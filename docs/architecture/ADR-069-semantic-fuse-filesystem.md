@@ -44,6 +44,23 @@ The knowledge graph already provides:
 
 FUSE could expose these capabilities through filesystem metaphors that users already understand.
 
+### Architectural Validation
+
+This proposal underwent external peer review to validate feasibility against the existing codebase. Key findings:
+
+- **Architectural Fit:** The FUSE operations map directly to existing services without requiring new core logic
+  - `ls` (semantic query) → `QueryService.build_search_query`
+  - `cd relationships/` (graph traversal) → `QueryService.build_concept_details_query`
+  - Write operations → existing async ingestion pipeline
+
+- **Implementation Feasibility:** High - essentially re-skinning existing services into FUSE protocol
+
+- **Discovery Value:** Solves the "I don't know what to search for" problem by allowing users to browse valid semantic pathways
+
+- **Standard Tool Integration:** Turns every Unix utility (`grep`, `diff`, `tar`) into a knowledge graph tool for free
+
+The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.
+
 ## Motivation
 
 Traditional filesystems organize knowledge through rigid hierarchies:
@@ -1196,23 +1213,135 @@ ln -s /mnt/knowledge/my-project/ ./docs
 
 ## Implementation Recommendation
 
-**Start with rclone backend (Option B):**
+**Update (Post Peer Review):** After architectural review, we are **strongly leaning toward Python FUSE (Option A)** for the MVP, though not yet committed.
 
-1. **Faster to MVP** - Leverage rclone's FUSE layer, caching, config management
-2. **Instant Interop** - Get cross-backend sync for free
-3. **Smaller Codebase** - ~500 lines Go vs ~2500 lines Python
-4. **Existing User Base** - rclone users understand the model
-5. **Fallback Path** - Can always build custom FUSE driver later if needed
+### Reconsidering Python FUSE (Option A)
 
-**Prototype scope:** Implement List/Read/Write operations for single shard/facet, validate concept with users.
+**Advantages for our specific architecture:**
+
+1. **Shared Logic Layer** - All core services (`QueryService`, `EmbeddingModel`, `GraphQueryFacade`) are Python
+   - Can import services directly without HTTP overhead
+   - Zero-latency local operations during development
+   - No schema drift between FUSE layer and graph layer
+
+2. **Complex Traversal Support** - Deep graph schema knowledge (ADR-048)
+   - Relationship navigation requires VocabType awareness
+   - Dynamic relationship discovery easier in Python
+   - Access to full graph context without API round-trips
+
+3. **Tight Integration** - Same runtime as API server
+   - Can mount on same machine as database for testing
+   - Direct access to PostgreSQL connection pool
+   - Shared caching layer with existing services
+
+**Implementation with `pyfuse3`:**
+```python
+import pyfuse3
+from api.services.query_service import QueryService
+
+class SemanticFS(pyfuse3.Operations):
+    def __init__(self):
+        self.query_service = QueryService()  # Direct import!
+
+    async def readdir(self, inode, off, token):
+        # Direct service call, no HTTP
+        concepts = await self.query_service.execute_search(query, threshold=0.7)
+        for concept in concepts:
+            pyfuse3.readdir_reply(token, f"{concept.label}.concept", ...)
+```
+
+**When to use rclone instead (Option B):**
+- Remote mounting (laptop → cloud server)
+- OAuth management for remote instances
+- Cross-backend sync requirements (knowledge graph ↔ S3/Google Drive)
+- Deployment to users unfamiliar with Python infrastructure
+
+**Current stance:** Prototype with Python FUSE for local/development use. Both implementations may coexist - Python for tight integration, rclone for remote access and OAuth workflows.
 
 ## Future Extensions
+
+### Core Features
 
 - Relationship-based symbolic links (`ln -s concept relationships/SUPPORTS/`)
 - Query operators (`/search/AND/`, `/search/OR/`, `/search/NOT/`)
 - Grounding filters (`/grounding/strong/`, `/grounding/weak/`)
 - Write support for relationship creation
 - Multi-shard federated views
+
+### Usability Enhancements (From Peer Review)
+
+**1. Empty Directory Problem Solution**
+
+When semantic queries return no results, generate a virtual `README.md` explaining why:
+
+```bash
+mkdir /mnt/knowledge/research/unicorn-physics/
+ls /mnt/knowledge/research/unicorn-physics/
+# Empty directory - no matching concepts
+
+cat /mnt/knowledge/research/unicorn-physics/README.md
+# Query 'unicorn physics' (Threshold: 0.7) matched 0 concepts in ontology 'research'.
+#
+# Suggestions:
+# - Lower threshold: /mnt/knowledge/search/0.5/unicorn+physics/
+# - Try broader query: /mnt/knowledge/research/physics/
+# - Check available ontologies: ls /mnt/knowledge/
+```
+
+**Benefits:** Users understand empty results instead of wondering if the system is broken.
+
+**2. Tarball Snapshots with Temporal Metadata**
+
+Include a `.manifest` file in every tarball to enable "time travel":
+
+```bash
+tar czf snapshot-$(date +%s).tar.gz /mnt/knowledge/research/
+
+tar tzf snapshot-*.tar.gz | head -5
+.manifest
+embedding-models.concept
+neural-networks.concept
+...
+
+cat .manifest
+{
+  "snapshot_timestamp": "2025-11-28T23:45:00Z",
+  "graph_revision": "a3b2c1d4",
+  "shard": "research",
+  "facet": "academic",
+  "ontology": "ai-research",
+  "query_threshold": 0.7,
+  "concept_count": 127,
+  "embedding_model": "nomic-ai/nomic-embed-text-v1.5"
+}
+```
+
+**Benefits:**
+- Restore semantic state from snapshots
+- Track knowledge evolution over time
+- Debug "why did this concept disappear?"
+
+**3. RBAC Integration via Filesystem Permissions**
+
+Map filesystem permission bits to OAuth scopes from ADR-054/055:
+
+```bash
+ls -l /mnt/knowledge/shard-production/
+drwxr-xr-x  engineering/     # User has write:engineering scope
+drwxr-xr--  compliance/      # User has read:compliance scope (no write)
+d---------  finance/         # User has no access
+
+# Attempting to write without scope:
+echo "test" > /mnt/knowledge/shard-production/compliance/test.md
+# Permission denied (requires write:compliance scope)
+```
+
+**Implementation:** Check OAuth scopes during FUSE `access()` and `open()` operations.
+
+**Benefits:**
+- Familiar Unix permission model
+- Natural RBAC enforcement
+- Tools like `ls -l` show access levels automatically
 
 ## References
 
