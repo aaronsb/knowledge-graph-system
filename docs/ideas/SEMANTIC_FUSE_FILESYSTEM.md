@@ -466,6 +466,273 @@ diff -r /tmp/before/ /tmp/after/
 
 **Why this works:** Concepts are files. Files can be diffed. Knowledge evolution becomes visible through standard Unix tools.
 
+## Architecture and Hierarchy
+
+### Important: This Is NOT a Full Filesystem
+
+Like `/sys/` or `/proc/`, this is a **partial filesystem** that exposes a specific interface (knowledge graphs) through filesystem semantics. It only implements operations that make semantic sense.
+
+**What works:**
+- `ls` (semantic query)
+- `cd` (navigate semantic space)
+- `cat` (read concept)
+- `find` / `grep` (search)
+- `echo >` / `cp` (ingest)
+- `tar` (snapshot)
+- `stat` (metadata)
+
+**What doesn't work (and won't):**
+- `mv` (concepts don't "move" in semantic space)
+- `chmod` / `chown` (use facet-level RBAC instead)
+- `ln -s` (maybe future: create relationships)
+- `touch` (timestamps are semantic, not file-based)
+- `dd` (nonsensical for semantic content)
+- Most other file operations that assume static files
+
+**This is a feature, not a limitation.** Don't pretend to be a full filesystem. Be an excellent semantic interface.
+
+### The Four-Level Model
+
+The semantic filesystem has a clear hierarchy that maps infrastructure to semantic content:
+
+```
+Shard (infrastructure: database + API + resources)
+  └── Facet (logical grouping of related ontologies)
+      └── Ontology (specific knowledge domain)
+          └── Concepts (semantic content)
+```
+
+**Why this hierarchy matters:**
+
+| Level | Purpose | Example | Isolation |
+|-------|---------|---------|-----------|
+| **Shard** | Physical deployment instance | `shard-research`, `shard-production` | Infrastructure (separate databases) |
+| **Facet** | Logical grouping for organization/RBAC | `academic`, `industrial`, `engineering` | Access control & resource limits |
+| **Ontology** | Knowledge domain namespace | `ai-research`, `api-docs`, `patents` | Semantic namespace |
+| **Concepts** | Individual semantic units | `embedding-models.concept` | Content |
+
+### Directory Structure
+
+```bash
+/mnt/knowledge/
+├── shard-research/              # Shard: research infrastructure
+│   ├── academic/                # Facet: academic research group
+│   │   ├── ai-research/         # Ontology: AI papers
+│   │   │   └── embedding-models.concept
+│   │   ├── neuroscience/        # Ontology: neuroscience papers
+│   │   └── ml-papers/           # Ontology: ML literature
+│   │
+│   └── industrial/              # Facet: industrial R&D group
+│       ├── patents/             # Ontology: patent filings
+│       └── prototypes/          # Ontology: prototype docs
+│
+├── shard-production/            # Shard: production infrastructure
+│   ├── engineering/             # Facet: engineering team
+│   │   ├── api-docs/            # Ontology: API documentation
+│   │   ├── architecture/        # Ontology: architecture decisions
+│   │   └── runbooks/            # Ontology: operational runbooks
+│   │
+│   └── compliance/              # Facet: compliance team
+│       ├── gdpr/                # Ontology: GDPR documentation
+│       └── soc2/                # Ontology: SOC2 compliance
+│
+└── shard-partners/              # Shard: partner infrastructure (remote)
+    └── shared/                  # Facet: shared knowledge
+        └── api-integration/     # Ontology: integration docs
+```
+
+### Why Facets?
+
+**Facets** provide logical organization within a shard without requiring separate infrastructure:
+
+1. **Access Control Boundaries:**
+   ```bash
+   # Academic team: read/write to academic/ facet
+   # Industrial team: read/write to industrial/ facet
+   # Same database, different permissions
+   ```
+
+2. **Resource Isolation:**
+   ```bash
+   # Academic facet: high ingestion rate, low query rate
+   # Industrial facet: low ingestion rate, high query rate
+   # Same infrastructure, different resource profiles
+   ```
+
+3. **Namespace Management:**
+   ```bash
+   # Both facets can have "documentation" ontology:
+   /mnt/knowledge/shard-research/academic/documentation/
+   /mnt/knowledge/shard-research/industrial/documentation/
+   # No collision!
+   ```
+
+4. **Organizational Clarity:**
+   ```bash
+   ls /mnt/knowledge/shard-research/
+   academic/      # University research
+   industrial/    # Corporate R&D
+   # Clear logical separation
+   ```
+
+### Mount Options at Different Levels
+
+```bash
+# Mount entire shard (all facets, all ontologies)
+mount -t fuse.knowledge-graph \
+  -o shard=research \
+  /dev/knowledge /mnt/knowledge/research
+
+ls /mnt/knowledge/research/
+academic/  industrial/
+
+# Mount specific facet (all ontologies in facet)
+mount -t fuse.knowledge-graph \
+  -o shard=research,facet=academic \
+  /dev/knowledge /mnt/knowledge/academic
+
+ls /mnt/knowledge/academic/
+ai-research/  neuroscience/  ml-papers/
+
+# Mount specific ontology (direct semantic access)
+mount -t fuse.knowledge-graph \
+  -o shard=research,facet=academic,ontology=ai-research \
+  /dev/knowledge /mnt/knowledge/ai-research
+
+ls /mnt/knowledge/ai-research/
+# Shows semantic query space directly
+embedding-models/  neural-networks/  transformers/
+```
+
+### Cross-Shard, Cross-Facet Queries
+
+Standard Unix tools traverse the hierarchy automatically:
+
+```bash
+# Search across all mounted shards, facets, and ontologies
+find /mnt/knowledge/ -name "*.concept" | grep "embedding"
+
+# Traverses:
+# 1. Shards (local + remote)
+#    ├── shard-research (local FUSE → local PostgreSQL)
+#    └── shard-partners (SSHFS → remote FUSE → remote PostgreSQL)
+#
+# 2. Facets within each shard
+#    ├── academic
+#    ├── industrial
+#    └── shared
+#
+# 3. Ontologies within each facet
+#    ├── ai-research
+#    ├── patents
+#    └── api-integration
+#
+# 4. Semantic queries within each ontology
+#    └── embedding-models.concept (found!)
+
+# All through standard Unix tooling!
+```
+
+**The magic:** `find` and `grep` don't know about:
+- Knowledge graphs
+- Semantic queries
+- Shard boundaries
+- Local vs. remote mounts
+
+They just traverse directories and read files. **The abstraction is perfect.**
+
+### Distributed Queries Across Mount Boundaries
+
+```bash
+# Mount local shards
+mount -t fuse.knowledge-graph -o shard=research /dev/knowledge /mnt/local/research
+mount -t fuse.knowledge-graph -o shard=production /dev/knowledge /mnt/local/production
+
+# Mount remote shards via SSH
+sshfs partner-a@remote:/mnt/knowledge/shared /mnt/remote/partner-a
+sshfs partner-b@remote:/mnt/knowledge/public /mnt/remote/partner-b
+
+# Now grep across ALL of them:
+grep -r "API compatibility" /mnt/{local,remote}/*/
+
+# What actually happens:
+# 1. grep traverses /mnt/local/research/
+#    → FUSE reads local database
+#    → Returns concept files as text
+#
+# 2. grep traverses /mnt/local/production/
+#    → FUSE reads local database
+#    → Returns concept files as text
+#
+# 3. grep traverses /mnt/remote/partner-a/
+#    → SSHFS sends reads over SSH
+#    → Remote FUSE reads remote database
+#    → SSH returns concept files as text
+#
+# 4. grep traverses /mnt/remote/partner-b/
+#    → Same: SSHFS → SSH → remote FUSE → remote database
+
+# Result: distributed semantic search across multiple knowledge graphs
+# Using only: grep, mount, and sshfs
+# No special distributed query protocol needed
+```
+
+**This is profound:** Standard Unix tools become distributed knowledge graph query engines simply by mounting semantic filesystems at different paths.
+
+### Write Operations Respect Hierarchy
+
+```bash
+cd /mnt/knowledge/research/academic/ai-research/embedding-models/
+
+# Write here → ingests into:
+# - Shard: research
+# - Facet: academic
+# - Ontology: ai-research
+# - Context: embedding-models (semantic query)
+echo "# Quantization Techniques..." > quantization.md
+
+# Concept appears in:
+# ✓ /mnt/knowledge/research/academic/ai-research/
+# ✗ NOT in /mnt/knowledge/research/industrial/patents/
+# Same shard, different facet = isolated
+```
+
+### Federation and Discovery
+
+```bash
+# Local shard (FUSE → local knowledge graph)
+mount -t fuse.knowledge-graph -o shard=research /dev/knowledge /mnt/local
+
+# Remote shard (SSHFS → remote FUSE → remote knowledge graph)
+sshfs partner@partner.com:/mnt/knowledge/shared \
+      /mnt/remote
+
+# Now find operates across BOTH:
+find /mnt/{local,remote}/ -name "*.concept" | grep "api"
+
+# Returns concepts from:
+# - Local research shard (all facets)
+# - Remote partner shard (shared facet)
+# Distributed knowledge graph queries via standard Unix tools!
+```
+
+### Path Semantics
+
+Every path encodes the full context:
+
+```
+/mnt/knowledge/shard-research/academic/ai-research/embedding-models/quantization.concept
+│              │              │        │            │                │
+│              │              │        │            │                └─ Concept (semantic entity)
+│              │              │        │            └─────────────────── Semantic query context
+│              │              │        └──────────────────────────────── Ontology (knowledge domain)
+│              │              └───────────────────────────────────────── Facet (logical group)
+│              └──────────────────────────────────────────────────────── Shard (infrastructure)
+└─────────────────────────────────────────────────────────────────────── Mount point
+```
+
+**Deterministic structure, semantic content.**
+
 ## Implementation Sketch
 
 ### Technology Stack
