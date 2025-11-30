@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-012 (API Server), ADR-013 (Unified Client), ADR-016 (Apache AGE), ADR-034 (Graph Visualization)
 
+## Overview
+
+When you ask an LLM about concepts in your knowledge graph, you face a fundamental challenge: every search query requires generating an embedding vector to compare against your stored concepts. If you're using OpenAI's embedding API, each of these searches costs money and adds network latency. More critically, your query text is sent to external servers—a privacy concern for sensitive documents. Think of it like paying a toll every time you want to search your own data, while also revealing what you're searching for to a third party.
+
+This becomes particularly problematic for the interactive visualization app, where users might type queries in real-time. A hundred keystrokes could trigger a hundred API calls, costing dollars and creating noticeable lag. The current system has painted itself into a corner: it depends entirely on external APIs for embedding generation, making it unusable without internet access and subject to rate limits during heavy use.
+
+Here's the good news: modern open-source embedding models like Nomic-embed-text-v1.5 can run locally with quality comparable to OpenAI's offerings. Better yet, they can run in the browser using transformers.js, enabling instant, private searches without server round-trips. The challenge is architecting this thoughtfully—you can't just mix embeddings from different models (they live in incompatible vector spaces), and you need a clear migration path from cloud to local without breaking existing deployments.
+
+This ADR proposes a hybrid architecture where the system can use local embeddings (via sentence-transformers on the server or transformers.js in the browser) while maintaining compatibility with cloud providers. The key insight is treating this as a configuration choice, not a code branch—the same `/embedding/generate` endpoint works whether you're using OpenAI's API or a local model, with the server managing model consistency transparently.
+
+---
+
 ## Context
 
 ### Current State: OpenAI Embedding Dependency
