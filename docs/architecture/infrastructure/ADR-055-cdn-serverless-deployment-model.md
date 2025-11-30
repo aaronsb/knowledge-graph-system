@@ -4,6 +4,16 @@
 **Date:** 2025-11-03
 **Related ADRs:** ADR-054 (OAuth Client Management)
 
+## Overview
+
+Modern web applications face a deployment puzzle: how do you serve the same frontend code to development, staging, and production without rebuilding each time? If your app has hardcoded URLs pointing to `localhost:8000` for development, you can't deploy that same build to production pointing at `api.example.com`. The traditional solution is to rebuild for each environment, but that violates the principle of "build once, deploy many."
+
+There's a deeper challenge too: serving web apps from Content Delivery Networks (CDNs) gives you global performance and scalability, but CDNs only serve static files. They can't run server-side code to render login forms or manage sessions. Yet modern OAuth security requires PKCE (a challenge-response protocol) and proper redirect URL validation. How do you reconcile stateless, static hosting with secure authentication?
+
+The solution is runtime configuration and client-side OAuth flows. Instead of baking configuration into the build, the app loads it when it starts via a `config.js` file that's generated at deploy time. For authentication, the browser handles the entire OAuth flow client-side - no server-rendered HTML needed. This means you can build once, deploy the same files to CloudFlare or Vercel in multiple environments, and just swap out the config file to point each deployment at the right backend. It's like having a universal adapter that works anywhere once you plug in the right settings.
+
+---
+
 ## Context
 
 The knowledge graph system currently consists of:
