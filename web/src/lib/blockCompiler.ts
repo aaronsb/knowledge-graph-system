@@ -11,6 +11,7 @@ import type {
   EndBlockParams,
   SearchBlockParams,
   VectorSearchBlockParams,
+  SourceSearchBlockParams,
   SelectConceptBlockParams,
   NeighborhoodBlockParams,
   PathToBlockParams,
@@ -178,6 +179,16 @@ function compileBlock(
       return {
         cypher: `// Vector Search (Smart Block): "${vsParams.query}" @ ${Math.round((vsParams.similarity || 0.7) * 100)}% similarity, limit ${vsParams.limit || 10}`,
         outputVariable: `vs${counter}`
+      };
+
+    case 'sourceSearch':
+      // Smart block - uses API source search endpoint (ADR-068)
+      // The execution handler will detect this and use the source search API
+      const ssParams = params as SourceSearchBlockParams;
+      const ontologyFilter = ssParams.ontology && ssParams.ontology.trim() !== '' ? `, ontology: "${ssParams.ontology}"` : '';
+      return {
+        cypher: `// Source Search (Smart Block - ADR-068): "${ssParams.query}" @ ${Math.round((ssParams.similarity || 0.7) * 100)}% similarity, limit ${ssParams.limit || 10}${ontologyFilter}`,
+        outputVariable: `ss${counter}`
       };
 
     case 'selectConcept':
