@@ -4,6 +4,18 @@
 **Date:** 2025-01-07
 **Replaces:** Previous containerization attempts with excessive script sprawl
 
+## Overview
+
+Imagine a platform with 35 different shell scripts scattered across multiple directories, each handling some piece of setup or configuration. Want to get started? Well, first run this script to set up secrets, then that script to start the database, then another to configure AI providers, then... wait, which order were they supposed to run in again? And did you remember to edit the `.env` file before starting the API, or was that supposed to happen automatically?
+
+This was the reality we faced: script sprawl had made the system nearly impossible to use. Worse, the scripts violated fundamental architectural boundaries—some tried to both generate infrastructure secrets (like encryption keys) AND configure application settings (like which AI model to use), mixing concerns that should have been cleanly separated. The result was brittle, confusing, and frequently broke when scripts ran in the wrong order.
+
+We needed a single, clear entry point that understood the proper layers of system initialization. Think of it like the Kubernetes operator pattern: one unified interface that knows infrastructure comes before schema, schema comes before configuration, and configuration must happen before the application starts. The solution is `kg-operator`, a command-line tool that orchestrates the entire platform lifecycle through four distinct layers: infrastructure secrets (generated once), database schema (automatically applied), application configuration (stored in the database, not files), and finally the running application.
+
+The key insight is separating what belongs in environment variables (infrastructure secrets that never change) from what belongs in database records (application configuration that changes frequently). With this boundary clear, Docker images can be completely clean—no runtime file editing, no secrets baked into containers. Everything follows the twelve-factor app model: infrastructure secrets flow from the environment, application config loads from the database at startup, and the operator container itself can manage the platform using standard Docker APIs. It's a dramatic simplification that turns chaos into clarity.
+
+---
+
 ## Context
 
 ### The Problem: Script Sprawl and Architectural Confusion
