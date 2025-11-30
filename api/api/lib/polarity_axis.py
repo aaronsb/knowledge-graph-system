@@ -115,16 +115,11 @@ def fetch_concept_with_embedding(
     Raises:
         ValueError: If concept not found or missing embedding
     """
-    # Query concept details
-    query = f"""
-        MATCH (c:Concept {{concept_id: '{concept_id}'}})
-        RETURN c.concept_id as concept_id,
-               c.label as label,
-               c.embedding as embedding,
-               c.description as description
-    """
-
-    results = age_client._execute_cypher(query)
+    # Query concept details using facade (ADR-048 namespace safety)
+    results = age_client.facade.match_concepts(
+        where="c.concept_id = $concept_id",
+        params={"concept_id": concept_id}
+    )
 
     if not results or len(results) == 0:
         raise ValueError(f"Concept not found: {concept_id}")
@@ -181,18 +176,24 @@ def discover_candidate_concepts(
         List of concept IDs (excludes the poles themselves)
     """
     # Find concepts connected to either pole within max_hops
-    query = f"""
-        MATCH (pole:Concept)
-        WHERE pole.concept_id IN ['{positive_pole_id}', '{negative_pole_id}']
-        MATCH (pole)-[*1..{max_hops}]-(candidate:Concept)
-        WHERE candidate.concept_id <> '{positive_pole_id}'
-          AND candidate.concept_id <> '{negative_pole_id}'
-        WITH DISTINCT candidate
-        RETURN candidate.concept_id as concept_id
-        LIMIT {max_candidates}
-    """
-
-    results = age_client._execute_cypher(query)
+    # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
+    results = age_client.facade.execute_raw(
+        query="""
+            MATCH (pole:Concept)
+            WHERE pole.concept_id IN $pole_ids
+            MATCH (pole)-[*1..$max_hops]-(candidate:Concept)
+            WHERE candidate.concept_id NOT IN $pole_ids
+            WITH DISTINCT candidate
+            RETURN candidate.concept_id as concept_id
+            LIMIT $limit
+        """,
+        params={
+            "pole_ids": [positive_pole_id, negative_pole_id],
+            "max_hops": max_hops,
+            "limit": max_candidates
+        },
+        namespace="concept"
+    )
 
     if not results:
         logger.warning("No candidate concepts discovered")
