@@ -518,7 +518,7 @@ Concept C  SUPPORTS CONTRADICTS  -
 
 **Explorer vs. Explorer:** We use "Explorer" to describe each interactive visualization mode. This term emphasizes the investigative, discovery-oriented nature of the tools and aligns with common graph database UI conventions (e.g., Neo4j Browser, graph explorers). Each explorer combines a specific visualization type with appropriate interaction patterns.
 
-See [[ADR-035-explorer-methods-uses-capabilities]] for details on explorers modules.
+See [ADR-035: Explorer Methods, Uses, and Capabilities](./ADR-035-explorer-methods-uses-capabilities.md) for details on explorers modules.
 
 ## Technical Implementation
 
