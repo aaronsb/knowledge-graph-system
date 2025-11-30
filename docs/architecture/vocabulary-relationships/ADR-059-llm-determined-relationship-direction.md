@@ -5,6 +5,14 @@
 **Deciders:** System Architects
 **Related:** ADR-047 (Probabilistic Categorization), ADR-048 (Vocabulary as Graph), ADR-022 (Semantic Taxonomy), ADR-025 (Dynamic Vocabulary)
 
+## Overview
+
+When the AI extracts a relationship like "meditation ENABLES enlightenment", does the word "enables" naturally flow from meditation to enlightenment (meditation acts on enlightenment), or could you reasonably reverse it? Graph databases force you to pick a direction for every edge, but that direction is just topology—it doesn't capture whether the word itself has inherent directionality.
+
+This ADR tackles relationship direction confusion by teaching the AI to explicitly reason about semantic direction. Think of it like grammar: "gives" is naturally outward (giver → receiver), "receives" is naturally inward (receiver ← giver), and "competes with" is bidirectional (symmetric). The problem was that extraction prompts only said "source concept" and "target concept"—topological terms that don't convey meaning. The AI had to guess which concept was the semantic actor, leading to 35% error rates like "false sense of identity ENABLED_BY language" (backwards—language enables identity, not vice versa). The solution is to teach the AI to classify direction using clear examples and active/passive voice reasoning, then store that direction as metadata on the relationship type itself. Now the system knows that "ENABLES" is typically used outward (actor→target) while "RESULTS_FROM" is typically inward (result←cause), enabling better validation (flag suspicious patterns), better queries (find what X enables vs what enables X), and better extraction quality through explicit frame-of-reference guidance.
+
+---
+
 ## Context
 
 ### The Direction Problem
