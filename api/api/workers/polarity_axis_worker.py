@@ -182,23 +182,27 @@ def discover_candidate_concepts(
         negative_pole_id: Negative pole concept ID
         age_client: AGEClient instance
         max_candidates: Maximum concepts to return
-        relationship_types: Relationship types to traverse (default: all)
+        relationship_types: Relationship types to traverse (currently ignored - AGE limitation)
         max_hops: Maximum hops from poles
 
     Returns:
         List of concept IDs (excludes the poles themselves)
+
+    Note:
+        AGE/openCypher doesn't support relationship type filtering in variable-length
+        paths (e.g., [:TYPE1|TYPE2*1..2]). For now, we traverse all relationship types.
+        Future: Could implement with UNION queries or path filtering.
     """
-    rel_filter = ""
-    if relationship_types:
-        rel_types_str = "|".join(relationship_types)
-        rel_filter = f":{rel_types_str}"
+    # Note: relationship_types parameter currently ignored due to AGE syntax limitation
+    # AGE doesn't support [:TYPE1|TYPE2*1..2] syntax
 
     # Find concepts connected to either pole within max_hops
     query = f"""
         MATCH (pole:Concept)
         WHERE pole.concept_id IN ['{positive_pole_id}', '{negative_pole_id}']
-        MATCH (pole)-[{rel_filter}*1..{max_hops}]-(candidate:Concept)
-        WHERE candidate.concept_id NOT IN ['{positive_pole_id}', '{negative_pole_id}']
+        MATCH (pole)-[*1..{max_hops}]-(candidate:Concept)
+        WHERE candidate.concept_id <> '{positive_pole_id}'
+          AND candidate.concept_id <> '{negative_pole_id}'
         WITH DISTINCT candidate
         RETURN candidate.concept_id as concept_id
         LIMIT {max_candidates}
@@ -306,7 +310,7 @@ def run_polarity_axis_worker(
         Exception: If analysis fails
     """
     try:
-        from api.api.lib.age_client import AGEClient
+        from api.lib.age_client import AGEClient
 
         logger.info(f"🔄 Polarity axis analysis worker started: {job_id}")
 

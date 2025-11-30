@@ -379,3 +379,69 @@ class SourceSearchResponse(BaseModel):
     count: int = Field(..., description="Number of sources returned")
     results: List[SourceSearchResult] = Field(..., description="Ranked source results by similarity")
     threshold_used: float = Field(..., description="Similarity threshold used")
+
+
+# Polarity Axis Models (ADR-070)
+class PolarityAxisRequest(BaseModel):
+    """Request to analyze bidirectional semantic dimension (polarity axis)."""
+    positive_pole_id: str = Field(..., description="Concept ID for positive pole (e.g., 'Modern')")
+    negative_pole_id: str = Field(..., description="Concept ID for negative pole (e.g., 'Traditional')")
+    candidate_ids: Optional[List[str]] = Field(None, description="Specific concept IDs to project onto axis (optional)")
+    auto_discover: bool = Field(True, description="Auto-discover related concepts if candidate_ids not provided")
+    max_candidates: int = Field(20, description="Maximum candidates for auto-discovery", ge=1, le=100)
+    max_hops: int = Field(2, description="Maximum graph hops for auto-discovery (1-3)", ge=1, le=3)
+
+
+class PolarityAxisPole(BaseModel):
+    """Concept pole (endpoint) of polarity axis."""
+    concept_id: str = Field(..., description="Concept ID")
+    label: str = Field(..., description="Concept label")
+    grounding: float = Field(..., description="Grounding strength (-1.0 to 1.0)")
+    description: Optional[str] = Field(None, description="Concept description")
+
+
+class PolarityAxisInfo(BaseModel):
+    """Polarity axis metadata (semantic dimension)."""
+    positive_pole: PolarityAxisPole = Field(..., description="Positive pole concept")
+    negative_pole: PolarityAxisPole = Field(..., description="Negative pole concept")
+    magnitude: float = Field(..., description="Semantic distance between poles")
+    axis_quality: str = Field(..., description="Axis quality: 'strong' (>0.8) or 'weak' (<0.8)")
+
+
+class ConceptProjection(BaseModel):
+    """Concept projected onto polarity axis."""
+    concept_id: str = Field(..., description="Concept ID")
+    label: str = Field(..., description="Concept label")
+    position: float = Field(..., description="Position on axis (-1.0 to +1.0, 0 = midpoint)")
+    axis_distance: float = Field(..., description="Distance from axis (orthogonal component)")
+    direction: str = Field(..., description="Direction: 'positive' (>0.3), 'negative' (<-0.3), or 'neutral'")
+    grounding: float = Field(..., description="Grounding strength (-1.0 to 1.0)")
+    alignment: Dict[str, float] = Field(..., description="Similarity to poles (positive_pole_similarity, negative_pole_similarity)")
+
+
+class PolarityAxisStatistics(BaseModel):
+    """Statistical summary of polarity axis analysis."""
+    total_concepts: int = Field(..., description="Number of concepts projected")
+    position_range: List[float] = Field(..., description="[min, max] position values")
+    mean_position: float = Field(..., description="Mean position on axis")
+    std_deviation: float = Field(..., description="Standard deviation of positions")
+    mean_axis_distance: float = Field(..., description="Mean distance from axis")
+    direction_distribution: Dict[str, int] = Field(..., description="Count by direction (positive, negative, neutral)")
+
+
+class GroundingCorrelation(BaseModel):
+    """Correlation between axis position and grounding strength."""
+    pearson_r: float = Field(..., description="Pearson correlation coefficient (-1.0 to 1.0)")
+    p_value: float = Field(..., description="Statistical significance (p-value)")
+    interpretation: str = Field(..., description="Human-readable interpretation of correlation")
+    strength: Optional[str] = Field(None, description="Correlation strength: 'strong', 'moderate', 'weak'")
+    direction: Optional[str] = Field(None, description="Correlation direction: 'positive', 'negative', 'none'")
+
+
+class PolarityAxisResponse(BaseModel):
+    """Polarity axis analysis results."""
+    success: bool = Field(..., description="Analysis success status")
+    axis: PolarityAxisInfo = Field(..., description="Polarity axis metadata")
+    projections: List[ConceptProjection] = Field(..., description="Concepts projected onto axis")
+    statistics: PolarityAxisStatistics = Field(..., description="Statistical summary")
+    grounding_correlation: GroundingCorrelation = Field(..., description="Correlation between position and grounding")
