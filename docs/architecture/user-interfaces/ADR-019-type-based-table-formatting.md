@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-013 (Unified TypeScript Client), ADR-018 (Server-Sent Events Streaming)
 
+## Overview
+
+Terminal tables should be simple, but they're surprisingly tricky to get right. When you apply color codes to text and then try to truncate it to fit column widths, you end up cutting through the ANSI escape sequences—leaving broken formatting and misaligned columns. Unicode characters throw off width calculations. Every command reimplements its own table logic.
+
+The problem gets worse when you realize tables appear everywhere in the CLI: job listings, search results, ontology information, and more. Each one was handling formatting slightly differently, with custom color logic applied before truncation, leading to the same bugs over and over.
+
+This ADR introduces semantic column types—like `job_id`, `status`, or `timestamp`—that know how to format their content. The key insight: truncate plain text first, then apply colors and styling. This way, width calculations work correctly, formatting never breaks, and all tables across the entire CLI use consistent colors and formatting rules defined in one place.
+
+---
+
 ## Context
 
 The `kg` CLI displays tabular data in multiple commands (`kg jobs list`, `kg ontology list`, `kg search`, etc.). Initial implementations used custom formatting logic with ANSI color codes applied before truncation, which caused:
