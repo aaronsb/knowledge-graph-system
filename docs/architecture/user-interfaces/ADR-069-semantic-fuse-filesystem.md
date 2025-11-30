@@ -7,6 +7,16 @@
 > "Everything is a file" - Traditional Unix Philosophy
 > "Everything is a file, but which file depends on what you're thinking about" - Semantic Unix Philosophy
 
+## Overview
+
+Traditional filesystems force you to organize knowledge in rigid hierarchies—one directory, one path, one canonical location. But knowledge doesn't work that way. A document about embedding models is simultaneously about AI architecture, operational procedures, and bug fixes. Why should it live in only one folder?
+
+The knowledge graph already solves this by letting concepts exist in multiple semantic contexts. But accessing it requires custom tools: CLI commands, web interfaces, MCP integration. Unix users already have powerful tools—grep, find, diff, tar—that they know intimately, but these tools can't touch the graph.
+
+This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, turning standard Unix tools into knowledge graph explorers. Type `cd /mnt/knowledge/embedding-models/` and you're executing a semantic query. Run `ls` and you see concepts with similarity scores. Use `grep -r` across multiple mounted shards and you're running distributed queries. Same concepts appear in multiple "directories" because they belong to multiple contexts. The filesystem adapts to your exploration patterns, making knowledge navigation feel like browsing files—except the files organize themselves based on what they mean.
+
+---
+
 ## Abstract
 
 This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, enabling semantic navigation and querying through standard Unix tools (`ls`, `cd`, `cat`, `grep`, `find`). Like `/sys/` or `/proc/`, this is a **partial filesystem** that implements only operations that make semantic sense, providing a familiar interface to knowledge graph exploration.
