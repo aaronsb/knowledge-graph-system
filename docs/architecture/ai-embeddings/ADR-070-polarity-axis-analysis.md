@@ -1,7 +1,8 @@
 # ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
 
-**Status:** Draft
+**Status:** Accepted
 **Date:** 2025-11-29
+**Implementation Date:** 2025-11-30
 **Deciders:** System Architect
 **Related ADRs:**
 - ADR-044: Probabilistic Truth Convergence (grounding calculation)
@@ -59,17 +60,35 @@ Projecting concepts onto polarity axes formed by opposing concepts (positive ↔
 
 ## Decision
 
-Implement polarity axis analysis as a core query capability using on-demand calculation via background workers. This approach provides flexibility for user-defined axes while reusing existing infrastructure.
+Implement polarity axis analysis as a **direct query pattern** with on-demand calculation, similar to the `/query/connect` endpoint. This approach provides flexibility for user-defined axes while maintaining fast response times (~2-3 seconds).
 
-**Architecture components:**
+**Architecture Pattern - Direct Query (Not Job Queue):**
 
-**Background worker processing:** Compute axes when requested rather than pre-computing them. This allows users to explore any pair of opposing concepts without requiring the system to predict which axes might be interesting. The `PolarityAxisWorker` handles calculation jobs asynchronously to avoid blocking the API, following the same pattern established for ingestion and embedding generation.
+After initial implementation and testing, we discovered that polarity axis analysis executes quickly enough (~2.36 seconds for 20 concepts) to use the direct query pattern instead of background workers. This decision was made after observing:
+- Fast execution time with existing embeddings (no external API calls)
+- Read-only operations with no side effects
+- Similar performance profile to `/query/connect` endpoint
+- User preference for immediate results over job tracking overhead
 
-**Three primary API endpoints** enable different exploration patterns. The `POST /queries/polarity-axis` endpoint analyzes a specific axis given two opposing concepts, returning positions of candidate concepts along that spectrum. The `POST /queries/discover-polarity-axes` endpoint auto-discovers potential axes by examining PREVENTS and CONTRADICTS relationships in the graph, surfacing implicit dimensions users might not have considered. The `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` endpoint projects individual concepts onto previously calculated axes for incremental exploration.
+The `/query/connect` endpoint serves as the architectural precedent - it performs similar embedding-heavy computations (multi-hop graph traversal with semantic matching) and returns results directly within 2-5 seconds. Polarity axis analysis fits the same performance envelope, making background workers unnecessary complexity.
 
-**Reuse of existing infrastructure** keeps implementation focused. The grounding correlation validation uses `AGEClient.calculate_grounding_strength_semantic()` (from ADR-058) to measure whether axes represent value polarities. Structured JSON responses follow established patterns from other query endpoints. The worker architecture builds on the existing job queue system rather than introducing new abstractions.
+**Future Consideration:** For large-scale analyses (100+ candidates, multiple concurrent requests), a "large polarity" job-based execution pattern could be added similar to how we might add "large connect" for expensive graph traversals. The current direct pattern handles typical use cases efficiently.
 
-**Performance considerations:** Embedding operations are computationally expensive (768-dimensional dot products across potentially hundreds of concepts). While a future global caching system for embedding-based queries would significantly improve performance, this ADR focuses on establishing the core capability first. Performance optimization through caching should be addressed holistically across all embedding-dependent queries (concept search, grounding calculation, polarity analysis) rather than implementing ad-hoc caching for each feature independently.
+**Primary API Endpoint:**
+
+`POST /query/polarity-axis` analyzes a specific axis given two opposing concept IDs, returning positions of candidate concepts along that spectrum. Request includes:
+- `positive_pole_id`: Concept ID for positive pole
+- `negative_pole_id`: Concept ID for negative pole
+- `candidate_ids` (optional): Specific concepts to project
+- `auto_discover` (default: true): Automatically find related concepts if no candidates specified
+- `max_candidates` (default: 20): Limit for auto-discovery
+- `max_hops` (default: 2): Graph traversal depth for discovery
+
+Response includes axis metadata, concept projections with positions/directions/grounding, statistical summary, and grounding correlation analysis.
+
+**Reuse of existing infrastructure** keeps implementation focused. The grounding correlation validation uses `AGEClient.calculate_grounding_strength_semantic()` (from ADR-058) to measure whether axes represent value polarities. Structured JSON responses follow established patterns from other query endpoints. Auto-discovery uses graph traversal patterns similar to related concepts queries.
+
+**Performance characteristics:** Execution time ~2-3 seconds for 20 candidates with 768-dimensional embeddings. Fast enough for direct query pattern without job queue overhead. Future optimization through global embedding cache (if needed) would benefit all embedding-dependent queries holistically.
 
 ## Consequences
 
@@ -452,76 +471,120 @@ r, p_value = pearsonr(positions, groundings)
 
 ## Implementation Phases
 
-### Phase 1: Core Worker
-- [ ] Refactor `polarity_axis_analysis.py` into `PolarityAxisWorker`
-- [ ] Add to worker registry
-- [ ] Unit tests for projection algorithm
-- [ ] Integration test with real embeddings
+### Phase 1: Core Analysis Function & API Endpoint ✅ COMPLETED
+- [x] Refactor experimental code into `api/lib/polarity_axis.py` as direct query function
+- [x] Implement `analyze_polarity_axis()` with auto-discovery capability
+- [x] Add `POST /query/polarity-axis` endpoint in `api/routes/queries.py`
+- [x] Create Pydantic models (`PolarityAxisRequest`, `PolarityAxisResponse`) in `api/models/queries.py`
+- [x] OpenAPI documentation (auto-generated from FastAPI schemas)
+- [x] Testing with real embeddings (Modern Ways of Working ↔ Traditional Operating Models)
+- [x] Validation: ~2.36 seconds for 20 concepts, confirmed direct query pattern viability
 
-### Phase 2: API Endpoints
-- [ ] `POST /queries/polarity-axis` (analyze axis)
-- [ ] `POST /queries/discover-polarity-axes` (auto-discover)
-- [ ] `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` (project concept)
-- [ ] Pydantic models for request/response
-- [ ] OpenAPI documentation
+**Implementation Notes:**
+- Decision to use direct query pattern instead of background workers based on fast execution time
+- Followed `/query/connect` pattern for consistency
+- AGE Cypher syntax limitations required workarounds (no type filters in variable-length paths)
 
-### Phase 3: Documentation
-- [ ] Update guides with polarity axis examples
-- [ ] CLI integration (`kg polarity ...`)
-- [ ] Video demo (optional)
+### Phase 2: CLI Command ✅ COMPLETED
+- [x] Add `kg polarity analyze` command in `cli/src/cli/polarity.ts`
+- [x] Client method `client.analyzePolarityAxis()` in `cli/src/api/client.ts`
+- [x] Colored output with formatted tables (positive/neutral/negative sections)
+- [x] JSON mode support for scripting
+- [x] Command registration in `cli/src/cli/commands.ts`
 
-### Phase 4: Interface Integration
-- [ ] MCP server tools (`analyze_polarity_axis`, `discover_polarity_axes`)
-- [ ] CLI commands (`kg polarity analyze`, `kg polarity discover`, `kg polarity project`)
-- [ ] Web workstation "Polarity Axis Explorer" panel
+### Phase 3: MCP Server Integration ✅ COMPLETED
+- [x] Add `analyze_polarity_axis` tool to MCP server (`cli/src/mcp-server.ts`)
+- [x] Token-efficient markdown formatter (`formatPolarityAxisResults` in `cli/src/mcp/formatters.ts`)
+- [x] Comprehensive tool description with use cases and performance characteristics
+- [x] Testing via Claude Desktop integration
+- [x] Rich output: axis metadata, statistics, grounding correlation, organized projections
+
+### Phase 4: Documentation & Web UI ⏳ IN PROGRESS
+- [x] Update ADR-070 with production implementation details (this document)
+- [ ] Add usage examples and interpretation guide
+- [ ] Update ARCHITECTURE_DECISIONS.md index
+- [ ] Web workstation "Polarity Axis Explorer" panel (deferred - future enhancement)
+
+**Deferred Items:**
+- `POST /queries/discover-polarity-axes` (auto-discover axes from relationships) - Could be added as future enhancement
+- `GET /queries/polarity-axis/{axis_id}/project/{concept_id}` (project onto saved axis) - Not needed without axis persistence
+- Axis persistence (`:PolarityAxis` nodes) - Deferred per Alternative 3 discussion
 
 ## User Interface Specifications
 
-### MCP Server Integration
+### MCP Server Integration ✅ IMPLEMENTED
 
-**Tools:**
-- `analyze_polarity_axis(positive_pole_query, negative_pole_query, auto_discover_candidates)`
-- `discover_polarity_axes(relationship_types, max_results)`
+**Tool:**
+`analyze_polarity_axis` - Analyze bidirectional semantic dimension between two concept poles
 
-**Output Format:** Markdown with emoji indicators, position visualization, grounding correlation insights
+**Parameters:**
+- `positive_pole_id` (required): Concept ID for positive pole
+- `negative_pole_id` (required): Concept ID for negative pole
+- `candidate_ids` (optional): Specific concept IDs to project onto axis
+- `auto_discover` (default: true): Auto-discover related concepts if no candidates specified
+- `max_candidates` (default: 20): Maximum candidates for auto-discovery
+- `max_hops` (default: 2): Maximum graph hops for auto-discovery
 
-**Use Cases:**
-- Claude asks "What are the key semantic dimensions in this knowledge base?"
-- Discovers PREVENTS/CONTRADICTS axes automatically
-- Projects concepts onto axes to understand positioning
+**Output Format:** Token-efficient markdown optimized for AI consumption with:
+- Axis definition (poles, grounding, magnitude, quality indicator)
+- Statistical summary (position range, mean, distribution)
+- Grounding correlation with practical interpretation
+- Concept projections organized by direction (positive/neutral/negative)
+- Usage guide explaining positions and orthogonality
 
-### CLI Tool (kg)
-
-**Commands:**
-```bash
-kg polarity analyze <positive> <negative>     # Analyze specific axis
-kg polarity discover [--type TYPE]            # Auto-discover axes
-kg polarity project <axis_id> <concept_id>    # Project concept
+**Example Usage:**
+```python
+analyze_polarity_axis(
+  positive_pole_id="sha256:0d5be_chunk1_a2ccadba",  # Modern Ways of Working
+  negative_pole_id="sha256:0f72d_chunk1_9a13bb20",  # Traditional Operating Models
+  auto_discover=true,
+  max_candidates=20
+)
 ```
 
-**Output:**
-- **Table mode:** Formatted tables with position, direction, grounding
-- **Visual mode:** ASCII spectrum showing concept positions
-- **JSON mode:** Machine-readable output for scripting
+### CLI Tool (kg) ✅ IMPLEMENTED
 
-### Web Workstation
+**Command:**
+```bash
+kg polarity analyze --positive <concept-id> --negative <concept-id> [options]
+```
 
-**New Explorer Panel:** "Polarity Axis Explorer"
+**Options:**
+- `--positive <id>` - Positive pole concept ID (required)
+- `--negative <id>` - Negative pole concept ID (required)
+- `--candidates <ids...>` - Specific concept IDs to project (space-separated)
+- `--no-auto-discover` - Disable auto-discovery of related concepts
+- `--max-candidates <N>` - Maximum candidates for auto-discovery (default: 20)
+- `--max-hops <N>` - Maximum graph hops for auto-discovery (default: 2)
+- `--json` - Output raw JSON instead of formatted text
 
-**Features:**
-1. **Axis Discovery** - Browse PREVENTS/CONTRADICTS relationship axes
-2. **Interactive Visualization** - Drag-and-drop concepts, color-coded by grounding
-3. **Custom Axis Creator** - Search and select poles, auto-discover candidates
-4. **Concept Integration** - "Polarity Analysis" tab shows where concept appears on known axes
-5. **Export Options** - JSON, PNG, SVG for documentation
+**Output Format:** Colored terminal output with:
+- Axis header with pole labels and grounding strength
+- Axis quality indicator (strong/weak based on magnitude)
+- Statistics table (position range, mean, distribution, correlation)
+- Three sections: Positive Direction, Neutral, Negative Direction
+- Each concept shows: label, position, grounding, axis distance, concept ID
 
-**Visual Design:**
-- Color gradient along axis (configurable theme)
-- Concept bubbles sized by grounding strength
-- Interactive: hover for stats, click to navigate
-- Real-time correlation metrics
+**Example:**
+```bash
+kg polarity analyze \
+  --positive sha256:0d5be_chunk1_a2ccadba \
+  --negative sha256:0f72d_chunk1_9a13bb20 \
+  --max-candidates 20
+```
 
-**See full interface specifications in:** [Implementation Plan](../features/polarity-axis-analysis/IMPLEMENTATION_PLAN.md)
+### Web Workstation ⏳ DEFERRED
+
+**New Explorer Panel:** "Polarity Axis Explorer" (future enhancement)
+
+**Deferred Features:**
+- Interactive visualization with drag-and-drop
+- Custom axis creator with search
+- Concept integration tabs
+- Export options (JSON, PNG, SVG)
+
+**Reason for Deferral:**
+Core functionality (API, CLI, MCP) provides complete access to polarity axis analysis. Web UI adds convenience but isn't required for feature adoption. Can be added based on user feedback and usage patterns.
 
 ## Success Criteria
 
@@ -564,16 +627,46 @@ kg polarity project <axis_id> <concept_id>    # Project concept
 
 ## Decision Record
 
-**Status:** Draft (awaiting team review)
+**Status:** Accepted & Implemented
 **Proposed By:** System Architect
-**Review Date:** TBD
-**Approval Date:** TBD
+**Implementation Date:** 2025-11-30
+**Approval Date:** 2025-11-30
+
+**Key Implementation Decisions:**
+1. **Direct Query Pattern:** Chose direct query over background workers based on fast execution time (~2-3s)
+2. **Simplified Scope:** Implemented single endpoint (`POST /query/polarity-axis`) rather than three endpoints
+3. **Auto-Discovery:** Included graph traversal-based candidate discovery in initial release
+4. **No Persistence:** Deferred axis persistence (`:PolarityAxis` nodes) - compute on demand only
+5. **Web UI Deferred:** Core functionality (API/CLI/MCP) sufficient for initial adoption
+
+**Implementation Files:**
+- `api/api/lib/polarity_axis.py` - Core analysis function (419 lines)
+- `api/api/models/queries.py` - Pydantic request/response models
+- `api/api/routes/queries.py` - FastAPI endpoint
+- `cli/src/cli/polarity.ts` - CLI command (166 lines)
+- `cli/src/api/client.ts` - Client method
+- `cli/src/mcp-server.ts` - MCP tool registration
+- `cli/src/mcp/formatters.ts` - Markdown formatter
+
+**Testing Results:**
+- Execution time: ~2.36 seconds for 20 concepts
+- Axis quality: Strong (magnitude 0.9735)
+- Grounding correlation: Validated with real-world examples
+- MCP integration: Tested via Claude Desktop
+- CLI integration: Tested with multiple pole pairs
 
 ---
 
-**Next Steps:**
-1. Team review of ADR
-2. Finalize API design
-3. Implement Phase 1 (worker)
-4. Gather feedback from early testing
-5. Iterate based on learnings
+**Completed:**
+1. ✅ Core analysis function with auto-discovery
+2. ✅ API endpoint with comprehensive request/response models
+3. ✅ CLI command with colored output
+4. ✅ MCP tool with rich markdown formatting
+5. ✅ ADR documentation update
+6. ✅ Testing and validation
+
+**Future Enhancements:**
+1. Web UI "Polarity Axis Explorer" panel
+2. Auto-discovery endpoint (`POST /queries/discover-polarity-axes`)
+3. Axis persistence if usage patterns warrant it
+4. Global embedding cache for performance optimization
