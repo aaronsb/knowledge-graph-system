@@ -5,6 +5,14 @@
 **Authors:** System Architecture Team
 **Related:** ADR-032 (Automatic Edge Vocabulary Expansion), ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
 
+## Overview
+
+Not all relationship types are created equal—some point to well-supported truths while others connect speculative or contradictory concepts. Should "SUPPORTS" (used in 38 solid connections backed by evidence) be treated the same as "THEORETICALLY_ENABLES" (used once, connecting two weakly-grounded concepts)?
+
+This ADR adds quality awareness to vocabulary management by tracking how well-grounded each relationship type tends to be. The system already calculates a grounding score for each concept based on supporting versus contradicting evidence (from ADR-044). Now, when managing vocabulary, the system can consider: "This relationship type consistently appears in high-grounding connections—keep it" versus "This type only shows up in low-grounding, speculative connections—candidate for pruning." This is particularly useful for detecting near-synonyms: if "SUPPORTS" and "VALIDATES" have similar semantic embeddings AND similar grounding profiles, they're probably redundant and can be consolidated. The system also uses this information when choosing which types to show the AI during extraction—prioritizing vocabulary that has proven useful for building well-grounded knowledge. Think of it as reputation-aware vocabulary: words that consistently contribute to solid, evidence-backed connections earn their place, while terms that only appear in speculative edges are scrutinized more carefully.
+
+---
+
 ## Context
 
 ### The ADR-044/045/046 Trio
