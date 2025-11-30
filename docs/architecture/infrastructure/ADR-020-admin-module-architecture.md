@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-015 (Backup/Restore), ADR-016 (Apache AGE)
 
+## Overview
+
+Every system needs administrative operations - resetting databases, creating backups, checking system health. Early on, developers often reach for shell scripts because they're quick to write: `reset.sh`, `backup.sh`, `configure.sh`. But these scripts become a maintenance nightmare. They're hard to test, impossible to reuse in other contexts, and when something goes wrong, debugging is a mess of exit codes and stderr output.
+
+We hit this wall when migrating from Neo4j to PostgreSQL. Our `reset.sh` script was still trying to restart Neo4j containers that didn't exist anymore. The error messages were confusing, the script sometimes succeeded but returned failure codes, and we couldn't easily call this logic from our API or CLI. It was like having important business logic written in bash instead of your main programming language - it works, but it's isolated and brittle.
+
+The solution moves all admin operations into proper Python modules. Each major operation (reset, backup, restore) gets its own focused module that can be called from anywhere - CLI, API, tests, or even directly via Python REPL. The service layer becomes a thin wrapper that just delegates to these modules. This is like refactoring a messy script into a well-organized library: same functionality, but now it's testable, reusable, and maintainable.
+
+---
+
 ## Context
 
 As the knowledge graph system evolved, administrative operations grew in complexity:
