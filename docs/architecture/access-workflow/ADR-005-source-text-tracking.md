@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-004 (Pure Graph Design)
 
+## Overview
+
+When you extract concepts from documents into a knowledge graph, you create powerful connections between ideas. But there's a catch: you lose the original context. If someone later asks "where did this concept come from?" or "what's the full context around this quote?", you need a way to trace back to the source material without storing entire documents in your graph database.
+
+The challenge is balancing traceability with efficiency. You could store full document text in every concept node, but that would bloat your database and make versioning a nightmare. You could store nothing and rely on external systems, but then retrieving context becomes slow and fragile. What you need is a smart middle ground that keeps the graph lean while maintaining quick access to source material when needed.
+
+This decision treats markdown files as the canonical source of truth, stored in version-controlled files on the filesystem, while the graph stores lightweight references—think of it as citations in an academic paper rather than reprinting entire books. The graph knows exactly which document, paragraph, and sentence a concept came from, and can retrieve the full context on demand without carrying that weight around all the time.
+
+The clever part is using paragraph-level indexing so you can retrieve just the right amount of context: sometimes you need just the quote, sometimes the full paragraph, sometimes the entire section. It's like having bookmarks with different levels of zoom—you can get as much or as little context as the situation requires, without storing redundant copies of text everywhere.
+
+---
+
 ## Context
 
 Concepts in a knowledge graph need traceability back to their original source text for verification, context, and citation purposes. Storing full document text in graph nodes creates storage overhead and versioning challenges. A clear strategy is needed for linking concepts to source material while keeping the graph focused on relationships.
