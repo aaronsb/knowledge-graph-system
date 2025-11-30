@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-001 (Multi-Tier Access)
 
+## Overview
+
+AI agents are powerful but not infallible—they can make workflow mistakes like creating duplicate concepts without searching first, or attempting operations they don't have permission for. The traditional solution is to hard-code strict rules: "You MUST search before creating." But this creates a rigid system that can't adapt when the agent has legitimate reasons to override the usual workflow.
+
+Think of it like a text adventure game where examining objects gives you hints about what to do next. Instead of locking doors and forcing a linear path, the game suggests "You might want to search for traps before opening that chest" but still lets you proceed if you're confident. The hint system guides behavior without removing player agency.
+
+This decision implements "conversational" tool hints in the MCP server that suggest best practices and prerequisites without enforcing them as hard rules. When an agent tries to create a concept, the system might respond: "Hey, you might want to search for similar concepts first to avoid duplicates. But if you're sure this is unique, go ahead." It's teaching through interaction rather than through prohibition.
+
+The beauty of this approach is that well-designed agents learn the right patterns quickly, while still having the flexibility to break the rules when they have good reason. The hints create a natural conversation flow with the knowledge graph rather than a bureaucratic checklist. Security still happens at the database level (see ADR-001), but workflow guidance happens through friendly suggestions that make the system easier to use correctly.
+
+---
+
 ## Context
 
 AI agents using MCP tools can make workflow mistakes (e.g., creating duplicate concepts without searching first, attempting operations they lack permissions for). Hard-coding workflow constraints into the MCP server creates inflexibility and prevents agents from making informed decisions when they have additional context.
