@@ -4,6 +4,18 @@
 
 **PROPOSED** - Implementation in progress
 
+## Overview
+
+Imagine you're about to process a large document through an AI system. You click submit, and suddenly hundreds of API calls start running—costing you money before you even realize what's happening. There's no way to see the estimated cost beforehand, no chance to review the settings, and no way to cancel once it starts. If you make a typo in the ontology name or select the wrong file, tough luck—you've already spent the money.
+
+This ADR introduces a two-phase job submission workflow that gives you control back. Instead of immediately processing documents, the system first analyzes them quickly (without calling expensive LLMs) to give you estimates: how many chunks will be created, what the token usage will be, and most importantly, what it will cost. Only after you review and approve these estimates does processing begin.
+
+Think of it like online shopping with a cart. You add items, review your cart with the total price, and only then click "purchase." This same pattern now applies to document ingestion—you queue documents, see the costs upfront, and approve when you're ready. Scripts that need automation can use an `--yes` flag to skip approval, while interactive users get transparency and control.
+
+The system also handles interrupted jobs gracefully through database-based checkpointing. If the API crashes mid-processing (deployment, restart, power outage), jobs automatically resume from where they left off instead of starting over or losing progress entirely.
+
+---
+
 ## Context
 
 ### Current State
