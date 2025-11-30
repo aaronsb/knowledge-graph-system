@@ -5,6 +5,14 @@
 **Deciders:** System Architects
 **Related:** ADR-022 (30-Type Taxonomy), ADR-025 (Dynamic Vocabulary), ADR-026 (Autonomous Curation)
 
+## Overview
+
+When your vocabulary grows dynamically, you need a strategy to prevent it from becoming unwieldy. Imagine your knowledge graph learns 200 different relationship types—by the time you're prompting the AI with a list of all these options, it gets confused and extraction quality plummets. You need a way to let vocabulary expand when needed but also keep it focused and manageable.
+
+This ADR introduces the concept of vocabulary as a self-regulating cache. When the AI encounters a new relationship type (like "OPTIMIZES" in machine learning documents), the system automatically adds it—no manual approval needed. But the system also tracks usage: types that get used frequently stay in the active vocabulary, while types that were created but never used again (perhaps "CALIBRATES_AGAINST" appeared once in a weird sentence) get automatically pruned. Think of it like your brain learning new words—you remember the ones you use regularly and forget the obscure terms you encountered once. The system maintains a "sweet spot" vocabulary size (30-90 types) through intelligent decisions about what to keep and what to remove, using metrics like usage frequency, semantic similarity to existing types, and how well-grounded the relationships are in evidence. This creates a vocabulary that's both adaptive and self-cleaning.
+
+---
+
 ## Context
 
 The current system uses a static 30-type relationship vocabulary defined in `src/api/constants.py`. While ADR-025 and ADR-026 propose dynamic vocabulary management with manual curator approval, this creates a bottleneck during high-volume ingestion.
