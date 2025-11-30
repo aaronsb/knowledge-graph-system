@@ -34,6 +34,7 @@ import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { EnrichBlock } from './EnrichBlock';
 import { VectorSearchBlock } from './VectorSearchBlock';
+import { SourceSearchBlock } from './SourceSearchBlock';
 import { EpistemicFilterBlock } from './EpistemicFilterBlock';
 import { BlockHelpPopup } from './BlockHelpPopup';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
@@ -42,7 +43,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDiagramStore';
 
-import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, SourceSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
 // Define nodeTypes outside component to prevent React Flow warning
 // See: https://reactflow.dev/error#002
@@ -61,6 +62,7 @@ const nodeTypes: NodeTypes = {
   limit: LimitBlock,
   // Smart blocks
   vectorSearch: VectorSearchBlock,
+  sourceSearch: SourceSearchBlock,
   epistemicFilter: EpistemicFilterBlock,
   enrich: EnrichBlock,
 };
@@ -203,6 +205,10 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
       case 'vectorSearch':
         params = { query: '', similarity: 0.7, limit: 10 } as VectorSearchBlockParams;
         label = 'Vector Search';
+        break;
+      case 'sourceSearch':
+        params = { query: '', similarity: 0.7, limit: 10, ontology: '' } as SourceSearchBlockParams;
+        label = 'Source Search';
         break;
       case 'neighborhood':
         params = { depth: 2, direction: 'both' } as NeighborhoodBlockParams;

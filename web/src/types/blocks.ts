@@ -27,6 +27,7 @@ export type BlockType =
   | 'limit'
   // Smart blocks (use API calls)
   | 'vectorSearch'  // Semantic search with embeddings
+  | 'sourceSearch'  // Source text search (ADR-068)
   | 'epistemicFilter' // Filter by epistemic status
   | 'enrich';
 
@@ -44,6 +45,13 @@ export interface VectorSearchBlockParams {
   query: string;
   similarity: number; // 0.0 - 1.0 threshold for semantic matching
   limit: number;
+}
+
+export interface SourceSearchBlockParams {
+  query: string;
+  similarity: number; // 0.0 - 1.0 threshold for semantic matching
+  limit: number;
+  ontology?: string; // Optional ontology filter
 }
 
 export interface SelectConceptBlockParams {
@@ -142,6 +150,7 @@ export interface BlockData {
     | EndBlockParams
     | SearchBlockParams
     | VectorSearchBlockParams
+    | SourceSearchBlockParams
     | SelectConceptBlockParams
     | NeighborhoodBlockParams
     | PathToBlockParams

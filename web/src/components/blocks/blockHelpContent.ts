@@ -75,6 +75,26 @@ export const blockHelpContent: Record<BlockType, BlockHelpContent> = {
     example: 'Search "payment" might find "transaction", "billing", "invoice"',
   },
 
+  sourceSearch: {
+    title: 'Source Search',
+    tag: 'SMART',
+    tagColor: 'amber',
+    description: 'Search source text passages directly using embeddings. Finds original document chunks where concepts were extracted from (ADR-068).',
+    parameters: [
+      { name: 'Query', description: 'Natural language phrase to search for in source text' },
+      { name: 'Ontology', description: 'Optional filter by ontology/document name' },
+      { name: 'Similarity', description: 'How closely passages must match (50-100%)' },
+      { name: 'Max Results', description: 'Maximum number of passages to return' },
+    ],
+    tips: [
+      'Searches actual source documents, not concept descriptions',
+      'Returns text chunks with character offsets for highlighting',
+      'Useful for finding original context and evidence',
+      'Shows which concepts were extracted from each passage',
+    ],
+    example: 'Search "authentication flow" finds source passages discussing auth, not just concepts',
+  },
+
   selectConcept: {
     title: 'Select Concept',
     tag: 'CYPHER',
