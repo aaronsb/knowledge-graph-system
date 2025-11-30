@@ -5,6 +5,18 @@
 **Authors:** System Architecture Team
 **Related:** ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)
 
+## Overview
+
+Here's a problem that sneaks up on you: your knowledge graph has 30 built-in relationship types (SUPPORTS, CONTRADICTS, IMPLIES, etc.), hundreds of concepts with embeddings, and a new vocabulary system that auto-generates edge types. But when you actually check the database, you discover that those 30 built-in relationship types have zero embeddings. None. They were never generated because there was no code path to create them at system initialization.
+
+This matters because ADR-044's grounding calculation depends on comparing relationship embeddings—measuring how semantically similar an edge type is to SUPPORTS versus CONTRADICTS. Without embeddings for the core vocabulary, grounding calculation simply can't work. You've built a car with no engine.
+
+The root cause is that embedding generation happens in three completely separate places: concepts get embeddings during ingestion, user-created relationship types get embeddings when they're added to the vocabulary, and built-in types... well, they were supposed to get embeddings somehow, but nobody implemented it. There's no cold start initialization, no unified system for regenerating embeddings when you switch from OpenAI to a local model, and no way to verify that all the pieces have embeddings before running grounding calculations.
+
+This ADR creates a unified EmbeddingWorker service that handles all embedding generation across the system—concepts, vocabulary types, and cold start initialization. Think of it like centralizing your payment processing: instead of having separate code for credit cards, PayPal, and cryptocurrency scattered across your app, you have one payment service with a consistent interface. The same principle applies here: all embeddings flow through one worker, making operations like "regenerate all embeddings with the new model" trivial instead of requiring coordinated updates to three different subsystems.
+
+---
+
 ## Context
 
 ### The ADR-044/045/046 Trio
