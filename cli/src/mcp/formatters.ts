@@ -1101,3 +1101,139 @@ export function formatSourceSearchResults(result: SourceSearchResponse): string 
 
   return output;
 }
+
+/**
+ * Format polarity axis analysis results as markdown (ADR-070)
+ *
+ * Optimized for MCP/AI consumption - shows axis definition, projections,
+ * statistics, and grounding correlation patterns.
+ */
+export function formatPolarityAxisResults(result: any): string {
+  let output = `# Polarity Axis Analysis\n\n`;
+
+  // Axis definition
+  output += `## Polarity Axis: ${result.axis.positive_pole.label} ↔ ${result.axis.negative_pole.label}\n\n`;
+
+  output += `**Positive Pole:** ${result.axis.positive_pole.label}\n`;
+  output += `  Grounding: ${formatGroundingStrength(result.axis.positive_pole.grounding)}\n`;
+  output += `  ID: ${result.axis.positive_pole.concept_id}\n\n`;
+
+  output += `**Negative Pole:** ${result.axis.negative_pole.label}\n`;
+  output += `  Grounding: ${formatGroundingStrength(result.axis.negative_pole.grounding)}\n`;
+  output += `  ID: ${result.axis.negative_pole.concept_id}\n\n`;
+
+  output += `**Axis Magnitude:** ${result.axis.magnitude.toFixed(4)}\n`;
+
+  const qualityLabel = result.axis.axis_quality === 'strong'
+    ? '✓ Strong (poles are semantically distinct)'
+    : '⚠ Weak (poles may be too similar)';
+  output += `**Axis Quality:** ${qualityLabel}\n\n`;
+
+  // Statistics
+  output += `## Statistics\n\n`;
+  output += `- **Total Concepts:** ${result.statistics.total_concepts}\n`;
+  output += `- **Position Range:** [${result.statistics.position_range[0].toFixed(3)}, ${result.statistics.position_range[1].toFixed(3)}]\n`;
+  output += `- **Mean Position:** ${result.statistics.mean_position.toFixed(3)} `;
+
+  if (result.statistics.mean_position > 0.2) {
+    output += '(skewed toward positive pole)\n';
+  } else if (result.statistics.mean_position < -0.2) {
+    output += '(skewed toward negative pole)\n';
+  } else {
+    output += '(balanced)\n';
+  }
+
+  output += `- **Mean Axis Distance:** ${result.statistics.mean_axis_distance.toFixed(3)} (orthogonal spread)\n\n`;
+
+  // Direction distribution
+  output += `**Direction Distribution:**\n`;
+  output += `- Positive (>0.3): ${result.statistics.direction_distribution.positive} concepts\n`;
+  output += `- Neutral (-0.3 to 0.3): ${result.statistics.direction_distribution.neutral} concepts\n`;
+  output += `- Negative (<-0.3): ${result.statistics.direction_distribution.negative} concepts\n\n`;
+
+  // Grounding correlation
+  output += `## Grounding Correlation\n\n`;
+  output += `**Pearson r:** ${result.grounding_correlation.pearson_r.toFixed(3)}\n`;
+  output += `**p-value:** ${result.grounding_correlation.p_value.toFixed(4)}\n`;
+  output += `**Interpretation:** ${result.grounding_correlation.interpretation}\n\n`;
+
+  // Add practical interpretation
+  const r = result.grounding_correlation.pearson_r;
+  if (Math.abs(r) < 0.1) {
+    output += `→ No correlation: Position and grounding are independent\n\n`;
+  } else if (r > 0.3) {
+    output += `→ Positive correlation: Concepts near positive pole tend to have higher grounding\n\n`;
+  } else if (r < -0.3) {
+    output += `→ Negative correlation: Concepts near negative pole tend to have higher grounding\n\n`;
+  } else {
+    output += `→ Weak correlation: Position and grounding are loosely related\n\n`;
+  }
+
+  // Projections (top concepts for each direction)
+  if (result.projections && result.projections.length > 0) {
+    output += `## Concept Projections (${result.projections.length} total)\n\n`;
+
+    // Sort by position
+    const sorted = [...result.projections].sort((a, b) => b.position - a.position);
+
+    // Show top 5 positive
+    const positive = sorted.filter(p => p.direction === 'positive').slice(0, 5);
+    if (positive.length > 0) {
+      output += `### Positive Direction (toward ${result.axis.positive_pole.label})\n\n`;
+      positive.forEach((proj, i) => {
+        output += `${i + 1}. **${proj.label}**\n`;
+        output += `   Position: ${proj.position.toFixed(3)} | `;
+        output += `Grounding: ${formatGroundingStrength(proj.grounding)} | `;
+        output += `Axis distance: ${proj.axis_distance.toFixed(4)}\n`;
+        output += `   ID: ${proj.concept_id}\n`;
+      });
+      output += '\n';
+    }
+
+    // Show neutral concepts (if any)
+    const neutral = sorted.filter(p => p.direction === 'neutral').slice(0, 3);
+    if (neutral.length > 0) {
+      output += `### Neutral (balanced between poles)\n\n`;
+      neutral.forEach((proj, i) => {
+        output += `${i + 1}. **${proj.label}**\n`;
+        output += `   Position: ${proj.position.toFixed(3)} | `;
+        output += `Grounding: ${formatGroundingStrength(proj.grounding)} | `;
+        output += `Axis distance: ${proj.axis_distance.toFixed(4)}\n`;
+        output += `   ID: ${proj.concept_id}\n`;
+      });
+      output += '\n';
+    }
+
+    // Show top 5 negative
+    const negative = sorted.filter(p => p.direction === 'negative').slice(-5).reverse();
+    if (negative.length > 0) {
+      output += `### Negative Direction (toward ${result.axis.negative_pole.label})\n\n`;
+      negative.forEach((proj, i) => {
+        output += `${i + 1}. **${proj.label}**\n`;
+        output += `   Position: ${proj.position.toFixed(3)} | `;
+        output += `Grounding: ${formatGroundingStrength(proj.grounding)} | `;
+        output += `Axis distance: ${proj.axis_distance.toFixed(4)}\n`;
+        output += `   ID: ${proj.concept_id}\n`;
+      });
+      output += '\n';
+    }
+  }
+
+  output += `## How to Use This Analysis\n\n`;
+  output += `**Understanding Positions:**\n`;
+  output += `- Position closer to +1.0 → More aligned with "${result.axis.positive_pole.label}"\n`;
+  output += `- Position closer to -1.0 → More aligned with "${result.axis.negative_pole.label}"\n`;
+  output += `- Position near 0.0 → Balanced or orthogonal to this dimension\n\n`;
+
+  output += `**Axis Distance (orthogonality):**\n`;
+  output += `- Low distance → Concept lies close to the axis (well-explained by this dimension)\n`;
+  output += `- High distance → Concept is orthogonal (other dimensions more relevant)\n\n`;
+
+  output += `**Next Steps:**\n`;
+  output += `- Use concept IDs with \`concept\` tool (action: "details") to explore individual concepts\n`;
+  output += `- Use \`concept\` tool (action: "connect") to find paths between concepts on the axis\n`;
+  output += `- Try different pole pairs to explore other semantic dimensions\n`;
+  output += `- Compare grounding patterns across positions to identify reliability trends\n`;
+
+  return output;
+}

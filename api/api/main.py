@@ -152,6 +152,7 @@ async def startup_event():
     queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
     queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
     queue.register_worker("source_embedding", run_source_embedding_worker)  # ADR-068 Phase 1
+    # Note: polarity_axis_analysis uses direct query pattern (ADR-070), not job queue
     logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)

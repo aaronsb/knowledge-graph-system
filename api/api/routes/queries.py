@@ -41,7 +41,10 @@ from ..models.queries import (
     SourceSearchResponse,
     SourceSearchResult,
     SourceConcept,
-    SourceChunk
+    SourceChunk,
+    # ADR-070: Polarity axis models
+    PolarityAxisRequest,
+    PolarityAxisResponse
 )
 from ..services.query_service import QueryService
 from ..services.diversity_analyzer import DiversityAnalyzer
@@ -1563,5 +1566,97 @@ async def execute_cypher_query(
     except Exception as e:
         logger.error(f"Failed to execute Cypher query: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Query execution failed: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/polarity-axis", response_model=PolarityAxisResponse)
+async def analyze_polarity_axis_endpoint(
+    current_user: CurrentUser,
+    request: PolarityAxisRequest
+):
+    """
+    Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+
+    **Authentication:** Requires valid OAuth token
+
+    Projects concepts onto a semantic axis formed by two opposing poles (e.g., Modern ↔ Traditional).
+    Returns concept positions, directions, and grounding correlation analysis.
+
+    **Use Cases:**
+    - Explore conceptual spectrums (Centralized ↔ Decentralized)
+    - Find middle-ground concepts between opposites
+    - Analyze value-laden vs descriptive dimensions (grounding correlation)
+    - Discover implicit semantic dimensions
+
+    **Parameters:**
+    - **positive_pole_id**: Concept ID for "positive" direction (e.g., "Modern")
+    - **negative_pole_id**: Concept ID for "negative" direction (e.g., "Traditional")
+    - **candidate_ids**: Optional list of concept IDs to project (default: auto-discover)
+    - **auto_discover**: Auto-find related concepts via graph traversal (default: true)
+    - **max_candidates**: Max concepts for auto-discovery (default: 20)
+    - **max_hops**: Max graph hops for auto-discovery (default: 2)
+
+    **Returns:**
+    - **axis**: Axis metadata (poles, magnitude, quality)
+    - **projections**: Concepts projected with positions (-1 to +1)
+    - **statistics**: Distribution summary (mean, range, direction counts)
+    - **grounding_correlation**: Correlation between position and grounding strength
+
+    **Position Interpretation:**
+    - **+1.0**: Aligned with positive pole
+    - **0.0**: Midpoint between poles
+    - **-1.0**: Aligned with negative pole
+
+    **Direction Classification:**
+    - **positive**: position > 0.3
+    - **neutral**: -0.3 ≤ position ≤ 0.3
+    - **negative**: position < -0.3
+
+    **Grounding Correlation:**
+    - **Strong positive (r > 0.7)**: Positive pole concepts better grounded
+    - **Weak (|r| < 0.3)**: Descriptive axis (no value judgment)
+    - **Strong negative (r < -0.7)**: Negative pole concepts better grounded
+
+    **Processing Time:** ~2-3 seconds (direct query, not queued)
+
+    **Example:**
+    ```json
+    {
+        "positive_pole_id": "sha256:abc123...",
+        "negative_pole_id": "sha256:def456...",
+        "auto_discover": true,
+        "max_candidates": 20,
+        "max_hops": 2
+    }
+    ```
+    """
+    client = get_age_client()
+
+    try:
+        logger.info(f"Polarity axis analysis: {request.positive_pole_id} ↔ {request.negative_pole_id}")
+
+        # Import analysis function
+        from api.api.lib.polarity_axis import analyze_polarity_axis
+
+        # Run analysis (direct query - no job queue)
+        result = analyze_polarity_axis(
+            positive_pole_id=request.positive_pole_id,
+            negative_pole_id=request.negative_pole_id,
+            age_client=client,
+            candidate_ids=request.candidate_ids,
+            auto_discover=request.auto_discover,
+            max_candidates=request.max_candidates,
+            max_hops=request.max_hops
+        )
+
+        return PolarityAxisResponse(**result)
+
+    except ValueError as e:
+        logger.error(f"Invalid polarity axis request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Polarity axis analysis failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
     finally:
         client.close()

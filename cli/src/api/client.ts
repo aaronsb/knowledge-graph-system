@@ -469,6 +469,14 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Analyze polarity axis between two concept poles (ADR-070)
+   */
+  async analyzePolarityAxis(request: any): Promise<any> {
+    const response = await this.client.post('/query/polarity-axis', request);
+    return response.data;
+  }
+
+  /**
    * Get image for a source node (ADR-057)
    * @param sourceId - Source ID from concept instance
    * @returns Image as Buffer (binary data)

@@ -38,6 +38,7 @@ import {
   formatEpistemicStatusDetails,
   formatEpistemicStatusMeasurement,
   formatSourceSearchResults,
+  formatPolarityAxisResults,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -589,6 +590,59 @@ Use for filtering relationships by epistemic reliability, identifying contested 
             },
           },
           required: ['action'],
+        },
+      },
+      {
+        name: 'analyze_polarity_axis',
+        description: `Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+
+Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
+- Axis quality and magnitude (semantic distinctness)
+- Concept positions along the axis (-1 to +1)
+- Direction distribution (positive/neutral/negative)
+- Grounding correlation patterns
+- Statistical analysis of projections
+
+PERFORMANCE: Direct query pattern, ~2-3 seconds execution time.
+
+Use Cases:
+- Explore conceptual spectrums and gradients
+- Identify position-grounding correlation patterns
+- Discover concepts balanced between opposing ideas
+- Map semantic dimensions in the knowledge graph`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            positive_pole_id: {
+              type: 'string',
+              description: 'Concept ID for positive pole (e.g., ID for "Modern")',
+            },
+            negative_pole_id: {
+              type: 'string',
+              description: 'Concept ID for negative pole (e.g., ID for "Traditional")',
+            },
+            candidate_ids: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific concept IDs to project onto axis (optional)',
+            },
+            auto_discover: {
+              type: 'boolean',
+              description: 'Auto-discover related concepts if candidate_ids not provided (default: true)',
+              default: true,
+            },
+            max_candidates: {
+              type: 'number',
+              description: 'Maximum candidates for auto-discovery (default: 20, max: 100)',
+              default: 20,
+            },
+            max_hops: {
+              type: 'number',
+              description: 'Maximum graph hops for auto-discovery (1-3, default: 2)',
+              default: 2,
+            },
+          },
+          required: ['positive_pole_id', 'negative_pole_id'],
         },
       },
     ],
@@ -1395,6 +1449,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           default:
             throw new Error(`Unknown epistemic_status action: ${action}`);
         }
+      }
+
+      case 'analyze_polarity_axis': {
+        const result = await client.analyzePolarityAxis({
+          positive_pole_id: toolArgs.positive_pole_id as string,
+          negative_pole_id: toolArgs.negative_pole_id as string,
+          candidate_ids: toolArgs.candidate_ids as string[] | undefined,
+          auto_discover: toolArgs.auto_discover !== false,
+          max_candidates: (toolArgs.max_candidates as number) || 20,
+          max_hops: (toolArgs.max_hops as number) || 2,
+        });
+
+        const formattedText = formatPolarityAxisResults(result);
+
+        return {
+          content: [{ type: 'text', text: formattedText }],
+        };
       }
 
       default:
