@@ -5,6 +5,14 @@
 **Deciders:** System Architects
 **Related:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-004 (Pure Graph Design)
 
+## Overview
+
+Imagine you're reading a medieval text about alchemy, and the author describes how one element "transmutes" another. Your knowledge graph system sees this word but only knows modern relationship types like "TRANSFORMS" or "CONVERTS". Should it reject this rich, domain-specific term and force everything into your predefined boxes? Or should it learn and adapt?
+
+This ADR makes a fundamental choice: let the AI discover new relationship types as it reads, rather than limiting it to a fixed list. Think of it like a child learning language—starting with basic words but naturally expanding their vocabulary as they encounter new concepts. When the AI extracts "transmutes" from alchemical texts or "prophesies" from religious documents, the system automatically creates these new relationship types, stores them in a vocabulary table, and tracks how often they're used. This creates a living vocabulary that grows organically with your knowledge base, while still maintaining quality through normalization (preventing "transmutes", "TRANSMUTES", and "transmutation" from becoming separate types) and usage tracking (so you can see which terms are actually useful versus one-off oddities). The vocabulary evolves to match the domains you're studying, rather than forcing every domain into the same rigid framework.
+
+---
+
 ## Context
 
 During ingestion, the LLM extraction process produces relationship types that don't match our fixed vocabulary of 30 approved types. These relationships are currently skipped with warnings, resulting in lost semantic connections.
