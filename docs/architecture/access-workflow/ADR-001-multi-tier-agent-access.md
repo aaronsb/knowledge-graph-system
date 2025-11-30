@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-004 (Pure Graph Design)
 
+## Overview
+
+When multiple AI agents interact with a knowledge graph, you face a classic problem: how do you let helpful agents add knowledge while preventing damage from mistakes or malicious behavior? It's like running a library where some visitors can only browse books, others can suggest new acquisitions, and only trusted librarians can reorganize the shelves or remove duplicates.
+
+The naive approach would be to trust each agent to declare its own permission level—"I'm a curator, let me delete things!" But that's like putting a suggestion box at the library entrance and blindly following every request. A compromised or poorly designed agent could claim administrator privileges and wreak havoc.
+
+This decision establishes a multi-tier access control system where security happens at the database level, not the application level. Think of it as issuing library cards with different colors—the database checks your card before letting you into restricted sections, regardless of what you claim you're allowed to do. The application layer (our MCP server) just routes you to the right entrance; the real bouncer is the database itself.
+
+The four tiers create a natural progression from casual readers to trusted curators, with each level unlocking new capabilities while preventing dangerous operations. This way, an AI agent helping you explore concepts can't accidentally delete your entire knowledge base, and even if someone hacks the application server, they can't escalate their database privileges.
+
+---
+
 ## Context
 
 The knowledge graph system needs to support multiple AI agents and human users interacting simultaneously. Different types of agents and users require different permission levels - some should only read data, while others need to contribute new concepts or perform administrative maintenance. Without proper access control, the system risks data corruption from unrestricted write access.
