@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-034 (Graph Visualization Architecture), ADR-035 (Explorer Methods), ADR-044 (Probabilistic Truth Convergence), ADR-051 (Graph Provenance Tracking), ADR-063 (Semantic Diversity)
 
+## Overview
+
+Force-directed graphs are excellent for showing connectivity—which concepts link to which—but they fail to communicate deeper qualities of knowledge. Our platform tracks grounding strength (is this reliable or contradicted?), semantic diversity (is this authentic or circular?), and provenance (where did this come from?), yet traditional node-edge visualizations hide these dimensions.
+
+Imagine trying to assess transformation readiness based on a tangled web of nodes. You can see connections, but you can't see which knowledge areas are well-grounded versus contested, which sources contributed most to key concepts, or how understanding evolved over time. Critical decision-making information remains invisible in the standard views.
+
+This ADR adds specialized visualizations that surface these unique capabilities: confidence heatmaps showing knowledge quality across domains, provenance flows tracing ideas from documents to concepts, temporal timelines revealing how grounding evolved, and semantic diversity sunbursts exposing authenticity. Each visualization type matches a specific analysis task, transforming the hidden dimensions of our knowledge graph into actionable insights.
+
+---
+
 ## Context
 
 The current web visualization (ADR-034, ADR-035) provides 2D and 3D force-directed graph explorers that excel at showing connectivity patterns and conceptual neighborhoods. However, the platform has unique capabilities that are not leveraged by traditional node-edge visualizations:
