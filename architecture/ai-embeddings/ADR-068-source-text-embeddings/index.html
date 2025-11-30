@@ -4073,10 +4073,60 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-5-advanced-features-future" class="md-nav__link">
+  <a href="#phase-5-user-interface-integration-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 5: Advanced Features (Future)
+        Phase 5: User Interface Integration (✅ COMPLETE)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: User Interface Integration (✅ COMPLETE)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-cli-source-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1: CLI Source Search ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-mcp-server-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2: MCP Server Integration ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-web-ui-block-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3: Web UI Block Builder ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-advanced-features-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Advanced Features (Future)
       
     </span>
   </a>
@@ -7323,10 +7373,60 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-5-advanced-features-future" class="md-nav__link">
+  <a href="#phase-5-user-interface-integration-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 5: Advanced Features (Future)
+        Phase 5: User Interface Integration (✅ COMPLETE)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: User Interface Integration (✅ COMPLETE)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-cli-source-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1: CLI Source Search ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-mcp-server-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2: MCP Server Integration ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-web-ui-block-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3: Web UI Block Builder ✅
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-advanced-features-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Advanced Features (Future)
       
     </span>
   </a>
@@ -7708,9 +7808,9 @@
 
 
 <h1 id="adr-068-source-text-embeddings-for-grounding-truth-retrieval">ADR-068: Source Text Embeddings for Grounding Truth Retrieval</h1>
-<p><strong>Status:</strong> Accepted - Partially Implemented (Phase 1-3 complete, Phase 4 pending)
+<p><strong>Status:</strong> Accepted - Partially Implemented (Phase 1-3, 5 complete, Phase 4 pending)
 <strong>Date:</strong> 2025-11-27
-<strong>Updated:</strong> 2025-11-28 (Phase 3 complete: Source search endpoint + CLI)
+<strong>Updated:</strong> 2025-11-29 (Phase 5 complete: Source search interfaces - CLI, MCP, Web UI)
 <strong>Deciders:</strong> System Architect
 <strong>Tags:</strong> #embeddings #source-retrieval #async-processing #lcm</p>
 <h2 id="overview">Overview</h2>
@@ -8330,7 +8430,56 @@
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="c1"># Batch processing</span>
 <a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">1000</span><span class="w"> </span>--offset<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<h3 id="phase-5-advanced-features-future">Phase 5: Advanced Features (Future)</h3>
+<h3 id="phase-5-user-interface-integration-complete">Phase 5: User Interface Integration (✅ COMPLETE)</h3>
+<p><strong>Implementation Date:</strong> 2025-11-29
+<strong>Branch:</strong> <code>feature/adr-068-phase5-interfaces</code></p>
+<p><strong>Goal:</strong> Provide source text search access across all user interaction methods.</p>
+<h4 id="51-cli-source-search">5.1: CLI Source Search ✅</h4>
+<ul>
+<li>[x] <code>kg search sources</code> command with full parameter support</li>
+<li>[x] Query, limit, similarity, ontology filtering</li>
+<li>[x] Formatted output with source passages, concepts, and similarity scores</li>
+<li>[x] Integrated with existing search command structure</li>
+</ul>
+<h4 id="52-mcp-server-integration">5.2: MCP Server Integration ✅</h4>
+<ul>
+<li>[x] Extended <code>search</code> tool with <code>type</code> parameter ('concepts' | 'sources')</li>
+<li>[x] Source search results formatter (<code>formatSourceSearchResults</code>)</li>
+<li>[x] Automatic routing based on search type</li>
+<li>[x] Rich text output for AI consumption (passages, concepts, offsets)</li>
+</ul>
+<h4 id="53-web-ui-block-builder">5.3: Web UI Block Builder ✅</h4>
+<ul>
+<li>[x] SourceSearchBlock component (Smart Block category)</li>
+<li>[x] Query input, ontology filter, similarity slider, limit controls</li>
+<li>[x] Execution logic extracting concepts from source passages</li>
+<li>[x] Block compiler integration with comment annotations</li>
+<li>[x] Help content and palette integration</li>
+<li>[x] Amber color scheme (consistent with Smart Blocks)</li>
+</ul>
+<p><strong>Files Modified:</strong>
+- <code>cli/src/mcp/formatters.ts</code> - Added <code>formatSourceSearchResults</code>
+- <code>cli/src/mcp-server.ts</code> - Extended search tool with type parameter
+- <code>web/src/api/client.ts</code> - Added <code>searchSources</code> method
+- <code>web/src/components/blocks/SourceSearchBlock.tsx</code> - New component (142 lines)
+- <code>web/src/components/blocks/BlockBuilder.tsx</code> - Execution logic
+- <code>web/src/components/blocks/BlockPalette.tsx</code> - Added to Smart Blocks
+- <code>web/src/components/blocks/blockHelpContent.ts</code> - Help documentation
+- <code>web/src/types/blocks.ts</code> - Type definitions
+- <code>web/src/lib/blockCompiler.ts</code> - Block compilation logic</p>
+<p><strong>Testing:</strong>
+- ✅ CLI: <code>kg search sources "data"</code> returns 5 results
+- ✅ CLI: <code>kg search query "towers"</code> returns 2 concepts
+- ✅ Web UI: Block renders correctly with all controls
+- ✅ API: <code>/query/sources/search</code> endpoint working
+- ⏳ MCP: Requires restart to test (in progress)</p>
+<p><strong>Commits:</strong>
+1. <code>feat(mcp): add source search tool with type parameter (ADR-068 Phase 5)</code> - 0744e837
+2. <code>feat(web): add SourceSearchBlock for source text search (ADR-068 Phase 5)</code> - 7dfe0b8b
+3. <code>fix(web): add source search execution logic to BlockBuilder</code> - 345304a0
+4. <code>fix(web): add sourceSearch case to block compiler</code> - 5b479746
+5. <code>fix(web): correct source search endpoint path</code> - 34ee7ce4</p>
+<h3 id="phase-6-advanced-features-future">Phase 6: Advanced Features (Future)</h3>
 <ul>
 <li>[ ] Hybrid search (concept + source combined)</li>
 <li>[ ] Semantic chunking strategy</li>
