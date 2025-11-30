@@ -5,6 +5,18 @@
 **Supersedes:** Partial aspects of ADR-016 (schema organization)
 **Related:** ADR-016 (Apache AGE Migration), ADR-014 (Job Approval Workflow)
 
+## Overview
+
+Picture this: you run a command to list recent jobs, and you wait... and wait... for 3 to 6 seconds while the database is locked by ongoing operations. Meanwhile, your expensive graph data (created by AI at real dollar cost) sits in the same database namespace as temporary job status records that get deleted after 30 days. And your sensitive user credentials share a schema with operational metrics that change hundreds of times per minute.
+
+This is the problem of mixing data with fundamentally different lifecycles and access patterns in a single undifferentiated bucket. When we migrated to PostgreSQL with Apache AGE (ADR-016), we gained "relational SQL for free" alongside our graph capabilities. But we didn't take full advantage of it—we dumped everything into the default `public` schema, creating a confusing mess where it's hard to tell what data is critical versus ephemeral, what needs strict security versus what's public-readable, and what should be backed up daily versus archived monthly.
+
+The solution is schema separation—not separate databases (which would lose our atomic transaction capabilities), but logical namespaces within our single PostgreSQL instance. Think of it like organizing files into folders: `ag_catalog` for the precious graph data created by expensive AI inference, `kg_api` for operational state like job queues and rate limits, `kg_auth` for highly sensitive user credentials and API keys, and `kg_logs` for append-only audit trails and metrics.
+
+Each schema gets its own access controls, backup policies, and retention rules. The graph data never auto-deletes and gets full daily backups. Job records clean up after 30 days and back up incrementally. Audit logs partition by month and archive to cold storage. Security tables encrypt at rest and allow only authentication middleware to read them. It's the same PostgreSQL instance, the same atomic transactions, but now with clear boundaries that make the system easier to secure, maintain, and understand.
+
+---
+
 ## Context
 
 ADR-016 established PostgreSQL + Apache AGE as our unified database, giving us "relational SQL for free" alongside graph capabilities. However, the current implementation mixes all concerns into a single schema namespace (`public`), which creates several challenges:
