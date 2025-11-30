@@ -6,6 +6,18 @@
 **Related ADRs:**
 - [ADR-060: API Endpoint Security Architecture](./ADR-060-endpoint-security-architecture.md) - Endpoint-level security implementation
 
+## Overview
+
+Think about permissions on your computer. You might have "admin" access, which sounds powerful - but what does that actually mean? Can you delete system files? Install software? Read other users' private files? The answer depends on what operations the system supports. As software evolves and adds new features, hardcoding permission rules becomes a nightmare.
+
+This is the challenge we face as the knowledge graph system grows. We started with four simple roles (read-only, contributor, curator, admin) and hardcoded permissions like "curators can approve vocabulary." That works fine initially, but what happens when we add AI-generated ontologies? Collaboration workspaces? Tool execution? Do we keep adding if-statements for every new feature? That approach doesn't scale and creates a tangled mess of permission logic.
+
+We need a system where permissions adapt to new resource types without changing code. When someone builds a "collaboration graph" feature, they should be able to register it as a new resource type and define what actions are possible (read, write, invite, moderate). Administrators should be able to create custom roles ("collaboration moderator") and grant fine-grained permissions ("can moderate collaboration graphs in the engineering workspace"). All without touching the authentication code.
+
+This ADR describes dynamic RBAC (Role-Based Access Control) - a three-tier system where resources register themselves, roles can be created on the fly, and permissions can be scoped to specific instances. It's the difference between hardcoded permission rules and a flexible permission engine that grows with the platform.
+
+---
+
 ## Context
 
 The current authentication system (ADR-027) has hardcoded roles (`read_only`, `contributor`, `curator`, `admin`) with static permissions seeded in `kg_auth.role_permissions`. As the platform evolves to support:
