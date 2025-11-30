@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Pattern Source:** Anthropic's `@modelcontextprotocol` packages
 
+## Overview
+
+Building software interfaces often leads to duplication. You create a command-line tool, then realize you need an MCP server for Claude integration, and suddenly you're maintaining two codebases with the same API calls, the same type definitions, and the same bug fixes needed in both places.
+
+This ADR takes a different approach, inspired by how Anthropic builds their tools: one TypeScript codebase that can run in multiple modes. When you run `kg search`, you get a CLI. When Claude Desktop starts the MCP server, it gets the same underlying client code but wrapped in MCP protocol. Same API logic, same types, same error handling—just different interfaces.
+
+The payoff is simple: change the API client once, both interfaces work. Add a new feature, it's available everywhere. Fix a bug, it's fixed everywhere. Instead of maintaining separate CLI and MCP codebases, we maintain one unified client that adapts its interface based on how it's launched.
+
+---
+
 ## Context
 
 The system needs multiple client interfaces:
