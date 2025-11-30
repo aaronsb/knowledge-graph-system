@@ -3,9 +3,19 @@
 **Date:** 2025-10-31
 **Related:** ADR-051 (Graph-Based Document Deduplication)
 
+## Overview
+
+ADR-051a introduced a fundamental architectural change: moving document deduplication from the ephemeral jobs table to permanent DocumentMeta nodes in the graph. But that decision requires actual API and database changes to implement. This document specifies exactly what needs to change and how to do it while maintaining backward compatibility with existing clients.
+
+The core change is adding optional source metadata fields to the ingestion endpoints. When you upload a file through the CLI, the client can now send extra information like the full file path, hostname where you're running, and what type of source it is (file upload, piped stdin, API call, etc.). This metadata gets stored in both the jobs table and the DocumentMeta node, creating a complete audit trail of where documents came from.
+
+The beauty is that all these new parameters are optional—existing API clients continue to work without any modifications. The kg CLI gets smarter by sending this metadata, but direct API users can keep doing what they're doing. The deduplication logic changes to check the graph first (persistent state) and only fall back to the jobs table for in-progress jobs, so you can safely delete old job records without breaking deduplication.
+
+New API endpoints let you query which documents are in an ontology, get details about a specific document, and even delete individual documents with all their sources. The graph becomes queryable in new ways: "show me all documents ingested via MCP," "which documents came from this machine," or "delete everything ingested on this date." The system gains transparency while maintaining complete backward compatibility.
+
 ---
 
-## Overview
+## Current API (Before ADR-051)
 
 This document specifies the exact API changes needed to implement ADR-051. These changes are **backward compatible** - existing clients continue to work without modification.
 

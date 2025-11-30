@@ -5,6 +5,16 @@
 **Deciders:** System Architecture
 **Related:** ADR-012 (API Server), ADR-013 (Unified Client)
 
+## Overview
+
+Think about how you back up photos from your phone. The photos live on your device, not on some cloud server. You initiate the backup, your phone sends the files where you want them, and you can restore them whenever needed. Now imagine if instead, all your photos were "backed up" to a folder on Apple's servers that you couldn't even access - that would be pretty useless, right?
+
+That's exactly the problem we had with our initial backup system. When you asked for a backup of your knowledge graph, the system would create it... on the server. You couldn't download it, move it, or keep it somewhere safe. Even worse, if you wanted to restore from a backup, you had to tell the server the filename of a file sitting on the server's disk. This violated a basic principle: the person who owns the data should control where it lives.
+
+The solution streams backups directly to your computer and lets you upload them back when needed. It's like having a proper export/import feature - you get a file you can save anywhere, email to a colleague, or store in your own cloud storage. The server never keeps permanent copies, treating backups as ephemeral streams of data moving between your computer and the database.
+
+---
+
 ## Context
 
 The current backup/restore implementation has architectural issues that violate client-server separation:

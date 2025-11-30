@@ -5,6 +5,18 @@
 **Decision Makers:** System Architecture
 **Consulted:** Ingestion Pipeline, LLM Integration
 
+## Overview
+
+When you ingest technical documentation into a knowledge graph, you expect it to extract concepts from the text. But what happens when that documentation contains code blocks? Imagine ingesting a guide about database queries that includes actual Cypher code examples. The parser chokes because it sees database keywords like `MATCH` and `WHERE` in the middle of a text string, causing errors like "invalid escape sequence." During testing with project documentation, about 15% of chunks failed this way—silently losing valuable content.
+
+The problem is deeper than just parsing errors. Markdown documents often contain structured content that represents its own conceptual models: code blocks, diagrams, JSON configurations, even graphs describing graphs. When you try to store literal code syntax in a knowledge graph, you're mixing metaphors—the graph is meant to store concepts and relationships, not source code.
+
+This ADR introduces a preprocessing pipeline that translates structured content into plain prose before concept extraction. Instead of storing `MATCH (c:Concept) RETURN c.label` literally, the system uses an AI to explain it: "This Cypher query finds a concept node and returns its label property." The knowledge graph then extracts semantic concepts from that explanation, while the original files remain unchanged as the source of truth for literal content.
+
+This approach solves the parsing problem and aligns with the graph's purpose: understanding concepts, not archiving code. When you search for "Cypher pattern matching," you'll find the concept even though the graph doesn't contain the literal syntax—that stays in your original documentation where it belongs.
+
+---
+
 ## Context
 
 ### The Problem: Parser-Breaking Syntax

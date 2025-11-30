@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Context:** Phase 1 Implementation
 
+## Overview
+
+Imagine you're building a knowledge extraction system where users upload documents and AI processes them into a graph. At first, you might have each user's tool connect directly to the database. But what happens when someone accidentally uploads the same document twice? They'd pay for the expensive AI processing all over again. What if the processing takes 10 minutes? The user's tool would just sit there, frozen, waiting.
+
+We needed something smarter sitting between users and the database - a middleman that could catch duplicates before wasting money, handle long-running work in the background, and keep track of what's happening. Think of it like a post office: you drop off your package (document), get a tracking number, and go about your day. The post office handles the actual delivery work and you can check the status anytime.
+
+This decision introduces FastAPI as that intelligent middleman. It accepts document uploads, checks if we've seen them before, assigns them to background workers, and provides a way to track progress. The best part? All the complex logic for managing work lives in one place, making it much easier to add features like rate limiting or user accounts later.
+
+---
+
 ## Context
 
 The original architecture had MCP servers making direct database calls to Neo4j. This approach has scaling limitations:

@@ -10,6 +10,16 @@
 
 ---
 
+## Overview
+
+The web application started as a graph visualization tool—click around, explore concepts, view relationships. But as the platform evolved, we added job management, OAuth configuration, ingestion workflows, and published query endpoints. These features live in the operator container and CLI, forcing users to jump between interfaces for routine tasks.
+
+The disconnect creates friction. You visualize a concept in the web app, decide to ingest more documents, drop to terminal, run CLI commands, return to browser, refresh to see results. Want to manage jobs? Back to terminal. Need to configure OAuth? Operator container. The web app shows you the knowledge but doesn't let you create or manage it.
+
+This ADR restructures the web application from a single-purpose visualization tool into a multi-function workstation. The left sidebar transforms from "pick a visualization type" to "pick a workflow category": Explorers for visualization, Ingest for uploading content, Jobs for queue management, Admin for platform configuration. Same plugin architecture as explorers, now extended to entire functional areas. The result: one interface for exploring, creating, and managing knowledge graphs.
+
+---
+
 ## Context
 
 ### Current State: Visualization-Centric Application

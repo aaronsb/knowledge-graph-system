@@ -5,6 +5,18 @@
 **Authors:** System Architecture Team
 **Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management), **ADR-058 (Polarity Axis Triangulation - IMPLEMENTATION)**
 
+## Overview
+
+Imagine you're building a knowledge graph from technical documentation, and you encounter two contradictory statements: "The system uses Neo4j" (found in old architecture docs) and "The system uses Apache AGE" (found in the current codebase). Both have evidence. Both seem authoritative. Which one is true? More importantly, how should the system decide which truth to present when someone asks about the database?
+
+This is the fundamental challenge of any knowledge system that ingests information from multiple sources over time: reality changes, documentation gets outdated, and contradictions accumulate. Traditional databases solve this with timestamps (newest wins) or manual curation (humans decide). But what if you could let the evidence itself determine which concepts are well-grounded and which are contradicted?
+
+Think of it like scientific consensus. A hypothesis gains strength when multiple experiments support it and loses credibility when experiments contradict it. No single experiment is "the truth"—instead, truth emerges from the weight of evidence. This ADR brings that same principle to the knowledge graph: each concept gets a grounding strength calculated from how strongly it's supported versus contradicted by other concepts.
+
+The key innovation is making this calculation dynamic and semantic. When you ask about a concept, the system looks at its incoming relationships (SUPPORTS, CONTRADICTS, ENABLES, etc.), measures how semantically similar each relationship is to "support" versus "contradict" using embedding vectors, and computes a weighted score. High positive grounding? The concept is well-validated. Negative grounding? It's been contradicted by more recent or stronger evidence. Near zero? The concept is neutral or contested. This way, "System uses Neo4j" would score negatively (contradicted), while "System uses Apache AGE" would score positively (supported), and users automatically see the more grounded truth.
+
+---
+
 ## Context
 
 ### The ADR-044/045/046 Trio

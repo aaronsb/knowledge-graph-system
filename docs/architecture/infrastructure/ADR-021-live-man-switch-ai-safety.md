@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-020 (Admin Module Architecture)
 
+## Overview
+
+We're entering an era where AI agents can execute terminal commands on our behalf. Ask an agent to "clean up the database" and it might helpfully run a reset command that deletes everything. The agent isn't malicious - it's trying to be helpful - but the consequences are the same. Traditional security measures like passwords don't help because the agent already has access to those credentials. It's a new kind of problem: not adversarial attacks, but well-intentioned automation gone wrong.
+
+The challenge is creating a gate that's trivial for humans but expensive for AI to automate. Think about those child safety caps on medicine bottles - they're not impossible to open, they just require sustained physical coordination that young children haven't developed. Similarly, we needed something that requires physical presence and sustained action, something that's harder to automate than a simple API call.
+
+The solution asks humans to hold down the Enter key for 3 seconds while watching a progress bar fill. For a human sitting at the keyboard, this takes 5 seconds total. For an AI agent, automating this requires spawning processes, researching keyboard injection libraries, coordinating timing - complex work that takes minutes to hours. It's not a perfect lock, it's a time barrier. Like a bank vault that can be broken into but takes so long that security arrives first, this gives humans time to notice unusual activity and intervene before irreversible damage occurs.
+
+---
+
 ## Context
 
 As AI agents become more autonomous and capable, they increasingly interact with systems through CLIs and APIs. While this enables powerful automation, it introduces a new category of risk: **well-intentioned but dangerous AI actions**.

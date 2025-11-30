@@ -8,6 +8,14 @@
 
 This document describes an emergent pattern in the vocabulary management system: **optimistic expansion followed by selective consolidation**. This two-phase cycle resembles biological memory consolidation (colloquially: "dreaming"), where vocabulary is acquired freely during learning, then refined during a consolidation phase. This observation grounds a fundamental principle: **you must possess vocabulary (words) to express knowledge (concepts)**, and general learning methods (expand → consolidate) outperform restrictive upfront prediction.
 
+## Overview
+
+Picture your knowledge graph ingesting 100 documents and discovering 245 relationship types—but when you check later, only 197 are actually used in connections between concepts. Did the system waste effort creating 48 unused types? Or was it exploring the semantic space to discover what vocabulary would actually be useful?
+
+This ADR recognizes an emergent two-phase pattern that resembles how humans learn: during "waking" (ingestion), the system freely creates vocabulary whenever the AI suggests a new relationship type, without trying to predict upfront whether it'll be useful. Then during "consolidation" (periodic cleanup), the system reviews what was learned and keeps what's connected while pruning what never found a home. This pattern is grounded in a fundamental principle from learning theory: you must have words before you can express ideas. Trying to predict which words will be useful before seeing the text is harder than just learning broadly and consolidating afterward. The analogy to biological memory is pedagogical—this isn't inspired by neuroscience, but the parallel helps understand why optimistic expansion (low cost: just metadata) followed by selective pruning (based on actual usage) works better than restrictive upfront filtering. Think of it as the system asking "what vocabulary exists in this domain?" during learning, then asking "which vocabulary actually gets used?" during cleanup.
+
+---
+
 ## Context
 
 ### The Problem Space

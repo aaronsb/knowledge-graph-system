@@ -6,6 +6,18 @@
 **Deciders:** System Architect
 **Tags:** #embeddings #source-retrieval #async-processing #lcm
 
+## Overview
+
+Your knowledge graph has embeddings for concepts (the ideas extracted from documents) and embeddings for relationship types (SUPPORTS, CONTRADICTS, etc.), but here's what's missing: embeddings for the source documents themselves—the actual paragraphs and passages that concepts came from. This creates a blind spot. You can search for concepts semantically ("find concepts similar to 'recursive depth tracking'"), but you can't search the original text that way. You're forced to use keyword search, which misses semantic matches.
+
+Think about the difference between these two questions: "Which concepts are related to performance optimization?" versus "Show me the original passages that discuss performance optimization." The first searches concept labels; the second searches the source text. Without source embeddings, you can only answer the first question semantically. For the second, you're stuck with keyword matching—"WHERE full_text LIKE '%performance%'"—which misses passages that discuss optimization without using that exact word.
+
+This matters for RAG (Retrieval-Augmented Generation) workflows. When you want to answer a question using your knowledge graph, you need to retrieve relevant context—not just concept names, but the actual text that provides nuanced detail. Source embeddings enable this: generate an embedding for the user's question, find the most similar source passages, and feed that rich context to an LLM for generation. It's the difference between saying "there's a concept called 'caching strategies'" (shallow) versus showing the actual paragraph explaining different caching approaches (deep).
+
+This ADR implements source text embeddings as a first-class system feature, stored in a separate table with chunk-level granularity and hash-based verification. Each source passage gets split into embedding chunks (around 100-120 words each, stored with character offsets for precise highlighting), and the system tracks which chunks came from which source using content hashes. This enables three new capabilities: semantic search over source passages, hybrid queries that blend concept matches with source matches, and complete RAG workflows that retrieve evidence-rich context for generation. The vision is a "Large Concept Model" where everything in the graph—concepts, sources, relationships, even images—participates in semantic search and retrieval.
+
+---
+
 ## Context
 
 ### Current State

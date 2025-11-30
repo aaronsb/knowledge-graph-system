@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-034 (Graph Visualization), ADR-035 (Explorer Methods), ADR-016 (Apache AGE Migration)
 
+## Overview
+
+Writing graph queries requires learning openCypher syntax—a barrier that keeps many users from fully exploring their knowledge graphs. When a simple search fails at the default similarity threshold, the system currently just says "no results" without guiding users toward better queries or suggesting adjustments.
+
+The deeper problem is that query interfaces are tied to specific visualizations. Search works in the force graph explorer but not elsewhere. There's no way to build complex queries visually, no way to find paths between concepts without writing code, and no way to express patterns like "find concepts that IMPLIES concepts that CONTRADICTS each other."
+
+This ADR introduces a tri-mode universal query builder that works with any explorer: Smart Search for enhanced text queries with recommendations, Visual Blocks for drag-and-drop query construction, and an openCypher editor for power users. The key insight is the "Rosetta Stone" learning pattern—building queries visually while seeing the generated openCypher teaches users the syntax organically, creating a bridge from visual to textual expertise.
+
+---
+
 ## Context
 
 The current visualization application uses a simple concept search interface. While functional, it has several limitations:

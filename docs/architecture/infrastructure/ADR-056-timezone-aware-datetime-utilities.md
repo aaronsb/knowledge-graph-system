@@ -5,6 +5,16 @@
 **Implemented:** 2025-11-04
 **Related ADRs:** ADR-054 (OAuth Client Management), ADR-055 (CDN/Serverless Deployment)
 
+## Overview
+
+DateTime handling in Python has a subtle trap that catches even experienced developers. When you call `datetime.utcnow()`, you get what looks like a UTC timestamp. But Python doesn't attach timezone information to it - it's "naive" in Python's terminology. Meanwhile, PostgreSQL stores timestamps with timezone info attached - they're "aware." When you try to compare these two, Python throws an error: you can't compare apples (naive) with oranges (aware).
+
+This kept happening throughout the codebase. Fix it in one place, encounter it somewhere else a week later. Each time felt like hitting the same hidden tripwire. The root issue is that Python's standard datetime API makes it too easy to accidentally create naive datetimes, and nothing warns you until runtime when the comparison fails - often in production.
+
+The solution is embarrassingly simple: create a central utility module with functions that always return timezone-aware datetimes. Instead of remembering to write `datetime.now(timezone.utc)` everywhere, you import `utcnow()` from the utilities. Instead of manual expiration checks, you call `is_expired(timestamp)` which handles all the timezone conversion internally. It's a thin wrapper, but it prevents the entire class of bugs by making the safe thing the easy thing.
+
+---
+
 ## Context
 
 The knowledge graph system has repeatedly encountered datetime comparison errors:

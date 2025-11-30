@@ -16,6 +16,14 @@
 - Embedding worker: Unified embedding generation for vocabulary and concepts
 - Result: All 47 types properly categorized (30 builtin + 17 custom) with confidence scores
 
+## Overview
+
+When your AI learns a new relationship type like "HARMONIZES_WITH", which semantic category does it belong to? Is it about composition (how things fit together), interaction (how things affect each other), or something else entirely? The original system only knew how to categorize the 30 hand-picked relationship types—everything the AI discovered got dumped into a generic "llm_generated" bucket, losing valuable semantic information.
+
+This ADR solves the categorization problem using the same embedding technology that powers concept matching. Think of it like having reference examples for each category: "causation" is defined by types like CAUSES and ENABLES, "composition" by PART_OF and CONTAINS. When a new type appears, the system generates its embedding vector (a mathematical representation of its meaning) and compares it to the embeddings of these reference types, asking "which category is this most similar to?" The result is probabilistic—a type might be 73% composition and 21% interaction, revealing semantic ambiguity. This automatic categorization happens immediately when new types are discovered, organizing your growing vocabulary without manual classification. The system can now filter queries by relationship category (show me all causal connections), detect when vocabulary is drifting toward certain semantic areas, and explain to users what kind of relationship "HARMONIZES_WITH" actually represents.
+
+---
+
 ## Context
 
 The relationship vocabulary system currently has two classification approaches:

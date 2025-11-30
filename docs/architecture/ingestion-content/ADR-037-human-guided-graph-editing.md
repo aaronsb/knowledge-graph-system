@@ -9,6 +9,18 @@
 - ADR-033: Multimodal Image Ingestion
 - ADR-036: Universal Visual Query Builder
 
+## Overview
+
+Picture this: you're exploring a knowledge graph and you see two clusters of concepts sitting far apart from each other. Your brain immediately recognizes they're related—"oh, that business strategy is implemented through this technical system"—but the graph doesn't show any connection because no single document explicitly stated that relationship. The AI can only learn from what's written down, but you just know these things connect.
+
+This is the "hunch problem." As a human expert, you possess knowledge that doesn't exist in any document yet: cross-domain connections, intuitive leaps, domain expertise that lives in your head. The current system treats you as a passive observer of the graph, when you should be able to actively teach it what you know.
+
+This ADR introduces human-guided graph editing where you can multi-select concepts across the graph and create connections between them by explaining why they relate. But here's the clever part: instead of directly mutating the graph (which would bypass the evidence system), your explanation gets fed back through the same ingestion pipeline that processes documents. The system treats your justification as a new piece of evidence, extracting concepts and relationships from it just like any other document.
+
+This approach maintains the graph's integrity while capturing irreplaceable human intelligence. Your hunches become queryable facts, your insights become evidence, and your expertise teaches the system connections it could never discover on its own. The "teaching ontology" collects all human contributions, creating a valuable dataset of expert knowledge that enriches the graph without corrupting it.
+
+---
+
 ## Context
 
 Humans possess intuitive knowledge that AI cannot extract from documents alone - cross-domain connections, hunches, domain expertise, and emergent insights. The current system can only learn from explicit relationships stated in ingested documents.

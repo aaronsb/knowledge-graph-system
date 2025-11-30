@@ -5,6 +5,16 @@
 **Deciders:** Development Team
 **Related:** ADR-012 (API Server Architecture), ADR-014 (Job Approval Workflow), ADR-049 (Rate Limiting)
 
+## Overview
+
+Imagine you've built a powerful job queue system that handles document ingestion, database backups, and data processing. It works great when users manually trigger operations, but what about tasks that need to happen automatically? Maybe you want to check every 6 hours if there's vocabulary that needs refreshing, or consolidate inactive database entries when they pile up. You need some kind of scheduler, but you don't want to replace your working infrastructure or add complex dependencies like Redis or RabbitMQ.
+
+The core insight is that you already have everything you need except timing. Your job queue knows how to execute work, track progress, and handle failures. All you're missing is something that says "hey, check if this work needs doing" at regular intervals. It's like having a great delivery service but no calendar to schedule pickups.
+
+This decision adds a lightweight scheduler that runs as a background task in your existing API server. Every minute, it checks a database table of schedules and asks "is it time?" If yes, it creates a job using your existing queue. The beauty is that scheduled jobs and manual jobs are identical once they're in the queue - same workers, same progress tracking, same everything. You're just adding a time-based trigger to infrastructure that already works.
+
+---
+
 ## Context
 
 The system needs automated maintenance tasks that run on schedules:

@@ -7,6 +7,14 @@
 
 **Implementation Summary:** Core eager categorization was already functional in ADR-047. Fixed transaction isolation bug preventing auto-categorization. Edge types now automatically categorized during ingestion with ~65-90% confidence. Similarity analysis tools (kg vocab similar/opposite/analyze) remain as future enhancements.
 
+## Overview
+
+When your system learns a new relationship type like "HARMONIZES_WITH" during document ingestion, should it immediately figure out what semantic category it belongs to (causation? composition? interaction?), or should it mark it as "uncategorized" and wait for you to manually run a separate categorization command later? The lazy approach means your vocabulary sits in limbo—unusable for category-based queries until you remember to categorize it.
+
+This ADR makes categorization happen automatically and immediately. The moment the system creates a new vocabulary type, it uses the embedding-based categorization logic (from ADR-047) to determine which semantic category it's most similar to. It's like having a librarian who immediately files each new book in the right section as it arrives, rather than stacking uncategorized books in a corner for later sorting. The implementation revealed that the core logic was already mostly there—what was missing was proper integration into the ingestion pipeline due to a database transaction isolation issue. Once fixed, new types get categorized with 65-90% confidence scores as they're created, eliminating the manual maintenance step. The vocabulary is always organized and queryable by category, without requiring you to remember to run refresh commands after ingestion completes.
+
+---
+
 ## Context
 
 The knowledge graph system manages edge vocabulary through a lifecycle: LLMs discover new relationship types during ingestion, and the system must categorize them into semantic groups (causation, temporal, logical, etc.) for organization and query purposes.

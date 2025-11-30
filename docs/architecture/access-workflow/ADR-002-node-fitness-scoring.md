@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-001 (Multi-Tier Access), ADR-004 (Pure Graph Design)
 
+## Overview
+
+Imagine you have thousands of concepts in your knowledge graph. Some get used constantly in queries and prove incredibly helpful, while others were added once and never touched again. Treating them all equally means your most valuable insights get buried alongside random noise. How do you make the good stuff rise to the top naturally?
+
+The answer is to track which concepts actually prove useful over time, based on real usage patterns. It's like a path through a forest—the more people walk a certain route, the more worn and visible it becomes. When someone searches for "organizational design," the concepts that have been repeatedly relevant to similar queries should rank higher than concepts that just happen to contain those words.
+
+This decision implements automatic fitness scoring where each concept accumulates a track record based on how often it's retrieved and how relevant it proves to be. Think of it as a recommendation system, but for your own knowledge instead of products. The graph learns which concepts matter through actual use, not through someone manually tagging things as "important."
+
+Importantly, this also includes a manual override capability for curators. Sometimes a concept is genuinely important but obscure, or popular but low-quality. Human judgment can boost or demote concepts when the automated scoring misses the mark. It's evolution with intelligent design as a backup plan.
+
+---
+
 ## Context
 
 A knowledge graph should evolve over time, with useful concepts naturally rising in prominence based on actual usage patterns. Without an evolutionary mechanism, the system treats all concepts equally regardless of their utility. Additionally, pure semantic search can be biased toward popular concepts that may not be the most relevant for specific queries.

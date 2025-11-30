@@ -5,6 +5,14 @@
 **Deciders:** Development Team
 **Related:** ADR-004 (Pure Graph Design), ADR-016 (Apache AGE Migration)
 
+## Overview
+
+When an AI extracts knowledge from text, it needs words to describe how concepts relate to each other. Should "meditation enables enlightenment" be categorized as SUPPORTS? CAUSES? ENABLES? The original system only had 5 relationship types, which forced everything into broad, imprecise buckets—losing nuance and causing the AI to fail when it tried to use more specific terms that didn't exist in the system.
+
+This ADR expands the vocabulary from 5 generic types to 30 carefully chosen types organized into 8 semantic categories. Think of it like upgrading from primary colors (red, blue, yellow) to a full palette that includes crimson, azure, and amber. The AI can now express subtle distinctions—like the difference between "causes" (deterministic) and "enables" (makes possible but doesn't guarantee). To handle variation in how the AI phrases things, we add smart matching that understands "CONTRASTS" should map to "CONTRASTS_WITH" and "CAUSING" should map to "CAUSES", using a multi-stage algorithm that combines exact matching, word stemming, and fuzzy similarity. This lets the system capture rich semantic relationships while gracefully handling the natural variation in how AI models express ideas.
+
+---
+
 ## Context
 
 The original knowledge graph used 5 relationship types (IMPLIES, CONTRADICTS, SUPPORTS, PART_OF, RELATES_TO). This limited semantic expressiveness led to:

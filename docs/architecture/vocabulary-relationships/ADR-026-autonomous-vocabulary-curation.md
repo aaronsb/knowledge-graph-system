@@ -5,6 +5,14 @@
 **Deciders:** System Architects
 **Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-024 (Multi-Schema PostgreSQL)
 
+## Overview
+
+When your knowledge graph can learn new relationship types automatically (as enabled in ADR-025), you quickly discover a practical challenge: who decides if "ENHANCES", "IMPROVES", and "STRENGTHENS" are really different concepts or just three ways to say the same thing? A human curator could review every new term, but with 50+ new types appearing from large document sets, this becomes a full-time job that slows down your knowledge building.
+
+This ADR explores using AI to help with vocabulary curation—essentially having the system clean up after itself. Imagine the AI extracting concepts uses GPT-4, and when new relationship types pile up, a separate AI agent (using embeddings to measure semantic similarity) reviews them and suggests: "These five types all mean roughly the same thing—should we consolidate them?" The human curator approves or rejects these suggestions, creating a collaborative workflow. The system also tracks which relationship types are actually being used versus just cluttering the vocabulary, enabling smart pruning decisions. This is theoretical enhancement rather than immediate implementation—exploring how to scale vocabulary management without requiring constant human oversight, while keeping humans in the loop for final decisions about the knowledge structure.
+
+---
+
 ## Context
 
 ADR-025 establishes a curator-driven workflow for managing relationship vocabulary growth. While effective, the manual curation process has scalability limitations:

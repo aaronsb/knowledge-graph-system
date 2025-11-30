@@ -12,6 +12,12 @@
 
 **Mathematical Foundation:** Hybrid symbolic-tensor network (emergent, not prescribed)
 
+## Overview
+
+Your knowledge graph tracks relationships between concepts (meditation ENABLES enlightenment) using rich, dynamic vocabulary. But it tracks relationships between concepts and their source documents using a single hardcoded type: APPEARS. This means you can't distinguish between a document that briefly mentions a concept versus one that explores it in depth, or between a text that predicts something versus one that fulfills a prediction. The architectural inconsistency is jarring—concept relationships get semantic richness, but source relationships are binary.
+
+This ADR extends the dynamic vocabulary system to cover provenance relationships. Instead of just "concept APPEARS in source", the system can express "concept is CENTRAL_TO source", "concept is MENTIONED_IN source", or "concept is PROPHESIED_IN source". These types emerge and get managed using the same vocabulary infrastructure: automatic categorization, similarity-based clustering, consolidation of synonyms. The implementation can start simple—infer appearance type from structural signals like quote length and frequency—then optionally enhance with AI judgment about prominence. Beyond solving the immediate consistency problem, this ADR represents an architectural revelation: through successive decisions to eliminate boolean logic in favor of probabilistic values, the system has evolved from "graph database with semantic enrichment" into a hybrid symbolic-tensor network—graphs for structural queries, embeddings for semantic operations. Acknowledging this helps clarify design choices and opens up optimization opportunities, while maintaining the graph as the primary user-facing interface.
+
 ---
 
 ## Context

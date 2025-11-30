@@ -5,6 +5,16 @@
 **Deciders**: Development Team
 **Related**: ADR-015 (Backup/Restore Streaming), ADR-014 (Job Queue System)
 
+## Overview
+
+Picture yourself waiting for a large file to download. You want to know how it's going - is it 10% done? 50%? Stuck? The worst experience is when your browser just shows a spinning wheel with no indication of progress. Now imagine that same frustrating experience, but for a 5-minute knowledge graph ingestion process. You'd be sitting there wondering: "Is it working? How much longer? Should I cancel and try again?"
+
+We had exactly this problem. Our server could see beautiful progress bars internally, watching as it processed documents chunk by chunk, but the user's terminal only saw updates every few seconds when it polled "are we done yet?" It's like checking your mailbox every 5 minutes instead of having the mail carrier knock on your door when they arrive.
+
+Server-Sent Events solve this by opening a continuous connection where the server can push updates the moment something happens. Process a chunk? User sees it instantly. Hit an error? User knows right away. It's like streaming vs. downloading - instead of asking "what's the status?" over and over, the server just tells you when things change. This creates a responsive experience where users feel connected to what's happening, and it sets up the foundation for real-time features in future web dashboards.
+
+---
+
 ## Context
 
 After implementing ADR-015 Phase 2 (backup/restore with progress tracking), we discovered that progress updates are limited by polling architecture:

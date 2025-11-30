@@ -5,6 +5,18 @@
 **Deciders:** Engineering Team
 **Related ADRs:** ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
 
+## Overview
+
+When you calculate how "grounded" a concept is (how well-supported versus contradicted), you face a surprising problem: the words "SUPPORTS" and "CONTRADICTS" are 81% similar in embedding space. Think about that for a moment—two words with opposite meanings are nearly identical according to the AI. This happens because embedding models learn from word usage patterns, and both words appear in similar contexts (evidential relationships, academic writing, logical arguments). They're linguistically siblings, even though they're semantic opposites.
+
+This similarity creates a crisis for ADR-044's original grounding algorithm, which asked "is this relationship closer to SUPPORTS or CONTRADICTS?" When the two options are 81% similar, that's like asking "is this color closer to red or crimson?"—the distinction is too subtle to be meaningful. The result was grounding scores that clustered at the extremes (-100%, 0%, +100%) instead of showing nuanced percentiles. Every concept was either perfectly supported, perfectly contradicted, or exactly neutral.
+
+The breakthrough comes from shifting the question. Instead of asking "which prototype is this edge closest to?" (a binary choice), we ask "where does this edge fall on the support-contradict spectrum?" (a continuous position). Imagine SUPPORTS and CONTRADICTS as opposite ends of a ruler. Rather than snapping each relationship to one end or the other, we measure exactly where it falls along that ruler—maybe at +15% (slightly supportive), -42% (moderately contradicting), or +3% (nearly neutral).
+
+The "triangulation" part is the key innovation: we don't rely on just SUPPORTS and CONTRADICTS to define our ruler. Instead, we average multiple opposing pairs (VALIDATES/REFUTES, CONFIRMS/DISPROVES, ENABLES/PREVENTS, REINFORCES/OPPOSES) to create a more robust polarity axis. Each pair contributes its semantic understanding of "positive versus negative," and averaging them smooths out the noise. It's like having five compasses instead of one—even if individual compasses have slight errors, the average points true north. This produces grounding scores with actual nuance: concepts at -5% (slightly contradicted), +24% (moderately supported), or +1% (essentially neutral)—exactly the granularity we need to distinguish reliable knowledge from contested claims.
+
+---
+
 ## Context
 
 ADR-044 introduced grounding strength as a measure of concept reliability, calculated from incoming SUPPORTS/CONTRADICTS relationships. The original implementation used binary classification to categorize edge types as either supporting or contradicting:

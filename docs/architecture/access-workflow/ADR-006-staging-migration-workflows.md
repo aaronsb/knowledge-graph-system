@@ -5,6 +5,18 @@
 **Deciders:** System Architecture
 **Related:** ADR-001 (Multi-Tier Access)
 
+## Overview
+
+Imagine you're testing a new AI agent or experimenting with a different ingestion strategy for your knowledge graph. If you point it directly at your production database, a bug or bad decision could corrupt months of carefully curated knowledge. But if you test in complete isolation, you can't validate whether the new content integrates properly with your existing concepts. You need a safe playground that feels real but won't hurt if things go wrong.
+
+This is the classic staging problem from software development, applied to knowledge graphs: you want an experimental environment where mistakes are cheap, but with a controlled path to promote validated knowledge into production. Think of it like a workshop adjacent to a museum—you can experiment with new restoration techniques on artifacts in the workshop, and only move pieces into the public galleries after thorough quality checks.
+
+This decision establishes separate databases for staging (experimentation), production (trusted knowledge), and archive (backups), with CLI tools for selective migration between them. You can ingest experimental documents, let new agents loose on staging data, try out different extraction prompts—all without fear of polluting your production graph. When something proves valuable, you promote just those concepts to production.
+
+The migration tools support different strategies: copy concepts non-destructively, move them from staging to production, or intelligently merge and deduplicate when promoting. You also get rollback capability through the archive database, so if a promotion goes wrong, you can restore the previous state. It's version control for your knowledge graph, giving you the confidence to experiment boldly while protecting your production data.
+
+---
+
 ## Context
 
 Directly ingesting experimental content or untested agent contributions into a production knowledge graph creates risk of data corruption or quality degradation. Users need a safe environment to test ingestion strategies, experiment with new concepts, and validate quality before promoting knowledge to production.

@@ -11,6 +11,18 @@
 - 🔄 Next: Task 05 (MCP Server), Task 07 (CLI), Task 08 (Ingestion) for functional parity
 - 📍 Current branch: `feature/apache-age-migration`
 
+## Overview
+
+Imagine you're building a knowledge system that needs to remember who created what, who's allowed to see what, and provide detailed audit logs of all activities. This is basic table-stakes functionality for any production system. But here's the catch: our graph database (Neo4j Community Edition) doesn't support any of these features unless we pay $180,000 per year for the Enterprise license.
+
+We faced a fundamental architectural dilemma. We needed two separate databases: Neo4j for the graph data (concepts and their relationships), and another database (like PostgreSQL) for everything else—user accounts, security permissions, API keys, job queues, and audit logs. This dual-database setup created its own problems: we couldn't perform atomic operations across both systems, backups became twice as complex, and we had to manage two completely different connection systems.
+
+The solution? Apache AGE, a PostgreSQL extension that brings graph database capabilities directly into PostgreSQL. Think of it as getting the best of both worlds: we keep our graph query language (Cypher) for exploring concept relationships, but now everything lives in a single, production-grade database that includes enterprise-level security features for free. Instead of juggling two databases, we get one unified system where a graph query and a user authentication check can happen in the same transaction.
+
+This migration preserves our existing graph model and query patterns while unlocking critical production capabilities like multi-user access control, comprehensive audit logging, and dramatically simpler backup procedures. It's not just a database swap—it's an architectural consolidation that makes the entire system simpler, more secure, and ready for real-world deployment.
+
+---
+
 ## Context
 
 The current Neo4j Community Edition implementation has critical production blockers:

@@ -6,6 +6,16 @@
 **Author:** Aaron Bockelie
 **Related ADRs:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-054 (OAuth 2.0 Client Management)
 
+## Overview
+
+Every multi-user application eventually faces the same questions: How do users log in? How do we know they're allowed to perform certain actions? How do we let automated tools (like CI/CD pipelines) access the API without passwords? This ADR was our first attempt to answer those questions with a lightweight authentication system.
+
+We chose JWT (JSON Web Tokens) as our foundation - think of them like digital boarding passes that prove who you are without requiring the API to check a database on every request. Password-based login would give you a JWT that's valid for an hour. For automated tools, we'd issue long-lived API keys. Both approaches are stateless, meaning the API can verify credentials without database lookups, which keeps things fast and scalable.
+
+However, this design had a fundamental limitation: it mixed up the concept of "our users" (people using the knowledge graph) with "our API clients" (different applications that need to access the system). A CLI tool, web app, and MCP server are fundamentally different types of clients with different security needs. Cramming them all into a simple username/password + JWT model wasn't elegant or secure.
+
+That's why this ADR was superseded by ADR-054, which implements proper OAuth 2.0 with different authorization flows for each client type. This document remains valuable as historical context - it shows our thinking about authentication fundamentals and why we ultimately needed something more sophisticated.
+
 ---
 
 ## ⚠️ Superseded Notice

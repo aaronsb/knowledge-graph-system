@@ -6,6 +6,16 @@
 **Related:** ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
 **Note:** This ADR predates the Apache AGE migration (ADR-016). References to Neo4j in this document are historical; the system now uses Apache AGE (PostgreSQL graph extension).
 
+## Overview
+
+When software grows organically, everything tends to end up in one place. Our knowledge graph system started with a single `cli.py` file that did everything—searching concepts, backing up databases, restoring data, and managing configurations. While this worked initially, it created a tangled mess where adding new features meant navigating an increasingly complex monolith.
+
+The real problem wasn't just messy code. We had shell scripts duplicating Python logic, no shared libraries for common operations, and backup processes that didn't properly save expensive vector embeddings. If you lost your database, you'd have to re-process all your documents through the AI models again—potentially costing $50-100 in API fees for large document collections.
+
+This ADR establishes a clean separation: query tools for exploring data go in the CLI layer, administrative tools for managing the database go in the admin layer, and shared functionality lives in reusable libraries. The result is a codebase that's easier to extend, properly backs up all your data (including those expensive embeddings), and provides a foundation for future interfaces like web UIs.
+
+---
+
 ## Context
 
 The original implementation mixed query operations (search, concept details) and administrative operations (backup, restore, database setup) in a single `cli.py` file. Shell scripts duplicated logic from Python code. No shared library existed for common operations like console output, JSON formatting, or graph database queries. This made it difficult to add new interfaces (GUI, web) without duplicating functionality.

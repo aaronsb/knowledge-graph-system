@@ -5,6 +5,18 @@
 **Deciders:** Development Team
 **Related:** ADR-031 (Encrypted API Key Storage), ADR-039 (Local Embedding Service)
 
+## Overview
+
+Every time you ingest a document, the system uses an LLM to extract concepts and relationships from the text. But here's the question: which LLM? OpenAI's GPT-4? Anthropic's Claude? A local model running via Ollama? And critically, where should this configuration live—in environment variables that require server restarts to change, or somewhere more dynamic?
+
+The current system hardcodes the extraction provider in environment variables. Want to switch from GPT-4 to Claude? You need to edit `.env`, restart the API server, and hope you didn't break anything. This is fine for static deployments, but it becomes painful when you want to experiment with different models, manage costs by mixing providers per ontology, or let operators change settings through an admin UI without touching configuration files.
+
+Think of it like this: should your TV's channel selection be hardwired into the circuit board, or controlled by a remote? Right now, we've hardwired it. This ADR proposes moving extraction configuration from static environment variables into the database, where it can be queried, updated via API, and changed at runtime without restarting services.
+
+The design follows a simple priority system: database configuration takes precedence when available, falling back to environment variables for development workflows and system initialization. This means operators can manage production settings through a web interface while developers can still use familiar `.env` files during local testing. The key insight is that configuration is data, not code—it should be stored where data lives, not buried in deployment files.
+
+---
+
 ## Context
 
 The knowledge graph system uses LLM APIs (OpenAI GPT-4, Anthropic Claude) to extract concepts from documents. Currently, provider and model selection is configured via environment variables:

@@ -5,6 +5,16 @@
 **Author:** System Architecture
 **Related:** ADR-014 (Job Approval Workflow), ADR-044 (Probabilistic Truth Convergence), ADR-037 (Human-Guided Graph Editing)
 
+## Overview
+
+Imagine you successfully ingested 50 documents months ago. Now you add 50 new documents to the same directory and try to ingest all 100 files. Your API key is invalid, so all 100 jobs fail. You fix the API key and try again, but the system blocks you—it sees failed jobs for those files. Frustrated, you delete the failed jobs to "clear the way" and re-ingest. Now all 100 files process, including the 50 that were already in the graph. You've just created duplicate content by accident.
+
+The root problem is that document deduplication checks an ephemeral table (the jobs table, which gets cleaned up) instead of the persistent graph itself. When you delete job records for any reason—failed jobs, old completed jobs, compliance retention policies—the system forgets which documents are already in the graph. The source of truth is in the wrong place.
+
+This ADR moves deduplication to the graph by creating DocumentMeta nodes that track successfully ingested documents forever. These nodes live alongside your concepts and relationships, storing the document's content hash, filename, when it was ingested, and how many source chunks were created. Now when you try to re-ingest a document, the system checks the graph first—not the jobs table—to see if it's already there.
+
+As a bonus, this also adds relationship provenance tracking. Every edge in the graph now stores metadata about who created it, when, and how (LLM extraction vs human curation). This audit trail helps with debugging, compliance, and future features where humans can correct or enhance AI-generated relationships. The graph becomes self-documenting, and deduplication becomes bulletproof even if you delete every job record.
+
 ---
 
 ## Context

@@ -5,6 +5,18 @@
 **Deciders:** Development Team
 **Related:** ADR-041 (AI Extraction Provider Configuration), ADR-042 (Local LLM Inference)
 
+## Overview
+
+Picture this: you're running four concurrent ingestion jobs to speed up processing. Each job is happily extracting concepts using OpenAI's API. Then suddenly, all four jobs start failing with "429 Too Many Requests" errors. What happened? All four workers hit the API at nearly the same time, exceeding your rate limit. The SDK retries twice, fails again, and gives up. Your ingestion grinds to a halt, and you've wasted API credits on failed requests.
+
+The problem gets worse when you realize there's no coordination between workers. Worker 1 hits a rate limit and backs off for 1 second. Worker 2 also hits a rate limit and backs off for 1 second. They both retry at the same instant... and hit the rate limit again. It's like four people trying to walk through a narrow doorway at once—they all get stuck, nobody makes progress, and the retry chaos creates what's called a "thundering herd."
+
+Different AI providers have wildly different constraints. OpenAI's API might handle 50 requests per minute on their standard tier. Anthropic might cap you at 20. Local Ollama? It can only process one request at a time because you have one GPU. The current system treats all providers the same, which means it either runs too conservatively (wasting OpenAI's capacity) or too aggressively (overwhelming Ollama and Anthropic).
+
+This ADR implements intelligent rate limiting with three layers: SDK-level exponential backoff (retry smartly when you do hit limits), per-provider concurrency limits (prevent workers from colliding in the first place), and database-driven configuration (let operators tune limits for their specific API tier without code changes). Think of it like traffic management: exponential backoff is like telling cars to wait increasing amounts of time after running a red light, concurrency limits are like metering ramps that control how many cars enter the highway, and database configuration is like adjusting those limits based on current traffic conditions—all working together to prevent congestion.
+
+---
+
 ## Context
 
 Users experiencing 429 rate limit errors when running multiple concurrent ingestion jobs:

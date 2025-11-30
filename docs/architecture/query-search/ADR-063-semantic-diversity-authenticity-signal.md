@@ -5,6 +5,16 @@
 **Author**: System
 **Related ADRs**: ADR-044 (Dynamic Grounding), ADR-045 (Unified Embedding), ADR-058 (Polarity Axis Triangulation)
 
+## Overview
+
+When you research a real event like the Apollo 11 moon landing, you'll find evidence from wildly different fields: geology (moon rocks), physics (radiation measurements), engineering (spacecraft design), photography (camera technology), and international relations (Soviet tracking stations). This rich tapestry of independent evidence from diverse domains is the hallmark of authentic information. In contrast, conspiracy theories about the same event tend to circle around a single theme—like Stanley Kubrick's filmmaking—creating an echo chamber of related but ultimately homogeneous claims.
+
+This ADR documents a fascinating discovery: we can measure this difference mathematically in our knowledge graph. By analyzing how semantically diverse the related concepts are around any given claim, we can distinguish between authentic information (which connects to many independent conceptual domains) and fabricated claims (which connect to variations on a single theme). When we tested this with the Space Travel ontology, Apollo 11 had 33 related concepts with high diversity across multiple scientific fields, while moon landing conspiracy theories had only 3 related concepts, all about filmmaking, with much lower diversity.
+
+This "semantic diversity score" isn't a silver bullet—sophisticated fabrications could potentially game it—but it provides a powerful complementary signal alongside our existing grounding strength metrics. It captures what humans intuitively recognize: real information is messy and connects to many independent areas of knowledge, while fabricated information tends to be suspiciously tidy and self-referential.
+
+---
+
 ## Context
 
 Knowledge graphs built from LLM extraction can contain both authentic information (based on real-world observations from independent sources) and fabricated claims (variations on false narratives). While grounding strength (ADR-058) measures evidential support through relationship polarity, it doesn't capture the **richness and diversity** of supporting evidence.

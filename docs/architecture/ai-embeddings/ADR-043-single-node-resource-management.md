@@ -6,6 +6,18 @@
 **Deciders:** System Architects
 **Related:** ADR-039 (Local Embedding Service), ADR-042 (Local LLM Inference)
 
+## Overview
+
+Here's a scenario that seems perfect until it breaks: you're running local inference with Ollama extracting concepts and a local embedding model generating vectors. Everything runs on one GPU to keep costs down. The extraction model (say, a 20B parameter LLM) loads into your GPU's VRAM and processes a chunk of text. Great! Then the embedding model tries to load right after... and crashes. Why? Your GPU only has 12GB of VRAM, the extraction model is using 10GB of it, and the embedding model needs at least 500MB. The math doesn't work.
+
+Think of it like trying to fit two elephants into a single-car garage. They can't both be in there at the same time, but you need both to get your work done. The naive solution would be to constantly unload one model and load the other, but that's painfully slow—model loading can take 30+ seconds each time. During a multi-hour ingestion job, you'd spend more time swapping models than actually processing documents.
+
+This is the reality of running modern AI on consumer hardware: VRAM is the bottleneck, and you have to be smart about managing it. The problem is particularly insidious because it often fails silently—the embedding model tries to load, can't find enough memory, falls back to CPU (if you're lucky), or just crashes (if you're not). Users see "ingestion complete" but get zero concepts extracted.
+
+This ADR solves the problem with intelligent resource management: check available VRAM before trying to load the embedding model, automatically fall back to CPU-based embeddings when GPU memory is tight, and clearly communicate what's happening so operators understand the performance tradeoffs. The key insight is that CPU-based embeddings are slower but acceptable (adding ~100ms per chunk to a 2-3 minute extraction job), while silent failures are unacceptable.
+
+---
+
 ## Context
 
 With the introduction of local inference capabilities (ADR-042: Ollama for extraction, ADR-039: sentence-transformers for embeddings), the system can now run entirely on local GPU hardware. However, this creates resource contention on single-node deployments where both models compete for limited VRAM.

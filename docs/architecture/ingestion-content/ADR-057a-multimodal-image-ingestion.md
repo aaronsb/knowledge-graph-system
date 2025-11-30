@@ -9,6 +9,16 @@
 - [ADR-043: Embedding Strategy and Resource Management](../ai-embeddings/ADR-043-single-node-resource-management.md)
 - [ADR-016: Apache AGE Migration](../database-schema/ADR-016-apache-age-migration.md) (Parallel vendor lock-in escape)
 
+## Overview
+
+The knowledge graph excels at extracting concepts from prose text, but what about all the valuable knowledge locked in images? Think about PDF lecture slides with diagrams, architecture flowcharts, screenshots of code, or whiteboard photos from brainstorming sessions. These visual documents contain concepts and relationships, but the text-only system can't see them.
+
+Modern vision AI models like GPT-4o can look at an image and describe what they see in exhaustive detail. This ADR proposes a "hairpin" architecture where images get converted to detailed prose descriptions via vision AI, then flow through the exact same concept extraction pipeline we already use for text documents. A diagram of a recursive loop becomes a prose description of that diagram, and the LLM extracts concepts from the description just like it would from written text. The original images get stored in object storage (Garage) for future reference, but the graph works with the semantic concepts extracted from their descriptions.
+
+The clever part is visual context injection. When you ingest an image, the system first searches for visually similar images already in the graph using image embeddings. If it finds a diagram that looks similar—especially from the same ontology—it includes those similar images' descriptions as context when extracting concepts. This helps the LLM understand "this flowchart is part of the same lecture series as that other flowchart," creating stronger relationships between related visual content.
+
+Everything reuses the existing architecture: one unified upsert pipeline, one concept extraction system, one graph schema. Images just take a detour through vision AI to become text first, then follow the same path as documents. The system gains multimodal capabilities while maintaining architectural simplicity and avoiding code duplication.
+
 ---
 
 ## Migration Note: MinIO → Garage (2025-11-04)
