@@ -541,6 +541,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
 
       // Check for smart blocks that need special handling
       const vectorSearchBlock = nodes.find(node => node.data.type === 'vectorSearch');
+      const sourceSearchBlock = nodes.find(node => node.data.type === 'sourceSearch');
 
       let result: any;
 
@@ -577,6 +578,51 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
             }
           })),
           relationships: [], // Vector search returns nodes only, no relationships
+        };
+      } else if (sourceSearchBlock) {
+        // Source Search smart block execution path - search source passages
+        const ssParams = sourceSearchBlock.data.params as SourceSearchBlockParams;
+        console.log('[BlockBuilder] Source Search smart block detected:', ssParams);
+
+        if (!ssParams.query || ssParams.query.trim() === '') {
+          setExecutionError('Source Search requires a search query');
+          return;
+        }
+
+        // Call the source search API
+        const searchResult = await apiClient.searchSources({
+          query: ssParams.query,
+          limit: ssParams.limit || 10,
+          min_similarity: ssParams.similarity || 0.7,
+          ontology: ssParams.ontology && ssParams.ontology.trim() !== '' ? ssParams.ontology : undefined,
+          include_concepts: true,
+          include_full_text: true,
+        });
+
+        console.log('[BlockBuilder] Source search result:', searchResult);
+
+        // Extract unique concepts from source results
+        const conceptMap = new Map<string, any>();
+        searchResult.results.forEach((source: any) => {
+          source.concepts?.forEach((concept: any) => {
+            if (!conceptMap.has(concept.concept_id)) {
+              conceptMap.set(concept.concept_id, concept);
+            }
+          });
+        });
+
+        // Transform to match Cypher result format
+        result = {
+          nodes: Array.from(conceptMap.values()).map((c: any) => ({
+            id: c.concept_id,
+            label: c.label,
+            properties: {
+              concept_id: c.concept_id,
+              label: c.label,
+              description: c.description,
+            }
+          })),
+          relationships: [], // Source search returns concepts from passages, no relationships
         };
       } else {
         // Standard Cypher execution path
