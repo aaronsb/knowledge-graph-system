@@ -1,7 +1,7 @@
 # ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
 
 **Date:** 2025-11-03
-**Related ADR:** [ADR-057: Multimodal Image Ingestion](./ADR-057-multimodal-image-ingestion.md)
+**Related ADR:** [ADR-057a: Multimodal Image Ingestion](./ADR-057a-multimodal-image-ingestion.md)
 
 ---
 

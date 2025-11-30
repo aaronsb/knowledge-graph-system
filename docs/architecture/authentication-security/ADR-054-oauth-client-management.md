@@ -6,7 +6,7 @@
 **Related ADRs:**
 - [ADR-027: User Management](./ADR-027-user-management-api.md) - User operations
 - [ADR-028: Dynamic RBAC](./ADR-028-dynamic-rbac-system.md) - Role-based access control
-- [ADR-024: Multi-Schema Architecture](./ADR-024-multi-schema-postgresql-architecture.md) - Database schema
+- [ADR-024: Multi-Schema Architecture](../database-schema/ADR-024-multi-schema-postgresql-architecture.md) - Database schema
 - [ADR-060: API Endpoint Security Architecture](./ADR-060-endpoint-security-architecture.md) - Endpoint-level security implementation
 
 ## Context
