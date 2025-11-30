@@ -4,6 +4,16 @@
 **Date:** 2025-10-12
 **Supersedes:** N/A - First formal CLI design specification
 
+## Overview
+
+Command-line interfaces face a fundamental tension: Unix experts want familiar verbs like `ls` and `rm`, while domain users want commands that reflect their work, like `job approve` and `ontology merge`. Most tools pick one approach and frustrate half their users.
+
+Our knowledge graph CLI grew organically with mixed patterns—some commands used hierarchies (`kg ontology list`), others were flat, and inconsistencies emerged. Aliases appeared without rationale. This ADR confronts the design tension directly with a deliberate hybrid approach.
+
+We provide two ways to interact with the same functionality: domain-oriented commands (`kg job approve <id>`) for power users learning the system, and Unix-style shortcuts (`kg rm job <id>`) for those who think in traditional file operations. The verb shortcuts delegate to the primary domain commands through a router pattern, ensuring one source of truth while supporting multiple mental models. Best of both worlds.
+
+---
+
 ## Context
 
 The Knowledge Graph CLI (`kg`) has evolved organically, resulting in inconsistent command structures:
