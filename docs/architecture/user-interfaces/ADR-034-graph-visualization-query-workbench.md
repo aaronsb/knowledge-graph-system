@@ -6,6 +6,16 @@
 **Deciders:** Development Team
 **Related:** ADR-016 (Apache AGE Migration), ADR-029 (CLI Theory of Operation), ADR-033 (Multimodal Ingestion)
 
+## Overview
+
+Knowledge graphs are inherently visual—concepts connect to other concepts, forming webs of meaning that resist linear navigation. Yet until now, our users have been limited to text-based tools: CLI commands that show lists, MCP integration through Claude's text interface, and REST APIs that return JSON. It's like exploring a city with only a phone book.
+
+The challenge isn't just showing pretty pictures. Existing graph visualization tools like Apache AGE Viewer have been abandoned, and generic tools like Gephi don't integrate with our unique capabilities—grounding strength, semantic diversity, and provenance tracking. We needed something purpose-built.
+
+This ADR establishes a web-based visualization application using React and D3.js, built as a separate service that communicates with our REST API. The architecture uses an explorer plugin pattern: each visualization type (force graphs, hierarchies, timelines) plugs into a common framework. Add a new explorer, it automatically appears in the sidebar. The result is a scalable foundation for visual knowledge exploration that can grow with our needs.
+
+---
+
 ## Context
 
 The knowledge graph system stores rich conceptual networks with complex relationships, but currently lacks visual exploration tools. Users interact primarily through:
