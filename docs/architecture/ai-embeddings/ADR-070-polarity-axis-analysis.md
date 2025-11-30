@@ -10,6 +10,18 @@
 - ADR-058: Polarity Axis Triangulation for Grounding (explains relationship to this ADR)
 - ADR-068: Unified Embedding Regeneration
 
+## Overview
+
+Imagine asking your knowledge graph "Where does 'Agile' fall on the spectrum between modern and traditional approaches?" Your graph might have hundreds of concepts related to organizational practices, but there's no explicit MODERN or TRADITIONAL relationship type labeling each one. How do you answer this question? Traditional graph traversal won't help—there are no edges to follow. Full-text search won't help either—the word "modern" might not appear in the concept description.
+
+This is where semantic dimensions come in. Think of them as invisible spectrums that organize your concepts even when explicit relationships don't capture them. Your knowledge base might contain dozens of concepts that naturally vary along a modern-versus-traditional dimension, not because someone tagged them that way, but because their semantic embeddings reveal that pattern. "Agile" sits closer to "modern operating models" in vector space, while "waterfall methodology" sits closer to "traditional hierarchies."
+
+The challenge is making these implicit dimensions explicit and measurable. You can't just compare embeddings pairwise—that doesn't tell you where a concept falls on a spectrum, only that two concepts are similar. What you need is a ruler: take two opposing concepts (like "modern operating models" and "traditional hierarchies"), treat them as opposite ends of an axis, and project other concepts onto that axis to see where they land. Maybe "Agile" projects at +72% (strongly modern), "DevOps" at +58% (moderately modern), "matrix organization" at +8% (nearly neutral), and "command-and-control" at -81% (strongly traditional).
+
+This ADR implements polarity axis analysis as a query capability, building on the same mathematical technique from ADR-058 but applying it to concepts instead of relationships. The key difference: ADR-058 uses polarity axes to calculate how reliable a concept is (grounding), while this ADR uses them to explore where concepts fall on semantic spectrums (positioning). Both use vector projection, but they answer different questions: "how grounded is this?" versus "where does this fall on this dimension?" The result is a new way to navigate your knowledge graph—not by following explicit edges, but by discovering the emergent conceptual dimensions that organize your ideas.
+
+---
+
 ## Context
 
 The knowledge graph captures concepts and relationships with semantic embeddings, but lacks tools to explore **bidirectional semantic dimensions** - conceptual spectrums along which concepts vary. While ADR-058 introduced polarity axes for calculating grounding strength by projecting relationship edges onto axes, this ADR explores a complementary capability: using polarity axes to discover and navigate semantic dimensions by projecting concept embeddings themselves.
