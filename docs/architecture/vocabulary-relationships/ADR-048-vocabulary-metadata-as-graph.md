@@ -34,6 +34,14 @@
 
 **Result:** Vocabulary metadata is now first-class graph with true relationship semantics. All operations use graph relationships for category membership.
 
+## Overview
+
+You've built a graph database to store knowledge, but your vocabulary metadata (the list of relationship types and their categories) lives in regular database tables. This creates an awkward split: the knowledge uses the graph, but the words describing that knowledge don't. Why should finding synonyms require SQL joins instead of graph traversals? Why should merging similar types manipulate foreign keys instead of rewiring edges?
+
+This ADR moves vocabulary metadata into the graph itself, treating relationship types as first-class graph nodes just like concepts. "SUPPORTS" becomes a :VocabType node that connects to a :VocabCategory node via an :IN_CATEGORY relationship. Now operations like "find all causation relationship types" are simple graph patterns, and merging "ENHANCES" into "STRENGTHENS" is just edge rewiring. The challenge is doing this safely—when vocabulary nodes live alongside concept nodes, a careless query like "MATCH (n) DELETE n" could accidentally delete your entire vocabulary structure along with your knowledge. To prevent this, the system adds a safety layer (GraphQueryFacade) that enforces explicit namespace isolation: concept queries only match :Concept nodes, vocabulary queries only match :VocabType nodes. This architectural shift makes the system internally consistent—everything important is graph structure, not tables—while maintaining safety through careful query abstractions.
+
+---
+
 ## Context
 
 ### The Realization
