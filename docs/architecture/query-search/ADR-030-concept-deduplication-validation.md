@@ -5,6 +5,14 @@
 **Author:** System Architecture
 **Related:** ADR-016 (Apache AGE), ADR-024 (PostgreSQL)
 
+## Overview
+
+Imagine you're building a knowledge base about Buddhism by reading multiple books on the subject. As you read, you take notes and create concept cards. When you encounter "Buddhism" in the first book, you create a card. But when the second book mentions "Buddhist Philosophy," should you create a new card or recognize it's the same concept? This decision happens thousands of times as your knowledge base grows, and getting it wrong leads to a fragmented, confusing mess.
+
+This is exactly the challenge our knowledge graph faces during document ingestion. The system uses AI to extract concepts from documents and relies on embedding-based similarity matching to decide whether a new mention is genuinely new or just another way of referring to something already in the graph. Currently, we use an 80% similarity threshold: if two concepts are more than 80% similar in their semantic meaning, we treat them as the same concept.
+
+The problem is, we don't systematically validate whether this deduplication process actually works well over time. Does the quality degrade as the graph grows? Do related documents properly share concepts, or do we end up with "Buddhism," "Buddhist Philosophy," and "Buddhist Teachings" cluttering our search results? This ADR establishes a rigorous test suite to answer these questions and ensure the deduplication system maintains quality.
+
 ---
 
 ## Context
