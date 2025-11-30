@@ -11,6 +11,7 @@ import type {
   FindConnectionBySearchResponse,
   RelatedConceptsResponse,
   JobStatus,
+  SourceSearchResponse,
 } from '../types/index.js';
 
 /**
@@ -1034,6 +1035,69 @@ export function formatEpistemicStatusMeasurement(result: any): string {
   output += '2. Use WELL_GROUNDED types for high-confidence reasoning and inference\n';
   output += '3. Investigate CONTRADICTED types to understand knowledge evolution\n';
   output += '4. Ingest more documents to move INSUFFICIENT_DATA types to measurable states\n';
+
+  return output;
+}
+
+/**
+ * Format source search results as markdown (ADR-068 Phase 5)
+ *
+ * Optimized for MCP/AI consumption - shows matched chunks with offsets
+ * and related concepts extracted from those sources.
+ */
+export function formatSourceSearchResults(result: SourceSearchResponse): string {
+  let output = `# Source Search: "${result.query}"\n\n`;
+  output += `Found ${result.count} source passage(s) (threshold: ${(result.threshold_used || 0.7) * 100}%)\n\n`;
+
+  if (result.count === 0) {
+    output += 'No source passages found matching this query.\n\n';
+    output += '**Tips:**\n';
+    output += '- Source search uses text embeddings, not concept embeddings\n';
+    output += '- Try broader queries or lower similarity thresholds\n';
+    output += '- Use concept search to find concepts, then view their evidence\n';
+    return output;
+  }
+
+  result.results.forEach((source, i) => {
+    output += `## ${i + 1}. ${source.document} (para ${source.paragraph})\n\n`;
+    output += `- **Source ID:** ${source.source_id}\n`;
+    output += `- **Similarity:** ${(source.similarity * 100).toFixed(1)}%\n`;
+
+    if (source.is_stale) {
+      output += `- **Status:** ⚠ Stale embedding (source text changed since embedding)\n`;
+    }
+
+    output += `\n**Matched Chunk** [offset ${source.matched_chunk.start_offset}:${source.matched_chunk.end_offset}]:\n\n`;
+    output += `> ${source.matched_chunk.chunk_text}\n\n`;
+
+    if (source.full_text) {
+      const truncated = source.full_text.length > 300
+        ? source.full_text.substring(0, 300) + '...'
+        : source.full_text;
+      output += `**Full Context:**\n\n${truncated}\n\n`;
+    }
+
+    if (source.concepts && source.concepts.length > 0) {
+      output += `**Concepts Extracted** (${source.concepts.length}):\n\n`;
+      source.concepts.slice(0, 5).forEach(concept => {
+        output += `- **${concept.label}** (${concept.concept_id})\n`;
+        if (concept.description) {
+          output += `  ${concept.description}\n`;
+        }
+        output += `  Evidence: "${concept.instance_quote}"\n`;
+      });
+
+      if (source.concepts.length > 5) {
+        output += `\n... and ${source.concepts.length - 5} more concepts\n`;
+      }
+      output += '\n';
+    }
+  });
+
+  output += '**Next Steps:**\n';
+  output += '- Use concept IDs with `concept` tool (action: "details") to explore further\n';
+  output += '- Use `concept` tool (action: "connect") to find relationships between concepts\n';
+  output += '- Adjust similarity threshold if results are too broad or too narrow\n';
 
   return output;
 }

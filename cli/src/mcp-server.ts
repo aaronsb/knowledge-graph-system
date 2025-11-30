@@ -37,6 +37,7 @@ import {
   formatEpistemicStatusList,
   formatEpistemicStatusDetails,
   formatEpistemicStatusMeasurement,
+  formatSourceSearchResults,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -235,15 +236,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'search',
-        description: `Search for concepts using semantic similarity. Your ENTRY POINT to the graph.
+        description: `Search for concepts or source passages using semantic similarity. Your ENTRY POINT to the graph.
 
-RETURNS RICH DATA FOR EACH CONCEPT:
+CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarity:
 - Grounding strength (-1.0 to 1.0): Reliability/contradiction score
 - Diversity score: Conceptual richness (% of diverse connections)
 - Authenticated diversity: Support vs contradiction indicator (✅✓⚠❌)
 - Evidence samples: Quoted text from source documents
 - Image indicators: Visual evidence when available
 - Document sources: Where concepts originated
+
+SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
+- Searches source document embeddings, not concept embeddings
+- Returns matched text chunks with character offsets for highlighting
+- Shows concepts extracted from those passages
+- Useful for RAG workflows and finding original context
 
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
@@ -254,6 +261,12 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").`,
             query: {
               type: 'string',
               description: 'Search query text (2-3 word phrases work best, e.g., "linear thinking patterns")',
+            },
+            type: {
+              type: 'string',
+              enum: ['concepts', 'sources'],
+              description: 'Search type: "concepts" (default - semantic concept search) or "sources" (source passage search, ADR-068)',
+              default: 'concepts',
             },
             limit: {
               type: 'number',
@@ -269,6 +282,10 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").`,
               type: 'number',
               description: 'Number of results to skip for pagination (default: 0)',
               default: 0,
+            },
+            ontology: {
+              type: 'string',
+              description: 'Filter by ontology/document name (sources only)',
             },
           },
           required: ['query'],
@@ -774,26 +791,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case 'search': {
         const query = toolArgs.query as string;
+        const searchType = toolArgs.type as string || 'concepts';
         const limit = toolArgs.limit as number || 10;
         const min_similarity = toolArgs.min_similarity as number || DEFAULT_SEARCH_SIMILARITY;
         const offset = toolArgs.offset as number || 0;
+        const ontology = toolArgs.ontology as string | undefined;
 
-        const result = await client.searchConcepts({
-          query,
-          limit,
-          min_similarity,
-          offset,
-          include_grounding: true,
-          include_evidence: true,
-          include_diversity: true,
-          diversity_max_hops: 2,
-        });
+        if (searchType === 'sources') {
+          // ADR-068 Phase 5: Source text search
+          const result = await client.searchSources({
+            query,
+            limit,
+            min_similarity,
+            ontology,
+            include_concepts: true,
+            include_full_text: true,
+          });
 
-        const formattedText = formatSearchResults(result);
+          const formattedText = formatSourceSearchResults(result);
 
-        return {
-          content: [{ type: 'text', text: formattedText }],
-        };
+          return {
+            content: [{ type: 'text', text: formattedText }],
+          };
+        } else {
+          // Default: Concept search
+          const result = await client.searchConcepts({
+            query,
+            limit,
+            min_similarity,
+            offset,
+            include_grounding: true,
+            include_evidence: true,
+            include_diversity: true,
+            diversity_max_hops: 2,
+          });
+
+          const formattedText = formatSearchResults(result);
+
+          return {
+            content: [{ type: 'text', text: formattedText }],
+          };
+        }
       }
 
       case 'concept': {
