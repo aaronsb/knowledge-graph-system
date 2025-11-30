@@ -9,6 +9,18 @@
 - [ADR-024: Multi-Schema Architecture](../database-schema/ADR-024-multi-schema-postgresql-architecture.md) - Database schema
 - [ADR-060: API Endpoint Security Architecture](./ADR-060-endpoint-security-architecture.md) - Endpoint-level security implementation
 
+## Overview
+
+Authentication gets complicated when you have multiple types of clients. A web browser can't safely store secrets. A command-line tool needs to work on headless servers where you can't open a browser. A background service shouldn't require a user to be logged in. Using the same authentication approach for all three creates security holes.
+
+This is the situation we faced with the knowledge graph system. Our initial JWT password flow worked fine for the CLI - type username and password, get a token. But what about the web visualization app? We can't have users typing their password into JavaScript that runs in the browser; that's a security nightmare. And what about the MCP server that runs in the background? It shouldn't need a human to log in every time it starts.
+
+OAuth 2.0 solves this by providing different "flows" for different client types. Web apps use "Authorization Code + PKCE" where the browser redirects through an authorization page and never sees the password. CLI tools use "Device Authorization" where you get a code to enter in a browser (like pairing a Roku). Background services use "Client Credentials" with a secret that acts like a service account. Each flow is designed for its specific security context.
+
+This ADR implements proper OAuth 2.0 client management, replacing our simple JWT password flow with a comprehensive system that knows the difference between a web browser, CLI tool, and background service. It provides client identification (who accessed the API), audit trails, per-client token revocation, and refresh tokens for long-lived sessions. It's the professional-grade authentication that multi-client systems need.
+
+---
+
 ## Context
 
 The knowledge graph system currently uses JWT tokens (password flow) and API keys for authentication. This works for the CLI but creates security problems for other client types:
