@@ -285,6 +285,8 @@ The [docs/architecture/](docs/architecture/) directory contains 67 Architecture 
 
 ## Documentation
 
+**📖 [Complete Documentation](https://aaronsb.github.io/knowledge-graph-system/)** - Comprehensive guides, architecture decisions, and API references
+
 - [Quick Start Guide](docs/guides/QUICKSTART.md)
 - [Architecture Overview](docs/architecture/ARCHITECTURE_OVERVIEW.md)
 - [MCP Setup](docs/manual/03-integration/01-MCP_SETUP.md)
