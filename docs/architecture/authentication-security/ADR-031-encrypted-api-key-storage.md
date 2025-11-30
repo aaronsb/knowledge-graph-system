@@ -6,6 +6,18 @@
 **Deciders:** Development Team
 **Related:** ADR-027 (User Management), ADR-024 (PostgreSQL Architecture), ADR-014 (Job Queue)
 
+## Overview
+
+Here's an uncomfortable truth: most applications handle API keys terribly. They sit in plain text in `.env` files or configuration databases, waiting to be discovered by anyone who can access a database dump or peek at a backup. When you need to rotate a compromised key, you edit the file and restart everything - downtime, friction, and stress.
+
+This is especially problematic for a knowledge graph system that needs expensive LLM API keys (OpenAI, Anthropic) to extract concepts from documents. These keys can cost thousands of dollars per month and provide access to powerful AI services. If they leak in a database dump or get committed to GitHub, the financial and security consequences can be severe.
+
+We need a solution that keeps keys encrypted at rest but still allows runtime management. Administrators should be able to rotate keys via API without redeploying containers. The system should protect against database breaches - if someone gets a SQL dump, they shouldn't be able to use the keys. But we also need to balance security with operational simplicity - this has to work seamlessly in Docker and Podman without complex secret management infrastructure.
+
+This ADR describes our two-layer approach: master encryption keys live in container secrets (never in the database), while LLM API keys are encrypted at rest in PostgreSQL and decrypted on-demand in memory. Think of it like a safe deposit box: the box itself (database) is in a vault (encrypted), but you still need the physical key (master encryption key from secrets) to open it. This gives us runtime management with protection against database compromise.
+
+---
+
 ## Context
 
 The knowledge graph system requires inference API keys (OpenAI, Anthropic) to extract concepts from documents. Currently, these are stored in `.env` files, which presents several issues:
