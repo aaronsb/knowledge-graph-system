@@ -8,6 +8,16 @@
 - [ADR-054: OAuth Client Management](./ADR-054-oauth-client-management.md) - OAuth 2.0 authentication
 - [ADR-027: User Management API](./ADR-027-user-management-api.md) - User operations
 
+## Overview
+
+Imagine building a house room by room, deciding whether each room needs a lock as you build it. You might remember to lock the front door and your bedroom, but forget about the window in the garage or the basement entrance. That's essentially what happened with our API - we built 112 endpoints, remembered to secure 6 of them, and left 52 completely unprotected. Anyone could delete ontologies, grant themselves admin privileges, or reset the entire database.
+
+This isn't a made-up scenario - this was the actual state discovered in a security audit. We had OAuth 2.0 authentication (ADR-054) and a sophisticated RBAC system (ADR-028), but they were optional components that developers had to remember to use. Most didn't. The admin database reset endpoint? No authentication. User management? Open to everyone. Critical RBAC operations? Completely unprotected.
+
+The core problem is architectural: should authentication be applied at the endpoint level (each endpoint declares what it needs) or at the infrastructure level (middleware that intercepts all requests)? Different frameworks make different choices. We researched production FastAPI patterns and found that the official FastAPI Full-Stack Template uses per-endpoint dependency injection, not middleware. This makes security requirements visible in API documentation and type-checked by Python.
+
+This ADR adopts that proven pattern with one addition: a central security policy file that documents what each endpoint should require. This gives us both explicitness (each endpoint declares its requirements) and auditability (we can verify the implementation matches the policy). Think of it like building codes for houses - each room declares whether it needs fire safety equipment, but inspectors can check compliance against a central standard.
+
 ---
 
 ## Context
