@@ -13,7 +13,7 @@
       
       
       
-        <link rel="prev" href="../ADR-069-semantic-fuse-filesystem/">
+        <link rel="prev" href="../ADR-070-polarity-axis-analysis/">
       
       
         <link rel="next" href="../ARCHITECTURE_OVERVIEW/">
@@ -4867,6 +4867,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-070-polarity-axis-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -6276,6 +6304,12 @@
 <td>Semantic FUSE Filesystem</td>
 <td>Proposed</td>
 <td>Expose knowledge graph as FUSE mount point enabling semantic navigation via standard Unix tools (ls, cd, cat, grep, find) - partial filesystem (like /sys/) with 4-level hierarchy (shard/facet/ontology/concepts), directory creation as semantic query, relationship navigation via subdirectories, write-as-ingest - implementation via rclone backend recommended for instant interop with cloud storage</td>
+</tr>
+<tr>
+<td><a href="../ADR-070-polarity-axis-analysis/">ADR-070</a></td>
+<td>Polarity Axis Analysis for Bidirectional Semantic Dimensions</td>
+<td>Draft</td>
+<td>On-demand polarity axis analysis via background workers enables discovery of conceptual spectrums (Modern ↔ Traditional), semantic positioning of concepts on axes, and grounding correlation validation - uses vector projection onto opposing concept pairs (PREVENTS/CONTRADICTS relationships), cached results, three API endpoints for axis analysis, auto-discovery, and concept projection</td>
 </tr>
 </tbody>
 </table>
