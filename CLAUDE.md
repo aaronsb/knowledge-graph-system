@@ -337,6 +337,41 @@ ghcr.io/aaronsb/knowledge-graph-system/kg-operator:0.3.0
 - MINOR: New features, backward-compatible
 - PATCH: Bug fixes, backward-compatible
 
+**Maintaining the CHANGELOG:**
+
+The project maintains `CHANGELOG.md` following [Keep a Changelog](https://keepachangelog.com) format.
+
+**When merging PRs:**
+1. **Update CHANGELOG.md** in the `[Unreleased]` section
+2. **Document notable changes:** Features, fixes, breaking changes, deprecations
+3. **Link to PR:** Include PR number for reference (e.g., `[#153]`)
+4. **Preserve implementation details:** For squash-merged PRs, add a comment to the PR documenting the individual commits
+5. **Commit the update:** Include CHANGELOG update in your PR or as a follow-up commit
+
+**Example CHANGELOG entry:**
+```markdown
+## [Unreleased]
+
+### Added
+
+- **Feature Name** ([#123](link-to-pr))
+  - Brief description of what was added
+  - Key capabilities or changes
+  - Performance characteristics if relevant
+  - Link to detailed implementation history if PR was squash-merged
+```
+
+**When releasing:**
+1. Move `[Unreleased]` entries to new version section (e.g., `[0.4.0] - 2025-11-30`)
+2. Create new empty `[Unreleased]` section
+3. Commit: `git commit -m "docs: update CHANGELOG for v0.4.0 release"`
+
+**Why this matters:**
+- GitHub squash merges combine all commits into one, losing granular history
+- CHANGELOG preserves the implementation story and decision rationale
+- Future maintainers can understand why changes were made
+- Release notes can be generated from CHANGELOG
+
 **Alternative: Manual Release Workflow**
 
 For more control, you can manually trigger the create-release workflow:
