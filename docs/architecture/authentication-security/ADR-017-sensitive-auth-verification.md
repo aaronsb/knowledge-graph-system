@@ -8,6 +8,16 @@
 
 **Technical Story:** Implement a secure authentication flow for destructive administrative operations (database wipe, restore, configuration changes) that balances security with operational robustness.
 
+## Overview
+
+Imagine you're logged into your banking app, browsing your transaction history. You can do that all day without extra verification. But the moment you try to wire transfer $10,000 to someone? The app asks you to re-enter your password, or maybe use a fingerprint. That's "step-up authentication" - proving you're really you before doing something potentially dangerous.
+
+We face a similar challenge with administrative operations in the knowledge graph system. Normal operations like searching concepts or reading data can use regular authentication tokens that last for hours. But what about database wipes, data restoration, or configuration changes? These are destructive operations that could corrupt or delete everything. We need stronger verification.
+
+Here's the tricky part: we can't just require a password for every dangerous operation and call it done. What happens if the network hiccups right after you enter your password but before the operation completes? Should you have to re-enter your password for every retry? That would be frustrating and brittle. We need something more elegant - a system that's both secure against attacks and robust against normal operational failures.
+
+This ADR describes our solution: time-bound elevated tokens with voluntary revocation. Think of it like getting a temporary "supervisor badge" that lets you perform dangerous operations for a short window (5 minutes), but you voluntarily hand the badge back when you're done. If someone tries to use your badge after you've returned it, alarms go off. It's a elegant balance between security, usability, and attack detection.
+
 ---
 
 ## Context
