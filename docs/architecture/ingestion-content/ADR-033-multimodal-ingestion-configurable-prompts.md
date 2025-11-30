@@ -5,6 +5,18 @@
 **Deciders:** Development Team
 **Related:** ADR-014 (Job Approval Workflow), ADR-015 (Smart Chunking), ADR-023 (Markdown Preprocessing)
 
+## Overview
+
+Right now, the knowledge graph system can only process text documents. But what about all the valuable knowledge locked in PowerPoint presentations, technical diagrams, screenshots, and charts? These visual formats contain concepts and relationships that would be incredibly useful to capture, but the system currently can't see them at all.
+
+Modern AI vision models like GPT-4o and Claude can look at images and describe what they see in detail. This ADR proposes adding image ingestion by having vision AI translate images into detailed text descriptions, which then flow through the same concept extraction pipeline we already use for documents. A photo of a flowchart becomes a prose description of that flowchart, and the system extracts concepts from the description just like it would from written text.
+
+But different types of documents benefit from different extraction strategies. Academic papers need formal terminology and citations, business presentations focus on strategic concepts and metrics, and technical documentation emphasizes implementation details. Currently, the system uses a single hardcoded prompt for all content types, which limits its ability to adapt to different knowledge domains.
+
+This ADR also introduces a configurable prompt system where extraction strategies are stored in the database and can be customized per content type or even per ontology. Organizations can experiment with different prompts without code changes, and the system can optimize extraction for specific knowledge domains while maintaining a unified architecture underneath.
+
+---
+
 ## Context
 
 The knowledge graph system currently processes only text documents. However, valuable knowledge exists in visual formats:
