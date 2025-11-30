@@ -5,6 +5,16 @@
 **Deciders:** System Architect
 **Tags:** #security #mcp #ingestion #file-access
 
+## Overview
+
+Giving an AI agent the ability to ingest files into a knowledge graph is incredibly powerful - imagine pointing Claude at your entire research folder and having it extract concepts automatically. But it's also incredibly dangerous if done naively. What stops the agent from ingesting `/etc/passwd` or your `.ssh/private_key`? What prevents path traversal attacks like `../../../sensitive-data`? You need guardrails.
+
+The challenge is balancing utility with security. You want the agent to easily ingest your Documents folder or project documentation, but you don't want it anywhere near your shell history, environment variables, or SSH keys. And you definitely don't want an attacker exploiting prompt injection to exfiltrate arbitrary files through the ingestion pipeline.
+
+The traditional approach might be to make the agent responsible for safety - have it analyze each path, check for sensitive patterns, and decide what's safe. But that's backwards. AI agents make mistakes, can be manipulated through prompts, and shouldn't be security gatekeepers. Instead, the system should enforce security boundaries that the agent can't bypass, period.
+
+This ADR implements a path allowlist security model where users explicitly configure which directories and file patterns are permitted. The agent's job is beautifully simple: just point at files. The system handles everything else - validation, file type detection, vision AI for images, concept extraction, and storage. If the agent tries to access something outside the allowlist, the system refuses before the agent even sees an error. It's fail-secure by design.
+
 ---
 
 ## Context
