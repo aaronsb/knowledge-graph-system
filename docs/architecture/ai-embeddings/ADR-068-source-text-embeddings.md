@@ -1,8 +1,8 @@
 # ADR-068: Source Text Embeddings for Grounding Truth Retrieval
 
-**Status:** Accepted - Partially Implemented (Phase 1-3 complete, Phase 4 pending)
+**Status:** Accepted - Partially Implemented (Phase 1-3, 5 complete, Phase 4 pending)
 **Date:** 2025-11-27
-**Updated:** 2025-11-28 (Phase 3 complete: Source search endpoint + CLI)
+**Updated:** 2025-11-29 (Phase 5 complete: Source search interfaces - CLI, MCP, Web UI)
 **Deciders:** System Architect
 **Tags:** #embeddings #source-retrieval #async-processing #lcm
 
@@ -684,7 +684,59 @@ kg admin regenerate-embeddings --type vocabulary
 kg admin regenerate-embeddings --type source --limit 1000 --offset 0
 ```
 
-### Phase 5: Advanced Features (Future)
+### Phase 5: User Interface Integration (✅ COMPLETE)
+
+**Implementation Date:** 2025-11-29
+**Branch:** `feature/adr-068-phase5-interfaces`
+
+**Goal:** Provide source text search access across all user interaction methods.
+
+#### 5.1: CLI Source Search ✅
+- [x] `kg search sources` command with full parameter support
+- [x] Query, limit, similarity, ontology filtering
+- [x] Formatted output with source passages, concepts, and similarity scores
+- [x] Integrated with existing search command structure
+
+#### 5.2: MCP Server Integration ✅
+- [x] Extended `search` tool with `type` parameter ('concepts' | 'sources')
+- [x] Source search results formatter (`formatSourceSearchResults`)
+- [x] Automatic routing based on search type
+- [x] Rich text output for AI consumption (passages, concepts, offsets)
+
+#### 5.3: Web UI Block Builder ✅
+- [x] SourceSearchBlock component (Smart Block category)
+- [x] Query input, ontology filter, similarity slider, limit controls
+- [x] Execution logic extracting concepts from source passages
+- [x] Block compiler integration with comment annotations
+- [x] Help content and palette integration
+- [x] Amber color scheme (consistent with Smart Blocks)
+
+**Files Modified:**
+- `cli/src/mcp/formatters.ts` - Added `formatSourceSearchResults`
+- `cli/src/mcp-server.ts` - Extended search tool with type parameter
+- `web/src/api/client.ts` - Added `searchSources` method
+- `web/src/components/blocks/SourceSearchBlock.tsx` - New component (142 lines)
+- `web/src/components/blocks/BlockBuilder.tsx` - Execution logic
+- `web/src/components/blocks/BlockPalette.tsx` - Added to Smart Blocks
+- `web/src/components/blocks/blockHelpContent.ts` - Help documentation
+- `web/src/types/blocks.ts` - Type definitions
+- `web/src/lib/blockCompiler.ts` - Block compilation logic
+
+**Testing:**
+- ✅ CLI: `kg search sources "data"` returns 5 results
+- ✅ CLI: `kg search query "towers"` returns 2 concepts
+- ✅ Web UI: Block renders correctly with all controls
+- ✅ API: `/query/sources/search` endpoint working
+- ⏳ MCP: Requires restart to test (in progress)
+
+**Commits:**
+1. `feat(mcp): add source search tool with type parameter (ADR-068 Phase 5)` - 0744e837
+2. `feat(web): add SourceSearchBlock for source text search (ADR-068 Phase 5)` - 7dfe0b8b
+3. `fix(web): add source search execution logic to BlockBuilder` - 345304a0
+4. `fix(web): add sourceSearch case to block compiler` - 5b479746
+5. `fix(web): correct source search endpoint path` - 34ee7ce4
+
+### Phase 6: Advanced Features (Future)
 - [ ] Hybrid search (concept + source combined)
 - [ ] Semantic chunking strategy
 - [ ] Multiple strategies per Source

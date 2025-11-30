@@ -34,6 +34,7 @@ import { NotBlock } from './NotBlock';
 import { LimitBlock } from './LimitBlock';
 import { EnrichBlock } from './EnrichBlock';
 import { VectorSearchBlock } from './VectorSearchBlock';
+import { SourceSearchBlock } from './SourceSearchBlock';
 import { EpistemicFilterBlock } from './EpistemicFilterBlock';
 import { BlockHelpPopup } from './BlockHelpPopup';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
@@ -42,7 +43,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDiagramStore';
 
-import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
+import type { BlockType, BlockData, StartBlockParams, EndBlockParams, SearchBlockParams, VectorSearchBlockParams, SourceSearchBlockParams, NeighborhoodBlockParams, OntologyFilterBlockParams, EdgeFilterBlockParams, NodeFilterBlockParams, AndBlockParams, OrBlockParams, NotBlockParams, LimitBlockParams, EpistemicFilterBlockParams, EnrichBlockParams } from '../../types/blocks';
 
 // Define nodeTypes outside component to prevent React Flow warning
 // See: https://reactflow.dev/error#002
@@ -61,6 +62,7 @@ const nodeTypes: NodeTypes = {
   limit: LimitBlock,
   // Smart blocks
   vectorSearch: VectorSearchBlock,
+  sourceSearch: SourceSearchBlock,
   epistemicFilter: EpistemicFilterBlock,
   enrich: EnrichBlock,
 };
@@ -203,6 +205,10 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
       case 'vectorSearch':
         params = { query: '', similarity: 0.7, limit: 10 } as VectorSearchBlockParams;
         label = 'Vector Search';
+        break;
+      case 'sourceSearch':
+        params = { query: '', similarity: 0.7, limit: 10, ontology: '' } as SourceSearchBlockParams;
+        label = 'Source Search';
         break;
       case 'neighborhood':
         params = { depth: 2, direction: 'both' } as NeighborhoodBlockParams;
@@ -535,6 +541,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
 
       // Check for smart blocks that need special handling
       const vectorSearchBlock = nodes.find(node => node.data.type === 'vectorSearch');
+      const sourceSearchBlock = nodes.find(node => node.data.type === 'sourceSearch');
 
       let result: any;
 
@@ -571,6 +578,51 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
             }
           })),
           relationships: [], // Vector search returns nodes only, no relationships
+        };
+      } else if (sourceSearchBlock) {
+        // Source Search smart block execution path - search source passages
+        const ssParams = sourceSearchBlock.data.params as SourceSearchBlockParams;
+        console.log('[BlockBuilder] Source Search smart block detected:', ssParams);
+
+        if (!ssParams.query || ssParams.query.trim() === '') {
+          setExecutionError('Source Search requires a search query');
+          return;
+        }
+
+        // Call the source search API
+        const searchResult = await apiClient.searchSources({
+          query: ssParams.query,
+          limit: ssParams.limit || 10,
+          min_similarity: ssParams.similarity || 0.7,
+          ontology: ssParams.ontology && ssParams.ontology.trim() !== '' ? ssParams.ontology : undefined,
+          include_concepts: true,
+          include_full_text: true,
+        });
+
+        console.log('[BlockBuilder] Source search result:', searchResult);
+
+        // Extract unique concepts from source results
+        const conceptMap = new Map<string, any>();
+        searchResult.results.forEach((source: any) => {
+          source.concepts?.forEach((concept: any) => {
+            if (!conceptMap.has(concept.concept_id)) {
+              conceptMap.set(concept.concept_id, concept);
+            }
+          });
+        });
+
+        // Transform to match Cypher result format
+        result = {
+          nodes: Array.from(conceptMap.values()).map((c: any) => ({
+            id: c.concept_id,
+            label: c.label,
+            properties: {
+              concept_id: c.concept_id,
+              label: c.label,
+              description: c.description,
+            }
+          })),
+          relationships: [], // Source search returns concepts from passages, no relationships
         };
       } else {
         // Standard Cypher execution path

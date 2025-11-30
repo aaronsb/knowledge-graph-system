@@ -329,6 +329,22 @@ class APIClient {
     // Create blob URL for display in <img> tags
     return URL.createObjectURL(response.data);
   }
+
+  /**
+   * Search source text passages using embeddings (ADR-068 Phase 5)
+   * Searches source document chunks directly, not concepts
+   */
+  async searchSources(params: {
+    query: string;
+    limit?: number;
+    min_similarity?: number;
+    ontology?: string;
+    include_concepts?: boolean;
+    include_full_text?: boolean;
+  }): Promise<any> {
+    const response = await this.client.post('/query/sources/search', params);
+    return response.data;
+  }
 }
 
 // Export singleton instance

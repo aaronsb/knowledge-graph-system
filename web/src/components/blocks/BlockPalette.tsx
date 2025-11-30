@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake, HelpCircle, Shield } from 'lucide-react';
+import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake, HelpCircle, Shield, FileText } from 'lucide-react';
 import type { BlockType } from '../../types/blocks';
 import { BlockHelpPopup } from './BlockHelpPopup';
 
@@ -125,6 +125,13 @@ const paletteSections: PaletteSection[] = [
         label: 'Vector Search',
         description: 'Semantic search with embeddings',
         color: 'indigo',
+      },
+      {
+        type: 'sourceSearch',
+        icon: FileText,
+        label: 'Source Search',
+        description: 'Search source text passages (ADR-068)',
+        color: 'amber',
       },
       {
         type: 'epistemicFilter',
