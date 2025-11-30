@@ -342,7 +342,7 @@ class APIClient {
     include_concepts?: boolean;
     include_full_text?: boolean;
   }): Promise<any> {
-    const response = await this.client.post('/query/search-sources', params);
+    const response = await this.client.post('/query/sources/search', params);
     return response.data;
   }
 }
