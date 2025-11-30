@@ -5251,6 +5251,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#abstract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7240,6 +7251,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#abstract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8315,6 +8337,11 @@
 <p>"Everything is a file" - Traditional Unix Philosophy
 "Everything is a file, but which file depends on what you're thinking about" - Semantic Unix Philosophy</p>
 </blockquote>
+<h2 id="overview">Overview</h2>
+<p>Traditional filesystems force you to organize knowledge in rigid hierarchies—one directory, one path, one canonical location. But knowledge doesn't work that way. A document about embedding models is simultaneously about AI architecture, operational procedures, and bug fixes. Why should it live in only one folder?</p>
+<p>The knowledge graph already solves this by letting concepts exist in multiple semantic contexts. But accessing it requires custom tools: CLI commands, web interfaces, MCP integration. Unix users already have powerful tools—grep, find, diff, tar—that they know intimately, but these tools can't touch the graph.</p>
+<p>This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, turning standard Unix tools into knowledge graph explorers. Type <code>cd /mnt/knowledge/embedding-models/</code> and you're executing a semantic query. Run <code>ls</code> and you see concepts with similarity scores. Use <code>grep -r</code> across multiple mounted shards and you're running distributed queries. Same concepts appear in multiple "directories" because they belong to multiple contexts. The filesystem adapts to your exploration patterns, making knowledge navigation feel like browsing files—except the files organize themselves based on what they mean.</p>
+<hr />
 <h2 id="abstract">Abstract</h2>
 <p>This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, enabling semantic navigation and querying through standard Unix tools (<code>ls</code>, <code>cd</code>, <code>cat</code>, <code>grep</code>, <code>find</code>). Like <code>/sys/</code> or <code>/proc/</code>, this is a <strong>partial filesystem</strong> that implements only operations that make semantic sense, providing a familiar interface to knowledge graph exploration.</p>
 <h2 id="context">Context</h2>

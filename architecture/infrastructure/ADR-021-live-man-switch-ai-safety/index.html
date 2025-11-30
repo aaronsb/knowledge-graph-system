@@ -4414,6 +4414,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6586,6 +6597,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7004,6 +7026,11 @@
 <strong>Date:</strong> 2025-10-09
 <strong>Deciders:</strong> Development Team
 <strong>Related:</strong> ADR-020 (Admin Module Architecture)</p>
+<h2 id="overview">Overview</h2>
+<p>We're entering an era where AI agents can execute terminal commands on our behalf. Ask an agent to "clean up the database" and it might helpfully run a reset command that deletes everything. The agent isn't malicious - it's trying to be helpful - but the consequences are the same. Traditional security measures like passwords don't help because the agent already has access to those credentials. It's a new kind of problem: not adversarial attacks, but well-intentioned automation gone wrong.</p>
+<p>The challenge is creating a gate that's trivial for humans but expensive for AI to automate. Think about those child safety caps on medicine bottles - they're not impossible to open, they just require sustained physical coordination that young children haven't developed. Similarly, we needed something that requires physical presence and sustained action, something that's harder to automate than a simple API call.</p>
+<p>The solution asks humans to hold down the Enter key for 3 seconds while watching a progress bar fill. For a human sitting at the keyboard, this takes 5 seconds total. For an AI agent, automating this requires spawning processes, researching keyboard injection libraries, coordinating timing - complex work that takes minutes to hours. It's not a perfect lock, it's a time barrier. Like a bank vault that can be broken into but takes so long that security arrives first, this gives humans time to notice unusual activity and intervene before irreversible damage occurs.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>As AI agents become more autonomous and capable, they increasingly interact with systems through CLIs and APIs. While this enables powerful automation, it introduces a new category of risk: <strong>well-intentioned but dangerous AI actions</strong>.</p>
 <h3 id="the-problem-space">The Problem Space</h3>

@@ -4330,6 +4330,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6807,6 +6818,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7446,6 +7468,11 @@
 <strong>Date:</strong> 2025-10-08
 <strong>Deciders:</strong> System Architecture
 <strong>Related:</strong> ADR-012 (API Server), ADR-013 (Unified Client)</p>
+<h2 id="overview">Overview</h2>
+<p>Think about how you back up photos from your phone. The photos live on your device, not on some cloud server. You initiate the backup, your phone sends the files where you want them, and you can restore them whenever needed. Now imagine if instead, all your photos were "backed up" to a folder on Apple's servers that you couldn't even access - that would be pretty useless, right?</p>
+<p>That's exactly the problem we had with our initial backup system. When you asked for a backup of your knowledge graph, the system would create it... on the server. You couldn't download it, move it, or keep it somewhere safe. Even worse, if you wanted to restore from a backup, you had to tell the server the filename of a file sitting on the server's disk. This violated a basic principle: the person who owns the data should control where it lives.</p>
+<p>The solution streams backups directly to your computer and lets you upload them back when needed. It's like having a proper export/import feature - you get a file you can save anywhere, email to a colleague, or store in your own cloud storage. The server never keeps permanent copies, treating backups as ephemeral streams of data moving between your computer and the database.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The current backup/restore implementation has architectural issues that violate client-server separation:</p>
 <p><strong>Current Problems:</strong>

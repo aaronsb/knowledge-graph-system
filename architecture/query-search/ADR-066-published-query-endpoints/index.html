@@ -4916,6 +4916,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6552,6 +6563,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6938,6 +6960,10 @@
 <strong>Related ADRs:</strong>
 - ADR-031 (Encrypted API Key Storage) - OAuth/auth infrastructure
 - ADR-014 (Job Approval Workflow) - Existing approval patterns</p>
+<h2 id="overview">Overview</h2>
+<p>Imagine you've spent hours using the Visual Block Builder to craft the perfect query that extracts exactly the knowledge you need from your graph—maybe it's all the concepts related to machine learning with high grounding strength, formatted as a clean dataset. Right now, every time you need that data, you have to log into the web interface, load your query flow, click "Run Query," and manually export the results. If you want to use this data in an automated pipeline or let another application access it, you're out of luck.</p>
+<p>This ADR introduces Published Query Endpoints, which transform your carefully crafted query flows into reusable REST API endpoints. Once you publish a query flow, external applications can execute it programmatically using OAuth credentials, receiving the results as JSON or CSV without any manual intervention. This is similar to how you might save a complex SQL query as a stored procedure or view in a traditional database, except these flows can include not just graph traversals but also semantic search, enrichment operations, and custom filters.</p>
+<p>The key innovation is that these aren't just raw graph queries—they're curated data pipelines that encapsulate your domain expertise about what knowledge matters and how it should be filtered and formatted. You control who can access each published endpoint, making it possible to share specific views of your knowledge graph with different teams or applications while keeping the underlying data secure.</p>
 <hr />
 <h2 id="context">Context</h2>
 <h3 id="current-state-interactive-only-query-execution">Current State: Interactive-Only Query Execution</h3>

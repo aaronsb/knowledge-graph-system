@@ -5055,6 +5055,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6453,6 +6464,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6738,6 +6760,11 @@
 <strong>Date:</strong> 2025-10-09
 <strong>Deciders:</strong> Development Team
 <strong>Related:</strong> ADR-013 (Unified TypeScript Client), ADR-018 (Server-Sent Events Streaming)</p>
+<h2 id="overview">Overview</h2>
+<p>Terminal tables should be simple, but they're surprisingly tricky to get right. When you apply color codes to text and then try to truncate it to fit column widths, you end up cutting through the ANSI escape sequences—leaving broken formatting and misaligned columns. Unicode characters throw off width calculations. Every command reimplements its own table logic.</p>
+<p>The problem gets worse when you realize tables appear everywhere in the CLI: job listings, search results, ontology information, and more. Each one was handling formatting slightly differently, with custom color logic applied before truncation, leading to the same bugs over and over.</p>
+<p>This ADR introduces semantic column types—like <code>job_id</code>, <code>status</code>, or <code>timestamp</code>—that know how to format their content. The key insight: truncate plain text first, then apply colors and styling. This way, width calculations work correctly, formatting never breaks, and all tables across the entire CLI use consistent colors and formatting rules defined in one place.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The <code>kg</code> CLI displays tabular data in multiple commands (<code>kg jobs list</code>, <code>kg ontology list</code>, <code>kg search</code>, etc.). Initial implementations used custom formatting logic with ANSI color codes applied before truncation, which caused:</p>
 <ol>

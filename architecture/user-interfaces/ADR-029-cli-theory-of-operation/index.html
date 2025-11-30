@@ -5083,6 +5083,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6563,6 +6574,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6957,6 +6979,11 @@
 <p><strong>Status:</strong> Proposed
 <strong>Date:</strong> 2025-10-12
 <strong>Supersedes:</strong> N/A - First formal CLI design specification</p>
+<h2 id="overview">Overview</h2>
+<p>Command-line interfaces face a fundamental tension: Unix experts want familiar verbs like <code>ls</code> and <code>rm</code>, while domain users want commands that reflect their work, like <code>job approve</code> and <code>ontology merge</code>. Most tools pick one approach and frustrate half their users.</p>
+<p>Our knowledge graph CLI grew organically with mixed patterns—some commands used hierarchies (<code>kg ontology list</code>), others were flat, and inconsistencies emerged. Aliases appeared without rationale. This ADR confronts the design tension directly with a deliberate hybrid approach.</p>
+<p>We provide two ways to interact with the same functionality: domain-oriented commands (<code>kg job approve &lt;id&gt;</code>) for power users learning the system, and Unix-style shortcuts (<code>kg rm job &lt;id&gt;</code>) for those who think in traditional file operations. The verb shortcuts delegate to the primary domain commands through a router pattern, ensuring one source of truth while supporting multiple mental models. Best of both worlds.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The Knowledge Graph CLI (<code>kg</code>) has evolved organically, resulting in inconsistent command structures:</p>
 <p><strong>Current Issues:</strong>

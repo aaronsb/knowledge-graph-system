@@ -3940,6 +3940,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6485,6 +6496,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6803,6 +6825,12 @@
 <strong>Supersedes:</strong> ADR-027 (Authentication API) - extends with dynamic RBAC
 <strong>Related ADRs:</strong>
 - <a href="../ADR-060-endpoint-security-architecture/">ADR-060: API Endpoint Security Architecture</a> - Endpoint-level security implementation</p>
+<h2 id="overview">Overview</h2>
+<p>Think about permissions on your computer. You might have "admin" access, which sounds powerful - but what does that actually mean? Can you delete system files? Install software? Read other users' private files? The answer depends on what operations the system supports. As software evolves and adds new features, hardcoding permission rules becomes a nightmare.</p>
+<p>This is the challenge we face as the knowledge graph system grows. We started with four simple roles (read-only, contributor, curator, admin) and hardcoded permissions like "curators can approve vocabulary." That works fine initially, but what happens when we add AI-generated ontologies? Collaboration workspaces? Tool execution? Do we keep adding if-statements for every new feature? That approach doesn't scale and creates a tangled mess of permission logic.</p>
+<p>We need a system where permissions adapt to new resource types without changing code. When someone builds a "collaboration graph" feature, they should be able to register it as a new resource type and define what actions are possible (read, write, invite, moderate). Administrators should be able to create custom roles ("collaboration moderator") and grant fine-grained permissions ("can moderate collaboration graphs in the engineering workspace"). All without touching the authentication code.</p>
+<p>This ADR describes dynamic RBAC (Role-Based Access Control) - a three-tier system where resources register themselves, roles can be created on the fly, and permissions can be scoped to specific instances. It's the difference between hardcoded permission rules and a flexible permission engine that grows with the platform.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The current authentication system (ADR-027) has hardcoded roles (<code>read_only</code>, <code>contributor</code>, <code>curator</code>, <code>admin</code>) with static permissions seeded in <code>kg_auth.role_permissions</code>. As the platform evolves to support:</p>
 <ul>

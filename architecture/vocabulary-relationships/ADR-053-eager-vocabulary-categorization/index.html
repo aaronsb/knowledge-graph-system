@@ -5586,6 +5586,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6475,6 +6486,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6783,6 +6805,10 @@
 <strong>Implemented:</strong> 2025-11-01
 <strong>Related:</strong> ADR-052 (Vocabulary Expansion-Consolidation Cycle), ADR-047 (Probabilistic Vocabulary Categorization)</p>
 <p><strong>Implementation Summary:</strong> Core eager categorization was already functional in ADR-047. Fixed transaction isolation bug preventing auto-categorization. Edge types now automatically categorized during ingestion with ~65-90% confidence. Similarity analysis tools (kg vocab similar/opposite/analyze) remain as future enhancements.</p>
+<h2 id="overview">Overview</h2>
+<p>When your system learns a new relationship type like "HARMONIZES_WITH" during document ingestion, should it immediately figure out what semantic category it belongs to (causation? composition? interaction?), or should it mark it as "uncategorized" and wait for you to manually run a separate categorization command later? The lazy approach means your vocabulary sits in limbo—unusable for category-based queries until you remember to categorize it.</p>
+<p>This ADR makes categorization happen automatically and immediately. The moment the system creates a new vocabulary type, it uses the embedding-based categorization logic (from ADR-047) to determine which semantic category it's most similar to. It's like having a librarian who immediately files each new book in the right section as it arrives, rather than stacking uncategorized books in a corner for later sorting. The implementation revealed that the core logic was already mostly there—what was missing was proper integration into the ingestion pipeline due to a database transaction isolation issue. Once fixed, new types get categorized with 65-90% confidence scores as they're created, eliminating the manual maintenance step. The vocabulary is always organized and queryable by category, without requiring you to remember to run refresh commands after ingestion completes.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The knowledge graph system manages edge vocabulary through a lifecycle: LLMs discover new relationship types during ingestion, and the system must categorize them into semantic groups (causation, temporal, logical, etc.) for organization and query purposes.</p>
 <h3 id="current-state-machine">Current State Machine</h3>

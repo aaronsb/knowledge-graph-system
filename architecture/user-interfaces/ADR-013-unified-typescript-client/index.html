@@ -5027,6 +5027,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6553,6 +6564,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6938,6 +6960,11 @@
 <strong>Date:</strong> 2025-10-06 (Updated: 2025-11-08)
 <strong>Deciders:</strong> Development Team
 <strong>Pattern Source:</strong> Anthropic's <code>@modelcontextprotocol</code> packages</p>
+<h2 id="overview">Overview</h2>
+<p>Building software interfaces often leads to duplication. You create a command-line tool, then realize you need an MCP server for Claude integration, and suddenly you're maintaining two codebases with the same API calls, the same type definitions, and the same bug fixes needed in both places.</p>
+<p>This ADR takes a different approach, inspired by how Anthropic builds their tools: one TypeScript codebase that can run in multiple modes. When you run <code>kg search</code>, you get a CLI. When Claude Desktop starts the MCP server, it gets the same underlying client code but wrapped in MCP protocol. Same API logic, same types, same error handling—just different interfaces.</p>
+<p>The payoff is simple: change the API client once, both interfaces work. Add a new feature, it's available everywhere. Fix a bug, it's fixed everywhere. Instead of maintaining separate CLI and MCP codebases, we maintain one unified client that adapts its interface based on how it's launched.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The system needs multiple client interfaces:</p>
 <ol>

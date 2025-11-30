@@ -4191,6 +4191,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6480,6 +6491,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6792,6 +6814,11 @@
 <strong>Date:</strong> 2025-10-20
 <strong>Deciders:</strong> Development Team
 <strong>Tags:</strong> #database #schema #migrations #devops</p>
+<h2 id="overview">Overview</h2>
+<p>Every software system evolves over time. You add a new feature that needs a new database table, or you realize an existing column needs a different data type, or you need to add an index for better performance. This is normal and healthy—but it creates a practical problem: how do you safely apply these changes to existing databases without breaking things?</p>
+<p>In the early days of our system, we used a single <code>schema/init.sql</code> file that worked great for fresh installations but became a coordination nightmare as the project grew. When a developer added a new table, they'd manually edit this monolithic file. If you already had a database running, you'd have to figure out which parts of the file you'd already applied and which were new, then carefully run just the new bits. Miss a dependency? Your database breaks. Run something twice? You might get errors or, worse, silent data corruption.</p>
+<p>The core insight is simple: databases need version control just like code. When you pull the latest code from git, you want a command that safely applies any new schema changes—whether it's your first time setting up or you've been running the system for months. The solution is a migration system: numbered SQL files (001, 002, 003...) combined with a tracking table that remembers which migrations have already been applied.</p>
+<p>We chose to build a simple bash-based migration runner rather than adopting heavyweight tools like Flyway or Alembic. It's about 100 lines of code, has zero external dependencies beyond the PostgreSQL tools already in our Docker containers, and perfectly fits our linear development model. Each migration is an idempotent SQL file that can safely run multiple times, and the system automatically skips migrations you've already applied. It's simple, transparent, and exactly powerful enough for our needs without the complexity of enterprise migration frameworks.</p>
 <hr />
 <h2 id="context">Context</h2>
 <p>As the knowledge graph system evolves, we're adding incremental schema changes (new tables, columns, constraints, etc.). Currently, we use a monolithic <code>schema/init.sql</code> file that's executed on fresh database initialization.</p>

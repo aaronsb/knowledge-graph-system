@@ -5167,6 +5167,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6624,6 +6635,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7080,6 +7102,11 @@
 <strong>Date:</strong> 2025-10-17
 <strong>Deciders:</strong> Development Team
 <strong>Related:</strong> ADR-034 (Graph Visualization), ADR-035 (Explorer Methods), ADR-016 (Apache AGE Migration)</p>
+<h2 id="overview">Overview</h2>
+<p>Writing graph queries requires learning openCypher syntax—a barrier that keeps many users from fully exploring their knowledge graphs. When a simple search fails at the default similarity threshold, the system currently just says "no results" without guiding users toward better queries or suggesting adjustments.</p>
+<p>The deeper problem is that query interfaces are tied to specific visualizations. Search works in the force graph explorer but not elsewhere. There's no way to build complex queries visually, no way to find paths between concepts without writing code, and no way to express patterns like "find concepts that IMPLIES concepts that CONTRADICTS each other."</p>
+<p>This ADR introduces a tri-mode universal query builder that works with any explorer: Smart Search for enhanced text queries with recommendations, Visual Blocks for drag-and-drop query construction, and an openCypher editor for power users. The key insight is the "Rosetta Stone" learning pattern—building queries visually while seeing the generated openCypher teaches users the syntax organically, creating a bridge from visual to textual expertise.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The current visualization application uses a simple concept search interface. While functional, it has several limitations:</p>
 <p><strong>Current Issues:</strong>

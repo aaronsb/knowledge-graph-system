@@ -4470,6 +4470,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6558,6 +6569,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6947,6 +6969,11 @@
 <p><strong>Status:</strong> Proposed
 <strong>Date:</strong> 2025-11-03
 <strong>Related ADRs:</strong> ADR-054 (OAuth Client Management)</p>
+<h2 id="overview">Overview</h2>
+<p>Modern web applications face a deployment puzzle: how do you serve the same frontend code to development, staging, and production without rebuilding each time? If your app has hardcoded URLs pointing to <code>localhost:8000</code> for development, you can't deploy that same build to production pointing at <code>api.example.com</code>. The traditional solution is to rebuild for each environment, but that violates the principle of "build once, deploy many."</p>
+<p>There's a deeper challenge too: serving web apps from Content Delivery Networks (CDNs) gives you global performance and scalability, but CDNs only serve static files. They can't run server-side code to render login forms or manage sessions. Yet modern OAuth security requires PKCE (a challenge-response protocol) and proper redirect URL validation. How do you reconcile stateless, static hosting with secure authentication?</p>
+<p>The solution is runtime configuration and client-side OAuth flows. Instead of baking configuration into the build, the app loads it when it starts via a <code>config.js</code> file that's generated at deploy time. For authentication, the browser handles the entire OAuth flow client-side - no server-rendered HTML needed. This means you can build once, deploy the same files to CloudFlare or Vercel in multiple environments, and just swap out the config file to point each deployment at the right backend. It's like having a universal adapter that works anywhere once you plug in the right settings.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The knowledge graph system currently consists of:
 - <strong>API Server:</strong> Python FastAPI backend (port 8000)

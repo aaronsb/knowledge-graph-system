@@ -3522,6 +3522,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6807,6 +6818,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7446,6 +7468,12 @@
 <strong>Date:</strong> 2025-10-24 (Updated: 2025-11-04)
 <strong>Authors:</strong> System Architecture Team
 <strong>Related:</strong> ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), <strong>ADR-045 (Unified Embedding Generation - DEPENDENCY)</strong>, ADR-046 (Grounding-Aware Vocabulary Management), <strong>ADR-058 (Polarity Axis Triangulation - IMPLEMENTATION)</strong></p>
+<h2 id="overview">Overview</h2>
+<p>Imagine you're building a knowledge graph from technical documentation, and you encounter two contradictory statements: "The system uses Neo4j" (found in old architecture docs) and "The system uses Apache AGE" (found in the current codebase). Both have evidence. Both seem authoritative. Which one is true? More importantly, how should the system decide which truth to present when someone asks about the database?</p>
+<p>This is the fundamental challenge of any knowledge system that ingests information from multiple sources over time: reality changes, documentation gets outdated, and contradictions accumulate. Traditional databases solve this with timestamps (newest wins) or manual curation (humans decide). But what if you could let the evidence itself determine which concepts are well-grounded and which are contradicted?</p>
+<p>Think of it like scientific consensus. A hypothesis gains strength when multiple experiments support it and loses credibility when experiments contradict it. No single experiment is "the truth"—instead, truth emerges from the weight of evidence. This ADR brings that same principle to the knowledge graph: each concept gets a grounding strength calculated from how strongly it's supported versus contradicted by other concepts.</p>
+<p>The key innovation is making this calculation dynamic and semantic. When you ask about a concept, the system looks at its incoming relationships (SUPPORTS, CONTRADICTS, ENABLES, etc.), measures how semantically similar each relationship is to "support" versus "contradict" using embedding vectors, and computes a weighted score. High positive grounding? The concept is well-validated. Negative grounding? It's been contradicted by more recent or stronger evidence. Near zero? The concept is neutral or contested. This way, "System uses Neo4j" would score negatively (contradicted), while "System uses Apache AGE" would score positively (supported), and users automatically see the more grounded truth.</p>
+<hr />
 <h2 id="context">Context</h2>
 <h3 id="the-adr-044045046-trio">The ADR-044/045/046 Trio</h3>
 <p>This ADR is part of a three-part system for truth convergence in the knowledge graph:</p>

@@ -4999,6 +4999,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6325,6 +6336,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6483,6 +6505,11 @@
 <strong>Deciders:</strong> Development Team
 <strong>Related:</strong> ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
 <strong>Note:</strong> This ADR predates the Apache AGE migration (ADR-016). References to Neo4j in this document are historical; the system now uses Apache AGE (PostgreSQL graph extension).</p>
+<h2 id="overview">Overview</h2>
+<p>When software grows organically, everything tends to end up in one place. Our knowledge graph system started with a single <code>cli.py</code> file that did everything—searching concepts, backing up databases, restoring data, and managing configurations. While this worked initially, it created a tangled mess where adding new features meant navigating an increasingly complex monolith.</p>
+<p>The real problem wasn't just messy code. We had shell scripts duplicating Python logic, no shared libraries for common operations, and backup processes that didn't properly save expensive vector embeddings. If you lost your database, you'd have to re-process all your documents through the AI models again—potentially costing $50-100 in API fees for large document collections.</p>
+<p>This ADR establishes a clean separation: query tools for exploring data go in the CLI layer, administrative tools for managing the database go in the admin layer, and shared functionality lives in reusable libraries. The result is a codebase that's easier to extend, properly backs up all your data (including those expensive embeddings), and provides a foundation for future interfaces like web UIs.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The original implementation mixed query operations (search, concept details) and administrative operations (backup, restore, database setup) in a single <code>cli.py</code> file. Shell scripts duplicated logic from Python code. No shared library existed for common operations like console output, JSON formatting, or graph database queries. This made it difficult to add new interfaces (GUI, web) without duplicating functionality.</p>
 <p>Additionally, backup/restore operations didn't handle vector embeddings properly, risking expensive re-ingestion costs ($50-100 for large documents) if data was lost.</p>

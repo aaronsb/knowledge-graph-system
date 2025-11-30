@@ -3243,6 +3243,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6336,6 +6347,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6504,6 +6526,12 @@
 <strong>Date:</strong> 2025-10-08
 <strong>Deciders:</strong> System Architecture
 <strong>Related:</strong> ADR-001 (Multi-Tier Access), ADR-002 (Node Fitness Scoring)</p>
+<h2 id="overview">Overview</h2>
+<p>When building software, there's a constant temptation to bundle everything together—put your access control in the database, your business logic in your API, your workflow rules in your UI, all tangled up in a mess that becomes impossible to change. Knowledge graphs are particularly vulnerable to this because they're so flexible: you can store anything in there, so why not store everything?</p>
+<p>The problem is that tight coupling kills adaptability. If your graph contains not just knowledge but also the rules for how to access it, the tools for working with it, and the logic for managing it, then you can't query it with anything except your specific application. Want to add a web UI? Rebuild everything. Want to query it with a different tool? Can't do it—the graph only speaks one language.</p>
+<p>This decision establishes a clean separation: the graph is a pure knowledge store, like a library's catalog system. All the stuff about how to access it, what workflows to follow, and what business rules apply lives outside the graph in the application layer, MCP server, or external services. The graph just holds concepts, relationships, sources, and provenance—period.</p>
+<p>Using the library metaphor: the graph is the books on shelves, organized and cataloged. The MCP server is the librarian's desk where you ask questions and get guidance. Automated quality control agents are the librarians who periodically check for misplaced books or damaged items. This separation means anyone can walk into the library and browse (using any tool), while the librarians maintain order without physically altering the books themselves.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>Early knowledge graph systems often conflate knowledge storage with access control, workflow logic, and business rules. This creates tight coupling that makes it difficult to add new access methods (web UI, API, different MCP servers) or query the graph using different tools.</p>
 <h2 id="decision">Decision</h2>

@@ -4860,6 +4860,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6481,6 +6492,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6794,6 +6816,10 @@
 <strong>Date:</strong> 2025-10-12
 <strong>Author:</strong> System Architecture
 <strong>Related:</strong> ADR-016 (Apache AGE), ADR-024 (PostgreSQL)</p>
+<h2 id="overview">Overview</h2>
+<p>Imagine you're building a knowledge base about Buddhism by reading multiple books on the subject. As you read, you take notes and create concept cards. When you encounter "Buddhism" in the first book, you create a card. But when the second book mentions "Buddhist Philosophy," should you create a new card or recognize it's the same concept? This decision happens thousands of times as your knowledge base grows, and getting it wrong leads to a fragmented, confusing mess.</p>
+<p>This is exactly the challenge our knowledge graph faces during document ingestion. The system uses AI to extract concepts from documents and relies on embedding-based similarity matching to decide whether a new mention is genuinely new or just another way of referring to something already in the graph. Currently, we use an 80% similarity threshold: if two concepts are more than 80% similar in their semantic meaning, we treat them as the same concept.</p>
+<p>The problem is, we don't systematically validate whether this deduplication process actually works well over time. Does the quality degrade as the graph grows? Do related documents properly share concepts, or do we end up with "Buddhism," "Buddhist Philosophy," and "Buddhist Teachings" cluttering our search results? This ADR establishes a rigorous test suite to answer these questions and ensure the deduplication system maintains quality.</p>
 <hr />
 <h2 id="context">Context</h2>
 <p>The knowledge graph relies on embedding-based concept deduplication to prevent creating duplicate concepts when ingesting related documents. The quality of this deduplication directly impacts:</p>

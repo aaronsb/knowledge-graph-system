@@ -4749,6 +4749,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#migration-note-minio-garage-2025-11-04" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7490,6 +7501,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#migration-note-minio-garage-2025-11-04" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8816,6 +8838,11 @@
 - <a href="../../ai-embeddings/ADR-042-local-extraction-inference/">ADR-042: Ollama Local Inference Integration</a>
 - <a href="../../ai-embeddings/ADR-043-single-node-resource-management/">ADR-043: Embedding Strategy and Resource Management</a>
 - <a href="../../database-schema/ADR-016-apache-age-migration/">ADR-016: Apache AGE Migration</a> (Parallel vendor lock-in escape)</p>
+<h2 id="overview">Overview</h2>
+<p>The knowledge graph excels at extracting concepts from prose text, but what about all the valuable knowledge locked in images? Think about PDF lecture slides with diagrams, architecture flowcharts, screenshots of code, or whiteboard photos from brainstorming sessions. These visual documents contain concepts and relationships, but the text-only system can't see them.</p>
+<p>Modern vision AI models like GPT-4o can look at an image and describe what they see in exhaustive detail. This ADR proposes a "hairpin" architecture where images get converted to detailed prose descriptions via vision AI, then flow through the exact same concept extraction pipeline we already use for text documents. A diagram of a recursive loop becomes a prose description of that diagram, and the LLM extracts concepts from the description just like it would from written text. The original images get stored in object storage (Garage) for future reference, but the graph works with the semantic concepts extracted from their descriptions.</p>
+<p>The clever part is visual context injection. When you ingest an image, the system first searches for visually similar images already in the graph using image embeddings. If it finds a diagram that looks similar—especially from the same ontology—it includes those similar images' descriptions as context when extracting concepts. This helps the LLM understand "this flowchart is part of the same lecture series as that other flowchart," creating stronger relationships between related visual content.</p>
+<p>Everything reuses the existing architecture: one unified upsert pipeline, one concept extraction system, one graph schema. Images just take a detour through vision AI to become text first, then follow the same path as documents. The system gains multimodal capabilities while maintaining architectural simplicity and avoiding code duplication.</p>
 <hr />
 <h2 id="migration-note-minio-garage-2025-11-04">Migration Note: MinIO → Garage (2025-11-04)</h2>
 <p><strong>Initial implementation</strong> used MinIO for S3-compatible object storage. However, in March 2025, MinIO gutted the admin UI from their Community Edition, relegating it to their Enterprise edition at $96,000/year. This follows the exact same bait-and-switch pattern we encountered with Neo4j (which charges $180,000/year for RBAC and security features we considered table-stakes).</p>

@@ -3466,6 +3466,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6791,6 +6802,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7415,6 +7437,12 @@
 <strong>Implemented:</strong> 2025-10-22
 <strong>Deciders:</strong> System Architects
 <strong>Related:</strong> ADR-039 (Local Embedding Service), ADR-041 (AI Extraction Config), ADR-025 (Dynamic Relationship Vocabulary)</p>
+<h2 id="overview">Overview</h2>
+<p>Imagine you're working on a knowledge base containing sensitive medical records, classified research, or proprietary business data. Every time you ingest a document, the system currently sends chunks of that text to OpenAI or Anthropic for concept extraction. Your private data leaves your infrastructure, travels across the internet, gets processed by someone else's computers, and then returns. This isn't just a privacy concern—it's often a compliance dealbreaker for regulated industries.</p>
+<p>Beyond privacy, there's the cost problem. Cloud API extraction scales linearly with your document volume. Ingesting a thousand-page technical manual? That's hundreds of API calls at several cents each. The bills add up quickly, and there's no ceiling—you pay for every chunk, every time. Plus, you're completely dependent on internet connectivity and the provider staying online. No network? No ingestion.</p>
+<p>Here's where the landscape has shifted: modern open-source LLMs running on consumer GPUs can now perform concept extraction with quality approaching GPT-4. Tools like Ollama make it dead simple to run models like Llama 3.1, Mistral, or Qwen locally. You download a model once, and then extraction is free—no API calls, no data leaving your system, no network dependency.</p>
+<p>This ADR enables local LLM inference as a first-class extraction provider. The system integrates with Ollama (or any OpenAI-compatible local server) just like it integrates with cloud providers, using the same unified configuration system from ADR-041. Switch from GPT-4 to local Mistral with a single API call—no code changes, no architectural rewrites, just configuration. The key insight is that extraction is an abstract operation: "given text, return concepts"—it doesn't care whether those concepts came from a cloud API or a GPU in your server room.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>Currently, the system requires cloud API access (OpenAI or Anthropic) for concept extraction during document ingestion. This creates several challenges:</p>
 <h3 id="current-limitations">Current Limitations</h3>

@@ -5139,6 +5139,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6618,6 +6629,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7069,6 +7091,11 @@
 <strong>Last Updated:</strong> 2025-10-17
 <strong>Deciders:</strong> Development Team
 <strong>Related:</strong> ADR-034 (Graph Visualization Architecture), ADR-037 (Human-Guided Graph Editing)</p>
+<h2 id="overview">Overview</h2>
+<p>Building a graph visualization isn't enough—you need to make it usable. ADR-034 established the architecture for explorers, but left crucial questions unanswered: How do users navigate between concepts? What happens when they click a node? How do they follow relationships without losing their place?</p>
+<p>Graph exploration has unique interaction challenges. Unlike browsing files in folders, you can arrive at the same concept through multiple semantic paths. You need to track where you came from, highlight your current focus, and provide intuitive ways to traverse relationships. Standard UI patterns break down when concepts exist in multiple contexts simultaneously.</p>
+<p>This ADR documents the specific explorer types, their interaction patterns, and navigation enhancements like "You Are Here" highlighting, breadcrumb trails, and context menus. It covers how users move through the graph (clicking, right-clicking, keyboard navigation), how the system maintains visual continuity, and how to implement these patterns using D3.js and DOM manipulation. These details transform static visualizations into fluid exploration tools.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>ADR-034 establishes the core architecture for the graph visualization application. This ADR documents the specific explorer types, their use cases, interaction patterns, and planned enhancements for navigating and understanding the knowledge graph.</p>
 <p>Explorers are specialized visualization modes optimized for different analysis tasks. Each explorer type serves distinct user needs - from discovering conceptual neighborhoods to comparing ontologies or analyzing temporal evolution.</p>

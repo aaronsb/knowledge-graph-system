@@ -4609,6 +4609,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6753,6 +6764,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7338,6 +7360,12 @@
 <strong>Date:</strong> 2025-10-10
 <strong>Decision Makers:</strong> System Architecture
 <strong>Consulted:</strong> Ingestion Pipeline, LLM Integration</p>
+<h2 id="overview">Overview</h2>
+<p>When you ingest technical documentation into a knowledge graph, you expect it to extract concepts from the text. But what happens when that documentation contains code blocks? Imagine ingesting a guide about database queries that includes actual Cypher code examples. The parser chokes because it sees database keywords like <code>MATCH</code> and <code>WHERE</code> in the middle of a text string, causing errors like "invalid escape sequence." During testing with project documentation, about 15% of chunks failed this way—silently losing valuable content.</p>
+<p>The problem is deeper than just parsing errors. Markdown documents often contain structured content that represents its own conceptual models: code blocks, diagrams, JSON configurations, even graphs describing graphs. When you try to store literal code syntax in a knowledge graph, you're mixing metaphors—the graph is meant to store concepts and relationships, not source code.</p>
+<p>This ADR introduces a preprocessing pipeline that translates structured content into plain prose before concept extraction. Instead of storing <code>MATCH (c:Concept) RETURN c.label</code> literally, the system uses an AI to explain it: "This Cypher query finds a concept node and returns its label property." The knowledge graph then extracts semantic concepts from that explanation, while the original files remain unchanged as the source of truth for literal content.</p>
+<p>This approach solves the parsing problem and aligns with the graph's purpose: understanding concepts, not archiving code. When you search for "Cypher pattern matching," you'll find the concept even though the graph doesn't contain the literal syntax—that stays in your original documentation where it belongs.</p>
+<hr />
 <h2 id="context">Context</h2>
 <h3 id="the-problem-parser-breaking-syntax">The Problem: Parser-Breaking Syntax</h3>
 <p>During documentation ingestion testing (fuzzing with project documentation), we discovered that markdown code blocks and structured content cause parser errors in the Cypher query generation:</p>

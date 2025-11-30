@@ -4693,6 +4693,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6714,6 +6725,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7260,6 +7282,11 @@
 <strong>Date:</strong> 2025-10-31
 <strong>Author:</strong> System Architecture
 <strong>Related:</strong> ADR-014 (Job Approval Workflow), ADR-044 (Probabilistic Truth Convergence), ADR-037 (Human-Guided Graph Editing)</p>
+<h2 id="overview">Overview</h2>
+<p>Imagine you successfully ingested 50 documents months ago. Now you add 50 new documents to the same directory and try to ingest all 100 files. Your API key is invalid, so all 100 jobs fail. You fix the API key and try again, but the system blocks you—it sees failed jobs for those files. Frustrated, you delete the failed jobs to "clear the way" and re-ingest. Now all 100 files process, including the 50 that were already in the graph. You've just created duplicate content by accident.</p>
+<p>The root problem is that document deduplication checks an ephemeral table (the jobs table, which gets cleaned up) instead of the persistent graph itself. When you delete job records for any reason—failed jobs, old completed jobs, compliance retention policies—the system forgets which documents are already in the graph. The source of truth is in the wrong place.</p>
+<p>This ADR moves deduplication to the graph by creating DocumentMeta nodes that track successfully ingested documents forever. These nodes live alongside your concepts and relationships, storing the document's content hash, filename, when it was ingested, and how many source chunks were created. Now when you try to re-ingest a document, the system checks the graph first—not the jobs table—to see if it's already there.</p>
+<p>As a bonus, this also adds relationship provenance tracking. Every edge in the graph now stores metadata about who created it, when, and how (LLM extraction vs human curation). This audit trail helps with debugging, compliance, and future features where humans can correct or enhance AI-generated relationships. The graph becomes self-documenting, and deduplication becomes bulletproof even if you delete every job record.</p>
 <hr />
 <h2 id="context">Context</h2>
 <p>ADR-014 implemented document-level deduplication using SHA-256 hashes stored in the jobs table. This prevents users from re-ingesting the same file by checking if a completed job exists with matching content hash and ontology.</p>

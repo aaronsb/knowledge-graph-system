@@ -4498,6 +4498,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6514,6 +6525,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6860,6 +6882,11 @@
 <strong>Date:</strong> 2025-11-03
 <strong>Implemented:</strong> 2025-11-04
 <strong>Related ADRs:</strong> ADR-054 (OAuth Client Management), ADR-055 (CDN/Serverless Deployment)</p>
+<h2 id="overview">Overview</h2>
+<p>DateTime handling in Python has a subtle trap that catches even experienced developers. When you call <code>datetime.utcnow()</code>, you get what looks like a UTC timestamp. But Python doesn't attach timezone information to it - it's "naive" in Python's terminology. Meanwhile, PostgreSQL stores timestamps with timezone info attached - they're "aware." When you try to compare these two, Python throws an error: you can't compare apples (naive) with oranges (aware).</p>
+<p>This kept happening throughout the codebase. Fix it in one place, encounter it somewhere else a week later. Each time felt like hitting the same hidden tripwire. The root issue is that Python's standard datetime API makes it too easy to accidentally create naive datetimes, and nothing warns you until runtime when the comparison fails - often in production.</p>
+<p>The solution is embarrassingly simple: create a central utility module with functions that always return timezone-aware datetimes. Instead of remembering to write <code>datetime.now(timezone.utc)</code> everywhere, you import <code>utcnow()</code> from the utilities. Instead of manual expiration checks, you call <code>is_expired(timestamp)</code> which handles all the timezone conversion internally. It's a thin wrapper, but it prevents the entire class of bugs by making the safe thing the easy thing.</p>
+<hr />
 <h2 id="context">Context</h2>
 <p>The knowledge graph system has repeatedly encountered datetime comparison errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ne">TypeError</span><span class="p">:</span> <span class="n">can</span><span class="s1">&#39;t compare offset-naive and offset-aware datetimes</span>

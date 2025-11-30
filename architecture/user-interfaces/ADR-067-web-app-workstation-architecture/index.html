@@ -5223,6 +5223,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6646,6 +6657,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7127,6 +7149,11 @@
 - ADR-034 (Graph Visualization Architecture) - Original explorer pattern
 - ADR-064 (Specialized Visualizations) - Additional explorer types
 - ADR-066 (Published Query Endpoints) - Block flow publishing</p>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>The web application started as a graph visualization tool—click around, explore concepts, view relationships. But as the platform evolved, we added job management, OAuth configuration, ingestion workflows, and published query endpoints. These features live in the operator container and CLI, forcing users to jump between interfaces for routine tasks.</p>
+<p>The disconnect creates friction. You visualize a concept in the web app, decide to ingest more documents, drop to terminal, run CLI commands, return to browser, refresh to see results. Want to manage jobs? Back to terminal. Need to configure OAuth? Operator container. The web app shows you the knowledge but doesn't let you create or manage it.</p>
+<p>This ADR restructures the web application from a single-purpose visualization tool into a multi-function workstation. The left sidebar transforms from "pick a visualization type" to "pick a workflow category": Explorers for visualization, Ingest for uploading content, Jobs for queue management, Admin for platform configuration. Same plugin architecture as explorers, now extended to entire functional areas. The result: one interface for exploring, creating, and managing knowledge graphs.</p>
 <hr />
 <h2 id="context">Context</h2>
 <h3 id="current-state-visualization-centric-application">Current State: Visualization-Centric Application</h3>
