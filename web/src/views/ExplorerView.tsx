@@ -21,9 +21,10 @@ interface ExplorerViewProps {
 }
 
 export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
-  const [urlParams] = useSearchParams();
+  const [urlParams, setUrlParams] = useSearchParams();
   const {
     searchParams,
+    similarityThreshold,
     graphData: storeGraphData,
     rawGraphData,
     setGraphData,
@@ -33,6 +34,9 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setSimilarityThreshold,
   } = useGraphStore();
 
+  // Track if we're initializing from URL to prevent loops
+  const initializingFromUrl = React.useRef(false);
+
   // Set the explorer type when this view mounts
   useEffect(() => {
     setSelectedExplorer(explorerType);
@@ -41,11 +45,16 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Initialize from URL parameters on mount
   useEffect(() => {
     const conceptId = urlParams.get('conceptId');
-    const mode = urlParams.get('mode') as 'concept' | 'neighborhood' | null;
+    const mode = urlParams.get('mode') as 'concept' | 'neighborhood' | 'path' | null;
     const similarity = urlParams.get('similarity');
     const depth = urlParams.get('depth');
+    const fromConceptId = urlParams.get('fromConceptId');
+    const toConceptId = urlParams.get('toConceptId');
+    const maxHops = urlParams.get('maxHops');
 
     if (conceptId && mode) {
+      initializingFromUrl.current = true;
+
       if (mode === 'concept') {
         // Concept mode: load single concept with similar concepts
         setSearchParams({
@@ -65,8 +74,65 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
           loadMode: 'clean',
         });
       }
+
+      // Reset flag after a tick to allow URL sync to run
+      setTimeout(() => {
+        initializingFromUrl.current = false;
+      }, 100);
+    } else if (mode === 'path' && fromConceptId && toConceptId) {
+      initializingFromUrl.current = true;
+
+      // Path mode: find connection between concepts
+      setSearchParams({
+        mode: 'path',
+        fromConceptId: fromConceptId,
+        toConceptId: toConceptId,
+        maxHops: maxHops ? parseInt(maxHops) : 5,
+        depth: depth ? parseInt(depth) : undefined,
+        loadMode: 'clean',
+      });
+
+      setTimeout(() => {
+        initializingFromUrl.current = false;
+      }, 100);
     }
   }, [urlParams, setSearchParams, setSimilarityThreshold]);
+
+  // Sync store state → URL parameters (bidirectional)
+  useEffect(() => {
+    // Don't update URL if we're initializing from URL
+    if (initializingFromUrl.current) return;
+
+    // Don't update URL if no search params set
+    if (!searchParams.mode) return;
+
+    const newParams = new URLSearchParams();
+
+    if (searchParams.mode === 'concept' && searchParams.conceptId) {
+      newParams.set('conceptId', searchParams.conceptId);
+      newParams.set('mode', 'concept');
+      newParams.set('similarity', similarityThreshold.toString());
+    } else if (searchParams.mode === 'neighborhood' && searchParams.centerConceptId) {
+      newParams.set('conceptId', searchParams.centerConceptId);
+      newParams.set('mode', 'neighborhood');
+      newParams.set('depth', (searchParams.depth || 2).toString());
+    } else if (searchParams.mode === 'path' && searchParams.fromConceptId && searchParams.toConceptId) {
+      newParams.set('mode', 'path');
+      newParams.set('fromConceptId', searchParams.fromConceptId);
+      newParams.set('toConceptId', searchParams.toConceptId);
+      newParams.set('maxHops', (searchParams.maxHops || 5).toString());
+      if (searchParams.depth) {
+        newParams.set('depth', searchParams.depth.toString());
+      }
+    }
+
+    // Only update URL if params have changed
+    const currentParams = urlParams.toString();
+    const updatedParams = newParams.toString();
+    if (currentParams !== updatedParams) {
+      setUrlParams(newParams, { replace: true }); // Use replace to avoid cluttering history
+    }
+  }, [searchParams, similarityThreshold, urlParams, setUrlParams]);
 
   // React to searchParams - fetch data based on mode
   // Concept mode: load single concept with neighbors
