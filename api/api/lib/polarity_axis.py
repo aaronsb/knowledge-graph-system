@@ -9,12 +9,43 @@ For large-scale analysis, use the job queue variant (future).
 """
 
 import logging
+import re
 import numpy as np
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from scipy.stats import pearsonr
 
 logger = logging.getLogger(__name__)
+
+
+def validate_concept_id(concept_id: str) -> None:
+    """
+    Validate concept ID format to prevent SQL/Cypher injection.
+
+    Concept IDs follow the format: {source_id}_{uuid_hex}
+    where source_id can be {document_id}_chunk{N} or {filename}_chunk{N}
+
+    Valid characters: alphanumeric, underscores, hyphens
+    Max length: 200 characters (generous limit)
+
+    Args:
+        concept_id: Concept ID to validate
+
+    Raises:
+        ValueError: If concept ID format is invalid
+    """
+    if not concept_id:
+        raise ValueError("Concept ID cannot be empty")
+
+    if len(concept_id) > 200:
+        raise ValueError(f"Concept ID too long: {len(concept_id)} characters (max 200)")
+
+    # Allow only alphanumeric, underscores, hyphens (no quotes, no special chars)
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', concept_id):
+        raise ValueError(
+            f"Invalid concept ID format: '{concept_id}'. "
+            "Only alphanumeric characters, underscores, and hyphens are allowed"
+        )
 
 
 @dataclass
@@ -176,16 +207,29 @@ def discover_candidate_concepts(
 
     Returns:
         List of concept IDs (excludes the poles themselves)
+
+    Raises:
+        ValueError: If concept IDs are invalid format
     """
+    # Validate concept IDs to prevent injection attacks
+    validate_concept_id(positive_pole_id)
+    validate_concept_id(negative_pole_id)
+
     # Find concepts connected to either pole within max_hops
     # Filter for concepts with embeddings (required for projection)
     # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
     # Format pole IDs as Cypher list manually (json.dumps uses double quotes which Cypher rejects)
+    # Note: IDs are validated above, safe to use in f-string
     # Performance optimization: Limit per-pole results to avoid expensive DISTINCT on large sets
     # Safety: 10 second timeout to prevent database spiral on highly connected graphs
     pole_ids_cypher = "[" + ", ".join(f"'{pid}'" for pid in [positive_pole_id, negative_pole_id]) + "]"
 
     # Set query timeout to prevent runaway queries (PostgreSQL SQL, not Cypher)
+    # TODO(connection-pooling-refactor): This timeout implementation has limitations:
+    #   - Timeout is set on connection A, but facade.execute_raw might use connection B
+    #   - Risk of timeout setting persisting on returned connection
+    #   - Will be addressed in broader connection pooling refactor across workers
+    #   - For now: validated IDs prevent injection, timeout provides safety guardrail
     conn = age_client.pool.getconn()
     try:
         with conn.cursor() as cur:
@@ -322,8 +366,20 @@ def analyze_polarity_axis(
         Dict with axis analysis, projections, and statistics
 
     Raises:
-        ValueError: If poles are invalid or too similar
+        ValueError: If poles are invalid, too similar, or have invalid format
     """
+    # Validate pole IDs
+    validate_concept_id(positive_pole_id)
+    validate_concept_id(negative_pole_id)
+
+    if positive_pole_id == negative_pole_id:
+        raise ValueError("Poles must be different concepts")
+
+    # Validate candidate IDs if provided
+    if candidate_ids:
+        for cid in candidate_ids:
+            validate_concept_id(cid)
+
     logger.info(f"Polarity axis analysis: {positive_pole_id} ↔ {negative_pole_id}")
 
     # Fetch pole concepts

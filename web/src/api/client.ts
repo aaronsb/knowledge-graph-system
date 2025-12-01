@@ -192,8 +192,11 @@ class APIClient {
     limit?: number;
     min_similarity?: number;
     offset?: number;
-  }): Promise<any> {
-    const response = await this.client.post('/query/search', params);
+  }): Promise<import('../types/polarity').ConceptSearchResponse> {
+    const response = await this.client.post<import('../types/polarity').ConceptSearchResponse>(
+      '/query/search',
+      params
+    );
     return response.data;
   }
 
@@ -357,10 +360,14 @@ class APIClient {
     auto_discover?: boolean;
     max_candidates?: number;
     max_hops?: number;
-  }): Promise<any> {
-    const response = await this.client.post('/query/polarity-axis', params, {
-      timeout: 30000, // 30 seconds for analysis
-    });
+  }): Promise<import('../types/polarity').PolarityAxisResponse> {
+    const response = await this.client.post<import('../types/polarity').PolarityAxisResponse>(
+      '/query/polarity-axis',
+      params,
+      {
+        timeout: 30000, // 30 seconds for analysis
+      }
+    );
     return response.data;
   }
 }

@@ -126,7 +126,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         min_similarity: 0.6,
       });
 
-      const concepts = response.results.map((r: any) => ({
+      const concepts = response.results.map((r) => ({
         concept_id: r.concept_id,
         label: r.label,
         description: r.description,
