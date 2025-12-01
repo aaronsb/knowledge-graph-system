@@ -31,7 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     4. Documentation: ADR updates + usage guide (POLARITY_AXIS_ANALYSIS.md)
     5. Code review fixes: Query safety (ADR-048), automated tests, cleanup
     6. Web UI workspace: Interactive pole selection, settings panel, results display with grounding correlation
-  - Performance: ~2.36 seconds for 20 concepts with 768-dimensional embeddings
+    7. Bug fixes: Embedding retrieval (explicit property return), openCypher syntax (NOT IN → NOT (x IN list))
+    8. Performance optimization: Reduced default max_hops from 2 to 1, optimized discovery query structure
+  - Performance: ~2.36 seconds for 20 concepts with 768-dimensional embeddings (max_hops=1)
   - Use cases: Semantic exploration, finding synthesis concepts, validating relationships, pedagogical ordering
   - See [detailed implementation history](https://github.com/aaronsb/knowledge-graph-system/pull/153#issuecomment-3593644834) in PR comment
 
