@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { X, HelpCircle, BookOpen, BarChart3, Lightbulb } from 'lucide-react';
+import { X, HelpCircle, BookOpen, BarChart3, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
 import { polarityHelpContent, polarityHelpCategories } from './polarityHelpContent';
 
 interface PolarityHelpModalProps {
@@ -20,11 +20,18 @@ const categoryIcons = {
 
 export const PolarityHelpModal: React.FC<PolarityHelpModalProps> = ({ isOpen, onClose }) => {
   const [selectedTopic, setSelectedTopic] = useState<string>('overview');
+  const [showTechnical, setShowTechnical] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
   const topic = polarityHelpContent[selectedTopic];
   const Icon = categoryIcons[topic.category];
+
+  // Reset technical details when changing topics
+  const handleTopicChange = (topicId: string) => {
+    setSelectedTopic(topicId);
+    setShowTechnical(false);
+  };
 
   // Group topics by category
   const topicsByCategory = Object.entries(polarityHelpContent).reduce(
@@ -75,7 +82,7 @@ export const PolarityHelpModal: React.FC<PolarityHelpModalProps> = ({ isOpen, on
                       {topics.map((t) => (
                         <button
                           key={t.id}
-                          onClick={() => setSelectedTopic(t.id)}
+                          onClick={() => handleTopicChange(t.id)}
                           className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
                             selectedTopic === t.id
                               ? 'bg-primary/10 dark:bg-primary/20 text-primary font-medium'
@@ -107,6 +114,28 @@ export const PolarityHelpModal: React.FC<PolarityHelpModalProps> = ({ isOpen, on
                   {topic.description}
                 </p>
               </div>
+
+              {/* Technical Details (collapsible) */}
+              {topic.technicalDescription && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowTechnical(!showTechnical)}
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-gray-200 transition-colors"
+                  >
+                    {showTechnical ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                    <span>Technical Details</span>
+                  </button>
+                  {showTechnical && (
+                    <div className="mt-3 pl-6 text-sm text-muted-foreground dark:text-gray-400 leading-relaxed border-l-2 border-primary/30">
+                      {topic.technicalDescription}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Interpretation */}
               {topic.interpretation && topic.interpretation.length > 0 && (

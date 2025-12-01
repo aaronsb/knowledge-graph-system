@@ -6,7 +6,8 @@ export interface PolarityHelpTopic {
   id: string;
   title: string;
   category: 'concept' | 'statistics' | 'usage';
-  description: string;
+  description: string; // Friendly, approachable explanation
+  technicalDescription?: string; // Technical details (collapsible)
   interpretation?: string[];
   tips?: string[];
   example?: string;
@@ -37,107 +38,117 @@ export const polarityHelpContent: Record<string, PolarityHelpTopic> = {
 
   pearsonR: {
     id: 'pearsonR',
-    title: 'Pearson r (Correlation Coefficient)',
+    title: 'Correlation Strength (Pearson r)',
     category: 'statistics',
     description:
-      'Measures the linear relationship between axis position and grounding strength. Values range from -1 to +1.',
+      'Think of this as asking: "Do concepts on one side of the axis tend to have better evidence than the other?" A positive number means concepts toward the positive pole are better supported by evidence. A negative number means the opposite pole has stronger backing. A number close to zero means both sides are about equally grounded.',
+    technicalDescription:
+      'Pearson\'s correlation coefficient (r) measures the linear relationship between axis position and grounding strength. Values range from -1 (perfect negative correlation) to +1 (perfect positive correlation), with 0 indicating no linear relationship.',
     interpretation: [
-      'r > 0.7: Strong positive correlation - concepts toward positive pole have higher grounding',
-      'r > 0.4: Moderate positive correlation',
-      '|r| < 0.3: Weak or no correlation',
-      'r < -0.4: Moderate negative correlation',
-      'r < -0.7: Strong negative correlation - concepts toward negative pole have higher grounding',
+      'Strong positive (r > 0.7): Concepts leaning toward the positive pole have much better evidence',
+      'Moderate positive (r > 0.4): Positive pole concepts tend to have better evidence',
+      'Weak or none (|r| < 0.3): Both sides have similar quality of evidence',
+      'Moderate negative (r < -0.4): Negative pole concepts tend to have better evidence',
+      'Strong negative (r < -0.7): Concepts leaning toward the negative pole have much better evidence',
     ],
     tips: [
-      'Strong correlation suggests the axis has an inherent value judgment',
-      'Weak correlation suggests a descriptive axis without bias toward either pole',
-      'Negative correlation means the "negative" pole is actually better grounded',
+      'A strong correlation hints that one perspective inherently has more evidence in your knowledge base',
+      'A weak correlation means the axis is descriptive - neither side is "better", just different',
+      'Don\'t be surprised if the "negative" pole has positive correlation - the labels are arbitrary!',
     ],
     example:
-      'r = 0.82 for "Evidence-Based ↔ Speculative" would show evidence-based concepts have stronger grounding (as expected).',
+      'For "Evidence-Based ↔ Speculative": r = 0.82 means evidence-based concepts are, unsurprisingly, better grounded in evidence.',
   },
 
   pValue: {
     id: 'pValue',
-    title: 'p-value (Statistical Significance)',
+    title: 'Confidence Level (p-value)',
     category: 'statistics',
     description:
-      'Probability that the observed correlation occurred by chance. Lower values indicate more reliable correlations.',
+      'This tells you: "Can I trust this pattern, or might it just be a coincidence?" A low p-value (under 0.05) means you can trust the correlation. A high p-value means the pattern might just be random luck - like seeing faces in clouds.',
+    technicalDescription:
+      'The p-value represents the probability that the observed correlation could have occurred by random chance. It\'s calculated using the t-distribution based on the correlation coefficient and sample size. Lower values provide stronger evidence against the null hypothesis of no correlation.',
     interpretation: [
-      'p < 0.01: Very strong evidence of correlation (highly significant)',
-      'p < 0.05: Strong evidence of correlation (statistically significant)',
-      'p < 0.10: Moderate evidence (marginally significant)',
-      'p ≥ 0.10: Weak or no evidence (not significant)',
+      'p < 0.01: Very confident - this pattern is almost certainly real',
+      'p < 0.05: Confident - this pattern is probably real (standard threshold)',
+      'p < 0.10: Somewhat confident - there might be something here',
+      'p ≥ 0.10: Not confident - could easily be random noise',
     ],
     tips: [
-      'Only trust correlation strength (Pearson r) when p-value is low (< 0.05)',
-      'High p-value means the pattern might be random noise',
-      'Requires sufficient data: at least 10-20 concepts for reliable p-values',
+      'Always check p-value before trusting the correlation number',
+      'With few concepts (< 10), even strong correlations might have high p-values',
+      'Think of it as a "trust meter" for the correlation strength',
     ],
     example:
-      'p = 0.03 with r = 0.65 means the moderate correlation is statistically significant and likely real.',
+      'If r = 0.65 and p = 0.03: The correlation is moderate AND trustworthy. If r = 0.65 and p = 0.40: The correlation looks moderate but might just be coincidence.',
   },
 
   meanPosition: {
     id: 'meanPosition',
-    title: 'Mean Position',
+    title: 'Average Balance',
     category: 'statistics',
     description:
-      'Average position of all projected concepts on the axis. Range: -1 (toward negative pole) to +1 (toward positive pole), with 0 as the midpoint.',
+      'This shows which side most concepts lean toward, on average. Think of it like asking your friend group their opinion: if most lean one way, the average will tilt that direction. Zero means perfectly balanced. Positive means more concepts lean toward the positive pole. Negative means they lean toward the negative pole.',
+    technicalDescription:
+      'The mean position is the arithmetic average of all concept positions on the normalized axis. The scale ranges from -1 (toward negative pole) to +1 (toward positive pole), with 0 representing the exact midpoint between poles.',
     interpretation: [
-      'Mean ≈ 0: Balanced distribution between poles',
-      'Mean > 0.2: Concepts skew toward positive pole',
-      'Mean < -0.2: Concepts skew toward negative pole',
-      'Extreme mean (> 0.5 or < -0.5): Very unbalanced, one pole dominates',
+      'Near 0 (±0.2): Balanced - concepts are spread fairly evenly',
+      'Positive (> 0.2): Tilted toward positive pole - that perspective is more common',
+      'Negative (< -0.2): Tilted toward negative pole - that perspective is more common',
+      'Extreme (> 0.5 or < -0.5): Very one-sided - one perspective dominates heavily',
     ],
     tips: [
-      'Check if skew matches your expectations about the domain',
-      'Unbalanced mean might indicate poles of different scope or importance',
-      'Compare with direction distribution to see clustering patterns',
+      'Ask yourself: does this match what you expected? If not, why might that be?',
+      'A tilt might mean one perspective is more popular, or just better documented',
+      'Compare with how many concepts fall in each direction for the full picture',
     ],
     example:
-      'Mean = -0.35 for "Innovation ↔ Stability" suggests the graph contains more stability-focused concepts.',
+      'Mean = -0.35 for "Innovation ↔ Stability" means your knowledge base has more stability-focused concepts. Maybe because stable practices get documented more?',
   },
 
   axisDistance: {
     id: 'axisDistance',
-    title: 'Axis Distance',
+    title: 'Relevance to This Comparison',
     category: 'statistics',
     description:
-      'How far a concept is from the axis itself (orthogonal distance). Lower values mean the concept aligns strongly with the semantic dimension; higher values mean the concept is tangential or unrelated.',
+      'Some concepts just don\'t fit neatly on your chosen axis - they\'re talking about something else entirely. This measures how "on topic" each concept is. Low distance means the concept really relates to your poles. High distance means it\'s kind of tangential or off in its own world.',
+    technicalDescription:
+      'Axis distance measures the orthogonal (perpendicular) distance from the concept\'s embedding vector to the polarity axis in high-dimensional space. It represents how much of the concept\'s semantic meaning is unexplained by the polarity dimension.',
     interpretation: [
-      'Distance < 0.5: Concept strongly aligns with the axis dimension',
-      'Distance 0.5-1.0: Moderate alignment',
-      'Distance > 1.0: Concept is somewhat orthogonal or unrelated to the axis',
+      'Low (< 0.5): This concept is clearly about your polarity - it fits well',
+      'Medium (0.5-1.0): Somewhat related but has other dimensions too',
+      'High (> 1.0): This concept is mostly about other things - tangentially related at best',
     ],
     tips: [
-      'High axis distance concepts might not fit the polarity well',
-      'Filter out high-distance concepts to focus on aligned ones',
-      'Compare distances to assess axis quality',
+      'Concepts with high distance might be interesting outliers worth investigating',
+      'If many concepts have high distance, your poles might not form a clear dimension',
+      'Low distance concepts are the "pure examples" of your polarity',
     ],
     example:
-      'A concept with position=0.2 and distance=1.2 is only weakly related to the axis dimension.',
+      'For "Modern ↔ Traditional": a concept about "Software Updates" might have low distance (clearly fits). But "Coffee Preferences"? High distance - not really about modernity vs tradition.',
   },
 
   groundingCorrelation: {
     id: 'groundingCorrelation',
-    title: 'Grounding Correlation',
+    title: 'Evidence Quality Pattern',
     category: 'statistics',
     description:
-      'The relationship between where concepts fall on the axis and how well-supported they are by evidence (grounding strength). Reveals whether one pole is more grounded than the other.',
+      'Here\'s a fun question: does one side of your axis have better evidence than the other? This looks at whether concepts on one pole are better-supported by sources and data. It can reveal hidden biases - like if "new ideas" consistently have less evidence than "traditional practices" just because old stuff has been documented longer.',
+    technicalDescription:
+      'Grounding correlation is the Pearson correlation coefficient between axis position and grounding strength scores. It quantifies whether there is a systematic relationship between a concept\'s position on the polarity axis and the quality/quantity of evidence supporting it.',
     interpretation: [
-      'Strong positive: Positive pole concepts have better evidence',
-      'Strong negative: Negative pole concepts have better evidence',
-      'Weak or none: Both poles equally grounded (descriptive axis)',
+      'Strong positive: The positive pole side has consistently better evidence',
+      'Strong negative: The negative pole side has consistently better evidence',
+      'Weak or none: Evidence quality is independent of which side concepts lean toward',
     ],
     tips: [
-      'Strong correlation suggests an inherent value judgment in the axis',
-      'Weak correlation indicates a neutral, descriptive dimension',
-      'Check p-value to confirm the correlation is real',
-      'Can reveal bias in the knowledge graph toward one perspective',
+      'This can reveal whether your axis has an implicit value judgment baked in',
+      'Historical vs. modern axes often show correlation due to documentation age',
+      'A neutral correlation means you\'re comparing apples to apples in terms of evidence',
+      'Strong correlation might reflect real-world bias in documentation, not reality',
     ],
     example:
-      'Strong negative correlation for "Modern ↔ Traditional" might show traditional concepts have more historical evidence.',
+      'For "Experimental ↔ Proven Methods": if proven methods have higher grounding (negative correlation), that makes sense - they\'ve been documented more. But if experimental has higher grounding, maybe your knowledge base is from cutting-edge research!',
   },
 
   projectedConcepts: {
