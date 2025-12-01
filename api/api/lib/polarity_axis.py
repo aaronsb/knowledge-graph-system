@@ -182,25 +182,51 @@ def discover_candidate_concepts(
     # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
     # Format pole IDs as Cypher list manually (json.dumps uses double quotes which Cypher rejects)
     # Performance optimization: Limit per-pole results to avoid expensive DISTINCT on large sets
+    # Safety: 10 second timeout to prevent database spiral on highly connected graphs
     pole_ids_cypher = "[" + ", ".join(f"'{pid}'" for pid in [positive_pole_id, negative_pole_id]) + "]"
 
-    results = age_client.facade.execute_raw(
-        query=f"""
-            MATCH (pole:Concept)
-            WHERE pole.concept_id IN {pole_ids_cypher}
-            MATCH (pole)-[*1..$max_hops]-(candidate:Concept)
-            WHERE NOT (candidate.concept_id IN {pole_ids_cypher})
-              AND candidate.embedding IS NOT NULL
-            WITH DISTINCT candidate
-            LIMIT $limit
-            RETURN candidate.concept_id as concept_id
-        """,
-        params={
-            "max_hops": max_hops,
-            "limit": max_candidates * 2  # Increase to account for potential overlap
-        },
-        namespace="concept"
-    )
+    # Set query timeout to prevent runaway queries (PostgreSQL SQL, not Cypher)
+    conn = age_client.pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET statement_timeout = '10s'")
+        conn.commit()
+
+        results = age_client.facade.execute_raw(
+            query=f"""
+                MATCH (pole:Concept)
+                WHERE pole.concept_id IN {pole_ids_cypher}
+                MATCH (pole)-[*1..$max_hops]-(candidate:Concept)
+                WHERE NOT (candidate.concept_id IN {pole_ids_cypher})
+                  AND candidate.embedding IS NOT NULL
+                WITH DISTINCT candidate
+                LIMIT $limit
+                RETURN candidate.concept_id as concept_id
+            """,
+            params={
+                "max_hops": max_hops,
+                "limit": max_candidates * 2  # Increase to account for potential overlap
+            },
+            namespace="concept"
+        )
+    except Exception as e:
+        # Check if timeout occurred
+        if "timeout" in str(e).lower() or "canceling statement" in str(e).lower():
+            logger.warning(
+                f"Discovery query timed out (max_hops={max_hops}). "
+                "Try reducing max_hops or max_candidates for highly connected concepts."
+            )
+            return []
+        else:
+            raise
+    finally:
+        # Reset timeout to default and return connection to pool
+        try:
+            with conn.cursor() as cur:
+                cur.execute("RESET statement_timeout")
+            conn.commit()
+        finally:
+            age_client.pool.putconn(conn)
 
     if not results:
         logger.warning("No candidate concepts discovered")
