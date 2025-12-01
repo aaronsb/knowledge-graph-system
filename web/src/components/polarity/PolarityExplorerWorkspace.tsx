@@ -20,6 +20,7 @@ import {
 import { apiClient } from '../../api/client';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { PolarityHelpModal } from './PolarityHelpModal';
+import { PolarityScatterPlot } from './PolarityScatterPlot';
 
 interface Concept {
   concept_id: string;
@@ -554,6 +555,18 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               <span className="font-medium capitalize">{selectedAnalysis.result.axis.axis_quality}</span>
             </div>
           </div>
+        </div>
+
+        {/* Visualization */}
+        <div className="border rounded-lg p-4 bg-card">
+          <h3 className="font-semibold mb-4">Visualization</h3>
+          <PolarityScatterPlot
+            analysisResult={selectedAnalysis.result}
+            onConceptClick={(concept) => {
+              // TODO: Future enhancement - open concept details in NodeInfoBox
+              console.log('Concept clicked:', concept);
+            }}
+          />
         </div>
 
         {/* Statistics */}
