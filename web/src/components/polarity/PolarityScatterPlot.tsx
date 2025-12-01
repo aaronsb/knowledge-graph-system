@@ -155,17 +155,15 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     setContextMenu(null);
   }, []);
 
-  // Navigate to 2D explorer with concept
-  const examineAsConcept = useCallback((concept: ProjectedConcept) => {
-    // Navigate to 2D explorer with concept query (similarity ~50%)
-    navigate(`/explorer-2d?conceptId=${concept.concept_id}&mode=concept&similarity=0.5`);
+  // Navigate to explorer with concept (similarity search)
+  const examineAsConcept = useCallback((concept: ProjectedConcept, explorerType: '2d' | '3d') => {
+    navigate(`/explore/${explorerType}?conceptId=${concept.concept_id}&mode=concept&similarity=0.5`);
     closeContextMenu();
   }, [navigate, closeContextMenu]);
 
-  // Navigate to 2D explorer with neighborhood
-  const examineAsNeighborhood = useCallback((concept: ProjectedConcept) => {
-    // Navigate to 2D explorer with neighborhood query (depth 2)
-    navigate(`/explorer-2d?conceptId=${concept.concept_id}&mode=neighborhood&depth=2`);
+  // Navigate to explorer with neighborhood (subgraph)
+  const examineAsNeighborhood = useCallback((concept: ProjectedConcept, explorerType: '2d' | '3d') => {
+    navigate(`/explore/${explorerType}?conceptId=${concept.concept_id}&mode=neighborhood&depth=2`);
     closeContextMenu();
   }, [navigate, closeContextMenu]);
 
@@ -215,23 +213,48 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             </div>
           </div>
           <div className="py-1">
-            <button
-              onClick={() => examineAsConcept(contextMenu.concept)}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
-            >
-              Examine as Concept
-              <div className="text-xs text-muted-foreground dark:text-gray-500 mt-0.5">
+            {/* Concept Mode (Similarity Search) */}
+            <div className="px-3 py-1.5">
+              <div className="text-xs font-medium text-muted-foreground dark:text-gray-500 uppercase tracking-wide">
+                Examine as Concept
+              </div>
+              <div className="text-xs text-muted-foreground dark:text-gray-500 mb-1">
                 Find similar concepts (~50% similarity)
               </div>
+            </div>
+            <button
+              onClick={() => examineAsConcept(contextMenu.concept, '2d')}
+              className="w-full px-6 py-1.5 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+            >
+              → 2D Force Graph
             </button>
             <button
-              onClick={() => examineAsNeighborhood(contextMenu.concept)}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+              onClick={() => examineAsConcept(contextMenu.concept, '3d')}
+              className="w-full px-6 py-1.5 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200 mb-2"
             >
-              Examine as Neighborhood
-              <div className="text-xs text-muted-foreground dark:text-gray-500 mt-0.5">
+              → 3D Force Graph
+            </button>
+
+            {/* Neighborhood Mode (Subgraph) */}
+            <div className="px-3 py-1.5 border-t border-border dark:border-gray-700">
+              <div className="text-xs font-medium text-muted-foreground dark:text-gray-500 uppercase tracking-wide">
+                Examine as Neighborhood
+              </div>
+              <div className="text-xs text-muted-foreground dark:text-gray-500 mb-1">
                 Explore connected concepts (2 hops)
               </div>
+            </div>
+            <button
+              onClick={() => examineAsNeighborhood(contextMenu.concept, '2d')}
+              className="w-full px-6 py-1.5 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+            >
+              → 2D Force Graph
+            </button>
+            <button
+              onClick={() => examineAsNeighborhood(contextMenu.concept, '3d')}
+              className="w-full px-6 py-1.5 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+            >
+              → 3D Force Graph
             </button>
           </div>
         </div>
