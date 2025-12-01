@@ -116,9 +116,11 @@ def fetch_concept_with_embedding(
         ValueError: If concept not found or missing embedding
     """
     # Query concept details using facade (ADR-048 namespace safety)
+    # Return individual properties to get flattened dict (not vertex structure)
     results = age_client.facade.match_concepts(
         where="c.concept_id = $concept_id",
-        params={"concept_id": concept_id}
+        params={"concept_id": concept_id},
+        return_clause="c.concept_id AS concept_id, c.label AS label, c.description AS description, c.embedding AS embedding"
     )
 
     if not results or len(results) == 0:
@@ -178,19 +180,21 @@ def discover_candidate_concepts(
     # Find concepts connected to either pole within max_hops
     # Filter for concepts with embeddings (required for projection)
     # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
+    # Format pole IDs as Cypher list manually (json.dumps uses double quotes which Cypher rejects)
+    pole_ids_cypher = "[" + ", ".join(f"'{pid}'" for pid in [positive_pole_id, negative_pole_id]) + "]"
+
     results = age_client.facade.execute_raw(
-        query="""
+        query=f"""
             MATCH (pole:Concept)
-            WHERE pole.concept_id IN $pole_ids
+            WHERE pole.concept_id IN {pole_ids_cypher}
             MATCH (pole)-[*1..$max_hops]-(candidate:Concept)
-            WHERE candidate.concept_id NOT IN $pole_ids
+            WHERE NOT (candidate.concept_id IN {pole_ids_cypher})
               AND candidate.embedding IS NOT NULL
             WITH DISTINCT candidate
             RETURN candidate.concept_id as concept_id
             LIMIT $limit
         """,
         params={
-            "pole_ids": [positive_pole_id, negative_pole_id],
             "max_hops": max_hops,
             "limit": max_candidates
         },
