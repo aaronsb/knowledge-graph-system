@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - API endpoint: `POST /query/polarity-axis` with auto-discovery of related concepts
   - CLI command: `kg polarity analyze` with colored output and JSON mode
   - MCP tool: `analyze_polarity_axis` for Claude Desktop integration
+  - Web UI: Polarity Explorer workspace in Explorers category with pole selection, analysis options, and results visualization
   - Comprehensive documentation: ADR-070 updated, 700+ line usage guide created
   - Automated tests: 25+ tests for vector mathematics and API integration
   - Implementation phases:
@@ -29,7 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     3. CLI command with formatted tables by direction
     4. Documentation: ADR updates + usage guide (POLARITY_AXIS_ANALYSIS.md)
     5. Code review fixes: Query safety (ADR-048), automated tests, cleanup
-  - Performance: ~2.36 seconds for 20 concepts with 768-dimensional embeddings
+    6. Web UI workspace: Interactive pole selection, settings panel, results display with grounding correlation
+    7. Bug fixes: Embedding retrieval (explicit property return), openCypher syntax (NOT IN → NOT (x IN list))
+    8. Performance optimization: Reduced default max_hops from 2 to 1, optimized discovery query structure
+  - Performance: ~2.36 seconds for 20 concepts with 768-dimensional embeddings (max_hops=1)
   - Use cases: Semantic exploration, finding synthesis concepts, validating relationships, pedagogical ordering
   - See [detailed implementation history](https://github.com/aaronsb/knowledge-graph-system/pull/153#issuecomment-3593644834) in PR comment
 

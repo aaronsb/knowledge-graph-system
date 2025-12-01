@@ -47,7 +47,7 @@ const analyzeCommand = setCommandHelp(
   .option('--candidates <ids...>', 'Specific concept IDs to project (space-separated)')
   .option('--no-auto-discover', 'Disable auto-discovery of related concepts')
   .option('--max-candidates <number>', 'Maximum candidates for auto-discovery', '20')
-  .option('--max-hops <number>', 'Maximum graph hops for auto-discovery (1-3)', '2')
+  .option('--max-hops <number>', 'Maximum graph hops for auto-discovery (1-3)', '1')
   .option('--json', 'Output raw JSON instead of formatted text')
   .action(async (options) => {
     try {

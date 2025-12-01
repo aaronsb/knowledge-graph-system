@@ -23,6 +23,7 @@ import { BlockEditorWorkspace } from './components/blocks/BlockEditorWorkspace';
 import { IngestWorkspace } from './components/ingest/IngestWorkspace';
 import { JobsWorkspace } from './components/jobs/JobsWorkspace';
 import { ReportWorkspace } from './components/report/ReportWorkspace';
+import { PolarityExplorerWorkspace } from './components/polarity/PolarityExplorerWorkspace';
 import { GraphEditor } from './components/edit/GraphEditor';
 import { PreferencesWorkspace } from './components/preferences/PreferencesWorkspace';
 import { AdminDashboard } from './components/admin/AdminDashboard';
@@ -126,6 +127,9 @@ const AppContent: React.FC = () => {
 
         {/* Report */}
         <Route path="/report" element={<ReportWorkspace />} />
+
+        {/* Polarity Explorer (ADR-070) */}
+        <Route path="/polarity" element={<PolarityExplorerWorkspace />} />
 
         {/* Edit */}
         <Route path="/edit" element={<GraphEditor />} />

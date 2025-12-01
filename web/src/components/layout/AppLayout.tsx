@@ -28,6 +28,8 @@ import {
   Shield,
   Network,
   Box,
+  GitBranch,
+  FlaskConical,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
@@ -57,6 +59,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path.startsWith('/ingest')) return 'Ingest';
     if (path.startsWith('/jobs')) return 'Jobs';
     if (path.startsWith('/report')) return 'Report';
+    if (path.startsWith('/polarity')) return 'Polarity Explorer';
     if (path.startsWith('/edit')) return 'Edit';
     if (path.startsWith('/preferences')) return 'Preferences';
     if (path.startsWith('/admin')) return 'Admin';
@@ -88,6 +91,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Immersive 3D exploration"
               isActive={isActive('/explore/3d')}
               onClick={() => navigate('/explore/3d')}
+            />
+            <SidebarItem
+              icon={GitBranch}
+              label="Polarity Explorer"
+              description="Bidirectional semantic dimensions"
+              isActive={isActive('/polarity')}
+              onClick={() => navigate('/polarity')}
             />
           </SidebarCategory>
 
@@ -134,6 +144,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               onClick={() => navigate('/report')}
             />
           </SidebarCategory>
+
+          {/* Analysis - Reserved for vocabulary analysis tools */}
+          {/* <SidebarCategory title="Analysis" icon={FlaskConical} defaultExpanded={false}>
+          </SidebarCategory> */}
 
           {/* Edit */}
           <SidebarCategory title="Edit" icon={PencilLine} defaultExpanded={false}>

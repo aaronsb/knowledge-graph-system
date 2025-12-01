@@ -192,8 +192,11 @@ class APIClient {
     limit?: number;
     min_similarity?: number;
     offset?: number;
-  }): Promise<any> {
-    const response = await this.client.post('/query/search', params);
+  }): Promise<import('../types/polarity').ConceptSearchResponse> {
+    const response = await this.client.post<import('../types/polarity').ConceptSearchResponse>(
+      '/query/search',
+      params
+    );
     return response.data;
   }
 
@@ -343,6 +346,28 @@ class APIClient {
     include_full_text?: boolean;
   }): Promise<any> {
     const response = await this.client.post('/query/sources/search', params);
+    return response.data;
+  }
+
+  /**
+   * Analyze polarity axis between two concept poles (ADR-070)
+   * Projects concepts onto bidirectional semantic dimension
+   */
+  async analyzePolarityAxis(params: {
+    positive_pole_id: string;
+    negative_pole_id: string;
+    candidate_ids?: string[];
+    auto_discover?: boolean;
+    max_candidates?: number;
+    max_hops?: number;
+  }): Promise<import('../types/polarity').PolarityAxisResponse> {
+    const response = await this.client.post<import('../types/polarity').PolarityAxisResponse>(
+      '/query/polarity-axis',
+      params,
+      {
+        timeout: 30000, // 30 seconds for analysis
+      }
+    );
     return response.data;
   }
 }
