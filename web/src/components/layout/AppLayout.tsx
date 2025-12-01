@@ -92,6 +92,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               isActive={isActive('/explore/3d')}
               onClick={() => navigate('/explore/3d')}
             />
+            <SidebarItem
+              icon={GitBranch}
+              label="Polarity Explorer"
+              description="Bidirectional semantic dimensions"
+              isActive={isActive('/polarity')}
+              onClick={() => navigate('/polarity')}
+            />
           </SidebarCategory>
 
           {/* Block Editor */}
@@ -138,16 +145,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             />
           </SidebarCategory>
 
-          {/* Analysis (ADR-070) */}
-          <SidebarCategory title="Analysis" icon={FlaskConical} defaultExpanded={false}>
-            <SidebarItem
-              icon={GitBranch}
-              label="Polarity Explorer"
-              description="Bidirectional semantic dimensions"
-              isActive={isActive('/polarity')}
-              onClick={() => navigate('/polarity')}
-            />
-          </SidebarCategory>
+          {/* Analysis - Reserved for vocabulary analysis tools */}
+          {/* <SidebarCategory title="Analysis" icon={FlaskConical} defaultExpanded={false}>
+          </SidebarCategory> */}
 
           {/* Edit */}
           <SidebarCategory title="Edit" icon={PencilLine} defaultExpanded={false}>
