@@ -176,6 +176,7 @@ def discover_candidate_concepts(
         List of concept IDs (excludes the poles themselves)
     """
     # Find concepts connected to either pole within max_hops
+    # Filter for concepts with embeddings (required for projection)
     # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
     results = age_client.facade.execute_raw(
         query="""
@@ -183,6 +184,7 @@ def discover_candidate_concepts(
             WHERE pole.concept_id IN $pole_ids
             MATCH (pole)-[*1..$max_hops]-(candidate:Concept)
             WHERE candidate.concept_id NOT IN $pole_ids
+              AND candidate.embedding IS NOT NULL
             WITH DISTINCT candidate
             RETURN candidate.concept_id as concept_id
             LIMIT $limit
