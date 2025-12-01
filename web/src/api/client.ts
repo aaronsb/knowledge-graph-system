@@ -345,6 +345,24 @@ class APIClient {
     const response = await this.client.post('/query/sources/search', params);
     return response.data;
   }
+
+  /**
+   * Analyze polarity axis between two concept poles (ADR-070)
+   * Projects concepts onto bidirectional semantic dimension
+   */
+  async analyzePolarityAxis(params: {
+    positive_pole_id: string;
+    negative_pole_id: string;
+    candidate_ids?: string[];
+    auto_discover?: boolean;
+    max_candidates?: number;
+    max_hops?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/polarity-axis', params, {
+      timeout: 30000, // 30 seconds for analysis
+    });
+    return response.data;
+  }
 }
 
 // Export singleton instance

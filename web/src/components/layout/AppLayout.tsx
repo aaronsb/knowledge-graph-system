@@ -28,6 +28,8 @@ import {
   Shield,
   Network,
   Box,
+  GitBranch,
+  FlaskConical,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
@@ -57,6 +59,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path.startsWith('/ingest')) return 'Ingest';
     if (path.startsWith('/jobs')) return 'Jobs';
     if (path.startsWith('/report')) return 'Report';
+    if (path.startsWith('/polarity')) return 'Polarity Explorer';
     if (path.startsWith('/edit')) return 'Edit';
     if (path.startsWith('/preferences')) return 'Preferences';
     if (path.startsWith('/admin')) return 'Admin';
@@ -132,6 +135,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Tabular views and exports"
               isActive={isActive('/report')}
               onClick={() => navigate('/report')}
+            />
+          </SidebarCategory>
+
+          {/* Analysis (ADR-070) */}
+          <SidebarCategory title="Analysis" icon={FlaskConical} defaultExpanded={false}>
+            <SidebarItem
+              icon={GitBranch}
+              label="Polarity Explorer"
+              description="Bidirectional semantic dimensions"
+              isActive={isActive('/polarity')}
+              onClick={() => navigate('/polarity')}
             />
           </SidebarCategory>
 
