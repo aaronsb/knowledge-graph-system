@@ -15,9 +15,11 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  HelpCircle,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { IconRailPanel } from '../shared/IconRailPanel';
+import { PolarityHelpModal } from './PolarityHelpModal';
 
 interface Concept {
   concept_id: string;
@@ -68,6 +70,14 @@ interface AnalysisResult {
   };
 }
 
+interface StoredAnalysis {
+  id: string;
+  timestamp: number;
+  positivePoleLabel: string;
+  negativePoleLabel: string;
+  result: AnalysisResult;
+}
+
 export const PolarityExplorerWorkspace: React.FC = () => {
   // Search state
   const [positivePoleQuery, setPositivePoleQuery] = useState('');
@@ -85,16 +95,23 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   // Analysis state
   const [isSearching, setIsSearching] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisHistory, setAnalysisHistory] = useState<StoredAnalysis[]>([]);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>('search');
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     positive: true,
     neutral: true,
     negative: true,
   });
+
+  // Computed: Get currently selected analysis
+  const selectedAnalysis = selectedAnalysisId
+    ? analysisHistory.find((a) => a.id === selectedAnalysisId)
+    : null;
 
   const searchConcepts = async (query: string, setPole: 'positive' | 'negative') => {
     if (query.trim().length < 2) return;
@@ -140,7 +157,6 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
     setIsAnalyzing(true);
     setError(null);
-    setAnalysisResult(null);
 
     try {
       const result = await apiClient.analyzePolarityAxis({
@@ -151,7 +167,17 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         max_hops: maxHops,
       });
 
-      setAnalysisResult(result);
+      // Store analysis in history
+      const storedAnalysis: StoredAnalysis = {
+        id: `analysis-${Date.now()}`,
+        timestamp: Date.now(),
+        positivePoleLabel: selectedPositivePole.label,
+        negativePoleLabel: selectedNegativePole.label,
+        result,
+      };
+
+      setAnalysisHistory((prev) => [storedAnalysis, ...prev]);
+      setSelectedAnalysisId(storedAnalysis.id);
       setActiveTab('results');
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Analysis failed');
@@ -427,20 +453,83 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     </div>
   );
 
-  // Results tab content
-  const resultsContent = analysisResult ? (
+  // Results list (for IconRailPanel sidebar)
+  const resultsListContent = analysisHistory.length > 0 ? (
+    <div className="flex-1 overflow-auto p-3">
+      <div className="space-y-2">
+        {analysisHistory.map((analysis) => (
+          <div
+            key={analysis.id}
+            className="border rounded-lg p-3 bg-card hover:bg-accent/50 transition-colors group"
+          >
+            <button
+              onClick={() => setSelectedAnalysisId(analysis.id)}
+              className="w-full text-left"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-sm font-medium text-blue-500">
+                  {analysis.positivePoleLabel}
+                </span>
+                <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                <span className="text-sm font-medium text-orange-500">
+                  {analysis.negativePoleLabel}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <span>{new Date(analysis.timestamp).toLocaleString()}</span>
+                <span>
+                  {analysis.result.statistics.total_concepts} concepts • r = {analysis.result.grounding_correlation.pearson_r.toFixed(2)}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setAnalysisHistory((prev) => prev.filter((a) => a.id !== analysis.id));
+                if (selectedAnalysisId === analysis.id) {
+                  setSelectedAnalysisId(null);
+                }
+              }}
+              className="mt-2 text-xs text-destructive hover:text-destructive/80 transition-colors opacity-0 group-hover:opacity-100"
+            >
+              Dismiss
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="flex-1 flex items-center justify-center p-4">
+      <div className="text-center text-muted-foreground text-sm">
+        <GitBranch className="w-10 h-10 mx-auto mb-3 opacity-50" />
+        <p>No analyses yet</p>
+      </div>
+    </div>
+  );
+
+  // Analysis report (for main content area)
+  const analysisReportContent = selectedAnalysis ? (
+    // Show full report for selected analysis
     <div className="flex-1 overflow-auto p-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back to List Button */}
+        <button
+          onClick={() => setSelectedAnalysisId(null)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronDown className="w-4 h-4 rotate-90" />
+          <span>Back to Analysis List</span>
+        </button>
+
         {/* Axis Info */}
         <div className="border rounded-lg p-4 bg-card">
           <h3 className="font-semibold mb-3">Polarity Axis</h3>
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1">
               <div className="text-sm font-medium text-blue-500">
-                {analysisResult.axis.positive_pole.label}
+                {selectedAnalysis.result.axis.positive_pole.label}
               </div>
               <div className="text-xs text-muted-foreground">
-                Grounding: {analysisResult.axis.positive_pole.grounding.toFixed(3)}
+                Grounding: {selectedAnalysis.result.axis.positive_pole.grounding.toFixed(3)}
               </div>
             </div>
             <div className="px-4">
@@ -448,21 +537,21 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             </div>
             <div className="flex-1 text-right">
               <div className="text-sm font-medium text-orange-500">
-                {analysisResult.axis.negative_pole.label}
+                {selectedAnalysis.result.axis.negative_pole.label}
               </div>
               <div className="text-xs text-muted-foreground">
-                Grounding: {analysisResult.axis.negative_pole.grounding.toFixed(3)}
+                Grounding: {selectedAnalysis.result.axis.negative_pole.grounding.toFixed(3)}
               </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Axis Magnitude:</span>{' '}
-              <span className="font-mono">{analysisResult.axis.magnitude.toFixed(4)}</span>
+              <span className="font-mono">{selectedAnalysis.result.axis.magnitude.toFixed(4)}</span>
             </div>
             <div>
               <span className="text-muted-foreground">Axis Quality:</span>{' '}
-              <span className="font-medium capitalize">{analysisResult.axis.axis_quality}</span>
+              <span className="font-medium capitalize">{selectedAnalysis.result.axis.axis_quality}</span>
             </div>
           </div>
         </div>
@@ -474,37 +563,37 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             <div>
               <div className="text-muted-foreground">Total Concepts</div>
               <div className="text-xl font-semibold">
-                {analysisResult.statistics.total_concepts}
+                {selectedAnalysis.result.statistics.total_concepts}
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Mean Position</div>
               <div className="text-xl font-semibold font-mono">
-                {analysisResult.statistics.mean_position.toFixed(3)}
+                {selectedAnalysis.result.statistics.mean_position.toFixed(3)}
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Std Deviation</div>
               <div className="text-xl font-semibold font-mono">
-                {analysisResult.statistics.std_deviation.toFixed(3)}
+                {selectedAnalysis.result.statistics.std_deviation.toFixed(3)}
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Positive</div>
               <div className="text-xl font-semibold text-blue-500">
-                {analysisResult.statistics.direction_distribution.positive}
+                {selectedAnalysis.result.statistics.direction_distribution.positive}
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Neutral</div>
               <div className="text-xl font-semibold text-muted-foreground">
-                {analysisResult.statistics.direction_distribution.neutral}
+                {selectedAnalysis.result.statistics.direction_distribution.neutral}
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Negative</div>
               <div className="text-xl font-semibold text-orange-500">
-                {analysisResult.statistics.direction_distribution.negative}
+                {selectedAnalysis.result.statistics.direction_distribution.negative}
               </div>
             </div>
           </div>
@@ -517,17 +606,17 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Pearson r:</span>
               <span className="font-mono font-semibold">
-                {analysisResult.grounding_correlation.pearson_r.toFixed(3)}
+                {selectedAnalysis.result.grounding_correlation.pearson_r.toFixed(3)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">p-value:</span>
               <span className="font-mono text-sm">
-                {analysisResult.grounding_correlation.p_value.toFixed(4)}
+                {selectedAnalysis.result.grounding_correlation.p_value.toFixed(4)}
               </span>
             </div>
             <div className="mt-2 p-2 bg-muted rounded text-sm">
-              {analysisResult.grounding_correlation.interpretation}
+              {selectedAnalysis.result.grounding_correlation.interpretation}
             </div>
           </div>
         </div>
@@ -547,7 +636,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500" />
                 <span className="font-medium">
-                  Positive ({analysisResult.statistics.direction_distribution.positive})
+                  Positive ({selectedAnalysis.result.statistics.direction_distribution.positive})
                 </span>
               </div>
               {expandedSections.positive ? (
@@ -558,7 +647,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             </button>
             {expandedSections.positive && (
               <div className="divide-y">
-                {analysisResult.projections
+                {selectedAnalysis.result.projections
                   .filter((p) => p.direction === 'positive')
                   .sort((a, b) => b.position - a.position)
                   .map((projection) => (
@@ -589,7 +678,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-muted-foreground" />
                 <span className="font-medium">
-                  Neutral ({analysisResult.statistics.direction_distribution.neutral})
+                  Neutral ({selectedAnalysis.result.statistics.direction_distribution.neutral})
                 </span>
               </div>
               {expandedSections.neutral ? (
@@ -600,7 +689,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             </button>
             {expandedSections.neutral && (
               <div className="divide-y">
-                {analysisResult.projections
+                {selectedAnalysis.result.projections
                   .filter((p) => p.direction === 'neutral')
                   .sort((a, b) => b.position - a.position)
                   .map((projection) => (
@@ -631,7 +720,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-500" />
                 <span className="font-medium">
-                  Negative ({analysisResult.statistics.direction_distribution.negative})
+                  Negative ({selectedAnalysis.result.statistics.direction_distribution.negative})
                 </span>
               </div>
               {expandedSections.negative ? (
@@ -642,7 +731,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             </button>
             {expandedSections.negative && (
               <div className="divide-y">
-                {analysisResult.projections
+                {selectedAnalysis.result.projections
                   .filter((p) => p.direction === 'negative')
                   .sort((a, b) => b.position - a.position)
                   .map((projection) => (
@@ -667,11 +756,12 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       </div>
     </div>
   ) : (
+    // No analysis selected - show empty state
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="text-center text-muted-foreground">
         <GitBranch className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p>No analysis results yet</p>
-        <p className="text-sm mt-2">Select poles and run analysis to see results</p>
+        <p>Select an analysis to view details</p>
+        <p className="text-sm mt-2">Choose from Results History or run a new analysis</p>
       </div>
     </div>
   );
@@ -682,19 +772,19 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       id: 'search',
       label: 'Search',
       icon: Search,
-      content: searchContent,
+      content: null, // Search UI shown in main content area
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: Settings,
-      content: settingsContent,
+      content: null, // Settings shown in main content area
     },
     {
       id: 'results',
-      label: 'Results',
+      label: 'Results History',
       icon: GitBranch,
-      content: resultsContent,
+      content: resultsListContent, // Results list shown in sidebar
     },
   ];
 
@@ -705,8 +795,32 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
-        {tabs.find((t) => t.id === activeTab)?.content}
+        {/* Header with help button */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h3 className="text-lg font-semibold text-foreground">
+            {activeTab === 'results' && selectedAnalysis
+              ? 'Analysis Report'
+              : tabs.find((t) => t.id === activeTab)?.label}
+          </h3>
+          <button
+            onClick={() => setIsHelpOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
+          >
+            <HelpCircle size={16} />
+            <span>How do I use this?</span>
+          </button>
+        </div>
+
+        {/* Main content - show appropriate content based on active tab */}
+        <div className="flex-1 overflow-auto">
+          {activeTab === 'search' && searchContent}
+          {activeTab === 'settings' && settingsContent}
+          {activeTab === 'results' && analysisReportContent}
+        </div>
       </div>
+
+      {/* Help Modal */}
+      <PolarityHelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 };
