@@ -137,6 +137,7 @@ interface GraphStore {
   };
   setPolarityState: (state: Partial<GraphStore['polarityState']>) => void;
   addPolarityAnalysis: (analysis: GraphStore['polarityState']['analysisHistory'][0]) => void;
+  removePolarityAnalysis: (id: string) => void;
   clearPolarityHistory: () => void;
 }
 
@@ -323,6 +324,20 @@ export const useGraphStore = create<GraphStore>((set) => ({
         selectedAnalysisId: analysis.id,
       },
     })),
+  removePolarityAnalysis: (id) =>
+    set((state) => {
+      const newHistory = state.polarityState.analysisHistory.filter((a) => a.id !== id);
+      return {
+        polarityState: {
+          ...state.polarityState,
+          analysisHistory: newHistory,
+          // If we're removing the selected analysis, deselect it
+          selectedAnalysisId: state.polarityState.selectedAnalysisId === id
+            ? null
+            : state.polarityState.selectedAnalysisId,
+        },
+      };
+    }),
   clearPolarityHistory: () =>
     set((state) => ({
       polarityState: {

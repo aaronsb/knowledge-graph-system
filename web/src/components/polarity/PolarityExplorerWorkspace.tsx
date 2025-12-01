@@ -86,6 +86,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     polarityState,
     setPolarityState,
     addPolarityAnalysis,
+    removePolarityAnalysis,
     clearPolarityHistory,
   } = useGraphStore();
 
@@ -493,12 +494,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               </div>
             </button>
             <button
-              onClick={() => {
-                setAnalysisHistory((prev) => prev.filter((a) => a.id !== analysis.id));
-                if (selectedAnalysisId === analysis.id) {
-                  setPolarityState({ selectedAnalysisId: null });
-                }
-              }}
+              onClick={() => removePolarityAnalysis(analysis.id)}
               className="mt-2 text-xs text-destructive hover:text-destructive/80 transition-colors opacity-0 group-hover:opacity-100"
             >
               Dismiss
@@ -523,7 +519,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back to List Button */}
         <button
-          onClick={() => setSelectedAnalysisId(null)}
+          onClick={() => setPolarityState({ selectedAnalysisId: null })}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronDown className="w-4 h-4 rotate-90" />
