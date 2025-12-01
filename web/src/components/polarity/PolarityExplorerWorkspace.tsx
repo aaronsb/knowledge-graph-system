@@ -18,6 +18,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
+import { useGraphStore } from '../../store/graphStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { PolarityHelpModal } from './PolarityHelpModal';
 import { PolarityScatterPlot } from './PolarityScatterPlot';
@@ -80,28 +81,37 @@ interface StoredAnalysis {
 }
 
 export const PolarityExplorerWorkspace: React.FC = () => {
-  // Search state
+  // Get polarity state from Zustand store
+  const {
+    polarityState,
+    setPolarityState,
+    addPolarityAnalysis,
+    clearPolarityHistory,
+  } = useGraphStore();
+
+  const {
+    selectedPositivePole,
+    selectedNegativePole,
+    analysisHistory,
+    selectedAnalysisId,
+    maxCandidates,
+    maxHops,
+    autoDiscover,
+    activeTab,
+  } = polarityState;
+
+  // Temporary search state (not persisted)
   const [positivePoleQuery, setPositivePoleQuery] = useState('');
   const [negativePoleQuery, setNegativePoleQuery] = useState('');
   const [positivePoleResults, setPositivePoleResults] = useState<Concept[]>([]);
   const [negativePoleResults, setNegativePoleResults] = useState<Concept[]>([]);
-  const [selectedPositivePole, setSelectedPositivePole] = useState<Concept | null>(null);
-  const [selectedNegativePole, setSelectedNegativePole] = useState<Concept | null>(null);
 
-  // Analysis options
-  const [maxCandidates, setMaxCandidates] = useState(20);
-  const [maxHops, setMaxHops] = useState(1);
-  const [autoDiscover, setAutoDiscover] = useState(true);
-
-  // Analysis state
+  // Loading/error state (not persisted)
   const [isSearching, setIsSearching] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisHistory, setAnalysisHistory] = useState<StoredAnalysis[]>([]);
-  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // UI state
-  const [activeTab, setActiveTab] = useState<string>('search');
+  // UI state (not persisted)
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     positive: true,
@@ -168,7 +178,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         max_hops: maxHops,
       });
 
-      // Store analysis in history
+      // Store analysis in history (Zustand store)
       const storedAnalysis: StoredAnalysis = {
         id: `analysis-${Date.now()}`,
         timestamp: Date.now(),
@@ -177,9 +187,8 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         result,
       };
 
-      setAnalysisHistory((prev) => [storedAnalysis, ...prev]);
-      setSelectedAnalysisId(storedAnalysis.id);
-      setActiveTab('results');
+      addPolarityAnalysis(storedAnalysis);
+      setPolarityState({ activeTab: 'results' });
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Analysis failed');
     } finally {
@@ -261,7 +270,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                   )}
                 </div>
                 <button
-                  onClick={() => setSelectedPositivePole(null)}
+                  onClick={() => setPolarityState({ selectedPositivePole: null })}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Clear
@@ -274,7 +283,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                 <button
                   key={concept.concept_id}
                   onClick={() => {
-                    setSelectedPositivePole(concept);
+                    setPolarityState({ selectedPositivePole: concept });
                     setPositivePoleResults([]);
                     setPositivePoleQuery('');
                   }}
@@ -335,7 +344,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                   )}
                 </div>
                 <button
-                  onClick={() => setSelectedNegativePole(null)}
+                  onClick={() => setPolarityState({ selectedNegativePole: null })}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Clear
@@ -348,7 +357,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                 <button
                   key={concept.concept_id}
                   onClick={() => {
-                    setSelectedNegativePole(concept);
+                    setPolarityState({ selectedNegativePole: concept });
                     setNegativePoleResults([]);
                     setNegativePoleQuery('');
                   }}
@@ -403,7 +412,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             <input
               type="checkbox"
               checked={autoDiscover}
-              onChange={(e) => setAutoDiscover(e.target.checked)}
+              onChange={(e) => setPolarityState({ autoDiscover: e.target.checked })}
               className="rounded"
             />
             <span className="text-sm font-medium">Auto-discover related concepts</span>
@@ -425,7 +434,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                 max="100"
                 step="5"
                 value={maxCandidates}
-                onChange={(e) => setMaxCandidates(parseInt(e.target.value))}
+                onChange={(e) => setPolarityState({ maxCandidates: parseInt(e.target.value) })}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -441,7 +450,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
                 max="5"
                 step="1"
                 value={maxHops}
-                onChange={(e) => setMaxHops(parseInt(e.target.value))}
+                onChange={(e) => setPolarityState({ maxHops: parseInt(e.target.value) })}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -464,7 +473,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             className="border rounded-lg p-3 bg-card hover:bg-accent/50 transition-colors group"
           >
             <button
-              onClick={() => setSelectedAnalysisId(analysis.id)}
+              onClick={() => setPolarityState({ selectedAnalysisId: analysis.id })}
               className="w-full text-left"
             >
               <div className="flex items-center gap-2 mb-1.5">
@@ -487,7 +496,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               onClick={() => {
                 setAnalysisHistory((prev) => prev.filter((a) => a.id !== analysis.id));
                 if (selectedAnalysisId === analysis.id) {
-                  setSelectedAnalysisId(null);
+                  setPolarityState({ selectedAnalysisId: null });
                 }
               }}
               className="mt-2 text-xs text-destructive hover:text-destructive/80 transition-colors opacity-0 group-hover:opacity-100"
@@ -804,7 +813,11 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   return (
     <div className="flex h-full">
       {/* Left sidebar with tabs */}
-      <IconRailPanel tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <IconRailPanel
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(tab) => setPolarityState({ activeTab: tab })}
+      />
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
