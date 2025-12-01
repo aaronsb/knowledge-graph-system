@@ -420,7 +420,8 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
               const vectorMagnitude = Math.sqrt(
                 payload.position ** 2 + payload.grounding ** 2
               );
-              const indicatorLength = radius + 4 + (vectorMagnitude * 8); // Scales with strength
+              // Increased scale factor to make length differences more visible
+              const indicatorLength = radius + 4 + (vectorMagnitude * 20); // Scales with strength
 
               // Calculate angle from origin to concept point (position, grounding)
               // This shows each concept's individual trend direction
