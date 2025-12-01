@@ -398,7 +398,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             />
           )}
 
-          {/* Data points (bubbles) */}
+          {/* Data points (bubbles with direction indicators) */}
           <Scatter
             name="Concepts"
             data={chartData}
@@ -408,20 +408,65 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             cursor="pointer"
             shape={(props: any) => {
               const { cx, cy, fill, payload } = props;
+              const radius = Math.sqrt(payload.size / Math.PI);
+              const isHovered = hoveredConcept?.concept_id === payload.concept_id;
+
+              // Calculate direction indicator (flow telltale)
+              // Shows the concept's trend direction in position-grounding space
+              // Like yarn on a wing, shows the "flow" direction for this specific concept
+
+              // Calculate vector magnitude (distance from origin)
+              // Strong concepts (far from origin) get longer telltales
+              const vectorMagnitude = Math.sqrt(
+                payload.position ** 2 + payload.grounding ** 2
+              );
+              const indicatorLength = radius + 4 + (vectorMagnitude * 8); // Scales with strength
+
+              // Calculate angle from origin to concept point (position, grounding)
+              // This shows each concept's individual trend direction
+              const angle = Math.atan2(payload.grounding, payload.position);
+
+              const lineEndX = cx + Math.cos(angle) * indicatorLength;
+              const lineEndY = cy - Math.sin(angle) * indicatorLength; // Negative because SVG Y increases downward
+              const lineStartX = cx + Math.cos(angle) * radius;
+              const lineStartY = cy - Math.sin(angle) * radius;
+
+              // Visual distinction by direction
+              const strokeDasharray = payload.direction === 'neutral' ? '2,2' : 'none';
+              const strokeWidth = isHovered ? 2.5 : (payload.direction === 'neutral' ? 1.5 : 2);
+
               return (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={Math.sqrt(payload.size / Math.PI)}
-                  fill={fill}
-                  fillOpacity={hoveredConcept?.concept_id === payload.concept_id ? 0.9 : 0.6}
-                  stroke={hoveredConcept?.concept_id === payload.concept_id ? fill : 'none'}
-                  strokeWidth={hoveredConcept?.concept_id === payload.concept_id ? 2 : 0}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    handleContextMenu(e as any, payload);
-                  }}
-                />
+                <g>
+                  {/* Direction indicator (flow telltale) - shows trend direction for each concept */}
+                  <line
+                    x1={lineStartX}
+                    y1={lineStartY}
+                    x2={lineEndX}
+                    y2={lineEndY}
+                    stroke={fill}
+                    strokeWidth={isHovered ? 2 : 1.5}
+                    strokeOpacity={isHovered ? 0.9 : 0.6}
+                    strokeLinecap="round"
+                    pointerEvents="none"
+                  />
+
+                  {/* Bubble */}
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill={fill}
+                    fillOpacity={isHovered ? 0.9 : 0.6}
+                    stroke={fill}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDasharray}
+                    strokeOpacity={isHovered ? 1 : 0.8}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleContextMenu(e as any, payload);
+                    }}
+                  />
+                </g>
               );
             }}
           >
@@ -436,7 +481,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
       </ResponsiveContainer>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground dark:text-gray-400">
+      <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground dark:text-gray-400">
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: DIRECTION_COLORS.positive }} />
@@ -444,6 +489,23 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: DIRECTION_COLORS.positive }} />
           </div>
           <span>Bubble size = Relevance to axis (larger = better fit)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg width="32" height="16" className="inline-block">
+            {/* Short telltale */}
+            <circle cx="6" cy="8" r="4" fill={DIRECTION_COLORS.neutral} fillOpacity="0.5" stroke={DIRECTION_COLORS.neutral} strokeWidth="1" />
+            <line x1="10" y1="8" x2="13" y2="8" stroke={DIRECTION_COLORS.neutral} strokeWidth="1" strokeOpacity="0.5" strokeLinecap="round" />
+            {/* Long telltale */}
+            <circle cx="20" cy="8" r="4" fill={DIRECTION_COLORS.positive} fillOpacity="0.6" stroke={DIRECTION_COLORS.positive} strokeWidth="2" />
+            <line x1="24" y1="8" x2="31" y2="8" stroke={DIRECTION_COLORS.positive} strokeWidth="1.5" strokeOpacity="0.6" strokeLinecap="round" />
+          </svg>
+          <span>Flow telltale = Trend direction (angle) & signal strength (length)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg width="20" height="16" className="inline-block">
+            <circle cx="10" cy="8" r="6" fill={DIRECTION_COLORS.neutral} fillOpacity="0.6" stroke={DIRECTION_COLORS.neutral} strokeWidth="1.5" strokeDasharray="2,2" />
+          </svg>
+          <span>Dashed border = Neutral (balanced)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-8 h-0.5 bg-indigo-500" style={{ backgroundImage: 'linear-gradient(to right, #6366F1 50%, transparent 50%)', backgroundSize: '8px 2px' }} />
