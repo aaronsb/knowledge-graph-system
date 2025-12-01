@@ -8,7 +8,8 @@
  * - Size: Inverse of axis distance (larger = better fit)
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ScatterChart,
   Scatter,
@@ -39,10 +40,16 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
   analysisResult,
   onConceptClick,
 }) => {
+  const navigate = useNavigate();
   const [activeFilters, setActiveFilters] = useState<Set<string>>(
     new Set(['positive', 'negative', 'neutral'])
   );
   const [hoveredConcept, setHoveredConcept] = useState<ProjectedConcept | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    concept: ProjectedConcept;
+  } | null>(null);
 
   // Calculate regression line parameters
   const regressionLine = useMemo(() => {
@@ -133,6 +140,42 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     });
   };
 
+  // Handle right-click on concept
+  const handleContextMenu = useCallback((event: React.MouseEvent, concept: ProjectedConcept) => {
+    event.preventDefault();
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      concept,
+    });
+  }, []);
+
+  // Close context menu
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  // Navigate to 2D explorer with concept
+  const examineAsConcept = useCallback((concept: ProjectedConcept) => {
+    // Navigate to 2D explorer with concept query (similarity ~50%)
+    navigate(`/explorer-2d?conceptId=${concept.concept_id}&mode=concept&similarity=0.5`);
+    closeContextMenu();
+  }, [navigate, closeContextMenu]);
+
+  // Navigate to 2D explorer with neighborhood
+  const examineAsNeighborhood = useCallback((concept: ProjectedConcept) => {
+    // Navigate to 2D explorer with neighborhood query (depth 2)
+    navigate(`/explorer-2d?conceptId=${concept.concept_id}&mode=neighborhood&depth=2`);
+    closeContextMenu();
+  }, [navigate, closeContextMenu]);
+
+  // Filter button tooltips
+  const filterTooltips = {
+    positive: 'Show concepts aligned with the positive pole',
+    negative: 'Show concepts aligned with the negative pole',
+    neutral: 'Show concepts balanced between both poles',
+  };
+
   // Generate regression line points
   const regressionPoints = useMemo(() => {
     if (!regressionLine) return [];
@@ -143,8 +186,57 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     ];
   }, [regressionLine]);
 
+  // Custom tick formatter for color-coded axis labels
+  const formatAxisTick = (value: number) => {
+    return value;
+  };
+
+  // Close context menu when clicking outside
+  React.useEffect(() => {
+    if (contextMenu) {
+      const handleClick = () => closeContextMenu();
+      document.addEventListener('click', handleClick);
+      return () => document.removeEventListener('click', handleClick);
+    }
+  }, [contextMenu, closeContextMenu]);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" onClick={closeContextMenu}>
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[9999] bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 min-w-[220px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-2 border-b border-border dark:border-gray-700">
+            <div className="font-semibold text-sm text-card-foreground dark:text-gray-100 truncate">
+              {contextMenu.concept.label}
+            </div>
+          </div>
+          <div className="py-1">
+            <button
+              onClick={() => examineAsConcept(contextMenu.concept)}
+              className="w-full px-3 py-2 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+            >
+              Examine as Concept
+              <div className="text-xs text-muted-foreground dark:text-gray-500 mt-0.5">
+                Find similar concepts (~50% similarity)
+              </div>
+            </button>
+            <button
+              onClick={() => examineAsNeighborhood(contextMenu.concept)}
+              className="w-full px-3 py-2 text-left text-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors text-card-foreground dark:text-gray-200"
+            >
+              Examine as Neighborhood
+              <div className="text-xs text-muted-foreground dark:text-gray-500 mt-0.5">
+                Explore connected concepts (2 hops)
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter Controls */}
       <div className="flex items-center gap-3 px-4">
         <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">
@@ -155,6 +247,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             <button
               key={direction}
               onClick={() => toggleFilter(direction)}
+              title={filterTooltips[direction]}
               className={`px-3 py-1 rounded text-sm font-medium transition-all ${
                 activeFilters.has(direction)
                   ? 'opacity-100'
@@ -191,7 +284,23 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             name="Position"
             domain={[-1, 1]}
             ticks={[-1, -0.5, 0, 0.5, 1]}
-            className="text-xs text-muted-foreground dark:text-gray-400"
+            tick={(props) => {
+              const { x, y, payload } = props;
+              const value = payload.value;
+              const color = value < 0 ? '#EF4444' : value > 0 ? '#10B981' : '#9CA3AF';
+              return (
+                <text
+                  x={x}
+                  y={y}
+                  dy={16}
+                  textAnchor="middle"
+                  fill={color}
+                  fontSize={12}
+                >
+                  {value}
+                </text>
+              );
+            }}
           >
             <Label
               value="Position on Axis (Negative ← → Positive)"
@@ -206,7 +315,23 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             type="number"
             dataKey="grounding"
             name="Grounding"
-            className="text-xs text-muted-foreground dark:text-gray-400"
+            tick={(props) => {
+              const { x, y, payload } = props;
+              const value = payload.value;
+              const color = value < 0 ? '#EF4444' : value > 0 ? '#10B981' : '#9CA3AF';
+              return (
+                <text
+                  x={x}
+                  y={y}
+                  dx={-8}
+                  textAnchor="end"
+                  fill={color}
+                  fontSize={12}
+                >
+                  {value.toFixed(1)}
+                </text>
+              );
+            }}
           >
             <Label
               value="Grounding Strength"
@@ -258,14 +383,29 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             onMouseEnter={(data) => setHoveredConcept(data)}
             onMouseLeave={() => setHoveredConcept(null)}
             cursor="pointer"
+            shape={(props: any) => {
+              const { cx, cy, fill, payload } = props;
+              return (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={Math.sqrt(payload.size / Math.PI)}
+                  fill={fill}
+                  fillOpacity={hoveredConcept?.concept_id === payload.concept_id ? 0.9 : 0.6}
+                  stroke={hoveredConcept?.concept_id === payload.concept_id ? fill : 'none'}
+                  strokeWidth={hoveredConcept?.concept_id === payload.concept_id ? 2 : 0}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    handleContextMenu(e as any, payload);
+                  }}
+                />
+              );
+            }}
           >
             {chartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={entry.color}
-                fillOpacity={hoveredConcept?.concept_id === entry.concept_id ? 0.9 : 0.6}
-                stroke={hoveredConcept?.concept_id === entry.concept_id ? entry.color : 'none'}
-                strokeWidth={hoveredConcept?.concept_id === entry.concept_id ? 2 : 0}
               />
             ))}
           </Scatter>
