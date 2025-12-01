@@ -160,7 +160,7 @@ def discover_candidate_concepts(
     negative_pole_id: str,
     age_client,
     max_candidates: int = 20,
-    max_hops: int = 2
+    max_hops: int = 1
 ) -> List[str]:
     """
     Auto-discover concepts related to the poles.
@@ -181,6 +181,7 @@ def discover_candidate_concepts(
     # Filter for concepts with embeddings (required for projection)
     # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
     # Format pole IDs as Cypher list manually (json.dumps uses double quotes which Cypher rejects)
+    # Performance optimization: Limit per-pole results to avoid expensive DISTINCT on large sets
     pole_ids_cypher = "[" + ", ".join(f"'{pid}'" for pid in [positive_pole_id, negative_pole_id]) + "]"
 
     results = age_client.facade.execute_raw(
@@ -191,12 +192,12 @@ def discover_candidate_concepts(
             WHERE NOT (candidate.concept_id IN {pole_ids_cypher})
               AND candidate.embedding IS NOT NULL
             WITH DISTINCT candidate
-            RETURN candidate.concept_id as concept_id
             LIMIT $limit
+            RETURN candidate.concept_id as concept_id
         """,
         params={
             "max_hops": max_hops,
-            "limit": max_candidates
+            "limit": max_candidates * 2  # Increase to account for potential overlap
         },
         namespace="concept"
     )
@@ -277,7 +278,7 @@ def analyze_polarity_axis(
     candidate_ids: Optional[List[str]] = None,
     auto_discover: bool = True,
     max_candidates: int = 20,
-    max_hops: int = 2
+    max_hops: int = 1
 ) -> Dict[str, Any]:
     """
     Analyze polarity axis between two concept poles (direct query).

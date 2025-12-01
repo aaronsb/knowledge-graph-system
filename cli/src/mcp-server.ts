@@ -638,8 +638,8 @@ Use Cases:
             },
             max_hops: {
               type: 'number',
-              description: 'Maximum graph hops for auto-discovery (1-3, default: 2)',
-              default: 2,
+              description: 'Maximum graph hops for auto-discovery (1-3, default: 1)',
+              default: 1,
             },
           },
           required: ['positive_pole_id', 'negative_pole_id'],

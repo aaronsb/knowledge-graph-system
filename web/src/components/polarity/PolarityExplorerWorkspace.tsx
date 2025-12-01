@@ -79,7 +79,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
   // Analysis options
   const [maxCandidates, setMaxCandidates] = useState(20);
-  const [maxHops, setMaxHops] = useState(2);
+  const [maxHops, setMaxHops] = useState(1);
   const [autoDiscover, setAutoDiscover] = useState(true);
 
   // Analysis state
