@@ -135,6 +135,25 @@ Visual hierarchy of key metrics (could be beside or above chart):
 
 ## Implementation Considerations
 
+### Reuse Existing Explorer Components
+
+**Important:** Leverage existing patterns from `/web/src/explorers/common/` for consistency:
+
+**Applicable Components:**
+- **NodeInfoBox.tsx** → Show concept details when clicking bubbles
+- **useGraphContextMenu.ts** → Right-click context menu for concepts (e.g., "View in graph", "Copy ID")
+- **Legend.tsx** → Direction color legend (positive/neutral/negative)
+- **StatsPanel.tsx** → Statistics summary panel
+- **PanelStack.tsx** → Panel management for stacking info panels
+- **styles.ts** → Common visual themes and colors
+- **labelStyles.ts** → Consistent text styling
+
+**Benefits:**
+- Familiar UX patterns across all explorers
+- Reduced code duplication
+- Consistent visual language
+- Maintained accessibility patterns
+
 ### Technology Options
 
 **Recharts** (Recommended for Phase 1):
@@ -143,6 +162,7 @@ Visual hierarchy of key metrics (could be beside or above chart):
 - Built-in responsive design
 - Supports bubble charts, tooltips, zoom
 - **Trade-off:** Less customization than D3
+- **Compatible with:** Existing explorer component patterns
 
 **Victory**:
 - More customizable
@@ -155,7 +175,7 @@ Visual hierarchy of key metrics (could be beside or above chart):
 - Requires more development time
 - Better for novel visualizations
 
-**Recommendation:** Start with Recharts for rapid implementation, migrate to D3 if we need custom interactions later.
+**Recommendation:** Start with Recharts for rapid implementation, integrate with existing explorer components (NodeInfoBox, context menu), migrate to D3 if we need custom interactions later.
 
 ### Color Palette
 
