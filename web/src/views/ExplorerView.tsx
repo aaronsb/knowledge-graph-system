@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SearchBar } from '../components/shared/SearchBar';
 import { useGraphStore } from '../store/graphStore';
 import { useSubgraph, useFindConnection } from '../hooks/useGraphData';
@@ -20,6 +21,7 @@ interface ExplorerViewProps {
 }
 
 export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
+  const [urlParams] = useSearchParams();
   const {
     searchParams,
     graphData: storeGraphData,
@@ -27,12 +29,44 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setGraphData,
     setRawGraphData,
     setSelectedExplorer,
+    setSearchParams,
+    setSimilarityThreshold,
   } = useGraphStore();
 
   // Set the explorer type when this view mounts
   useEffect(() => {
     setSelectedExplorer(explorerType);
   }, [explorerType, setSelectedExplorer]);
+
+  // Initialize from URL parameters on mount
+  useEffect(() => {
+    const conceptId = urlParams.get('conceptId');
+    const mode = urlParams.get('mode') as 'concept' | 'neighborhood' | null;
+    const similarity = urlParams.get('similarity');
+    const depth = urlParams.get('depth');
+
+    if (conceptId && mode) {
+      if (mode === 'concept') {
+        // Concept mode: load single concept with similar concepts
+        setSearchParams({
+          mode: 'concept',
+          conceptId: conceptId,
+          loadMode: 'clean',
+        });
+        if (similarity) {
+          setSimilarityThreshold(parseFloat(similarity));
+        }
+      } else if (mode === 'neighborhood') {
+        // Neighborhood mode: load subgraph around concept
+        setSearchParams({
+          mode: 'neighborhood',
+          centerConceptId: conceptId,
+          depth: depth ? parseInt(depth) : 2,
+          loadMode: 'clean',
+        });
+      }
+    }
+  }, [urlParams, setSearchParams, setSimilarityThreshold]);
 
   // React to searchParams - fetch data based on mode
   // Concept mode: load single concept with neighbors
