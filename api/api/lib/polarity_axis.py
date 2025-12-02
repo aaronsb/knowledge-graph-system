@@ -23,9 +23,9 @@ def validate_concept_id(concept_id: str) -> None:
     Validate concept ID format to prevent SQL/Cypher injection.
 
     Concept IDs follow the format: {source_id}_{uuid_hex}
-    where source_id can be {document_id}_chunk{N} or {filename}_chunk{N}
+    where source_id can be sha256:{hash}_chunk{N} or {filename}_chunk{N}
 
-    Valid characters: alphanumeric, underscores, hyphens
+    Valid characters: alphanumeric, underscores, hyphens, colons
     Max length: 200 characters (generous limit)
 
     Args:
@@ -40,11 +40,12 @@ def validate_concept_id(concept_id: str) -> None:
     if len(concept_id) > 200:
         raise ValueError(f"Concept ID too long: {len(concept_id)} characters (max 200)")
 
-    # Allow only alphanumeric, underscores, hyphens (no quotes, no special chars)
-    if not re.match(r'^[a-zA-Z0-9_\-]+$', concept_id):
+    # Allow alphanumeric, underscores, hyphens, colons (for sha256: prefix)
+    # Still blocks quotes, semicolons, parentheses, and other SQL/Cypher injection chars
+    if not re.match(r'^[a-zA-Z0-9_\-:]+$', concept_id):
         raise ValueError(
             f"Invalid concept ID format: '{concept_id}'. "
-            "Only alphanumeric characters, underscores, and hyphens are allowed"
+            "Only alphanumeric characters, underscores, hyphens, and colons are allowed"
         )
 
 

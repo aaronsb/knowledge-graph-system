@@ -117,6 +117,28 @@ interface GraphStore {
   // Block builder expanded state
   blockBuilderExpanded: boolean;
   setBlockBuilderExpanded: (expanded: boolean) => void;
+
+  // Polarity Explorer state (ADR-070)
+  polarityState: {
+    selectedPositivePole: { concept_id: string; label: string; description?: string } | null;
+    selectedNegativePole: { concept_id: string; label: string; description?: string } | null;
+    analysisHistory: Array<{
+      id: string;
+      timestamp: number;
+      positivePoleLabel: string;
+      negativePoleLabel: string;
+      result: any; // PolarityAxisResponse type
+    }>;
+    selectedAnalysisId: string | null;
+    maxCandidates: number;
+    maxHops: number;
+    autoDiscover: boolean;
+    activeTab: string;
+  };
+  setPolarityState: (state: Partial<GraphStore['polarityState']>) => void;
+  addPolarityAnalysis: (analysis: GraphStore['polarityState']['analysisHistory'][0]) => void;
+  removePolarityAnalysis: (id: string) => void;
+  clearPolarityHistory: () => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -278,4 +300,50 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Block builder expanded
   blockBuilderExpanded: true,
   setBlockBuilderExpanded: (expanded) => set({ blockBuilderExpanded: expanded }),
+
+  // Polarity Explorer state (ADR-070)
+  polarityState: {
+    selectedPositivePole: null,
+    selectedNegativePole: null,
+    analysisHistory: [],
+    selectedAnalysisId: null,
+    maxCandidates: 20,
+    maxHops: 1,
+    autoDiscover: true,
+    activeTab: 'search',
+  },
+  setPolarityState: (newState) =>
+    set((state) => ({
+      polarityState: { ...state.polarityState, ...newState },
+    })),
+  addPolarityAnalysis: (analysis) =>
+    set((state) => ({
+      polarityState: {
+        ...state.polarityState,
+        analysisHistory: [analysis, ...state.polarityState.analysisHistory],
+        selectedAnalysisId: analysis.id,
+      },
+    })),
+  removePolarityAnalysis: (id) =>
+    set((state) => {
+      const newHistory = state.polarityState.analysisHistory.filter((a) => a.id !== id);
+      return {
+        polarityState: {
+          ...state.polarityState,
+          analysisHistory: newHistory,
+          // If we're removing the selected analysis, deselect it
+          selectedAnalysisId: state.polarityState.selectedAnalysisId === id
+            ? null
+            : state.polarityState.selectedAnalysisId,
+        },
+      };
+    }),
+  clearPolarityHistory: () =>
+    set((state) => ({
+      polarityState: {
+        ...state.polarityState,
+        analysisHistory: [],
+        selectedAnalysisId: null,
+      },
+    })),
 }));
