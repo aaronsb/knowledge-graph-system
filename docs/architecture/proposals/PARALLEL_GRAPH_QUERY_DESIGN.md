@@ -115,48 +115,63 @@ This runs in ~500ms and returns, let's say, 150 concepts:
 
 Total: 150 concepts that are directly connected to our poles.
 
-**Phase 2: The Parallel Part (8 Workers)**
+**Phase 2: The Parallel Part (8 Workers with Chunking)**
 
-Now we need the neighbors of those 150 concepts. Instead of one query with `[*1..2]` (which would explore 150 × 100 = 15,000 paths sequentially), we break it up:
+Now we need the neighbors of those 150 concepts. Instead of one query with `[*1..2]` (which would explore 150 × 100 = 15,000 paths sequentially), we use **chunking** to minimize network overhead.
 
-- Worker 1: Gets neighbors of concepts 1-19 (19 queries)
-- Worker 2: Gets neighbors of concepts 20-38 (19 queries)
-- Worker 3: Gets neighbors of concepts 39-57 (19 queries)
+**The Optimization:** Instead of 1 worker = 1 concept = 1 query (150 total queries), we do 1 worker = 1 chunk of concepts = 1 batched query (8 total queries).
+
+Split 150 concepts into 8 chunks:
+- Chunk 1: Concepts 1-19 (19 IDs)
+- Chunk 2: Concepts 20-37 (18 IDs)
+- Chunk 3: Concepts 38-56 (19 IDs)
 - ... and so on ...
-- Worker 8: Gets neighbors of concepts 134-150 (17 queries)
+- Chunk 8: Concepts 134-150 (17 IDs)
 
 Each worker:
 1. Grabs a connection from the pool
-2. For each of its assigned concepts, runs:
+2. Runs **ONE** batched query for its entire chunk:
 ```cypher
-MATCH (seed:Concept {concept_id: 'authority_xyz'})-[]-(neighbor:Concept)
-WHERE neighbor.embedding IS NOT NULL
+MATCH (seed:Concept)-[]-(neighbor:Concept)
+WHERE seed.concept_id IN $seed_ids  -- All 19 IDs passed as parameter
+  AND neighbor.embedding IS NOT NULL
 RETURN DISTINCT neighbor.concept_id
-LIMIT 100
+LIMIT 2000  -- Higher limit since we're batching
 ```
-3. Collects all the neighbor IDs into a set
+3. Collects all neighbor IDs (deduped by DISTINCT)
 4. Returns the connection to the pool
 5. Reports its results back
 
-**The Timeline:**
+**Why Chunking Matters:**
+
+- **Network overhead:** Each query has ~10ms latency (connection setup, query parse, result marshal)
+- **Old approach:** 150 concepts × 10ms = 1,500ms wasted in network overhead
+- **New approach:** 8 chunks × 10ms = 80ms network overhead
+- **Savings:** 1,420ms (1.4 seconds) just from batching!
+
+Plus, the database can optimize a single batched query better than 19 separate queries (shared query plan, shared index lookups).
+
+**The Timeline (With Chunking):**
 
 ```
-T=0ms:    Start Phase 1 query
-T=500ms:  Phase 1 complete (150 1-hop neighbors found)
-T=500ms:  Launch 8 workers in parallel
-T=502ms:  All 8 workers grab connections from pool
-T=502ms:  All 8 workers start running their first queries
+T=0ms:     Start Phase 1 query
+T=500ms:   Phase 1 complete (150 1-hop neighbors found)
+T=500ms:   Split into 8 chunks of ~19 IDs each
+T=502ms:   Launch 8 workers in parallel
+T=504ms:   All 8 workers grab connections from pool
+T=504ms:   All 8 workers start their batched queries
 
-T=2500ms: Worker 1 finishes its 19 queries → returns connection
-T=2600ms: Worker 2 finishes its 19 queries → returns connection
-... workers finish between 2.5-3.0 seconds ...
-T=3000ms: Worker 8 finishes its 17 queries → returns connection
+T=1500ms:  Worker 1 finishes its batched query (19 seeds) → returns connection
+T=1520ms:  Worker 2 finishes its batched query (18 seeds) → returns connection
+T=1540ms:  Worker 3 finishes its batched query (19 seeds) → returns connection
+... workers finish between 1.5-1.8 seconds ...
+T=1800ms:  Worker 8 finishes its batched query (17 seeds) → returns connection
 
-T=3100ms: Merge and deduplicate all results
-T=3200ms: Return final set of ~2,500 unique concepts
+T=1810ms:  Merge and deduplicate all results
+T=1850ms:  Return final set of ~2,500 unique concepts
 ```
 
-**Total Time:** ~3.2 seconds
+**Total Time:** ~1.85 seconds (less than 2 seconds!)
 
 **Compare to Sequential:**
 
@@ -166,7 +181,19 @@ If we'd done this sequentially:
 
 **Total Time:** 5+ minutes
 
-We just went from 5 minutes to 3 seconds. That's a **100x speedup**.
+**Compare to Parallel Without Chunking:**
+
+If we'd done parallel but with 150 individual queries:
+- Phase 1: 500ms
+- Phase 2: (150 ÷ 8) × 2s + 1.5s network overhead = ~5 seconds
+
+**Total Time:** ~5.5 seconds
+
+**With Chunking:** ~1.85 seconds
+
+We just went from 5 minutes (sequential) to 1.85 seconds (parallel + chunked). That's a **160x speedup**.
+
+Even compared to "parallel without chunking" (5.5s), chunking gives us a **3x improvement**.
 
 ### Why This Works
 
@@ -563,47 +590,114 @@ Your query count: 400 connections needed
 
 These aren't just theoretical horror stories. This is what *will* happen if we ship this without guardrails. So here's how we keep the wheels on:
 
-#### 1. Bounded Worker Pool (Preventing Death Spirals)
+#### 1. Global Semaphore (Preventing Multi-User Deadlock)
 
-**The Fix:**
-```python
-@dataclass
-class ParallelQueryConfig:
-    max_workers: int = 8  # Default conservative
-    # Can increase to 16-32 based on connection pool size
-```
+**The Critical Bug in the Original Design:**
 
-We default to 8 workers, which is well under our 20-connection pool limit. Why 8 and not 18? Because we need headroom for:
-- Other API endpoints using connections
-- Connection pool maintenance tasks
-- The occasional long-running query
-- Your sanity when debugging
+The original plan said "8 workers per request is safe with a 20-connection pool." But that only works for a **single user**. Here's what actually happens in production:
 
-**The Safety Check:**
+- User A starts polarity analysis: 1 main + 8 workers = **9 connections**
+- User B starts polarity analysis: 1 main + 8 workers = **9 connections**
+- Total: **18/20 connections used**
+- User C (or a health check endpoint): **BLOCKED**
 
-When you initialize the parallelizer, we actually verify your settings won't cause a deadlock:
+Two simultaneous analysts lock out the entire application. This is a showstopper bug.
+
+**The Fix: Application-Level Global Semaphore**
+
+We need to limit the total number of graph workers **across the entire application**, not per request:
 
 ```python
-def __init__(self, age_client, config):
-    # Verify worker count doesn't exceed available connections
-    pool_size = age_client.pool.maxconn  # Default 20
-    if config.max_workers > pool_size - 2:
-        logger.warning(
-            f"Worker count ({config.max_workers}) near pool limit ({pool_size}). "
-            f"Recommend max_workers ≤ {pool_size - 2} to prevent deadlock."
-        )
+# Global singleton semaphore (initialized once at app startup)
+_GRAPH_WORKER_SEMAPHORE = None
+
+def get_global_graph_semaphore(max_workers: int = 8) -> threading.Semaphore:
+    """
+    Get or create the global graph worker semaphore.
+
+    This limits TOTAL concurrent graph workers across ALL requests.
+    """
+    global _GRAPH_WORKER_SEMAPHORE
+    if _GRAPH_WORKER_SEMAPHORE is None:
+        _GRAPH_WORKER_SEMAPHORE = threading.Semaphore(max_workers)
+    return _GRAPH_WORKER_SEMAPHORE
+
+class GraphParallelizer:
+    def __init__(self, age_client, config: Optional[ParallelQueryConfig] = None):
+        self.client = age_client
+        self.config = config or ParallelQueryConfig()
+        self.global_semaphore = get_global_graph_semaphore(self.config.max_workers)
+
+    def _get_1hop_neighbors_worker(self, seed_id, ...):
+        # Acquire from GLOBAL semaphore, not per-request
+        with self.global_semaphore:
+            conn = self.client.pool.getconn()
+            try:
+                # ... run query ...
+            finally:
+                self.client.pool.putconn(conn)
 ```
 
-If someone tries to set `max_workers=25` with a 20-connection pool, they get a big fat warning. We don't hard-fail because maybe they know something we don't (increased the pool size), but we make it *very* clear they're playing with fire.
+**How This Works:**
 
-**The Rule:**
+With `max_workers=8` globally:
+
+- User A starts query: Acquires 8 slots from global semaphore
+- User B starts query: Tries to acquire 8 slots, but only 0 available → **waits**
+- User A finishes: Releases 8 slots
+- User B proceeds: Acquires 8 slots
+
+**Graceful Degradation Option:**
+
+Instead of blocking User B, we could degrade to sequential execution:
+
+```python
+def get_nhop_neighbors(self, seed_ids, max_hops, ...):
+    # Try to acquire workers from global pool
+    available_workers = 0
+    acquired_slots = []
+
+    for _ in range(self.config.max_workers):
+        if self.global_semaphore.acquire(blocking=False):
+            acquired_slots.append(True)
+            available_workers += 1
+        else:
+            break
+
+    if available_workers == 0:
+        # No workers available - degrade to sequential
+        logger.warning("Global worker pool exhausted, running sequentially")
+        return self._sequential_fallback(seed_ids, max_hops)
+
+    # Use however many workers we got
+    logger.info(f"Acquired {available_workers}/{self.config.max_workers} workers")
+    # ... proceed with available_workers ...
 ```
-max_workers ≤ (connection_pool_size - 2)
 
-Safe defaults:
-- Pool size 20 → max_workers 8 (default)
-- Pool size 40 → max_workers 16 (comfortable)
-- Pool size 60 → max_workers 32 (aggressive)
+**Alternative: Dedicated Connection Pool**
+
+Another approach is separate pools:
+
+```python
+# Main API pool: 10 connections
+main_pool = psycopg2.pool.SimpleConnectionPool(2, 10, ...)
+
+# Graph worker pool: 10 connections
+graph_worker_pool = psycopg2.pool.SimpleConnectionPool(2, 10, ...)
+```
+
+**Benefit:** API endpoints never hang even if graph workers are maxed out.
+
+**Trade-off:** More complex connection management, but better isolation.
+
+**Recommended Configuration:**
+```
+Total PostgreSQL connections: 100
+Main API pool: 10 connections
+Graph worker pool: 10 connections (8 workers + 2 buffer)
+Reserved for monitoring/admin: 5 connections
+
+Result: 2 concurrent graph analyses can run without blocking API
 ```
 
 #### 2. Per-Worker Result Limits (Preventing Memory Explosions)
@@ -685,7 +779,121 @@ This is different from, say, a database transaction where you need all-or-nothin
 
 This makes the system resilient. One bad concept with pathological connectivity can't bring down the entire analysis.
 
-#### 5. Database-Side Safety
+#### 5. Security: Parameter Binding (Preventing Cypher Injection)
+
+**The Vulnerability:**
+
+The original implementation used f-strings to build Cypher queries:
+
+```python
+query = f"""
+    MATCH (seed:Concept {{concept_id: '{seed_id}'}})...
+"""
+```
+
+Even with `validate_concept_id()`, this is technically a **Cypher injection vulnerability**. If validation has a bug, or if IDs come from a different source, an attacker could inject:
+
+```python
+seed_id = "abc'})-[:ADMIN]->(u:User) WHERE u.username='admin' SET u.password='"
+```
+
+**The Limitation:**
+
+AGE's `ag_catalog.cypher()` function takes a Cypher string literal. Unlike regular SQL with `%s` placeholders, we can't easily pass parameters *into* the Cypher string from psycopg2.
+
+**The Solution: Strict Validation + Safe Escaping**
+
+1. **Allowlist Validation:** Only allow alphanumeric, underscores, hyphens, and colons:
+```python
+def validate_concept_id(concept_id: str) -> None:
+    if not re.match(r'^[a-zA-Z0-9_\-:]+$', concept_id):
+        raise ValueError("Invalid concept ID format")
+```
+
+2. **Parameter Binding Where Possible:** Use the Cypher `$param` syntax inside the string:
+```python
+query = f"""
+    SELECT * FROM ag_catalog.cypher('concept', $$
+        MATCH (seed:Concept)-[]-(neighbor:Concept)
+        WHERE seed.concept_id IN $seed_ids
+        RETURN DISTINCT neighbor.concept_id
+    $$) as (concept_id agtype);
+"""
+# Pass seed_ids as psycopg2 parameter (safe)
+cursor.execute(query, {'seed_ids': json.dumps(seed_ids)})
+```
+
+3. **Escape Single Quotes:** If we must use f-strings, escape any quotes:
+```python
+seed_id_safe = seed_id.replace("'", "''")  # SQL escaping
+query = f"MATCH (seed {{concept_id: '{seed_id_safe}'}})"
+```
+
+**Recommended Approach:**
+
+Use chunking (as described above), which allows us to pass lists via parameterized queries instead of individual f-string interpolation.
+
+#### 6. Wall-Clock Timeout (Strictly Bounded Execution)
+
+**The Bug:**
+
+The original code used:
+```python
+for future in as_completed(futures, timeout=30):
+    result = future.result(timeout=5)
+```
+
+**Problem:** `as_completed(timeout=30)` only times out if it's waiting for the *next* result, not for the *total* execution time. If you have 8 workers that each take 29 seconds, `as_completed` never times out because results keep arriving.
+
+**The Fix: Track Deadline**
+
+```python
+def _get_2hop_neighbors_parallel(self, hop1_neighbors, ...):
+    deadline = time.time() + self.config.timeout_seconds
+    all_neighbors = set()
+
+    with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+        futures = {executor.submit(...): nid for nid in hop1_neighbors}
+
+        while futures and time.time() < deadline:
+            # Calculate remaining time
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                logger.warning("Wall-clock timeout reached, returning partial results")
+                break
+
+            # Wait for next result with adjusted timeout
+            try:
+                done, pending = concurrent.futures.wait(
+                    futures.keys(),
+                    timeout=min(remaining, 5.0),  # At most 5s per iteration
+                    return_when=concurrent.futures.FIRST_COMPLETED
+                )
+
+                for future in done:
+                    nid = futures.pop(future)
+                    try:
+                        neighbors = future.result(timeout=0.1)  # Already done
+                        all_neighbors.update(neighbors)
+                    except Exception as e:
+                        logger.warning(f"Worker failed for {nid}: {e}")
+
+            except concurrent.futures.TimeoutError:
+                # No results ready yet, loop will check deadline
+                pass
+
+        # Cancel any remaining workers if we hit deadline
+        if futures:
+            logger.warning(f"Cancelling {len(futures)} slow workers due to timeout")
+            for future in futures:
+                future.cancel()
+
+    return all_neighbors
+```
+
+**Benefit:** Guarantees total execution time ≤ `timeout_seconds`, regardless of worker count or individual query times.
+
+#### 7. Database-Side Safety
 ```sql
 -- PostgreSQL connection limits (already configured)
 max_connections = 100
