@@ -5045,10 +5045,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-bounded-worker-pool-preventing-death-spirals" class="md-nav__link">
+  <a href="#1-global-semaphore-preventing-multi-user-deadlock" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Bounded Worker Pool (Preventing Death Spirals)
+        1. Global Semaphore (Preventing Multi-User Deadlock)
       
     </span>
   </a>
@@ -5089,10 +5089,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-database-side-safety" class="md-nav__link">
+  <a href="#5-security-parameter-binding-preventing-cypher-injection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Database-Side Safety
+        5. Security: Parameter Binding (Preventing Cypher Injection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-wall-clock-timeout-strictly-bounded-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Wall-Clock Timeout (Strictly Bounded Execution)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-database-side-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Database-Side Safety
       
     </span>
   </a>
@@ -7043,10 +7065,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-bounded-worker-pool-preventing-death-spirals" class="md-nav__link">
+  <a href="#1-global-semaphore-preventing-multi-user-deadlock" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Bounded Worker Pool (Preventing Death Spirals)
+        1. Global Semaphore (Preventing Multi-User Deadlock)
       
     </span>
   </a>
@@ -7087,10 +7109,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-database-side-safety" class="md-nav__link">
+  <a href="#5-security-parameter-binding-preventing-cypher-injection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Database-Side Safety
+        5. Security: Parameter Binding (Preventing Cypher Injection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-wall-clock-timeout-strictly-bounded-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Wall-Clock Timeout (Strictly Bounded Execution)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-database-side-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Database-Side Safety
       
     </span>
   </a>
@@ -7570,48 +7614,66 @@
 - 80 neighbors of "Centralized" (things like "Authority," "Control," "Hierarchy")
 - 70 neighbors of "Decentralized" (things like "Autonomy," "Distribution," "Peer-to-peer")</p>
 <p>Total: 150 concepts that are directly connected to our poles.</p>
-<p><strong>Phase 2: The Parallel Part (8 Workers)</strong></p>
-<p>Now we need the neighbors of those 150 concepts. Instead of one query with <code>[*1..2]</code> (which would explore 150 × 100 = 15,000 paths sequentially), we break it up:</p>
-<ul>
-<li>Worker 1: Gets neighbors of concepts 1-19 (19 queries)</li>
-<li>Worker 2: Gets neighbors of concepts 20-38 (19 queries)</li>
-<li>Worker 3: Gets neighbors of concepts 39-57 (19 queries)</li>
-<li>... and so on ...</li>
-<li>Worker 8: Gets neighbors of concepts 134-150 (17 queries)</li>
-</ul>
+<p><strong>Phase 2: The Parallel Part (8 Workers with Chunking)</strong></p>
+<p>Now we need the neighbors of those 150 concepts. Instead of one query with <code>[*1..2]</code> (which would explore 150 × 100 = 15,000 paths sequentially), we use <strong>chunking</strong> to minimize network overhead.</p>
+<p><strong>The Optimization:</strong> Instead of 1 worker = 1 concept = 1 query (150 total queries), we do 1 worker = 1 chunk of concepts = 1 batched query (8 total queries).</p>
+<p>Split 150 concepts into 8 chunks:
+- Chunk 1: Concepts 1-19 (19 IDs)
+- Chunk 2: Concepts 20-37 (18 IDs)
+- Chunk 3: Concepts 38-56 (19 IDs)
+- ... and so on ...
+- Chunk 8: Concepts 134-150 (17 IDs)</p>
 <p>Each worker:
 1. Grabs a connection from the pool
-2. For each of its assigned concepts, runs:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;authority_xyz&#39;</span><span class="p">})</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">100</span>
+2. Runs <strong>ONE</strong> batched query for its entire chunk:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="k">All</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="n">IDs</span><span class="w"> </span><span class="n">passed</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">parameter</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">2000</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Higher</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="n">since</span><span class="w"> </span><span class="n">we</span><span class="err">&#39;</span><span class="n">re</span><span class="w"> </span><span class="n">batching</span>
 </code></pre></div>
-3. Collects all the neighbor IDs into a set
+3. Collects all neighbor IDs (deduped by DISTINCT)
 4. Returns the connection to the pool
 5. Reports its results back</p>
-<p><strong>The Timeline:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>T=0ms:    Start Phase 1 query
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>T=500ms:  Phase 1 complete (150 1-hop neighbors found)
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>T=500ms:  Launch 8 workers in parallel
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>T=502ms:  All 8 workers grab connections from pool
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>T=502ms:  All 8 workers start running their first queries
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>T=2500ms: Worker 1 finishes its 19 queries → returns connection
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>T=2600ms: Worker 2 finishes its 19 queries → returns connection
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>... workers finish between 2.5-3.0 seconds ...
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>T=3000ms: Worker 8 finishes its 17 queries → returns connection
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>T=3100ms: Merge and deduplicate all results
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>T=3200ms: Return final set of ~2,500 unique concepts
+<p><strong>Why Chunking Matters:</strong></p>
+<ul>
+<li><strong>Network overhead:</strong> Each query has ~10ms latency (connection setup, query parse, result marshal)</li>
+<li><strong>Old approach:</strong> 150 concepts × 10ms = 1,500ms wasted in network overhead</li>
+<li><strong>New approach:</strong> 8 chunks × 10ms = 80ms network overhead</li>
+<li><strong>Savings:</strong> 1,420ms (1.4 seconds) just from batching!</li>
+</ul>
+<p>Plus, the database can optimize a single batched query better than 19 separate queries (shared query plan, shared index lookups).</p>
+<p><strong>The Timeline (With Chunking):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>T=0ms:     Start Phase 1 query
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>T=500ms:   Phase 1 complete (150 1-hop neighbors found)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>T=500ms:   Split into 8 chunks of ~19 IDs each
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>T=502ms:   Launch 8 workers in parallel
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>T=504ms:   All 8 workers grab connections from pool
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>T=504ms:   All 8 workers start their batched queries
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>T=1500ms:  Worker 1 finishes its batched query (19 seeds) → returns connection
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>T=1520ms:  Worker 2 finishes its batched query (18 seeds) → returns connection
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>T=1540ms:  Worker 3 finishes its batched query (19 seeds) → returns connection
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>... workers finish between 1.5-1.8 seconds ...
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>T=1800ms:  Worker 8 finishes its batched query (17 seeds) → returns connection
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>T=1810ms:  Merge and deduplicate all results
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>T=1850ms:  Return final set of ~2,500 unique concepts
 </code></pre></div>
-<p><strong>Total Time:</strong> ~3.2 seconds</p>
+<p><strong>Total Time:</strong> ~1.85 seconds (less than 2 seconds!)</p>
 <p><strong>Compare to Sequential:</strong></p>
 <p>If we'd done this sequentially:
 - Phase 1: 500ms (same)
 - Phase 2: 150 concepts × 2s per query = 300s = <strong>5 minutes</strong></p>
 <p><strong>Total Time:</strong> 5+ minutes</p>
-<p>We just went from 5 minutes to 3 seconds. That's a <strong>100x speedup</strong>.</p>
+<p><strong>Compare to Parallel Without Chunking:</strong></p>
+<p>If we'd done parallel but with 150 individual queries:
+- Phase 1: 500ms
+- Phase 2: (150 ÷ 8) × 2s + 1.5s network overhead = ~5 seconds</p>
+<p><strong>Total Time:</strong> ~5.5 seconds</p>
+<p><strong>With Chunking:</strong> ~1.85 seconds</p>
+<p>We just went from 5 minutes (sequential) to 1.85 seconds (parallel + chunked). That's a <strong>160x speedup</strong>.</p>
+<p>Even compared to "parallel without chunking" (5.5s), chunking gives us a <strong>3x improvement</strong>.</p>
 <h3 id="why-this-works">Why This Works</h3>
 <p>Let me walk you through why this approach is actually brilliant (and why it won't blow up in our faces).</p>
 <p><strong>We're Not Reinventing Anything:</strong></p>
@@ -7955,49 +8017,107 @@ Your query count: 400 connections needed</p>
 <p><strong>Result:</strong> 300 queries waiting for connections, blocking their threads, blocking your threadpool, cascading back to block your API endpoints. Your entire API becomes unresponsive. Your users think the site is down. Your monitoring thinks the database is down. The database is fine—it's just laughing at you.</p>
 <p><strong>How We Prevent All This (The Mitigations):</strong></p>
 <p>These aren't just theoretical horror stories. This is what <em>will</em> happen if we ship this without guardrails. So here's how we keep the wheels on:</p>
-<h4 id="1-bounded-worker-pool-preventing-death-spirals">1. Bounded Worker Pool (Preventing Death Spirals)</h4>
-<p><strong>The Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParallelQueryConfig</span><span class="p">:</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># Default conservative</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="c1"># Can increase to 16-32 based on connection pool size</span>
-</code></pre></div></p>
-<p>We default to 8 workers, which is well under our 20-connection pool limit. Why 8 and not 18? Because we need headroom for:
-- Other API endpoints using connections
-- Connection pool maintenance tasks
-- The occasional long-running query
-- Your sanity when debugging</p>
-<p><strong>The Safety Check:</strong></p>
-<p>When you initialize the parallelizer, we actually verify your settings won't cause a deadlock:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="c1"># Verify worker count doesn&#39;t exceed available connections</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">pool_size</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">maxconn</span>  <span class="c1"># Default 20</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">&gt;</span> <span class="n">pool_size</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>            <span class="sa">f</span><span class="s2">&quot;Worker count (</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="si">}</span><span class="s2">) near pool limit (</span><span class="si">{</span><span class="n">pool_size</span><span class="si">}</span><span class="s2">). &quot;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>            <span class="sa">f</span><span class="s2">&quot;Recommend max_workers ≤ </span><span class="si">{</span><span class="n">pool_size</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2"> to prevent deadlock.&quot;</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="p">)</span>
+<h4 id="1-global-semaphore-preventing-multi-user-deadlock">1. Global Semaphore (Preventing Multi-User Deadlock)</h4>
+<p><strong>The Critical Bug in the Original Design:</strong></p>
+<p>The original plan said "8 workers per request is safe with a 20-connection pool." But that only works for a <strong>single user</strong>. Here's what actually happens in production:</p>
+<ul>
+<li>User A starts polarity analysis: 1 main + 8 workers = <strong>9 connections</strong></li>
+<li>User B starts polarity analysis: 1 main + 8 workers = <strong>9 connections</strong></li>
+<li>Total: <strong>18/20 connections used</strong></li>
+<li>User C (or a health check endpoint): <strong>BLOCKED</strong></li>
+</ul>
+<p>Two simultaneous analysts lock out the entire application. This is a showstopper bug.</p>
+<p><strong>The Fix: Application-Level Global Semaphore</strong></p>
+<p>We need to limit the total number of graph workers <strong>across the entire application</strong>, not per request:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Global singleton semaphore (initialized once at app startup)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">_GRAPH_WORKER_SEMAPHORE</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_global_graph_semaphore</span><span class="p">(</span><span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="sd">    Get or create the global graph worker semaphore.</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="sd">    This limits TOTAL concurrent graph workers across ALL requests.</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="k">global</span> <span class="n">_GRAPH_WORKER_SEMAPHORE</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    <span class="k">if</span> <span class="n">_GRAPH_WORKER_SEMAPHORE</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="n">_GRAPH_WORKER_SEMAPHORE</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">max_workers</span><span class="p">)</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="k">return</span> <span class="n">_GRAPH_WORKER_SEMAPHORE</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphParallelizer</span><span class="p">:</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParallelQueryConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">age_client</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">ParallelQueryConfig</span><span class="p">()</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">global_semaphore</span> <span class="o">=</span> <span class="n">get_global_graph_semaphore</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_get_1hop_neighbors_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed_id</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>        <span class="c1"># Acquire from GLOBAL semaphore, not per-request</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_semaphore</span><span class="p">:</span>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>            <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">getconn</span><span class="p">()</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>                <span class="c1"># ... run query ...</span>
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>            <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">putconn</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
 </code></pre></div>
-<p>If someone tries to set <code>max_workers=25</code> with a 20-connection pool, they get a big fat warning. We don't hard-fail because maybe they know something we don't (increased the pool size), but we make it <em>very</em> clear they're playing with fire.</p>
-<p><strong>The Rule:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>max_workers ≤ (connection_pool_size - 2)
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>Safe defaults:
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>- Pool size 20 → max_workers 8 (default)
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>- Pool size 40 → max_workers 16 (comfortable)
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>- Pool size 60 → max_workers 32 (aggressive)
+<p><strong>How This Works:</strong></p>
+<p>With <code>max_workers=8</code> globally:</p>
+<ul>
+<li>User A starts query: Acquires 8 slots from global semaphore</li>
+<li>User B starts query: Tries to acquire 8 slots, but only 0 available → <strong>waits</strong></li>
+<li>User A finishes: Releases 8 slots</li>
+<li>User B proceeds: Acquires 8 slots</li>
+</ul>
+<p><strong>Graceful Degradation Option:</strong></p>
+<p>Instead of blocking User B, we could degrade to sequential execution:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_nhop_neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed_ids</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="c1"># Try to acquire workers from global pool</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">available_workers</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">acquired_slots</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">):</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_semaphore</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>            <span class="n">acquired_slots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>            <span class="n">available_workers</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>            <span class="k">break</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="k">if</span> <span class="n">available_workers</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>        <span class="c1"># No workers available - degrade to sequential</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Global worker pool exhausted, running sequentially&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequential_fallback</span><span class="p">(</span><span class="n">seed_ids</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">)</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    <span class="c1"># Use however many workers we got</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Acquired </span><span class="si">{</span><span class="n">available_workers</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="si">}</span><span class="s2"> workers&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="c1"># ... proceed with available_workers ...</span>
+</code></pre></div>
+<p><strong>Alternative: Dedicated Connection Pool</strong></p>
+<p>Another approach is separate pools:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Main API pool: 10 connections</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">main_pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Graph worker pool: 10 connections</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">graph_worker_pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Benefit:</strong> API endpoints never hang even if graph workers are maxed out.</p>
+<p><strong>Trade-off:</strong> More complex connection management, but better isolation.</p>
+<p><strong>Recommended Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Total PostgreSQL connections: 100
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Main API pool: 10 connections
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Graph worker pool: 10 connections (8 workers + 2 buffer)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>Reserved for monitoring/admin: 5 connections
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Result: 2 concurrent graph analyses can run without blocking API
 </code></pre></div></p>
 <h4 id="2-per-worker-result-limits-preventing-memory-explosions">2. Per-Worker Result Limits (Preventing Memory Explosions)</h4>
 <p><strong>The Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">max_results_per_worker</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Prevent runaway queries</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">max_results_per_worker</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Prevent runaway queries</span>
 </code></pre></div></p>
 <p>Each worker is allowed to return a maximum of 100 concepts. Why? Because if we have 200 workers and each one can return unlimited results, one "hub" concept with 10,000 neighbors could single-handedly blow up our memory.</p>
 <p><strong>The Implementation:</strong></p>
 <p>Every query we generate has a hard LIMIT clause:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;abc123&#39;</span><span class="p">})</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">100</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Hard</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">worker</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;abc123&#39;</span><span class="p">})</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">100</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Hard</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">worker</span>
 </code></pre></div>
 <p>So even if a concept has 10,000 neighbors (looking at you, highly connected hub nodes), each worker only returns 100. This means:</p>
 <ul>
@@ -8009,11 +8129,11 @@ Your query count: 400 connections needed</p>
 <p>"But what if I'm missing important concepts?" Fair question. Here's the thing: if a concept has 10,000 neighbors, the first 100 are going to be pretty representative. You're not losing critical information—you're avoiding exponential explosion for marginal gains. And remember, we're usually looking for concepts with embeddings for similarity analysis. Those 100 are likely the most relevant anyway (if we're smart about ordering, which we can be).</p>
 <h4 id="3-timeouts-preventing-infinite-waits">3. Timeouts (Preventing Infinite Waits)</h4>
 <p><strong>The Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># Kill slow workers</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># In executor</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">futures</span> <span class="o">=</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># Per-future timeout</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># Kill slow workers</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="c1"># In executor</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">futures</span> <span class="o">=</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># Per-future timeout</span>
 </code></pre></div></p>
 <p>We have two levels of timeouts:</p>
 <ol>
@@ -8031,12 +8151,12 @@ Your query count: 400 connections needed</p>
 <p>With timeouts, worker 8 gets killed after 5 seconds, and we return the results from workers 1-7. You get 87.5% of your data in 5 seconds instead of 100% of your data in 5 minutes. That's a trade worth making.</p>
 <h4 id="4-graceful-degradation-partial-results-are-ok">4. Graceful Degradation (Partial Results Are OK)</h4>
 <p><strong>The Philosophy:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed for </span><span class="si">{</span><span class="n">neighbor_id</span><span class="si">}</span><span class="s2">, skipping&quot;</span><span class="p">)</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    <span class="c1"># Continue with other workers - partial results OK</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed for </span><span class="si">{</span><span class="n">neighbor_id</span><span class="si">}</span><span class="s2">, skipping&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="c1"># Continue with other workers - partial results OK</span>
 </code></pre></div>
 <p>Here's a key insight: for graph discovery queries, <strong>partial results are perfectly acceptable</strong>. If we're discovering 20 candidate concepts for a polarity analysis, and one worker fails, we still have 19 concepts. That's enough to do meaningful analysis.</p>
 <p>This is different from, say, a database transaction where you need all-or-nothing. Graph exploration is inherently fuzzy—you're sampling the graph, not enumerating it exhaustively. So we embrace partial failures:</p>
@@ -8047,48 +8167,142 @@ Your query count: 400 connections needed</p>
 <li>All workers fail → okay, <em>now</em> we return an error</li>
 </ul>
 <p>This makes the system resilient. One bad concept with pathological connectivity can't bring down the entire analysis.</p>
-<h4 id="5-database-side-safety">5. Database-Side Safety</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">-- PostgreSQL connection limits (already configured)</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">max_connections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">superuser_reserved_connections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1">-- AGE client pool (already configured)</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="n">minconn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="n">maxconn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="w">  </span><span class="c1">-- Conservative default</span>
+<h4 id="5-security-parameter-binding-preventing-cypher-injection">5. Security: Parameter Binding (Preventing Cypher Injection)</h4>
+<p><strong>The Vulnerability:</strong></p>
+<p>The original implementation used f-strings to build Cypher queries:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="s2">    MATCH (seed:Concept </span><span class="se">{{</span><span class="s2">concept_id: &#39;</span><span class="si">{</span><span class="n">seed_id</span><span class="si">}</span><span class="s2">&#39;</span><span class="se">}}</span><span class="s2">)...</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="s2">&quot;&quot;&quot;</span>
+</code></pre></div>
+<p>Even with <code>validate_concept_id()</code>, this is technically a <strong>Cypher injection vulnerability</strong>. If validation has a bug, or if IDs come from a different source, an attacker could inject:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">seed_id</span> <span class="o">=</span> <span class="s2">&quot;abc&#39;})-[:ADMIN]-&gt;(u:User) WHERE u.username=&#39;admin&#39; SET u.password=&#39;&quot;</span>
+</code></pre></div>
+<p><strong>The Limitation:</strong></p>
+<p>AGE's <code>ag_catalog.cypher()</code> function takes a Cypher string literal. Unlike regular SQL with <code>%s</code> placeholders, we can't easily pass parameters <em>into</em> the Cypher string from psycopg2.</p>
+<p><strong>The Solution: Strict Validation + Safe Escaping</strong></p>
+<ol>
+<li>
+<p><strong>Allowlist Validation:</strong> Only allow alphanumeric, underscores, hyphens, and colons:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">validate_concept_id</span><span class="p">(</span><span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[a-zA-Z0-9_\-:]+$&#39;</span><span class="p">,</span> <span class="n">concept_id</span><span class="p">):</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid concept ID format&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Parameter Binding Where Possible:</strong> Use the Cypher <code>$param</code> syntax inside the string:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="s2">    SELECT * FROM ag_catalog.cypher(&#39;concept&#39;, $$</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="s2">        MATCH (seed:Concept)-[]-(neighbor:Concept)</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="s2">        WHERE seed.concept_id IN $seed_ids</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="s2">        RETURN DISTINCT neighbor.concept_id</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="s2">    $$) as (concept_id agtype);</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># Pass seed_ids as psycopg2 parameter (safe)</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;seed_ids&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">seed_ids</span><span class="p">)})</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Escape Single Quotes:</strong> If we must use f-strings, escape any quotes:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">seed_id_safe</span> <span class="o">=</span> <span class="n">seed_id</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>  <span class="c1"># SQL escaping</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;MATCH (seed </span><span class="se">{{</span><span class="s2">concept_id: &#39;</span><span class="si">{</span><span class="n">seed_id_safe</span><span class="si">}</span><span class="s2">&#39;</span><span class="se">}}</span><span class="s2">)&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<p><strong>Recommended Approach:</strong></p>
+<p>Use chunking (as described above), which allows us to pass lists via parameterized queries instead of individual f-string interpolation.</p>
+<h4 id="6-wall-clock-timeout-strictly-bounded-execution">6. Wall-Clock Timeout (Strictly Bounded Execution)</h4>
+<p><strong>The Bug:</strong></p>
+<p>The original code used:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Problem:</strong> <code>as_completed(timeout=30)</code> only times out if it's waiting for the <em>next</em> result, not for the <em>total</em> execution time. If you have 8 workers that each take 29 seconds, <code>as_completed</code> never times out because results keep arriving.</p>
+<p><strong>The Fix: Track Deadline</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_2hop_neighbors_parallel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hop1_neighbors</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timeout_seconds</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">all_neighbors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>        <span class="n">futures</span> <span class="o">=</span> <span class="p">{</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="o">...</span><span class="p">):</span> <span class="n">nid</span> <span class="k">for</span> <span class="n">nid</span> <span class="ow">in</span> <span class="n">hop1_neighbors</span><span class="p">}</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>        <span class="k">while</span> <span class="n">futures</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>            <span class="c1"># Calculate remaining time</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>            <span class="n">remaining</span> <span class="o">=</span> <span class="n">deadline</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>            <span class="k">if</span> <span class="n">remaining</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Wall-clock timeout reached, returning partial results&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>                <span class="k">break</span>
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>            <span class="c1"># Wait for next result with adjusted timeout</span>
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>                <span class="n">done</span><span class="p">,</span> <span class="n">pending</span> <span class="o">=</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span>
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>                    <span class="n">futures</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>                    <span class="n">timeout</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>  <span class="c1"># At most 5s per iteration</span>
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>                    <span class="n">return_when</span><span class="o">=</span><span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">FIRST_COMPLETED</span>
+<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>                <span class="p">)</span>
+<a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>
+<a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a>                <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">done</span><span class="p">:</span>
+<a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a>                    <span class="n">nid</span> <span class="o">=</span> <span class="n">futures</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+<a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a>                    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-26-26" name="__codelineno-26-26" href="#__codelineno-26-26"></a>                        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Already done</span>
+<a id="__codelineno-26-27" name="__codelineno-26-27" href="#__codelineno-26-27"></a>                        <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
+<a id="__codelineno-26-28" name="__codelineno-26-28" href="#__codelineno-26-28"></a>                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-26-29" name="__codelineno-26-29" href="#__codelineno-26-29"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed for </span><span class="si">{</span><span class="n">nid</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-30" name="__codelineno-26-30" href="#__codelineno-26-30"></a>
+<a id="__codelineno-26-31" name="__codelineno-26-31" href="#__codelineno-26-31"></a>            <span class="k">except</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
+<a id="__codelineno-26-32" name="__codelineno-26-32" href="#__codelineno-26-32"></a>                <span class="c1"># No results ready yet, loop will check deadline</span>
+<a id="__codelineno-26-33" name="__codelineno-26-33" href="#__codelineno-26-33"></a>                <span class="k">pass</span>
+<a id="__codelineno-26-34" name="__codelineno-26-34" href="#__codelineno-26-34"></a>
+<a id="__codelineno-26-35" name="__codelineno-26-35" href="#__codelineno-26-35"></a>        <span class="c1"># Cancel any remaining workers if we hit deadline</span>
+<a id="__codelineno-26-36" name="__codelineno-26-36" href="#__codelineno-26-36"></a>        <span class="k">if</span> <span class="n">futures</span><span class="p">:</span>
+<a id="__codelineno-26-37" name="__codelineno-26-37" href="#__codelineno-26-37"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span><span class="si">}</span><span class="s2"> slow workers due to timeout&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-38" name="__codelineno-26-38" href="#__codelineno-26-38"></a>            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
+<a id="__codelineno-26-39" name="__codelineno-26-39" href="#__codelineno-26-39"></a>                <span class="n">future</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+<a id="__codelineno-26-40" name="__codelineno-26-40" href="#__codelineno-26-40"></a>
+<a id="__codelineno-26-41" name="__codelineno-26-41" href="#__codelineno-26-41"></a>    <span class="k">return</span> <span class="n">all_neighbors</span>
+</code></pre></div>
+<p><strong>Benefit:</strong> Guarantees total execution time ≤ <code>timeout_seconds</code>, regardless of worker count or individual query times.</p>
+<h4 id="7-database-side-safety">7. Database-Side Safety</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1">-- PostgreSQL connection limits (already configured)</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="n">max_connections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="n">superuser_reserved_connections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1">-- AGE client pool (already configured)</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="n">minconn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="n">maxconn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="w">  </span><span class="c1">-- Conservative default</span>
 </code></pre></div>
 <p><strong>Rule of Thumb:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>max_workers ≤ (connection_pool_size - 2)
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>max_workers = 8  (default safe)
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>max_workers = 16 (if pool_size ≥ 18)
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>max_workers = 32 (if pool_size ≥ 34, requires tuning)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>max_workers ≤ (connection_pool_size - 2)
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>max_workers = 8  (default safe)
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>max_workers = 16 (if pool_size ≥ 18)
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>max_workers = 32 (if pool_size ≥ 34, requires tuning)
 </code></pre></div></p>
 <h2 id="configuration-management">Configuration Management</h2>
 <h3 id="database-first-like-adr-049">Database-First (Like ADR-049)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1">-- Migration 020: Add parallel query configuration</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">8</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">32</span><span class="p">);</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">30</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">120</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1">-- Migration 020: Add parallel query configuration</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">8</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">32</span><span class="p">);</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">30</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">120</span><span class="p">);</span>
 </code></pre></div>
 <h3 id="loading-config">Loading Config</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_parallel_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ParallelQueryConfig</span><span class="p">:</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from database (ADR-041/049 pattern)&quot;&quot;&quot;</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>        <span class="c1"># Try database first</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT parallel_query_max_workers, parallel_query_timeout_seconds ...&quot;</span><span class="p">)</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_max_workers&#39;</span><span class="p">],</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_timeout_seconds&#39;</span><span class="p">]</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>        <span class="p">)</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="k">except</span><span class="p">:</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>        <span class="c1"># Fallback to environment variables</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;PARALLEL_QUERY_MAX_WORKERS&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span>
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;PARALLEL_QUERY_TIMEOUT_SECONDS&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>        <span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_parallel_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ParallelQueryConfig</span><span class="p">:</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from database (ADR-041/049 pattern)&quot;&quot;&quot;</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>        <span class="c1"># Try database first</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT parallel_query_max_workers, parallel_query_timeout_seconds ...&quot;</span><span class="p">)</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_max_workers&#39;</span><span class="p">],</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_timeout_seconds&#39;</span><span class="p">]</span>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>        <span class="p">)</span>
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>    <span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>        <span class="c1"># Fallback to environment variables</span>
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;PARALLEL_QUERY_MAX_WORKERS&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span>
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;PARALLEL_QUERY_TIMEOUT_SECONDS&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+<a id="__codelineno-30-15" name="__codelineno-30-15" href="#__codelineno-30-15"></a>        <span class="p">)</span>
 </code></pre></div>
 <h2 id="performance-estimates">Performance Estimates</h2>
 <h3 id="polarity-discovery-max_hops2-20-candidates">Polarity Discovery (max_hops=2, 20 candidates)</h3>
@@ -8166,51 +8380,51 @@ Your query count: 400 connections needed</p>
 </table>
 <h2 id="testing-strategy">Testing Strategy</h2>
 <h3 id="unit-tests">Unit Tests</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_parallel_nhop_neighbors</span><span class="p">():</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test parallel 2-hop neighbor discovery&quot;&quot;&quot;</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;concept1&#39;</span><span class="p">,</span> <span class="s1">&#39;concept2&#39;</span><span class="p">],</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>    <span class="p">)</span>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
-<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="k">assert</span> <span class="s1">&#39;concept1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">neighbors</span>  <span class="c1"># Seeds excluded</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_parallel_nhop_neighbors</span><span class="p">():</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test parallel 2-hop neighbor discovery&quot;&quot;&quot;</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;concept1&#39;</span><span class="p">,</span> <span class="s1">&#39;concept2&#39;</span><span class="p">],</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>    <span class="p">)</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>    <span class="k">assert</span> <span class="s1">&#39;concept1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">neighbors</span>  <span class="c1"># Seeds excluded</span>
 </code></pre></div>
 <h3 id="integration-tests">Integration Tests</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_polarity_discovery_parallel</span><span class="p">():</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare sequential vs parallel performance&quot;&quot;&quot;</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="c1"># Sequential</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">sequential_results</span> <span class="o">=</span> <span class="n">discover_candidate_concepts_sequential</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">sequential_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="c1"># Parallel</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>    <span class="n">parallel_results</span> <span class="o">=</span> <span class="n">discover_candidate_concepts_parallel</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>    <span class="n">parallel_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
-<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    <span class="c1"># Same results</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">sequential_results</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">parallel_results</span><span class="p">)</span>
-<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>
-<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>    <span class="c1"># Faster (at least 2x for max_hops=2)</span>
-<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>    <span class="k">assert</span> <span class="n">parallel_time</span> <span class="o">&lt;</span> <span class="n">sequential_time</span> <span class="o">/</span> <span class="mi">2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_polarity_discovery_parallel</span><span class="p">():</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare sequential vs parallel performance&quot;&quot;&quot;</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="c1"># Sequential</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="n">sequential_results</span> <span class="o">=</span> <span class="n">discover_candidate_concepts_sequential</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="n">sequential_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    <span class="c1"># Parallel</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>    <span class="n">parallel_results</span> <span class="o">=</span> <span class="n">discover_candidate_concepts_parallel</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>    <span class="n">parallel_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>
+<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>    <span class="c1"># Same results</span>
+<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a>    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">sequential_results</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">parallel_results</span><span class="p">)</span>
+<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>
+<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    <span class="c1"># Faster (at least 2x for max_hops=2)</span>
+<a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>    <span class="k">assert</span> <span class="n">parallel_time</span> <span class="o">&lt;</span> <span class="n">sequential_time</span> <span class="o">/</span> <span class="mi">2</span>
 </code></pre></div>
 <h3 id="load-tests">Load Tests</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_connection_pool_saturation</span><span class="p">():</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify workers don&#39;t exhaust connection pool&quot;&quot;&quot;</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="c1"># Simulate 100 concurrent queries</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">32</span><span class="p">))</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>    <span class="c1"># Should not deadlock or fail</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span>  <span class="c1"># Many seeds</span>
-<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>    <span class="p">)</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>    <span class="c1"># Should complete without errors</span>
-<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_connection_pool_saturation</span><span class="p">():</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify workers don&#39;t exhaust connection pool&quot;&quot;&quot;</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="c1"># Simulate 100 concurrent queries</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">32</span><span class="p">))</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>    <span class="c1"># Should not deadlock or fail</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span>  <span class="c1"># Many seeds</span>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>    <span class="p">)</span>
+<a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>
+<a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a>    <span class="c1"># Should complete without errors</span>
+<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
 </code></pre></div>
 <h2 id="implementation-plan">Implementation Plan</h2>
 <h3 id="phase-1-core-parallelizer-week-1">Phase 1: Core Parallelizer (Week 1)</h3>
@@ -8266,21 +8480,21 @@ Your query count: 400 connections needed</p>
 <h2 id="future-enhancements">Future Enhancements</h2>
 <h3 id="phase-2-3-hop-parallelization">Phase 2: 3-Hop Parallelization</h3>
 <p>Extend to 3 hops with nested parallelization:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>1-hop: Single query
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>2-hop: Parallel (8 workers)
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>3-hop: Nested parallel (8 × 8 = 64 sub-workers)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>1-hop: Single query
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>2-hop: Parallel (8 workers)
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>3-hop: Nested parallel (8 × 8 = 64 sub-workers)
 </code></pre></div></p>
 <h3 id="phase-3-query-result-caching">Phase 3: Query Result Caching</h3>
 <p>Cache 1-hop neighbor results for frequently queried concepts:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_cached_1hop_neighbors</span><span class="p">(</span><span class="n">concept_id</span><span class="p">):</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>    <span class="k">return</span> <span class="n">_get_1hop_neighbors_uncached</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_cached_1hop_neighbors</span><span class="p">(</span><span class="n">concept_id</span><span class="p">):</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>    <span class="k">return</span> <span class="n">_get_1hop_neighbors_uncached</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
 </code></pre></div></p>
 <h3 id="phase-4-adaptive-worker-count">Phase 4: Adaptive Worker Count</h3>
 <p>Automatically adjust worker count based on query load:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_optimal_workers</span><span class="p">(</span><span class="n">query_count</span><span class="p">,</span> <span class="n">avg_query_time</span><span class="p">):</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    <span class="c1"># More workers for large batches, fewer for small</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">query_count</span> <span class="o">//</span> <span class="mi">10</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_optimal_workers</span><span class="p">(</span><span class="n">query_count</span><span class="p">,</span> <span class="n">avg_query_time</span><span class="p">):</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>    <span class="c1"># More workers for large batches, fewer for small</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">query_count</span> <span class="o">//</span> <span class="mi">10</span><span class="p">))</span>
 </code></pre></div></p>
 <h2 id="open-questions">Open Questions</h2>
 <ol>
