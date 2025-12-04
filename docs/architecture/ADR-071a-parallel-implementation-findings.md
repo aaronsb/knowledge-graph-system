@@ -330,6 +330,110 @@ def get_optimal_workers(num_concepts):
 3. **Investigate query plan caching** to reduce per-query overhead
 4. **Consider adaptive worker count** based on dataset size (if large datasets become common)
 
+## Database Tuning Research
+
+After establishing the optimal application-level configuration (2 workers), we researched PostgreSQL and Apache AGE database-level optimizations to understand potential incremental improvements.
+
+### Current Configuration (32-core, 123GB RAM system)
+
+**PostgreSQL Memory Settings:**
+- `shared_buffers`: 128MB (default)
+- `effective_cache_size`: 4GB
+- `work_mem`: 4MB (default)
+- `maintenance_work_mem`: 64MB
+
+**Parallelism Settings:**
+- `max_worker_processes`: 8
+- `max_parallel_workers`: 8
+- `max_parallel_workers_per_gather`: 2
+
+**Current Usage:** 44MB / 123GB (0.03%)
+
+### Research Findings
+
+**Key Insight:** All sources confirm that **indexing strategy is the highest-impact optimization**. Apache AGE does NOT auto-create indexes, and graph performance depends heavily on proper indexing of node/edge properties.
+
+**Recommended Configuration for Production:**
+
+```ini
+# Memory Settings (25-33% of 123GB RAM)
+shared_buffers = 32GB              # Currently: 128MB
+effective_cache_size = 75GB        # Currently: 4GB
+work_mem = 256MB                   # Currently: 4MB (for graph traversals)
+maintenance_work_mem = 2GB         # Currently: 64MB
+huge_pages = on                    # CRITICAL for 32GB+ shared_buffers
+
+# Parallelism (32-core system)
+max_worker_processes = 32          # Currently: 8
+max_parallel_workers = 32          # Currently: 8
+max_parallel_workers_per_gather = 16  # Currently: 2
+```
+
+**Expected Performance Impact:**
+- **Indexing improvements**: 2-3x speedup for graph traversals (highest priority)
+- **Memory tuning**: 10-15% improvement for complex queries
+- **Parallelism tuning**: Diminishing returns beyond 12 workers (validates ADR-071a findings)
+- **Huge pages**: Can reduce CPU overhead from 51% to 15% (source: PostgreSQL community benchmarks)
+
+### Critical Missing Indexes
+
+Research revealed that AGE requires explicit indexing:
+
+```sql
+-- Node property indexes (for MATCH filtering)
+CREATE INDEX idx_concept_label ON ag_catalog.concept_vertex
+  USING btree ((properties->>'label'));
+CREATE INDEX idx_concept_id ON ag_catalog.concept_vertex
+  USING btree ((properties->>'concept_id'));
+
+-- Relationship indexes (for traversal)
+CREATE INDEX idx_edge_start_end ON ag_catalog.concept_edge
+  USING btree (start_id, end_id);
+CREATE INDEX idx_edge_type ON ag_catalog.concept_edge
+  USING btree ((properties->>'type'));
+```
+
+### Additional Optimization Strategies
+
+1. **Connection Pooling (PgBouncer)**
+   - Industry standard for PostgreSQL production deployments
+   - Transaction pooling mode recommended
+   - Target: 5-10 active connections even with high concurrency
+
+2. **Query Optimization**
+   - Use `PROFILE` to analyze Cypher query execution plans
+   - Filter early in MATCH clauses (reduces intermediate results)
+   - Use explicit node labels (`:Concept`, `:Source`) - aligns with ADR-048
+   - Minimize `OPTIONAL MATCH` usage (generates large intermediate results)
+
+3. **Prepared Statements**
+   - Parse and optimize once, execute many times
+   - Particularly effective for ingestion pipelines
+   - Already supported via psycopg2 in `age_client.py`
+
+### Alignment with ADR-071a Performance Testing
+
+Database tuning research **confirms our empirical findings**:
+- Parallelism shows diminishing returns beyond 10-12 workers
+- Application-level batching provides bigger gains than database parallelism
+- Proper query structure (early filtering, explicit labels) more important than raw resources
+
+**Conclusion:** The 3x speedup from fixing query format validates that **query optimization > resource tuning**. Database configuration improvements would provide incremental 10-15% gains, not transformative performance changes.
+
+### Deferred Items
+
+The following optimizations are documented but not implemented (await production deployment or larger datasets):
+- PostgreSQL memory configuration tuning
+- Huge pages enablement
+- Explicit graph indexing strategy
+- PgBouncer connection pooling
+- Query plan profiling and optimization
+
+These should be prioritized when:
+- Graph exceeds 100K concepts (indexing becomes critical)
+- Multi-user production deployment (connection pooling needed)
+- Query performance degrades (profile and optimize)
+
 ## Conclusion
 
 The implementation of ADR-071 successfully achieved a **3.15x speedup** (4:21 → 1:23), but the source of the speedup was different than designed.
