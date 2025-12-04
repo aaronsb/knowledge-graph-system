@@ -59,6 +59,7 @@ class ParallelQueryConfig:
     chunk_size: int = 20  # Concepts per worker chunk
     timeout_seconds: float = 30.0  # Wall-clock timeout
     per_worker_limit: int = 2000  # Max results per worker (memory safety)
+    use_degree_centrality: bool = True  # Enable degree centrality filtering (static rank)
 
     def __post_init__(self):
         """Validate configuration"""
@@ -213,18 +214,29 @@ class GraphParallelizer:
         # Build WHERE clause for embedding requirement
         embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-        # Build Cypher query with degree centrality filtering
-        # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
-        # Prioritizes well-connected "hub" concepts over leaf nodes
-        query = f"""
-            MATCH (seed:Concept)-[r]-(neighbor:Concept)
-            WHERE seed.concept_id IN $seed_ids
-              {embedding_filter}
-            WITH neighbor, count(r) AS degree
-            ORDER BY count(r) DESC
-            RETURN DISTINCT neighbor.concept_id as concept_id
-            LIMIT {self.config.per_worker_limit}
-        """
+        # Build Cypher query with optional degree centrality filtering
+        if self.config.use_degree_centrality:
+            # Degree centrality filtering (static rank)
+            # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
+            # Prioritizes well-connected "hub" concepts over leaf nodes
+            query = f"""
+                MATCH (seed:Concept)-[r]-(neighbor:Concept)
+                WHERE seed.concept_id IN $seed_ids
+                  {embedding_filter}
+                WITH neighbor, count(r) AS degree
+                ORDER BY count(r) DESC
+                RETURN DISTINCT neighbor.concept_id as concept_id
+                LIMIT {self.config.per_worker_limit}
+            """
+        else:
+            # Simple query without degree centrality filtering
+            query = f"""
+                MATCH (seed:Concept)-[]-(neighbor:Concept)
+                WHERE seed.concept_id IN $seed_ids
+                  {embedding_filter}
+                RETURN DISTINCT neighbor.concept_id as concept_id
+                LIMIT {self.config.per_worker_limit}
+            """
 
         try:
             # Use AGEClient._execute_cypher (handles wrapping, connection, params)
@@ -369,18 +381,29 @@ class GraphParallelizer:
         with self.global_semaphore:
             embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-            # Build Cypher query with degree centrality filtering
-            # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
-            # Prioritizes well-connected "hub" concepts over leaf nodes
-            query = f"""
-                MATCH (seed:Concept)-[r]-(neighbor:Concept)
-                WHERE seed.concept_id IN $seed_ids
-                  {embedding_filter}
-                WITH neighbor, count(r) AS degree
-                ORDER BY count(r) DESC
-                RETURN DISTINCT neighbor.concept_id as concept_id
-                LIMIT {self.config.per_worker_limit}
-            """
+            # Build Cypher query with optional degree centrality filtering
+            if self.config.use_degree_centrality:
+                # Degree centrality filtering (static rank)
+                # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
+                # Prioritizes well-connected "hub" concepts over leaf nodes
+                query = f"""
+                    MATCH (seed:Concept)-[r]-(neighbor:Concept)
+                    WHERE seed.concept_id IN $seed_ids
+                      {embedding_filter}
+                    WITH neighbor, count(r) AS degree
+                    ORDER BY count(r) DESC
+                    RETURN DISTINCT neighbor.concept_id as concept_id
+                    LIMIT {self.config.per_worker_limit}
+                """
+            else:
+                # Simple query without degree centrality filtering
+                query = f"""
+                    MATCH (seed:Concept)-[]-(neighbor:Concept)
+                    WHERE seed.concept_id IN $seed_ids
+                      {embedding_filter}
+                    RETURN DISTINCT neighbor.concept_id as concept_id
+                    LIMIT {self.config.per_worker_limit}
+                """
 
             try:
                 # Use AGEClient._execute_cypher (handles wrapping, connection, params)

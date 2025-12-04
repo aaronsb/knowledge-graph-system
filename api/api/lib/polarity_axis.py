@@ -285,7 +285,8 @@ def discover_candidate_concepts_parallel(
     negative_pole_id: str,
     age_client,
     max_candidates: int = 20,
-    max_hops: int = 1
+    max_hops: int = 1,
+    parallel_config = None
 ) -> List[str]:
     """
     Auto-discover concepts related to the poles (PARALLEL VERSION - ADR-071).
@@ -299,6 +300,7 @@ def discover_candidate_concepts_parallel(
         age_client: AGEClient instance
         max_candidates: Maximum concepts to return
         max_hops: Maximum hops from poles (1-2 recommended)
+        parallel_config: Optional ParallelQueryConfig (uses defaults if not provided)
 
     Returns:
         List of concept IDs (excludes the poles themselves)
@@ -333,13 +335,17 @@ def discover_candidate_concepts_parallel(
     from api.api.lib.graph_parallelizer import GraphParallelizer, ParallelQueryConfig
 
     # Configure parallelizer
-    # Testing degree centrality filtering with 4 workers (chunk_size=10)
-    config = ParallelQueryConfig(
-        max_workers=8,   # Pool size (actual workers = min(chunks, max_workers))
-        chunk_size=10,   # TESTING: Creates ~4 workers for typical 40-concept datasets
-        timeout_seconds=120.0,  # Allow workers time for large graphs
-        per_worker_limit=max_candidates * 2  # Safety margin for deduplication
-    )
+    # Use provided config or create default (2 workers, degree centrality enabled - ADR-071a)
+    if parallel_config is None:
+        config = ParallelQueryConfig(
+            max_workers=8,   # Pool size (actual workers = min(chunks, max_workers))
+            chunk_size=20,   # Creates 2 workers for typical 40-concept datasets
+            timeout_seconds=120.0,  # Allow workers time for large graphs
+            per_worker_limit=max_candidates * 2,  # Safety margin for deduplication
+            use_degree_centrality=True  # Enable degree centrality filtering (static rank)
+        )
+    else:
+        config = parallel_config
 
     parallelizer = GraphParallelizer(age_client, config)
 
@@ -447,7 +453,8 @@ def analyze_polarity_axis(
     auto_discover: bool = True,
     max_candidates: int = 20,
     max_hops: int = 1,
-    use_parallel: bool = True
+    use_parallel: bool = True,
+    parallel_config = None
 ) -> Dict[str, Any]:
     """
     Analyze polarity axis between two concept poles (direct query).
@@ -461,6 +468,7 @@ def analyze_polarity_axis(
         max_candidates: Max candidates for auto-discovery
         max_hops: Max hops for auto-discovery
         use_parallel: Use parallel discovery (ADR-071, default: True)
+        parallel_config: Optional ParallelQueryConfig for testing/tuning
 
     Returns:
         Dict with axis analysis, projections, and statistics
@@ -512,13 +520,24 @@ def analyze_polarity_axis(
 
         logger.info(f"Using {discovery_method} candidate discovery")
 
-        candidate_ids = discovery_func(
-            positive_pole_id=positive_pole_id,
-            negative_pole_id=negative_pole_id,
-            age_client=age_client,
-            max_candidates=max_candidates,
-            max_hops=max_hops
-        )
+        # Pass parallel_config only if using parallel discovery
+        if use_parallel:
+            candidate_ids = discovery_func(
+                positive_pole_id=positive_pole_id,
+                negative_pole_id=negative_pole_id,
+                age_client=age_client,
+                max_candidates=max_candidates,
+                max_hops=max_hops,
+                parallel_config=parallel_config
+            )
+        else:
+            candidate_ids = discovery_func(
+                positive_pole_id=positive_pole_id,
+                negative_pole_id=negative_pole_id,
+                age_client=age_client,
+                max_candidates=max_candidates,
+                max_hops=max_hops
+            )
         logger.info(f"Discovered {len(candidate_ids)} candidate concepts ({discovery_method})")
     elif candidate_ids is None:
         candidate_ids = []
