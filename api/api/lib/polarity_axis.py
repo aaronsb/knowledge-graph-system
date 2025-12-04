@@ -334,15 +334,15 @@ def discover_candidate_concepts_parallel(
     # Import here to avoid circular dependency
     from api.api.lib.graph_parallelizer import GraphParallelizer, ParallelQueryConfig
 
-    # Configure parallelizer
-    # Use provided config or create default (2 workers, degree centrality enabled - ADR-071a)
+    # Configure parallelizer (ADR-071a)
+    # Config should be provided by caller; create default if missing
     if parallel_config is None:
         config = ParallelQueryConfig(
-            max_workers=8,   # Pool size (actual workers = min(chunks, max_workers))
-            chunk_size=20,   # Creates 2 workers for typical 40-concept datasets
-            timeout_seconds=120.0,  # Allow workers time for large graphs
+            max_workers=8,
+            chunk_size=20,
+            timeout_seconds=120.0,
             per_worker_limit=max_candidates * 2,  # Safety margin for deduplication
-            use_degree_centrality=True  # Enable degree centrality filtering (static rank)
+            discovery_slot_pct=0.2  # Default: balanced mode
         )
     else:
         config = parallel_config
@@ -454,7 +454,11 @@ def analyze_polarity_axis(
     max_candidates: int = 20,
     max_hops: int = 1,
     use_parallel: bool = True,
-    parallel_config = None
+    parallel_config = None,
+    discovery_slot_pct: Optional[float] = None,
+    max_workers: Optional[int] = None,
+    chunk_size: Optional[int] = None,
+    timeout_seconds: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Analyze polarity axis between two concept poles (direct query).
@@ -468,7 +472,11 @@ def analyze_polarity_axis(
         max_candidates: Max candidates for auto-discovery
         max_hops: Max hops for auto-discovery
         use_parallel: Use parallel discovery (ADR-071, default: True)
-        parallel_config: Optional ParallelQueryConfig for testing/tuning
+        parallel_config: Optional ParallelQueryConfig for testing/tuning (legacy)
+        discovery_slot_pct: Discovery slot percentage (0.0-1.0, ADR-071a)
+        max_workers: Maximum parallel workers for 2-hop queries
+        chunk_size: Concepts per worker chunk
+        timeout_seconds: Wall-clock timeout in seconds
 
     Returns:
         Dict with axis analysis, projections, and statistics
@@ -519,6 +527,17 @@ def analyze_polarity_axis(
         discovery_method = "parallel" if use_parallel else "sequential"
 
         logger.info(f"Using {discovery_method} candidate discovery")
+
+        # Create parallel config if using parallel discovery (ADR-071a)
+        if use_parallel and parallel_config is None:
+            from api.api.lib.graph_parallelizer import ParallelQueryConfig
+            parallel_config = ParallelQueryConfig(
+                max_workers=max_workers if max_workers is not None else 8,
+                chunk_size=chunk_size if chunk_size is not None else 20,
+                timeout_seconds=timeout_seconds if timeout_seconds is not None else 120.0,
+                per_worker_limit=max_candidates * 2,  # Safety margin for deduplication
+                discovery_slot_pct=discovery_slot_pct if discovery_slot_pct is not None else 0.2  # Default: balanced mode
+            )
 
         # Pass parallel_config only if using parallel discovery
         if use_parallel:

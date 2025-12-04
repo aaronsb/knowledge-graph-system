@@ -469,14 +469,6 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Analyze polarity axis between two concept poles (ADR-070)
-   */
-  async analyzePolarityAxis(request: any): Promise<any> {
-    const response = await this.client.post('/query/polarity-axis', request);
-    return response.data;
-  }
-
-  /**
    * Get image for a source node (ADR-057)
    * @param sourceId - Source ID from concept instance
    * @returns Image as Buffer (binary data)
@@ -1336,6 +1328,25 @@ export class KnowledgeGraphClient {
     const response = await this.client.get(
       `/vocabulary/analyze/${encodeURIComponent(relationshipType)}`
     );
+    return response.data;
+  }
+
+  /**
+   * Analyze polarity axis between two concept poles (ADR-070)
+   */
+  async analyzePolarityAxis(request: {
+    positive_pole_id: string;
+    negative_pole_id: string;
+    candidate_ids?: string[];
+    auto_discover?: boolean;
+    max_candidates?: number;
+    max_hops?: number;
+    discovery_slot_pct?: number;
+    max_workers?: number;
+    chunk_size?: number;
+    timeout_seconds?: number;
+  }): Promise<any> {
+    const response = await this.client.post('/query/polarity-axis', request);
     return response.data;
   }
 }

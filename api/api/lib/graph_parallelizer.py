@@ -59,7 +59,11 @@ class ParallelQueryConfig:
     chunk_size: int = 20  # Concepts per worker chunk
     timeout_seconds: float = 30.0  # Wall-clock timeout
     per_worker_limit: int = 2000  # Max results per worker (memory safety)
-    use_degree_centrality: bool = True  # Enable degree centrality filtering (static rank)
+    discovery_slot_pct: float = 0.2  # % of results reserved for random discovery (epsilon-greedy)
+    # discovery_slot_pct modes:
+    # 0.0 = Pure degree centrality (conservative, fast, popular concepts)
+    # 0.2 = Balanced (80% degree + 20% random discovery) - RECOMMENDED DEFAULT
+    # 1.0 = Pure random discovery (novelty mode, slow, emerging concepts)
 
     def __post_init__(self):
         """Validate configuration"""
@@ -71,6 +75,8 @@ class ParallelQueryConfig:
             raise ValueError(f"timeout_seconds must be > 0, got {self.timeout_seconds}")
         if self.per_worker_limit < 1:
             raise ValueError(f"per_worker_limit must be >= 1, got {self.per_worker_limit}")
+        if not 0.0 <= self.discovery_slot_pct <= 1.0:
+            raise ValueError(f"discovery_slot_pct must be between 0.0 and 1.0, got {self.discovery_slot_pct}")
 
 
 class GraphParallelizer:
@@ -214,11 +220,13 @@ class GraphParallelizer:
         # Build WHERE clause for embedding requirement
         embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-        # Build Cypher query with optional degree centrality filtering
-        if self.config.use_degree_centrality:
-            # Degree centrality filtering (static rank)
-            # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
-            # Prioritizes well-connected "hub" concepts over leaf nodes
+        # Calculate epsilon-greedy discovery slot split
+        discovery_count = int(self.config.per_worker_limit * self.config.discovery_slot_pct)
+        main_count = self.config.per_worker_limit - discovery_count
+
+        # Build Cypher query with epsilon-greedy discovery slots
+        if discovery_count == 0:
+            # Pure degree centrality (conservative mode)
             query = f"""
                 MATCH (seed:Concept)-[r]-(neighbor:Concept)
                 WHERE seed.concept_id IN $seed_ids
@@ -228,14 +236,35 @@ class GraphParallelizer:
                 RETURN DISTINCT neighbor.concept_id as concept_id
                 LIMIT {self.config.per_worker_limit}
             """
-        else:
-            # Simple query without degree centrality filtering
+        elif main_count == 0:
+            # Pure random discovery (novelty mode)
             query = f"""
                 MATCH (seed:Concept)-[]-(neighbor:Concept)
                 WHERE seed.concept_id IN $seed_ids
                   {embedding_filter}
+                WITH neighbor
+                ORDER BY rand()
                 RETURN DISTINCT neighbor.concept_id as concept_id
                 LIMIT {self.config.per_worker_limit}
+            """
+        else:
+            # Balanced mode: Degree centrality + random discovery (UNION ALL)
+            query = f"""
+                MATCH (seed:Concept)-[r]-(neighbor:Concept)
+                WHERE seed.concept_id IN $seed_ids
+                  {embedding_filter}
+                WITH neighbor, count(r) AS degree
+                ORDER BY count(r) DESC
+                RETURN DISTINCT neighbor.concept_id as concept_id
+                LIMIT {main_count}
+                UNION ALL
+                MATCH (seed:Concept)-[]-(neighbor:Concept)
+                WHERE seed.concept_id IN $seed_ids
+                  {embedding_filter}
+                WITH neighbor
+                ORDER BY rand()
+                RETURN DISTINCT neighbor.concept_id as concept_id
+                LIMIT {discovery_count}
             """
 
         try:
@@ -381,11 +410,13 @@ class GraphParallelizer:
         with self.global_semaphore:
             embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-            # Build Cypher query with optional degree centrality filtering
-            if self.config.use_degree_centrality:
-                # Degree centrality filtering (static rank)
-                # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
-                # Prioritizes well-connected "hub" concepts over leaf nodes
+            # Calculate epsilon-greedy discovery slot split
+            discovery_count = int(self.config.per_worker_limit * self.config.discovery_slot_pct)
+            main_count = self.config.per_worker_limit - discovery_count
+
+            # Build Cypher query with epsilon-greedy discovery slots
+            if discovery_count == 0:
+                # Pure degree centrality (conservative mode)
                 query = f"""
                     MATCH (seed:Concept)-[r]-(neighbor:Concept)
                     WHERE seed.concept_id IN $seed_ids
@@ -395,14 +426,35 @@ class GraphParallelizer:
                     RETURN DISTINCT neighbor.concept_id as concept_id
                     LIMIT {self.config.per_worker_limit}
                 """
-            else:
-                # Simple query without degree centrality filtering
+            elif main_count == 0:
+                # Pure random discovery (novelty mode)
                 query = f"""
                     MATCH (seed:Concept)-[]-(neighbor:Concept)
                     WHERE seed.concept_id IN $seed_ids
                       {embedding_filter}
+                    WITH neighbor
+                    ORDER BY rand()
                     RETURN DISTINCT neighbor.concept_id as concept_id
                     LIMIT {self.config.per_worker_limit}
+                """
+            else:
+                # Balanced mode: Degree centrality + random discovery (UNION ALL)
+                query = f"""
+                    MATCH (seed:Concept)-[r]-(neighbor:Concept)
+                    WHERE seed.concept_id IN $seed_ids
+                      {embedding_filter}
+                    WITH neighbor, count(r) AS degree
+                    ORDER BY count(r) DESC
+                    RETURN DISTINCT neighbor.concept_id as concept_id
+                    LIMIT {main_count}
+                    UNION ALL
+                    MATCH (seed:Concept)-[]-(neighbor:Concept)
+                    WHERE seed.concept_id IN $seed_ids
+                      {embedding_filter}
+                    WITH neighbor
+                    ORDER BY rand()
+                    RETURN DISTINCT neighbor.concept_id as concept_id
+                    LIMIT {discovery_count}
                 """
 
             try:
