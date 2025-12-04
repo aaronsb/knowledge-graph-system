@@ -213,11 +213,15 @@ class GraphParallelizer:
         # Build WHERE clause for embedding requirement
         embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-        # Build plain Cypher query (AGEClient._execute_cypher wraps it properly)
+        # Build Cypher query with degree centrality filtering
+        # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
+        # Prioritizes well-connected "hub" concepts over leaf nodes
         query = f"""
-            MATCH (seed:Concept)-[]-(neighbor:Concept)
+            MATCH (seed:Concept)-[r]-(neighbor:Concept)
             WHERE seed.concept_id IN $seed_ids
               {embedding_filter}
+            WITH neighbor, count(r) AS degree
+            ORDER BY count(r) DESC
             RETURN DISTINCT neighbor.concept_id as concept_id
             LIMIT {self.config.per_worker_limit}
         """
@@ -365,11 +369,15 @@ class GraphParallelizer:
         with self.global_semaphore:
             embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-            # Build plain Cypher query (AGEClient._execute_cypher wraps it properly)
+            # Build Cypher query with degree centrality filtering
+            # Uses count(r) directly in ORDER BY (AGE-compatible syntax from StackOverflow)
+            # Prioritizes well-connected "hub" concepts over leaf nodes
             query = f"""
-                MATCH (seed:Concept)-[]-(neighbor:Concept)
+                MATCH (seed:Concept)-[r]-(neighbor:Concept)
                 WHERE seed.concept_id IN $seed_ids
                   {embedding_filter}
+                WITH neighbor, count(r) AS degree
+                ORDER BY count(r) DESC
                 RETURN DISTINCT neighbor.concept_id as concept_id
                 LIMIT {self.config.per_worker_limit}
             """
