@@ -1647,7 +1647,8 @@ async def analyze_polarity_axis_endpoint(
             candidate_ids=request.candidate_ids,
             auto_discover=request.auto_discover,
             max_candidates=request.max_candidates,
-            max_hops=request.max_hops
+            max_hops=request.max_hops,
+            use_parallel=request.use_parallel
         )
 
         return PolarityAxisResponse(**result)

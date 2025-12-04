@@ -390,6 +390,7 @@ class PolarityAxisRequest(BaseModel):
     auto_discover: bool = Field(True, description="Auto-discover related concepts if candidate_ids not provided")
     max_candidates: int = Field(20, description="Maximum candidates for auto-discovery", ge=1, le=100)
     max_hops: int = Field(2, description="Maximum graph hops for auto-discovery (1-3)", ge=1, le=3)
+    use_parallel: bool = Field(True, description="Use parallel discovery for 100x+ speedup (ADR-071)")
 
 
 class PolarityAxisPole(BaseModel):

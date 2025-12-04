@@ -280,6 +280,102 @@ def discover_candidate_concepts(
     return [r['concept_id'] for r in results]
 
 
+def discover_candidate_concepts_parallel(
+    positive_pole_id: str,
+    negative_pole_id: str,
+    age_client,
+    max_candidates: int = 20,
+    max_hops: int = 1
+) -> List[str]:
+    """
+    Auto-discover concepts related to the poles (PARALLEL VERSION - ADR-071).
+
+    Uses GraphParallelizer for 100x+ speedup on max_hops=2 queries.
+    Falls back to sequential implementation for max_hops > 2.
+
+    Args:
+        positive_pole_id: Positive pole concept ID
+        negative_pole_id: Negative pole concept ID
+        age_client: AGEClient instance
+        max_candidates: Maximum concepts to return
+        max_hops: Maximum hops from poles (1-2 recommended)
+
+    Returns:
+        List of concept IDs (excludes the poles themselves)
+
+    Raises:
+        ValueError: If concept IDs are invalid format
+    """
+    # Validate concept IDs to prevent injection attacks
+    validate_concept_id(positive_pole_id)
+    validate_concept_id(negative_pole_id)
+
+    # Fall back to sequential for max_hops > 2 (safety)
+    if max_hops > 2:
+        logger.warning(
+            f"max_hops={max_hops} exceeds parallel query limit (2), "
+            "falling back to sequential implementation"
+        )
+        return discover_candidate_concepts(
+            positive_pole_id=positive_pole_id,
+            negative_pole_id=negative_pole_id,
+            age_client=age_client,
+            max_candidates=max_candidates,
+            max_hops=max_hops
+        )
+
+    logger.info(
+        f"Parallel candidate discovery: poles=[{positive_pole_id[:20]}..., {negative_pole_id[:20]}...], "
+        f"max_hops={max_hops}, max_candidates={max_candidates}"
+    )
+
+    # Import here to avoid circular dependency
+    from api.api.lib.graph_parallelizer import GraphParallelizer, ParallelQueryConfig
+
+    # Configure parallelizer
+    config = ParallelQueryConfig(
+        max_workers=8,
+        chunk_size=20,
+        timeout_seconds=30.0,
+        per_worker_limit=max_candidates * 2  # Safety margin for deduplication
+    )
+
+    parallelizer = GraphParallelizer(age_client, config)
+
+    try:
+        # Discover neighbors in parallel
+        seed_ids = [positive_pole_id, negative_pole_id]
+        exclude_ids = set(seed_ids)  # Don't return the poles themselves
+
+        neighbors = parallelizer.discover_nhop_neighbors(
+            seed_ids=seed_ids,
+            max_hops=max_hops,
+            require_embedding=True,
+            exclude_ids=exclude_ids
+        )
+
+        # Convert to list and limit results
+        result_list = list(neighbors)[:max_candidates]
+
+        logger.info(
+            f"✅ Parallel discovery found {len(neighbors)} concepts, "
+            f"returning top {len(result_list)}"
+        )
+
+        return result_list
+
+    except Exception as e:
+        logger.error(f"Parallel discovery failed: {e}, falling back to sequential")
+        # Fall back to sequential implementation on error
+        return discover_candidate_concepts(
+            positive_pole_id=positive_pole_id,
+            negative_pole_id=negative_pole_id,
+            age_client=age_client,
+            max_candidates=max_candidates,
+            max_hops=max_hops
+        )
+
+
 def calculate_grounding_correlation(
     projections: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
@@ -349,7 +445,8 @@ def analyze_polarity_axis(
     candidate_ids: Optional[List[str]] = None,
     auto_discover: bool = True,
     max_candidates: int = 20,
-    max_hops: int = 1
+    max_hops: int = 1,
+    use_parallel: bool = True
 ) -> Dict[str, Any]:
     """
     Analyze polarity axis between two concept poles (direct query).
@@ -362,6 +459,7 @@ def analyze_polarity_axis(
         auto_discover: Auto-discover candidates if not provided
         max_candidates: Max candidates for auto-discovery
         max_hops: Max hops for auto-discovery
+        use_parallel: Use parallel discovery (ADR-071, default: True)
 
     Returns:
         Dict with axis analysis, projections, and statistics
@@ -404,14 +502,23 @@ def analyze_polarity_axis(
 
     # Determine candidate concepts
     if candidate_ids is None and auto_discover:
-        candidate_ids = discover_candidate_concepts(
+        # Choose parallel or sequential discovery
+        discovery_func = (
+            discover_candidate_concepts_parallel if use_parallel
+            else discover_candidate_concepts
+        )
+        discovery_method = "parallel" if use_parallel else "sequential"
+
+        logger.info(f"Using {discovery_method} candidate discovery")
+
+        candidate_ids = discovery_func(
             positive_pole_id=positive_pole_id,
             negative_pole_id=negative_pole_id,
             age_client=age_client,
             max_candidates=max_candidates,
             max_hops=max_hops
         )
-        logger.info(f"Discovered {len(candidate_ids)} candidate concepts")
+        logger.info(f"Discovered {len(candidate_ids)} candidate concepts ({discovery_method})")
     elif candidate_ids is None:
         candidate_ids = []
         logger.warning("No candidates provided and auto-discovery disabled")
