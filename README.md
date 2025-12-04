@@ -137,7 +137,7 @@ Found 6 concepts (threshold: 70%)
 A planning process that occurs every quarter, often involving 
 Program Increments in agile frameworks.
 
-Documents: EPOM-Model, Southwest-Apptio
+Documents: EPOM-Model, Contoso-Apptio
 Evidence: 4 instances
 Grounding: Weak (0.000, 0%)
 Diversity: 43.9% (33 related concepts)
@@ -153,10 +153,10 @@ $ kg concept details sha256:bfc80_chunk1_814fee0b
 1. EPOM-Model (para 1): "Orange arrow: 'PI/Quarterly Planning'"
    [IMAGE AVAILABLE]
 
-2. Southwest-Apptio (para 2): "PI is a planning increment. It used 
+2. Contoso-Apptio (para 2): "PI is a planning increment. It used
    to be a programming increment, but they changed the terminology."
 
-3. Southwest-Apptio (para 3): "PI planning, which is a two-day 
+3. Contoso-Apptio (para 3): "PI planning, which is a two-day
    ceremony that is pivotal."
 
 ## Relationships (3)
