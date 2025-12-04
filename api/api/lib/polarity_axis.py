@@ -333,10 +333,12 @@ def discover_candidate_concepts_parallel(
     from api.api.lib.graph_parallelizer import GraphParallelizer, ParallelQueryConfig
 
     # Configure parallelizer
+    # ADR-071a: Optimal configuration is 1-2 workers (chunk_size=20-100)
+    # Testing showed 2 workers provides 3.07x speedup with minimal overhead (+2s vs 1 worker)
     config = ParallelQueryConfig(
-        max_workers=8,
-        chunk_size=10,  # Smaller chunks = faster per-worker queries
-        timeout_seconds=120.0,  # Allow workers more time for large graphs
+        max_workers=8,   # Pool size (actual workers = min(chunks, max_workers))
+        chunk_size=20,   # Optimal: Creates ~2 workers for typical 40-concept datasets
+        timeout_seconds=120.0,  # Allow workers time for large graphs
         per_worker_limit=max_candidates * 2  # Safety margin for deduplication
     )
 
