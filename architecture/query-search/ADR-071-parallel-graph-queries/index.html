@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../../reference/api/">
+        <link rel="prev" href="../ADR-066-published-query-endpoints/">
       
       
-        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
+        <link rel="next" href="../ADR-071a-parallel-implementation-findings/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>ADR-071a: Parallel Graph Query Implementation Findings - Knowledge Graph System</title>
+        <title>ADR-071: Parallel Graph Query Optimization - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-071a-parallel-graph-query-implementation-findings" class="md-skip">
+        <a href="#adr-071-parallel-graph-query-optimization" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-071a: Parallel Graph Query Implementation Findings
+              ADR-071: Parallel Graph Query Optimization
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -511,7 +511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -594,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -622,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -705,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -733,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -761,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -789,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -817,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -845,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -928,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -956,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1039,7 +1039,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1067,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1095,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1123,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1206,7 +1206,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1234,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1317,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1345,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1373,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1401,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1429,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1457,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1485,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1513,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1687,7 +1687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -1762,7 +1762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -1837,7 +1837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -1865,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -1893,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -1921,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -1949,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -1977,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2005,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2033,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2061,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2089,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2117,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2145,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2228,7 +2228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2319,7 +2319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2394,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2477,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2505,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2533,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2561,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2589,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2617,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2645,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2673,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2701,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -2846,7 +2846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -2935,6 +2935,1980 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decision Records (ADRs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge Graph System Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../QUERY_SAFETY_BASELINE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Query Safety Baseline - Technical Debt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    access-workflow
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    access-workflow
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001: Multi-Tier Agent Access Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002: Node Fitness Scoring System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003: Semantic Tool Hint Networks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004: Pure Graph Design (Library Metaphor)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005: Source Text Tracking and Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006: Staging and Migration Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-038: Official Project Apparel Design Specifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ai-embeddings
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ai-embeddings
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-041: AI Extraction Provider Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-042: Local LLM Inference for Concept Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-043: Single-Node Resource Management for Local Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Plan: ADR-045/046 Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-045: Unified Embedding Generation System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-049: Rate Limiting and Per-Provider Concurrency Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-058: Polarity Axis Triangulation for Grounding Calculation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-068 Source Text Embeddings - Implementation Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-068: Source Text Embeddings for Grounding Truth Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6_13" id="__nav_6_6_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    media-ADR-058
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_6_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    media-ADR-058
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polarity Axis Triangulation Visualizations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    authentication-security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    authentication-security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-027: User Management API with Lightweight JWT Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-031: Encrypted API Key Storage with Container Secrets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-060: API Endpoint Security Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-062: MCP File Ingestion Security Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    database-schema
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    database-schema
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-024: Multi-Schema PostgreSQL Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-040: Database Schema Migration Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-061: Operator Pattern for Platform Lifecycle Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015: Backup/Restore Streaming Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-020: Admin Module Architecture Pattern
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-050: Scheduled Jobs System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-055: CDN and Serverless Deployment Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-056: Timezone-Aware Datetime Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ingestion-content
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ingestion-content
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-023: Markdown Structured Content Preprocessing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-037: Human-Guided Graph Editing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-051: Graph-Based Provenance Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-051: API Changes for Graph-Based Document Deduplication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-057: Multimodal Image Ingestion with Visual Context Injection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-072: Concept Matching Strategies and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    query-search
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    query-search
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-030: Concept Deduplication Quality Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-063: Semantic Diversity as Authenticity Signal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-066-published-query-endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-066: Published Query Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2954,7 +4928,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-071a: Parallel Graph Query Implementation Findings
+    ADR-071: Parallel Graph Query Optimization
   
 
     
@@ -2972,7 +4946,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-071a: Parallel Graph Query Implementation Findings
+    ADR-071: Parallel Graph Query Optimization
   
 
     
@@ -3006,75 +4980,14 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#critical-bug-fix" class="md-nav__link">
+  <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Critical Bug Fix
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuration-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-testing-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance Testing Results
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Performance Testing Results">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#complete-performance-curve" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete Performance Curve
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Findings
+        The Problem
       
     </span>
   </a>
@@ -3094,6 +5007,73 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture-2-phase-parallel-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture: 2-Phase Parallel Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Insight
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphparallelizer-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphParallelizer Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-example-polarity-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Example: Polarity Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3148,22 +5128,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#safety-mitigations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
+        Safety Mitigations
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Alternatives Considered">
+    <nav class="md-nav" aria-label="Safety Mitigations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#alternative-1-remove-parallelization-entirely" class="md-nav__link">
+  <a href="#1-global-semaphore-prevents-multi-user-deadlock" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 1: Remove parallelization entirely
+        1. Global Semaphore (Prevents Multi-User Deadlock)
       
     </span>
   </a>
@@ -3171,10 +5151,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-2-adaptive-worker-count" class="md-nav__link">
+  <a href="#2-per-worker-result-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 2: Adaptive worker count
+        2. Per-Worker Result Limits
       
     </span>
   </a>
@@ -3182,10 +5162,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-3-database-level-parallelization" class="md-nav__link">
+  <a href="#3-wall-clock-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 3: Database-level parallelization
+        3. Wall-Clock Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-connection-pool-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Connection Pool Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-parameter-binding-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Parameter Binding (Security)
       
     </span>
   </a>
@@ -3198,22 +5211,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-notes" class="md-nav__link">
+  <a href="#actual-performance-results-adr-071a" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Notes
+        Actual Performance Results (ADR-071a)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Implementation Notes">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Management">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#files-modified" class="md-nav__link">
+  <a href="#database-first-following-adr-041049-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Files Modified
+        Database-First (Following ADR-041/049 Pattern)
       
     </span>
   </a>
@@ -3221,10 +5245,71 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing-performed" class="md-nav__link">
+  <a href="#loading-config" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing Performed
+        Loading Config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-postgresql-parallel-workers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: PostgreSQL Parallel Workers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-asyncawait-asyncio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Async/Await (asyncio)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-distributed-queue-celery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C: Distributed Queue (Celery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-graphql-dataloader-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D: GraphQL DataLoader Pattern
       
     </span>
   </a>
@@ -3248,143 +5333,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#lessons-learned" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lessons Learned
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recommendations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Recommendations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-production" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Production
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-future-work" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Future Work
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database-tuning-research" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Tuning Research
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Tuning Research">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-configuration-32-core-123gb-ram-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current Configuration (32-core, 123GB RAM system)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Findings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#critical-missing-indexes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Critical Missing Indexes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-optimization-strategies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Additional Optimization Strategies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alignment-with-adr-071a-performance-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alignment with ADR-071a Performance Testing
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deferred-items" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred Items
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conclusion
+        References
       
     </span>
   </a>
@@ -3407,1791 +5359,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Architecture Decision Records (ADRs)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Knowledge Graph System Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Query Safety Baseline - Technical Debt
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Recursive Upsert Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    access-workflow
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    access-workflow
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-001: Multi-Tier Agent Access Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-002: Node Fitness Scoring System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-003: Semantic Tool Hint Networks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-004: Pure Graph Design (Library Metaphor)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-005: Source Text Tracking and Retrieval
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-006: Staging and Migration Workflows
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-038: Official Project Apparel Design Specifications
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ai-embeddings
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    ai-embeddings
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-041: AI Extraction Provider Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-042: Local LLM Inference for Concept Extraction
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-043: Single-Node Resource Management for Local Inference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migration Plan: ADR-045/046 Implementation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-045: Unified Embedding Generation System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-049: Rate Limiting and Per-Provider Concurrency Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-058: Polarity Axis Triangulation for Grounding Calculation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-068 Source Text Embeddings - Implementation Plan
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-068: Source Text Embeddings for Grounding Truth Retrieval
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7_13" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_7_13" id="__nav_6_7_13_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    media-ADR-058
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_7_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7_13">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    media-ADR-058
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Polarity Axis Triangulation Visualizations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    authentication-security
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_8">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    authentication-security
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-027: User Management API with Lightweight JWT Authentication
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-028: Dynamic Role-Based Access Control (RBAC) System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-031: Encrypted API Key Storage with Container Secrets
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-060: API Endpoint Security Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-062: MCP File Ingestion Security Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_9" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    database-schema
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_9">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    database-schema
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-016: Apache AGE Migration (Neo4j Replacement)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-024: Multi-Schema PostgreSQL Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-040: Database Schema Migration Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-061: Operator Pattern for Platform Lifecycle Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    infrastructure
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_10">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    infrastructure
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-012: API Server Architecture for Scalable Neo4j Access
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-015: Backup/Restore Streaming Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-018: Server-Sent Events for Real-Time Progress Streaming
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-020: Admin Module Architecture Pattern
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-021: Live Man Switch - AI Safety for Critical Operations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-050: Scheduled Jobs System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-055: CDN and Serverless Deployment Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-056: Timezone-Aware Datetime Utilities
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingestion-content
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_11">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    ingestion-content
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-023: Markdown Structured Content Preprocessing
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-033: Multimodal Image Ingestion with Configurable Prompt System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-037: Human-Guided Graph Editing
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-051: Graph-Based Provenance Tracking
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-051: API Changes for Graph-Based Document Deduplication
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-057: Multimodal Image Ingestion with Visual Context Injection
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-057 Appendix: Single-Stage vs Two-Stage Image Processing
+    ADR-071a: Parallel Graph Query Implementation Findings
   
 
     
@@ -5238,7 +5413,7 @@
   <span class="md-ellipsis">
     
   
-    proposals
+    user-interfaces
   
 
     
@@ -5254,7 +5429,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    proposals
+    user-interfaces
   
 
           </label>
@@ -5267,14 +5442,266 @@
   
   
     <li class="md-nav__item">
-      <a href="../proposals/PARALLEL_GRAPH_QUERY_DESIGN/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Parallel Graph Query Execution - Design Proposal
+    ADR-011: CLI and Admin Tooling Separation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013: Unified TypeScript Client (CLI + MCP Server)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-019: Type-Based Table Formatting System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-034: Graph Visualization &amp; Interactive Query Explorers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-035: Explorer Methods, Uses, and Capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-036: Universal Visual Query Builder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-064: Specialized Truth Convergence Visualizations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-067: Web Application Workstation Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-069: Semantic FUSE Filesystem
   
 
     
@@ -5321,7 +5748,7 @@
   <span class="md-ellipsis">
     
   
-    query-search
+    vocabulary-relationships
   
 
     
@@ -5337,480 +5764,6 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    query-search
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-030: Concept Deduplication Quality Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-063: Semantic Diversity as Authenticity Signal
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-066: Published Query Endpoints
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_14" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_14" id="__nav_6_14_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    user-interfaces
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_14_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_14">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    user-interfaces
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-011: CLI and Admin Tooling Separation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-013: Unified TypeScript Client (CLI + MCP Server)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-019: Type-Based Table Formatting System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-034: Graph Visualization &amp; Interactive Query Explorers
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-035: Explorer Methods, Uses, and Capabilities
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-036: Universal Visual Query Builder
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-064: Specialized Truth Convergence Visualizations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-067: Web Application Workstation Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-069: Semantic FUSE Filesystem
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_15" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_15" id="__nav_6_15_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    vocabulary-relationships
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_15_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_15">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
     vocabulary-relationships
   
 
@@ -5824,7 +5777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5852,7 +5805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5880,7 +5833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5908,7 +5861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5936,7 +5889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5964,7 +5917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5992,7 +5945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6020,7 +5973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -6048,7 +6001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -6076,7 +6029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6104,7 +6057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6132,7 +6085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6222,7 +6175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6250,7 +6203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6278,7 +6231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6306,7 +6259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6334,7 +6287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6362,7 +6315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6390,7 +6343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -6472,7 +6425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6500,7 +6453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -6528,7 +6481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -6556,7 +6509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -6584,7 +6537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -6612,7 +6565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -6640,7 +6593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -6703,75 +6656,14 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#critical-bug-fix" class="md-nav__link">
+  <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Critical Bug Fix
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuration-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-testing-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance Testing Results
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Performance Testing Results">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#complete-performance-curve" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete Performance Curve
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Findings
+        The Problem
       
     </span>
   </a>
@@ -6791,6 +6683,73 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture-2-phase-parallel-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture: 2-Phase Parallel Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Insight
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphparallelizer-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphParallelizer Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-example-polarity-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Example: Polarity Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6845,22 +6804,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#safety-mitigations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
+        Safety Mitigations
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Alternatives Considered">
+    <nav class="md-nav" aria-label="Safety Mitigations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#alternative-1-remove-parallelization-entirely" class="md-nav__link">
+  <a href="#1-global-semaphore-prevents-multi-user-deadlock" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 1: Remove parallelization entirely
+        1. Global Semaphore (Prevents Multi-User Deadlock)
       
     </span>
   </a>
@@ -6868,10 +6827,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-2-adaptive-worker-count" class="md-nav__link">
+  <a href="#2-per-worker-result-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 2: Adaptive worker count
+        2. Per-Worker Result Limits
       
     </span>
   </a>
@@ -6879,10 +6838,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-3-database-level-parallelization" class="md-nav__link">
+  <a href="#3-wall-clock-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 3: Database-level parallelization
+        3. Wall-Clock Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-connection-pool-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Connection Pool Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-parameter-binding-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Parameter Binding (Security)
       
     </span>
   </a>
@@ -6895,22 +6887,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-notes" class="md-nav__link">
+  <a href="#actual-performance-results-adr-071a" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Notes
+        Actual Performance Results (ADR-071a)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Implementation Notes">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Management">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#files-modified" class="md-nav__link">
+  <a href="#database-first-following-adr-041049-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Files Modified
+        Database-First (Following ADR-041/049 Pattern)
       
     </span>
   </a>
@@ -6918,10 +6921,71 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing-performed" class="md-nav__link">
+  <a href="#loading-config" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing Performed
+        Loading Config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-postgresql-parallel-workers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: PostgreSQL Parallel Workers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-asyncawait-asyncio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Async/Await (asyncio)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-distributed-queue-celery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C: Distributed Queue (Celery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-graphql-dataloader-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D: GraphQL DataLoader Pattern
       
     </span>
   </a>
@@ -6945,143 +7009,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#lessons-learned" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lessons Learned
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recommendations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Recommendations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-production" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Production
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-future-work" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Future Work
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database-tuning-research" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Tuning Research
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Tuning Research">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-configuration-32-core-123gb-ram-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current Configuration (32-core, 123GB RAM system)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Findings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#critical-missing-indexes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Critical Missing Indexes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-optimization-strategies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Additional Optimization Strategies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alignment-with-adr-071a-performance-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alignment with ADR-071a Performance Testing
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deferred-items" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred Items
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conclusion
+        References
       
     </span>
   </a>
@@ -7108,443 +7039,276 @@
   
 
 
-<h1 id="adr-071a-parallel-graph-query-implementation-findings">ADR-071a: Parallel Graph Query Implementation Findings</h1>
+<h1 id="adr-071-parallel-graph-query-optimization">ADR-071: Parallel Graph Query Optimization</h1>
 <p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2025-12-04
-<strong>Parent:</strong> <a href="ADR-071-parallel-graph-queries.md">ADR-071: Parallel Graph Query Optimization</a></p>
+<strong>Date:</strong> 2025-12-01
+<strong>Updated:</strong> 2025-12-04 (findings documented in ADR-071a)</p>
 <h2 id="context">Context</h2>
-<p>This subletter documents the actual implementation of ADR-071's parallel graph query system and the critical performance discoveries made during testing.</p>
-<p><strong>Implementation Environment:</strong>
-- System: 32-core machine
-- Database: PostgreSQL + Apache AGE
-- Test workload: Polarity axis analysis (Modern Operating Model ↔ Traditional Operating Model)
-- Dataset: 40 1-hop neighbors, ~75 2-hop neighbors
-- Baseline: 4:21 (261 seconds) for max_hops=2 query</p>
+<p>Graph traversal queries with variable-length paths <code>[*1..N]</code> exhibit severe performance degradation as hop count increases. Polarity axis analysis (<code>api/lib/polarity_axis.py</code>) with <code>max_hops=2</code> takes over 3 minutes (180-261 seconds), making the feature unusable for interactive analysis.</p>
+<h3 id="the-problem">The Problem</h3>
+<p>When discovering candidates within 2 hops of two pole concepts:</p>
+<ol>
+<li>Find all 1-hop neighbors of poles → ~200 concepts (500ms ✓)</li>
+<li>Find neighbors of those 200 concepts → 200 × 100 = 20,000 potential paths (3+ min ✗)</li>
+</ol>
+<p><strong>Root Cause:</strong> PostgreSQL cannot parallelize Apache AGE Cypher queries because <code>ag_catalog.cypher()</code> appears as an opaque function call. PostgreSQL's parallel query machinery never activates.</p>
+<p><strong>Affected Patterns:</strong>
+- Polarity candidate discovery (<code>api/lib/polarity_axis.py:190</code>)
+- Neighborhood queries (<code>api/services/diversity_analyzer.py:174</code>)
+- Path enrichment (web UI subgraph expansion)</p>
+<p>All follow the same pattern: multi-hop traversal from seed concepts.</p>
+<h2 id="decision">Decision</h2>
+<p>Implement application-level parallelization using Python's <code>ThreadPoolExecutor</code> with connection pooling to execute multiple small Cypher queries concurrently instead of one large variable-length path query.</p>
+<h3 id="architecture-2-phase-parallel-execution">Architecture: 2-Phase Parallel Execution</h3>
+<p><strong>Phase 1: Direct Neighbors (1-hop) - Single Batched Query</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
+</code></pre></div>
+Returns ~100-500 concepts in ~500ms.</p>
+<p><strong>Phase 2: Extended Neighbors (2-hop) - Parallel Queries</strong></p>
+<p>Split 1-hop results into chunks, execute in parallel with ThreadPoolExecutor:
+- 8 workers (default)
+- Each worker processes a chunk of seed IDs in one batched query
+- Workers grab connections from existing psycopg2 connection pool
+- Results merged and deduplicated</p>
+<h3 id="key-insight">Key Insight</h3>
+<p><strong>The Optimization:</strong> Instead of 1 concept = 1 query (150 queries with network overhead), use chunking: 1 chunk = 1 batched query (8 queries total).</p>
+<p><strong>Network Overhead Savings:</strong>
+- Old: 150 concepts × 10ms = 1,500ms wasted
+- New: 8 chunks × 10ms = 80ms overhead
+- <strong>Savings:</strong> 1,420ms from batching alone</p>
 <h2 id="implementation">Implementation</h2>
-<h3 id="critical-bug-fix">Critical Bug Fix</h3>
-<p>The initial implementation failed with "graph 'concept' does not exist" errors. The root cause:</p>
-<p><strong>Broken Code (manual query wrapping):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s2">    SELECT * FROM ag_catalog.cypher(&#39;concept&#39;, $$</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s2">        MATCH (seed:Concept)-[]-(neighbor:Concept)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s2">        WHERE seed.concept_id IN $seed_ids</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s2">        RETURN DISTINCT neighbor.concept_id as concept_id</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s2">    $$) as (concept_id agtype);</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s2">&quot;&quot;&quot;</span>
+<h3 id="graphparallelizer-class">GraphParallelizer Class</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># api/lib/graph_parallelizer.py</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParallelQueryConfig</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>           <span class="c1"># ThreadPoolExecutor size</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>           <span class="c1"># Concepts per worker chunk</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">120.0</span> <span class="c1"># Wall-clock timeout</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">per_worker_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>    <span class="c1"># Max results per worker</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">discovery_slot_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># Epsilon-greedy (ADR-071a)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphParallelizer</span><span class="p">:</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="sd">    Reusable n-hop query parallelizer using connection pooling.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="sd">    Breaks multi-hop graph queries into:</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="sd">    1. Phase 1: Fast single query for 1-hop neighbors</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="sd">    2. Phase 2: Parallel queries for 2-hop neighbors</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="n">seed_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="n">filter_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;neighbor.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="c1"># Phase 1: Single batched query</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        <span class="n">neighbors_1hop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_1hop_neighbors</span><span class="p">(</span><span class="n">seed_ids</span><span class="p">,</span> <span class="n">filter_clause</span><span class="p">)</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        <span class="k">if</span> <span class="n">max_hops</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>            <span class="k">return</span> <span class="n">neighbors_1hop</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>        <span class="c1"># Phase 2: Parallel execution with chunking</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>        <span class="n">neighbors_2hop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_2hop_neighbors_parallel</span><span class="p">(</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>            <span class="nb">list</span><span class="p">(</span><span class="n">neighbors_1hop</span><span class="p">),</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>            <span class="n">filter_clause</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>        <span class="p">)</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>        <span class="k">return</span> <span class="n">neighbors_1hop</span> <span class="o">|</span> <span class="n">neighbors_2hop</span>
+</code></pre></div>
+<h3 id="integration-example-polarity-discovery">Integration Example: Polarity Discovery</h3>
+<p><strong>Before (Sequential):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># Single query with variable-length path - takes 3+ minutes</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s2">        MATCH (pole)-[*1..</span><span class="si">{</span><span class="n">max_hops</span><span class="si">}</span><span class="s2">]-(candidate)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s2">        WHERE pole.concept_id IN [&#39;</span><span class="si">{</span><span class="n">positive_pole_id</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">negative_pole_id</span><span class="si">}</span><span class="s2">&#39;]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s2">        RETURN DISTINCT candidate.concept_id</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
 </code></pre></div></p>
-<p><strong>Problem:</strong> Manually wrapping queries with <code>ag_catalog.cypher('concept', ...)</code> used wrong graph name.</p>
-<p><strong>Fix (use AGEClient._execute_cypher):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Plain Cypher query - AGEClient._execute_cypher() handles wrapping</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s2">    MATCH (seed:Concept)-[]-(neighbor:Concept)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s2">    WHERE seed.concept_id IN $seed_ids</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s2">    RETURN DISTINCT neighbor.concept_id as concept_id</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s2">    LIMIT </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">per_worker_limit</span><span class="si">}</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;seed_ids&#39;</span><span class="p">:</span> <span class="n">seed_ids</span><span class="p">})</span>
+<p><strong>After (Parallel):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">age_client</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">neighbor_ids</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="p">[</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">],</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="n">max_hops</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">filter_clause</span><span class="o">=</span><span class="s2">&quot;candidate.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">neighbor_ids</span><span class="p">)</span>
 </code></pre></div></p>
-<p><strong>Impact:</strong> This single fix enabled the 3x speedup. The parallelization infrastructure works correctly, but the speedup primarily comes from <strong>batched query optimization</strong>, not from parallelization itself.</p>
-<h3 id="configuration-changes">Configuration Changes</h3>
-<p><strong>AGEClient Connection Pool:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Increased from 10 to support parallel workers</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="mi">1</span><span class="p">,</span>   <span class="c1"># minconn</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># maxconn (supports up to 16 parallel workers + buffer)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="o">...</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<p>✅ <strong>Expected 8-30x speedup</strong> for 2-hop queries (3 minutes → 6-25 seconds)
+✅ <strong>Reusable pattern</strong> for all multi-hop traversals
+✅ <strong>No new infrastructure</strong> - uses existing connection pool + stdlib ThreadPoolExecutor
+✅ <strong>Graceful degradation</strong> - partial results acceptable, timeout handling
+✅ <strong>Production-safe</strong> - connection pool limits prevent resource exhaustion</p>
+<h3 id="negative">Negative</h3>
+<p>❌ <strong>Connection pool contention</strong> - requires monitoring and tuning
+❌ <strong>Result ordering undefined</strong> - parallel execution loses deterministic ordering
+❌ <strong>Memory overhead</strong> - holds more results in memory during merge phase
+❌ <strong>Complexity</strong> - introduces concurrency concerns (timeouts, deadlocks, race conditions)</p>
+<h3 id="neutral">Neutral</h3>
+<p>⚠️ <strong>Database load increases</strong> - more concurrent queries, but each smaller
+⚠️ <strong>Requires configuration</strong> - worker count, timeouts, per-worker limits need tuning</p>
+<h2 id="safety-mitigations">Safety Mitigations</h2>
+<h3 id="1-global-semaphore-prevents-multi-user-deadlock">1. Global Semaphore (Prevents Multi-User Deadlock)</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Limit TOTAL concurrent graph workers across ALL requests</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">_GRAPH_WORKER_SEMAPHORE</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</code></pre></div>
+Without this: 2 users × 8 workers each = 16 connections → locks out other API endpoints.</p>
+<h3 id="2-per-worker-result-limits">2. Per-Worker Result Limits</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">LIMIT</span><span class="w"> </span><span class="p">{</span><span class="n">per_worker_limit</span><span class="p">}</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Hard</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">worker</span>
+</code></pre></div>
+Prevents hub nodes with 10,000 neighbors from causing memory explosions.</p>
+<h3 id="3-wall-clock-timeout">3. Wall-Clock Timeout</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout_seconds</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Strictly bounded execution regardless of worker count</span>
+</code></pre></div>
+Guarantees queries complete within timeout, not just individual workers.</p>
+<h3 id="4-graceful-degradation">4. Graceful Degradation</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed, continuing with partial results&quot;</span><span class="p">)</span>
+</code></pre></div>
+Partial results acceptable for graph exploration - one slow worker doesn't fail entire query.</p>
+<h3 id="5-connection-pool-configuration">5. Connection Pool Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Increased from 10 to support parallel workers</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="mi">1</span><span class="p">,</span>   <span class="c1"># minconn</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># maxconn (8 workers + 2 buffer + main queries)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="o">...</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Rule of Thumb:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>max_workers ≤ (connection_pool_size - 2)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>max_workers = 8  (default safe with pool_size=20)
 </code></pre></div></p>
-<p><strong>GraphParallelizer Configuration:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>      <span class="c1"># ThreadPoolExecutor size</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>     <span class="c1"># Optimal: 1-2 workers (see findings)</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
-</code></pre></div></p>
-<h2 id="performance-testing-results">Performance Testing Results</h2>
-<h3 id="complete-performance-curve">Complete Performance Curve</h3>
-<p>Tested configurations from 1 to 8 workers on clean system (no CPU contention):</p>
+<h3 id="6-parameter-binding-security">6. Parameter Binding (Security)</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Parameterized</span>
+</code></pre></div>
+All queries use parameter binding to prevent Cypher injection, not f-string interpolation.</p>
+<h2 id="actual-performance-results-adr-071a">Actual Performance Results (ADR-071a)</h2>
+<p>Implementation testing revealed:</p>
 <table>
 <thead>
 <tr>
 <th>Workers</th>
 <th>Chunk Size</th>
-<th>Phase 1</th>
-<th>Phase 2</th>
-<th>Total</th>
-<th>Success</th>
+<th>Total Time</th>
 <th>Speedup</th>
-<th>Overhead</th>
+<th>Success Rate</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Baseline</strong></td>
+<td>Baseline</td>
 <td>N/A</td>
-<td>-</td>
-<td>~180s</td>
-<td><strong>4:21 (261s)</strong></td>
-<td>-</td>
-<td><strong>1.0x</strong></td>
+<td>4:21 (261s)</td>
+<td>1.0x</td>
 <td>-</td>
 </tr>
 <tr>
 <td><strong>1 worker</strong></td>
 <td>100</td>
-<td>41.5s</td>
-<td><strong>40.8s</strong></td>
 <td><strong>1:23 (83s)</strong></td>
+<td><strong>3.15x</strong> ✅</td>
 <td>100%</td>
-<td><strong>3.15x</strong></td>
-<td><strong>0s</strong> ✅</td>
 </tr>
 <tr>
 <td>2 workers</td>
 <td>20</td>
-<td>41.4s</td>
-<td>43.3s</td>
 <td>1:25 (85s)</td>
-<td>100%</td>
 <td>3.07x</td>
-<td>+2s</td>
+<td>100%</td>
 </tr>
 <tr>
 <td>4 workers</td>
 <td>10</td>
-<td>41.7s</td>
-<td>80.5s</td>
 <td>2:02 (122s)</td>
-<td>100%</td>
 <td>2.14x</td>
-<td>+39s</td>
+<td>100%</td>
 </tr>
 <tr>
 <td>8 workers</td>
 <td>5</td>
-<td>41.8s</td>
-<td>162s</td>
 <td>3:24 (204s)</td>
-<td>50%</td>
 <td>1.28x</td>
-<td>+79s + timeouts</td>
+<td>50%</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Phase Breakdown:</strong>
-- Phase 1 (1-hop): ~41-42s (consistent across all configs, single batched query)
-- Phase 2 (2-hop): 41s (1 worker) → 43s (2 workers) → 80s (4 workers) → 162s (8 workers)</p>
-<h3 id="key-findings">Key Findings</h3>
-<p><strong>🎯 Discovery #1: Speedup source is batched queries, NOT parallelization</strong></p>
-<p>The 3x speedup comes from:
-1. ✅ <strong>Fixing the query format</strong> to use <code>_execute_cypher()</code> correctly
-2. ✅ <strong>Batched IN clause queries</strong> instead of individual queries per concept
-3. ❌ <strong>NOT from parallelization</strong> - parallelization adds overhead</p>
-<p><strong>Evidence:</strong>
-- 1 worker (sequential): 83 seconds
-- 2 workers (parallel): 85 seconds (+2s)
-- Difference: Only 2 seconds faster with parallelization</p>
-<p><strong>🎯 Discovery #2: 1 worker is optimal for this workload</strong></p>
-<ul>
-<li><strong>1 worker</strong>: 83s, zero overhead, simplest implementation</li>
-<li><strong>2 workers</strong>: 85s, +2s overhead (negligible)</li>
-<li><strong>4 workers</strong>: 122s, +39s overhead (significant)</li>
-<li><strong>8 workers</strong>: 204s, +79s overhead + timeouts (catastrophic)</li>
-</ul>
-<p><strong>Why more workers hurt performance:</strong>
-1. <strong>Per-worker overhead</strong> - Thread spawning, coordination, context switching
-2. <strong>Fixed query costs</strong> - Connection acquisition, query planning, setup
-3. <strong>Database contention</strong> - Multiple concurrent queries compete for locks
-4. <strong>Diminishing returns</strong> - Amdahl's Law in action</p>
-<p><strong>🎯 Discovery #3: Worker overhead scales badly</strong></p>
-<p>Phase 2 overhead vs number of workers:
-- 1 worker: 41s (baseline)
-- 2 workers: 43s (+2s, 5% overhead)
-- 4 workers: 80s (+39s, 95% overhead)
-- 8 workers: 162s (+121s, 295% overhead + timeouts)</p>
-<p><strong>🎯 Discovery #4: Timeout mechanism validates correctly</strong></p>
-<p>With 8 workers and CPU contention:
-- 4/8 chunks completed successfully
-- 4/8 chunks timed out after exactly 120s
-- System gracefully returned partial results
-- No hangs, no crashes, no data corruption</p>
-<h2 id="decision">Decision</h2>
-<p><strong>Optimal Configuration: 1-2 workers</strong></p>
-<p>After comprehensive testing, we recommend:</p>
-<p><strong>Option A: 1 worker (simplest, fastest)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># Forces 1 worker, sequential Phase 2</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
-</code></pre></div></p>
-<p><strong>Option B: 2 workers (minimal overhead, nice symmetry)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>   <span class="c1"># Creates 2 workers for typical 40-concept datasets</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
-</code></pre></div></p>
-<p><strong>Rationale:</strong>
-- Both deliver ~3x speedup over broken baseline
-- 1 worker eliminates all parallelization complexity
-- 2 workers adds only 2s overhead, validates parallel infrastructure
-- 4+ workers add significant overhead without proportional benefit
-- Simpler = fewer failure modes, easier debugging, better maintainability</p>
-<h2 id="consequences">Consequences</h2>
-<h3 id="positive">Positive</h3>
-<ol>
-<li><strong>3x speedup achieved</strong> - 4:21 → 1:23 (261s → 83s)</li>
-<li><strong>Simple implementation</strong> - 1 worker eliminates parallelization complexity</li>
-<li><strong>Root cause identified</strong> - Query format bug, not algorithm design</li>
-<li><strong>Robust infrastructure</strong> - Parallel system works, validated with timeout testing</li>
-<li><strong>Scalability path</strong> - Can increase workers for larger datasets if needed</li>
-<li><strong>Performance baseline</strong> - Comprehensive testing establishes performance curve</li>
-</ol>
-<h3 id="negative">Negative</h3>
-<ol>
-<li><strong>Parallelization infrastructure underutilized</strong> - Built for 8+ workers, optimal is 1-2</li>
-<li><strong>Design assumptions wrong</strong> - ADR-071 predicted 160x speedup from parallelization, actual speedup is from batched queries</li>
-<li><strong>Overhead higher than expected</strong> - Worker overhead grows faster than linear</li>
-</ol>
-<h3 id="neutral">Neutral</h3>
-<ol>
-<li><strong>Configuration tunability</strong> - chunk_size controls worker count, but optimal is fixed</li>
-<li><strong>Connection pool increase</strong> - Increased from 10 → 20, but only need 2-3</li>
-<li><strong>Timeout mechanism</strong> - Validated and working, but not needed at optimal config</li>
-</ol>
-<h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="alternative-1-remove-parallelization-entirely">Alternative 1: Remove parallelization entirely</h3>
-<p><strong>Approach:</strong> Delete GraphParallelizer, just use batched queries</p>
-<p><strong>Pros:</strong>
-- Simplest possible code
-- No thread management, no semaphores, no timeouts
-- Identical performance to 1-worker config</p>
-<p><strong>Cons:</strong>
-- Loses scalability path for larger datasets
-- Loses timeout safety mechanism
-- Wastes implementation effort</p>
-<p><strong>Decision:</strong> Keep parallelizer with optimal 1-2 worker config. Infrastructure is valuable for:
-- Future large-scale queries (100+ concepts)
-- Timeout safety mechanism
-- Demonstrates due diligence in optimization</p>
-<h3 id="alternative-2-adaptive-worker-count">Alternative 2: Adaptive worker count</h3>
-<p><strong>Approach:</strong> Dynamically choose worker count based on dataset size</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Adaptive configuration</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_optimal_workers</span><span class="p">(</span><span class="n">num_concepts</span><span class="p">):</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">if</span> <span class="n">num_concepts</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">:</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="k">return</span> <span class="mi">1</span>  <span class="c1"># Sequential is fastest</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">elif</span> <span class="n">num_concepts</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="k">return</span> <span class="mi">2</span>  <span class="c1"># Minimal overhead</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="k">return</span> <span class="mi">4</span>  <span class="c1"># More parallelism for large datasets</span>
+<p><strong>Critical Discovery:</strong> The 3x speedup comes from <strong>batched queries with IN clauses</strong>, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.</p>
+<p><strong>See <a href="../ADR-071a-parallel-implementation-findings/">ADR-071a: Parallel Implementation Findings</a> for detailed analysis.</strong></p>
+<h2 id="configuration-management">Configuration Management</h2>
+<h3 id="database-first-following-adr-041049-pattern">Database-First (Following ADR-041/049 Pattern)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">-- Migration: Add parallel query configuration</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">8</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">32</span><span class="p">);</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">30</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">120</span><span class="p">);</span>
 </code></pre></div>
-<p><strong>Pros:</strong>
-- Optimal performance across different dataset sizes
-- Handles both small and large queries</p>
-<p><strong>Cons:</strong>
-- Increased complexity
-- Untested for large datasets
-- Premature optimization</p>
-<p><strong>Decision:</strong> Defer until we have real-world large dataset use cases. Current config is simple and optimal for observed workloads.</p>
-<h3 id="alternative-3-database-level-parallelization">Alternative 3: Database-level parallelization</h3>
-<p><strong>Approach:</strong> Investigate PostgreSQL parallel query execution instead of application-level parallelization</p>
-<p><strong>Pros:</strong>
-- Database engine handles parallelization
-- No application-level thread management
-- May be more efficient</p>
-<p><strong>Cons:</strong>
-- AGE Cypher queries are function calls, not parallelizable by PostgreSQL
-- Would require changes to AGE extension itself
-- Out of scope for application-level optimization</p>
-<p><strong>Decision:</strong> Not feasible with current AGE architecture.</p>
-<h2 id="implementation-notes">Implementation Notes</h2>
-<h3 id="files-modified">Files Modified</h3>
-<ol>
-<li><strong>api/api/lib/graph_parallelizer.py</strong> (409 lines)</li>
-<li>Fixed query format to use <code>_execute_cypher()</code></li>
-<li>Removed manual <code>ag_catalog.cypher()</code> wrapping</li>
-<li>
-<p>Removed unnecessary <code>json</code> import</p>
-</li>
-<li>
-<p><strong>api/api/lib/polarity_axis.py</strong></p>
-</li>
-<li>Added <code>discover_candidate_concepts_parallel()</code> function</li>
-<li>Updated <code>analyze_polarity_axis()</code> with <code>use_parallel</code> parameter</li>
-<li>
-<p>Configured ParallelQueryConfig with optimal settings</p>
-</li>
-<li>
-<p><strong>api/api/models/queries.py</strong></p>
-</li>
-<li>
-<p>Added <code>use_parallel: bool</code> field to <code>PolarityAxisRequest</code></p>
-</li>
-<li>
-<p><strong>api/api/routes/queries.py</strong></p>
-</li>
-<li>
-<p>Passed <code>use_parallel</code> parameter to analysis function</p>
-</li>
-<li>
-<p><strong>api/api/lib/age_client.py</strong></p>
-</li>
-<li>
-<p>Increased connection pool: <code>maxconn=10</code> → <code>maxconn=20</code></p>
-</li>
-<li>
-<p><strong>scripts/development/manual-tests/test_parallel_performance.py</strong></p>
-</li>
-<li>Performance testing script for future benchmarking</li>
-</ol>
-<h3 id="testing-performed">Testing Performed</h3>
-<p><strong>Test Environment:</strong>
-- Clean system (no competing workload)
-- 32-core machine
-- PostgreSQL + AGE running in Docker
-- Test poles: Modern Operating Model ↔ Traditional Operating Model</p>
-<p><strong>Configurations Tested:</strong>
-- ✅ 1 worker (chunk_size=100): 1:23, 100% success
-- ✅ 2 workers (chunk_size=20): 1:25, 100% success
-- ✅ 4 workers (chunk_size=10): 2:02, 100% success
-- ✅ 8 workers (chunk_size=5): 3:24, 50% success (timeouts)</p>
-<p><strong>Stress Testing:</strong>
-- CPU contention (kernel compilation running): Validated graceful degradation
-- Timeout mechanism: Validated with 8-worker config
-- Connection pool: No exhaustion observed with 20-connection pool</p>
+<h3 id="loading-config">Loading Config</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_parallel_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ParallelQueryConfig</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from database (ADR-041/049 pattern)&quot;&quot;&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT parallel_query_max_workers, ...&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_max_workers&#39;</span><span class="p">],</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_timeout_seconds&#39;</span><span class="p">]</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="p">)</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">()</span>  <span class="c1"># Fallback to defaults</span>
+</code></pre></div>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="option-a-postgresql-parallel-workers">Option A: PostgreSQL Parallel Workers</h3>
+<p><strong>Pros:</strong> Native parallelism
+<strong>Cons:</strong> Doesn't work with AGE Cypher queries (opaque function calls)
+<strong>Decision:</strong> Rejected - PostgreSQL can't see inside <code>ag_catalog.cypher()</code></p>
+<h3 id="option-b-asyncawait-asyncio">Option B: Async/Await (asyncio)</h3>
+<p><strong>Pros:</strong> Python-native async
+<strong>Cons:</strong> psycopg2 is blocking (would require migration to psycopg3 or aiopg)
+<strong>Decision:</strong> Rejected - too much refactoring for uncertain benefit</p>
+<h3 id="option-c-distributed-queue-celery">Option C: Distributed Queue (Celery)</h3>
+<p><strong>Pros:</strong> Battle-tested, scales horizontally
+<strong>Cons:</strong> Massive complexity, external dependencies (Redis/RabbitMQ)
+<strong>Decision:</strong> Rejected - overkill for current scale</p>
+<h3 id="option-d-graphql-dataloader-pattern">Option D: GraphQL DataLoader Pattern</h3>
+<p><strong>Pros:</strong> Batch + cache
+<strong>Cons:</strong> Designed for request-scoped batching, not multi-hop traversal
+<strong>Decision:</strong> Rejected - different use case</p>
 <h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li><strong>ADR-071: Parallel Graph Query Optimization</strong> (parent) - Original design document</li>
-<li><strong>ADR-048: GraphQueryFacade</strong> - Namespace-safe query interface (not used, went with _execute_cypher)</li>
-<li><strong>ADR-043: Resource Management</strong> - VRAM/CPU contention handling (informed testing approach)</li>
+<li><strong><a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/">ADR-070: Polarity Axis Analysis</a></strong> - The feature that exposed this performance issue</li>
+<li><strong><a href="../ADR-071a-parallel-implementation-findings/">ADR-071a: Parallel Implementation Findings</a></strong> - Actual performance results and critical discoveries</li>
+<li><strong><a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/">ADR-049: Rate Limiting and Concurrency</a></strong> - Semaphore pattern for resource limiting</li>
+<li><strong><a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/">ADR-048: GraphQueryFacade</a></strong> - Namespace-safe query interface</li>
 </ul>
-<h2 id="lessons-learned">Lessons Learned</h2>
-<ol>
-<li><strong>Profile before parallelizing</strong> - The bottleneck was broken query format, not sequential execution</li>
-<li><strong>Measure, don't assume</strong> - Design predicted 160x from parallelization, actual gain is from batching</li>
-<li><strong>Simple is fast</strong> - 1 worker (sequential) beats complex parallelization</li>
-<li><strong>Amdahl's Law is real</strong> - Overhead grows faster than parallelization benefit</li>
-<li><strong>Infrastructure has value</strong> - Even if underutilized, timeout safety and scalability path justify keeping GraphParallelizer</li>
-</ol>
-<h2 id="recommendations">Recommendations</h2>
-<h3 id="for-production">For Production</h3>
-<ol>
-<li><strong>Use 2-worker configuration</strong> for balance of:</li>
-<li>Near-optimal performance (only 2s slower than 1 worker)</li>
-<li>Validates parallel infrastructure is working</li>
-<li>
-<p>Provides scalability path for larger datasets</p>
-</li>
-<li>
-<p><strong>Monitor Phase 2 timing</strong> to detect performance regressions</p>
-</li>
-<li>
-<p><strong>Consider 1-worker config</strong> if simplicity &gt; 2s performance difference</p>
-</li>
-</ol>
-<h3 id="for-future-work">For Future Work</h3>
-<ol>
-<li><strong>Test with larger datasets</strong> (100+ concepts) to validate if more workers help at scale</li>
-<li><strong>Profile database-level bottlenecks</strong> to understand why larger chunks are faster</li>
-<li><strong>Investigate query plan caching</strong> to reduce per-query overhead</li>
-<li><strong>Consider adaptive worker count</strong> based on dataset size (if large datasets become common)</li>
-</ol>
-<h2 id="database-tuning-research">Database Tuning Research</h2>
-<p>After establishing the optimal application-level configuration (2 workers), we researched PostgreSQL and Apache AGE database-level optimizations to understand potential incremental improvements.</p>
-<h3 id="current-configuration-32-core-123gb-ram-system">Current Configuration (32-core, 123GB RAM system)</h3>
-<p><strong>PostgreSQL Memory Settings:</strong>
-- <code>shared_buffers</code>: 128MB (default)
-- <code>effective_cache_size</code>: 4GB
-- <code>work_mem</code>: 4MB (default)
-- <code>maintenance_work_mem</code>: 64MB</p>
-<p><strong>Parallelism Settings:</strong>
-- <code>max_worker_processes</code>: 8
-- <code>max_parallel_workers</code>: 8
-- <code>max_parallel_workers_per_gather</code>: 2</p>
-<p><strong>Current Usage:</strong> 44MB / 123GB (0.03%)</p>
-<h3 id="research-findings">Research Findings</h3>
-<p><strong>Key Insight:</strong> All sources confirm that <strong>indexing strategy is the highest-impact optimization</strong>. Apache AGE does NOT auto-create indexes, and graph performance depends heavily on proper indexing of node/edge properties.</p>
-<p><strong>Recommended Configuration for Production:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Memory Settings (25-33% of 123GB RAM)</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">shared_buffers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32GB</span><span class="w">              </span><span class="c1"># Currently: 128MB</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="na">effective_cache_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">75GB</span><span class="w">        </span><span class="c1"># Currently: 4GB</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="na">work_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">256MB</span><span class="w">                   </span><span class="c1"># Currently: 4MB (for graph traversals)</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="na">maintenance_work_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2GB</span><span class="w">         </span><span class="c1"># Currently: 64MB</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="na">huge_pages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">on</span><span class="w">                    </span><span class="c1"># CRITICAL for 32GB+ shared_buffers</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Parallelism (32-core system)</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="na">max_worker_processes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span><span class="w">          </span><span class="c1"># Currently: 8</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="na">max_parallel_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span><span class="w">          </span><span class="c1"># Currently: 8</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="na">max_parallel_workers_per_gather</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">16</span><span class="w">  </span><span class="c1"># Currently: 2</span>
-</code></pre></div>
-<p><strong>Expected Performance Impact:</strong>
-- <strong>Indexing improvements</strong>: 2-3x speedup for graph traversals (highest priority)
-- <strong>Memory tuning</strong>: 10-15% improvement for complex queries
-- <strong>Parallelism tuning</strong>: Diminishing returns beyond 12 workers (validates ADR-071a findings)
-- <strong>Huge pages</strong>: Can reduce CPU overhead from 51% to 15% (source: PostgreSQL community benchmarks)</p>
-<h3 id="critical-missing-indexes">Critical Missing Indexes</h3>
-<p>Research revealed that AGE requires explicit indexing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- Node property indexes (for MATCH filtering)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_concept_label</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_vertex</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;label&#39;</span><span class="p">));</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_concept_id</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_vertex</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;concept_id&#39;</span><span class="p">));</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1">-- Relationship indexes (for traversal)</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_edge_start_end</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_edge</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">(</span><span class="n">start_id</span><span class="p">,</span><span class="w"> </span><span class="n">end_id</span><span class="p">);</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_edge_type</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_edge</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;type&#39;</span><span class="p">));</span>
-</code></pre></div>
-<h3 id="additional-optimization-strategies">Additional Optimization Strategies</h3>
-<ol>
-<li><strong>Connection Pooling (PgBouncer)</strong></li>
-<li>Industry standard for PostgreSQL production deployments</li>
-<li>Transaction pooling mode recommended</li>
-<li>
-<p>Target: 5-10 active connections even with high concurrency</p>
-</li>
-<li>
-<p><strong>Query Optimization</strong></p>
-</li>
-<li>Use <code>PROFILE</code> to analyze Cypher query execution plans</li>
-<li>Filter early in MATCH clauses (reduces intermediate results)</li>
-<li>Use explicit node labels (<code>:Concept</code>, <code>:Source</code>) - aligns with ADR-048</li>
-<li>
-<p>Minimize <code>OPTIONAL MATCH</code> usage (generates large intermediate results)</p>
-</li>
-<li>
-<p><strong>Prepared Statements</strong></p>
-</li>
-<li>Parse and optimize once, execute many times</li>
-<li>Particularly effective for ingestion pipelines</li>
-<li>Already supported via psycopg2 in <code>age_client.py</code></li>
-</ol>
-<h3 id="alignment-with-adr-071a-performance-testing">Alignment with ADR-071a Performance Testing</h3>
-<p>Database tuning research <strong>confirms our empirical findings</strong>:
-- Parallelism shows diminishing returns beyond 10-12 workers
-- Application-level batching provides bigger gains than database parallelism
-- Proper query structure (early filtering, explicit labels) more important than raw resources</p>
-<p><strong>Conclusion:</strong> The 3x speedup from fixing query format validates that <strong>query optimization &gt; resource tuning</strong>. Database configuration improvements would provide incremental 10-15% gains, not transformative performance changes.</p>
-<h3 id="deferred-items">Deferred Items</h3>
-<p>The following optimizations are documented but not implemented (await production deployment or larger datasets):
-- PostgreSQL memory configuration tuning
-- Huge pages enablement
-- Explicit graph indexing strategy
-- PgBouncer connection pooling
-- Query plan profiling and optimization</p>
-<p>These should be prioritized when:
-- Graph exceeds 100K concepts (indexing becomes critical)
-- Multi-user production deployment (connection pooling needed)
-- Query performance degrades (profile and optimize)</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>The implementation of ADR-071 successfully achieved a <strong>3.15x speedup</strong> (4:21 → 1:23), but the source of the speedup was different than designed.</p>
-<p><strong>Key Insight:</strong> The performance gain comes from fixing the query format to use proper batched queries, not from parallelization. The parallel infrastructure works correctly and provides value (timeout safety, scalability path), but <strong>1-2 workers is optimal</strong> for current workloads.</p>
-<p>This is a valuable lesson in <strong>"make it work, make it right, make it fast"</strong> - we made it work (fixed query), and it's already fast. The parallelization exploration was valuable for understanding performance characteristics and establishing that simpler (sequential) is better.</p>
-<p><strong>Final Configuration:</strong> 2 workers (chunk_size=20), delivering 3.07x speedup with 100% reliability and minimal complexity.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>Issue #155:</strong> Polarity Candidate Discovery Optimization</li>
+<li><strong>PostgreSQL Parallel Query:</strong> https://www.postgresql.org/docs/current/how-parallel-query-works.html</li>
+<li><strong>Python ThreadPoolExecutor:</strong> https://docs.python.org/3/library/concurrent.futures.html</li>
+<li><strong>psycopg2 Connection Pooling:</strong> https://www.psycopg.org/docs/pool.html</li>
+</ul>
+<hr />
+<p><strong>Last Updated:</strong> 2025-12-04
+<strong>Implementation Status:</strong> Completed in PR #157
+<strong>Files Changed:</strong>
+- <code>api/api/lib/graph_parallelizer.py</code> (NEW - 475 lines)
+- <code>api/api/lib/polarity_axis.py</code> (enhanced with parallel discovery)
+- <code>api/api/lib/age_client.py</code> (connection pool increased to 20)</p>
 
 
 
@@ -7594,10 +7358,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>

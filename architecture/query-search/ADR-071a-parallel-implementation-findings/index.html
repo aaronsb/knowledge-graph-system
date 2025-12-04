@@ -13,21 +13,25 @@
       
       
       
+        <link rel="prev" href="../ADR-071-parallel-graph-queries/">
+      
+      
+        <link rel="next" href="../../user-interfaces/ADR-011-cli-admin-separation/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>CLI Development Guide - Knowledge Graph System</title>
+        <title>ADR-071a: Parallel Graph Query Implementation Findings - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
       
       
 
@@ -46,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -64,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cli-development-guide" class="md-skip">
+        <a href="#adr-071a-parallel-graph-query-implementation-findings" class="md-skip">
           Skip to content
         </a>
       
@@ -80,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -100,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI Development Guide
+              ADR-071a: Parallel Graph Query Implementation Findings
             
           </span>
         </div>
@@ -190,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -220,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -294,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../COLD-START.md" class="md-nav__link">
+      <a href="../../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -322,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -350,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -432,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -507,7 +511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -590,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -618,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -701,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -729,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -757,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -785,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -813,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -841,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -924,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -952,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1035,7 +1039,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1063,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1091,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1119,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1202,7 +1206,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1230,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1313,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1341,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1369,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1397,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1425,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1453,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1481,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1509,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1537,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1565,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1593,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1683,7 +1687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -1758,7 +1762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -1833,7 +1837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -1861,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -1889,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -1917,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -1945,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -1973,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2001,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2029,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2057,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2085,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2113,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2141,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2224,7 +2228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2315,7 +2319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2390,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2473,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2501,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2529,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2557,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2585,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2613,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2641,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2669,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2697,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -2842,7 +2846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -2882,18 +2886,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -2914,7 +2920,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2932,7 +2938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -2960,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2988,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3016,7 +3022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3091,7 +3097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3119,7 +3125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3147,7 +3153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3175,7 +3181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3203,7 +3209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3231,7 +3237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3259,7 +3265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3342,7 +3348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3370,7 +3376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3398,7 +3404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3426,7 +3432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3454,7 +3460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3482,7 +3488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3510,7 +3516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3538,7 +3544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -3566,7 +3572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -3594,7 +3600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -3622,7 +3628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -3650,7 +3656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -3725,7 +3731,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -3816,7 +3822,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -3844,7 +3850,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -3872,7 +3878,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -3900,7 +3906,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -3928,7 +3934,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -3956,7 +3962,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -3984,7 +3990,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4067,7 +4073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4095,7 +4101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4123,7 +4129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4151,7 +4157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4234,7 +4240,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4262,7 +4268,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -4290,7 +4296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -4318,7 +4324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -4346,7 +4352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -4374,7 +4380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4402,7 +4408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4430,7 +4436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4513,7 +4519,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4541,7 +4547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4569,7 +4575,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -4597,7 +4603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -4625,7 +4631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4653,7 +4659,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4681,7 +4687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4709,7 +4715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -4737,7 +4743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -4770,18 +4776,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" checked>
         
           
           <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
@@ -4802,7 +4810,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4820,7 +4828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -4848,7 +4856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -4876,7 +4884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -4904,7 +4912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -4929,10 +4937,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-071a: Parallel Graph Query Implementation Findings
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4948,6 +4983,420 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#critical-bug-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical Bug Fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-testing-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Testing Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Testing Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-performance-curve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Performance Curve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-1-remove-parallelization-entirely" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 1: Remove parallelization entirely
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-2-adaptive-worker-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 2: Adaptive worker count
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-3-database-level-parallelization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative 3: Database-level parallelization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files-modified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files Modified
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-performed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Performed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lessons-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lessons Learned
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Production
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Future Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-tuning-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Tuning Research
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Tuning Research">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-configuration-32-core-123gb-ram-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Configuration (32-core, 123GB RAM system)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research Findings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critical-missing-indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical Missing Indexes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-optimization-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Optimization Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alignment-with-adr-071a-performance-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alignment with ADR-071a Performance Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deferred-items" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deferred Items
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -5015,7 +5464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5043,7 +5492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5071,7 +5520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5099,7 +5548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5127,7 +5576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5155,7 +5604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5183,7 +5632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5211,7 +5660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5239,7 +5688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5267,7 +5716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -5350,7 +5799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5378,7 +5827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5406,7 +5855,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5434,7 +5883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5462,7 +5911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5490,7 +5939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5518,7 +5967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5546,7 +5995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -5574,7 +6023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -5602,7 +6051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5630,7 +6079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -5658,7 +6107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -5748,7 +6197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -5776,7 +6225,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -5804,7 +6253,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -5832,7 +6281,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -5860,7 +6309,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -5888,7 +6337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -5916,7 +6365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -5998,7 +6447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6026,7 +6475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -6054,7 +6503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -6082,7 +6531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -6110,7 +6559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -6138,7 +6587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -6166,7 +6615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -6221,10 +6670,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design Principles
+        Context
       
     </span>
   </a>
@@ -6232,33 +6681,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-layers" class="md-nav__link">
+  <a href="#implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture Layers
+        Implementation
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Flow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication Flow">
+    <nav class="md-nav" aria-label="Implementation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#login-flow" class="md-nav__link">
+  <a href="#critical-bug-fix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Login Flow
+        Critical Bug Fix
       
     </span>
   </a>
@@ -6266,21 +6704,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#token-usage" class="md-nav__link">
+  <a href="#configuration-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#challenge-flow-sensitive-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Challenge Flow (Sensitive Operations)
+        Configuration Changes
       
     </span>
   </a>
@@ -6293,33 +6720,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-storage-format" class="md-nav__link">
+  <a href="#performance-testing-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Storage Format
+        Performance Testing Results
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-authentication-to-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding Authentication to Commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding Authentication to Commands">
+    <nav class="md-nav" aria-label="Performance Testing Results">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pattern-1-protected-command-requires-auth" class="md-nav__link">
+  <a href="#complete-performance-curve" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 1: Protected Command (Requires Auth)
+        Complete Performance Curve
       
     </span>
   </a>
@@ -6327,21 +6743,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pattern-2-optional-auth-public-endpoint" class="md-nav__link">
+  <a href="#key-findings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 2: Optional Auth (Public Endpoint)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-3-sensitive-operation-challenge-required" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 3: Sensitive Operation (Challenge Required)
+        Key Findings
       
     </span>
   </a>
@@ -6354,22 +6759,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-expiration-handling" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Expiration Handling
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Token Expiration Handling">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#automatic-detection" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automatic Detection
+        Positive
       
     </span>
   </a>
@@ -6377,10 +6793,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#user-experience" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Experience
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
       
     </span>
   </a>
@@ -6393,22 +6820,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Considerations
+        Alternatives Considered
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Security Considerations">
+    <nav class="md-nav" aria-label="Alternatives Considered">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-we-store" class="md-nav__link">
+  <a href="#alternative-1-remove-parallelization-entirely" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What We Store
+        Alternative 1: Remove parallelization entirely
       
     </span>
   </a>
@@ -6416,10 +6843,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#what-we-dont-store" class="md-nav__link">
+  <a href="#alternative-2-adaptive-worker-count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What We DON'T Store
+        Alternative 2: Adaptive worker count
       
     </span>
   </a>
@@ -6427,21 +6854,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#file-permissions" class="md-nav__link">
+  <a href="#alternative-3-database-level-parallelization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        File Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Security
+        Alternative 3: Database-level parallelization
       
     </span>
   </a>
@@ -6454,33 +6870,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-priority" class="md-nav__link">
+  <a href="#implementation-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication Priority
+        Implementation Notes
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-authentication-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Authentication Code
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Authentication Code">
+    <nav class="md-nav" aria-label="Implementation Notes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
+  <a href="#files-modified" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unit Tests
+        Files Modified
       
     </span>
   </a>
@@ -6488,21 +6893,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
+  <a href="#testing-performed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual Testing
+        Testing Performed
       
     </span>
   </a>
@@ -6515,22 +6909,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
+  <a href="#related-adrs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Patterns
+        Related ADRs
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Common Patterns">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lessons-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lessons Learned
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#reading-current-user-info" class="md-nav__link">
+  <a href="#for-production" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reading Current User Info
+        For Production
       
     </span>
   </a>
@@ -6538,21 +6954,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#handling-401-errors-gracefully" class="md-nav__link">
+  <a href="#for-future-work" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Handling 401 Errors Gracefully
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompting-for-re-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prompting for Re-authentication
+        For Future Work
       
     </span>
   </a>
@@ -6565,22 +6970,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
+  <a href="#database-tuning-research" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Future Enhancements
+        Database Tuning Research
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Future Enhancements">
+    <nav class="md-nav" aria-label="Database Tuning Research">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#oauth-20-support-adr-054" class="md-nav__link">
+  <a href="#current-configuration-32-core-123gb-ram-system" class="md-nav__link">
     <span class="md-ellipsis">
       
-        OAuth 2.0 Support (ADR-054)
+        Current Configuration (32-core, 123GB RAM system)
       
     </span>
   </a>
@@ -6588,10 +6993,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#refresh-tokens" class="md-nav__link">
+  <a href="#research-findings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refresh Tokens
+        Research Findings
       
     </span>
   </a>
@@ -6599,10 +7004,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mcp-server-integration" class="md-nav__link">
+  <a href="#critical-missing-indexes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP Server Integration
+        Critical Missing Indexes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-optimization-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Optimization Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alignment-with-adr-071a-performance-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alignment with ADR-071a Performance Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deferred-items" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deferred Items
       
     </span>
   </a>
@@ -6615,10 +7053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-reference" class="md-nav__link">
+  <a href="#conclusion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Reference
+        Conclusion
       
     </span>
   </a>
@@ -6645,336 +7083,443 @@
   
 
 
-<h1 id="cli-development-guide">CLI Development Guide</h1>
-<p><strong>Purpose:</strong> Guide for developers working on the <code>kg</code> TypeScript CLI client</p>
-<p><strong>Related ADRs:</strong>
-- <a href="../architecture/ADR-027-user-management-api.md">ADR-027: User Management API</a> - Server-side authentication
-- <a href="../architecture/ADR-029-cli-theory-of-operation.md">ADR-029: CLI Theory of Operation</a> - Command structure
-- <a href="../architecture/ADR-031-encrypted-api-key-storage.md">ADR-031: Encrypted API Key Storage</a> - API key management
-- <a href="../architecture/ADR-054-oauth-client-management.md">ADR-054: OAuth Client Management</a> - OAuth flows</p>
-<hr />
-<h2 id="design-principles">Design Principles</h2>
+<h1 id="adr-071a-parallel-graph-query-implementation-findings">ADR-071a: Parallel Graph Query Implementation Findings</h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2025-12-04
+<strong>Parent:</strong> <a href="../ADR-071-parallel-graph-queries/">ADR-071: Parallel Graph Query Optimization</a></p>
+<h2 id="context">Context</h2>
+<p>This subletter documents the actual implementation of ADR-071's parallel graph query system and the critical performance discoveries made during testing.</p>
+<p><strong>Implementation Environment:</strong>
+- System: 32-core machine
+- Database: PostgreSQL + Apache AGE
+- Test workload: Polarity axis analysis (Modern Operating Model ↔ Traditional Operating Model)
+- Dataset: 40 1-hop neighbors, ~75 2-hop neighbors
+- Baseline: 4:21 (261 seconds) for max_hops=2 query</p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="critical-bug-fix">Critical Bug Fix</h3>
+<p>The initial implementation failed with "graph 'concept' does not exist" errors. The root cause:</p>
+<p><strong>Broken Code (manual query wrapping):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s2">    SELECT * FROM ag_catalog.cypher(&#39;concept&#39;, $$</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s2">        MATCH (seed:Concept)-[]-(neighbor:Concept)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s2">        WHERE seed.concept_id IN $seed_ids</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s2">        RETURN DISTINCT neighbor.concept_id as concept_id</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s2">    $$) as (concept_id agtype);</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s2">&quot;&quot;&quot;</span>
+</code></pre></div></p>
+<p><strong>Problem:</strong> Manually wrapping queries with <code>ag_catalog.cypher('concept', ...)</code> used wrong graph name.</p>
+<p><strong>Fix (use AGEClient._execute_cypher):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Plain Cypher query - AGEClient._execute_cypher() handles wrapping</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s2">    MATCH (seed:Concept)-[]-(neighbor:Concept)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s2">    WHERE seed.concept_id IN $seed_ids</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s2">    RETURN DISTINCT neighbor.concept_id as concept_id</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s2">    LIMIT </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">per_worker_limit</span><span class="si">}</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;seed_ids&#39;</span><span class="p">:</span> <span class="n">seed_ids</span><span class="p">})</span>
+</code></pre></div></p>
+<p><strong>Impact:</strong> This single fix enabled the 3x speedup. The parallelization infrastructure works correctly, but the speedup primarily comes from <strong>batched query optimization</strong>, not from parallelization itself.</p>
+<h3 id="configuration-changes">Configuration Changes</h3>
+<p><strong>AGEClient Connection Pool:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Increased from 10 to support parallel workers</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="mi">1</span><span class="p">,</span>   <span class="c1"># minconn</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># maxconn (supports up to 16 parallel workers + buffer)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="o">...</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>GraphParallelizer Configuration:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>      <span class="c1"># ThreadPoolExecutor size</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>     <span class="c1"># Optimal: 1-2 workers (see findings)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<h2 id="performance-testing-results">Performance Testing Results</h2>
+<h3 id="complete-performance-curve">Complete Performance Curve</h3>
+<p>Tested configurations from 1 to 8 workers on clean system (no CPU contention):</p>
+<table>
+<thead>
+<tr>
+<th>Workers</th>
+<th>Chunk Size</th>
+<th>Phase 1</th>
+<th>Phase 2</th>
+<th>Total</th>
+<th>Success</th>
+<th>Speedup</th>
+<th>Overhead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Baseline</strong></td>
+<td>N/A</td>
+<td>-</td>
+<td>~180s</td>
+<td><strong>4:21 (261s)</strong></td>
+<td>-</td>
+<td><strong>1.0x</strong></td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>1 worker</strong></td>
+<td>100</td>
+<td>41.5s</td>
+<td><strong>40.8s</strong></td>
+<td><strong>1:23 (83s)</strong></td>
+<td>100%</td>
+<td><strong>3.15x</strong></td>
+<td><strong>0s</strong> ✅</td>
+</tr>
+<tr>
+<td>2 workers</td>
+<td>20</td>
+<td>41.4s</td>
+<td>43.3s</td>
+<td>1:25 (85s)</td>
+<td>100%</td>
+<td>3.07x</td>
+<td>+2s</td>
+</tr>
+<tr>
+<td>4 workers</td>
+<td>10</td>
+<td>41.7s</td>
+<td>80.5s</td>
+<td>2:02 (122s)</td>
+<td>100%</td>
+<td>2.14x</td>
+<td>+39s</td>
+</tr>
+<tr>
+<td>8 workers</td>
+<td>5</td>
+<td>41.8s</td>
+<td>162s</td>
+<td>3:24 (204s)</td>
+<td>50%</td>
+<td>1.28x</td>
+<td>+79s + timeouts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Phase Breakdown:</strong>
+- Phase 1 (1-hop): ~41-42s (consistent across all configs, single batched query)
+- Phase 2 (2-hop): 41s (1 worker) → 43s (2 workers) → 80s (4 workers) → 162s (8 workers)</p>
+<h3 id="key-findings">Key Findings</h3>
+<p><strong>🎯 Discovery #1: Speedup source is batched queries, NOT parallelization</strong></p>
+<p>The 3x speedup comes from:
+1. ✅ <strong>Fixing the query format</strong> to use <code>_execute_cypher()</code> correctly
+2. ✅ <strong>Batched IN clause queries</strong> instead of individual queries per concept
+3. ❌ <strong>NOT from parallelization</strong> - parallelization adds overhead</p>
+<p><strong>Evidence:</strong>
+- 1 worker (sequential): 83 seconds
+- 2 workers (parallel): 85 seconds (+2s)
+- Difference: Only 2 seconds faster with parallelization</p>
+<p><strong>🎯 Discovery #2: 1 worker is optimal for this workload</strong></p>
+<ul>
+<li><strong>1 worker</strong>: 83s, zero overhead, simplest implementation</li>
+<li><strong>2 workers</strong>: 85s, +2s overhead (negligible)</li>
+<li><strong>4 workers</strong>: 122s, +39s overhead (significant)</li>
+<li><strong>8 workers</strong>: 204s, +79s overhead + timeouts (catastrophic)</li>
+</ul>
+<p><strong>Why more workers hurt performance:</strong>
+1. <strong>Per-worker overhead</strong> - Thread spawning, coordination, context switching
+2. <strong>Fixed query costs</strong> - Connection acquisition, query planning, setup
+3. <strong>Database contention</strong> - Multiple concurrent queries compete for locks
+4. <strong>Diminishing returns</strong> - Amdahl's Law in action</p>
+<p><strong>🎯 Discovery #3: Worker overhead scales badly</strong></p>
+<p>Phase 2 overhead vs number of workers:
+- 1 worker: 41s (baseline)
+- 2 workers: 43s (+2s, 5% overhead)
+- 4 workers: 80s (+39s, 95% overhead)
+- 8 workers: 162s (+121s, 295% overhead + timeouts)</p>
+<p><strong>🎯 Discovery #4: Timeout mechanism validates correctly</strong></p>
+<p>With 8 workers and CPU contention:
+- 4/8 chunks completed successfully
+- 4/8 chunks timed out after exactly 120s
+- System gracefully returned partial results
+- No hangs, no crashes, no data corruption</p>
+<h2 id="decision">Decision</h2>
+<p><strong>Optimal Configuration: 1-2 workers</strong></p>
+<p>After comprehensive testing, we recommend:</p>
+<p><strong>Option A: 1 worker (simplest, fastest)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># Forces 1 worker, sequential Phase 2</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Option B: 2 workers (minimal overhead, nice symmetry)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>   <span class="c1"># Creates 2 workers for typical 40-concept datasets</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">timeout_seconds</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">per_worker_limit</span><span class="o">=</span><span class="n">max_candidates</span> <span class="o">*</span> <span class="mi">2</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Rationale:</strong>
+- Both deliver ~3x speedup over broken baseline
+- 1 worker eliminates all parallelization complexity
+- 2 workers adds only 2s overhead, validates parallel infrastructure
+- 4+ workers add significant overhead without proportional benefit
+- Simpler = fewer failure modes, easier debugging, better maintainability</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ol>
-<li><strong>Modular Architecture</strong>: Separate concerns into reusable TypeScript modules</li>
-<li><strong>Security First</strong>: No plaintext password storage, secure token management</li>
-<li><strong>User Experience</strong>: Remember username, persistent token storage, graceful error handling</li>
-<li><strong>Multi-Client Support</strong>: Modules designed for CLI, MCP server, and future clients</li>
-<li><strong>Backwards Compatibility</strong>: Existing API key authentication continues to work</li>
+<li><strong>3x speedup achieved</strong> - 4:21 → 1:23 (261s → 83s)</li>
+<li><strong>Simple implementation</strong> - 1 worker eliminates parallelization complexity</li>
+<li><strong>Root cause identified</strong> - Query format bug, not algorithm design</li>
+<li><strong>Robust infrastructure</strong> - Parallel system works, validated with timeout testing</li>
+<li><strong>Scalability path</strong> - Can increase workers for larger datasets if needed</li>
+<li><strong>Performance baseline</strong> - Comprehensive testing establishes performance curve</li>
 </ol>
-<hr />
-<h2 id="architecture-layers">Architecture Layers</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                     CLI Commands Layer                       │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  kg login, kg logout, kg admin user [commands]              │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                       │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                   Auth Client Layer                          │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  AuthClient: login(), logout(), validateToken()            │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                       │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                  Token Manager Layer                         │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  TokenManager: store(), retrieve(), validate(), clear()    │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                       │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│                 Config Storage Layer                         │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  ConfigManager: Auth token storage (~/.config/kg/)         │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>└─────────────────────────────────────────────────────────────┘
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Parallelization infrastructure underutilized</strong> - Built for 8+ workers, optimal is 1-2</li>
+<li><strong>Design assumptions wrong</strong> - ADR-071 predicted 160x speedup from parallelization, actual speedup is from batched queries</li>
+<li><strong>Overhead higher than expected</strong> - Worker overhead grows faster than linear</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>Configuration tunability</strong> - chunk_size controls worker count, but optimal is fixed</li>
+<li><strong>Connection pool increase</strong> - Increased from 10 → 20, but only need 2-3</li>
+<li><strong>Timeout mechanism</strong> - Validated and working, but not needed at optimal config</li>
+</ol>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="alternative-1-remove-parallelization-entirely">Alternative 1: Remove parallelization entirely</h3>
+<p><strong>Approach:</strong> Delete GraphParallelizer, just use batched queries</p>
+<p><strong>Pros:</strong>
+- Simplest possible code
+- No thread management, no semaphores, no timeouts
+- Identical performance to 1-worker config</p>
+<p><strong>Cons:</strong>
+- Loses scalability path for larger datasets
+- Loses timeout safety mechanism
+- Wastes implementation effort</p>
+<p><strong>Decision:</strong> Keep parallelizer with optimal 1-2 worker config. Infrastructure is valuable for:
+- Future large-scale queries (100+ concepts)
+- Timeout safety mechanism
+- Demonstrates due diligence in optimization</p>
+<h3 id="alternative-2-adaptive-worker-count">Alternative 2: Adaptive worker count</h3>
+<p><strong>Approach:</strong> Dynamically choose worker count based on dataset size</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Adaptive configuration</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_optimal_workers</span><span class="p">(</span><span class="n">num_concepts</span><span class="p">):</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">if</span> <span class="n">num_concepts</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">:</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="k">return</span> <span class="mi">1</span>  <span class="c1"># Sequential is fastest</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">elif</span> <span class="n">num_concepts</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="k">return</span> <span class="mi">2</span>  <span class="c1"># Minimal overhead</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="k">return</span> <span class="mi">4</span>  <span class="c1"># More parallelism for large datasets</span>
 </code></pre></div>
-<p><strong>Key modules:</strong>
-- <code>client/src/lib/auth/token-manager.ts</code> - JWT token lifecycle
-- <code>client/src/lib/auth/auth-client.ts</code> - HTTP client for auth endpoints
-- <code>client/src/lib/auth/challenge.ts</code> - Re-auth prompt for sensitive ops
-- <code>client/src/lib/config.ts</code> - Config file management (extended for auth)
-- <code>client/src/api/client.ts</code> - Main API client (with auth interceptors)</p>
-<hr />
-<h2 id="authentication-flow">Authentication Flow</h2>
-<h3 id="login-flow">Login Flow</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. User runs: kg login
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. Prompt for username (remember from last login)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. Prompt for password (hidden input, not stored)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. POST /auth/login with credentials
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. Receive JWT token + user info
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>6. Store token in ~/.config/kg/config.json
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>7. Store expiration timestamp (not just duration)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>8. Store username + role for quick access
-</code></pre></div>
-<h3 id="token-usage">Token Usage</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. User runs any command: kg search query &quot;concept&quot;
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. TokenManager checks for valid token
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. If expired → prompt re-login
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>4. If valid → add to request: Authorization: Bearer &lt;token&gt;
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>5. API validates token → returns data
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>6. If 401 → token expired, prompt re-login
-</code></pre></div>
-<h3 id="challenge-flow-sensitive-operations">Challenge Flow (Sensitive Operations)</h3>
-<p>For destructive operations (delete user, reset database):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. User runs: kg admin user delete &lt;id&gt;
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. System prompts: &quot;This is a sensitive operation. Re-enter password:&quot;
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. Pre-fill username, prompt password only
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>4. Validate credentials → get fresh token
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>5. Execute operation with fresh token
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>6. Discard fresh token (keep original session)
-</code></pre></div>
-<hr />
-<h2 id="token-storage-format">Token Storage Format</h2>
-<p><strong>Location:</strong> <code>~/.config/kg/config.json</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;auth&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eyJhbGciOiJIUzI1NiIs...&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;expires_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1760230000</span><span class="p">,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nt">&quot;api_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Key points:</strong>
-- Store <strong>expiration timestamp</strong> (Unix timestamp), not duration
-- Store <strong>username</strong> and <strong>role</strong> for quick access (avoid JWT decode)
-- NEVER store passwords
-- Backwards compatible with <code>secret</code> (API key) field</p>
-<hr />
-<h2 id="adding-authentication-to-commands">Adding Authentication to Commands</h2>
-<h3 id="pattern-1-protected-command-requires-auth">Pattern 1: Protected Command (Requires Auth)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">TokenManager</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/token-manager&#39;</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../api/client&#39;</span><span class="p">;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">myCommand</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="c1">// Check authentication</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">isLoggedIn</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Not logged in. Run: kg login&#39;</span><span class="p">);</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span><span class="c1">// Create client with token</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">  </span><span class="c1">// Make API call (token added automatically)</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">myApiCall</span><span class="p">();</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="pattern-2-optional-auth-public-endpoint">Pattern 2: Optional Auth (Public Endpoint)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">myCommand</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="c1">// Create client (will use token if available)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="c1">// API call works with or without auth</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">publicApiCall</span><span class="p">();</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="pattern-3-sensitive-operation-challenge-required">Pattern 3: Sensitive Operation (Challenge Required)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/challenge&#39;</span><span class="p">;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">deleteUser</span><span class="p">(</span><span class="nx">userId</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">authClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthClient</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">api_url</span><span class="p">);</span>
+<p><strong>Pros:</strong>
+- Optimal performance across different dataset sizes
+- Handles both small and large queries</p>
+<p><strong>Cons:</strong>
+- Increased complexity
+- Untested for large datasets
+- Premature optimization</p>
+<p><strong>Decision:</strong> Defer until we have real-world large dataset use cases. Current config is simple and optimal for observed workloads.</p>
+<h3 id="alternative-3-database-level-parallelization">Alternative 3: Database-level parallelization</h3>
+<p><strong>Approach:</strong> Investigate PostgreSQL parallel query execution instead of application-level parallelization</p>
+<p><strong>Pros:</strong>
+- Database engine handles parallelization
+- No application-level thread management
+- May be more efficient</p>
+<p><strong>Cons:</strong>
+- AGE Cypher queries are function calls, not parallelizable by PostgreSQL
+- Would require changes to AGE extension itself
+- Out of scope for application-level optimization</p>
+<p><strong>Decision:</strong> Not feasible with current AGE architecture.</p>
+<h2 id="implementation-notes">Implementation Notes</h2>
+<h3 id="files-modified">Files Modified</h3>
+<ol>
+<li><strong>api/api/lib/graph_parallelizer.py</strong> (409 lines)</li>
+<li>Fixed query format to use <code>_execute_cypher()</code></li>
+<li>Removed manual <code>ag_catalog.cypher()</code> wrapping</li>
+<li>
+<p>Removed unnecessary <code>json</code> import</p>
+</li>
+<li>
+<p><strong>api/api/lib/polarity_axis.py</strong></p>
+</li>
+<li>Added <code>discover_candidate_concepts_parallel()</code> function</li>
+<li>Updated <code>analyze_polarity_axis()</code> with <code>use_parallel</code> parameter</li>
+<li>
+<p>Configured ParallelQueryConfig with optimal settings</p>
+</li>
+<li>
+<p><strong>api/api/models/queries.py</strong></p>
+</li>
+<li>
+<p>Added <code>use_parallel: bool</code> field to <code>PolarityAxisRequest</code></p>
+</li>
+<li>
+<p><strong>api/api/routes/queries.py</strong></p>
+</li>
+<li>
+<p>Passed <code>use_parallel</code> parameter to analysis function</p>
+</li>
+<li>
+<p><strong>api/api/lib/age_client.py</strong></p>
+</li>
+<li>
+<p>Increased connection pool: <code>maxconn=10</code> → <code>maxconn=20</code></p>
+</li>
+<li>
+<p><strong>scripts/development/manual-tests/test_parallel_performance.py</strong></p>
+</li>
+<li>Performance testing script for future benchmarking</li>
+</ol>
+<h3 id="testing-performed">Testing Performed</h3>
+<p><strong>Test Environment:</strong>
+- Clean system (no competing workload)
+- 32-core machine
+- PostgreSQL + AGE running in Docker
+- Test poles: Modern Operating Model ↔ Traditional Operating Model</p>
+<p><strong>Configurations Tested:</strong>
+- ✅ 1 worker (chunk_size=100): 1:23, 100% success
+- ✅ 2 workers (chunk_size=20): 1:25, 100% success
+- ✅ 4 workers (chunk_size=10): 2:02, 100% success
+- ✅ 8 workers (chunk_size=5): 3:24, 50% success (timeouts)</p>
+<p><strong>Stress Testing:</strong>
+- CPU contention (kernel compilation running): Validated graceful degradation
+- Timeout mechanism: Validated with 8-worker config
+- Connection pool: No exhaustion observed with 20-connection pool</p>
+<h2 id="related-adrs">Related ADRs</h2>
+<ul>
+<li><strong>ADR-071: Parallel Graph Query Optimization</strong> (parent) - Original design document</li>
+<li><strong>ADR-048: GraphQueryFacade</strong> - Namespace-safe query interface (not used, went with _execute_cypher)</li>
+<li><strong>ADR-043: Resource Management</strong> - VRAM/CPU contention handling (informed testing approach)</li>
+</ul>
+<h2 id="lessons-learned">Lessons Learned</h2>
+<ol>
+<li><strong>Profile before parallelizing</strong> - The bottleneck was broken query format, not sequential execution</li>
+<li><strong>Measure, don't assume</strong> - Design predicted 160x from parallelization, actual gain is from batching</li>
+<li><strong>Simple is fast</strong> - 1 worker (sequential) beats complex parallelization</li>
+<li><strong>Amdahl's Law is real</strong> - Overhead grows faster than parallelization benefit</li>
+<li><strong>Infrastructure has value</strong> - Even if underutilized, timeout safety and scalability path justify keeping GraphParallelizer</li>
+</ol>
+<h2 id="recommendations">Recommendations</h2>
+<h3 id="for-production">For Production</h3>
+<ol>
+<li><strong>Use 2-worker configuration</strong> for balance of:</li>
+<li>Near-optimal performance (only 2s slower than 1 worker)</li>
+<li>Validates parallel infrastructure is working</li>
+<li>
+<p>Provides scalability path for larger datasets</p>
+</li>
+<li>
+<p><strong>Monitor Phase 2 timing</strong> to detect performance regressions</p>
+</li>
+<li>
+<p><strong>Consider 1-worker config</strong> if simplicity &gt; 2s performance difference</p>
+</li>
+</ol>
+<h3 id="for-future-work">For Future Work</h3>
+<ol>
+<li><strong>Test with larger datasets</strong> (100+ concepts) to validate if more workers help at scale</li>
+<li><strong>Profile database-level bottlenecks</strong> to understand why larger chunks are faster</li>
+<li><strong>Investigate query plan caching</strong> to reduce per-query overhead</li>
+<li><strong>Consider adaptive worker count</strong> based on dataset size (if large datasets become common)</li>
+</ol>
+<h2 id="database-tuning-research">Database Tuning Research</h2>
+<p>After establishing the optimal application-level configuration (2 workers), we researched PostgreSQL and Apache AGE database-level optimizations to understand potential incremental improvements.</p>
+<h3 id="current-configuration-32-core-123gb-ram-system">Current Configuration (32-core, 123GB RAM system)</h3>
+<p><strong>PostgreSQL Memory Settings:</strong>
+- <code>shared_buffers</code>: 128MB (default)
+- <code>effective_cache_size</code>: 4GB
+- <code>work_mem</code>: 4MB (default)
+- <code>maintenance_work_mem</code>: 64MB</p>
+<p><strong>Parallelism Settings:</strong>
+- <code>max_worker_processes</code>: 8
+- <code>max_parallel_workers</code>: 8
+- <code>max_parallel_workers_per_gather</code>: 2</p>
+<p><strong>Current Usage:</strong> 44MB / 123GB (0.03%)</p>
+<h3 id="research-findings">Research Findings</h3>
+<p><strong>Key Insight:</strong> All sources confirm that <strong>indexing strategy is the highest-impact optimization</strong>. Apache AGE does NOT auto-create indexes, and graph performance depends heavily on proper indexing of node/edge properties.</p>
+<p><strong>Recommended Configuration for Production:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Memory Settings (25-33% of 123GB RAM)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">shared_buffers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32GB</span><span class="w">              </span><span class="c1"># Currently: 128MB</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="na">effective_cache_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">75GB</span><span class="w">        </span><span class="c1"># Currently: 4GB</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="na">work_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">256MB</span><span class="w">                   </span><span class="c1"># Currently: 4MB (for graph traversals)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="na">maintenance_work_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2GB</span><span class="w">         </span><span class="c1"># Currently: 64MB</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="na">huge_pages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">on</span><span class="w">                    </span><span class="c1"># CRITICAL for 32GB+ shared_buffers</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="c1">// Require challenge for sensitive operation</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">challenge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="p">(</span><span class="nx">authClient</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">freshToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">challenge</span><span class="p">.</span><span class="nx">challenge</span><span class="p">({</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Delete user account&#39;</span><span class="p">,</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="nx">username</span><span class="o">:</span><span class="w"> </span><span class="kt">tokenManager.getUsername</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="kc">undefined</span><span class="p">,</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="nx">allowCancel</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">freshToken</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Operation cancelled&#39;</span><span class="p">);</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="k">return</span><span class="p">;</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span><span class="c1">// Execute with fresh token</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">authClient</span><span class="p">.</span><span class="nx">deleteUser</span><span class="p">(</span><span class="nx">freshToken</span><span class="p">.</span><span class="nx">access_token</span><span class="p">,</span><span class="w"> </span><span class="nx">userId</span><span class="p">);</span>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;User deleted&#39;</span><span class="p">);</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="p">}</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Parallelism (32-core system)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="na">max_worker_processes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span><span class="w">          </span><span class="c1"># Currently: 8</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="na">max_parallel_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span><span class="w">          </span><span class="c1"># Currently: 8</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="na">max_parallel_workers_per_gather</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">16</span><span class="w">  </span><span class="c1"># Currently: 2</span>
 </code></pre></div>
-<hr />
-<h2 id="token-expiration-handling">Token Expiration Handling</h2>
-<h3 id="automatic-detection">Automatic Detection</h3>
-<p>Tokens are checked before each request:
-- <strong>5-minute buffer:</strong> Token considered expired 5 minutes before actual expiration
-- <strong>Interceptor:</strong> Axios interceptor catches 401 responses
-- <strong>User prompt:</strong> Clear error message directing user to re-login</p>
-<h3 id="user-experience">User Experience</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a># Token valid - command succeeds
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Found 5 concepts...
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a># Token expired - prompt re-login
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Error: Authentication expired. Please run: kg login
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a># User logs in again
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>$ kg login
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>Username: admin
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>Password: ********
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>Logged in successfully as admin (role: admin)
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a># Command works again
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>Found 5 concepts...
+<p><strong>Expected Performance Impact:</strong>
+- <strong>Indexing improvements</strong>: 2-3x speedup for graph traversals (highest priority)
+- <strong>Memory tuning</strong>: 10-15% improvement for complex queries
+- <strong>Parallelism tuning</strong>: Diminishing returns beyond 12 workers (validates ADR-071a findings)
+- <strong>Huge pages</strong>: Can reduce CPU overhead from 51% to 15% (source: PostgreSQL community benchmarks)</p>
+<h3 id="critical-missing-indexes">Critical Missing Indexes</h3>
+<p>Research revealed that AGE requires explicit indexing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- Node property indexes (for MATCH filtering)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_concept_label</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_vertex</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;label&#39;</span><span class="p">));</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_concept_id</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_vertex</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;concept_id&#39;</span><span class="p">));</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1">-- Relationship indexes (for traversal)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_edge_start_end</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_edge</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">(</span><span class="n">start_id</span><span class="p">,</span><span class="w"> </span><span class="n">end_id</span><span class="p">);</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_edge_type</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept_edge</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="k">USING</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">((</span><span class="n">properties</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;type&#39;</span><span class="p">));</span>
 </code></pre></div>
-<hr />
-<h2 id="security-considerations">Security Considerations</h2>
-<h3 id="what-we-store">What We Store</h3>
-<ul>
-<li>✅ JWT token (time-limited, signed by server)</li>
-<li>✅ Token expiration timestamp</li>
-<li>✅ Username and role (decoded from JWT)</li>
-<li>✅ API URL</li>
-</ul>
-<h3 id="what-we-dont-store">What We DON'T Store</h3>
-<ul>
-<li>❌ <strong>Passwords</strong> (NEVER stored, only used during login)</li>
-<li>❌ Private keys (if using OAuth, keys stay server-side)</li>
-<li>❌ Unencrypted secrets</li>
-</ul>
-<h3 id="file-permissions">File Permissions</h3>
-<ul>
-<li>Config file: <code>~/.config/kg/config.json</code> set to <strong>0600</strong> (owner read/write only)</li>
-<li>Automatic permission check on write</li>
-<li>Warning if permissions too permissive</li>
-</ul>
-<h3 id="token-security">Token Security</h3>
-<ul>
-<li><strong>Short-lived:</strong> 60 minutes default (configurable server-side)</li>
-<li><strong>Single-use sensitive ops:</strong> Challenge flow generates fresh token</li>
-<li><strong>Stateless:</strong> Server validates signature, no revocation (use short expiry)</li>
-<li><strong>Future:</strong> Refresh tokens for longer sessions (ADR-054)</li>
-</ul>
-<hr />
-<h2 id="authentication-priority">Authentication Priority</h2>
-<p>When multiple auth methods are available:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>1. JWT token (if logged in via kg login)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>   → Authorization: Bearer &lt;jwt_token&gt;
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>2. API key (if configured via kg config set secret)
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>   → X-API-Key: &lt;api_key&gt;
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>3. None (unauthenticated)
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>   → Some endpoints allow public access
-</code></pre></div>
-<p><strong>Implementation:</strong> Request interceptor in <code>KnowledgeGraphClient</code> checks in this order.</p>
-<hr />
-<h2 id="testing-authentication-code">Testing Authentication Code</h2>
-<h3 id="unit-tests">Unit Tests</h3>
-<p>Test individual modules in isolation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// Test token expiration logic</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;TokenManager&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should detect expired tokens&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">expired</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">expires_at</span><span class="o">:</span><span class="w"> </span><span class="kt">Math.floor</span><span class="p">(</span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">100</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">isTokenExpired</span><span class="p">(</span><span class="nx">expired</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">});</span>
-</code></pre></div>
-<h3 id="integration-tests">Integration Tests</h3>
-<p>Test full authentication flow:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Test login flow</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>login
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Enter credentials</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should work</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>kg<span class="w"> </span><span class="nb">logout</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should fail with auth error</span>
-</code></pre></div>
-<h3 id="manual-testing">Manual Testing</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 1. Fresh login</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>rm<span class="w"> </span>~/.config/kg/config.json
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kg<span class="w"> </span>login
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># 2. Token persistence</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should work without re-login</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># 3. Token expiration (wait 60+ minutes or modify config)</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should prompt re-login</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1"># 4. Challenge flow</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;<span class="w">  </span><span class="c1"># Should prompt password</span>
-</code></pre></div>
-<hr />
-<h2 id="common-patterns">Common Patterns</h2>
-<h3 id="reading-current-user-info">Reading Current User Info</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">getUsername</span><span class="p">();</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">role</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">getRole</span><span class="p">();</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">role</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="c1">// Admin-only functionality</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="handling-401-errors-gracefully">Handling 401 Errors Gracefully</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">someApiCall</span><span class="p">();</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">response</span><span class="o">?</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">401</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Authentication expired. Run: kg login&#39;</span><span class="p">);</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="prompting-for-re-authentication">Prompting for Re-authentication</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/challenge&#39;</span><span class="p">;</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">challenge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="p">(</span><span class="nx">authClient</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">challenge</span><span class="p">.</span><span class="nx">challenge</span><span class="p">({</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Perform sensitive operation&#39;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="nx">allowCancel</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">});</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="c1">// User cancelled</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">  </span><span class="k">return</span><span class="p">;</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="p">}</span>
-</code></pre></div>
-<hr />
-<h2 id="future-enhancements">Future Enhancements</h2>
-<h3 id="oauth-20-support-adr-054">OAuth 2.0 Support (ADR-054)</h3>
-<ul>
-<li><strong>Device Authorization Grant</strong> for CLI</li>
-<li>Better for headless environments</li>
-<li>Longer-lived sessions with refresh tokens</li>
-</ul>
-<h3 id="refresh-tokens">Refresh Tokens</h3>
-<ul>
-<li>Extend sessions without re-entering password</li>
-<li>Background token refresh</li>
-<li>Revocable at server-side</li>
-</ul>
-<h3 id="mcp-server-integration">MCP Server Integration</h3>
-<ul>
-<li>Share token management modules</li>
-<li>Same security model across clients</li>
-</ul>
-<hr />
-<h2 id="quick-reference">Quick Reference</h2>
-<p><strong>Key Files:</strong>
-- <code>client/src/lib/auth/</code> - Authentication modules
-- <code>client/src/cli/login.ts</code> - Login command
-- <code>client/src/cli/admin/user.ts</code> - User management commands
-- <code>client/src/api/client.ts</code> - Main API client</p>
-<p><strong>Key Commands:</strong>
-- <code>kg login</code> - Authenticate user
-- <code>kg logout</code> - Clear stored token
-- <code>kg admin user list</code> - List users (admin only)
-- <code>kg admin user create</code> - Create user (admin only)</p>
-<p><strong>Config Location:</strong>
-- <code>~/.config/kg/config.json</code> (Linux/macOS)
-- <code>%APPDATA%\kg\config.json</code> (Windows)</p>
-<p><strong>Token Lifespan:</strong>
-- Default: 60 minutes
-- Buffer: 5 minutes (55 minutes effective)
-- Configurable server-side: <code>JWT_EXPIRATION_MINUTES</code></p>
+<h3 id="additional-optimization-strategies">Additional Optimization Strategies</h3>
+<ol>
+<li><strong>Connection Pooling (PgBouncer)</strong></li>
+<li>Industry standard for PostgreSQL production deployments</li>
+<li>Transaction pooling mode recommended</li>
+<li>
+<p>Target: 5-10 active connections even with high concurrency</p>
+</li>
+<li>
+<p><strong>Query Optimization</strong></p>
+</li>
+<li>Use <code>PROFILE</code> to analyze Cypher query execution plans</li>
+<li>Filter early in MATCH clauses (reduces intermediate results)</li>
+<li>Use explicit node labels (<code>:Concept</code>, <code>:Source</code>) - aligns with ADR-048</li>
+<li>
+<p>Minimize <code>OPTIONAL MATCH</code> usage (generates large intermediate results)</p>
+</li>
+<li>
+<p><strong>Prepared Statements</strong></p>
+</li>
+<li>Parse and optimize once, execute many times</li>
+<li>Particularly effective for ingestion pipelines</li>
+<li>Already supported via psycopg2 in <code>age_client.py</code></li>
+</ol>
+<h3 id="alignment-with-adr-071a-performance-testing">Alignment with ADR-071a Performance Testing</h3>
+<p>Database tuning research <strong>confirms our empirical findings</strong>:
+- Parallelism shows diminishing returns beyond 10-12 workers
+- Application-level batching provides bigger gains than database parallelism
+- Proper query structure (early filtering, explicit labels) more important than raw resources</p>
+<p><strong>Conclusion:</strong> The 3x speedup from fixing query format validates that <strong>query optimization &gt; resource tuning</strong>. Database configuration improvements would provide incremental 10-15% gains, not transformative performance changes.</p>
+<h3 id="deferred-items">Deferred Items</h3>
+<p>The following optimizations are documented but not implemented (await production deployment or larger datasets):
+- PostgreSQL memory configuration tuning
+- Huge pages enablement
+- Explicit graph indexing strategy
+- PgBouncer connection pooling
+- Query plan profiling and optimization</p>
+<p>These should be prioritized when:
+- Graph exceeds 100K concepts (indexing becomes critical)
+- Multi-user production deployment (connection pooling needed)
+- Query performance degrades (profile and optimize)</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The implementation of ADR-071 successfully achieved a <strong>3.15x speedup</strong> (4:21 → 1:23), but the source of the speedup was different than designed.</p>
+<p><strong>Key Insight:</strong> The performance gain comes from fixing the query format to use proper batched queries, not from parallelization. The parallel infrastructure works correctly and provides value (timeout safety, scalability path), but <strong>1-2 workers is optimal</strong> for current workloads.</p>
+<p>This is a valuable lesson in <strong>"make it work, make it right, make it fast"</strong> - we made it work (fixed query), and it's already fast. The parallelization exploration was valuable for understanding performance characteristics and establishing that simpler (sequential) is better.</p>
+<p><strong>Final Configuration:</strong> 2 workers (chunk_size=20), delivering 3.07x speedup with 100% reliability and minimal complexity.</p>
 
 
 
@@ -7024,10 +7569,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>

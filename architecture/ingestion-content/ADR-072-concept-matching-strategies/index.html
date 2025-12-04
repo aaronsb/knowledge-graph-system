@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-001-multi-tier-agent-access/">
+        <link rel="prev" href="../ADR-057b-appendix-single-vs-two-stage/">
       
       
-        <link rel="next" href="../ADR-003-semantic-tool-hints/">
+        <link rel="next" href="../../query-search/ADR-030-concept-deduplication-validation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-002: Node Fitness Scoring System - Knowledge Graph System</title>
+        <title>ADR-072: Concept Matching Strategies and Configuration - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-002-node-fitness-scoring-system" class="md-skip">
+        <a href="#adr-072-concept-matching-strategies-and-configuration" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-002: Node Fitness Scoring System
+              ADR-072: Concept Matching Strategies and Configuration
             
           </span>
         </div>
@@ -3047,20 +3047,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
         
           
           <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="0">
@@ -3081,7 +3079,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3099,7 +3097,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3124,37 +3122,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-002: Node Fitness Scoring System
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3170,159 +3141,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#node-fitness-properties" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Node Fitness Properties
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auto-update-mechanism" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auto-Update Mechanism
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#search-boosting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Search Boosting
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#curator-interventions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Curator Interventions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3335,7 +3153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3363,7 +3181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3391,7 +3209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3419,7 +3237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3447,7 +3265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -4651,18 +4469,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" checked>
         
           
           <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
@@ -4683,7 +4503,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_10">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4701,7 +4521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4729,7 +4549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4757,7 +4577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -4785,7 +4605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -4813,7 +4633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4841,7 +4661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4869,7 +4689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4897,7 +4717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -4922,10 +4742,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-072: Concept Matching Strategies and Configuration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -4941,6 +4788,419 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-state-hardcoded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current State (Hardcoded)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-capabilities-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Capabilities Available
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-bottleneck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Bottleneck
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-strategy-insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Strategy Insight
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-database-configuration-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Database Configuration Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-three-search-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Three Search Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-pgvector-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. pgvector Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configuration-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Configuration Loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-ingestion-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Ingestion Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-operator-cli-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Operator CLI Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pgvector-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: pgvector Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-database-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Database Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-degree-centrality-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Degree Centrality Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-search-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Search Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-ingestion-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Ingestion Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-monitoring-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Monitoring &amp; Tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidence-aware-matching-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence-Aware Matching (Future)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-per-job-configuration-override" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: Per-Job Configuration Override
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-automatic-strategy-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Automatic Strategy Selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-only-add-pgvector-no-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C: Only Add pgvector (No Strategies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-embedding-model-in-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D: Embedding Model in Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -6409,17 +6669,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6427,6 +6676,56 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-state-hardcoded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current State (Hardcoded)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-capabilities-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Capabilities Available
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-bottleneck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Bottleneck
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-strategy-insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Strategy Insight
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6443,10 +6742,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#node-fitness-properties" class="md-nav__link">
+  <a href="#1-database-configuration-schema" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Node Fitness Properties
+        1. Database Configuration Schema
       
     </span>
   </a>
@@ -6454,10 +6753,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#auto-update-mechanism" class="md-nav__link">
+  <a href="#2-three-search-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auto-Update Mechanism
+        2. Three Search Strategies
       
     </span>
   </a>
@@ -6465,10 +6764,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#search-boosting" class="md-nav__link">
+  <a href="#3-pgvector-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Search Boosting
+        3. pgvector Integration
       
     </span>
   </a>
@@ -6476,10 +6775,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#curator-interventions" class="md-nav__link">
+  <a href="#4-configuration-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Curator Interventions
+        4. Configuration Loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-ingestion-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Ingestion Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-operator-cli-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Operator CLI Integration
       
     </span>
   </a>
@@ -6541,6 +6873,194 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#implementation-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pgvector-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: pgvector Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-database-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Database Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-degree-centrality-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Degree Centrality Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-search-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Search Strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-ingestion-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Ingestion Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-monitoring-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Monitoring &amp; Tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidence-aware-matching-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence-Aware Matching (Future)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-per-job-configuration-override" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: Per-Job Configuration Override
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-automatic-strategy-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Automatic Strategy Selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-only-add-pgvector-no-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C: Only Add pgvector (No Strategies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-embedding-model-in-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D: Embedding Model in Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6561,105 +7081,485 @@
   
 
 
-<h1 id="adr-002-node-fitness-scoring-system">ADR-002: Node Fitness Scoring System</h1>
-<p><strong>Status:</strong> Proposed
-<strong>Date:</strong> 2025-10-08
-<strong>Deciders:</strong> System Architecture
-<strong>Related:</strong> ADR-001 (Multi-Tier Access), ADR-004 (Pure Graph Design)</p>
-<h2 id="overview">Overview</h2>
-<p>Imagine you have thousands of concepts in your knowledge graph. Some get used constantly in queries and prove incredibly helpful, while others were added once and never touched again. Treating them all equally means your most valuable insights get buried alongside random noise. How do you make the good stuff rise to the top naturally?</p>
-<p>The answer is to track which concepts actually prove useful over time, based on real usage patterns. It's like a path through a forest—the more people walk a certain route, the more worn and visible it becomes. When someone searches for "organizational design," the concepts that have been repeatedly relevant to similar queries should rank higher than concepts that just happen to contain those words.</p>
-<p>This decision implements automatic fitness scoring where each concept accumulates a track record based on how often it's retrieved and how relevant it proves to be. Think of it as a recommendation system, but for your own knowledge instead of products. The graph learns which concepts matter through actual use, not through someone manually tagging things as "important."</p>
-<p>Importantly, this also includes a manual override capability for curators. Sometimes a concept is genuinely important but obscure, or popular but low-quality. Human judgment can boost or demote concepts when the automated scoring misses the mark. It's evolution with intelligent design as a backup plan.</p>
-<hr />
+<h1 id="adr-072-concept-matching-strategies-and-configuration">ADR-072: Concept Matching Strategies and Configuration</h1>
+<p><strong>Status:</strong> Draft
+<strong>Date:</strong> 2025-12-04
+<strong>Supersedes:</strong> Initial ingestion implementation (no formal ADR)</p>
 <h2 id="context">Context</h2>
-<p>A knowledge graph should evolve over time, with useful concepts naturally rising in prominence based on actual usage patterns. Without an evolutionary mechanism, the system treats all concepts equally regardless of their utility. Additionally, pure semantic search can be biased toward popular concepts that may not be the most relevant for specific queries.</p>
+<p>Concept similarity matching during ingestion currently uses hardcoded parameters and an exhaustive search strategy that will not scale. The system has evolved since initial implementation:</p>
+<h3 id="current-state-hardcoded">Current State (Hardcoded)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># api/api/lib/ingestion.py:336</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">matches</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">vector_search</span><span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>  <span class="c1"># ❌ Hardcoded</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span>          <span class="c1"># ❌ Hardcoded</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Issues:</strong>
+1. <strong>No pgvector:</strong> Full O(n) Python numpy scan on every concept match
+2. <strong>Hardcoded threshold:</strong> 0.85 may not suit all use cases (research vs brainstorming)
+3. <strong>Exhaustive search:</strong> Checks all concepts, ignores graph structure
+4. <strong>Not configurable:</strong> Users can't tune for their corpus characteristics</p>
+<h3 id="new-capabilities-available">New Capabilities Available</h3>
+<p>Since initial implementation, the platform now supports:</p>
+<ol>
+<li><strong>pgvector Extension</strong> - Can be added to PostgreSQL for native vector indexing</li>
+<li><strong>Degree Centrality Data</strong> - Graph structure reveals hub concepts</li>
+<li><strong>ADR-041 Configuration Pattern</strong> - Database-first configuration with hot-reload</li>
+<li><strong>ADR-071 Epsilon-Greedy Pattern</strong> - Proven degree-biased search strategies</li>
+</ol>
+<h3 id="performance-bottleneck">Performance Bottleneck</h3>
+<p>With 10k+ concepts, ingestion slows dramatically:
+- Current: 100 concepts/chunk × 500ms search = 50 seconds/chunk
+- With pgvector: 100 concepts × 10ms = 1 second/chunk
+- <strong>50x speedup potential</strong></p>
+<h3 id="search-strategy-insight">Search Strategy Insight</h3>
+<p>ADR-071 discovered that degree centrality bias improves both performance and quality for graph traversal. The same principle applies to concept matching:</p>
+<p><strong>High-degree concepts are:</strong>
+- More semantically stable (validated by many sources)
+- More likely canonical (referenced frequently)
+- Better deduplication targets (consolidation nodes)</p>
 <h2 id="decision">Decision</h2>
-<p>Implement automatic fitness scoring based on query patterns, with manual curator override capability. Each Concept node will track usage metrics that influence search result rankings, creating a self-organizing knowledge network.</p>
-<h3 id="node-fitness-properties">Node Fitness Properties</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="c1">// Core properties</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="n">string</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="n">string</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="n">embedding</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="o">[]</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="c1">// Provenance</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="n">created_by</span><span class="p">:</span><span class="w"> </span><span class="n">string</span><span class="p">,</span><span class="w">      </span><span class="c1">// Agent/user identifier</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="n">created_at</span><span class="p">:</span><span class="w"> </span><span class="n">datetime</span><span class="p">,</span><span class="w">    </span><span class="c1">// Creation timestamp</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="n">source_type</span><span class="p">:</span><span class="w"> </span><span class="n">enum</span><span class="p">,</span><span class="w">       </span><span class="c1">// &quot;document&quot; | &quot;conversation&quot; | &quot;inference&quot;</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="c1">// Fitness metrics (auto-updated)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="n">query_count</span><span class="p">:</span><span class="w"> </span><span class="n">integer</span><span class="p">,</span><span class="w">    </span><span class="c1">// Total times retrieved</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="n">relevance_sum</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="p">,</span><span class="w">    </span><span class="c1">// Cumulative match scores</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span><span class="n">fitness_score</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="p">,</span><span class="w">    </span><span class="c1">// relevance_sum / query_count</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="c1">// Curator adjustments</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="n">manual_bias</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="p">,</span><span class="w">      </span><span class="c1">// -1.0 to +1.0, curator override</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="n">final_score</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="p">,</span><span class="w">      </span><span class="c1">// fitness_score + manual_bias</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="c1">// Quality flags</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span><span class="n">flagged_for_review</span><span class="p">:</span><span class="w"> </span><span class="n">boolean</span><span class="p">,</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="n">float</span><span class="w">        </span><span class="c1">// 0.0 to 1.0</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">})</span>
+<p>Implement three-tier concept matching system with database-first configuration and pgvector indexing.</p>
+<h3 id="1-database-configuration-schema">1. Database Configuration Schema</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Migration: Add concept matching configuration</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">concept_match_config</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">config_id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">strategy</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;exhaustive&#39;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">strategy</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;exhaustive&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;degree_biased&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;degree_only&#39;</span><span class="p">)),</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">similarity_threshold</span><span class="w"> </span><span class="nb">FLOAT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">85</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">similarity_threshold</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">similarity_threshold</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">),</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="n">top_k</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">top_k</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">top_k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">20</span><span class="p">),</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">degree_percentile</span><span class="w"> </span><span class="nb">FLOAT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">degree_percentile</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">degree_percentile</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">),</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="n">evidence_weight</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">evidence_weight</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="p">(</span><span class="n">evidence_weight</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">evidence_weight</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">)),</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="n">is_active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="n">updated_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="p">);</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1">-- Insert default configuration (exhaustive, current behavior)</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">concept_match_config</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="n">strategy</span><span class="p">,</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="n">similarity_threshold</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="n">top_k</span><span class="p">,</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="n">degree_percentile</span><span class="p">,</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="n">evidence_weight</span><span class="p">,</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">    </span><span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">    </span><span class="n">is_active</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">    </span><span class="s1">&#39;exhaustive&#39;</span><span class="p">,</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="mi">0</span><span class="p">.</span><span class="mi">85</span><span class="p">,</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">    </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">,</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">    </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">    </span><span class="s1">&#39;Default configuration: exhaustive search with 0.85 threshold&#39;</span><span class="p">,</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">    </span><span class="k">TRUE</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="p">);</span>
 </code></pre></div>
-<h3 id="auto-update-mechanism">Auto-Update Mechanism</h3>
-<p><strong>Lazy Write Pattern:</strong>
-- Query operations queue fitness updates
-- Batch flush every 100 queries or 10 seconds
-- Updates happen outside query transaction (async)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ScoringQueue</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">updates</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">record_hit</span><span class="p">(</span><span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">relevance</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">updates</span><span class="p">[</span><span class="n">concept_id</span><span class="p">][</span><span class="s2">&quot;count&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">updates</span><span class="p">[</span><span class="n">concept_id</span><span class="p">][</span><span class="s2">&quot;relevance&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">relevance</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">():</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="c1"># Batch update Neo4j</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">UNWIND</span> <span class="err">$</span><span class="n">updates</span> <span class="k">as</span> <span class="n">u</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="n">MATCH</span> <span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span> <span class="p">{</span><span class="n">concept_id</span><span class="p">:</span> <span class="n">u</span><span class="o">.</span><span class="n">id</span><span class="p">})</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="n">SET</span> <span class="n">c</span><span class="o">.</span><span class="n">query_count</span> <span class="o">=</span> <span class="n">coalesce</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">query_count</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">u</span><span class="o">.</span><span class="n">count</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="n">c</span><span class="o">.</span><span class="n">relevance_sum</span> <span class="o">=</span> <span class="n">coalesce</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">relevance_sum</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">u</span><span class="o">.</span><span class="n">relevance</span><span class="p">,</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>            <span class="n">c</span><span class="o">.</span><span class="n">fitness_score</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">relevance_sum</span> <span class="o">/</span> <span class="n">c</span><span class="o">.</span><span class="n">query_count</span><span class="p">,</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>            <span class="n">c</span><span class="o">.</span><span class="n">final_score</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">fitness_score</span> <span class="o">+</span> <span class="n">coalesce</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">manual_bias</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<h3 id="2-three-search-strategies">2. Three Search Strategies</h3>
+<p>Following ADR-071 epsilon-greedy pattern:</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Description</th>
+<th>Performance</th>
+<th>Quality</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>exhaustive</strong></td>
+<td>Search all concepts (current)</td>
+<td>O(n) slow</td>
+<td>Best</td>
+<td>Default, small graphs (&lt;10k)</td>
+</tr>
+<tr>
+<td><strong>degree_biased</strong></td>
+<td>80% high-degree + 20% random</td>
+<td>2-3x faster</td>
+<td>Good</td>
+<td>Growing graphs, balanced</td>
+</tr>
+<tr>
+<td><strong>degree_only</strong></td>
+<td>Only high-degree concepts</td>
+<td>Fastest</td>
+<td>Conservative</td>
+<td>Large mature graphs (&gt;50k)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Degree Centrality Filter:</strong>
+- Calculate degree for each concept: <code>count(relationships)</code>
+- Filter to top N percentile (default: 75th percentile = top 25%)
+- Only search filtered set (degree_only) or bias search toward it (degree_biased)</p>
+<h3 id="3-pgvector-integration">3. pgvector Integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">-- Add pgvector extension</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">vector</span><span class="p">;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">-- Add vector column for fast similarity search</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">embedding_vec</span><span class="w"> </span><span class="n">vector</span><span class="p">(</span><span class="mi">1536</span><span class="p">);</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1">-- Populate from existing JSON embeddings</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">SET</span><span class="w"> </span><span class="n">embedding_vec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">embedding</span><span class="p">::</span><span class="n">vector</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">embedding</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1">-- Create index (IVFFlat with cosine distance)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">concept_embedding_idx</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="k">ON</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="k">USING</span><span class="w"> </span><span class="n">ivfflat</span><span class="w"> </span><span class="p">(</span><span class="n">embedding_vec</span><span class="w"> </span><span class="n">vector_cosine_ops</span><span class="p">)</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">WITH</span><span class="w"> </span><span class="p">(</span><span class="n">lists</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
 </code></pre></div>
-<h3 id="search-boosting">Search Boosting</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Vector search with fitness boost</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">CALL</span><span class="w"> </span><span class="n">db</span><span class="p">.</span><span class="n">index</span><span class="p">.</span><span class="n">vector</span><span class="p">.</span><span class="n">queryNodes</span><span class="p">(</span><span class="s">&#39;concept-embeddings&#39;</span><span class="p">,</span><span class="w"> </span><span class="m">10</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="n">embedding</span><span class="p">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">YIELD</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="n">score</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">score</span><span class="w"> </span><span class="p">*</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">final_score</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">boosted_score</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">boosted_score</span><span class="w"> </span><span class="k">DESC</span>
+<p><strong>Query Pattern with Degree Centrality (following ADR-071):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Degree</span><span class="err">-</span><span class="n">biased</span><span class="w"> </span><span class="n">search</span><span class="w"> </span><span class="p">(</span><span class="n">calculate</span><span class="w"> </span><span class="n">degree</span><span class="w"> </span><span class="n">inline</span><span class="p">,</span><span class="w"> </span><span class="n">no</span><span class="w"> </span><span class="n">caching</span><span class="w"> </span><span class="n">needed</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">WITH</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">degree</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">degree</span><span class="w"> </span><span class="k">DESC</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">1000</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Pre</span><span class="err">-</span><span class="n">filter</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="n">N</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">degree</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="err">--</span><span class="w"> </span><span class="k">Then</span><span class="w"> </span><span class="n">apply</span><span class="w"> </span><span class="n">pgvector</span><span class="w"> </span><span class="n">similarity</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">filtered</span><span class="w"> </span><span class="k">set</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="err">--</span><span class="w"> </span><span class="p">(</span><span class="n">Combined</span><span class="w"> </span><span class="n">Cypher</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="n">SQL</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="n">best</span><span class="w"> </span><span class="n">performance</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>pgvector Similarity Search:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Fast similarity search with pgvector</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">concept_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">label</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">description</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">       </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">c</span><span class="p">.</span><span class="n">embedding_vec</span><span class="w"> </span><span class="o">&lt;=&gt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">::</span><span class="n">vector</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">similarity</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">FROM</span><span class="w"> </span><span class="n">ag_catalog</span><span class="p">.</span><span class="n">concept</span><span class="w"> </span><span class="k">c</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">embedding_vec</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="k">c</span><span class="p">.</span><span class="n">embedding_vec</span><span class="w"> </span><span class="o">&lt;=&gt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">::</span><span class="n">vector</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="err">$</span><span class="n">threshold</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">embedding_vec</span><span class="w"> </span><span class="o">&lt;=&gt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">::</span><span class="n">vector</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">top_k</span><span class="p">;</span>
+</code></pre></div></p>
+<h3 id="4-configuration-loading">4. Configuration Loading</h3>
+<p>Following ADR-041 pattern (database-first with fallbacks):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># api/api/lib/concept_matcher.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConceptMatchConfig</span><span class="p">:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for concept similarity matching.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exhaustive&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">similarity_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.85</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">degree_percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">evidence_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="nd">@classmethod</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_database</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">db_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ConceptMatchConfig&quot;</span><span class="p">:</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Load active configuration from database.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="s2">        SELECT strategy, similarity_threshold, top_k,</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="s2">               degree_percentile, evidence_weight</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="s2">        FROM kg_api.concept_match_config</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="s2">        WHERE is_active = TRUE</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="s2">        ORDER BY updated_at DESC</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="s2">        LIMIT 1</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>            <span class="n">result</span> <span class="o">=</span> <span class="n">db_client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>            <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load concept match config: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>        <span class="c1"># Fallback to defaults</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="c1"># Load once at startup, cache, reload on config change</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="n">_config_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConceptMatchConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_concept_match_config</span><span class="p">(</span><span class="n">db_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConceptMatchConfig</span><span class="p">:</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get active concept matching configuration (cached).&quot;&quot;&quot;</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    <span class="k">global</span> <span class="n">_config_cache</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>    <span class="k">if</span> <span class="n">_config_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>        <span class="n">_config_cache</span> <span class="o">=</span> <span class="n">ConceptMatchConfig</span><span class="o">.</span><span class="n">from_database</span><span class="p">(</span><span class="n">db_client</span><span class="p">)</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    <span class="k">return</span> <span class="n">_config_cache</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="k">def</span><span class="w"> </span><span class="nf">reload_concept_match_config</span><span class="p">(</span><span class="n">db_client</span><span class="p">):</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Force reload of configuration (called after admin updates).&quot;&quot;&quot;</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>    <span class="k">global</span> <span class="n">_config_cache</span>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>    <span class="n">_config_cache</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>    <span class="k">return</span> <span class="n">get_concept_match_config</span><span class="p">(</span><span class="n">db_client</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="curator-interventions">Curator Interventions</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Promote undervalued concept</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">curator</span><span class="o">.</span><span class="n">adjust_bias</span><span class="p">(</span><span class="s2">&quot;concept_091&quot;</span><span class="p">,</span> <span class="n">bias</span><span class="o">=+</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Critical but obscure&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Demote over-prominent concept</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">curator</span><span class="o">.</span><span class="n">adjust_bias</span><span class="p">(</span><span class="s2">&quot;concept_042&quot;</span><span class="p">,</span> <span class="n">bias</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Popular but low quality&quot;</span><span class="p">)</span>
+<h3 id="5-api-endpoints">5. API Endpoints</h3>
+<p><strong>GET /admin/concept-match/config</strong> - View current configuration
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;strategy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;exhaustive&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">&quot;similarity_threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">&quot;top_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nt">&quot;degree_percentile&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nt">&quot;evidence_weight&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Default configuration: exhaustive search with 0.85 threshold&quot;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>GET /admin/concept-match/strategies</strong> - List available strategies
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;strategies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;exhaustive&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Search all concepts with embeddings&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">&quot;performance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;O(n) - slower at scale&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">&quot;quality&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Best - finds optimal match&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">&quot;recommended_for&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Small graphs (&lt;10k concepts), strict deduplication&quot;</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;degree_biased&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;80% high-degree concepts + 20% random exploration&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="nt">&quot;performance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2-3x faster than exhaustive&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">      </span><span class="nt">&quot;quality&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Good - biases toward stable hub concepts&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">      </span><span class="nt">&quot;recommended_for&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Growing graphs, balanced performance/quality&quot;</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;degree_only&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Only search high-degree hub concepts&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">      </span><span class="nt">&quot;performance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fastest - searches top 25% by degree&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">      </span><span class="nt">&quot;quality&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Conservative - may miss novel connections&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">      </span><span class="nt">&quot;recommended_for&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Large mature graphs (&gt;50k concepts)&quot;</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">  </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">    </span><span class="nt">&quot;similarity_threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">      </span><span class="nt">&quot;range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">      </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Minimum cosine similarity for concept matching&quot;</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">    </span><span class="nt">&quot;top_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">      </span><span class="nt">&quot;range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">],</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">      </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Maximum candidate concepts to evaluate&quot;</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">    </span><span class="nt">&quot;degree_percentile&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">      </span><span class="nt">&quot;range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="w">      </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Degree centrality threshold (0.75 = top 25%)&quot;</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">    </span><span class="nt">&quot;evidence_weight&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;float&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="w">      </span><span class="nt">&quot;range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span>
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">      </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Weight for evidence-aware matching (null = disabled)&quot;</span>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>POST /admin/concept-match/config</strong> - Update configuration
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;strategy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;degree_biased&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">&quot;similarity_threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.87</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">&quot;top_k&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">&quot;degree_percentile&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.80</span><span class="p">,</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Optimized for large research corpus&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="6-ingestion-integration">6. Ingestion Integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># api/api/lib/ingestion.py</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">process_chunk</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="c1"># Load configuration once per ingestion job (cached)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">match_config</span> <span class="o">=</span> <span class="n">get_concept_match_config</span><span class="p">(</span><span class="n">age_client</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="k">for</span> <span class="n">concept</span> <span class="ow">in</span> <span class="n">extraction</span><span class="p">[</span><span class="s2">&quot;concepts&quot;</span><span class="p">]:</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="c1"># Generate embedding (unchanged)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>        <span class="n">embedding</span> <span class="o">=</span> <span class="n">embedding_worker</span><span class="o">.</span><span class="n">generate_concept_embedding</span><span class="p">(</span><span class="n">embedding_text</span><span class="p">)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="c1"># Vector search with configured strategy</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>        <span class="n">matches</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">vector_search_with_strategy</span><span class="p">(</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>            <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>            <span class="n">threshold</span><span class="o">=</span><span class="n">match_config</span><span class="o">.</span><span class="n">similarity_threshold</span><span class="p">,</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>            <span class="n">top_k</span><span class="o">=</span><span class="n">match_config</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>            <span class="n">strategy</span><span class="o">=</span><span class="n">match_config</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>            <span class="n">degree_percentile</span><span class="o">=</span><span class="n">match_config</span><span class="o">.</span><span class="n">degree_percentile</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>        <span class="p">)</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>        <span class="c1"># Rest of upsert logic unchanged</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>            <span class="c1"># Link to existing</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>            <span class="c1"># Create new</span>
+</code></pre></div>
+<h3 id="7-operator-cli-integration">7. Operator CLI Integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># View current configuration</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>concept-match<span class="w"> </span>status
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Update configuration</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>concept-match<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--strategy<span class="w"> </span>degree_biased<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>--threshold<span class="w"> </span><span class="m">0</span>.87<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">  </span>--top-k<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># List available strategies</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/configure.py<span class="w"> </span>concept-match<span class="w"> </span>strategies
 </code></pre></div>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
-<ul>
-<li>Self-organizing knowledge network evolves based on actual usage</li>
-<li>Useful concepts naturally promoted through organic query patterns</li>
-<li>Combats semantic search bias (popular ≠ relevant)</li>
-<li>Curator can override automated scoring for edge cases</li>
-<li>Minimal storage overhead (4 floats per node)</li>
-<li>Provides feedback loop for quality assessment</li>
-</ul>
+<p>✅ <strong>Massive Performance Improvement</strong>
+- pgvector: 100x faster than Python numpy full scan
+- degree_biased: 2-3x additional speedup via filtering
+- Combined: 50 seconds/chunk → 1 second/chunk potential</p>
+<p>✅ <strong>Configurability Without Complexity</strong>
+- Database-first: single source of truth
+- No per-job overrides (simplicity)
+- Hot-reload capability via cache invalidation</p>
+<p>✅ <strong>Proven Pattern</strong>
+- Follows ADR-041 (database-first configuration)
+- Applies ADR-071 lessons (degree-biased search)
+- Consistent with platform architecture</p>
+<p>✅ <strong>Future-Ready</strong>
+- Evidence-aware matching (when ADR-068 complete)
+- Per-job overrides (if needed later)
+- Query tuning based on graph characteristics</p>
+<p>✅ <strong>Backward Compatible</strong>
+- Default: exhaustive with 0.85 threshold (current behavior)
+- pgvector migration: transparent performance boost
+- No API changes for ingestion endpoints</p>
 <h3 id="negative">Negative</h3>
-<ul>
-<li>Requires lazy write infrastructure to avoid query slowdown</li>
-<li>New concepts start with low scores (cold start problem)</li>
-<li>Potential feedback loops if agents rely too heavily on top results</li>
-<li>Manual bias requires curator judgment and ongoing maintenance</li>
-</ul>
+<p>❌ <strong>pgvector Dependency</strong>
+- Requires PostgreSQL extension installation
+- Adds operational complexity (index maintenance)
+- Migration effort for existing embeddings</p>
+<p>❌ <strong>Configuration Complexity</strong>
+- Users must understand strategy trade-offs
+- Wrong configuration could hurt deduplication quality
+- Requires documentation and guidance</p>
+<p>❌ <strong>Degree Calculation Overhead</strong>
+- Must calculate/cache degree centrality
+- May need periodic recalculation as graph evolves
+- Additional query complexity</p>
 <h3 id="neutral">Neutral</h3>
+<p>⚠️ <strong>No Per-Job Override</strong>
+- Simplifies implementation (consistency)
+- May need future ADR if use cases demand flexibility
+- Current decision: wait for actual need</p>
+<p>⚠️ <strong>Strategy Selection Guidance</strong>
+- Need metrics to recommend strategy per graph size
+- "10k concepts" thresholds are estimates
+- Real-world tuning required</p>
+<h2 id="implementation-sequence">Implementation Sequence</h2>
+<h3 id="phase-1-pgvector-foundation">Phase 1: pgvector Foundation</h3>
+<ol>
+<li>Add pgvector extension to PostgreSQL</li>
+<li>Add <code>embedding_vec</code> vector column</li>
+<li>Migrate existing embeddings: <code>embedding::vector</code></li>
+<li>Create IVFFlat index with cosine distance</li>
+<li>Update <code>vector_search()</code> to use pgvector</li>
+<li>Measure performance improvement</li>
+</ol>
+<h3 id="phase-2-database-configuration">Phase 2: Database Configuration</h3>
+<ol>
+<li>Create <code>concept_match_config</code> table with migration</li>
+<li>Insert default configuration (exhaustive)</li>
+<li>Implement <code>ConceptMatchConfig</code> dataclass</li>
+<li>Add configuration loading with caching</li>
+<li>Create operator CLI commands</li>
+<li>Test configuration hot-reload</li>
+</ol>
+<h3 id="phase-3-degree-centrality-helpers">Phase 3: Degree Centrality Helpers</h3>
+<ol>
+<li>Implement inline degree calculation (following ADR-071 pattern)</li>
+<li>Implement <code>get_degree_threshold()</code> for percentile filtering</li>
+<li>Test degree queries with various graph sizes</li>
+<li>No caching needed - calculate on-demand in Cypher</li>
+<li>Document performance characteristics</li>
+</ol>
+<h3 id="phase-4-search-strategies">Phase 4: Search Strategies</h3>
+<ol>
+<li>Implement <code>vector_search_with_strategy()</code> dispatcher</li>
+<li>Implement exhaustive strategy (pgvector only)</li>
+<li>Implement degree_only strategy (pgvector + filter)</li>
+<li>Implement degree_biased strategy (epsilon-greedy)</li>
+<li>Add strategy enum and validation</li>
+<li>Test all three strategies with real corpus</li>
+</ol>
+<h3 id="phase-5-api-endpoints">Phase 5: API Endpoints</h3>
+<ol>
+<li>Create <code>GET /admin/concept-match/config</code></li>
+<li>Create <code>GET /admin/concept-match/strategies</code></li>
+<li>Create <code>POST /admin/concept-match/config</code></li>
+<li>Add request/response Pydantic models</li>
+<li>Add authentication (admin-only endpoints)</li>
+<li>Test configuration updates and reload</li>
+</ol>
+<h3 id="phase-6-ingestion-integration">Phase 6: Ingestion Integration</h3>
+<ol>
+<li>Update <code>process_chunk()</code> to load configuration</li>
+<li>Pass configuration to <code>vector_search_with_strategy()</code></li>
+<li>Test ingestion with all three strategies</li>
+<li>Measure deduplication quality (hit rate)</li>
+<li>Document strategy recommendations</li>
+<li>Update CLAUDE.md with new workflow</li>
+</ol>
+<h3 id="phase-7-monitoring-tuning">Phase 7: Monitoring &amp; Tuning</h3>
+<ol>
+<li>Add telemetry for search times per strategy</li>
+<li>Add metrics for deduplication hit rate</li>
+<li>Create dashboard for configuration impact</li>
+<li>Document tuning guidelines</li>
+<li>Gather real-world performance data</li>
+<li>Write operational runbook</li>
+</ol>
+<h2 id="evidence-aware-matching-future">Evidence-Aware Matching (Future)</h2>
+<p>This ADR leaves room for ADR-073 (Evidence-Aware Concept Matching) which will add:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">evidence_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Reserved for future use</span>
+</code></pre></div>
+<p><strong>When evidence_weight is set:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Concept similarity (current)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">concept_sim</span> <span class="o">=</span> <span class="n">cosine</span><span class="p">(</span><span class="n">new_concept_emb</span><span class="p">,</span> <span class="n">existing_concept_emb</span><span class="p">)</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Evidence similarity (ADR-073, future)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">evidence_chunks</span> <span class="o">=</span> <span class="n">get_source_chunks_for_concept</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="n">evidence_sim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">cosine</span><span class="p">(</span><span class="n">new_concept_emb</span><span class="p">,</span> <span class="n">chunk_emb</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">evidence_chunks</span><span class="p">])</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># Ensemble score</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">final_score</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">evidence_weight</span><span class="p">)</span> <span class="o">*</span> <span class="n">concept_sim</span> <span class="o">+</span> <span class="n">evidence_weight</span> <span class="o">*</span> <span class="n">evidence_sim</span>
+</code></pre></div></p>
+<p>This requires ADR-068 (Source Text Embeddings) to be implemented first.</p>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="option-a-per-job-configuration-override">Option A: Per-Job Configuration Override</h3>
+<p><strong>Pros:</strong> Maximum flexibility, users tune per ingestion
+<strong>Cons:</strong> Complexity, inconsistency, hard to reason about graph evolution
+<strong>Decision:</strong> Rejected - Database-first for simplicity and consistency</p>
+<h3 id="option-b-automatic-strategy-selection">Option B: Automatic Strategy Selection</h3>
+<p><strong>Pros:</strong> System auto-selects based on graph size
+<strong>Cons:</strong> Magic behavior, unclear to users, hard to debug
+<strong>Decision:</strong> Rejected - Explicit configuration with operator CLI</p>
+<h3 id="option-c-only-add-pgvector-no-strategies">Option C: Only Add pgvector (No Strategies)</h3>
+<p><strong>Pros:</strong> Simpler, less code
+<strong>Cons:</strong> Misses opportunity to apply ADR-071 lessons
+<strong>Decision:</strong> Rejected - Degree-biased search proven valuable</p>
+<h3 id="option-d-embedding-model-in-configuration">Option D: Embedding Model in Configuration</h3>
+<p><strong>Pros:</strong> Could switch embedding models
+<strong>Cons:</strong> Breaks existing embeddings, requires full regeneration
+<strong>Decision:</strong> Rejected - Embedding model separate concern (ADR-041)</p>
+<h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li>Fitness scores accumulate over time - need periodic normalization strategy</li>
-<li>May want to decay old scores to adapt to changing usage patterns</li>
-<li>Need clear documentation on when to apply manual bias</li>
+<li><strong><a href="../../ai-embeddings/ADR-041-ai-extraction-config/">ADR-041: AI Extraction Provider Configuration</a></strong> - Database-first configuration pattern</li>
+<li><strong><a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/">ADR-049: Rate Limiting and Concurrency</a></strong> - Per-provider semaphores and configuration</li>
+<li><strong><a href="../../ai-embeddings/ADR-068-source-text-embeddings/">ADR-068: Source Text Embeddings</a></strong> - Future: Evidence-aware matching</li>
+<li><strong><a href="../../query-search/ADR-071-parallel-graph-queries/">ADR-071: Parallel Graph Query Optimization</a></strong> - Epsilon-greedy degree-biased search pattern</li>
+<li><strong><a href="../../query-search/ADR-071a-parallel-implementation-findings/">ADR-071a: Parallel Implementation Findings</a></strong> - Discovery that query optimization &gt; parallelization</li>
 </ul>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>pgvector:</strong> https://github.com/pgvector/pgvector</li>
+<li><strong>PostgreSQL Vector Extension:</strong> https://www.postgresql.org/docs/current/indexes-types.html</li>
+<li><strong>IVFFlat Index:</strong> https://github.com/pgvector/pgvector#ivfflat</li>
+<li><strong>Cosine Distance Operator:</strong> https://github.com/pgvector/pgvector#distance-operators</li>
+</ul>
+<hr />
+<p><strong>Last Updated:</strong> 2025-12-04
+<strong>Next Steps:</strong> Review with stakeholders, validate approach, begin Phase 1 implementation</p>
 
 
 
