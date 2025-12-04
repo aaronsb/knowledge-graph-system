@@ -48,10 +48,36 @@ const analyzeCommand = setCommandHelp(
   .option('--no-auto-discover', 'Disable auto-discovery of related concepts')
   .option('--max-candidates <number>', 'Maximum candidates for auto-discovery', '20')
   .option('--max-hops <number>', 'Maximum graph hops for auto-discovery (1-3)', '1')
+  .option('--discovery-mode <mode>', 'Discovery strategy: conservative (pure degree), balanced (80/20 - DEFAULT), novelty (pure random)', 'balanced')
+  .option('--discovery-pct <number>', 'Custom discovery percentage (0.0-1.0, overrides --discovery-mode)')
+  .option('--max-workers <number>', 'Maximum parallel workers for 2-hop queries', '8')
+  .option('--chunk-size <number>', 'Concepts per worker chunk', '20')
+  .option('--timeout <number>', 'Wall-clock timeout in seconds', '120')
   .option('--json', 'Output raw JSON instead of formatted text')
   .action(async (options) => {
     try {
       const client = createClientFromEnv();
+
+      // Parse discovery mode to percentage
+      let discoveryPct: number;
+      if (options.discoveryPct !== undefined) {
+        // Custom percentage overrides mode
+        discoveryPct = parseFloat(options.discoveryPct);
+        if (discoveryPct < 0 || discoveryPct > 1) {
+          throw new Error('discovery-pct must be between 0.0 and 1.0');
+        }
+      } else {
+        // Map mode to percentage
+        const modeMap: Record<string, number> = {
+          'conservative': 0.0,
+          'balanced': 0.2,
+          'novelty': 1.0
+        };
+        discoveryPct = modeMap[options.discoveryMode.toLowerCase()];
+        if (discoveryPct === undefined) {
+          throw new Error(`Invalid discovery-mode: ${options.discoveryMode}. Must be: conservative, balanced, or novelty`);
+        }
+      }
 
       console.log(colors.ui.header('Polarity Axis Analysis'));
       console.log(separator());
@@ -63,7 +89,10 @@ const analyzeCommand = setCommandHelp(
         if (options.candidates) {
           console.log(`${colors.ui.key('Candidates:')} ${options.candidates.length} concepts`);
         } else {
-          console.log(`${colors.ui.key('Discovery:')} Auto (max ${options.maxCandidates} concepts, ${options.maxHops} hops)`);
+          const modeLabel = discoveryPct === 0.0 ? 'conservative (pure degree)' :
+                            discoveryPct === 1.0 ? 'novelty (pure random)' :
+                            `balanced (${Math.round((1-discoveryPct)*100)}% degree + ${Math.round(discoveryPct*100)}% random)`;
+          console.log(`${colors.ui.key('Discovery:')} Auto (max ${options.maxCandidates} concepts, ${options.maxHops} hops, ${modeLabel})`);
         }
         console.log();
         console.log(colors.status.info('⏳ Analyzing polarity axis...'));
@@ -75,7 +104,11 @@ const analyzeCommand = setCommandHelp(
         candidate_ids: options.candidates,
         auto_discover: options.autoDiscover !== false,
         max_candidates: parseInt(options.maxCandidates),
-        max_hops: parseInt(options.maxHops)
+        max_hops: parseInt(options.maxHops),
+        discovery_slot_pct: discoveryPct,
+        max_workers: parseInt(options.maxWorkers),
+        chunk_size: parseInt(options.chunkSize),
+        timeout_seconds: parseFloat(options.timeout)
       });
 
       if (options.json) {

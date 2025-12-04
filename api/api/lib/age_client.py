@@ -58,9 +58,10 @@ class AGEClient:
 
         try:
             # Create connection pool for better performance
+            # Increased for parallel graph queries (ADR-071)
             self.pool = psycopg2.pool.SimpleConnectionPool(
                 1,  # minconn
-                10,  # maxconn
+                20,  # maxconn (supports up to 16 parallel workers + buffer)
                 host=self.host,
                 port=self.port,
                 database=self.database,
