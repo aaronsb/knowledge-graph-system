@@ -335,8 +335,8 @@ def discover_candidate_concepts_parallel(
     # Configure parallelizer
     config = ParallelQueryConfig(
         max_workers=8,
-        chunk_size=20,
-        timeout_seconds=30.0,
+        chunk_size=10,  # Smaller chunks = faster per-worker queries
+        timeout_seconds=120.0,  # Allow workers more time for large graphs
         per_worker_limit=max_candidates * 2  # Safety margin for deduplication
     )
 

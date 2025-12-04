@@ -16,7 +16,6 @@ Performance: 160x speedup for max_hops=2 queries (5 min → 1.85 sec)
 import logging
 import threading
 import time
-import json
 from typing import List, Set, Dict, Any, Optional
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
@@ -214,30 +213,24 @@ class GraphParallelizer:
         # Build WHERE clause for embedding requirement
         embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-        # Build Cypher query with parameter binding (security)
-        # Note: We pass seed_ids as JSON array for safe parameter binding
+        # Build plain Cypher query (AGEClient._execute_cypher wraps it properly)
         query = f"""
-            SELECT * FROM ag_catalog.cypher('concept', $$
-                MATCH (seed:Concept)-[]-(neighbor:Concept)
-                WHERE seed.concept_id IN $seed_ids
-                  {embedding_filter}
-                RETURN DISTINCT neighbor.concept_id as concept_id
-                LIMIT {self.config.per_worker_limit}
-            $$) as (concept_id agtype);
+            MATCH (seed:Concept)-[]-(neighbor:Concept)
+            WHERE seed.concept_id IN $seed_ids
+              {embedding_filter}
+            RETURN DISTINCT neighbor.concept_id as concept_id
+            LIMIT {self.config.per_worker_limit}
         """
 
-        conn = self.client.pool.getconn()
         try:
-            with conn.cursor() as cur:
-                # Pass seed_ids as JSON array (safe parameter binding)
-                cur.execute(query, {'seed_ids': json.dumps(seed_ids)})
-                results = cur.fetchall()
+            # Use AGEClient._execute_cypher (handles wrapping, connection, params)
+            results = self.client._execute_cypher(query, params={'seed_ids': seed_ids})
 
             # Extract concept IDs and filter excludes
             neighbors = {
-                str(row[0]).strip('"')  # AGE returns quoted strings
+                str(row.get('concept_id', '')).strip('"')
                 for row in results
-                if str(row[0]).strip('"') not in exclude_ids
+                if str(row.get('concept_id', '')).strip('"') not in exclude_ids
             }
 
             return neighbors
@@ -245,8 +238,6 @@ class GraphParallelizer:
         except Exception as e:
             logger.error(f"Phase 1 query failed: {e}")
             raise
-        finally:
-            self.client.pool.putconn(conn)
 
     def _get_2hop_neighbors_parallel(
         self,
@@ -374,29 +365,24 @@ class GraphParallelizer:
         with self.global_semaphore:
             embedding_filter = "AND neighbor.embedding IS NOT NULL" if require_embedding else ""
 
-            # Batched query for entire chunk (reduces network overhead)
+            # Build plain Cypher query (AGEClient._execute_cypher wraps it properly)
             query = f"""
-                SELECT * FROM ag_catalog.cypher('concept', $$
-                    MATCH (seed:Concept)-[]-(neighbor:Concept)
-                    WHERE seed.concept_id IN $seed_ids
-                      {embedding_filter}
-                    RETURN DISTINCT neighbor.concept_id as concept_id
-                    LIMIT {self.config.per_worker_limit}
-                $$) as (concept_id agtype);
+                MATCH (seed:Concept)-[]-(neighbor:Concept)
+                WHERE seed.concept_id IN $seed_ids
+                  {embedding_filter}
+                RETURN DISTINCT neighbor.concept_id as concept_id
+                LIMIT {self.config.per_worker_limit}
             """
 
-            conn = self.client.pool.getconn()
             try:
-                with conn.cursor() as cur:
-                    # Safe parameter binding
-                    cur.execute(query, {'seed_ids': json.dumps(seed_chunk)})
-                    results = cur.fetchall()
+                # Use AGEClient._execute_cypher (handles wrapping, connection, params)
+                results = self.client._execute_cypher(query, params={'seed_ids': seed_chunk})
 
                 # Extract and filter
                 neighbors = {
-                    str(row[0]).strip('"')
+                    str(row.get('concept_id', '')).strip('"')
                     for row in results
-                    if str(row[0]).strip('"') not in exclude_ids
+                    if str(row.get('concept_id', '')).strip('"') not in exclude_ids
                 }
 
                 return neighbors
@@ -404,5 +390,3 @@ class GraphParallelizer:
             except Exception as e:
                 logger.error(f"Worker query failed for chunk: {e}")
                 raise
-            finally:
-                self.client.pool.putconn(conn)
