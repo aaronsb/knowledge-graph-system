@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { LoginModal } from '../auth/LoginModal';
 import { apiClient } from '../../api/client';
+import { GraphAnimation } from './GraphAnimation';
 
 interface SystemStatus {
   database?: {
@@ -101,10 +102,15 @@ export const HomeWorkspace: React.FC = () => {
     return (
       <div className="h-full flex flex-col bg-background dark:bg-gray-950">
         <div className="flex-1 flex items-center justify-center p-8">
-          <div className="max-w-lg text-center">
+          <div className="max-w-lg text-center relative">
+            {/* Animated Graph Background */}
+            <div className="absolute inset-0 flex items-center justify-center -z-10 opacity-30 dark:opacity-40">
+              <GraphAnimation width={500} height={500} />
+            </div>
+
             {/* Logo/Icon */}
             <div className="mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg backdrop-blur-sm">
                 <Network className="w-12 h-12 text-white" />
               </div>
             </div>
