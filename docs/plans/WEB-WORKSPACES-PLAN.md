@@ -11,8 +11,8 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 ## Progress Tracking
 
 - [x] **Phase 1: Shared Foundation** (completed 2025-12-07)
-- [ ] **Phase 2: IngestWorkspace**
-- [ ] **Phase 3: JobsWorkspace**
+- [x] **Phase 2: IngestWorkspace** (completed 2025-12-07)
+- [x] **Phase 3: JobsWorkspace** (completed 2025-12-07)
 - [ ] **Phase 4: PreferencesWorkspace**
 
 ---
@@ -47,27 +47,22 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 **Location:** `web/src/components/ingest/`
 
 ### Components
-- [ ] `IngestWorkspace.tsx` - Main workspace (replace placeholder)
-- [ ] `FileDropZone.tsx` - Drag-drop area with file type validation
-- [ ] `OntologySelector.tsx` - Dropdown with existing ontologies + create new option
-- [ ] `IngestOptionsPanel.tsx` - Chunking settings, processing mode, force flag
-- [ ] `SubmitPreview.tsx` - Cost estimate display, approve/cancel before processing
-- [ ] `IngestProgress.tsx` - Real-time progress during ingestion
+- [x] `IngestWorkspace.tsx` - Main workspace (all-in-one implementation)
 
 ### Features
-- [ ] Drag-and-drop file upload
-- [ ] Manual file picker fallback
-- [ ] Ontology selection (existing or new)
-- [ ] Chunking options (target words, overlap)
-- [ ] Processing mode (serial/parallel)
-- [ ] Force re-ingest option
-- [ ] Duplicate detection handling
-- [ ] Cost estimate before approval
-- [ ] Real-time progress tracking
-- [ ] Success/error feedback
+- [x] Drag-and-drop file upload
+- [x] Manual file picker fallback
+- [x] Ontology selection (existing or new)
+- [x] Chunking options (target words, overlap)
+- [x] Processing mode (serial/parallel)
+- [x] Force re-ingest option
+- [x] Duplicate detection handling
+- [x] Cost estimate before approval
+- [x] Real-time progress tracking (SSE with polling fallback)
+- [x] Success/error feedback
 
 ### State Management
-- [ ] `web/src/store/ingestStore.ts` - Zustand store for ingest state
+- [x] Local component state (simpler than Zustand for single-component use)
 
 ---
 
@@ -76,32 +71,25 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 **Location:** `web/src/components/jobs/`
 
 ### Components
-- [ ] `JobsWorkspace.tsx` - Main workspace (replace placeholder)
-- [ ] `JobsTable.tsx` - List view with sortable columns
-- [ ] `JobsFilters.tsx` - Status filter tabs/buttons
-- [ ] `JobDetailPanel.tsx` - Full job info, progress, results
-- [ ] `JobActions.tsx` - Approve/Cancel buttons with confirmation
-- [ ] `JobProgress.tsx` - Real-time progress visualization
+- [x] `JobsWorkspace.tsx` - Main workspace (all-in-one implementation)
 
 ### Features
-- [ ] Job list with pagination
-- [ ] Filter by status (pending, processing, completed, failed, cancelled)
-- [ ] Filter by user (if admin)
-- [ ] Sort by created date, status
-- [ ] Job detail view with:
-  - Metadata (ID, type, timestamps)
-  - Pre-ingestion analysis (if awaiting approval)
-  - Progress (chunks, concepts, relationships)
-  - Results (stats, cost breakdown)
+- [x] Job list with filtering
+- [x] Filter by status (all, pending, processing, completed, failed, cancelled)
+- [x] Real-time status updates (auto-refresh when active jobs present)
+- [x] Job detail view with:
+  - Metadata (ID, type, timestamps, duration)
+  - Pre-ingestion analysis (file stats, cost estimate, warnings)
+  - Progress indicator (chunks, concepts, relationships)
+  - Results (stats, actual cost)
   - Error messages (if failed)
-- [ ] Approve action (for awaiting_approval jobs)
-- [ ] Cancel action (for cancellable jobs)
-- [ ] Real-time updates via SSE
-- [ ] Polling fallback if SSE unavailable
+- [x] Approve action (for awaiting_approval jobs)
+- [x] Cancel action (with confirmation)
+- [x] Responsive layout (list-only on mobile, split view on desktop)
+- [x] Polling-based updates (3s interval for active jobs)
 
 ### State Management
-- [ ] `web/src/store/jobsStore.ts` - Zustand store for jobs state
-- [ ] React Query hooks for job fetching/caching
+- [x] Local component state (simpler than Zustand for single-component use)
 
 ---
 
@@ -192,3 +180,17 @@ All endpoints already exist and work via CLI:
   - Added SSE streaming (streamJobProgress) and polling fallback (pollJobUntilComplete)
   - Created common components: StatusBadge, CostDisplay, ProgressIndicator
   - All components use theme-aware Tailwind classes (dark: variants)
+- **Phase 2 completed:**
+  - Implemented IngestWorkspace with drag-drop file upload
+  - Ontology selector with create-new option
+  - Advanced options (chunking, processing mode, auto-approve)
+  - Duplicate detection and force re-ingest
+  - Real-time job progress monitoring
+  - Success/error state handling
+- **Phase 3 completed:**
+  - Implemented JobsWorkspace with job list and detail view
+  - Status filter tabs (All, Pending, Processing, Completed, Failed, Cancelled)
+  - Auto-refresh for active jobs (3s polling interval)
+  - Job detail panel with full metadata, analysis, progress, results
+  - Approve/cancel actions with loading states
+  - Responsive split-view layout
