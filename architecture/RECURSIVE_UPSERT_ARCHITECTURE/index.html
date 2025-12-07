@@ -3348,6 +3348,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#architectural-classification-vector-augmented-knowledge-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Classification: Vector-Augmented Knowledge Graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architectural Classification: Vector-Augmented Knowledge Graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-is-and-isnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is (and Isn't)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-distinction-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Distinction Matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-to-graph-learning-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection to Graph Learning Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feedback-loops-that-improve-early-cycle-attachment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feedback Loops That Improve Early-Cycle Attachment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-true-tensor-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future: True Tensor Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trade-offs-and-design-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3405,6 +3477,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architectural-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6878,6 +6967,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#architectural-classification-vector-augmented-knowledge-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Classification: Vector-Augmented Knowledge Graph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architectural Classification: Vector-Augmented Knowledge Graph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-is-and-isnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is (and Isn't)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-distinction-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Distinction Matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-to-graph-learning-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection to Graph Learning Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feedback-loops-that-improve-early-cycle-attachment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feedback Loops That Improve Early-Cycle Attachment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-true-tensor-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future: True Tensor Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trade-offs-and-design-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6936,6 +7097,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architectural-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6985,6 +7163,7 @@
 <li><a href="#why-it-works">Why It Works Well</a></li>
 <li><a href="#the-on-problem">The O(N) Problem</a></li>
 <li><a href="#evolution">Evolution: How Later ADRs Improve The Pattern</a></li>
+<li><a href="#architectural-classification-vector-augmented-knowledge-graph">Architectural Classification: Vector-Augmented Knowledge Graph</a></li>
 <li><a href="#trade-offs">Trade-offs and Design Decisions</a></li>
 </ol>
 <hr />
@@ -7155,6 +7334,132 @@
 - Adjust thresholds based on relationship type
 - Provide confidence metrics to users</p>
 <hr />
+<h2 id="architectural-classification-vector-augmented-knowledge-graph">Architectural Classification: Vector-Augmented Knowledge Graph</h2>
+<p>Understanding what this system <em>is</em> helps clarify design decisions and future directions.</p>
+<h3 id="what-it-is-and-isnt">What It Is (and Isn't)</h3>
+<p>The recursive upsert pattern operates within a <strong>three-layer architecture</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>┌─────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>│  PROPERTY GRAPH STORAGE                                             │
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│  ─────────────────────                                              │
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│  Apache AGE / PostgreSQL                                            │
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│  Binary edges: (node)─[rel]→(node)                                  │
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│  Rich metadata: embeddings, confidence, timestamps                  │
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│                                                                     │
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>├─────────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│  QUERY-TIME SEMANTIC COMPUTATION                                    │
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│  ──────────────────────────────                                     │
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│  Cypher traversals construct node sets dynamically                  │
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│  No pre-materialized structures—computed on demand                  │
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│  Enables flexible analysis patterns without storage overhead        │
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>│                                                                     │
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>├─────────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>│  VECTOR OPERATIONS                                                  │
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>│  ────────────────                                                   │
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>│  Cosine similarity for concept matching                             │
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>│  Dot product projections onto semantic axes (ADR-058)               │
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>│  Polarity axis triangulation for grounding strength                 │
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>│  Collective epistemic agreement/disagreement analysis               │
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>└─────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Accurate terminology:</strong> "Vector-augmented knowledge graph" or "Property graph with query-time semantic computation"</p>
+<p><strong>Not accurate:</strong> "Hypergraph" (our edges connect exactly 2 nodes; true hyperedges connect N nodes as first-class entities)</p>
+<h3 id="why-this-distinction-matters">Why This Distinction Matters</h3>
+<p>The system's power comes from <strong>combining symbolic queryability with continuous semantic operations</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Capability</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Property Graph</strong></td>
+<td>Structural traversal</td>
+<td>"Find all concepts within 2 hops of X"</td>
+</tr>
+<tr>
+<td><strong>Query-Time Computation</strong></td>
+<td>Dynamic set construction</td>
+<td>"Collect nodes along SUPPORTS path, expand to neighbors"</td>
+</tr>
+<tr>
+<td><strong>Vector Operations</strong></td>
+<td>Semantic analysis</td>
+<td>"Calculate epistemic agreement across collected set"</td>
+</tr>
+</tbody>
+</table>
+<p>This hybrid enables queries like:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>1. Traverse SUPPORTS chain from concept X to Y  (graph layer)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>2. Collect all nodes on path + 2-hop neighbors  (computation layer)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>3. Project each onto polarity axis              (vector layer)
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>4. Calculate collective grounding agreement     (vector layer)
+</code></pre></div></p>
+<h3 id="connection-to-graph-learning-research">Connection to Graph Learning Research</h3>
+<p>The recursive upsert pattern shares conceptual DNA with <strong>Adaptive Neighborhood Feature Mixing (ANFM)</strong> from graph neural network research:</p>
+<table>
+<thead>
+<tr>
+<th>ANFM Approach</th>
+<th>Recursive Upsert Parallel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adaptive mixing weights via MLP</td>
+<td>Threshold-based vector similarity (0.85)</td>
+</tr>
+<tr>
+<td>Node embeddings for semantic content</td>
+<td>Concept embeddings (768-1536 dim)</td>
+</tr>
+<tr>
+<td>Edge embeddings for relationship semantics</td>
+<td>VocabType embeddings for relationship types</td>
+</tr>
+<tr>
+<td>Rejects uniform aggregation</td>
+<td>Uses context-aware matching, not blind merge/create</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key shared insight:</strong> Both systems reject uniform strategies in favor of <strong>adaptive, context-aware aggregation</strong>. ANFM learns mixing weights through training; our system achieves similar adaptivity through:
+- Configurable similarity thresholds
+- Grounding-based feedback loops
+- Epistemic status classification</p>
+<p><strong>Our unique advantage:</strong> The recursive aspect. ANFM operates on static graphs; our system builds graphs incrementally where each document matches against the <strong>accumulating graph state</strong>, creating self-improving feedback loops.</p>
+<h3 id="feedback-loops-that-improve-early-cycle-attachment">Feedback Loops That Improve Early-Cycle Attachment</h3>
+<p>Later ADRs don't just extend the pattern—they create <strong>feedback loops</strong> that improve attachment quality even in early ingestion cycles:</p>
+<p><strong>Loop 1: LLM Context Awareness</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># LLM sees recent concepts during extraction</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">existing_concepts</span> <span class="o">=</span> <span class="n">get_document_concepts</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">recent_chunks_only</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># → Can predict existing IDs, generates matching search terms</span>
+</code></pre></div></p>
+<p><strong>Loop 2: Vocabulary Evolution</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>LLM generates: &quot;validates&quot; → normalized to &quot;VALIDATES&quot;
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>New type: &quot;ENHANCES&quot; → auto-categorized, embedded, available for future matching
+</code></pre></div>
+The vocabulary <strong>grows with the graph</strong>, improving relationship normalization over time.</p>
+<p><strong>Loop 3: Grounding Feedback (ADR-044, ADR-058)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>High-grounding concepts → More likely to match (semantically stable)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>Low-grounding concepts → May indicate extraction errors → Adjust threshold
+</code></pre></div></p>
+<p><strong>Loop 4: Epistemic Status (ADR-065)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>AFFIRMATIVE relationships → Increase merge confidence
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>CONTESTED relationships → Flag for review
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>CONTRADICTORY relationships → Valuable dialectical tension, not errors
+</code></pre></div></p>
+<h3 id="future-true-tensor-operations">Future: True Tensor Operations</h3>
+<p>Current implementation uses CPU-based NumPy for vector operations. Future enhancements could include:</p>
+<ul>
+<li><strong>pgvector</strong> for native PostgreSQL vector similarity (ADR-072)</li>
+<li><strong>GPU-accelerated embeddings</strong> for batch operations</li>
+<li><strong>Graph Neural Network layers</strong> for learned concept clustering</li>
+</ul>
+<p>The architecture is designed to support these without fundamental restructuring—the property graph provides stable indexing while the vector layer can be upgraded independently.</p>
+<hr />
 <h2 id="trade-offs-and-design-decisions">Trade-offs and Design Decisions</h2>
 <h3 id="threshold-selection-085">Threshold Selection (0.85)</h3>
 <p><strong>Higher (0.90+):</strong>
@@ -7204,6 +7509,14 @@
 <li><strong>It's foundational</strong> to how the system builds knowledge across documents</li>
 </ol>
 <p>The key insight: <strong>Don't force exact matches, don't accept everything as new—find the semantic middle ground and let evidence accumulate.</strong></p>
+<h3 id="architectural-identity">Architectural Identity</h3>
+<p>The system is best described as a <strong>vector-augmented knowledge graph</strong>—a property graph foundation (Apache AGE) with query-time semantic computation and vector operations. This hybrid architecture:</p>
+<ul>
+<li><strong>Is NOT a hypergraph</strong> (our edges connect 2 nodes; true hyperedges connect N nodes)</li>
+<li><strong>IS a property graph</strong> with rich embeddings on nodes and relationship types</li>
+<li><strong>Enables hybrid queries</strong> combining structural traversal with semantic analysis</li>
+</ul>
+<p>The innovation lies in <strong>systematically replacing boolean logic with probabilistic values</strong>. Where traditional systems ask "does this relationship exist?" (yes/no), we ask "how strongly does this concept ground that one?" (continuous score via vector projection).</p>
 <p>Later enhancements (grounding, namespace safety, HNSW indexing, epistemic classification) address the pattern's limitations while preserving its core strength: <strong>organic knowledge synthesis through semantic similarity.</strong></p>
 <hr />
 <h2 id="related-adrs">Related ADRs</h2>
@@ -7211,9 +7524,12 @@
 <li><strong>ADR-016:</strong> Apache AGE Migration (graph database foundation)</li>
 <li><strong>ADR-028:</strong> Grounding Strength Calculation (epistemic feedback)</li>
 <li><strong>ADR-042:</strong> Ollama Integration (affects extraction cost)</li>
+<li><strong>ADR-044:</strong> Probabilistic Truth Convergence (grounding calculation)</li>
 <li><strong>ADR-048:</strong> GraphQueryFacade (namespace safety)</li>
 <li><strong>ADR-055:</strong> HNSW Vector Indexing (scaling beyond O(N))</li>
+<li><strong>ADR-058:</strong> Polarity Axis Triangulation (continuous grounding scores)</li>
 <li><strong>ADR-065:</strong> Epistemic Status Classification (merge reliability)</li>
+<li><strong>ADR-072:</strong> Configuration-Driven Matching (threshold tuning)</li>
 </ul>
 <p>For complete system architecture, see <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
 
