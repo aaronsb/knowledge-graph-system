@@ -601,6 +601,27 @@ class APIClient {
       await new Promise(resolve => setTimeout(resolve, interval));
     }
   }
+
+  /**
+   * Health check endpoint
+   */
+  async healthCheck(): Promise<{ status: string }> {
+    const response = await this.client.get<{ status: string }>('/health');
+    return response.data;
+  }
+
+  /**
+   * Get database statistics
+   */
+  async getDatabaseStats(): Promise<{
+    concepts: number;
+    relationships: number;
+    sources: number;
+    ontologies?: number;
+  }> {
+    const response = await this.client.get('/admin/database/stats');
+    return response.data;
+  }
 }
 
 // Export singleton instance

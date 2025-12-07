@@ -30,6 +30,7 @@ import {
   Box,
   GitBranch,
   FlaskConical,
+  Home,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
@@ -44,8 +45,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Determine active item from current path
   const isActive = (path: string) => {
-    if (path === '/explore/2d') {
-      return location.pathname === '/' || location.pathname === '/explore/2d';
+    if (path === '/') {
+      return location.pathname === '/';
     }
     return location.pathname.startsWith(path);
   };
@@ -53,7 +54,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Get current workspace name for toolbar
   const getWorkspaceName = () => {
     const path = location.pathname;
-    if (path === '/' || path.startsWith('/explore/2d')) return '2D Force Graph';
+    if (path === '/') return 'Home';
+    if (path.startsWith('/explore/2d')) return '2D Force Graph';
     if (path.startsWith('/explore/3d')) return '3D Force Graph';
     if (path.startsWith('/blocks')) return 'Block Editor';
     if (path.startsWith('/ingest')) return 'Ingest';
@@ -76,6 +78,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         <nav className="flex-1 p-2 overflow-y-auto">
+          {/* Home */}
+          <div className="mb-2">
+            <SidebarItem
+              icon={Home}
+              label="Home"
+              description="Welcome & overview"
+              isActive={isActive('/')}
+              onClick={() => navigate('/')}
+            />
+          </div>
+
           {/* Explorers */}
           <SidebarCategory title="Explorers" icon={Compass} defaultExpanded={true}>
             <SidebarItem
