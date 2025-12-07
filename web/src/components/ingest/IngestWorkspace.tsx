@@ -31,10 +31,14 @@ import type {
 import { isDuplicateResponse, isImageFile, isSupportedFile, MAX_FILE_SIZE_MB } from '../../types/ingest';
 import type { JobStatus } from '../../types/jobs';
 import { StatusBadge, CostDisplay, ProgressIndicator } from '../workspaces/common';
+import { usePreferencesStore } from '../../store/preferencesStore';
 
 type IngestState = 'idle' | 'uploading' | 'submitted' | 'processing' | 'completed' | 'failed';
 
 export const IngestWorkspace: React.FC = () => {
+  // Get ingest defaults from preferences store
+  const { ingest: ingestDefaults } = usePreferencesStore();
+
   // File state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -42,17 +46,17 @@ export const IngestWorkspace: React.FC = () => {
 
   // Ontology state
   const [ontologies, setOntologies] = useState<OntologyItem[]>([]);
-  const [selectedOntology, setSelectedOntology] = useState<string>('');
+  const [selectedOntology, setSelectedOntology] = useState<string>(ingestDefaults.defaultOntology);
   const [newOntologyName, setNewOntologyName] = useState<string>('');
   const [showNewOntology, setShowNewOntology] = useState(false);
   const [loadingOntologies, setLoadingOntologies] = useState(false);
 
-  // Options state
+  // Options state (initialized from preferences)
   const [showOptions, setShowOptions] = useState(false);
-  const [targetWords, setTargetWords] = useState(1000);
+  const [targetWords, setTargetWords] = useState(ingestDefaults.defaultChunkSize);
   const [overlapWords, setOverlapWords] = useState(200);
-  const [processingMode, setProcessingMode] = useState<'serial' | 'parallel'>('serial');
-  const [autoApprove, setAutoApprove] = useState(true);
+  const [processingMode, setProcessingMode] = useState<'serial' | 'parallel'>(ingestDefaults.defaultProcessingMode);
+  const [autoApprove, setAutoApprove] = useState(ingestDefaults.autoApprove);
   const [force, setForce] = useState(false);
 
   // Job state
@@ -71,9 +75,13 @@ export const IngestWorkspace: React.FC = () => {
     try {
       const response = await apiClient.listOntologies();
       setOntologies(response.ontologies);
-      // Select first ontology if available
-      if (response.ontologies.length > 0 && !selectedOntology) {
-        setSelectedOntology(response.ontologies[0].ontology);
+      // Use preference default if set, otherwise select first ontology
+      if (!selectedOntology) {
+        if (ingestDefaults.defaultOntology && response.ontologies.some(o => o.ontology === ingestDefaults.defaultOntology)) {
+          setSelectedOntology(ingestDefaults.defaultOntology);
+        } else if (response.ontologies.length > 0) {
+          setSelectedOntology(response.ontologies[0].ontology);
+        }
       }
     } catch (err) {
       console.error('Failed to load ontologies:', err);

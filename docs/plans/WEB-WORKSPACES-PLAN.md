@@ -13,7 +13,7 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 - [x] **Phase 1: Shared Foundation** (completed 2025-12-07)
 - [x] **Phase 2: IngestWorkspace** (completed 2025-12-07)
 - [x] **Phase 3: JobsWorkspace** (completed 2025-12-07)
-- [ ] **Phase 4: PreferencesWorkspace**
+- [x] **Phase 4: PreferencesWorkspace** (completed 2025-12-07)
 
 ---
 
@@ -97,30 +97,30 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 
 **Location:** `web/src/components/preferences/`
 
-### Existing (already implemented)
-- [x] Theme selection (Light/Dark/System)
-
-### Components to Add
-- [ ] `SearchPreferences.tsx` - Search result display options
-- [ ] `IngestDefaults.tsx` - Default ingest settings
-- [ ] `DisplayPreferences.tsx` - UI display options
+### Components
+- [x] `PreferencesWorkspace.tsx` - Enhanced with all preference sections
 
 ### Features
-- [ ] Search preferences:
-  - [ ] Show evidence quotes in results
-  - [ ] Show images inline
-  - [ ] Default result limit
-- [ ] Ingest defaults:
-  - [ ] Auto-approve new jobs
-  - [ ] Default ontology
-  - [ ] Default chunk size
-- [ ] Display preferences:
-  - [ ] Compact vs expanded views
-  - [ ] Animation settings
+- [x] Theme selection (Light/Dark/System with system preference tracking)
+- [x] Search preferences:
+  - [x] Show evidence quotes in results
+  - [x] Show images inline
+  - [x] Default result limit
+- [x] Ingest defaults:
+  - [x] Auto-approve new jobs
+  - [x] Default ontology (with dynamic ontology list)
+  - [x] Default chunk size
+  - [x] Default processing mode
+- [x] Display preferences:
+  - [x] Compact mode
+  - [x] Animation settings
+  - [x] Job notifications
+- [x] Reset to defaults button
 
 ### State Management
-- [ ] Enhance `web/src/store/preferencesStore.ts` (or themeStore)
-- [ ] localStorage persistence
+- [x] `web/src/store/preferencesStore.ts` - Zustand store with localStorage persistence
+- [x] Enhanced `web/src/store/themeStore.ts` - Added system theme support
+- [x] IngestWorkspace uses preferences for defaults
 
 ---
 
@@ -194,3 +194,13 @@ All endpoints already exist and work via CLI:
   - Job detail panel with full metadata, analysis, progress, results
   - Approve/cancel actions with loading states
   - Responsive split-view layout
+- **Phase 4 completed:**
+  - Created preferencesStore.ts with localStorage persistence
+  - Enhanced themeStore.ts with system theme preference support
+  - Enhanced PreferencesWorkspace with all preference sections:
+    - Appearance (Light/Dark/System theme)
+    - Search Results (quotes, images, result limit)
+    - Ingest Defaults (auto-approve, ontology, chunk size, processing mode)
+    - Display (compact mode, animations, notifications)
+  - Connected IngestWorkspace to use preference defaults
+  - Added reset-to-defaults functionality
