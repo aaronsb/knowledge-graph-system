@@ -10,7 +10,7 @@
 - ADR-048 (Query Safety via GraphQueryFacade) - Abstraction layer
 - ADR-044 (Probabilistic Truth Convergence) - Grounding calculation
 
-**Mathematical Foundation:** Hybrid symbolic-tensor network (emergent, not prescribed)
+**Mathematical Foundation:** Hybrid symbolic-semantic architecture with vector operations (emergent, not prescribed)
 
 ## Overview
 
@@ -112,7 +112,7 @@ RETURN s
 
 ---
 
-## Architectural Realization: From Boolean to Probabilistic, From Graph to Tensor Network
+## Architectural Realization: From Boolean to Probabilistic
 
 ### The Emergent Pattern
 
@@ -120,7 +120,9 @@ Through successive design decisions—vocabulary expansion-consolidation (ADR-05
 
 **What we thought we were building:** A graph database with semantic enrichment
 
-**What we're actually building:** A hybrid symbolic-tensor network represented in a graph
+**What we're actually building:** A vector-augmented knowledge graph—property graph storage with query-time semantic computation
+
+> **Terminology note:** This is NOT a "tensor network" in the quantum physics/ML sense (no tensor contractions, no GPU tensor operations). We perform **vector operations** (dot products, cosine similarity, projections) on embeddings. The term "vector-augmented" is more accurate than "tensor network." See [RECURSIVE_UPSERT_ARCHITECTURE.md](../RECURSIVE_UPSERT_ARCHITECTURE.md) for detailed terminology.
 
 ### The Shift from Boolean to Probabilistic
 
@@ -150,20 +152,19 @@ confidence = 0.92  # [0, 1]
 grounding = weighted_avg(projections, confidences)  # [-1, 1]
 ```
 
-### If It Walks Like a Tensor...
+### Vector Operations on Graph Structure
 
-**Tensor network properties we've inadvertently created:**
+The system performs **vector operations** that produce continuous scores instead of boolean results:
 
-| Property | Our System | Tensor Network Equivalent |
-|----------|------------|---------------------------|
-| **Nodes** | Concepts with embeddings | Tensors (vectors in R^n) |
-| **Edges** | Relationships with type embeddings | Tensor indices/contractions |
-| **Operations** | Dot products, projections, weighted sums | Tensor contractions |
-| **Clustering** | Similarity threshold filtering | Contraction-based membership |
-| **Grounding** | Weighted projection aggregation | Multi-edge tensor contraction |
-| **Vocabulary** | Type embeddings in semantic space | Tensor factorization/basis vectors |
+| Component | What It Stores | Vector Operation |
+|-----------|----------------|------------------|
+| **Concept nodes** | Embeddings (768-1536 dim) | Cosine similarity for matching |
+| **Relationship types** | Type embeddings in VocabType nodes | Dot product projections onto polarity axis |
+| **Clustering** | Similarity scores | Threshold filtering (≥0.85) |
+| **Grounding** | Weighted projections | `Σ(confidence × projection) / Σ(confidence)` |
+| **Vocabulary** | Category embeddings | Semantic similarity for auto-categorization |
 
-**We're not forcing a tensor paradigm—we're recognizing that our design naturally creates one.**
+**Key insight:** These are standard vector operations (rank-1 tensors), not tensor network contractions. The mathematical operations are simple but the architectural pattern is powerful.
 
 ### Why This Happened
 
@@ -178,7 +179,7 @@ Each decision eliminated discrete categories in favor of continuous values:
 3. **ADR-065 (Vocabulary-Based APPEARS):** Instead of binary presence, use appearance strength
    - Boolean: "Does concept appear?" → Probabilistic: "92% central, 0.15 tangential"
 
-**Result: A probabilistic tensor network indexed by graph structure**
+**Result: A vector-augmented knowledge graph where probabilistic semantics emerge from embedding operations**
 
 ### What This Means Architecturally
 
@@ -189,57 +190,57 @@ We're building a **hybrid system:**
 - Ontology organization (human-readable)
 - Provenance chains (source → instance → concept)
 
-**Tensor layer (continuous):**
+**Vector layer (continuous):**
 - Embeddings (vectors in semantic space)
 - Projections (dot products onto axes)
 - Clustering (similarity thresholds)
-- Grounding (weighted contractions)
+- Grounding (weighted aggregations)
 
 **Integration:**
 - Relationship types bridge both layers (symbolic labels + vector embeddings)
-- Graph topology indexes tensor network structure
+- Graph topology provides structure; vectors provide semantics
 - Queries combine symbolic patterns + probabilistic operations
 
-### Examples of Tensor Operations in the Graph
+### Examples of Vector Operations in the Graph
 
 **Example 1: Grounding calculation**
 ```python
-# This is a tensor contraction
+# Weighted dot product aggregation
 grounding = Σ(confidence_i * dot(edge_embedding_i, polarity_axis)) / Σ(confidence_i)
             └──────────────────────┬──────────────────────┘
-                          Weighted tensor contraction
+                          Weighted vector projection
 ```
 
 **Example 2: Appearance clustering**
 ```python
-# This is tensor filtering via contraction
+# Similarity-based filtering
 cluster = {r | dot(embed(r), embed("APPEARS")) >= 0.75}
                └──────────────┬─────────────┘
-                    Tensor similarity (normalized contraction)
+                    Cosine similarity threshold
 ```
 
 **Example 3: Vocabulary consolidation**
 ```python
-# This is tensor proximity detection
+# Semantic similarity detection
 should_merge = cosine_sim(embed(type1), embed(type2)) >= threshold
                └─────────────────┬────────────────┘
-                    Normalized tensor contraction
+                    Vector similarity comparison
 ```
 
 ### Implications
 
-**If we acknowledge this is a tensor network:**
-
-**Benefits we gain:**
-- Leverage tensor network optimization theory
-- GPU acceleration for batch operations (dot products, projections)
-- Tensor decomposition methods (reduce dimensionality, find patterns)
-- Anomaly detection (outliers in tensor space)
+**Benefits of the vector-augmented approach:**
 
 **Clarity we gain:**
-- Honest about mathematical foundation
+- Honest about mathematical foundation (vector operations, not tensor contractions)
 - Probabilistic semantics (not boolean approximations)
 - Gradient-based reasoning (smooth transitions, not hard boundaries)
+
+**Future possibilities:**
+- GPU acceleration for batch vector operations
+- pgvector for native PostgreSQL similarity search (ADR-072)
+- Dimensionality reduction for efficiency
+- Anomaly detection (outliers in embedding space)
 
 **Risks we avoid:**
 - Pretending discrete when actually continuous
@@ -248,14 +249,14 @@ should_merge = cosine_sim(embed(type1), embed(type2)) >= threshold
 
 **Architecture we maintain:**
 - Graph remains primary interface (Cypher, ontologies)
-- Tensors are implementation detail (users see probabilities)
-- Hybrid symbolic-continuous reasoning
+- Vectors are implementation detail (users see probabilities)
+- Hybrid symbolic-semantic reasoning
 
 ### Decision: Embrace the Pattern
 
 **Treat APPEARS as a semantic prototype in embedding space**, identical to how SUPPORTS/CONTRADICTS function as polarity prototypes in ADR-058.
 
-**But acknowledge:** This creates tensor network structure, and that's okay. We're not forcing tensors—they're emerging from our design principles.
+**But acknowledge:** This creates a vector-augmented architecture where probabilistic semantics emerge naturally from the design principles.
 
 ### Core Principle
 

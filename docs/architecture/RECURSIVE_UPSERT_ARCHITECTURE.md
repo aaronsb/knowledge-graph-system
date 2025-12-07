@@ -16,7 +16,8 @@
 4. [Why It Works Well](#why-it-works)
 5. [The O(N) Problem](#the-on-problem)
 6. [Evolution: How Later ADRs Improve The Pattern](#evolution)
-7. [Trade-offs and Design Decisions](#trade-offs)
+7. [Architectural Classification: Vector-Augmented Knowledge Graph](#architectural-classification-vector-augmented-knowledge-graph)
+8. [Trade-offs and Design Decisions](#trade-offs)
 
 ---
 
@@ -250,6 +251,122 @@ MATCH (c:Concept) WHERE c.embedding <-> $vec < 0.85
 
 ---
 
+## Architectural Classification: Vector-Augmented Knowledge Graph
+
+Understanding what this system *is* helps clarify design decisions and future directions.
+
+### What It Is (and Isn't)
+
+The recursive upsert pattern operates within a **three-layer architecture**:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  PROPERTY GRAPH STORAGE                                             │
+│  ─────────────────────                                              │
+│  Apache AGE / PostgreSQL                                            │
+│  Binary edges: (node)─[rel]→(node)                                  │
+│  Rich metadata: embeddings, confidence, timestamps                  │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  QUERY-TIME SEMANTIC COMPUTATION                                    │
+│  ──────────────────────────────                                     │
+│  Cypher traversals construct node sets dynamically                  │
+│  No pre-materialized structures—computed on demand                  │
+│  Enables flexible analysis patterns without storage overhead        │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  VECTOR OPERATIONS                                                  │
+│  ────────────────                                                   │
+│  Cosine similarity for concept matching                             │
+│  Dot product projections onto semantic axes (ADR-058)               │
+│  Polarity axis triangulation for grounding strength                 │
+│  Collective epistemic agreement/disagreement analysis               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Accurate terminology:** "Vector-augmented knowledge graph" or "Property graph with query-time semantic computation"
+
+**Not accurate:** "Hypergraph" (our edges connect exactly 2 nodes; true hyperedges connect N nodes as first-class entities)
+
+### Why This Distinction Matters
+
+The system's power comes from **combining symbolic queryability with continuous semantic operations**:
+
+| Layer | Capability | Example |
+|-------|------------|---------|
+| **Property Graph** | Structural traversal | "Find all concepts within 2 hops of X" |
+| **Query-Time Computation** | Dynamic set construction | "Collect nodes along SUPPORTS path, expand to neighbors" |
+| **Vector Operations** | Semantic analysis | "Calculate epistemic agreement across collected set" |
+
+This hybrid enables queries like:
+```
+1. Traverse SUPPORTS chain from concept X to Y  (graph layer)
+2. Collect all nodes on path + 2-hop neighbors  (computation layer)
+3. Project each onto polarity axis              (vector layer)
+4. Calculate collective grounding agreement     (vector layer)
+```
+
+### Connection to Graph Learning Research
+
+The recursive upsert pattern shares conceptual DNA with **Adaptive Neighborhood Feature Mixing (ANFM)** from graph neural network research:
+
+| ANFM Approach | Recursive Upsert Parallel |
+|---------------|---------------------------|
+| Adaptive mixing weights via MLP | Threshold-based vector similarity (0.85) |
+| Node embeddings for semantic content | Concept embeddings (768-1536 dim) |
+| Edge embeddings for relationship semantics | VocabType embeddings for relationship types |
+| Rejects uniform aggregation | Uses context-aware matching, not blind merge/create |
+
+**Key shared insight:** Both systems reject uniform strategies in favor of **adaptive, context-aware aggregation**. ANFM learns mixing weights through training; our system achieves similar adaptivity through:
+- Configurable similarity thresholds
+- Grounding-based feedback loops
+- Epistemic status classification
+
+**Our unique advantage:** The recursive aspect. ANFM operates on static graphs; our system builds graphs incrementally where each document matches against the **accumulating graph state**, creating self-improving feedback loops.
+
+### Feedback Loops That Improve Early-Cycle Attachment
+
+Later ADRs don't just extend the pattern—they create **feedback loops** that improve attachment quality even in early ingestion cycles:
+
+**Loop 1: LLM Context Awareness**
+```python
+# LLM sees recent concepts during extraction
+existing_concepts = get_document_concepts(ontology, recent_chunks_only=3)
+# → Can predict existing IDs, generates matching search terms
+```
+
+**Loop 2: Vocabulary Evolution**
+```
+LLM generates: "validates" → normalized to "VALIDATES"
+New type: "ENHANCES" → auto-categorized, embedded, available for future matching
+```
+The vocabulary **grows with the graph**, improving relationship normalization over time.
+
+**Loop 3: Grounding Feedback (ADR-044, ADR-058)**
+```
+High-grounding concepts → More likely to match (semantically stable)
+Low-grounding concepts → May indicate extraction errors → Adjust threshold
+```
+
+**Loop 4: Epistemic Status (ADR-065)**
+```
+AFFIRMATIVE relationships → Increase merge confidence
+CONTESTED relationships → Flag for review
+CONTRADICTORY relationships → Valuable dialectical tension, not errors
+```
+
+### Future: True Tensor Operations
+
+Current implementation uses CPU-based NumPy for vector operations. Future enhancements could include:
+
+- **pgvector** for native PostgreSQL vector similarity (ADR-072)
+- **GPU-accelerated embeddings** for batch operations
+- **Graph Neural Network layers** for learned concept clustering
+
+The architecture is designed to support these without fundamental restructuring—the property graph provides stable indexing while the vector layer can be upgraded independently.
+
+---
+
 ## Trade-offs and Design Decisions
 
 ### Threshold Selection (0.85)
@@ -316,6 +433,16 @@ MATCH (c:Concept) WHERE c.embedding <-> $vec < 0.85
 
 The key insight: **Don't force exact matches, don't accept everything as new—find the semantic middle ground and let evidence accumulate.**
 
+### Architectural Identity
+
+The system is best described as a **vector-augmented knowledge graph**—a property graph foundation (Apache AGE) with query-time semantic computation and vector operations. This hybrid architecture:
+
+- **Is NOT a hypergraph** (our edges connect 2 nodes; true hyperedges connect N nodes)
+- **IS a property graph** with rich embeddings on nodes and relationship types
+- **Enables hybrid queries** combining structural traversal with semantic analysis
+
+The innovation lies in **systematically replacing boolean logic with probabilistic values**. Where traditional systems ask "does this relationship exist?" (yes/no), we ask "how strongly does this concept ground that one?" (continuous score via vector projection).
+
 Later enhancements (grounding, namespace safety, HNSW indexing, epistemic classification) address the pattern's limitations while preserving its core strength: **organic knowledge synthesis through semantic similarity.**
 
 ---
@@ -325,8 +452,11 @@ Later enhancements (grounding, namespace safety, HNSW indexing, epistemic classi
 - **ADR-016:** Apache AGE Migration (graph database foundation)
 - **ADR-028:** Grounding Strength Calculation (epistemic feedback)
 - **ADR-042:** Ollama Integration (affects extraction cost)
+- **ADR-044:** Probabilistic Truth Convergence (grounding calculation)
 - **ADR-048:** GraphQueryFacade (namespace safety)
 - **ADR-055:** HNSW Vector Indexing (scaling beyond O(N))
+- **ADR-058:** Polarity Axis Triangulation (continuous grounding scores)
 - **ADR-065:** Epistemic Status Classification (merge reliability)
+- **ADR-072:** Configuration-Driven Matching (threshold tuning)
 
 For complete system architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
