@@ -10,7 +10,7 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 
 ## Progress Tracking
 
-- [ ] **Phase 1: Shared Foundation**
+- [x] **Phase 1: Shared Foundation** (completed 2025-12-07)
 - [ ] **Phase 2: IngestWorkspace**
 - [ ] **Phase 3: JobsWorkspace**
 - [ ] **Phase 4: PreferencesWorkspace**
@@ -20,23 +20,25 @@ Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preference
 ## Phase 1: Shared Foundation
 
 ### Types
-- [ ] `web/src/types/jobs.ts` - Job types (JobStatus, JobProgress, JobResult, etc.)
-- [ ] `web/src/types/ingest.ts` - Ingest types (IngestRequest, IngestResponse, DuplicateJobResponse)
+- [x] `web/src/types/jobs.ts` - Job types (JobStatus, JobProgress, JobResult, etc.)
+- [x] `web/src/types/ingest.ts` - Ingest types (IngestRequest, IngestResponse, DuplicateJobResponse)
 
 ### API Client Methods (`web/src/api/client.ts`)
-- [ ] `ingestFile(file, options)` - Multipart file upload
-- [ ] `ingestText(text, options)` - Raw text ingestion
-- [ ] `listJobs(filters)` - List jobs with status/user filters
-- [ ] `getJob(jobId)` - Get job status and details
-- [ ] `approveJob(jobId)` - Approve job for processing
-- [ ] `cancelJob(jobId)` - Cancel a job
-- [ ] `streamJobProgress(jobId, callbacks)` - SSE streaming with polling fallback
-- [ ] `listOntologies()` - Get available ontologies for selector
+- [x] `ingestFile(file, options)` - Multipart file upload
+- [x] `ingestText(text, options)` - Raw text ingestion
+- [x] `listJobs(filters)` - List jobs with status/user filters
+- [x] `getJob(jobId)` - Get job status and details
+- [x] `approveJob(jobId)` - Approve job for processing
+- [x] `cancelJob(jobId)` - Cancel a job
+- [x] `streamJobProgress(jobId, callbacks)` - SSE streaming with polling fallback
+- [x] `pollJobUntilComplete(jobId, callbacks)` - Polling fallback
+- [x] `listOntologies()` - Get available ontologies for selector
 
 ### Common Components (`web/src/components/workspaces/common/`)
-- [ ] `StatusBadge.tsx` - Consistent job status display (icons + colors)
-- [ ] `CostDisplay.tsx` - Format cost estimates ($0.15 - $0.25)
-- [ ] `ProgressIndicator.tsx` - Reusable progress bar with percentage
+- [x] `StatusBadge.tsx` - Consistent job status display (icons + colors)
+- [x] `CostDisplay.tsx` - Format cost estimates ($0.15 - $0.25)
+- [x] `ProgressIndicator.tsx` - Reusable progress bar with percentage
+- [x] `index.ts` - Re-exports for easy importing
 
 ---
 
@@ -182,3 +184,11 @@ All endpoints already exist and work via CLI:
 - Created feature branch `feature/web-workspaces`
 - Created this plan document
 - Researched existing web UI structure and CLI implementations
+- **Phase 1 completed:**
+  - Created `web/src/types/jobs.ts` with full job lifecycle types
+  - Created `web/src/types/ingest.ts` with ingest request/response types
+  - Added ingest methods to API client (ingestFile, ingestText, listOntologies)
+  - Added job methods to API client (getJob, listJobs, approveJob, cancelJob)
+  - Added SSE streaming (streamJobProgress) and polling fallback (pollJobUntilComplete)
+  - Created common components: StatusBadge, CostDisplay, ProgressIndicator
+  - All components use theme-aware Tailwind classes (dark: variants)

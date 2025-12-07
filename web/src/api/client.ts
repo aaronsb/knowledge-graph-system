@@ -7,6 +7,22 @@
 
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { SubgraphResponse } from '../types/graph';
+import type {
+  JobStatus,
+  JobListFilters,
+  JobApproveResponse,
+  JobCancelResponse,
+  JobsClearResponse,
+  JobProgressEvent,
+  JobCompletedEvent,
+  JobFailedEvent,
+} from '../types/jobs';
+import type {
+  IngestFileRequest,
+  IngestTextRequest,
+  IngestResponse,
+  OntologyListResponse,
+} from '../types/ingest';
 import { getAuthState } from '../lib/auth/oauth-utils';
 
 // API configuration - runtime config takes precedence over build-time env vars
@@ -369,6 +385,221 @@ class APIClient {
       }
     );
     return response.data;
+  }
+
+  // ============================================================
+  // INGESTION METHODS
+  // ============================================================
+
+  /**
+   * Ingest a file (multipart upload)
+   * Returns job submission response or duplicate detection response
+   */
+  async ingestFile(file: File, request: IngestFileRequest): Promise<IngestResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('ontology', request.ontology);
+
+    if (request.filename) formData.append('filename', request.filename);
+    if (request.force) formData.append('force', 'true');
+    if (request.auto_approve !== undefined) formData.append('auto_approve', String(request.auto_approve));
+    if (request.processing_mode) formData.append('processing_mode', request.processing_mode);
+    if (request.source_type) formData.append('source_type', request.source_type);
+    if (request.source_path) formData.append('source_path', request.source_path);
+    if (request.source_hostname) formData.append('source_hostname', request.source_hostname);
+
+    // Chunking options
+    if (request.options?.target_words) formData.append('target_words', String(request.options.target_words));
+    if (request.options?.overlap_words) formData.append('overlap_words', String(request.options.overlap_words));
+    if (request.options?.min_words) formData.append('min_words', String(request.options.min_words));
+    if (request.options?.max_words) formData.append('max_words', String(request.options.max_words));
+
+    const response = await this.client.post<IngestResponse>('/ingest', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 1 minute for upload
+    });
+    return response.data;
+  }
+
+  /**
+   * Ingest raw text directly
+   */
+  async ingestText(request: IngestTextRequest): Promise<IngestResponse> {
+    const formData = new FormData();
+    formData.append('text', request.text);
+    formData.append('ontology', request.ontology);
+
+    if (request.filename) formData.append('filename', request.filename);
+    if (request.force) formData.append('force', 'true');
+    if (request.auto_approve !== undefined) formData.append('auto_approve', String(request.auto_approve));
+    if (request.processing_mode) formData.append('processing_mode', request.processing_mode);
+
+    if (request.options?.target_words) formData.append('target_words', String(request.options.target_words));
+
+    const response = await this.client.post<IngestResponse>('/ingest/text', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000,
+    });
+    return response.data;
+  }
+
+  /**
+   * List available ontologies
+   */
+  async listOntologies(): Promise<OntologyListResponse> {
+    const response = await this.client.get<OntologyListResponse>('/ontology/');
+    return response.data;
+  }
+
+  // ============================================================
+  // JOB MANAGEMENT METHODS
+  // ============================================================
+
+  /**
+   * Get job status by ID
+   */
+  async getJob(jobId: string): Promise<JobStatus> {
+    const response = await this.client.get<JobStatus>(`/jobs/${jobId}`);
+    return response.data;
+  }
+
+  /**
+   * List jobs with optional filtering
+   */
+  async listJobs(filters?: JobListFilters): Promise<JobStatus[]> {
+    const response = await this.client.get<JobStatus[]>('/jobs', {
+      params: {
+        status: filters?.status,
+        user_id: filters?.user_id,
+        limit: filters?.limit ?? 50,
+        offset: filters?.offset ?? 0,
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Approve a job for processing (ADR-014)
+   */
+  async approveJob(jobId: string): Promise<JobApproveResponse> {
+    const response = await this.client.post<JobApproveResponse>(`/jobs/${jobId}/approve`);
+    return response.data;
+  }
+
+  /**
+   * Cancel a job
+   */
+  async cancelJob(jobId: string): Promise<JobCancelResponse> {
+    const response = await this.client.delete<JobCancelResponse>(`/jobs/${jobId}`);
+    return response.data;
+  }
+
+  /**
+   * Clear all jobs (admin operation)
+   */
+  async clearAllJobs(): Promise<JobsClearResponse> {
+    const response = await this.client.delete<JobsClearResponse>('/jobs', {
+      params: { confirm: true },
+    });
+    return response.data;
+  }
+
+  /**
+   * Stream job progress via Server-Sent Events
+   * Returns cleanup function to close connection
+   */
+  streamJobProgress(
+    jobId: string,
+    callbacks: {
+      onProgress?: (event: JobProgressEvent) => void;
+      onCompleted?: (event: JobCompletedEvent) => void;
+      onFailed?: (event: JobFailedEvent) => void;
+      onError?: (error: Error) => void;
+    }
+  ): () => void {
+    const authState = getAuthState();
+    const token = authState?.access_token;
+
+    // Build URL with auth token as query param (SSE doesn't support headers)
+    const url = new URL(`${API_BASE_URL}/jobs/${jobId}/stream`);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+
+    const eventSource = new EventSource(url.toString());
+
+    eventSource.addEventListener('progress', (e) => {
+      try {
+        const data = JSON.parse(e.data) as JobProgressEvent;
+        callbacks.onProgress?.(data);
+      } catch (err) {
+        console.error('Failed to parse progress event:', err);
+      }
+    });
+
+    eventSource.addEventListener('completed', (e) => {
+      try {
+        const data = JSON.parse(e.data) as JobCompletedEvent;
+        callbacks.onCompleted?.(data);
+        eventSource.close();
+      } catch (err) {
+        console.error('Failed to parse completed event:', err);
+      }
+    });
+
+    eventSource.addEventListener('failed', (e) => {
+      try {
+        const data = JSON.parse(e.data) as JobFailedEvent;
+        callbacks.onFailed?.(data);
+        eventSource.close();
+      } catch (err) {
+        console.error('Failed to parse failed event:', err);
+      }
+    });
+
+    eventSource.addEventListener('cancelled', () => {
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      callbacks.onError?.(new Error('SSE connection error'));
+      eventSource.close();
+    };
+
+    // Return cleanup function
+    return () => {
+      eventSource.close();
+    };
+  }
+
+  /**
+   * Poll job status until completion (fallback for SSE)
+   * Returns final job status
+   */
+  async pollJobUntilComplete(
+    jobId: string,
+    callbacks?: {
+      onProgress?: (job: JobStatus) => void;
+      intervalMs?: number;
+    }
+  ): Promise<JobStatus> {
+    const interval = callbacks?.intervalMs ?? 2000;
+    const terminalStates = ['completed', 'failed', 'cancelled'];
+
+    while (true) {
+      const job = await this.getJob(jobId);
+      callbacks?.onProgress?.(job);
+
+      if (terminalStates.includes(job.status)) {
+        return job;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, interval));
+    }
   }
 }
 
