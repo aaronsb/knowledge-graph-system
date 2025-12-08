@@ -30,6 +30,7 @@ interface SystemStatus {
     concepts: number;
     relationships: number;
     sources: number;
+    ontologies: number;
   };
   health?: boolean;
 }
@@ -51,14 +52,35 @@ export const HomeWorkspace: React.FC = () => {
   const loadStatus = async () => {
     setLoading(true);
     try {
-      const health = await apiClient.healthCheck();
-      const stats = await apiClient.getDatabaseStats();
+      // Load health, stats, and ontologies in parallel
+      const [health, stats, ontologies] = await Promise.all([
+        apiClient.healthCheck().catch(err => {
+          console.error('Health check failed:', err);
+          return { status: 'error' };
+        }),
+        apiClient.getDatabaseStats().catch(err => {
+          console.error('Database stats failed:', err);
+          return null;
+        }),
+        apiClient.listOntologies().catch(err => {
+          console.error('Ontologies fetch failed:', err);
+          return { ontologies: [], count: 0 };
+        }),
+      ]);
+
+      // Parse stats response: { nodes: { Concept: X, Source: Y }, relationships: { total: N } }
+      const concepts = stats?.nodes?.Concept || 0;
+      const sources = stats?.nodes?.Source || 0;
+      const relationships = stats?.relationships?.total || 0;
+      const ontologyCount = ontologies?.count || 0;
+
       setStatus({
-        health: health.status === 'ok',
+        health: health.status === 'healthy',
         database: {
-          concepts: stats.concepts || 0,
-          relationships: stats.relationships || 0,
-          sources: stats.sources || 0,
+          concepts,
+          relationships,
+          sources,
+          ontologies: ontologyCount,
         },
       });
     } catch (err) {
@@ -100,14 +122,16 @@ export const HomeWorkspace: React.FC = () => {
   // Not authenticated - show welcome and login
   if (!isAuthenticated) {
     return (
-      <div className="h-full flex flex-col bg-background dark:bg-gray-950">
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="max-w-lg text-center relative">
-            {/* Animated Graph Background */}
-            <div className="absolute inset-0 flex items-center justify-center -z-10 opacity-30 dark:opacity-40">
-              <GraphAnimation width={500} height={500} />
-            </div>
+      <div className="h-full flex flex-col bg-background dark:bg-gray-950 relative overflow-hidden">
+        {/* Animated Graph Background - positioned behind everything */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="opacity-20 dark:opacity-30">
+            <GraphAnimation width={600} height={600} />
+          </div>
+        </div>
 
+        <div className="flex-1 flex items-center justify-center p-8 relative z-10">
+          <div className="max-w-lg text-center">
             {/* Logo/Icon */}
             <div className="mb-8">
               <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg backdrop-blur-sm">
@@ -191,7 +215,7 @@ export const HomeWorkspace: React.FC = () => {
                 Loading status...
               </div>
             ) : status ? (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-5 gap-4">
                 <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">
                   <div className="flex items-center gap-2 mb-2">
                     {status.health ? (
@@ -203,6 +227,14 @@ export const HomeWorkspace: React.FC = () => {
                   </div>
                   <div className="text-2xl font-bold text-card-foreground dark:text-gray-200">
                     {status.health ? 'Online' : 'Offline'}
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">
+                  <div className="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-2">
+                    Ontologies
+                  </div>
+                  <div className="text-2xl font-bold text-card-foreground dark:text-gray-200">
+                    {status.database?.ontologies?.toLocaleString() || 0}
                   </div>
                 </div>
                 <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">

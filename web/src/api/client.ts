@@ -612,14 +612,14 @@ class APIClient {
 
   /**
    * Get database statistics
+   * Response format: { nodes: { Concept, Source, Instance }, relationships: { total, by_type } }
    */
   async getDatabaseStats(): Promise<{
-    concepts: number;
-    relationships: number;
-    sources: number;
-    ontologies?: number;
+    nodes: { Concept?: number; Source?: number; Instance?: number };
+    relationships: { total?: number; by_type?: Array<{ rel_type: string; count: number }> };
+    metrics?: Record<string, unknown>;
   }> {
-    const response = await this.client.get('/admin/database/stats');
+    const response = await this.client.get('/database/stats');
     return response.data;
   }
 }

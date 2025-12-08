@@ -198,8 +198,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         <div className="p-4 border-t border-border">
           <div className="text-xs text-muted-foreground">
-            <div>API: localhost:8000</div>
-            <div className="mt-1">Status: Connected</div>
+            API: localhost:8000
           </div>
         </div>
       </aside>
