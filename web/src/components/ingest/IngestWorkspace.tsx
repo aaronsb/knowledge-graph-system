@@ -1,8 +1,9 @@
 /**
  * Ingest Workspace
  *
- * Web-based content ingestion interface.
- * Supports drag-drop file upload with ontology selection and job monitoring.
+ * Queue-based multi-ontology ingestion interface.
+ * Users drag files into specific ontology zones (existing or new).
+ * Files queue up per ontology before batch ingestion.
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -21,6 +22,8 @@ import {
   X,
   Plus,
   RefreshCw,
+  PencilLine,
+  Trash2,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import type {
@@ -33,25 +36,52 @@ import type { JobStatus } from '../../types/jobs';
 import { StatusBadge, CostDisplay, ProgressIndicator } from '../workspaces/common';
 import { usePreferencesStore } from '../../store/preferencesStore';
 
-type IngestState = 'idle' | 'uploading' | 'submitted' | 'processing' | 'completed' | 'failed';
+// File queue entry
+interface QueuedFile {
+  id: string;
+  file: File;
+}
+
+// Queue per ontology
+interface OntologyQueue {
+  ontology: string;
+  isNew: boolean;
+  files: QueuedFile[];
+}
+
+// Job tracking for batch submission
+interface SubmittedJob {
+  ontology: string;
+  filename: string;
+  jobId?: string;
+  status: 'pending' | 'uploading' | 'submitted' | 'failed';
+  error?: string;
+}
+
+type IngestState = 'idle' | 'submitting' | 'completed';
 
 export const IngestWorkspace: React.FC = () => {
   // Get ingest defaults from preferences store
   const { ingest: ingestDefaults } = usePreferencesStore();
 
-  // File state
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-
   // Ontology state
   const [ontologies, setOntologies] = useState<OntologyItem[]>([]);
-  const [selectedOntology, setSelectedOntology] = useState<string>(ingestDefaults.defaultOntology);
-  const [newOntologyName, setNewOntologyName] = useState<string>('');
-  const [showNewOntology, setShowNewOntology] = useState(false);
   const [loadingOntologies, setLoadingOntologies] = useState(false);
 
-  // Options state (initialized from preferences)
+  // New ontology being created (in the "Create New" zone)
+  const [pendingNewOntologyName, setPendingNewOntologyName] = useState<string>('');
+  const [editingPendingOntology, setEditingPendingOntology] = useState(false);
+
+  // Track which new ontology names are being edited
+  const [editingOntologyName, setEditingOntologyName] = useState<string | null>(null);
+
+  // File queues - map from ontology name to queue
+  const [queues, setQueues] = useState<Map<string, OntologyQueue>>(new Map());
+
+  // Drag state - track which zone is being hovered
+  const [dragOverZone, setDragOverZone] = useState<string | null>(null);
+
+  // Options state
   const [showOptions, setShowOptions] = useState(false);
   const [targetWords, setTargetWords] = useState(ingestDefaults.defaultChunkSize);
   const [overlapWords, setOverlapWords] = useState(200);
@@ -59,11 +89,10 @@ export const IngestWorkspace: React.FC = () => {
   const [autoApprove, setAutoApprove] = useState(ingestDefaults.autoApprove);
   const [force, setForce] = useState(false);
 
-  // Job state
+  // Submission state
   const [ingestState, setIngestState] = useState<IngestState>('idle');
-  const [currentJob, setCurrentJob] = useState<JobStatus | null>(null);
+  const [submittedJobs, setSubmittedJobs] = useState<SubmittedJob[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [duplicateInfo, setDuplicateInfo] = useState<{ jobId: string; message: string } | null>(null);
 
   // Load ontologies on mount
   useEffect(() => {
@@ -75,14 +104,6 @@ export const IngestWorkspace: React.FC = () => {
     try {
       const response = await apiClient.listOntologies();
       setOntologies(response.ontologies);
-      // Use preference default if set, otherwise select first ontology
-      if (!selectedOntology) {
-        if (ingestDefaults.defaultOntology && response.ontologies.some(o => o.ontology === ingestDefaults.defaultOntology)) {
-          setSelectedOntology(ingestDefaults.defaultOntology);
-        } else if (response.ontologies.length > 0) {
-          setSelectedOntology(response.ontologies[0].ontology);
-        }
-      }
     } catch (err) {
       console.error('Failed to load ontologies:', err);
     } finally {
@@ -90,407 +111,773 @@ export const IngestWorkspace: React.FC = () => {
     }
   };
 
-  // File drop handlers
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  }, []);
+  // Generate unique ID for queued files
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  // Validate file
   const validateFile = (file: File): string | null => {
     if (!isSupportedFile(file.name)) {
-      return `Unsupported file type. Supported: .txt, .md, .rst, .pdf, .png, .jpg, .jpeg, .gif, .webp, .bmp`;
+      return `Unsupported file type: ${file.name}`;
     }
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      return `File too large. Maximum size: ${MAX_FILE_SIZE_MB}MB`;
+      return `File too large: ${file.name} (max ${MAX_FILE_SIZE_MB}MB)`;
     }
     return null;
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    setFileError(null);
+  // Add files to an ontology queue
+  const addFilesToQueue = (ontologyName: string, files: File[], isNew: boolean) => {
+    const validFiles: QueuedFile[] = [];
+    const errors: string[] = [];
 
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      const file = files[0];
+    for (const file of files) {
       const error = validateFile(file);
       if (error) {
-        setFileError(error);
+        errors.push(error);
       } else {
-        setSelectedFile(file);
-        setDuplicateInfo(null);
+        validFiles.push({ id: generateId(), file });
       }
     }
-  }, []);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFileError(null);
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      const error = validateFile(file);
-      if (error) {
-        setFileError(error);
-      } else {
-        setSelectedFile(file);
-        setDuplicateInfo(null);
-      }
+    if (errors.length > 0) {
+      setSubmitError(errors.join('\n'));
     }
-  }, []);
 
-  const clearFile = () => {
-    setSelectedFile(null);
-    setFileError(null);
-    setDuplicateInfo(null);
-    setIngestState('idle');
-    setCurrentJob(null);
+    if (validFiles.length > 0) {
+      setQueues(prev => {
+        const newQueues = new Map(prev);
+        const existing = newQueues.get(ontologyName);
+        if (existing) {
+          newQueues.set(ontologyName, {
+            ...existing,
+            files: [...existing.files, ...validFiles],
+          });
+        } else {
+          newQueues.set(ontologyName, {
+            ontology: ontologyName,
+            isNew,
+            files: validFiles,
+          });
+        }
+        return newQueues;
+      });
+    }
+  };
+
+  // Remove file from queue
+  const removeFileFromQueue = (ontologyName: string, fileId: string) => {
+    setQueues(prev => {
+      const newQueues = new Map(prev);
+      const queue = newQueues.get(ontologyName);
+      if (queue) {
+        const newFiles = queue.files.filter(f => f.id !== fileId);
+        if (newFiles.length === 0) {
+          newQueues.delete(ontologyName);
+        } else {
+          newQueues.set(ontologyName, { ...queue, files: newFiles });
+        }
+      }
+      return newQueues;
+    });
+  };
+
+  // Clear entire queue for an ontology
+  const clearQueue = (ontologyName: string) => {
+    setQueues(prev => {
+      const newQueues = new Map(prev);
+      newQueues.delete(ontologyName);
+      return newQueues;
+    });
+  };
+
+  // Clear all queues
+  const clearAllQueues = () => {
+    setQueues(new Map());
+    setPendingNewOntologyName('');
+    setEditingPendingOntology(false);
     setSubmitError(null);
   };
 
-  // Get effective ontology name
-  const getOntologyName = (): string => {
-    if (showNewOntology && newOntologyName.trim()) {
-      return newOntologyName.trim();
+  // Handle drop on ontology zone
+  const handleDrop = (e: React.DragEvent, ontologyName: string, isNew: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverZone(null);
+    setSubmitError(null);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      // For the "Create New" placeholder zone, prompt for name
+      if (ontologyName === '__PENDING_NEW__') {
+        setEditingPendingOntology(true);
+        // Store files temporarily - they'll be added when name is confirmed
+        const validFiles = files.filter(f => !validateFile(f));
+        if (validFiles.length > 0) {
+          addFilesToQueue('__PENDING_NEW__', validFiles, true);
+        }
+      } else {
+        addFilesToQueue(ontologyName, files, isNew);
+      }
     }
-    return selectedOntology;
   };
 
-  // Submit ingestion
-  const handleSubmit = async () => {
-    if (!selectedFile) return;
+  // Confirm pending new ontology name - creates it and clears the pending zone
+  const confirmPendingOntology = () => {
+    if (!pendingNewOntologyName.trim()) return;
 
-    const ontologyName = getOntologyName();
-    if (!ontologyName) {
-      setSubmitError('Please select or create an ontology');
+    const newName = pendingNewOntologyName.trim();
+
+    // Move any files from placeholder to the real name
+    setQueues(prev => {
+      const newQueues = new Map(prev);
+      const placeholder = newQueues.get('__PENDING_NEW__');
+      if (placeholder) {
+        newQueues.delete('__PENDING_NEW__');
+        const existing = newQueues.get(newName);
+        if (existing) {
+          newQueues.set(newName, {
+            ...existing,
+            files: [...existing.files, ...placeholder.files],
+          });
+        } else {
+          newQueues.set(newName, {
+            ontology: newName,
+            isNew: true,
+            files: placeholder.files,
+          });
+        }
+      }
+      return newQueues;
+    });
+
+    // Reset the pending zone for another new ontology
+    setPendingNewOntologyName('');
+    setEditingPendingOntology(false);
+  };
+
+  // Rename an existing new ontology
+  const renameNewOntology = (oldName: string, newName: string) => {
+    if (!newName.trim() || oldName === newName.trim()) {
+      setEditingOntologyName(null);
       return;
     }
 
-    setIngestState('uploading');
-    setSubmitError(null);
-    setDuplicateInfo(null);
-
-    try {
-      const request: IngestFileRequest = {
-        ontology: ontologyName,
-        filename: selectedFile.name,
-        force,
-        auto_approve: autoApprove,
-        processing_mode: processingMode,
-        source_type: 'web',
-        options: {
-          target_words: targetWords,
-          overlap_words: overlapWords,
-        },
-      };
-
-      const response = await apiClient.ingestFile(selectedFile, request);
-
-      if (isDuplicateResponse(response)) {
-        setDuplicateInfo({
-          jobId: response.existing_job_id,
-          message: response.message,
+    setQueues(prev => {
+      const newQueues = new Map(prev);
+      const queue = newQueues.get(oldName);
+      if (queue) {
+        newQueues.delete(oldName);
+        newQueues.set(newName.trim(), {
+          ...queue,
+          ontology: newName.trim(),
         });
-        setIngestState('idle');
-        return;
       }
-
-      // Job submitted successfully
-      setIngestState('submitted');
-
-      // Start monitoring the job
-      monitorJob(response.job_id);
-
-    } catch (err: any) {
-      setSubmitError(err.response?.data?.detail || err.message || 'Upload failed');
-      setIngestState('failed');
-    }
+      return newQueues;
+    });
+    setEditingOntologyName(null);
   };
 
-  // Monitor job progress
-  const monitorJob = async (jobId: string) => {
-    // First, try SSE streaming
-    const cleanup = apiClient.streamJobProgress(jobId, {
-      onProgress: (event) => {
-        setCurrentJob(prev => prev ? {
-          ...prev,
-          status: 'processing',
-          progress: {
-            stage: event.stage,
-            percent: event.percent,
-            chunks_processed: event.chunks_processed,
-            chunks_total: event.chunks_total,
-            concepts_created: event.concepts_created,
-            concepts_linked: event.concepts_linked,
-            relationships_created: event.relationships_created,
-          },
-        } : null);
-        setIngestState('processing');
-      },
-      onCompleted: (event) => {
-        setCurrentJob(prev => prev ? {
-          ...prev,
-          status: 'completed',
-          result: {
-            status: event.status,
-            stats: event.stats,
-            cost: event.cost,
-          },
-        } : null);
-        setIngestState('completed');
-        // Refresh ontologies to show updated counts
-        loadOntologies();
-      },
-      onFailed: (event) => {
-        setCurrentJob(prev => prev ? {
-          ...prev,
-          status: 'failed',
-          error: event.error,
-        } : null);
-        setIngestState('failed');
-      },
-      onError: async () => {
-        // SSE failed, fall back to polling
-        console.log('SSE failed, falling back to polling');
-        try {
-          const finalJob = await apiClient.pollJobUntilComplete(jobId, {
-            onProgress: (job) => {
-              setCurrentJob(job);
-              if (job.status === 'processing') {
-                setIngestState('processing');
-              }
-            },
-          });
-          setCurrentJob(finalJob);
-          setIngestState(finalJob.status === 'completed' ? 'completed' : 'failed');
-          if (finalJob.status === 'completed') {
-            loadOntologies();
-          }
-        } catch (pollErr) {
-          console.error('Polling failed:', pollErr);
-          setIngestState('failed');
-        }
-      },
+  // Get total file count
+  const getTotalFileCount = (): number => {
+    let count = 0;
+    queues.forEach(q => {
+      count += q.files.length;
+    });
+    return count;
+  };
+
+  // Check if we can submit (no pending unnamed ontology)
+  const canSubmit = getTotalFileCount() > 0 && !queues.has('__PENDING_NEW__');
+
+  // Submit all queued files
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+
+    setIngestState('submitting');
+    setSubmitError(null);
+
+    const jobs: SubmittedJob[] = [];
+
+    // Build job list
+    queues.forEach((queue, ontologyName) => {
+      queue.files.forEach(qf => {
+        jobs.push({
+          ontology: ontologyName,
+          filename: qf.file.name,
+          status: 'pending',
+        });
+      });
     });
 
-    // Get initial job status
-    try {
-      const job = await apiClient.getJob(jobId);
-      setCurrentJob(job);
-      if (job.status === 'completed') {
-        setIngestState('completed');
-        cleanup();
-      } else if (job.status === 'failed' || job.status === 'cancelled') {
-        setIngestState('failed');
-        cleanup();
+    setSubmittedJobs(jobs);
+
+    // Submit each file
+    let jobIndex = 0;
+    for (const [ontologyName, queue] of queues) {
+      for (const qf of queue.files) {
+        // Update status to uploading
+        setSubmittedJobs(prev => {
+          const updated = [...prev];
+          updated[jobIndex] = { ...updated[jobIndex], status: 'uploading' };
+          return updated;
+        });
+
+        try {
+          const request: IngestFileRequest = {
+            ontology: ontologyName,
+            filename: qf.file.name,
+            force,
+            auto_approve: autoApprove,
+            processing_mode: processingMode,
+            chunking: {
+              target_words: targetWords,
+              overlap_words: overlapWords,
+            },
+          };
+
+          const response = await apiClient.ingestFile(qf.file, request);
+
+          // Update status to submitted
+          setSubmittedJobs(prev => {
+            const updated = [...prev];
+            updated[jobIndex] = {
+              ...updated[jobIndex],
+              status: 'submitted',
+              jobId: response.job_id,
+            };
+            return updated;
+          });
+        } catch (err: any) {
+          // Update status to failed
+          setSubmittedJobs(prev => {
+            const updated = [...prev];
+            updated[jobIndex] = {
+              ...updated[jobIndex],
+              status: 'failed',
+              error: err.response?.data?.detail || err.message || 'Upload failed',
+            };
+            return updated;
+          });
+        }
+
+        jobIndex++;
       }
-    } catch (err) {
-      console.error('Failed to get initial job status:', err);
     }
+
+    setIngestState('completed');
   };
 
-  // Render file info
-  const renderFileInfo = () => {
-    if (!selectedFile) return null;
+  // Reset after completion
+  const resetWorkspace = () => {
+    clearAllQueues();
+    setIngestState('idle');
+    setSubmittedJobs([]);
+    loadOntologies(); // Refresh ontology list
+  };
 
-    const isImage = isImageFile(selectedFile.name);
-    const Icon = isImage ? Image : FileText;
-    const sizeKB = (selectedFile.size / 1024).toFixed(1);
+  // Get file icon
+  const getFileIcon = (filename: string) => {
+    if (isImageFile(filename)) {
+      return <Image className="w-4 h-4 text-purple-500" />;
+    }
+    return <FileText className="w-4 h-4 text-blue-500" />;
+  };
+
+  // Format file size
+  const formatSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Render drop zone for an existing ontology
+  const renderExistingOntologyDropZone = (ontologyName: string, conceptCount: number) => {
+    const queue = queues.get(ontologyName);
+    const isDragOver = dragOverZone === ontologyName;
+    const hasFiles = queue && queue.files.length > 0;
 
     return (
-      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-        <Icon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-card-foreground dark:text-gray-200 truncate">
-            {selectedFile.name}
+      <div
+        key={ontologyName}
+        onDragEnter={(e) => { e.preventDefault(); setDragOverZone(ontologyName); }}
+        onDragOver={(e) => { e.preventDefault(); setDragOverZone(ontologyName); }}
+        onDragLeave={(e) => { e.preventDefault(); if (e.currentTarget === e.target) setDragOverZone(null); }}
+        onDrop={(e) => handleDrop(e, ontologyName, false)}
+        className={`
+          p-4 rounded-lg border-2 transition-all min-h-[120px]
+          ${isDragOver
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 border-solid'
+            : hasFiles
+              ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/10 border-solid'
+              : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 border-dashed'
+          }
+        `}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-blue-500" />
+            <span className="font-medium text-card-foreground dark:text-gray-200">
+              {ontologyName}
+            </span>
+            <span className="text-xs text-muted-foreground dark:text-gray-400">
+              ({conceptCount} concepts)
+            </span>
           </div>
-          <div className="text-sm text-muted-foreground dark:text-gray-400">
-            {sizeKB} KB • {isImage ? 'Image' : 'Document'}
-          </div>
+          {hasFiles && (
+            <button
+              onClick={() => clearQueue(ontologyName)}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+              title="Clear all files"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        <button
-          onClick={clearFile}
-          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-          title="Remove file"
-        >
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
+
+        {hasFiles ? (
+          <div className="space-y-1">
+            {queue.files.map((qf) => (
+              <div
+                key={qf.id}
+                className="flex items-center justify-between py-1 px-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {getFileIcon(qf.file.name)}
+                  <span className="text-sm text-card-foreground dark:text-gray-200 truncate">
+                    {qf.file.name}
+                  </span>
+                  <span className="text-xs text-muted-foreground dark:text-gray-400 flex-shrink-0">
+                    {formatSize(qf.file.size)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeFileFromQueue(ontologyName, qf.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            {/* Embedded summary for this ontology */}
+            <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700 text-xs text-blue-600 dark:text-blue-400">
+              {queue.files.length} file{queue.files.length !== 1 ? 's' : ''} ready to add
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-12 text-sm text-muted-foreground dark:text-gray-400">
+            <Upload className="w-4 h-4 mr-2" />
+            Drop files here
+          </div>
+        )}
       </div>
     );
   };
 
-  // Can submit?
-  const canSubmit = selectedFile && getOntologyName() && ingestState === 'idle';
+  // Render drop zone for a proposed new ontology
+  const renderProposedOntologyDropZone = (ontologyName: string, queue: OntologyQueue) => {
+    const isDragOver = dragOverZone === ontologyName;
+    const isEditing = editingOntologyName === ontologyName;
+
+    return (
+      <div
+        key={ontologyName}
+        onDragEnter={(e) => { e.preventDefault(); setDragOverZone(ontologyName); }}
+        onDragOver={(e) => { e.preventDefault(); setDragOverZone(ontologyName); }}
+        onDragLeave={(e) => { e.preventDefault(); if (e.currentTarget === e.target) setDragOverZone(null); }}
+        onDrop={(e) => handleDrop(e, ontologyName, true)}
+        className={`
+          p-4 rounded-lg border-2 border-dashed transition-all
+          ${isDragOver
+            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+            : 'border-green-400 dark:border-green-600 bg-green-50/50 dark:bg-green-900/10'
+          }
+        `}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Plus className="w-4 h-4 text-green-500 flex-shrink-0" />
+            {isEditing ? (
+              <input
+                type="text"
+                defaultValue={ontologyName}
+                onBlur={(e) => renameNewOntology(ontologyName, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') renameNewOntology(ontologyName, (e.target as HTMLInputElement).value);
+                  if (e.key === 'Escape') setEditingOntologyName(null);
+                }}
+                className="flex-1 px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                autoFocus
+              />
+            ) : (
+              <>
+                <span className="font-medium text-card-foreground dark:text-gray-200">
+                  {ontologyName}
+                </span>
+                <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                  will be created
+                </span>
+                <button
+                  onClick={() => setEditingOntologyName(ontologyName)}
+                  className="text-gray-400 hover:text-green-600 transition-colors p-1"
+                  title="Edit name"
+                >
+                  <PencilLine className="w-3 h-3" />
+                </button>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => clearQueue(ontologyName)}
+            className="text-gray-400 hover:text-red-500 transition-colors"
+            title="Remove this ontology"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* File list */}
+        <div className="space-y-1 mb-3">
+          {queue.files.map((qf) => (
+            <div
+              key={qf.id}
+              className="flex items-center justify-between py-1 px-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {getFileIcon(qf.file.name)}
+                <span className="text-sm text-card-foreground dark:text-gray-200 truncate">
+                  {qf.file.name}
+                </span>
+                <span className="text-xs text-muted-foreground dark:text-gray-400 flex-shrink-0">
+                  {formatSize(qf.file.size)}
+                </span>
+              </div>
+              <button
+                onClick={() => removeFileFromQueue(ontologyName, qf.id)}
+                className="text-gray-400 hover:text-red-500 transition-colors p-1"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Embedded summary */}
+        <div className="pt-2 border-t border-green-200 dark:border-green-700 text-xs text-green-600 dark:text-green-400">
+          Ready: Create "{ontologyName}" with {queue.files.length} file{queue.files.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+    );
+  };
+
+  // Render the "Create New Ontology" placeholder zone (always visible)
+  const renderCreateNewZone = () => {
+    const pendingQueue = queues.get('__PENDING_NEW__');
+    const hasPendingFiles = pendingQueue && pendingQueue.files.length > 0;
+    const isDragOver = dragOverZone === '__PENDING_NEW__';
+
+    return (
+      <div
+        onDragEnter={(e) => { e.preventDefault(); setDragOverZone('__PENDING_NEW__'); }}
+        onDragOver={(e) => { e.preventDefault(); setDragOverZone('__PENDING_NEW__'); }}
+        onDragLeave={(e) => { e.preventDefault(); if (e.currentTarget === e.target) setDragOverZone(null); }}
+        onDrop={(e) => handleDrop(e, '__PENDING_NEW__', true)}
+        className={`
+          p-4 rounded-lg border-2 border-dashed transition-all min-h-[100px]
+          ${isDragOver
+            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+            : 'border-green-400 dark:border-green-600 bg-gray-50 dark:bg-gray-800/50'
+          }
+        `}
+      >
+        {editingPendingOntology || hasPendingFiles ? (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={pendingNewOntologyName}
+                onChange={(e) => setPendingNewOntologyName(e.target.value)}
+                placeholder="Enter new ontology name"
+                className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && pendingNewOntologyName.trim()) {
+                    confirmPendingOntology();
+                  }
+                  if (e.key === 'Escape') {
+                    setEditingPendingOntology(false);
+                    setPendingNewOntologyName('');
+                    clearQueue('__PENDING_NEW__');
+                  }
+                }}
+              />
+              <button
+                onClick={confirmPendingOntology}
+                disabled={!pendingNewOntologyName.trim()}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                Create
+              </button>
+              <button
+                onClick={() => {
+                  setEditingPendingOntology(false);
+                  setPendingNewOntologyName('');
+                  clearQueue('__PENDING_NEW__');
+                }}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            {hasPendingFiles && (
+              <div className="space-y-1">
+                <div className="text-xs text-amber-600 dark:text-amber-400">
+                  Name this ontology to continue:
+                </div>
+                {pendingQueue.files.map((qf) => (
+                  <div
+                    key={qf.id}
+                    className="flex items-center gap-2 py-1 px-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-700"
+                  >
+                    {getFileIcon(qf.file.name)}
+                    <span className="text-sm truncate">{qf.file.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground dark:text-gray-400">
+            <Plus className="w-6 h-6 mb-2 text-green-500" />
+            <div className="text-sm font-medium text-green-600 dark:text-green-400">Create New Ontology</div>
+            <div className="text-xs">Drop files to start</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Get all proposed (new) ontologies from queues
+  const getProposedOntologies = (): [string, OntologyQueue][] => {
+    const proposed: [string, OntologyQueue][] = [];
+    queues.forEach((queue, name) => {
+      if (queue.isNew && name !== '__PENDING_NEW__') {
+        proposed.push([name, queue]);
+      }
+    });
+    return proposed;
+  };
+
+  // Render global summary section (simple totals)
+  const renderGlobalSummary = () => {
+    let existingCount = 0;
+    let newCount = 0;
+    let existingOntologies = 0;
+    let newOntologies = 0;
+
+    queues.forEach((queue, ontologyName) => {
+      if (ontologyName === '__PENDING_NEW__') return;
+      if (queue.isNew) {
+        newCount += queue.files.length;
+        newOntologies++;
+      } else {
+        existingCount += queue.files.length;
+        existingOntologies++;
+      }
+    });
+
+    const total = existingCount + newCount;
+    if (total === 0) return null;
+
+    return (
+      <div className="p-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="text-sm font-medium text-foreground dark:text-gray-200 mb-2">
+          Summary
+        </div>
+        <div className="text-sm text-muted-foreground dark:text-gray-400 space-y-1">
+          {existingCount > 0 && (
+            <div>
+              {existingCount} file{existingCount !== 1 ? 's' : ''} → {existingOntologies} existing ontolog{existingOntologies !== 1 ? 'ies' : 'y'}
+            </div>
+          )}
+          {newCount > 0 && (
+            <div className="text-green-600 dark:text-green-400">
+              {newCount} file{newCount !== 1 ? 's' : ''} → {newOntologies} new ontolog{newOntologies !== 1 ? 'ies' : 'y'} (will be created)
+            </div>
+          )}
+          <div className="pt-1 border-t border-gray-200 dark:border-gray-600 font-medium text-foreground dark:text-gray-200">
+            Total: {total} file{total !== 1 ? 's' : ''} ready
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render submission progress
+  const renderSubmissionProgress = () => {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-center gap-2 mb-4">
+            {ingestState === 'submitting' ? (
+              <>
+                <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                <span className="font-medium text-blue-800 dark:text-blue-200">Submitting files...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <span className="font-medium text-green-800 dark:text-green-200">Submission complete</span>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {submittedJobs.map((job, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between py-2 px-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {job.status === 'uploading' && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+                  {job.status === 'submitted' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {job.status === 'failed' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                  {job.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
+                  <span className="text-sm truncate">{job.filename}</span>
+                  <span className="text-xs text-muted-foreground">→ {job.ontology}</span>
+                </div>
+                {job.status === 'failed' && (
+                  <span className="text-xs text-red-500">{job.error}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {ingestState === 'completed' && (
+          <div className="flex gap-2">
+            <button
+              onClick={resetWorkspace}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Ingest More
+            </button>
+            <button
+              onClick={() => window.location.href = '/jobs'}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
+            >
+              View Jobs
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Main render
+  if (ingestState === 'submitting' || ingestState === 'completed') {
+    return (
+      <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+        <div className="flex-none p-6 border-b border-border dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <Upload className="w-6 h-6 text-primary dark:text-blue-400" />
+            <div>
+              <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
+                Ingest Content
+              </h1>
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
+                {ingestState === 'submitting' ? 'Uploading files...' : 'Files submitted'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {renderSubmissionProgress()}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-border dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <Upload className="w-6 h-6 text-blue-500" />
-          <div>
-            <h1 className="text-xl font-semibold text-card-foreground dark:text-gray-100">
-              Ingest Documents
-            </h1>
-            <p className="text-sm text-muted-foreground dark:text-gray-400">
-              Upload documents for knowledge extraction
-            </p>
+      <div className="flex-none p-6 border-b border-border dark:border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Upload className="w-6 h-6 text-primary dark:text-blue-400" />
+            <div>
+              <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
+                Ingest Content
+              </h1>
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
+                Drag files into ontology zones to queue for ingestion
+              </p>
+            </div>
           </div>
+          <button
+            onClick={loadOntologies}
+            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            title="Refresh ontologies"
+            disabled={loadingOntologies}
+          >
+            <RefreshCw className={`w-5 h-5 ${loadingOntologies ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-
-          {/* Drop Zone */}
-          {!selectedFile && ingestState === 'idle' && (
-            <div
-              className={`
-                relative border-2 border-dashed rounded-xl p-8 text-center transition-colors
-                ${dragActive
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                }
-              `}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={handleFileSelect}
-                accept=".txt,.md,.rst,.pdf,.png,.jpg,.jpeg,.gif,.webp,.bmp"
-              />
-              <FolderOpen className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-              <p className="text-lg font-medium text-card-foreground dark:text-gray-200 mb-2">
-                Drop file here or click to browse
-              </p>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">
-                Supports text (.txt, .md, .rst, .pdf) and images (.png, .jpg, .gif, .webp)
-              </p>
-              <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2">
-                Max {MAX_FILE_SIZE_MB}MB
-              </p>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Error display */}
+          {submitError && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="text-sm whitespace-pre-line">{submitError}</div>
+              <button onClick={() => setSubmitError(null)} className="ml-auto">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
-          {/* File Error */}
-          {fileError && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{fileError}</span>
-            </div>
-          )}
-
-          {/* Selected File */}
-          {selectedFile && renderFileInfo()}
-
-          {/* Duplicate Warning */}
-          {duplicateInfo && (
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">
-                    Duplicate Detected
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                    {duplicateInfo.message}
-                  </p>
-                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-                    Job ID: <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">{duplicateInfo.jobId}</code>
-                  </p>
-                  <button
-                    onClick={() => setForce(true)}
-                    className="mt-3 text-sm font-medium text-amber-700 dark:text-amber-300 hover:underline"
-                  >
-                    Force re-ingest anyway →
-                  </button>
-                </div>
+          {/* Existing Ontologies */}
+          {ontologies.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-medium text-muted-foreground dark:text-gray-400 uppercase tracking-wide">
+                Existing Ontologies
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ontologies.map((ont) => renderExistingOntologyDropZone(ont.ontology, ont.concept_count))}
               </div>
             </div>
           )}
 
-          {/* Ontology Selector */}
-          {selectedFile && ingestState === 'idle' && (
+          {/* Proposed New Ontologies */}
+          {getProposedOntologies().length > 0 && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-card-foreground dark:text-gray-200">
-                Target Ontology
-              </label>
-
-              {!showNewOntology ? (
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <select
-                      value={selectedOntology}
-                      onChange={(e) => setSelectedOntology(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={loadingOntologies}
-                    >
-                      {loadingOntologies ? (
-                        <option>Loading...</option>
-                      ) : ontologies.length === 0 ? (
-                        <option value="">No ontologies - create new</option>
-                      ) : (
-                        ontologies.map((ont) => (
-                          <option key={ont.ontology} value={ont.ontology}>
-                            {ont.ontology} ({ont.concept_count} concepts)
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-                  <button
-                    onClick={() => setShowNewOntology(true)}
-                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-card-foreground dark:text-gray-200 transition-colors"
-                    title="Create new ontology"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={loadOntologies}
-                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-card-foreground dark:text-gray-200 transition-colors"
-                    title="Refresh ontologies"
-                    disabled={loadingOntologies}
-                  >
-                    <RefreshCw className={`w-5 h-5 ${loadingOntologies ? 'animate-spin' : ''}`} />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newOntologyName}
-                    onChange={(e) => setNewOntologyName(e.target.value)}
-                    placeholder="New ontology name"
-                    className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => {
-                      setShowNewOntology(false);
-                      setNewOntologyName('');
-                    }}
-                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-card-foreground dark:text-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <h2 className="text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
+                New Ontologies (will be created)
+              </h2>
+              <div className="space-y-4">
+                {getProposedOntologies().map(([name, queue]) => renderProposedOntologyDropZone(name, queue))}
+              </div>
             </div>
           )}
 
+          {/* Create New Ontology Zone - Always visible */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-medium text-muted-foreground dark:text-gray-400 uppercase tracking-wide">
+              {ontologies.length > 0 || getProposedOntologies().length > 0 ? 'Add Another Ontology' : 'Create Ontology'}
+            </h2>
+            {renderCreateNewZone()}
+          </div>
+
+          {/* Global Summary */}
+          {renderGlobalSummary()}
+
           {/* Options */}
-          {selectedFile && ingestState === 'idle' && (
+          {getTotalFileCount() > 0 && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
                 onClick={() => setShowOptions(!showOptions)}
@@ -498,8 +885,8 @@ export const IngestWorkspace: React.FC = () => {
               >
                 <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium text-card-foreground dark:text-gray-200">
-                    Advanced Options
+                  <span className="text-sm font-medium text-card-foreground dark:text-gray-200">
+                    Ingestion Options
                   </span>
                 </div>
                 {showOptions ? (
@@ -511,32 +898,32 @@ export const IngestWorkspace: React.FC = () => {
 
               {showOptions && (
                 <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
-                  {/* Chunking options */}
+                  {/* Chunking settings */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-1">
-                        Target words per chunk
+                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                        Target Words per Chunk
                       </label>
                       <input
                         type="number"
                         value={targetWords}
-                        onChange={(e) => setTargetWords(Number(e.target.value))}
-                        min={500}
-                        max={2000}
-                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-card-foreground dark:text-gray-200"
+                        onChange={(e) => setTargetWords(parseInt(e.target.value) || 1000)}
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        min={100}
+                        max={5000}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-1">
-                        Overlap words
+                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                        Overlap Words
                       </label>
                       <input
                         type="number"
                         value={overlapWords}
-                        onChange={(e) => setOverlapWords(Number(e.target.value))}
+                        onChange={(e) => setOverlapWords(parseInt(e.target.value) || 200)}
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
                         min={0}
                         max={500}
-                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-card-foreground dark:text-gray-200"
                       />
                     </div>
                   </div>
@@ -550,26 +937,20 @@ export const IngestWorkspace: React.FC = () => {
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
-                          name="processingMode"
                           checked={processingMode === 'serial'}
                           onChange={() => setProcessingMode('serial')}
                           className="text-blue-500"
                         />
-                        <span className="text-sm text-card-foreground dark:text-gray-200">
-                          Serial (better quality)
-                        </span>
+                        <span className="text-sm">Serial (better quality)</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
-                          name="processingMode"
                           checked={processingMode === 'parallel'}
                           onChange={() => setProcessingMode('parallel')}
                           className="text-blue-500"
                         />
-                        <span className="text-sm text-card-foreground dark:text-gray-200">
-                          Parallel (faster)
-                        </span>
+                        <span className="text-sm">Parallel (faster)</span>
                       </label>
                     </div>
                   </div>
@@ -583,9 +964,7 @@ export const IngestWorkspace: React.FC = () => {
                         onChange={(e) => setAutoApprove(e.target.checked)}
                         className="rounded text-blue-500"
                       />
-                      <span className="text-sm text-card-foreground dark:text-gray-200">
-                        Auto-approve (start immediately)
-                      </span>
+                      <span className="text-sm">Auto-approve (start immediately)</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -594,9 +973,7 @@ export const IngestWorkspace: React.FC = () => {
                         onChange={(e) => setForce(e.target.checked)}
                         className="rounded text-blue-500"
                       />
-                      <span className="text-sm text-card-foreground dark:text-gray-200">
-                        Force re-ingest (bypass duplicate detection)
-                      </span>
+                      <span className="text-sm">Force re-ingestion (skip duplicate check)</span>
                     </label>
                   </div>
                 </div>
@@ -605,7 +982,7 @@ export const IngestWorkspace: React.FC = () => {
           )}
 
           {/* Submit Button */}
-          {selectedFile && ingestState === 'idle' && (
+          {getTotalFileCount() > 0 && (
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
@@ -618,116 +995,24 @@ export const IngestWorkspace: React.FC = () => {
               `}
             >
               <Play className="w-5 h-5" />
-              Start Ingestion
+              Start Ingestion ({getTotalFileCount()} file{getTotalFileCount() !== 1 ? 's' : ''})
             </button>
           )}
 
-          {/* Submit Error */}
-          {submitError && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{submitError}</span>
-            </div>
+          {/* Clear all button */}
+          {getTotalFileCount() > 0 && (
+            <button
+              onClick={clearAllQueues}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear all queued files
+            </button>
           )}
-
-          {/* Progress */}
-          {(ingestState === 'uploading' || ingestState === 'submitted' || ingestState === 'processing') && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                <span className="font-medium text-blue-800 dark:text-blue-200">
-                  {ingestState === 'uploading' && 'Uploading...'}
-                  {ingestState === 'submitted' && 'Job submitted, waiting for processing...'}
-                  {ingestState === 'processing' && 'Processing...'}
-                </span>
-              </div>
-
-              {currentJob && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={currentJob.status} size="sm" />
-                    {currentJob.job_id && (
-                      <span className="text-xs text-muted-foreground dark:text-gray-400 font-mono">
-                        {currentJob.job_id.substring(0, 12)}...
-                      </span>
-                    )}
-                  </div>
-
-                  {currentJob.progress && (
-                    <ProgressIndicator progress={currentJob.progress} variant="bar" />
-                  )}
-
-                  {currentJob.analysis && (
-                    <CostDisplay estimate={currentJob.analysis.cost_estimate} compact />
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Completed */}
-          {ingestState === 'completed' && currentJob && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium text-green-800 dark:text-green-200">
-                  Ingestion Complete!
-                </span>
-              </div>
-
-              {currentJob.result && (
-                <div className="space-y-3">
-                  {currentJob.result.stats && (
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-muted-foreground dark:text-gray-400">Concepts created:</div>
-                      <div className="text-card-foreground dark:text-gray-200">{currentJob.result.stats.concepts_created}</div>
-                      <div className="text-muted-foreground dark:text-gray-400">Relationships:</div>
-                      <div className="text-card-foreground dark:text-gray-200">{currentJob.result.stats.relationships_created}</div>
-                      <div className="text-muted-foreground dark:text-gray-400">Chunks processed:</div>
-                      <div className="text-card-foreground dark:text-gray-200">{currentJob.result.stats.chunks_processed}</div>
-                    </div>
-                  )}
-
-                  {currentJob.result.cost && (
-                    <CostDisplay actual={currentJob.result.cost} compact />
-                  )}
-                </div>
-              )}
-
-              <button
-                onClick={clearFile}
-                className="mt-4 w-full px-4 py-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg font-medium transition-colors"
-              >
-                Ingest Another Document
-              </button>
-            </div>
-          )}
-
-          {/* Failed */}
-          {ingestState === 'failed' && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-                <span className="font-medium text-red-800 dark:text-red-200">
-                  Ingestion Failed
-                </span>
-              </div>
-              {currentJob?.error && (
-                <p className="text-sm text-red-700 dark:text-red-300 mt-2">
-                  {currentJob.error}
-                </p>
-              )}
-              <button
-                onClick={clearFile}
-                className="mt-4 w-full px-4 py-2 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg font-medium transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
-
         </div>
       </div>
     </div>
   );
 };
+
+export default IngestWorkspace;
