@@ -75,15 +75,59 @@ class JobScheduler:
         logger.info("Job scheduler stopped")
 
     async def _run(self):
-        """Main scheduler loop - runs cleanup periodically."""
+        """Main scheduler loop - runs cleanup and job processing periodically."""
+        # On startup, immediately check for stuck approved jobs
+        try:
+            await self.process_approved_jobs()
+        except Exception as e:
+            logger.error(f"Error processing approved jobs on startup: {e}", exc_info=True)
+
         while self.running:
             try:
                 await self.cleanup_jobs()
+                # Also check for stuck approved jobs each cycle
+                await self.process_approved_jobs()
             except Exception as e:
-                logger.error(f"Error in job cleanup: {e}", exc_info=True)
+                logger.error(f"Error in job scheduler: {e}", exc_info=True)
 
             # Sleep until next run
             await asyncio.sleep(self.cleanup_interval)
+
+    async def process_approved_jobs(self):
+        """
+        Process approved jobs that may be stuck in queue.
+
+        This handles the case where:
+        - API restarted while jobs were in 'approved' status
+        - Jobs were approved but never started due to race conditions
+        - Serial queue processing was interrupted
+
+        Uses database-backed queue (see job_queue.py) for safe concurrent access.
+        """
+        from .job_queue import get_job_queue
+
+        queue = get_job_queue()
+
+        # Check if any serial job is currently running
+        running_jobs = queue.list_jobs(status="running", limit=1)
+        running_serial = any(j.get("processing_mode") == "serial" for j in running_jobs)
+
+        if running_serial:
+            # A serial job is already running - don't start another
+            return
+
+        # Get oldest approved serial job
+        approved_jobs = queue.list_jobs(status="approved", limit=10)
+        serial_jobs = [j for j in approved_jobs if j.get("processing_mode", "serial") == "serial"]
+
+        if serial_jobs:
+            # Sort by created_at and take oldest
+            serial_jobs.sort(key=lambda j: j.get("created_at", ""))
+            oldest_job = serial_jobs[0]
+
+            logger.info(f"Found stuck approved job, starting: {oldest_job['job_id']}")
+            # Use queue_serial_job which handles database state atomically
+            queue.queue_serial_job(oldest_job["job_id"])
 
     async def cleanup_jobs(self):
         """

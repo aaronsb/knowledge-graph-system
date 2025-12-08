@@ -140,8 +140,8 @@ class PostgreSQLJobQueue(JobQueue):
         """
         self.lock = threading.Lock()
         self.worker_registry: Dict[str, Callable] = {}
-        self.serial_queue: list = []
-        self.serial_running: bool = False
+        # Note: serial_queue and serial_running removed - now fully database-backed
+        # See queue_serial_job() and _process_next_serial_job() for db-backed implementation
 
         # Create connection pool
         self.pool = psycopg2.pool.ThreadedConnectionPool(
@@ -540,10 +540,7 @@ class PostgreSQLJobQueue(JobQueue):
                 cur.execute("DELETE FROM kg_api.jobs")
                 conn.commit()
 
-                # Clear in-memory queue state
-                with self.lock:
-                    self.serial_queue.clear()
-                    self.serial_running = False
+                # Note: No in-memory queue state to clear - fully database-backed
 
                 return count
         finally:
@@ -587,34 +584,104 @@ class PostgreSQLJobQueue(JobQueue):
                 "error": str(e)
             })
         finally:
-            # If this was a serial job, process next in queue
+            # If this was a serial job, process next in queue (database-backed)
             if job.get("processing_mode") == "serial":
-                with self.lock:
-                    self.serial_running = False
-                    self._process_next_serial_job()
+                self._process_next_serial_job()
 
     def queue_serial_job(self, job_id: str):
         """
-        Queue a serial job for execution.
-        If no serial job is running, start immediately.
+        Queue a serial job for execution (database-backed).
+
+        Uses database status to track queue state:
+        - Checks if any job is currently 'running' (serial execution)
+        - If not, atomically claims this job and starts it
+        - If yes, leaves job in 'approved' status (will be picked up when current finishes)
+
+        Database-backed approach:
+        - Survives API restarts
+        - No in-memory state to lose
+        - Uses FOR UPDATE SKIP LOCKED for safe concurrent access
         """
-        with self.lock:
-            if not self.serial_running:
-                # No serial job running, start this one
-                self.serial_running = True
-                self.execute_job(job_id)
-            else:
-                # Serial job already running, add to queue
-                self.serial_queue.append(job_id)
-                self.update_job(job_id, {"status": "queued"})
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Check if any serial job is currently running
+                # Use FOR UPDATE to prevent race conditions
+                cur.execute("""
+                    SELECT job_id FROM kg_api.jobs
+                    WHERE status = 'running'
+                      AND processing_mode = 'serial'
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                """)
+
+                if cur.fetchone():
+                    # Another serial job is running - leave this job as 'approved'
+                    # It will be picked up by _process_next_serial_job when current finishes
+                    logger.info(f"Serial job {job_id} waiting - another job is running")
+                    conn.commit()
+                    return
+
+                # No serial job running - claim this job and start it
+                cur.execute("""
+                    UPDATE kg_api.jobs
+                    SET status = 'running', started_at = NOW()
+                    WHERE job_id = %s
+                    RETURNING job_id
+                """, (job_id,))
+
+                if cur.fetchone():
+                    conn.commit()
+                    logger.info(f"Starting serial job {job_id}")
+                    # Execute in background thread
+                    threading.Thread(target=self.execute_job, args=(job_id,)).start()
+                else:
+                    conn.commit()
+                    logger.warning(f"Failed to claim job {job_id}")
+
+        finally:
+            self._return_connection(conn)
 
     def _process_next_serial_job(self):
-        """Process the next serial job in queue (called with lock held)"""
-        if self.serial_queue:
-            next_job_id = self.serial_queue.pop(0)
-            self.serial_running = True
-            # Execute in background
-            threading.Thread(target=self.execute_job, args=(next_job_id,)).start()
+        """
+        Process the next serial job from database queue.
+
+        Called when a serial job completes - checks for any approved serial jobs
+        waiting in the database and starts the oldest one.
+
+        Uses FOR UPDATE SKIP LOCKED for safe concurrent access.
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Atomically claim the oldest approved serial job
+                cur.execute("""
+                    UPDATE kg_api.jobs
+                    SET status = 'running', started_at = NOW()
+                    WHERE job_id = (
+                        SELECT job_id FROM kg_api.jobs
+                        WHERE status = 'approved'
+                          AND processing_mode = 'serial'
+                        ORDER BY created_at ASC
+                        LIMIT 1
+                        FOR UPDATE SKIP LOCKED
+                    )
+                    RETURNING job_id
+                """)
+
+                row = cur.fetchone()
+                conn.commit()
+
+                if row:
+                    next_job_id = row[0]
+                    logger.info(f"Starting next serial job from queue: {next_job_id}")
+                    # Execute in background thread
+                    threading.Thread(target=self.execute_job, args=(next_job_id,)).start()
+                else:
+                    logger.debug("No pending serial jobs in queue")
+
+        finally:
+            self._return_connection(conn)
 
 
 # Singleton instance (will be initialized in main.py)

@@ -155,6 +155,59 @@ async def startup_event():
     # Note: polarity_axis_analysis uses direct query pattern (ADR-070), not job queue
     logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding")
 
+    # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
+    # (fixes race condition where jobs start before EmbeddingWorker is ready)
+
+    # ADR-039: Initialize embedding model manager (if local embeddings configured)
+    try:
+        from .lib.embedding_model_manager import init_embedding_model_manager
+        model_manager = await init_embedding_model_manager()
+        if model_manager:
+            logger.info(f"✅ Embedding model manager initialized: {model_manager.get_model_name()} ({model_manager.get_dimensions()} dims)")
+        else:
+            logger.info("📍 Using API-based embeddings (OpenAI or configured provider)")
+    except Exception as e:
+        logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
+        logger.info("   Falling back to API-based embeddings")
+
+    # ADR-041: Validate API keys at startup (non-blocking)
+    try:
+        from .lib.api_key_validator import validate_api_keys_at_startup
+        validate_api_keys_at_startup()
+    except Exception as e:
+        logger.warning(f"⚠️  API key validation failed: {e}")
+        logger.info("   System will continue without validated keys")
+
+    # ADR-045: Initialize EmbeddingWorker (required before any jobs can run)
+    try:
+        logger.info("🔧 Initializing EmbeddingWorker...")
+        age_client = AGEClient()
+        ai_provider = get_provider()
+
+        # Initialize singleton
+        embedding_worker = get_embedding_worker(age_client, ai_provider)
+
+        if embedding_worker:
+            # Perform cold start initialization for builtin vocabulary types
+            logger.info("🌡️  Checking builtin vocabulary embeddings (cold start)...")
+            cold_start_result = await embedding_worker.initialize_builtin_embeddings()
+
+            if cold_start_result.target_count > 0:
+                logger.info(
+                    f"✅ Cold start complete: {cold_start_result.processed_count}/{cold_start_result.target_count} "
+                    f"builtin types initialized in {cold_start_result.duration_ms}ms"
+                )
+                if cold_start_result.failed_count > 0:
+                    logger.warning(f"⚠️  {cold_start_result.failed_count} types failed during cold start")
+            else:
+                logger.info("✓  Builtin vocabulary embeddings already initialized")
+        else:
+            logger.warning("⚠️  EmbeddingWorker initialization failed - embedding features may be limited")
+
+    except Exception as e:
+        logger.warning(f"⚠️  EmbeddingWorker initialization failed: {e}")
+        logger.info("   System will continue without embedding worker (manual initialization may be needed)")
+
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
     try:
@@ -234,56 +287,6 @@ async def startup_event():
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()
     logger.info("✅ Scheduled jobs manager started (maintenance tasks enabled)")
-
-    # ADR-039: Initialize embedding model manager (if local embeddings configured)
-    try:
-        from .lib.embedding_model_manager import init_embedding_model_manager
-        model_manager = await init_embedding_model_manager()
-        if model_manager:
-            logger.info(f"✅ Embedding model manager initialized: {model_manager.get_model_name()} ({model_manager.get_dimensions()} dims)")
-        else:
-            logger.info("📍 Using API-based embeddings (OpenAI or configured provider)")
-    except Exception as e:
-        logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
-        logger.info("   Falling back to API-based embeddings")
-
-    # ADR-041: Validate API keys at startup (non-blocking)
-    try:
-        from .lib.api_key_validator import validate_api_keys_at_startup
-        validate_api_keys_at_startup()
-    except Exception as e:
-        logger.warning(f"⚠️  API key validation failed: {e}")
-        logger.info("   System will continue without validated keys")
-
-    # ADR-045: Initialize EmbeddingWorker and perform cold start if needed
-    try:
-        logger.info("🔧 Initializing EmbeddingWorker...")
-        age_client = AGEClient()
-        ai_provider = get_provider()
-
-        # Initialize singleton
-        embedding_worker = get_embedding_worker(age_client, ai_provider)
-
-        if embedding_worker:
-            # Perform cold start initialization for builtin vocabulary types
-            logger.info("🌡️  Checking builtin vocabulary embeddings (cold start)...")
-            cold_start_result = await embedding_worker.initialize_builtin_embeddings()
-
-            if cold_start_result.target_count > 0:
-                logger.info(
-                    f"✅ Cold start complete: {cold_start_result.processed_count}/{cold_start_result.target_count} "
-                    f"builtin types initialized in {cold_start_result.duration_ms}ms"
-                )
-                if cold_start_result.failed_count > 0:
-                    logger.warning(f"⚠️  {cold_start_result.failed_count} types failed during cold start")
-            else:
-                logger.info("✓  Builtin vocabulary embeddings already initialized")
-        else:
-            logger.warning("⚠️  EmbeddingWorker initialization failed - embedding features may be limited")
-
-    except Exception as e:
-        logger.warning(f"⚠️  EmbeddingWorker initialization failed: {e}")
-        logger.info("   System will continue without embedding worker (manual initialization may be needed)")
 
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
