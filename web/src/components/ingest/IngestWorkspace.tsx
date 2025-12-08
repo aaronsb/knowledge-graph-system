@@ -714,6 +714,8 @@ export const IngestWorkspace: React.FC = () => {
 
   // Render submission progress
   const renderSubmissionProgress = () => {
+    const successfulJobs = submittedJobs.filter(j => j.status === 'submitted').length;
+
     return (
       <div className="space-y-4">
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -726,10 +728,21 @@ export const IngestWorkspace: React.FC = () => {
             ) : (
               <>
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium text-green-800 dark:text-green-200">Submission complete</span>
+                <span className="font-medium text-green-800 dark:text-green-200">
+                  {successfulJobs} job{successfulJobs !== 1 ? 's' : ''} submitted
+                </span>
               </>
             )}
           </div>
+
+          {/* Show guidance based on auto-approve setting */}
+          {ingestState === 'completed' && successfulJobs > 0 && !autoApprove && (
+            <div className="mb-4 p-3 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Next step:</strong> Review cost estimates in the Jobs workspace, then approve jobs to start processing.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             {submittedJobs.map((job, i) => (
@@ -755,19 +768,41 @@ export const IngestWorkspace: React.FC = () => {
 
         {ingestState === 'completed' && (
           <div className="flex gap-2">
-            <button
-              onClick={resetWorkspace}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Ingest More
-            </button>
-            <button
-              onClick={() => window.location.href = '/jobs'}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
-            >
-              View Jobs
-            </button>
+            {autoApprove ? (
+              // Auto-approve ON: primary action is "Ingest More"
+              <>
+                <button
+                  onClick={resetWorkspace}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                  Ingest More
+                </button>
+                <button
+                  onClick={() => window.location.href = '/jobs'}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
+                >
+                  View Jobs
+                </button>
+              </>
+            ) : (
+              // Auto-approve OFF: primary action is "Review & Approve Jobs"
+              <>
+                <button
+                  onClick={() => window.location.href = '/jobs'}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Review & Approve Jobs
+                </button>
+                <button
+                  onClick={resetWorkspace}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                  Ingest More
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -955,17 +990,8 @@ export const IngestWorkspace: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Checkboxes */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={autoApprove}
-                        onChange={(e) => setAutoApprove(e.target.checked)}
-                        className="rounded text-blue-500"
-                      />
-                      <span className="text-sm">Auto-approve (start immediately)</span>
-                    </label>
+                  {/* Force re-ingestion option */}
+                  <div>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -981,6 +1007,35 @@ export const IngestWorkspace: React.FC = () => {
             </div>
           )}
 
+          {/* Auto-approve toggle - Prominent placement */}
+          {getTotalFileCount() > 0 && (
+            <div className={`p-4 rounded-lg border-2 transition-colors ${
+              autoApprove
+                ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                : 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20'
+            }`}>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoApprove}
+                  onChange={(e) => setAutoApprove(e.target.checked)}
+                  className="mt-1 rounded text-green-500 w-5 h-5"
+                />
+                <div>
+                  <span className="font-medium text-card-foreground dark:text-gray-200">
+                    {autoApprove ? 'Auto-approve enabled' : 'Review costs before processing'}
+                  </span>
+                  <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                    {autoApprove
+                      ? 'Jobs will start processing immediately after submission.'
+                      : 'Jobs will be created with cost estimates. Review them in the Jobs workspace before approving.'
+                    }
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
           {/* Submit Button */}
           {getTotalFileCount() > 0 && (
             <button
@@ -989,13 +1044,18 @@ export const IngestWorkspace: React.FC = () => {
               className={`
                 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
                 ${canSubmit
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  ? autoApprove
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }
               `}
             >
               <Play className="w-5 h-5" />
-              Start Ingestion ({getTotalFileCount()} file{getTotalFileCount() !== 1 ? 's' : ''})
+              {autoApprove
+                ? `Start Ingestion (${getTotalFileCount()} file${getTotalFileCount() !== 1 ? 's' : ''})`
+                : `Submit for Review (${getTotalFileCount()} file${getTotalFileCount() !== 1 ? 's' : ''})`
+              }
             </button>
           )}
 
