@@ -253,7 +253,9 @@ async def delete_ontology(
     - All Instance nodes linked to those sources
     - All DocumentMeta nodes for this ontology (ADR-051: provenance metadata)
     - Orphaned Concept nodes (concepts with no remaining sources)
+    - All source embeddings for deleted sources (kg_api.source_embeddings)
     - All job records for this ontology (enables clean re-ingestion)
+    - All Garage storage objects (images) for this ontology
 
     **Authentication:** Requires admin role
 
@@ -329,7 +331,17 @@ async def delete_ontology(
             DETACH DELETE i
         """)
 
-        # Delete sources
+        # IMPORTANT: Capture source_ids BEFORE cascade deleting from graph.
+        # After graph nodes are deleted, we lose the ability to know which source_ids
+        # belonged to this ontology - they're just opaque hashes in the relational table.
+        # This pattern: capture references → cascade delete → cleanup related tables.
+        source_ids_result = client._execute_cypher(f"""
+            MATCH (s:Source {{document: '{ontology_name}'}})
+            RETURN s.source_id as source_id
+        """)
+        source_ids = [row['source_id'] for row in (source_ids_result or []) if row.get('source_id')]
+
+        # Delete sources from graph
         result = client._execute_cypher(f"""
             MATCH (s:Source {{document: '{ontology_name}'}})
             DETACH DELETE s
@@ -337,6 +349,23 @@ async def delete_ontology(
         """, fetch_one=True)
 
         sources_deleted = result['deleted_count'] if result else 0
+
+        # Delete source_embeddings for the deleted sources
+        if source_ids:
+            try:
+                conn = client.conn
+                with conn.cursor() as cur:
+                    # Use ANY to match source_ids in the list
+                    cur.execute("""
+                        DELETE FROM kg_api.source_embeddings
+                        WHERE source_id = ANY(%s)
+                    """, (source_ids,))
+                    embeddings_deleted = cur.rowcount
+                    conn.commit()
+                    if embeddings_deleted > 0:
+                        logger.info(f"Deleted {embeddings_deleted} source embeddings for ontology '{ontology_name}'")
+            except Exception as e:
+                logger.warning(f"Failed to delete source embeddings: {e}")
 
         # ADR-051: Delete DocumentMeta nodes for this ontology
         # This ensures cascade deletion of provenance metadata
