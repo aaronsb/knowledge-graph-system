@@ -610,6 +610,157 @@ class APIClient {
     return response.data;
   }
 
+  // ============================================================
+  // ADMIN / OAUTH CLIENT MANAGEMENT
+  // ============================================================
+
+  /**
+   * Get current user profile
+   */
+  async getCurrentUser(): Promise<{
+    id: number;
+    username: string;
+    role: string;
+    created_at: string;
+    last_login: string | null;
+    disabled: boolean;
+  }> {
+    const response = await this.client.get('/users/me');
+    return response.data;
+  }
+
+  /**
+   * List all users (admin or authenticated users can view)
+   */
+  async listUsers(params?: { limit?: number; offset?: number }): Promise<{
+    users: Array<{
+      id: number;
+      username: string;
+      role: string;
+      created_at: string;
+      last_login: string | null;
+      disabled: boolean;
+    }>;
+    total: number;
+    skip: number;
+    limit: number;
+  }> {
+    const response = await this.client.get('/users', { params });
+    return response.data;
+  }
+
+  /**
+   * Get user's own OAuth clients (personal clients)
+   */
+  async getMyOAuthClients(): Promise<Array<{
+    client_id: string;
+    client_name: string;
+    client_type: string;
+    created_at: string;
+    last_used: string | null;
+    token_count?: number;
+  }>> {
+    const response = await this.client.get('/auth/oauth/clients/personal');
+    // API returns { clients: [...], total: int }
+    return response.data.clients || [];
+  }
+
+  /**
+   * Create a new personal OAuth client
+   * Uses form-data as required by the endpoint
+   */
+  async createPersonalOAuthClient(params: {
+    client_name: string;
+  }): Promise<{
+    client_id: string;
+    client_secret: string;
+    client_name: string;
+  }> {
+    // Use URLSearchParams for form data (FastAPI Form() accepts both)
+    const formData = new URLSearchParams();
+    formData.append('client_name', params.client_name);
+
+    const response = await this.client.post('/auth/oauth/clients/personal/new', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete a personal OAuth client
+   */
+  async deletePersonalOAuthClient(clientId: string): Promise<void> {
+    await this.client.delete(`/auth/oauth/clients/personal/${clientId}`);
+  }
+
+  /**
+   * Get system status (admin)
+   */
+  async getSystemStatus(): Promise<{
+    database: {
+      connected: boolean;
+      postgres_version?: string;
+      age_version?: string;
+    };
+    jobs: {
+      pending: number;
+      running: number;
+      completed: number;
+      failed: number;
+    };
+    storage?: {
+      connected: boolean;
+      bucket_count?: number;
+    };
+    uptime_seconds?: number;
+  }> {
+    const response = await this.client.get('/admin/status');
+    return response.data;
+  }
+
+  /**
+   * List all OAuth clients (admin)
+   */
+  async listAllOAuthClients(params?: {
+    client_type?: string;
+    owner_id?: number;
+    include_disabled?: boolean;
+  }): Promise<Array<{
+    client_id: string;
+    client_name: string;
+    client_type: string;
+    owner_id: number | null;
+    owner_username: string | null;
+    created_at: string;
+    last_used: string | null;
+    disabled: boolean;
+  }>> {
+    const response = await this.client.get('/auth/oauth/clients', { params });
+    // API returns { clients: [...], total: int }
+    return response.data.clients || [];
+  }
+
+  /**
+   * Delete any OAuth client (admin)
+   */
+  async deleteOAuthClient(clientId: string): Promise<void> {
+    await this.client.delete(`/auth/oauth/clients/${clientId}`);
+  }
+
+  /**
+   * Get scheduler status (admin)
+   */
+  async getSchedulerStatus(): Promise<{
+    jobs_by_status: Record<string, number>;
+    last_cleanup: string | null;
+    next_cleanup: string | null;
+  }> {
+    const response = await this.client.get('/admin/scheduler/status');
+    return response.data;
+  }
+
   /**
    * Get database statistics
    * Response format: { nodes: { Concept, Source, Instance }, relationships: { total, by_type } }
