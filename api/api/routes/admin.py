@@ -60,7 +60,7 @@ async def get_system_status(
     - Python environment
     - Configuration
 
-    **Authentication:** Requires admin role
+    **Authorization:** Authenticated users (admin role)
     """
     service = AdminService()
     try:
@@ -82,7 +82,7 @@ async def list_backups(
 
     Returns list of backup files with metadata (size, created date, etc.)
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `backups:read` permission
     """
     service = AdminService()
     try:
@@ -128,7 +128,7 @@ async def create_backup(
 
     Returns streaming response with Content-Disposition header.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `backups:create` permission
 
     Example (JSON):
     ```json
@@ -216,7 +216,7 @@ async def restore_backup(
     3. Queue restore worker with job ID
     4. Return job ID for progress tracking
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `backups:restore` permission
 
     Returns job_id for polling restore progress via /jobs/{job_id}
 
@@ -394,7 +394,7 @@ async def get_scheduler_status(
     - Last cleanup time
     - Next scheduled cleanup
 
-    **Authentication:** Requires admin role
+    **Authorization:** Authenticated users (admin role)
 
     Example response:
     ```json
@@ -461,7 +461,7 @@ async def trigger_scheduler_cleanup(
 
     Returns cleanup results showing what was processed.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Authenticated users (admin role)
 
     Example response:
     ```json
@@ -531,7 +531,7 @@ async def set_api_key(
     - Stored in PostgreSQL
     - Decrypted only when needed for inference
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:write` permission
 
     Example:
     ```bash
@@ -643,7 +643,7 @@ async def list_api_keys(
     Does NOT return the actual API keys (security) - only masked versions showing
     prefix + last 6 characters (e.g., "sk-proj-...abc123").
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:read` permission
 
     Example response:
     ```json
@@ -723,7 +723,7 @@ async def delete_api_key(
     After deletion, inference using this provider will not work
     until a new key is configured.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:delete` permission
 
     Example:
     ```bash
@@ -796,7 +796,7 @@ async def regenerate_concept_embeddings(
     Useful after changing embedding models to update all concept embeddings
     to the new model/dimensions.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:regenerate` permission
 
     Args:
         only_missing: Only generate for concepts without embeddings

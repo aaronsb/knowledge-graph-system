@@ -89,6 +89,7 @@ All ADRs follow a consistent format:
 | [ADR-070](ai-embeddings/ADR-070-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted | Direct query pattern (~2-3s) enables discovery of conceptual spectrums (Modern ↔ Traditional), semantic positioning of concepts on axes, and grounding correlation validation - uses vector projection onto opposing concept pairs with auto-discovery, API endpoint, CLI command, and MCP tool integration |
 | [ADR-071](query-search/ADR-071-parallel-graph-queries.md) | Parallel Graph Query Optimization | Accepted | Application-level parallelization using ThreadPoolExecutor with connection pooling to execute multiple small Cypher queries concurrently instead of one large variable-length path query - achieves 3x speedup (3 min → 83s) primarily from batched queries with IN clauses, not parallelization overhead (ADR-071a findings) |
 | [ADR-072](ingestion-content/ADR-072-concept-matching-strategies.md) | Concept Matching Strategies and Configuration | Draft | Database-first configuration for concept similarity matching with pgvector indexing (100x speedup) and three search strategies (exhaustive/degree_biased/degree_only) - applies ADR-071 epsilon-greedy pattern to ingestion, default exhaustive 0.85 threshold unchanged, prepares for evidence-aware matching (ADR-073) |
+| [ADR-074](authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Proposed | Three-tier admin structure (user → admin → platform_admin) with 6 new resource types (api_keys, embedding_config, extraction_config, oauth_clients, ontologies, backups) and hardcoded permission bypass for platform_admin role to ensure emergency recovery |
 
 ## How to Use This Index
 
@@ -162,6 +163,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-09
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.

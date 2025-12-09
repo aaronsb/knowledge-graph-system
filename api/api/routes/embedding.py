@@ -74,7 +74,7 @@ async def get_embedding_config_detail(
     """
     Get full embedding configuration details (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:read` permission
 
     Returns complete configuration including:
     - All resource allocation settings
@@ -103,7 +103,7 @@ async def create_embedding_config(
     """
     Create a new embedding configuration (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:create` permission
 
     Creates a new INACTIVE configuration entry. Use the activate endpoint to switch to it.
 
@@ -205,7 +205,7 @@ async def reload_embedding_model(
     """
     Hot reload embedding model without API restart (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:reload` permission
 
     Implements zero-downtime configuration updates:
     1. Load new config from database
@@ -281,7 +281,7 @@ async def list_embedding_configs(
     """
     List all embedding configurations (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:read` permission
 
     Returns all configs (active and inactive) with protection flags.
     Use this to see all historical configurations.
@@ -308,7 +308,7 @@ async def protect_embedding_config(
     """
     Set protection flags on an embedding configuration (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:create` permission
 
     Protection flags prevent accidental breaking changes:
     - delete_protected: Prevents deletion without explicit unprotect
@@ -362,7 +362,7 @@ async def delete_embedding_config_endpoint(
     """
     Delete an embedding configuration (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:delete` permission
 
     Cannot delete configs that are delete-protected.
     Remove protection first if needed.
@@ -398,7 +398,7 @@ async def activate_embedding_config_endpoint(
     """
     Activate an embedding configuration with automatic protection management (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:activate` permission
 
     This provides a clean "unlock → activate → lock" workflow:
     1. Unprotects currently active config (change protection)
@@ -480,7 +480,7 @@ async def get_embedding_status(
     - Vocabulary (relationship types)
     - Images (future - ADR-057)
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:read` permission
 
     Args:
         ontology: Limit to specific ontology (optional, applies to concepts/sources only)
@@ -542,7 +542,7 @@ async def regenerate_embeddings(
     (relationship types). Useful for model migrations, fixing missing/corrupted
     embeddings, or updating incompatible embeddings.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:regenerate` permission
 
     Args:
         embedding_type: Type of embeddings to regenerate: 'concept', 'source', 'vocabulary', 'all'

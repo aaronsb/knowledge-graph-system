@@ -68,7 +68,7 @@ async def get_extraction_config_detail(
     """
     Get full AI extraction configuration details (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `extraction_config:read` permission
 
     Returns complete configuration including:
     - Provider and model details
@@ -98,7 +98,7 @@ async def update_extraction_config(
     """
     Update AI extraction configuration (Admin only - ADR-060).
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `extraction_config:write` permission
 
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.ai_extraction_config table.

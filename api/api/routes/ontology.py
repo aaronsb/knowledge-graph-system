@@ -257,7 +257,7 @@ async def delete_ontology(
     - All job records for this ontology (enables clean re-ingestion)
     - All Garage storage objects (images) for this ontology
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `ontologies:delete` permission
 
     Args:
         ontology_name: Name of the ontology to delete
@@ -426,7 +426,7 @@ async def rename_ontology(
     Updates all Source nodes' document property from old_name to new_name.
     This operation is fast and safe - only affects Source nodes in the specified ontology.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `ontologies:create` permission
 
     Args:
         ontology_name: Current ontology name
