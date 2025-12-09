@@ -476,6 +476,100 @@ async def delete_personal_oauth_client(
         conn.close()
 
 
+@router.post("/clients/personal/{client_id}/rotate-secret", response_model=RotateSecretResponse)
+async def rotate_personal_client_secret(
+    client_id: str,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    """
+    Rotate secret for a personal OAuth client (requires authentication).
+
+    Allows users to rotate the secret for their own personal OAuth clients.
+    Returns new secret (shown only once). Old secret is immediately invalidated.
+
+    Security:
+    - User can only rotate secrets for their own personal clients
+    - Cannot rotate secrets for system clients or other users' clients
+
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:8000/auth/oauth/clients/personal/kg-cli-admin-f8a4b2c1/rotate-secret \\
+      -H "Authorization: Bearer <access_token>"
+    ```
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Verify client exists and get metadata
+            cur.execute("""
+                SELECT client_type, metadata, client_name
+                FROM kg_auth.oauth_clients
+                WHERE client_id = %s
+            """, (client_id,))
+
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"OAuth client '{client_id}' not found"
+                )
+
+            client_type, metadata, client_name = row
+            metadata = metadata or {}
+
+            # Check if this is a personal client
+            if not metadata.get("personal"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot rotate secret for non-personal OAuth client. Use admin endpoints."
+                )
+
+            # Check if client belongs to current user
+            if metadata.get("user_id") != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot rotate secret for another user's OAuth client"
+                )
+
+            # Verify it's a confidential client (has a secret to rotate)
+            if client_type != "confidential":
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Cannot rotate secret for public client '{client_id}'"
+                )
+
+            # Generate new secret
+            new_secret = generate_client_secret()
+            new_secret_hash = get_password_hash(new_secret)
+
+            # Update client
+            cur.execute(
+                "UPDATE kg_auth.oauth_clients SET client_secret_hash = %s WHERE client_id = %s",
+                (new_secret_hash, client_id)
+            )
+
+            conn.commit()
+
+            return RotateSecretResponse(
+                client_id=client_id,
+                client_secret=new_secret,
+                client_name=client_name,
+                rotated_at=utcnow()
+            )
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to rotate personal client secret: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
 @router.get("/clients/personal", response_model=OAuthClientListResponse)
 async def list_personal_oauth_clients(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)]
@@ -874,7 +968,7 @@ async def rotate_client_secret(
         with conn.cursor() as cur:
             # Check client exists and is confidential
             cur.execute(
-                "SELECT client_type FROM kg_auth.oauth_clients WHERE client_id = %s",
+                "SELECT client_type, client_name FROM kg_auth.oauth_clients WHERE client_id = %s",
                 (client_id,)
             )
             row = cur.fetchone()
@@ -885,7 +979,9 @@ async def rotate_client_secret(
                     detail=f"OAuth client '{client_id}' not found"
                 )
 
-            if row[0] != "confidential":
+            client_type, client_name = row
+
+            if client_type != "confidential":
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Cannot rotate secret for public client '{client_id}'"
@@ -905,6 +1001,7 @@ async def rotate_client_secret(
 
             return RotateSecretResponse(
                 client_id=client_id,
+                client_name=client_name,
                 client_secret=new_secret,
                 rotated_at=utcnow()
             )

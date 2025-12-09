@@ -18,6 +18,7 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  RotateCw,
   User,
   Clock,
   Database,
@@ -140,9 +141,11 @@ const Section: React.FC<{
 const OAuthClientCard: React.FC<{
   client: OAuthClient;
   onDelete: (clientId: string) => void;
+  onRotate?: (clientId: string) => void;
   isDeleting: boolean;
+  isRotating?: boolean;
   showOwner?: boolean;
-}> = ({ client, onDelete, isDeleting, showOwner }) => {
+}> = ({ client, onDelete, onRotate, isDeleting, isRotating, showOwner }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const formatDate = (dateStr: string) => {
@@ -201,7 +204,7 @@ const OAuthClientCard: React.FC<{
             )}
           </div>
         </div>
-        <div>
+        <div className="flex items-center gap-1">
           {confirmDelete ? (
             <div className="flex items-center gap-2">
               <button
@@ -220,13 +223,29 @@ const OAuthClientCard: React.FC<{
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-              title="Delete client"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <>
+              {onRotate && client.client_type === 'confidential' && (
+                <button
+                  onClick={() => onRotate(client.client_id)}
+                  disabled={isRotating}
+                  className="p-1.5 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50"
+                  title="Rotate secret"
+                >
+                  {isRotating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCw className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                title="Delete client"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -520,6 +539,7 @@ export const AdminDashboard: React.FC = () => {
   const [newClientName, setNewClientName] = useState('');
   const [newCredentials, setNewCredentials] = useState<NewClientCredentials | null>(null);
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+  const [rotatingClientId, setRotatingClientId] = useState<string | null>(null);
 
   // Load data based on active tab
   useEffect(() => {
@@ -594,6 +614,24 @@ export const AdminDashboard: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to delete client');
     } finally {
       setDeletingClientId(null);
+    }
+  };
+
+  // Rotate client secret
+  const handleRotateSecret = async (clientId: string) => {
+    setRotatingClientId(clientId);
+    try {
+      const result = await apiClient.rotatePersonalOAuthClientSecret(clientId);
+      // Show new credentials with MCP config helper
+      setNewCredentials({
+        client_id: result.client_id,
+        client_name: result.client_name || clientId,
+        client_secret: result.client_secret,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rotate secret');
+    } finally {
+      setRotatingClientId(null);
     }
   };
 
@@ -754,7 +792,9 @@ export const AdminDashboard: React.FC = () => {
                         key={client.client_id}
                         client={client}
                         onDelete={(id) => handleDeleteClient(id, true)}
+                        onRotate={handleRotateSecret}
                         isDeleting={deletingClientId === client.client_id}
+                        isRotating={rotatingClientId === client.client_id}
                       />
                     ))}
                   </div>

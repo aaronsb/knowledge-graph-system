@@ -105,6 +105,7 @@ class OAuthClientListResponse(BaseModel):
 class RotateSecretResponse(BaseModel):
     """Response model for rotating client secret."""
     client_id: str
+    client_name: Optional[str] = Field(None, description="Client name for display")
     client_secret: str = Field(..., description="New client secret (shown only once)")
     rotated_at: datetime
 

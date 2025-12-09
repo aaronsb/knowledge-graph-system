@@ -696,6 +696,20 @@ class APIClient {
   }
 
   /**
+   * Rotate secret for a personal OAuth client
+   * Returns new credentials (secret shown only once)
+   */
+  async rotatePersonalOAuthClientSecret(clientId: string): Promise<{
+    client_id: string;
+    client_name: string | null;
+    client_secret: string;
+    rotated_at: string;
+  }> {
+    const response = await this.client.post(`/auth/oauth/clients/personal/${clientId}/rotate-secret`);
+    return response.data;
+  }
+
+  /**
    * Get system status (admin)
    */
   async getSystemStatus(): Promise<{
