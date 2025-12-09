@@ -16,13 +16,13 @@ from pydantic import BaseModel, Field, field_validator
 class UserBase(BaseModel):
     """Base user schema with common fields"""
     username: str = Field(..., min_length=3, max_length=100, description="Unique username")
-    role: str = Field(..., description="User role: read_only, contributor, curator, admin")
+    role: str = Field(..., description="User role: read_only, contributor, curator, admin, platform_admin")
 
     @field_validator('role')
     @classmethod
     def validate_role(cls, v: str) -> str:
-        """Ensure role is one of the allowed values"""
-        allowed_roles = ['read_only', 'contributor', 'curator', 'admin']
+        """Ensure role is one of the allowed values (ADR-074: includes platform_admin)"""
+        allowed_roles = ['read_only', 'contributor', 'curator', 'admin', 'platform_admin']
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
         return v
@@ -74,10 +74,10 @@ class UserUpdate(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v: Optional[str]) -> Optional[str]:
-        """Ensure role is one of the allowed values"""
+        """Ensure role is one of the allowed values (ADR-074: includes platform_admin)"""
         if v is None:
             return v
-        allowed_roles = ['read_only', 'contributor', 'curator', 'admin']
+        allowed_roles = ['read_only', 'contributor', 'curator', 'admin', 'platform_admin']
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
         return v

@@ -1,7 +1,8 @@
 # ADR-074 Implementation Checklist
 
-**Status:** In Progress
+**Status:** Complete ✅
 **Started:** 2025-12-09
+**Completed:** 2025-12-09
 **ADR:** [ADR-074: Platform Admin Role](./ADR-074-platform-admin-role.md)
 
 ## Phase 1: Database Migration ✅ COMPLETE
@@ -94,29 +95,55 @@ Replaced `Depends(require_role("admin"))` with `Depends(require_permission("reso
 
 **Results:** 23/23 permission tests passing for admin role
 
-## Phase 4: CLI Role Management
+## Phase 4: CLI Role Management ✅ COMPLETE (Already Implemented)
 
-- [ ] `kg rbac roles list` - List all roles
-- [ ] `kg rbac roles create <name>` - Create custom role
-- [ ] `kg rbac roles delete <name>` - Delete custom role
-- [ ] `kg rbac resources list` - List all resource types and actions
-- [ ] `kg rbac permissions list` - List permissions (filterable)
-- [ ] `kg rbac permissions grant <role> <resource> <action>`
-- [ ] `kg rbac permissions revoke <role> <resource> <action>`
+CLI commands already existed at `kg admin rbac`:
 
-## Phase 5: Web UI Updates
+- [x] `kg admin rbac role list` - List all roles with hierarchy
+- [x] `kg admin rbac role show <role>` - Show role details with permissions
+- [x] `kg admin rbac role create` - Create custom role
+- [x] `kg admin rbac role delete` - Delete custom role
+- [x] `kg admin rbac resource list` - List all resource types and actions
+- [x] `kg admin rbac permission list` - List permissions (filterable by role/resource)
+- [x] `kg admin rbac permission grant` - Grant permission to role
+- [x] `kg admin rbac permission revoke` - Revoke permission
 
-- [ ] Update AdminDashboard to check permissions per section
-- [ ] Hide/disable features based on effective permissions
-- [ ] Add visual indicator for platform admin users
-- [ ] Show appropriate error messages for permission denied
+Also fixed:
+- [x] `kg admin status` - Updated AdminService for containerized environment
+  - Replaced docker exec with direct database connections
+  - Check API keys from encrypted database storage
+  - Detect container via /.dockerenv
 
-## Phase 6: Documentation
+## Phase 5: Web UI Updates ✅ COMPLETE
 
-- [ ] Update `docs/reference/api/ADMIN-ENDPOINTS.md`
-- [ ] Add Platform Admin setup to operator docs
-- [ ] Document recovery procedure for self-lockout
-- [ ] Update CLAUDE.md with platform admin workflow
+- [x] Update AdminDashboard to check permissions per section
+  - Added `canViewUsers`, `canViewAllOAuthClients`, `canViewSystemStatus` permission checks
+  - Tabs now show/hide based on actual permissions instead of role equality
+- [x] Hide/disable features based on effective permissions
+  - "All OAuth Clients" section only shows if user has `oauth_clients:read`
+  - Users tab only shows if user has `users:read`
+  - System tab only shows if user has `admin:status`
+- [x] Add visual indicator for platform admin users
+  - Purple "Platform Admin" badge in header for platform_admin role
+  - Role-colored badges in user list (purple=platform_admin, blue=admin, green=curator, gray=contributor)
+- [x] Add `/users/me/permissions` API endpoint
+  - Returns role, role_hierarchy, permissions list, and `can` map for easy checking
+- [x] Update auth store with permissions state
+  - `loadPermissions()` called after authentication
+  - `hasPermission(resource, action)` helper method
+  - `isPlatformAdmin()` helper method
+
+**Results:** Permission-based UI visibility implemented with graceful degradation
+
+## Phase 6: Documentation ✅ COMPLETE
+
+- [x] Update `docs/reference/api/ADMIN-ENDPOINTS.md`
+  - Added permission-based access level section
+  - Updated all endpoint tables to show required `resource:action` permissions
+  - Added role hierarchy documentation
+- [ ] Add Platform Admin setup to operator docs (deferred - operator workflow unchanged)
+- [ ] Document recovery procedure for self-lockout (deferred - future enhancement)
+- [ ] Update CLAUDE.md with platform admin workflow (not needed - existing RBAC CLI docs cover this)
 
 ---
 
@@ -133,3 +160,11 @@ Replaced `Depends(require_role("admin"))` with `Depends(require_permission("reso
 - Created migration 029 to fix role hierarchy (admin → curator → contributor)
 - Added `api/tests/test_permissions.py` for permission coverage testing
 - **Phase 3 complete:** 23/23 permission tests passing
+- **Phase 4 complete:** CLI RBAC commands already existed (`kg admin rbac`)
+- Fixed `AdminService` for containerized environment (replaced docker exec with direct connections)
+- **Phase 5 complete:** Web UI updated with permission-based access control
+  - Added `/users/me/permissions` endpoint
+  - Updated authStore with `loadPermissions()`, `hasPermission()`, `isPlatformAdmin()`
+  - AdminDashboard now uses permission checks instead of role equality
+  - Added platform admin badge and role-colored user badges
+- **Phase 6 complete:** Updated `ADMIN-ENDPOINTS.md` with permission-based documentation

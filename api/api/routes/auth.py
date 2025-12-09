@@ -275,6 +275,112 @@ async def get_current_user_from_oauth(
     )
 
 
+from pydantic import BaseModel
+from typing import Dict, List as TypingList
+
+class EffectivePermission(BaseModel):
+    resource: str
+    action: str
+    scope_type: str
+    granted: bool
+
+
+class UserPermissionsResponse(BaseModel):
+    """Response model for user's effective permissions"""
+    role: str
+    role_hierarchy: TypingList[str]  # e.g., ['platform_admin', 'admin', 'curator', 'contributor']
+    permissions: TypingList[EffectivePermission]
+    can: Dict[str, bool]  # Flat map of "resource:action" -> bool for easy client-side checking
+
+
+@admin_router.get("/me/permissions", response_model=UserPermissionsResponse)
+async def get_current_user_permissions(
+    current_user: CurrentUser
+):
+    """
+    Get current user's effective permissions (ADR-074)
+
+    Returns all permissions the user has based on their role and role hierarchy.
+    Includes a flat `can` map for easy client-side permission checks.
+
+    **Authorization:** Authenticated users (any valid token)
+
+    Example response:
+    ```json
+    {
+        "role": "admin",
+        "role_hierarchy": ["admin", "curator", "contributor"],
+        "permissions": [
+            {"resource": "users", "action": "read", "scope_type": "global", "granted": true},
+            ...
+        ],
+        "can": {
+            "users:read": true,
+            "users:write": true,
+            "admin:status": true,
+            ...
+        }
+    }
+    ```
+    """
+    from psycopg2.extras import RealDictCursor
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Build role hierarchy by traversing parent_role chain
+            role_hierarchy = []
+            current_role = current_user.role
+
+            while current_role:
+                role_hierarchy.append(current_role)
+                cur.execute("""
+                    SELECT parent_role FROM kg_auth.roles
+                    WHERE role_name = %s AND is_active = TRUE
+                """, (current_role,))
+                row = cur.fetchone()
+                current_role = row['parent_role'] if row else None
+
+            # Get all permissions for roles in hierarchy
+            cur.execute("""
+                SELECT DISTINCT
+                    rp.resource_type,
+                    rp.action,
+                    rp.scope_type,
+                    rp.granted
+                FROM kg_auth.role_permissions rp
+                WHERE rp.role_name = ANY(%s)
+                  AND rp.granted = TRUE
+                ORDER BY rp.resource_type, rp.action
+            """, (role_hierarchy,))
+
+            permissions = []
+            can_map = {}
+
+            for row in cur.fetchall():
+                perm = EffectivePermission(
+                    resource=row['resource_type'],
+                    action=row['action'],
+                    scope_type=row['scope_type'],
+                    granted=row['granted']
+                )
+                permissions.append(perm)
+
+                # Build can map (only for global scope, granted permissions)
+                if row['scope_type'] == 'global' and row['granted']:
+                    key = f"{row['resource_type']}:{row['action']}"
+                    can_map[key] = True
+
+            return UserPermissionsResponse(
+                role=current_user.role,
+                role_hierarchy=role_hierarchy,
+                permissions=permissions,
+                can=can_map
+            )
+    finally:
+        conn.close()
+
+
 @admin_router.get("", response_model=UserListResponse)
 async def list_users(
     current_user: CurrentUser,

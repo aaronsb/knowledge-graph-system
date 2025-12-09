@@ -630,6 +630,25 @@ class APIClient {
   }
 
   /**
+   * Get current user's effective permissions (ADR-074)
+   * Returns role info and a 'can' map for easy permission checking
+   */
+  async getCurrentUserPermissions(): Promise<{
+    role: string;
+    role_hierarchy: string[];
+    permissions: Array<{
+      resource: string;
+      action: string;
+      scope_type: string;
+      granted: boolean;
+    }>;
+    can: Record<string, boolean>;
+  }> {
+    const response = await this.client.get('/users/me/permissions');
+    return response.data;
+  }
+
+  /**
    * List all users (admin or authenticated users can view)
    */
   async listUsers(params?: { limit?: number; offset?: number }): Promise<{

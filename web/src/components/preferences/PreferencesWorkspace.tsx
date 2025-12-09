@@ -184,7 +184,7 @@ export const PreferencesWorkspace: React.FC = () => {
   // Load ontologies (only when authenticated)
   useEffect(() => {
     apiClient.listOntologies()
-      .then(setOntologies)
+      .then((response) => setOntologies(response.ontologies || []))
       .catch(() => {
         // Silently fail if not authenticated yet
         setOntologies([]);

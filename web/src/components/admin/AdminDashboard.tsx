@@ -483,8 +483,12 @@ const UserRow: React.FC<{
       <td className="px-4 py-3">
         <span className={`
           px-2 py-0.5 text-xs rounded-full
-          ${user.role === 'admin'
-            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+          ${user.role === 'platform_admin'
+            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 font-medium'
+            : user.role === 'admin'
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+            : user.role === 'curator'
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
             : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
           }
         `}>
@@ -519,8 +523,16 @@ const StatusBadge: React.FC<{
 );
 
 export const AdminDashboard: React.FC = () => {
-  const { user, isAuthenticated } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const { user, isAuthenticated, permissions, hasPermission, isPlatformAdmin } = useAuthStore();
+
+  // Permission-based access control (ADR-074)
+  // Instead of role equality, check actual permissions
+  const canViewUsers = hasPermission('users', 'read');
+  const canViewAllOAuthClients = hasPermission('oauth_clients', 'read');
+  const canViewSystemStatus = hasPermission('admin', 'status');
+
+  // Legacy compatibility - keep isAdmin for now but base it on having admin-level permissions
+  const isAdmin = canViewUsers || canViewSystemStatus;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('account');
@@ -541,7 +553,7 @@ export const AdminDashboard: React.FC = () => {
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const [rotatingClientId, setRotatingClientId] = useState<string | null>(null);
 
-  // Load data based on active tab
+  // Load data based on active tab (ADR-074: permission-based)
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -553,14 +565,16 @@ export const AdminDashboard: React.FC = () => {
         if (activeTab === 'account') {
           const clients = await apiClient.getMyOAuthClients();
           setMyClients(clients);
-        } else if (activeTab === 'users' && isAdmin) {
+        } else if (activeTab === 'users' && canViewUsers) {
           const [usersData, clientsData] = await Promise.all([
             apiClient.listUsers({ limit: 100 }),
-            apiClient.listAllOAuthClients({ include_disabled: true }),
+            canViewAllOAuthClients
+              ? apiClient.listAllOAuthClients({ include_disabled: true })
+              : Promise.resolve([]),
           ]);
           setUsers(usersData.users);
           setAllClients(clientsData);
-        } else if (activeTab === 'system' && isAdmin) {
+        } else if (activeTab === 'system' && canViewSystemStatus) {
           const [status, stats] = await Promise.all([
             apiClient.getSystemStatus().catch(() => null),
             apiClient.getDatabaseStats().catch(() => null),
@@ -576,7 +590,7 @@ export const AdminDashboard: React.FC = () => {
     };
 
     loadData();
-  }, [activeTab, isAuthenticated, isAdmin]);
+  }, [activeTab, isAuthenticated, canViewUsers, canViewAllOAuthClients, canViewSystemStatus]);
 
   // Create new client
   const handleCreateClient = async () => {
@@ -662,6 +676,18 @@ export const AdminDashboard: React.FC = () => {
             <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">
               Administration
             </h1>
+            {/* Platform Admin Badge (ADR-074) */}
+            {isPlatformAdmin() && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 font-medium">
+                Platform Admin
+              </span>
+            )}
+            {/* Role indicator for non-platform admins */}
+            {!isPlatformAdmin() && permissions?.role && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                {permissions.role}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <TabButton
@@ -671,22 +697,24 @@ export const AdminDashboard: React.FC = () => {
               label="Account"
               badge={myClients.length}
             />
-            {isAdmin && (
-              <>
-                <TabButton
-                  active={activeTab === 'users'}
-                  onClick={() => setActiveTab('users')}
-                  icon={<Users className="w-4 h-4" />}
-                  label="Users"
-                  badge={users.length}
-                />
-                <TabButton
-                  active={activeTab === 'system'}
-                  onClick={() => setActiveTab('system')}
-                  icon={<Activity className="w-4 h-4" />}
-                  label="System"
-                />
-              </>
+            {/* Users tab - requires users:read permission (ADR-074) */}
+            {canViewUsers && (
+              <TabButton
+                active={activeTab === 'users'}
+                onClick={() => setActiveTab('users')}
+                icon={<Users className="w-4 h-4" />}
+                label="Users"
+                badge={users.length}
+              />
+            )}
+            {/* System tab - requires admin:status permission (ADR-074) */}
+            {canViewSystemStatus && (
+              <TabButton
+                active={activeTab === 'system'}
+                onClick={() => setActiveTab('system')}
+                icon={<Activity className="w-4 h-4" />}
+                label="System"
+              />
             )}
           </div>
         </div>
@@ -803,8 +831,8 @@ export const AdminDashboard: React.FC = () => {
             </>
           )}
 
-          {/* Users Tab (Admin only) */}
-          {!loading && activeTab === 'users' && isAdmin && (
+          {/* Users Tab - requires users:read permission (ADR-074) */}
+          {!loading && activeTab === 'users' && canViewUsers && (
             <>
               <Section
                 title="All Users"
@@ -847,33 +875,36 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </Section>
 
-              <Section
-                title="All OAuth Clients"
-                icon={<Key className="w-5 h-5" />}
-              >
-                {allClients.length === 0 ? (
-                  <p className="text-muted-foreground dark:text-gray-400 text-center py-8">
-                    No OAuth clients registered.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {allClients.map((client) => (
-                      <OAuthClientCard
-                        key={client.client_id}
-                        client={client}
-                        onDelete={(id) => handleDeleteClient(id, false)}
-                        isDeleting={deletingClientId === client.client_id}
-                        showOwner={true}
-                      />
-                    ))}
-                  </div>
-                )}
-              </Section>
+              {/* All OAuth Clients - requires oauth_clients:read permission (ADR-074) */}
+              {canViewAllOAuthClients && (
+                <Section
+                  title="All OAuth Clients"
+                  icon={<Key className="w-5 h-5" />}
+                >
+                  {allClients.length === 0 ? (
+                    <p className="text-muted-foreground dark:text-gray-400 text-center py-8">
+                      No OAuth clients registered.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {allClients.map((client) => (
+                        <OAuthClientCard
+                          key={client.client_id}
+                          client={client}
+                          onDelete={(id) => handleDeleteClient(id, false)}
+                          isDeleting={deletingClientId === client.client_id}
+                          showOwner={true}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              )}
             </>
           )}
 
-          {/* System Tab (Admin only) */}
-          {!loading && activeTab === 'system' && isAdmin && (
+          {/* System Tab - requires admin:status permission (ADR-074) */}
+          {!loading && activeTab === 'system' && canViewSystemStatus && (
             <>
               <Section
                 title="System Status"

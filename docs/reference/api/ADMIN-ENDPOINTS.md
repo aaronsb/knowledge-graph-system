@@ -2,13 +2,41 @@
 
 Overview of Knowledge Graph API endpoints organized by access level and functional area.
 
-## Access Levels
+## Access Levels (ADR-074)
+
+The system uses **fine-grained permission-based access control** instead of simple role checks.
+
+### Role Hierarchy
+
+```
+platform_admin → admin → curator → contributor
+```
+
+Each role inherits permissions from roles below it in the hierarchy.
+
+### Permission Format
+
+Permissions follow the format `resource:action`. For example:
+- `users:read` - Permission to view user list
+- `oauth_clients:delete` - Permission to delete OAuth clients
+- `admin:status` - Permission to view system status
+
+### Access Levels
 
 | Level | Description | Who Has Access |
 |-------|-------------|----------------|
 | **Public** | No authentication required | Anyone |
-| **Authenticated** | Requires valid login | All logged-in users |
-| **Admin** | Requires admin role | Users with `role: admin` |
+| **Authenticated** | Requires valid OAuth token | All logged-in users |
+| **Permission-based** | Requires specific `resource:action` permission | Users with granted permissions |
+
+### Default Role Permissions
+
+| Role | Key Permissions |
+|------|-----------------|
+| **contributor** | `graph:read`, `ingest:create/read`, `jobs:approve/cancel`, `ontologies:read` |
+| **curator** | All contributor + `vocabulary:write`, `ontologies:create` |
+| **admin** | All curator + `users:*`, `oauth_clients:*`, `rbac:read` |
+| **platform_admin** | All admin + `admin:status`, `backups:*`, `api_keys:*`, `embedding_config:*`, `rbac:*` |
 
 ---
 
@@ -95,91 +123,102 @@ Requires valid JWT token. Available to all logged-in users.
 
 ---
 
-## Admin Endpoints
+## Permission-Protected Endpoints (ADR-074)
 
-Requires admin role. These endpoints can modify system configuration and perform destructive operations.
+These endpoints require specific permissions. Each endpoint shows the required `resource:action` permission.
 
 ### User Management
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /auth/admin/users` | List all users | Read |
-| `POST /auth/admin/users` | Create user | Low |
-| `PATCH /auth/admin/users/{username}` | Update user | Medium |
-| `DELETE /auth/admin/users/{username}` | Delete user | High |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /users/me` | (authenticated) | Get own profile | Read |
+| `GET /users/me/permissions` | (authenticated) | Get effective permissions | Read |
+| `GET /users` | `users:read` | List all users | Read |
+| `GET /users/{id}` | `users:read` | Get user details | Read |
+| `PUT /users/{id}` | `users:write` | Update user | Medium |
+| `DELETE /users/{id}` | `users:delete` | Delete user | High |
 
-### OAuth Client Management (All Clients)
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /auth/oauth/clients` | List all OAuth clients | Read |
-| `DELETE /auth/oauth/clients/{id}` | Delete any OAuth client | High |
+### OAuth Client Management
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /auth/oauth/clients` | `oauth_clients:read` | List all OAuth clients | Read |
+| `POST /auth/oauth/clients` | `oauth_clients:create` | Create OAuth client | Low |
+| `GET /auth/oauth/clients/{id}` | `oauth_clients:read` | Get client details | Read |
+| `PATCH /auth/oauth/clients/{id}` | `oauth_clients:write` | Update client | Medium |
+| `DELETE /auth/oauth/clients/{id}` | `oauth_clients:delete` | Delete client | High |
+| `POST /auth/oauth/clients/{id}/rotate-secret` | `oauth_clients:write` | Rotate secret | High |
 
 ### Ontology Management
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `DELETE /ontology/{name}` | Delete ontology and all data | **Critical** |
-| `POST /ontology/{name}/rename` | Rename ontology | Medium |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `DELETE /ontology/{name}` | `ontologies:delete` | Delete ontology and all data | **Critical** |
+| `POST /ontology/{name}/rename` | `ontologies:create` | Rename ontology | Medium |
 
 ### System Status
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/status` | Full system health status | Read |
-| `GET /admin/scheduler/status` | Job scheduler status | Read |
-| `POST /admin/scheduler/cleanup` | Trigger job cleanup | Low |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/status` | `admin:status` | Full system health status | Read |
+| `GET /admin/scheduler/status` | `admin:status` | Job scheduler status | Read |
+| `POST /admin/scheduler/cleanup` | `admin:status` | Trigger job cleanup | Low |
 
 ### API Key Management
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/keys` | List API keys (masked) | Read |
-| `POST /admin/keys/{provider}` | Set/rotate API key | High |
-| `DELETE /admin/keys/{provider}` | Delete API key | High |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/keys` | `api_keys:read` | List API keys (masked) | Read |
+| `POST /admin/keys/{provider}` | `api_keys:write` | Set/rotate API key | High |
+| `DELETE /admin/keys/{provider}` | `api_keys:delete` | Delete API key | High |
 
 ### Embedding Configuration
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/embedding/config` | Full embedding config | Read |
-| `GET /admin/embedding/configs` | List all configs | Read |
-| `GET /admin/embedding/status` | Embedding coverage stats | Read |
-| `POST /admin/embedding/config` | Create new config | Medium |
-| `POST /admin/embedding/config/{id}/activate` | Activate config | **Critical** |
-| `POST /admin/embedding/config/{id}/protect` | Set protection flags | Low |
-| `DELETE /admin/embedding/config/{id}` | Delete config | High |
-| `POST /admin/embedding/config/reload` | Hot reload model | High |
-| `POST /admin/embedding/regenerate` | Regenerate embeddings | **Critical** |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/embedding/config` | `embedding_config:read` | Full embedding config | Read |
+| `GET /admin/embedding/configs` | `embedding_config:read` | List all configs | Read |
+| `GET /admin/embedding/status` | `embedding_config:read` | Embedding coverage stats | Read |
+| `POST /admin/embedding/config` | `embedding_config:create` | Create new config | Medium |
+| `POST /admin/embedding/config/{id}/activate` | `embedding_config:activate` | Activate config | **Critical** |
+| `DELETE /admin/embedding/config/{id}` | `embedding_config:delete` | Delete config | High |
+| `POST /admin/embedding/config/reload` | `embedding_config:reload` | Hot reload model | High |
+| `POST /admin/embedding/regenerate` | `embedding_config:regenerate` | Regenerate embeddings | **Critical** |
 
 ### Extraction Configuration
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/extraction/config` | Full extraction config | Read |
-| `POST /admin/extraction/config` | Update extraction config | High |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/extraction/config` | `extraction_config:read` | Full extraction config | Read |
+| `POST /admin/extraction/config` | `extraction_config:write` | Update extraction config | High |
 
 ### Vocabulary Configuration
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/vocabulary/config` | Full vocabulary config | Read |
-| `PUT /admin/vocabulary/config` | Update vocabulary config | High |
-| `GET /admin/vocabulary/profiles` | List aggressiveness profiles | Read |
-| `POST /admin/vocabulary/profiles` | Create custom profile | Low |
-| `DELETE /admin/vocabulary/profiles/{name}` | Delete custom profile | Medium |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/vocabulary/config` | `vocabulary_config:read` | Full vocabulary config | Read |
+| `PUT /admin/vocabulary/config` | `vocabulary_config:write` | Update vocabulary config | High |
+| `GET /admin/vocabulary/profiles` | `vocabulary_config:read` | List aggressiveness profiles | Read |
+| `POST /admin/vocabulary/profiles` | `vocabulary_config:create` | Create custom profile | Low |
+| `DELETE /admin/vocabulary/profiles/{name}` | `vocabulary_config:delete` | Delete custom profile | Medium |
 
 ### Backup & Restore
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/backups` | List backups | Read |
-| `POST /admin/backup` | Create backup | Low |
-| `POST /admin/restore` | Restore from backup | **Critical** |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /admin/backups` | `backups:read` | List backups | Read |
+| `POST /admin/backup` | `backups:create` | Create backup | Low |
+| `POST /admin/restore` | `backups:restore` | Restore from backup | **Critical** |
 
 ### RBAC Management
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /admin/rbac/*` | Read RBAC config | Read |
-| `POST /admin/rbac/*` | Create roles/permissions | Medium |
-| `DELETE /admin/rbac/*` | Delete roles/permissions | High |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /rbac/resources` | `rbac:read` | List resource types | Read |
+| `GET /rbac/roles` | `rbac:read` | List roles | Read |
+| `GET /rbac/permissions` | `rbac:read` | List permissions | Read |
+| `POST /rbac/resources` | `rbac:create` | Create resource type | Medium |
+| `POST /rbac/roles` | `rbac:create` | Create role | Medium |
+| `POST /rbac/permissions` | `rbac:create` | Grant permission | Medium |
+| `DELETE /rbac/roles/{name}` | `rbac:delete` | Delete role | High |
+| `DELETE /rbac/permissions/{id}` | `rbac:delete` | Revoke permission | High |
+| `POST /rbac/check-permission` | `rbac:read` | Check user permission | Read |
 
 ### Database Operations
-| Endpoint | Description | Impact |
-|----------|-------------|--------|
-| `GET /database/stats` | Database statistics | Read |
-| `POST /admin/regenerate-concept-embeddings` | Regenerate embeddings | **Critical** |
+| Endpoint | Permission | Description | Impact |
+|----------|------------|-------------|--------|
+| `GET /database/stats` | `database:read` | Database statistics | Read |
+| `POST /admin/regenerate-concept-embeddings` | `embedding_config:regenerate` | Regenerate embeddings | **Critical** |
 
 ---
 
@@ -214,6 +253,7 @@ kg admin restore             → POST /admin/restore
 
 ## Related Documentation
 
-- [Authentication (ADR-027)](../../architecture/ADR-027-authentication.md)
-- [RBAC (ADR-028)](../../architecture/ADR-028-rbac.md)
-- [API Key Management (ADR-031)](../../architecture/ADR-031-api-key-management.md)
+- [Authentication (ADR-027)](../../architecture/authentication-security/ADR-027-authentication.md)
+- [RBAC (ADR-028)](../../architecture/authentication-security/ADR-028-rbac.md)
+- [API Key Management (ADR-031)](../../architecture/authentication-security/ADR-031-api-key-management.md)
+- [Platform Admin Role (ADR-074)](../../architecture/authentication-security/ADR-074-platform-admin-role.md) - Fine-grained permission model
