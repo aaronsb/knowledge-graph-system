@@ -2846,6 +2846,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Endpoints Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/api/" class="md-nav__link">
         
   
@@ -4150,6 +4178,62 @@
     
   
     ADR-062: MCP File Ingestion Security Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-074 Implementation Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-074: Platform Admin Role
   
 
     
@@ -6957,6 +7041,12 @@
 <td>Draft</td>
 <td>Database-first configuration for concept similarity matching with pgvector indexing (100x speedup) and three search strategies (exhaustive/degree_biased/degree_only) - applies ADR-071 epsilon-greedy pattern to ingestion, default exhaustive 0.85 threshold unchanged, prepares for evidence-aware matching (ADR-073)</td>
 </tr>
+<tr>
+<td><a href="../authentication-security/ADR-074-platform-admin-role/">ADR-074</a></td>
+<td>Platform Admin Role</td>
+<td>Proposed</td>
+<td>Three-tier admin structure (user → admin → platform_admin) with 6 new resource types (api_keys, embedding_config, extraction_config, oauth_clients, ontologies, backups) and hardcoded permission bypass for platform_admin role to ensure emergency recovery</td>
+</tr>
 </tbody>
 </table>
 <h2 id="how-to-use-this-index">How to Use This Index</h2>
@@ -7009,7 +7099,7 @@
 <li><strong>Superseded:</strong> Decision replaced by specific ADR (noted in "Related" section)</li>
 </ol>
 <hr />
-<p><strong>Last Updated:</strong> 2025-11-27</p>
+<p><strong>Last Updated:</strong> 2025-12-09</p>
 <p><strong>Note:</strong> When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.</p>
 
 
