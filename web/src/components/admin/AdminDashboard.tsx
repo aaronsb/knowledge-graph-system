@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Shield,
+  ShieldCheck,
   Key,
   Users,
   Activity,
@@ -27,8 +28,19 @@ import {
   Eye,
   EyeOff,
   ChevronRight,
+  ChevronDown,
   ExternalLink,
   FileText,
+  Edit2,
+  KeyRound,
+  UserPlus,
+  X,
+  Save,
+  Ban,
+  CheckCircle,
+  Lock,
+  Unlock,
+  GitBranch,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
@@ -85,7 +97,44 @@ interface NewClientCredentials {
   // Other fields from OAuthClientWithSecret may be present but aren't used
 }
 
-type TabType = 'account' | 'users' | 'system';
+interface RoleInfo {
+  role_name: string;
+  display_name: string;
+  description: string | null;
+  is_builtin: boolean;
+  is_active: boolean;
+  parent_role: string | null;
+  created_at: string;
+  created_by: string | null;
+  metadata: Record<string, unknown>;
+}
+
+interface ResourceInfo {
+  resource_type: string;
+  description: string | null;
+  parent_type: string | null;
+  available_actions: string[];
+  supports_scoping: boolean;
+  metadata: Record<string, unknown>;
+  registered_at: string;
+  registered_by: string | null;
+}
+
+interface PermissionInfo {
+  id: number;
+  role_name: string;
+  resource_type: string;
+  action: string;
+  scope_type: string;
+  scope_id: string | null;
+  scope_filter: Record<string, unknown> | null;
+  granted: boolean;
+  inherited_from: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+type TabType = 'account' | 'users' | 'roles' | 'system';
 
 // Tab button component
 const TabButton: React.FC<{
@@ -445,11 +494,16 @@ const NewClientCredentialsDisplay: React.FC<{
   );
 };
 
-// User Row
+// User Row with actions
 const UserRow: React.FC<{
   user: UserInfo;
   isCurrentUser: boolean;
-}> = ({ user, isCurrentUser }) => {
+  canEdit?: boolean;
+  canDelete?: boolean;
+  onEdit?: (user: UserInfo) => void;
+  onDelete?: (user: UserInfo) => void;
+  onResetPassword?: (userId: number) => void;
+}> = ({ user, isCurrentUser, canEdit, canDelete, onEdit, onDelete, onResetPassword }) => {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Never';
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -460,6 +514,8 @@ const UserRow: React.FC<{
       minute: '2-digit',
     });
   };
+
+  const showActions = (canEdit || canDelete) && !isCurrentUser;
 
   return (
     <tr className={`border-b border-border dark:border-gray-800 last:border-0 ${isCurrentUser ? 'bg-primary/5 dark:bg-blue-900/10' : ''}`}>
@@ -501,6 +557,39 @@ const UserRow: React.FC<{
       <td className="px-4 py-3 text-sm text-muted-foreground dark:text-gray-400">
         {formatDate(user.last_login)}
       </td>
+      {showActions && (
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-1">
+            {canEdit && onEdit && (
+              <button
+                onClick={() => onEdit(user)}
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Edit user"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {canEdit && onResetPassword && (
+              <button
+                onClick={() => onResetPassword(user.id)}
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Reset password"
+              >
+                <KeyRound className="w-4 h-4" />
+              </button>
+            )}
+            {canDelete && onDelete && (
+              <button
+                onClick={() => onDelete(user)}
+                className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                title="Delete user"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </td>
+      )}
     </tr>
   );
 };
@@ -528,11 +617,20 @@ export const AdminDashboard: React.FC = () => {
   // Permission-based access control (ADR-074)
   // Instead of role equality, check actual permissions
   const canViewUsers = hasPermission('users', 'read');
+  const canCreateUsers = hasPermission('users', 'create');
+  const canEditUsers = hasPermission('users', 'write');
+  const canDeleteUsers = hasPermission('users', 'delete');
   const canViewAllOAuthClients = hasPermission('oauth_clients', 'read');
   const canViewSystemStatus = hasPermission('admin', 'status');
 
+  // RBAC permissions
+  const canViewRoles = hasPermission('rbac', 'read');
+  const canCreateRoles = hasPermission('rbac', 'create');
+  const canEditRoles = hasPermission('rbac', 'write');
+  const canDeleteRoles = hasPermission('rbac', 'delete');
+
   // Legacy compatibility - keep isAdmin for now but base it on having admin-level permissions
-  const isAdmin = canViewUsers || canViewSystemStatus;
+  const isAdmin = canViewUsers || canViewSystemStatus || canViewRoles;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('account');
@@ -544,6 +642,11 @@ export const AdminDashboard: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
 
+  // RBAC data states
+  const [roles, setRoles] = useState<RoleInfo[]>([]);
+  const [resources, setResources] = useState<ResourceInfo[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<PermissionInfo[]>([]);
+
   // UI states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -552,6 +655,31 @@ export const AdminDashboard: React.FC = () => {
   const [newCredentials, setNewCredentials] = useState<NewClientCredentials | null>(null);
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const [rotatingClientId, setRotatingClientId] = useState<string | null>(null);
+
+  // User management states
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUserData, setNewUserData] = useState({ username: '', password: '', role: 'contributor' });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editUserData, setEditUserData] = useState({ role: '', disabled: false });
+  const [savingUser, setSavingUser] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserInfo | null>(null);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // RBAC management states
+  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
+  const [newRoleData, setNewRoleData] = useState({ role_name: '', display_name: '', description: '', parent_role: '' });
+  const [creatingRole, setCreatingRole] = useState(false);
+  const [editingRole, setEditingRole] = useState<RoleInfo | null>(null);
+  const [savingRole, setSavingRole] = useState(false);
+  const [confirmDeleteRole, setConfirmDeleteRole] = useState<RoleInfo | null>(null);
+  const [deletingRole, setDeletingRole] = useState(false);
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
+  const [showResourcesPanel, setShowResourcesPanel] = useState(false);
 
   // Load data based on active tab (ADR-074: permission-based)
   useEffect(() => {
@@ -574,6 +702,13 @@ export const AdminDashboard: React.FC = () => {
           ]);
           setUsers(usersData.users);
           setAllClients(clientsData);
+        } else if (activeTab === 'roles' && canViewRoles) {
+          const [rolesData, resourcesData] = await Promise.all([
+            apiClient.listRoles(),
+            apiClient.listResources(),
+          ]);
+          setRoles(rolesData);
+          setResources(resourcesData);
         } else if (activeTab === 'system' && canViewSystemStatus) {
           const [status, stats] = await Promise.all([
             apiClient.getSystemStatus().catch(() => null),
@@ -590,7 +725,7 @@ export const AdminDashboard: React.FC = () => {
     };
 
     loadData();
-  }, [activeTab, isAuthenticated, canViewUsers, canViewAllOAuthClients, canViewSystemStatus]);
+  }, [activeTab, isAuthenticated, canViewUsers, canViewAllOAuthClients, canViewRoles, canViewSystemStatus]);
 
   // Create new client
   const handleCreateClient = async () => {
@@ -648,6 +783,194 @@ export const AdminDashboard: React.FC = () => {
       setRotatingClientId(null);
     }
   };
+
+  // User management handlers
+  const handleCreateUser = async () => {
+    if (!newUserData.username.trim() || !newUserData.password.trim()) return;
+    setCreatingUser(true);
+    try {
+      await apiClient.createUser({
+        username: newUserData.username.trim(),
+        password: newUserData.password,
+        role: newUserData.role,
+      });
+      setSuccessMessage(`User '${newUserData.username}' created successfully`);
+      setNewUserData({ username: '', password: '', role: 'contributor' });
+      setShowCreateUserModal(false);
+      // Refresh users list
+      const usersData = await apiClient.listUsers({ limit: 100 });
+      setUsers(usersData.users);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create user');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleStartEditUser = (userInfo: UserInfo) => {
+    setEditingUserId(userInfo.id);
+    setEditUserData({ role: userInfo.role, disabled: userInfo.disabled });
+  };
+
+  const handleSaveUser = async () => {
+    if (!editingUserId) return;
+    setSavingUser(true);
+    try {
+      await apiClient.updateUser(editingUserId, {
+        role: editUserData.role,
+        disabled: editUserData.disabled,
+      });
+      setSuccessMessage('User updated successfully');
+      setEditingUserId(null);
+      // Refresh users list
+      const usersData = await apiClient.listUsers({ limit: 100 });
+      setUsers(usersData.users);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update user');
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!confirmDeleteUser) return;
+    setDeletingUserId(confirmDeleteUser.id);
+    try {
+      await apiClient.deleteUser(confirmDeleteUser.id);
+      setSuccessMessage(`User '${confirmDeleteUser.username}' deleted`);
+      setConfirmDeleteUser(null);
+      // Refresh users list
+      const usersData = await apiClient.listUsers({ limit: 100 });
+      setUsers(usersData.users);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user');
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUserId || !newPassword.trim()) return;
+    setResettingPassword(true);
+    try {
+      const result = await apiClient.resetUserPassword(resetPasswordUserId, newPassword);
+      setSuccessMessage(result.message);
+      setResetPasswordUserId(null);
+      setNewPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset password');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  // Role management handlers
+  const handleCreateRole = async () => {
+    if (!newRoleData.role_name.trim() || !newRoleData.display_name.trim()) return;
+    setCreatingRole(true);
+    try {
+      await apiClient.createRole({
+        role_name: newRoleData.role_name.trim().toLowerCase().replace(/\s+/g, '_'),
+        display_name: newRoleData.display_name.trim(),
+        description: newRoleData.description.trim() || undefined,
+        parent_role: newRoleData.parent_role || undefined,
+      });
+      setSuccessMessage(`Role '${newRoleData.display_name}' created successfully`);
+      setNewRoleData({ role_name: '', display_name: '', description: '', parent_role: '' });
+      setShowCreateRoleModal(false);
+      // Refresh roles list
+      const rolesData = await apiClient.listRoles();
+      setRoles(rolesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create role');
+    } finally {
+      setCreatingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!confirmDeleteRole) return;
+    setDeletingRole(true);
+    try {
+      await apiClient.deleteRole(confirmDeleteRole.role_name);
+      setSuccessMessage(`Role '${confirmDeleteRole.display_name}' deleted`);
+      setConfirmDeleteRole(null);
+      // Refresh roles list
+      const rolesData = await apiClient.listRoles();
+      setRoles(rolesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete role');
+    } finally {
+      setDeletingRole(false);
+    }
+  };
+
+  const loadRolePermissions = async (roleName: string) => {
+    try {
+      const permissions = await apiClient.listPermissions({ role_name: roleName });
+      setRolePermissions(permissions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load role permissions');
+    }
+  };
+
+  const handleGrantPermission = async (roleName: string, resourceType: string, action: string) => {
+    try {
+      await apiClient.grantPermission({
+        role_name: roleName,
+        resource_type: resourceType,
+        action: action,
+      });
+      setSuccessMessage(`Permission granted: ${resourceType}:${action}`);
+      // Refresh permissions for this role
+      await loadRolePermissions(roleName);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to grant permission');
+    }
+  };
+
+  const handleRevokePermission = async (permissionId: number, roleName: string) => {
+    try {
+      await apiClient.revokePermission(permissionId);
+      setSuccessMessage('Permission revoked');
+      // Refresh permissions for this role
+      await loadRolePermissions(roleName);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to revoke permission');
+    }
+  };
+
+  const toggleRoleExpanded = (roleName: string) => {
+    const newExpanded = new Set(expandedRoles);
+    if (newExpanded.has(roleName)) {
+      newExpanded.delete(roleName);
+    } else {
+      newExpanded.add(roleName);
+      loadRolePermissions(roleName);
+    }
+    setExpandedRoles(newExpanded);
+  };
+
+  // Get role hierarchy for display
+  const getRoleHierarchy = (role: RoleInfo): string[] => {
+    const hierarchy: string[] = [role.role_name];
+    let current = role;
+    while (current.parent_role) {
+      hierarchy.push(current.parent_role);
+      const parent = roles.find(r => r.role_name === current.parent_role);
+      if (!parent) break;
+      current = parent;
+    }
+    return hierarchy.reverse();
+  };
+
+  // Clear success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Not authenticated
   if (!isAuthenticated) {
@@ -707,6 +1030,16 @@ export const AdminDashboard: React.FC = () => {
                 badge={users.length}
               />
             )}
+            {/* Roles tab - requires rbac:read permission (ADR-074) */}
+            {canViewRoles && (
+              <TabButton
+                active={activeTab === 'roles'}
+                onClick={() => setActiveTab('roles')}
+                icon={<ShieldCheck className="w-4 h-4" />}
+                label="Roles"
+                badge={roles.length}
+              />
+            )}
             {/* System tab - requires admin:status permission (ADR-074) */}
             {canViewSystemStatus && (
               <TabButton
@@ -736,6 +1069,14 @@ export const AdminDashboard: React.FC = () => {
                   Dismiss
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Success message */}
+          {successMessage && (
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <p className="text-green-800 dark:text-green-300">{successMessage}</p>
             </div>
           )}
 
@@ -834,6 +1175,19 @@ export const AdminDashboard: React.FC = () => {
           {/* Users Tab - requires users:read permission (ADR-074) */}
           {!loading && activeTab === 'users' && canViewUsers && (
             <>
+              {/* Create User Button */}
+              {canCreateUsers && (
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={() => setShowCreateUserModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 transition-colors"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Create User
+                  </button>
+                </div>
+              )}
+
               <Section
                 title="All Users"
                 icon={<Users className="w-5 h-5" />}
@@ -860,6 +1214,9 @@ export const AdminDashboard: React.FC = () => {
                         <th className="px-4 py-2 font-medium">Role</th>
                         <th className="px-4 py-2 font-medium">Created</th>
                         <th className="px-4 py-2 font-medium">Last Login</th>
+                        {(canEditUsers || canDeleteUsers) && (
+                          <th className="px-4 py-2 font-medium">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -868,6 +1225,11 @@ export const AdminDashboard: React.FC = () => {
                           key={u.id}
                           user={u}
                           isCurrentUser={u.id === user?.id}
+                          canEdit={canEditUsers}
+                          canDelete={canDeleteUsers}
+                          onEdit={handleStartEditUser}
+                          onDelete={setConfirmDeleteUser}
+                          onResetPassword={setResetPasswordUserId}
                         />
                       ))}
                     </tbody>
@@ -900,6 +1262,269 @@ export const AdminDashboard: React.FC = () => {
                   )}
                 </Section>
               )}
+            </>
+          )}
+
+          {/* Roles Tab - requires rbac:read permission (ADR-074) */}
+          {!loading && activeTab === 'roles' && canViewRoles && (
+            <>
+              {/* Create Role Button */}
+              {canCreateRoles && (
+                <div className="flex justify-between items-center mb-4">
+                  <button
+                    onClick={() => setShowCreateRoleModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Role
+                  </button>
+                  <button
+                    onClick={() => setShowResourcesPanel(!showResourcesPanel)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {showResourcesPanel ? 'Hide' : 'Show'} Resources
+                  </button>
+                </div>
+              )}
+
+              {/* Resources Panel */}
+              {showResourcesPanel && (
+                <Section
+                  title="Available Resources"
+                  icon={<FileText className="w-5 h-5" />}
+                >
+                  <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                    Resources and actions that can be granted to roles.
+                  </p>
+                  <div className="space-y-2">
+                    {resources.map((resource) => (
+                      <div
+                        key={resource.resource_type}
+                        className="p-3 bg-muted/50 dark:bg-gray-800/50 rounded-lg"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-medium text-foreground dark:text-gray-200">
+                              {resource.resource_type}
+                            </span>
+                            {resource.description && (
+                              <p className="text-sm text-muted-foreground dark:text-gray-400 mt-0.5">
+                                {resource.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {resource.available_actions.map((action) => (
+                            <span
+                              key={action}
+                              className="px-2 py-0.5 text-xs bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-blue-300 rounded"
+                            >
+                              {action}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {/* Roles List */}
+              <Section
+                title="Roles"
+                icon={<ShieldCheck className="w-5 h-5" />}
+                action={
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      const rolesData = await apiClient.listRoles();
+                      setRoles(rolesData);
+                      setLoading(false);
+                    }}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                    title="Refresh"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                }
+              >
+                <div className="space-y-2">
+                  {roles.map((role) => (
+                    <div
+                      key={role.role_name}
+                      className="border border-border dark:border-gray-700 rounded-lg overflow-hidden"
+                    >
+                      {/* Role Header */}
+                      <div
+                        className={`p-4 cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 transition-colors ${
+                          expandedRoles.has(role.role_name) ? 'bg-muted/30 dark:bg-gray-800/30' : ''
+                        }`}
+                        onClick={() => toggleRoleExpanded(role.role_name)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <button className="p-0.5">
+                              {expandedRoles.has(role.role_name) ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </button>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-foreground dark:text-gray-200">
+                                  {role.display_name}
+                                </span>
+                                <span className="text-xs text-muted-foreground dark:text-gray-500 font-mono">
+                                  ({role.role_name})
+                                </span>
+                                {role.is_builtin && (
+                                  <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                                    built-in
+                                  </span>
+                                )}
+                                {!role.is_active && (
+                                  <span className="px-1.5 py-0.5 text-xs rounded bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
+                                    inactive
+                                  </span>
+                                )}
+                              </div>
+                              {role.description && (
+                                <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                                  {role.description}
+                                </p>
+                              )}
+                              {role.parent_role && (
+                                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground dark:text-gray-500">
+                                  <GitBranch className="w-3 h-3" />
+                                  <span>inherits from</span>
+                                  <span className="font-medium">{role.parent_role}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            {canDeleteRoles && !role.is_builtin && (
+                              <button
+                                onClick={() => setConfirmDeleteRole(role)}
+                                className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                title="Delete role"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Role Permissions (Expanded) */}
+                      {expandedRoles.has(role.role_name) && (
+                        <div className="border-t border-border dark:border-gray-700 p-4 bg-muted/20 dark:bg-gray-800/20">
+                          <h4 className="text-sm font-medium text-foreground dark:text-gray-300 mb-3">
+                            Permissions
+                          </h4>
+                          {rolePermissions.filter(p => p.role_name === role.role_name).length === 0 ? (
+                            <p className="text-sm text-muted-foreground dark:text-gray-400">
+                              {role.parent_role
+                                ? `Inherits all permissions from ${role.parent_role}`
+                                : 'No direct permissions assigned'}
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {/* Group permissions by resource */}
+                              {Object.entries(
+                                rolePermissions
+                                  .filter(p => p.role_name === role.role_name)
+                                  .reduce((acc, p) => {
+                                    if (!acc[p.resource_type]) acc[p.resource_type] = [];
+                                    acc[p.resource_type].push(p);
+                                    return acc;
+                                  }, {} as Record<string, PermissionInfo[]>)
+                              ).map(([resourceType, perms]) => (
+                                <div key={resourceType} className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium text-foreground dark:text-gray-300 min-w-[120px]">
+                                    {resourceType}:
+                                  </span>
+                                  {perms.map((p) => (
+                                    <span
+                                      key={p.id}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded ${
+                                        p.inherited_from
+                                          ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                          : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+                                      }`}
+                                    >
+                                      {p.action}
+                                      {p.inherited_from && (
+                                        <span className="text-gray-400 dark:text-gray-500">
+                                          (from {p.inherited_from})
+                                        </span>
+                                      )}
+                                      {canEditRoles && !p.inherited_from && (
+                                        <button
+                                          onClick={() => handleRevokePermission(p.id, role.role_name)}
+                                          className="ml-1 hover:text-red-600"
+                                          title="Revoke permission"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add Permission */}
+                          {canEditRoles && (
+                            <div className="mt-4 pt-4 border-t border-border dark:border-gray-700">
+                              <h5 className="text-xs font-medium text-muted-foreground dark:text-gray-400 mb-2">
+                                Grant Permission
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {resources.map((resource) => (
+                                  <div key={resource.resource_type} className="relative group">
+                                    <button className="px-2 py-1 text-xs bg-muted dark:bg-gray-800 rounded hover:bg-muted/80 dark:hover:bg-gray-700 transition-colors">
+                                      {resource.resource_type}
+                                    </button>
+                                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10 bg-card dark:bg-gray-900 border border-border dark:border-gray-700 rounded shadow-lg p-2 min-w-[120px]">
+                                      {resource.available_actions.map((action) => {
+                                        const hasPermission = rolePermissions.some(
+                                          p => p.role_name === role.role_name &&
+                                               p.resource_type === resource.resource_type &&
+                                               p.action === action
+                                        );
+                                        return (
+                                          <button
+                                            key={action}
+                                            onClick={() => handleGrantPermission(role.role_name, resource.resource_type, action)}
+                                            disabled={hasPermission}
+                                            className={`block w-full text-left px-2 py-1 text-xs rounded ${
+                                              hasPermission
+                                                ? 'text-muted-foreground cursor-not-allowed'
+                                                : 'hover:bg-muted dark:hover:bg-gray-800'
+                                            }`}
+                                          >
+                                            {action}
+                                            {hasPermission && ' ✓'}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Section>
             </>
           )}
 
@@ -1074,6 +1699,461 @@ export const AdminDashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Create User Modal */}
+      {showCreateUserModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Create User
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateUserModal(false);
+                  setNewUserData({ username: '', password: '', role: 'contributor' });
+                }}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={newUserData.username}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Enter username"
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Minimum 8 characters"
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Role
+                </label>
+                <select
+                  value={newUserData.role}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value }))}
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                >
+                  <option value="read_only">Read Only</option>
+                  <option value="contributor">Contributor</option>
+                  <option value="curator">Curator</option>
+                  <option value="admin">Admin</option>
+                  {isPlatformAdmin() && <option value="platform_admin">Platform Admin</option>}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowCreateUserModal(false);
+                  setNewUserData({ username: '', password: '', role: 'contributor' });
+                }}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateUser}
+                disabled={creatingUser || !newUserData.username.trim() || !newUserData.password.trim()}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {creatingUser ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <UserPlus className="w-4 h-4" />
+                )}
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUserId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
+                <Edit2 className="w-5 h-5" />
+                Edit User
+              </h3>
+              <button
+                onClick={() => setEditingUserId(null)}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Username
+                </label>
+                <div className="px-3 py-2 bg-muted/50 dark:bg-gray-800/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
+                  {users.find(u => u.id === editingUserId)?.username}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Role
+                </label>
+                <select
+                  value={editUserData.role}
+                  onChange={(e) => setEditUserData(prev => ({ ...prev, role: e.target.value }))}
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                >
+                  <option value="read_only">Read Only</option>
+                  <option value="contributor">Contributor</option>
+                  <option value="curator">Curator</option>
+                  <option value="admin">Admin</option>
+                  {isPlatformAdmin() && <option value="platform_admin">Platform Admin</option>}
+                </select>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setEditUserData(prev => ({ ...prev, disabled: !prev.disabled }))}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                    editUserData.disabled
+                      ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                      : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                  }`}
+                >
+                  {editUserData.disabled ? (
+                    <>
+                      <Ban className="w-4 h-4" />
+                      Account Disabled
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Account Active
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => setEditingUserId(null)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveUser}
+                disabled={savingUser}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {savingUser ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Dialog */}
+      {confirmDeleteUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Delete User
+              </h3>
+              <button
+                onClick={() => setConfirmDeleteUser(null)}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-foreground dark:text-gray-300">
+                Are you sure you want to delete user <strong>{confirmDeleteUser.username}</strong>?
+              </p>
+              <p className="text-sm text-muted-foreground dark:text-gray-400 mt-2">
+                This action cannot be undone. All associated OAuth clients and tokens will also be deleted.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => setConfirmDeleteUser(null)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={deletingUserId === confirmDeleteUser.id}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {deletingUserId === confirmDeleteUser.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Delete User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPasswordUserId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
+                <KeyRound className="w-5 h-5" />
+                Reset Password
+              </h3>
+              <button
+                onClick={() => {
+                  setResetPasswordUserId(null);
+                  setNewPassword('');
+                }}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  User
+                </label>
+                <div className="px-3 py-2 bg-muted/50 dark:bg-gray-800/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
+                  {users.find(u => u.id === resetPasswordUserId)?.username}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 8 characters"
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setResetPasswordUserId(null);
+                  setNewPassword('');
+                }}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetPassword}
+                disabled={resettingPassword || !newPassword.trim()}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {resettingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <KeyRound className="w-4 h-4" />
+                )}
+                Reset Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Role Modal */}
+      {showCreateRoleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5" />
+                Create Custom Role
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateRoleModal(false);
+                  setNewRoleData({ role_name: '', display_name: '', description: '', parent_role: '' });
+                }}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Role Name (ID) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newRoleData.role_name}
+                  onChange={(e) => setNewRoleData({ ...newRoleData, role_name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                  placeholder="e.g., data_analyst"
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Lowercase letters, numbers, and underscores only</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Display Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newRoleData.display_name}
+                  onChange={(e) => setNewRoleData({ ...newRoleData, display_name: e.target.value })}
+                  placeholder="e.g., Data Analyst"
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newRoleData.description}
+                  onChange={(e) => setNewRoleData({ ...newRoleData, description: e.target.value })}
+                  placeholder="Describe the role's purpose..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
+                  Parent Role (Inherits Permissions)
+                </label>
+                <select
+                  value={newRoleData.parent_role}
+                  onChange={(e) => setNewRoleData({ ...newRoleData, parent_role: e.target.value })}
+                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                >
+                  <option value="">No parent (standalone role)</option>
+                  {roles.filter(r => r.is_active).map(role => (
+                    <option key={role.role_name} value={role.role_name}>
+                      {role.display_name} ({role.role_name})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Child roles inherit all permissions from their parent
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowCreateRoleModal(false);
+                  setNewRoleData({ role_name: '', display_name: '', description: '', parent_role: '' });
+                }}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateRole}
+                disabled={creatingRole || !newRoleData.role_name.trim() || !newRoleData.display_name.trim()}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {creatingRole ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                Create Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Role Confirmation Modal */}
+      {confirmDeleteRole && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
+              <h3 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Delete Role
+              </h3>
+              <button
+                onClick={() => setConfirmDeleteRole(null)}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-foreground dark:text-gray-200">
+                Are you sure you want to delete the role <strong>&quot;{confirmDeleteRole.display_name}&quot;</strong>?
+              </p>
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Warning:</strong> This will remove all permission assignments for this role.
+                  Users assigned to this role will lose those permissions.
+                </p>
+              </div>
+              {confirmDeleteRole.is_builtin && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    <strong>Note:</strong> This is a built-in role. Deleting it may affect system functionality.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 px-4 py-3 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => setConfirmDeleteRole(null)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteRole}
+                disabled={deletingRole}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {deletingRole ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Delete Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

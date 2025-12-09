@@ -169,4 +169,9 @@ VALUES
     ('platform_admin', 'graph', 'execute', 'global', TRUE)
 ON CONFLICT DO NOTHING;
 
+-- Record migration (idempotent)
+INSERT INTO public.schema_migrations (version, name)
+VALUES (28, 'platform_admin_resources')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;

@@ -304,6 +304,38 @@ class ValidationError(BaseModel):
 
 
 # =============================================================================
+# Password Reset Models
+# =============================================================================
+
+class AdminPasswordReset(BaseModel):
+    """Admin password reset request - sets a new password for a user"""
+    new_password: str = Field(..., min_length=8, description="New password for the user")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "new_password": "NewSecurePass456!"
+            }]
+        }
+    }
+
+
+class PasswordResetResponse(BaseModel):
+    """Password reset response"""
+    success: bool = Field(..., description="Whether the reset was successful")
+    message: str = Field(..., description="Result message")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "success": True,
+                "message": "Password reset successfully"
+            }]
+        }
+    }
+
+
+# =============================================================================
 # Pagination Models (for admin user list)
 # =============================================================================
 

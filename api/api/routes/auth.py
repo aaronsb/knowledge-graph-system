@@ -57,6 +57,8 @@ from api.api.models.auth import (
     APIKeyCreate,
     APIKeyRead,
     APIKeyResponse,
+    AdminPasswordReset,
+    PasswordResetResponse,
 )
 from api.api.dependencies.auth import (
     CurrentUser,
@@ -424,6 +426,127 @@ async def list_users(
                 total=total,
                 skip=offset,
                 limit=limit
+            )
+    finally:
+        conn.close()
+
+
+@admin_router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    user: UserCreate,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "create"))
+):
+    """
+    Create a new user (Admin only - ADR-027, ADR-074)
+
+    Creates a new user with the specified username, password, and role.
+    Unlike /auth/register, this endpoint requires admin permissions.
+
+    **Authorization:** Requires `users:create` permission
+    """
+    # Validate password strength
+    is_valid, error_message = validate_password_strength(user.password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=error_message
+        )
+
+    # Hash password
+    password_hash = get_password_hash(user.password)
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Check if username already exists
+            cur.execute(
+                "SELECT id FROM kg_auth.users WHERE username = %s",
+                (user.username,)
+            )
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Username '{user.username}' already exists"
+                )
+
+            # Insert new user
+            cur.execute("""
+                INSERT INTO kg_auth.users (username, password_hash, primary_role, created_at)
+                VALUES (%s, %s, %s, NOW())
+                RETURNING id, username, primary_role, created_at, last_login, disabled
+            """, (user.username, password_hash, user.role))
+
+            row = cur.fetchone()
+            conn.commit()
+
+            return UserRead(
+                id=row[0],
+                username=row[1],
+                role=row[2],
+                created_at=row[3],
+                last_login=row[4],
+                disabled=row[5]
+            )
+    finally:
+        conn.close()
+
+
+@admin_router.post("/{user_id}/reset-password", response_model=PasswordResetResponse)
+async def reset_user_password(
+    user_id: int,
+    reset_data: AdminPasswordReset,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "write"))
+):
+    """
+    Reset a user's password (Admin only - ADR-027, ADR-074)
+
+    Sets a new password for the specified user. The password must meet
+    security requirements (min 8 chars, uppercase, lowercase, digit, special char).
+
+    **Authorization:** Requires `users:write` permission
+    """
+    # Cannot reset your own password via this endpoint
+    if user_id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use PUT /auth/me to change your own password"
+        )
+
+    # Validate password strength
+    is_valid, error_message = validate_password_strength(reset_data.new_password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=error_message
+        )
+
+    password_hash = get_password_hash(reset_data.new_password)
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Check user exists
+            cur.execute("SELECT username FROM kg_auth.users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found"
+                )
+            username = row[0]
+
+            # Update password
+            cur.execute(
+                "UPDATE kg_auth.users SET password_hash = %s WHERE id = %s",
+                (password_hash, user_id)
+            )
+            conn.commit()
+
+            return PasswordResetResponse(
+                success=True,
+                message=f"Password reset successfully for user '{username}'"
             )
     finally:
         conn.close()
