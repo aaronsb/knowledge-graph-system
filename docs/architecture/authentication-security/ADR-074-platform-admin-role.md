@@ -45,16 +45,42 @@ These are **default** role configurations. Platform admins can create additional
 
 ### New Resource Types
 
-Register 6 new resource types with **domain-specific actions** (not generic CRUD):
+Register **15 resource types** with **domain-specific actions** (not generic CRUD):
+
+#### Platform Administration Resources (Critical)
 
 | Resource | Actions | Description |
 |----------|---------|-------------|
 | `api_keys` | read, write, delete | Manage AI provider API keys |
 | `embedding_config` | read, create, delete, activate, reload, regenerate | Embedding system |
 | `extraction_config` | read, write | AI extraction provider settings |
-| `oauth_clients` | read, create, delete | OAuth client management (all clients) |
-| `ontologies` | read, create, delete | Ontology management (no update - names immutable) |
 | `backups` | read, create, restore | Backup/restore (restore ≠ create!) |
+
+#### Content & Data Resources
+
+| Resource | Actions | Description |
+|----------|---------|-------------|
+| `ontologies` | read, create, delete | Ontology management (no update - names immutable) |
+| `graph` | read, execute | Query the knowledge graph (execute = raw Cypher) |
+| `ingest` | create | Submit documents for ingestion |
+| `sources` | read | Retrieve source documents and images |
+| `vocabulary` | read, write | Vocabulary type management |
+| `vocabulary_config` | read, write, create, delete | Vocabulary profiles and settings |
+| `database` | read, execute | Database stats and direct queries |
+
+#### Identity & Access Resources
+
+| Resource | Actions | Description |
+|----------|---------|-------------|
+| `users` | read, write, delete | User account management |
+| `oauth_clients` | read, write, create, delete | OAuth client management (all clients) |
+| `rbac` | read, write, create, delete | RBAC roles, resources, and permissions |
+
+#### System Resources
+
+| Resource | Actions | Description |
+|----------|---------|-------------|
+| `admin` | status | View admin dashboard status |
 
 **Why domain-specific actions?**
 
@@ -73,12 +99,14 @@ require_permission("embedding_config", "activate")
 
 **Action-to-Endpoint Mapping:**
 
+#### Platform Administration
+
 | Resource | Action | Endpoint | HTTP |
 |----------|--------|----------|------|
 | `api_keys` | read | `/admin/keys` | GET |
 | `api_keys` | write | `/admin/keys/{provider}` | POST |
 | `api_keys` | delete | `/admin/keys/{provider}` | DELETE |
-| `embedding_config` | read | `/admin/embedding/config` | GET |
+| `embedding_config` | read | `/admin/embedding/config`, `/admin/embedding/configs` | GET |
 | `embedding_config` | create | `/admin/embedding/config` | POST |
 | `embedding_config` | delete | `/admin/embedding/config/{id}` | DELETE |
 | `embedding_config` | activate | `/admin/embedding/config/{id}/activate` | POST |
@@ -86,15 +114,58 @@ require_permission("embedding_config", "activate")
 | `embedding_config` | regenerate | `/admin/embedding/regenerate` | POST |
 | `extraction_config` | read | `/admin/extraction/config` | GET |
 | `extraction_config` | write | `/admin/extraction/config` | POST |
-| `oauth_clients` | read | `/auth/oauth/clients` | GET |
-| `oauth_clients` | create | `/auth/oauth/clients` | POST |
-| `oauth_clients` | delete | `/auth/oauth/clients/{id}` | DELETE |
-| `ontologies` | read | `/ontology/` | GET |
-| `ontologies` | create | `/ontology/` | POST (via ingest) |
-| `ontologies` | delete | `/ontology/{name}` | DELETE |
 | `backups` | read | `/admin/backups` | GET |
 | `backups` | create | `/admin/backup` | POST |
 | `backups` | restore | `/admin/restore` | POST |
+| `admin` | status | `/admin/status` | GET |
+
+#### Content & Data
+
+| Resource | Action | Endpoint | HTTP |
+|----------|--------|----------|------|
+| `ontologies` | read | `/ontology/`, `/ontology/{name}`, `/ontology/{name}/files` | GET |
+| `ontologies` | create | (via ingest) | POST |
+| `ontologies` | delete | `/ontology/{name}` | DELETE |
+| `graph` | read | `/query/search`, `/query/concept/{id}`, `/query/related`, `/query/connect`, `/query/connect-by-search`, `/query/sources/search`, `/query/polarity-axis` | GET/POST |
+| `graph` | execute | `/query/cypher` | POST |
+| `ingest` | create | `/ingest`, `/ingest/text` | POST |
+| `sources` | read | `/sources/{id}`, `/sources/{id}/image` | GET |
+| `vocabulary` | read | `/vocabulary/status`, `/vocabulary/types`, `/vocabulary/similar/{type}`, `/vocabulary/analyze/{type}`, `/vocabulary/category-scores/{type}`, `/vocabulary/epistemic-status`, `/vocabulary/epistemic-status/{type}` | GET |
+| `vocabulary` | write | `/vocabulary/types`, `/vocabulary/merge`, `/vocabulary/consolidate`, `/vocabulary/generate-embeddings`, `/vocabulary/refresh-categories`, `/vocabulary/epistemic-status/measure` | POST |
+| `vocabulary_config` | read | `/admin/vocabulary/config`, `/admin/vocabulary/profiles`, `/admin/vocabulary/profiles/{name}` | GET |
+| `vocabulary_config` | write | `/admin/vocabulary/config` | PUT |
+| `vocabulary_config` | create | `/admin/vocabulary/profiles` | POST |
+| `vocabulary_config` | delete | `/admin/vocabulary/profiles/{name}` | DELETE |
+| `database` | read | `/database/stats`, `/database/info` | GET |
+| `database` | execute | `/database/query` | POST |
+
+#### Identity & Access
+
+| Resource | Action | Endpoint | HTTP |
+|----------|--------|----------|------|
+| `users` | read | `/users`, `/users/{id}` | GET |
+| `users` | write | `/users/{id}` | PUT |
+| `users` | delete | `/users/{id}` | DELETE |
+| `oauth_clients` | read | `/auth/oauth/clients`, `/auth/oauth/clients/{id}` | GET |
+| `oauth_clients` | write | `/auth/oauth/clients/{id}`, `/auth/oauth/clients/{id}/rotate-secret` | PATCH/POST |
+| `oauth_clients` | create | `/auth/oauth/clients` | POST |
+| `oauth_clients` | delete | `/auth/oauth/clients/{id}` | DELETE |
+| `rbac` | read | `/rbac/resources`, `/rbac/resources/{type}`, `/rbac/roles`, `/rbac/roles/{name}`, `/rbac/permissions`, `/rbac/user-roles/{id}` | GET |
+| `rbac` | write | `/rbac/resources/{type}`, `/rbac/roles/{name}` | PUT |
+| `rbac` | create | `/rbac/resources`, `/rbac/roles`, `/rbac/permissions`, `/rbac/user-roles` | POST |
+| `rbac` | delete | `/rbac/resources/{type}`, `/rbac/roles/{name}`, `/rbac/permissions/{id}`, `/rbac/user-roles/{id}` | DELETE |
+
+#### No Permission Required (Authenticated Only)
+
+These endpoints require a valid token but no specific permission:
+
+| Endpoint | HTTP | Description |
+|----------|------|-------------|
+| `/users/me` | GET | Get current user profile |
+| `/auth/me` | PUT | Update own profile |
+| `/auth/oauth/clients/personal/*` | ALL | Manage own OAuth clients |
+| `/auth/oauth/tokens`, `/auth/oauth/tokens/{hash}` | GET/DELETE | Manage own tokens |
+| `/rbac/check-permission` | POST | Check own permissions |
 
 ### New Role: `platform_admin`
 
@@ -127,27 +198,54 @@ The migration uses `ON CONFLICT DO NOTHING`, so it safely restores any missing p
 
 These are the **default** permissions seeded by the migration. They can be modified via CLI or API.
 
+#### Contributor Role (existing, extended)
+```
+graph:            read
+ingest:           create
+sources:          read
+vocabulary:       read
+ontologies:       read
+```
+
+#### Curator Role (existing, extended)
+```
+(inherits from contributor)
+vocabulary:       read, write
+ontologies:       read, create
+```
+
 #### Admin Role (existing, extended)
 ```
+(inherits from curator)
 api_keys:         read
 embedding_config: read
 extraction_config: read
 oauth_clients:    read, create, delete
 ontologies:       read, create
 backups:          read
+users:            read, write, delete
+rbac:             read
+vocabulary_config: read
+database:         read
+admin:            status
 ```
 
 #### Platform Admin Role (new default)
 ```
+(inherits from admin)
 api_keys:         read, write, delete
 embedding_config: read, create, delete, activate, reload, regenerate
 extraction_config: read, write
-oauth_clients:    read, create, delete
+oauth_clients:    read, write, create, delete
 ontologies:       read, create, delete
 backups:          read, create, restore
+rbac:             read, write, create, delete
+vocabulary_config: read, write, create, delete
+database:         read, execute
+graph:            read, execute
 ```
 
-Note: `platform_admin` inherits from `admin`, so it also has all admin permissions. Explicit permissions are still granted for clarity and to ensure the role works even if inheritance is modified.
+Note: Role inheritance means `platform_admin` gets all permissions from `admin`, which gets all from `curator`, which gets all from `contributor`. Explicit permissions are still granted for clarity and to ensure roles work even if inheritance is modified.
 
 ### CLI Role Management
 
@@ -266,23 +364,46 @@ Update endpoints to use RBAC permission checks:
 BEGIN;
 
 -- =============================================================================
--- Register New Resource Types
+-- Register All Resource Types
 -- =============================================================================
 
 INSERT INTO kg_auth.resources (resource_type, description, available_actions, supports_scoping, registered_by)
 VALUES
+    -- Platform Administration (Critical)
     ('api_keys', 'API key management for AI providers',
      ARRAY['read', 'write', 'delete'], FALSE, 'system'),
     ('embedding_config', 'Embedding model configuration and operations',
      ARRAY['read', 'create', 'delete', 'activate', 'reload', 'regenerate'], FALSE, 'system'),
     ('extraction_config', 'AI extraction provider configuration',
      ARRAY['read', 'write'], FALSE, 'system'),
-    ('oauth_clients', 'OAuth client management (all clients)',
-     ARRAY['read', 'create', 'delete'], FALSE, 'system'),
+    ('backups', 'System backup and restore operations',
+     ARRAY['read', 'create', 'restore'], FALSE, 'system'),
+    ('admin', 'Admin dashboard and status',
+     ARRAY['status'], FALSE, 'system'),
+
+    -- Content & Data
     ('ontologies', 'Ontology management including deletion',
      ARRAY['read', 'create', 'delete'], FALSE, 'system'),
-    ('backups', 'System backup and restore operations',
-     ARRAY['read', 'create', 'restore'], FALSE, 'system')
+    ('graph', 'Knowledge graph queries',
+     ARRAY['read', 'execute'], FALSE, 'system'),
+    ('ingest', 'Document ingestion',
+     ARRAY['create'], FALSE, 'system'),
+    ('sources', 'Source document retrieval',
+     ARRAY['read'], FALSE, 'system'),
+    ('vocabulary', 'Vocabulary type management',
+     ARRAY['read', 'write'], FALSE, 'system'),
+    ('vocabulary_config', 'Vocabulary configuration and profiles',
+     ARRAY['read', 'write', 'create', 'delete'], FALSE, 'system'),
+    ('database', 'Database statistics and queries',
+     ARRAY['read', 'execute'], FALSE, 'system'),
+
+    -- Identity & Access
+    ('users', 'User account management',
+     ARRAY['read', 'write', 'delete'], FALSE, 'system'),
+    ('oauth_clients', 'OAuth client management (all clients)',
+     ARRAY['read', 'write', 'create', 'delete'], FALSE, 'system'),
+    ('rbac', 'RBAC roles, resources, and permissions',
+     ARRAY['read', 'write', 'create', 'delete'], FALSE, 'system')
 ON CONFLICT (resource_type) DO NOTHING;
 
 -- =============================================================================
@@ -301,34 +422,60 @@ VALUES (
 ON CONFLICT (role_name) DO NOTHING;
 
 -- =============================================================================
--- Grant Permissions to Admin Role (read-only for most platform resources)
+-- Grant Permissions to Contributor Role (content access)
 -- =============================================================================
 
--- Admin can view but not modify critical platform settings
 INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
 VALUES
-    -- API Keys: read only
+    ('contributor', 'graph', 'read', 'global', TRUE),
+    ('contributor', 'ingest', 'create', 'global', TRUE),
+    ('contributor', 'sources', 'read', 'global', TRUE),
+    ('contributor', 'vocabulary', 'read', 'global', TRUE),
+    ('contributor', 'ontologies', 'read', 'global', TRUE)
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- Grant Permissions to Curator Role (content management)
+-- =============================================================================
+
+INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
+VALUES
+    ('curator', 'vocabulary', 'write', 'global', TRUE),
+    ('curator', 'ontologies', 'create', 'global', TRUE)
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- Grant Permissions to Admin Role (user/system management, read-only platform)
+-- =============================================================================
+
+INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
+VALUES
+    -- Platform resources: read only
     ('admin', 'api_keys', 'read', 'global', TRUE),
-    -- Embedding Config: read only
     ('admin', 'embedding_config', 'read', 'global', TRUE),
-    -- Extraction Config: read only
     ('admin', 'extraction_config', 'read', 'global', TRUE),
-    -- OAuth Clients: full access (admin manages clients)
+    ('admin', 'backups', 'read', 'global', TRUE),
+    ('admin', 'admin', 'status', 'global', TRUE),
+    -- OAuth Clients: full access
     ('admin', 'oauth_clients', 'read', 'global', TRUE),
     ('admin', 'oauth_clients', 'create', 'global', TRUE),
     ('admin', 'oauth_clients', 'delete', 'global', TRUE),
-    -- Ontologies: read and create, but not delete
-    ('admin', 'ontologies', 'read', 'global', TRUE),
-    ('admin', 'ontologies', 'create', 'global', TRUE),
-    -- Backups: read only
-    ('admin', 'backups', 'read', 'global', TRUE)
+    -- Users: full access
+    ('admin', 'users', 'read', 'global', TRUE),
+    ('admin', 'users', 'write', 'global', TRUE),
+    ('admin', 'users', 'delete', 'global', TRUE),
+    -- RBAC: read only
+    ('admin', 'rbac', 'read', 'global', TRUE),
+    -- Vocabulary config: read only
+    ('admin', 'vocabulary_config', 'read', 'global', TRUE),
+    -- Database: read only
+    ('admin', 'database', 'read', 'global', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
 -- Grant Full Permissions to Platform Admin Role
 -- =============================================================================
 
--- Platform admin has full access to all platform resources
 INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
 VALUES
     -- API Keys: full access
@@ -347,16 +494,30 @@ VALUES
     ('platform_admin', 'extraction_config', 'write', 'global', TRUE),
     -- OAuth Clients: full access
     ('platform_admin', 'oauth_clients', 'read', 'global', TRUE),
+    ('platform_admin', 'oauth_clients', 'write', 'global', TRUE),
     ('platform_admin', 'oauth_clients', 'create', 'global', TRUE),
     ('platform_admin', 'oauth_clients', 'delete', 'global', TRUE),
     -- Ontologies: full access including delete
-    ('platform_admin', 'ontologies', 'read', 'global', TRUE),
-    ('platform_admin', 'ontologies', 'create', 'global', TRUE),
     ('platform_admin', 'ontologies', 'delete', 'global', TRUE),
     -- Backups: full access including restore
     ('platform_admin', 'backups', 'read', 'global', TRUE),
     ('platform_admin', 'backups', 'create', 'global', TRUE),
-    ('platform_admin', 'backups', 'restore', 'global', TRUE)
+    ('platform_admin', 'backups', 'restore', 'global', TRUE),
+    -- RBAC: full access
+    ('platform_admin', 'rbac', 'read', 'global', TRUE),
+    ('platform_admin', 'rbac', 'write', 'global', TRUE),
+    ('platform_admin', 'rbac', 'create', 'global', TRUE),
+    ('platform_admin', 'rbac', 'delete', 'global', TRUE),
+    -- Vocabulary config: full access
+    ('platform_admin', 'vocabulary_config', 'read', 'global', TRUE),
+    ('platform_admin', 'vocabulary_config', 'write', 'global', TRUE),
+    ('platform_admin', 'vocabulary_config', 'create', 'global', TRUE),
+    ('platform_admin', 'vocabulary_config', 'delete', 'global', TRUE),
+    -- Database: full access including execute
+    ('platform_admin', 'database', 'read', 'global', TRUE),
+    ('platform_admin', 'database', 'execute', 'global', TRUE),
+    -- Graph: execute (raw Cypher)
+    ('platform_admin', 'graph', 'execute', 'global', TRUE)
 ON CONFLICT DO NOTHING;
 
 COMMIT;

@@ -134,6 +134,9 @@ async def ingest_document(
     """
     Submit a document for async ingestion into the knowledge graph with approval workflow.
 
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ingest:create` permission
+
     Implements ADR-014 job approval workflow with cost estimation before processing.
     Documents are chunked, analyzed by LLM for concept extraction, and upserted to
     the graph with semantic relationships.
@@ -305,6 +308,9 @@ async def ingest_text(
 ):
     """
     Submit raw text content for async ingestion into the knowledge graph.
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ingest:create` permission
 
     Alternative to file upload for direct text submission. Implements the same
     ADR-014 approval workflow and deduplication as the file-based endpoint.

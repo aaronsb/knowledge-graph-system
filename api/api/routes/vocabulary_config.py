@@ -87,15 +87,15 @@ async def get_vocabulary_config_detail(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Get full vocabulary configuration details (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    Get full vocabulary configuration details
 
     Returns complete configuration including:
     - All threshold settings
     - Current vocabulary size and zone
     - Computed aggressiveness percentage
     - Metadata (updated_at, updated_by, etc.)
+
+    **Authorization:** Requires `vocabulary_config:read` permission
     """
     try:
         config = load_vocabulary_config_detail()
@@ -115,9 +115,7 @@ async def update_vocabulary_config_endpoint(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Update vocabulary configuration (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    Update vocabulary configuration
 
     Updates configuration values in the database. Only provided fields are updated.
 
@@ -133,6 +131,8 @@ async def update_vocabulary_config_endpoint(
         - low_value_threshold (optional): Low value score threshold (0.0-10.0)
         - consolidation_similarity_threshold (optional): Auto-merge threshold (0.5-1.0)
         - updated_by (required): Username making the update
+
+    **Authorization:** Requires `vocabulary_config:write` permission
 
     Returns:
         Updated configuration with metadata
@@ -197,12 +197,12 @@ async def list_profiles(
     _: None = Depends(require_role("admin"))
 ):
     """
-    List all aggressiveness profiles (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    List all aggressiveness profiles
 
     Returns:
         List of all profiles (builtin and custom) with Bezier curve parameters
+
+    **Authorization:** Requires `vocabulary_config:read` permission
     """
     try:
         profiles = list_aggressiveness_profiles()
@@ -231,15 +231,15 @@ async def get_profile(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Get specific aggressiveness profile details (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    Get specific aggressiveness profile details
 
     Args:
         profile_name: Name of the profile
 
     Returns:
         Profile with Bezier curve parameters and metadata
+
+    **Authorization:** Requires `vocabulary_config:read` permission
     """
     try:
         profile = get_aggressiveness_profile(profile_name)
@@ -268,9 +268,7 @@ async def create_profile(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Create custom aggressiveness profile (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    Create custom aggressiveness profile
 
     Creates a new Bezier curve profile for vocabulary aggressiveness control.
 
@@ -281,6 +279,8 @@ async def create_profile(
         - control_x2: Second control point X (0.0-1.0)
         - control_y2: Second control point Y (-2.0 to 2.0)
         - description: Profile behavior description (min 10 chars)
+
+    **Authorization:** Requires `vocabulary_config:create` permission
 
     Returns:
         Created profile with metadata
@@ -319,12 +319,12 @@ async def delete_profile(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Delete custom aggressiveness profile (Admin only - ADR-060)
-
-    **Authentication:** Requires admin role
+    Delete custom aggressiveness profile
 
     Args:
         profile_name: Name of the profile to delete
+
+    **Authorization:** Requires `vocabulary_config:delete` permission
 
     Returns:
         Deletion confirmation

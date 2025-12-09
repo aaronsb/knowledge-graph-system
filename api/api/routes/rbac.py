@@ -148,6 +148,8 @@ async def list_resources(
     """
     List all registered resource types.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -180,6 +182,8 @@ async def create_resource(
 ):
     """
     Register a new resource type.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -236,6 +240,8 @@ async def get_resource(
     """
     Get resource type details.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -273,6 +279,8 @@ async def update_resource(
     Update resource type configuration.
 
     Cannot update builtin resources.
+
+    **Authorization:** Requires `rbac:write` permission
 
     **Authentication:** Requires admin role
     """
@@ -345,6 +353,8 @@ async def delete_resource(
 
     Cannot delete builtin resources or resources with existing permissions.
 
+    **Authorization:** Requires `rbac:delete` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -387,6 +397,8 @@ async def list_roles(
     """
     List all roles.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -417,6 +429,8 @@ async def create_role(
 ):
     """
     Create a new role.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -471,6 +485,8 @@ async def get_role(
     """
     Get role details.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -508,6 +524,8 @@ async def update_role(
     Update role configuration.
 
     Cannot modify builtin roles.
+
+    **Authorization:** Requires `rbac:write` permission
 
     **Authentication:** Requires admin role
     """
@@ -594,6 +612,8 @@ async def delete_role(
 
     Cannot delete builtin roles or roles with users/permissions.
 
+    **Authorization:** Requires `rbac:delete` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -648,6 +668,8 @@ async def list_permissions(
     """
     List role permissions with optional filtering.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -687,6 +709,8 @@ async def create_permission(
 ):
     """
     Grant a permission to a role.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -754,6 +778,8 @@ async def delete_permission(
     """
     Revoke a permission from a role.
 
+    **Authorization:** Requires `rbac:delete` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -783,6 +809,8 @@ async def list_user_roles(
     """
     List roles assigned to a user.
 
+    **Authorization:** Requires `rbac:read` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -810,6 +838,8 @@ async def assign_user_role(
 ):
     """
     Assign a role to a user.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -873,6 +903,8 @@ async def revoke_user_role(
     """
     Revoke a role assignment from a user.
 
+    **Authorization:** Requires `rbac:delete` permission
+
     **Authentication:** Requires admin role
     """
     conn = get_db_connection()
@@ -914,6 +946,8 @@ async def check_user_permission(
 ):
     """
     Check if a user has a specific permission (utility endpoint).
+
+    **Authorization:** Authenticated users (any valid token)
 
     **Authentication:** Requires admin role
     """

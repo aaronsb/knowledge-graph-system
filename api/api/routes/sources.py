@@ -44,6 +44,9 @@ async def get_source_image(
     """
     Retrieve the original image for an image source.
 
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `sources:read` permission
+
     **Workflow:**
     1. Look up Source node in graph by source_id
     2. Verify it's an image source (content_type='image')
@@ -167,6 +170,9 @@ async def get_source(
 ):
     """
     Retrieve source metadata and content (prose for images, text for documents).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `sources:read` permission
 
     **Returns:**
     ```json

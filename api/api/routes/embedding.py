@@ -72,9 +72,7 @@ async def get_embedding_config_detail(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Get full embedding configuration details (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:read` permission
+    Get full embedding configuration details
 
     Returns complete configuration including:
     - All resource allocation settings
@@ -82,6 +80,8 @@ async def get_embedding_config_detail(
     - Database config ID
 
     Returns null if no configuration is set.
+
+    **Authorization:** Requires `embedding_config:read` permission
     """
     try:
         config = load_active_embedding_config()
@@ -101,9 +101,7 @@ async def create_embedding_config(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Create a new embedding configuration (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:create` permission
+    Create a new embedding configuration
 
     Creates a new INACTIVE configuration entry. Use the activate endpoint to switch to it.
 
@@ -138,6 +136,8 @@ async def create_embedding_config(
         "batch_size": 8
     }
     ```
+
+    **Authorization:** Requires `embedding_config:create` permission
     """
     try:
         # Validate provider
@@ -203,9 +203,7 @@ async def reload_embedding_model(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Hot reload embedding model without API restart (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:reload` permission
+    Hot reload embedding model without API restart
 
     Implements zero-downtime configuration updates:
     1. Load new config from database
@@ -222,6 +220,8 @@ async def reload_embedding_model(
     - local → local (different model): Hot swaps to new model
 
     Returns success with new provider details.
+
+    **Authorization:** Requires `embedding_config:reload` permission
 
     Example response:
     ```json
@@ -279,12 +279,12 @@ async def list_embedding_configs(
     _: None = Depends(require_role("admin"))
 ):
     """
-    List all embedding configurations (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:read` permission
+    List all embedding configurations
 
     Returns all configs (active and inactive) with protection flags.
     Use this to see all historical configurations.
+
+    **Authorization:** Requires `embedding_config:read` permission
     """
     try:
         configs = list_all_embedding_configs()
@@ -306,13 +306,13 @@ async def protect_embedding_config(
     change_protected: Optional[bool] = None
 ):
     """
-    Set protection flags on an embedding configuration (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:create` permission
+    Set protection flags on an embedding configuration
 
     Protection flags prevent accidental breaking changes:
     - delete_protected: Prevents deletion without explicit unprotect
     - change_protected: Prevents changing provider/dimensions (breaks vector search)
+
+    **Authorization:** Requires `embedding_config:create` permission
 
     Example:
     ```json
@@ -360,12 +360,12 @@ async def delete_embedding_config_endpoint(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Delete an embedding configuration (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:delete` permission
+    Delete an embedding configuration
 
     Cannot delete configs that are delete-protected.
     Remove protection first if needed.
+
+    **Authorization:** Requires `embedding_config:delete` permission
     """
     try:
         success, error_msg = delete_embedding_config(config_id)
@@ -396,9 +396,7 @@ async def activate_embedding_config_endpoint(
     force: bool = False
 ):
     """
-    Activate an embedding configuration with automatic protection management (Admin only - ADR-060).
-
-    **Authorization:** Requires `embedding_config:activate` permission
+    Activate an embedding configuration with automatic protection management
 
     This provides a clean "unlock → activate → lock" workflow:
     1. Unprotects currently active config (change protection)
@@ -425,6 +423,8 @@ async def activate_embedding_config_endpoint(
     # Hot reload to apply changes
     kg admin embedding reload
     ```
+
+    **Authorization:** Requires `embedding_config:activate` permission
 
     Query Parameters:
     - force: Bypass dimension mismatch check (default: false)

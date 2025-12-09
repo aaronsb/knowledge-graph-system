@@ -311,6 +311,7 @@ async def search_concepts(
     Search for concepts using semantic similarity with vector embeddings (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Generates a vector embedding for the query text using the configured AI provider
     and performs cosine similarity search against all concept embeddings in the graph.
@@ -598,6 +599,7 @@ async def search_sources(
     Search source text using semantic similarity on embeddings (ADR-068 Phase 3).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Searches source text chunks via embedding similarity, returns matched sources
     with related concepts for evidence/provenance retrieval.
@@ -729,6 +731,7 @@ async def get_concept_details(
     Get detailed information about a specific concept including all evidence and relationships (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Retrieves complete concept data from the graph including:
     - Concept metadata (unique ID, human-readable label, alternative search terms)
@@ -978,6 +981,7 @@ async def find_related_concepts(
     Find concepts related through graph traversal using breadth-first search (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Performs breadth-first graph traversal from a starting concept to discover
     all connected concepts within a specified maximum distance (hops). Optionally
@@ -1077,6 +1081,7 @@ async def find_connection(
     Find shortest paths between two concepts using exact concept IDs (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Uses Apache AGE graph traversal to find up to 5 shortest paths connecting
     two concepts. Requires exact concept IDs (not semantic phrase matching).
@@ -1229,6 +1234,7 @@ async def find_connection_by_search(
     Find shortest paths between two concepts using semantic phrase matching (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Uses vector embeddings to match query phrases to existing concepts based on
     semantic similarity, then finds shortest paths connecting them.
@@ -1465,6 +1471,7 @@ async def execute_cypher_query(
     Execute a raw openCypher query against the Apache AGE graph (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:execute` permission
 
     Allows direct execution of openCypher queries for advanced users who want full control.
     Returns nodes and relationships in a format suitable for graph visualization.
@@ -1579,6 +1586,7 @@ async def analyze_polarity_axis_endpoint(
     Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
 
     Projects concepts onto a semantic axis formed by two opposing poles (e.g., Modern ↔ Traditional).
     Returns concept positions, directions, and grounding correlation analysis.

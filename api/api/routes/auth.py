@@ -173,6 +173,9 @@ async def update_current_user_profile(
     """
     Update current user profile.
 
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Authenticated users (any valid token)
+
     Users can only update their own password.
     Role and disabled status can only be changed by admins.
     """
@@ -256,10 +259,10 @@ async def get_current_user_from_oauth(
     """
     Get current user profile (ADR-054, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-
     Replaces GET /auth/me (ADR-054).
     Returns user details for the authenticated user.
+
+    **Authorization:** Authenticated users (any valid token)
     """
     return UserRead(
         id=current_user.id,
@@ -280,9 +283,9 @@ async def list_users(
     """
     List all users (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-
     Supports pagination and filtering by role.
+
+    **Authorization:** Requires `users:read` permission
     """
     conn = get_db_connection()
     try:
@@ -326,8 +329,9 @@ async def get_user(
     """
     Get user by ID (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-    **Authorization:** Users can view their own profile, admins can view any user
+    Users can view their own profile, admins can view any user.
+
+    **Authorization:** Requires `users:read` permission
     """
     # Ownership check
     if current_user.id != user_id and current_user.role != "admin":
@@ -373,10 +377,10 @@ async def update_user(
     """
     Update user by ID (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-    **Authorization:** Users can update their own profile, admins can update any user
-
+    Users can update their own profile, admins can update any user.
     Can update role, disabled status, and password.
+
+    **Authorization:** Requires `users:write` permission
     """
     # Ownership check
     if current_user.id != user_id and current_user.role != "admin":
@@ -460,10 +464,10 @@ async def delete_user(
     """
     Delete user by ID (Admin only - ADR-027, ADR-060)
 
-    **Authentication:** Requires admin role
-
     Cannot delete yourself.
     Cascade deletes API keys, sessions, and OAuth tokens.
+
+    **Authorization:** Requires `users:delete` permission
     """
     if user_id == current_user.id:
         raise HTTPException(

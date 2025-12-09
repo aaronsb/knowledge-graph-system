@@ -51,7 +51,7 @@ async def get_system_status(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Get complete system status (Admin only - ADR-060)
+    Get complete system status
 
     Returns status of:
     - Docker containers
@@ -60,7 +60,7 @@ async def get_system_status(
     - Python environment
     - Configuration
 
-    **Authorization:** Authenticated users (admin role)
+    **Authorization:** Requires `admin:status` permission
     """
     service = AdminService()
     try:
@@ -78,7 +78,7 @@ async def list_backups(
     _: None = Depends(require_role("admin"))
 ):
     """
-    List all available backup files (Admin only - ADR-060)
+    List all available backup files
 
     Returns list of backup files with metadata (size, created date, etc.)
 
@@ -216,9 +216,9 @@ async def restore_backup(
     3. Queue restore worker with job ID
     4. Return job ID for progress tracking
 
-    **Authorization:** Requires `backups:restore` permission
-
     Returns job_id for polling restore progress via /jobs/{job_id}
+
+    **Authorization:** Requires `backups:restore` permission
 
     Example (multipart/form-data):
     ```

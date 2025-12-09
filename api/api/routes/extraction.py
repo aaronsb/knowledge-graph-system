@@ -66,9 +66,7 @@ async def get_extraction_config_detail(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Get full AI extraction configuration details (Admin only - ADR-060).
-
-    **Authorization:** Requires `extraction_config:read` permission
+    Get full AI extraction configuration details
 
     Returns complete configuration including:
     - Provider and model details
@@ -77,6 +75,8 @@ async def get_extraction_config_detail(
     - Database config ID
 
     Returns null if no configuration is set.
+
+    **Authorization:** Requires `extraction_config:read` permission
     """
     try:
         config = load_active_extraction_config()
@@ -96,9 +96,7 @@ async def update_extraction_config(
     _: None = Depends(require_role("admin"))
 ):
     """
-    Update AI extraction configuration (Admin only - ADR-060).
-
-    **Authorization:** Requires `extraction_config:write` permission
+    Update AI extraction configuration
 
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.ai_extraction_config table.
@@ -113,6 +111,8 @@ async def update_extraction_config(
     Validation:
     - provider must be 'openai' or 'anthropic'
     - model_name is required
+
+    **Authorization:** Requires `extraction_config:write` permission
 
     Example (OpenAI):
     ```json

@@ -40,6 +40,7 @@ async def get_database_stats(
     Get database statistics including node and relationship counts (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `database:read` permission
 
     Returns:
         DatabaseStatsResponse with node counts by type and relationship breakdown
@@ -129,6 +130,7 @@ async def get_database_info(
     Get database connection information (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `database:read` permission
 
     Returns:
         DatabaseInfoResponse with connection details and version info
@@ -280,6 +282,7 @@ async def execute_cypher_query(
     For internal code, always use namespace-safe facade methods when possible.
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `database:execute` permission
 
     Args:
         request: CypherQueryRequest with query, optional params, optional namespace

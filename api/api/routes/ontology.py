@@ -45,6 +45,7 @@ async def list_ontologies(
     file count, chunk count, and concept count.
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ontologies:read` permission
 
     Returns:
         OntologyListResponse with all ontologies
@@ -105,6 +106,7 @@ async def get_ontology_info(
     - Relationship count
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ontologies:read` permission
 
     Args:
         ontology_name: Name of the ontology
@@ -179,6 +181,7 @@ async def get_ontology_files(
     List all files in a specific ontology with their statistics (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ontologies:read` permission
 
     Args:
         ontology_name: Name of the ontology

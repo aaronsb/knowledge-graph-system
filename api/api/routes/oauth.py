@@ -96,6 +96,8 @@ async def create_personal_oauth_client(
     """
     Create a personal OAuth client for a user (GitHub CLI-style authentication).
 
+    **Authorization:** Authenticated users (any valid token)
+
     This endpoint allows users to create long-lived OAuth credentials by authenticating
     with their username and password. The returned client_id and client_secret should be
     stored securely (e.g., ~/.config/kg/config.json) and used for subsequent API requests
@@ -271,6 +273,8 @@ async def create_additional_personal_oauth_client(
     """
     Create an additional personal OAuth client (requires existing authentication).
 
+    **Authorization:** Authenticated users (any valid token)
+
     This endpoint allows authenticated users to create additional OAuth clients
     (e.g., for MCP server, scripts) without providing password again.
 
@@ -406,6 +410,8 @@ async def delete_personal_oauth_client(
     """
     Delete a personal OAuth client (requires authentication).
 
+    **Authorization:** Authenticated users (any valid token)
+
     Allows users to revoke their own personal OAuth clients.
     This is called by `kg logout` to clean up OAuth credentials.
 
@@ -483,6 +489,8 @@ async def rotate_personal_client_secret(
 ):
     """
     Rotate secret for a personal OAuth client (requires authentication).
+
+    **Authorization:** Authenticated users (any valid token)
 
     Allows users to rotate the secret for their own personal OAuth clients.
     Returns new secret (shown only once). Old secret is immediately invalidated.
@@ -577,6 +585,8 @@ async def list_personal_oauth_clients(
     """
     List all personal OAuth clients for the current user.
 
+    **Authorization:** Authenticated users (any valid token)
+
     Returns OAuth clients owned by the authenticated user.
     Useful for managing multiple clients (CLI, MCP, scripts, etc.)
 
@@ -653,6 +663,8 @@ async def create_oauth_client(
 ):
     """
     Register a new OAuth client application (admin only).
+
+    **Authorization:** Requires `oauth_clients:create` permission
 
     For confidential clients, returns client_secret (shown only once).
     For public clients, client_secret is None.
@@ -731,6 +743,8 @@ async def list_oauth_clients(
 ):
     """
     List all OAuth client applications (admin only).
+
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -785,6 +799,8 @@ async def get_oauth_client(
 ):
     """
     Get OAuth client details (admin only).
+
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -835,6 +851,8 @@ async def update_oauth_client(
 ):
     """
     Update OAuth client configuration (admin only).
+
+    **Authorization:** Requires `oauth_clients:write` permission
 
     Cannot update client_type or regenerate secret (use rotate-secret endpoint).
     """
@@ -923,6 +941,8 @@ async def delete_oauth_client(
     """
     Delete OAuth client (admin only).
 
+    **Authorization:** Requires `oauth_clients:delete` permission
+
     Cascades to all associated tokens, codes, etc.
     """
     conn = get_db_connection()
@@ -960,6 +980,8 @@ async def rotate_client_secret(
 ):
     """
     Rotate client secret for confidential clients (admin only).
+
+    **Authorization:** Requires `oauth_clients:write` permission
 
     Returns new secret (shown only once). Old secret is immediately invalidated.
     """
@@ -1907,6 +1929,8 @@ async def list_tokens(
 ):
     """
     List all OAuth tokens (admin only).
+
+    **Authorization:** Authenticated users (any valid token)
     """
     conn = get_db_connection()
     try:
@@ -2005,6 +2029,8 @@ async def revoke_token_by_hash(
 ):
     """
     Revoke a specific token by its hash (admin only).
+
+    **Authorization:** Authenticated users (any valid token)
     """
     conn = get_db_connection()
     try:

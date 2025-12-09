@@ -121,6 +121,7 @@ async def get_vocabulary_status(
     Get current vocabulary status including size, zone, and aggressiveness (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `vocabulary:read` permission
 
     Returns:
         VocabularyStatusResponse with current state
@@ -196,6 +197,7 @@ async def list_edge_types(
     List all edge types with statistics (ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `vocabulary:read` permission
 
     Args:
         include_inactive: Include inactive/deprecated types
@@ -306,6 +308,8 @@ async def add_edge_type(
     """
     Manually add a new edge type (curator action).
 
+    **Authorization:** Requires `vocabulary:write` permission
+
     Args:
         request: Edge type details
 
@@ -384,6 +388,8 @@ async def merge_edge_types(
 
     Updates all edges to use the target type and marks the deprecated type as inactive.
 
+    **Authorization:** Requires `vocabulary:write` permission
+
     Args:
         request: Merge details
 
@@ -439,6 +445,8 @@ async def consolidate_vocabulary(
 ):
     """
     Run AITL vocabulary consolidation workflow.
+
+    **Authorization:** Requires `vocabulary:write` permission
 
     Modes:
     - dry_run=True: Evaluate top candidates without executing (validation)
@@ -585,6 +593,8 @@ async def generate_embeddings(
     """
     Generate embeddings for vocabulary types (bulk operation).
 
+    **Authorization:** Requires `vocabulary:write` permission
+
     Useful for:
     - Fixing missing embeddings after database issues
     - Regenerating embeddings after model changes
@@ -672,6 +682,7 @@ async def get_category_scores(
     Get category similarity scores for a relationship type (ADR-047, ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `vocabulary:read` permission
 
     Returns detailed breakdown of semantic similarity to all 8 categories:
     - causation, composition, logical, evidential
@@ -739,6 +750,8 @@ async def refresh_categories(
 ):
     """
     Refresh category assignments for vocabulary types (ADR-047).
+
+    **Authorization:** Requires `vocabulary:write` permission
 
     Recomputes probabilistic category assignments based on current embeddings.
     Useful after:
@@ -841,6 +854,7 @@ async def get_similar_types(
     Find similar (or opposite) edge types based on embedding similarity (ADR-053, ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `vocabulary:read` permission
 
     Uses cosine similarity between embeddings to find:
     - Similar types (high similarity): Potential synonyms for consolidation
@@ -976,6 +990,7 @@ async def analyze_vocabulary_type(
     Detailed analysis of vocabulary type for quality assurance (ADR-053, ADR-060).
 
     **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `vocabulary:read` permission
 
     Provides comprehensive similarity analysis:
     - Category fit (similarity to category seeds)
@@ -1095,6 +1110,8 @@ async def measure_epistemic_status(
     """
     Measure epistemic status for all vocabulary types (ADR-065 Phase 2).
 
+    **Authorization:** Requires `vocabulary:write` permission
+
     Uses EpistemicStatusService to:
     - Sample edges for each vocabulary type
     - Calculate grounding patterns dynamically
@@ -1177,7 +1194,9 @@ async def list_epistemic_status(
 ):
     """
     List all vocabulary types with their epistemic status (ADR-065 Phase 2).
-    
+
+    **Authorization:** Requires `vocabulary:read` permission
+
     Returns types with:
     - epistemic_status classification
     - Grounding statistics (avg, std, min, max)
@@ -1272,7 +1291,9 @@ async def get_epistemic_status(
 ):
     """
     Get epistemic status for a specific vocabulary type (ADR-065 Phase 2).
-    
+
+    **Authorization:** Requires `vocabulary:read` permission
+
     Returns detailed classification and statistics for the relationship type.
     """
     try:
