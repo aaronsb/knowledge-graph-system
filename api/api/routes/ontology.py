@@ -11,7 +11,7 @@ Provides REST API access to:
 from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
 import logging
 
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_role, require_permission
 from ..models.ontology import (
     OntologyListResponse,
     OntologyItem,
@@ -243,7 +243,7 @@ async def get_ontology_files(
 async def delete_ontology(
     ontology_name: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("ontologies", "delete")),
     force: bool = QueryParam(False, description="Skip confirmation and force deletion")
 ):
     """
@@ -421,7 +421,7 @@ async def rename_ontology(
     ontology_name: str,
     request: OntologyRenameRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("ontologies", "create"))
 ):
     """
     Rename an ontology (Admin only - ADR-060).

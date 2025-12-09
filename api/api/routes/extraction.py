@@ -15,7 +15,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_role, require_permission
 from ..models.extraction import (
     ExtractionConfigResponse,
     ExtractionConfigDetail,
@@ -63,7 +63,7 @@ async def get_extraction_config():
 @admin_router.get("/config", response_model=Optional[ExtractionConfigDetail])
 async def get_extraction_config_detail(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("extraction_config", "read"))
 ):
     """
     Get full AI extraction configuration details
@@ -93,7 +93,7 @@ async def get_extraction_config_detail(
 async def update_extraction_config(
     request: UpdateExtractionConfigRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("extraction_config", "write"))
 ):
     """
     Update AI extraction configuration

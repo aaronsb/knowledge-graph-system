@@ -14,7 +14,7 @@ from typing import Optional
 import logging
 import os
 
-from api.api.dependencies.auth import CurrentUser, require_role
+from api.api.dependencies.auth import CurrentUser, require_role, require_permission
 
 from ..models.vocabulary import (
     # Status and info
@@ -302,7 +302,7 @@ async def list_edge_types(
 @router.post("/types", response_model=EdgeTypeInfo)
 async def add_edge_type(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("vocabulary", "write")),
     request: AddEdgeTypeRequest = None
 ):
     """
@@ -380,7 +380,7 @@ async def add_edge_type(
 @router.post("/merge", response_model=MergeEdgeTypesResponse)
 async def merge_edge_types(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("vocabulary", "write")),
     request: MergeEdgeTypesRequest = None
 ):
     """
@@ -440,7 +440,7 @@ async def merge_edge_types(
 @router.post("/consolidate", response_model=ConsolidateVocabularyResponse)
 async def consolidate_vocabulary(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("vocabulary", "write")),
     request: ConsolidateVocabularyRequest = None
 ):
     """
@@ -587,7 +587,7 @@ async def consolidate_vocabulary(
 @router.post("/generate-embeddings", response_model=GenerateEmbeddingsResponse)
 async def generate_embeddings(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("vocabulary", "write")),
     request: GenerateEmbeddingsRequest = None
 ):
     """
@@ -745,7 +745,7 @@ async def get_category_scores(
 @router.post("/refresh-categories", response_model=RefreshCategoriesResponse)
 async def refresh_categories(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("vocabulary", "write")),
     request: RefreshCategoriesRequest = None
 ):
     """
@@ -1105,7 +1105,7 @@ async def analyze_vocabulary_type(
 async def measure_epistemic_status(
     request: EpistemicStatusMeasureRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary", "write"))
 ):
     """
     Measure epistemic status for all vocabulary types (ADR-065 Phase 2).

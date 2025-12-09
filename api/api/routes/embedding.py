@@ -16,7 +16,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_permission
 from ..models.embedding import (
     EmbeddingConfigResponse,
     EmbeddingConfigDetail,
@@ -69,7 +69,7 @@ async def get_embedding_config():
 @admin_router.get("/config", response_model=Optional[EmbeddingConfigDetail])
 async def get_embedding_config_detail(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("embedding_config", "read"))
 ):
     """
     Get full embedding configuration details
@@ -98,7 +98,7 @@ async def get_embedding_config_detail(
 async def create_embedding_config(
     request: UpdateEmbeddingConfigRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("embedding_config", "create"))
 ):
     """
     Create a new embedding configuration
@@ -200,7 +200,7 @@ async def create_embedding_config(
 @admin_router.post("/config/reload", response_model=ReloadEmbeddingModelResponse)
 async def reload_embedding_model(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("embedding_config", "reload"))
 ):
     """
     Hot reload embedding model without API restart
@@ -276,7 +276,7 @@ async def reload_embedding_model(
 @admin_router.get("/configs", response_model=list)
 async def list_embedding_configs(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("embedding_config", "read"))
 ):
     """
     List all embedding configurations
@@ -301,7 +301,7 @@ async def list_embedding_configs(
 async def protect_embedding_config(
     config_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "create")),
     delete_protected: Optional[bool] = None,
     change_protected: Optional[bool] = None
 ):
@@ -357,7 +357,7 @@ async def protect_embedding_config(
 async def delete_embedding_config_endpoint(
     config_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("embedding_config", "delete"))
 ):
     """
     Delete an embedding configuration
@@ -392,7 +392,7 @@ async def delete_embedding_config_endpoint(
 async def activate_embedding_config_endpoint(
     config_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "activate")),
     force: bool = False
 ):
     """
@@ -468,7 +468,7 @@ async def activate_embedding_config_endpoint(
 @admin_router.get("/status")
 async def get_embedding_status(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "read")),
     ontology: Optional[str] = None
 ):
     """
@@ -528,7 +528,7 @@ async def get_embedding_status(
 @admin_router.post("/regenerate")
 async def regenerate_embeddings(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "regenerate")),
     embedding_type: str = "concept",
     only_missing: bool = False,
     only_incompatible: bool = False,

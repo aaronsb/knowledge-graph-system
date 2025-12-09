@@ -64,6 +64,7 @@ from api.api.dependencies.auth import (
     get_current_active_user,
     get_db_connection,
     require_role,
+    require_permission,
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -278,7 +279,8 @@ async def get_current_user_from_oauth(
 async def list_users(
     current_user: CurrentUser,
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
+    _: None = Depends(require_permission("users", "read"))
 ):
     """
     List all users (ADR-027, ADR-060)
@@ -324,7 +326,8 @@ async def list_users(
 @admin_router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: int,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "read"))
 ):
     """
     Get user by ID (ADR-027, ADR-060)
@@ -372,7 +375,8 @@ async def get_user(
 async def update_user(
     user_id: int,
     update: UserUpdate,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "write"))
 ):
     """
     Update user by ID (ADR-027, ADR-060)
@@ -459,7 +463,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("users", "delete"))
 ):
     """
     Delete user by ID (Admin only - ADR-027, ADR-060)

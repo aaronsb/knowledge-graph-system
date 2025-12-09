@@ -31,7 +31,7 @@ from ..models.admin import (
     RestoreResponse,
     # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
 )
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_permission
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 @router.get("/status", response_model=SystemStatusResponse)
 async def get_system_status(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
     Get complete system status
@@ -75,7 +75,7 @@ async def get_system_status(
 @router.get("/backups", response_model=ListBackupsResponse)
 async def list_backups(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("backups", "read"))
 ):
     """
     List all available backup files
@@ -98,7 +98,7 @@ async def list_backups(
 async def create_backup(
     request: BackupRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("backups", "create"))
 ):
     """
     Create a database backup (ADR-015 Phase 2: Streaming Download)
@@ -190,7 +190,7 @@ async def create_backup(
 async def restore_backup(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("backups", "restore")),
     file: UploadFile = File(..., description="Backup JSON file to restore"),
     overwrite: bool = Form(False, description="Overwrite existing data"),
     handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
@@ -382,7 +382,7 @@ async def restore_backup(
 @router.get("/scheduler/status")
 async def get_scheduler_status(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
     Get job scheduler status and statistics (ADR-014)
@@ -444,7 +444,7 @@ async def get_scheduler_status(
 @router.post("/scheduler/cleanup")
 async def trigger_scheduler_cleanup(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
     Manually trigger job scheduler cleanup (ADR-014)
@@ -512,7 +512,7 @@ async def trigger_scheduler_cleanup(
 async def set_api_key(
     provider: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("api_keys", "write")),
     api_key: str = Form(..., description="API key to store")
 ):
     """
@@ -626,7 +626,7 @@ async def set_api_key(
 @router.get("/keys")
 async def list_api_keys(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("api_keys", "read"))
 ):
     """
     List configured API providers with validation status (ADR-031, ADR-041)
@@ -714,7 +714,7 @@ async def list_api_keys(
 async def delete_api_key(
     provider: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("api_keys", "delete"))
 ):
     """
     Delete system API key for a provider (ADR-031)
@@ -785,7 +785,7 @@ async def delete_api_key(
 @router.post("/regenerate-concept-embeddings")
 async def regenerate_concept_embeddings(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "regenerate")),
     only_missing: bool = False,
     ontology: Optional[str] = None,
     limit: Optional[int] = None

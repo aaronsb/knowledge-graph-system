@@ -19,7 +19,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_permission
 from ..models.vocabulary import (
     VocabularyConfigResponse,
     VocabularyConfigDetail,
@@ -84,7 +84,7 @@ async def get_vocabulary_config():
 @admin_router.get("/config", response_model=VocabularyConfigDetail)
 async def get_vocabulary_config_detail(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "read"))
 ):
     """
     Get full vocabulary configuration details
@@ -112,7 +112,7 @@ async def get_vocabulary_config_detail(
 async def update_vocabulary_config_endpoint(
     request: UpdateConfigRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "write"))
 ):
     """
     Update vocabulary configuration
@@ -194,7 +194,7 @@ async def update_vocabulary_config_endpoint(
 @admin_router.get("/profiles", response_model=ProfileListResponse)
 async def list_profiles(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "read"))
 ):
     """
     List all aggressiveness profiles
@@ -228,7 +228,7 @@ async def list_profiles(
 async def get_profile(
     profile_name: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "read"))
 ):
     """
     Get specific aggressiveness profile details
@@ -265,7 +265,7 @@ async def get_profile(
 async def create_profile(
     request: CreateProfileRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "create"))
 ):
     """
     Create custom aggressiveness profile
@@ -316,7 +316,7 @@ async def create_profile(
 async def delete_profile(
     profile_name: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("vocabulary_config", "delete"))
 ):
     """
     Delete custom aggressiveness profile

@@ -73,6 +73,7 @@ from api.api.dependencies.auth import (
     get_current_active_user,
     get_db_connection,
     require_role,
+    require_permission,
 )
 from api.api.models.auth import UserInDB
 
@@ -659,7 +660,7 @@ async def list_personal_oauth_clients(
 @router.post("/clients", response_model=OAuthClientWithSecret, status_code=status.HTTP_201_CREATED)
 async def create_oauth_client(
     client: OAuthClientCreate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "create"))]
 ):
     """
     Register a new OAuth client application (admin only).
@@ -738,7 +739,7 @@ async def create_oauth_client(
 
 @router.get("/clients", response_model=OAuthClientListResponse)
 async def list_oauth_clients(
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))],
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))],
     active_only: bool = Query(False, description="Filter active clients only")
 ):
     """
@@ -795,7 +796,7 @@ async def list_oauth_clients(
 @router.get("/clients/{client_id}", response_model=OAuthClientRead)
 async def get_oauth_client(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))]
 ):
     """
     Get OAuth client details (admin only).
@@ -847,7 +848,7 @@ async def get_oauth_client(
 async def update_oauth_client(
     client_id: str,
     update: OAuthClientUpdate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "write"))]
 ):
     """
     Update OAuth client configuration (admin only).
@@ -936,7 +937,7 @@ async def update_oauth_client(
 @router.delete("/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_oauth_client(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "delete"))]
 ):
     """
     Delete OAuth client (admin only).
@@ -976,7 +977,7 @@ async def delete_oauth_client(
 @router.post("/clients/{client_id}/rotate-secret", response_model=RotateSecretResponse)
 async def rotate_client_secret(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "write"))]
 ):
     """
     Rotate client secret for confidential clients (admin only).
@@ -1922,7 +1923,7 @@ async def revoke_token(
 
 @router.get("/tokens", response_model=TokenListResponse)
 async def list_tokens(
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))],
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))],
     client_id: Optional[str] = Query(None, description="Filter by client ID"),
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
     active_only: bool = Query(True, description="Show only active (non-revoked, non-expired) tokens")
@@ -1930,7 +1931,7 @@ async def list_tokens(
     """
     List all OAuth tokens (admin only).
 
-    **Authorization:** Authenticated users (any valid token)
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -2025,12 +2026,12 @@ async def list_tokens(
 @router.delete("/tokens/{token_hash}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_token_by_hash(
     token_hash: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "delete"))]
 ):
     """
     Revoke a specific token by its hash (admin only).
 
-    **Authorization:** Authenticated users (any valid token)
+    **Authorization:** Requires `oauth_clients:delete` permission
     """
     conn = get_db_connection()
     try:
