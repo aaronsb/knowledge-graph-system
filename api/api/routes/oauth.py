@@ -73,6 +73,7 @@ from api.api.dependencies.auth import (
     get_current_active_user,
     get_db_connection,
     require_role,
+    require_permission,
 )
 from api.api.models.auth import UserInDB
 
@@ -95,6 +96,8 @@ async def create_personal_oauth_client(
 ):
     """
     Create a personal OAuth client for a user (GitHub CLI-style authentication).
+
+    **Authorization:** Authenticated users (any valid token)
 
     This endpoint allows users to create long-lived OAuth credentials by authenticating
     with their username and password. The returned client_id and client_secret should be
@@ -271,6 +274,8 @@ async def create_additional_personal_oauth_client(
     """
     Create an additional personal OAuth client (requires existing authentication).
 
+    **Authorization:** Authenticated users (any valid token)
+
     This endpoint allows authenticated users to create additional OAuth clients
     (e.g., for MCP server, scripts) without providing password again.
 
@@ -406,6 +411,8 @@ async def delete_personal_oauth_client(
     """
     Delete a personal OAuth client (requires authentication).
 
+    **Authorization:** Authenticated users (any valid token)
+
     Allows users to revoke their own personal OAuth clients.
     This is called by `kg logout` to clean up OAuth credentials.
 
@@ -476,12 +483,110 @@ async def delete_personal_oauth_client(
         conn.close()
 
 
+@router.post("/clients/personal/{client_id}/rotate-secret", response_model=RotateSecretResponse)
+async def rotate_personal_client_secret(
+    client_id: str,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    """
+    Rotate secret for a personal OAuth client (requires authentication).
+
+    **Authorization:** Authenticated users (any valid token)
+
+    Allows users to rotate the secret for their own personal OAuth clients.
+    Returns new secret (shown only once). Old secret is immediately invalidated.
+
+    Security:
+    - User can only rotate secrets for their own personal clients
+    - Cannot rotate secrets for system clients or other users' clients
+
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:8000/auth/oauth/clients/personal/kg-cli-admin-f8a4b2c1/rotate-secret \\
+      -H "Authorization: Bearer <access_token>"
+    ```
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Verify client exists and get metadata
+            cur.execute("""
+                SELECT client_type, metadata, client_name
+                FROM kg_auth.oauth_clients
+                WHERE client_id = %s
+            """, (client_id,))
+
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"OAuth client '{client_id}' not found"
+                )
+
+            client_type, metadata, client_name = row
+            metadata = metadata or {}
+
+            # Check if this is a personal client
+            if not metadata.get("personal"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot rotate secret for non-personal OAuth client. Use admin endpoints."
+                )
+
+            # Check if client belongs to current user
+            if metadata.get("user_id") != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot rotate secret for another user's OAuth client"
+                )
+
+            # Verify it's a confidential client (has a secret to rotate)
+            if client_type != "confidential":
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Cannot rotate secret for public client '{client_id}'"
+                )
+
+            # Generate new secret
+            new_secret = generate_client_secret()
+            new_secret_hash = get_password_hash(new_secret)
+
+            # Update client
+            cur.execute(
+                "UPDATE kg_auth.oauth_clients SET client_secret_hash = %s WHERE client_id = %s",
+                (new_secret_hash, client_id)
+            )
+
+            conn.commit()
+
+            return RotateSecretResponse(
+                client_id=client_id,
+                client_secret=new_secret,
+                client_name=client_name,
+                rotated_at=utcnow()
+            )
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to rotate personal client secret: {str(e)}"
+        )
+    finally:
+        conn.close()
+
+
 @router.get("/clients/personal", response_model=OAuthClientListResponse)
 async def list_personal_oauth_clients(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)]
 ):
     """
     List all personal OAuth clients for the current user.
+
+    **Authorization:** Authenticated users (any valid token)
 
     Returns OAuth clients owned by the authenticated user.
     Useful for managing multiple clients (CLI, MCP, scripts, etc.)
@@ -555,10 +660,12 @@ async def list_personal_oauth_clients(
 @router.post("/clients", response_model=OAuthClientWithSecret, status_code=status.HTTP_201_CREATED)
 async def create_oauth_client(
     client: OAuthClientCreate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "create"))]
 ):
     """
     Register a new OAuth client application (admin only).
+
+    **Authorization:** Requires `oauth_clients:create` permission
 
     For confidential clients, returns client_secret (shown only once).
     For public clients, client_secret is None.
@@ -632,11 +739,13 @@ async def create_oauth_client(
 
 @router.get("/clients", response_model=OAuthClientListResponse)
 async def list_oauth_clients(
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))],
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))],
     active_only: bool = Query(False, description="Filter active clients only")
 ):
     """
     List all OAuth client applications (admin only).
+
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -687,10 +796,12 @@ async def list_oauth_clients(
 @router.get("/clients/{client_id}", response_model=OAuthClientRead)
 async def get_oauth_client(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))]
 ):
     """
     Get OAuth client details (admin only).
+
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -737,10 +848,12 @@ async def get_oauth_client(
 async def update_oauth_client(
     client_id: str,
     update: OAuthClientUpdate,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "write"))]
 ):
     """
     Update OAuth client configuration (admin only).
+
+    **Authorization:** Requires `oauth_clients:write` permission
 
     Cannot update client_type or regenerate secret (use rotate-secret endpoint).
     """
@@ -824,10 +937,12 @@ async def update_oauth_client(
 @router.delete("/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_oauth_client(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "delete"))]
 ):
     """
     Delete OAuth client (admin only).
+
+    **Authorization:** Requires `oauth_clients:delete` permission
 
     Cascades to all associated tokens, codes, etc.
     """
@@ -862,10 +977,12 @@ async def delete_oauth_client(
 @router.post("/clients/{client_id}/rotate-secret", response_model=RotateSecretResponse)
 async def rotate_client_secret(
     client_id: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "write"))]
 ):
     """
     Rotate client secret for confidential clients (admin only).
+
+    **Authorization:** Requires `oauth_clients:write` permission
 
     Returns new secret (shown only once). Old secret is immediately invalidated.
     """
@@ -874,7 +991,7 @@ async def rotate_client_secret(
         with conn.cursor() as cur:
             # Check client exists and is confidential
             cur.execute(
-                "SELECT client_type FROM kg_auth.oauth_clients WHERE client_id = %s",
+                "SELECT client_type, client_name FROM kg_auth.oauth_clients WHERE client_id = %s",
                 (client_id,)
             )
             row = cur.fetchone()
@@ -885,7 +1002,9 @@ async def rotate_client_secret(
                     detail=f"OAuth client '{client_id}' not found"
                 )
 
-            if row[0] != "confidential":
+            client_type, client_name = row
+
+            if client_type != "confidential":
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Cannot rotate secret for public client '{client_id}'"
@@ -905,6 +1024,7 @@ async def rotate_client_secret(
 
             return RotateSecretResponse(
                 client_id=client_id,
+                client_name=client_name,
                 client_secret=new_secret,
                 rotated_at=utcnow()
             )
@@ -1803,13 +1923,15 @@ async def revoke_token(
 
 @router.get("/tokens", response_model=TokenListResponse)
 async def list_tokens(
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))],
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "read"))],
     client_id: Optional[str] = Query(None, description="Filter by client ID"),
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
     active_only: bool = Query(True, description="Show only active (non-revoked, non-expired) tokens")
 ):
     """
     List all OAuth tokens (admin only).
+
+    **Authorization:** Requires `oauth_clients:read` permission
     """
     conn = get_db_connection()
     try:
@@ -1904,10 +2026,12 @@ async def list_tokens(
 @router.delete("/tokens/{token_hash}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_token_by_hash(
     token_hash: str,
-    current_user: Annotated[UserInDB, Depends(require_role("admin"))]
+    current_user: Annotated[UserInDB, Depends(require_permission("oauth_clients", "delete"))]
 ):
     """
     Revoke a specific token by its hash (admin only).
+
+    **Authorization:** Requires `oauth_clients:delete` permission
     """
     conn = get_db_connection()
     try:

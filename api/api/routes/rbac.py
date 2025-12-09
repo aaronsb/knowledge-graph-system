@@ -20,7 +20,7 @@ from api.api.dependencies.auth import (
     CurrentUser,
     get_current_active_user,
     get_db_connection,
-    require_role,
+    require_permission,
 )
 from api.api.models.auth import UserInDB
 from api.api.lib.permissions import PermissionChecker
@@ -143,10 +143,12 @@ router = APIRouter(prefix="/rbac", tags=["rbac"])
 @router.get("/resources", response_model=List[ResourceRead])
 async def list_resources(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "read"))
 ):
     """
     List all registered resource types.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -176,10 +178,12 @@ async def list_resources(
 async def create_resource(
     resource: ResourceCreate,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "create"))
 ):
     """
     Register a new resource type.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -231,10 +235,12 @@ async def create_resource(
 async def get_resource(
     resource_type: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "read"))
 ):
     """
     Get resource type details.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -267,12 +273,14 @@ async def update_resource(
     resource_type: str,
     update: ResourceUpdate,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "write"))
 ):
     """
     Update resource type configuration.
 
     Cannot update builtin resources.
+
+    **Authorization:** Requires `rbac:write` permission
 
     **Authentication:** Requires admin role
     """
@@ -338,12 +346,14 @@ async def update_resource(
 async def delete_resource(
     resource_type: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "delete"))
 ):
     """
     Delete a resource type.
 
     Cannot delete builtin resources or resources with existing permissions.
+
+    **Authorization:** Requires `rbac:delete` permission
 
     **Authentication:** Requires admin role
     """
@@ -381,11 +391,13 @@ async def delete_resource(
 @router.get("/roles", response_model=List[RoleRead])
 async def list_roles(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("rbac", "read")),
     include_inactive: bool = False
 ):
     """
     List all roles.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -413,10 +425,12 @@ async def list_roles(
 async def create_role(
     role: RoleCreate,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "create"))
 ):
     """
     Create a new role.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -466,10 +480,12 @@ async def create_role(
 async def get_role(
     role_name: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "read"))
 ):
     """
     Get role details.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -502,12 +518,14 @@ async def update_role(
     role_name: str,
     update: RoleUpdate,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "write"))
 ):
     """
     Update role configuration.
 
     Cannot modify builtin roles.
+
+    **Authorization:** Requires `rbac:write` permission
 
     **Authentication:** Requires admin role
     """
@@ -587,12 +605,14 @@ async def update_role(
 async def delete_role(
     role_name: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "delete"))
 ):
     """
     Delete a role.
 
     Cannot delete builtin roles or roles with users/permissions.
+
+    **Authorization:** Requires `rbac:delete` permission
 
     **Authentication:** Requires admin role
     """
@@ -641,12 +661,14 @@ async def delete_role(
 @router.get("/permissions", response_model=List[PermissionRead])
 async def list_permissions(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("rbac", "read")),
     role_name: Optional[str] = None,
     resource_type: Optional[str] = None
 ):
     """
     List role permissions with optional filtering.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -683,10 +705,12 @@ async def list_permissions(
 async def create_permission(
     permission: PermissionCreate,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "create"))
 ):
     """
     Grant a permission to a role.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -749,10 +773,12 @@ async def create_permission(
 async def delete_permission(
     permission_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "delete"))
 ):
     """
     Revoke a permission from a role.
+
+    **Authorization:** Requires `rbac:delete` permission
 
     **Authentication:** Requires admin role
     """
@@ -778,10 +804,12 @@ async def delete_permission(
 async def list_user_roles(
     user_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "read"))
 ):
     """
     List roles assigned to a user.
+
+    **Authorization:** Requires `rbac:read` permission
 
     **Authentication:** Requires admin role
     """
@@ -806,10 +834,12 @@ async def list_user_roles(
 async def assign_user_role(
     assignment: UserRoleAssign,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "create"))
 ):
     """
     Assign a role to a user.
+
+    **Authorization:** Requires `rbac:create` permission
 
     **Authentication:** Requires admin role
     """
@@ -868,10 +898,12 @@ async def assign_user_role(
 async def revoke_user_role(
     assignment_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "delete"))
 ):
     """
     Revoke a role assignment from a user.
+
+    **Authorization:** Requires `rbac:delete` permission
 
     **Authentication:** Requires admin role
     """
@@ -910,10 +942,12 @@ class PermissionCheckResponse(BaseModel):
 async def check_user_permission(
     request: PermissionCheckRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("rbac", "read"))
 ):
     """
     Check if a user has a specific permission (utility endpoint).
+
+    **Authorization:** Authenticated users (any valid token)
 
     **Authentication:** Requires admin role
     """

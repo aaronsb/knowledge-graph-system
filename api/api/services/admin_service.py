@@ -52,12 +52,10 @@ class AdminService:
         db_connected, db_error = await self._check_database_connection()
         db_stats = await self._get_database_stats() if db_connected else None
 
-        # Python environment
-        venv_exists = (self.project_root / "venv").exists()
-        python_version = await self._get_python_version() if venv_exists else None
+        # Python environment (always available in container)
+        python_version = await self._get_python_version()
 
-        # Configuration
-        env_exists = (self.project_root / ".env").exists()
+        # Configuration (API keys from encrypted database)
         anthropic_configured, openai_configured = await self._check_api_keys()
 
         return SystemStatusResponse(
@@ -74,11 +72,11 @@ class AdminService:
             ),
             database_stats=db_stats,
             python_env=PythonEnvironment(
-                venv_exists=venv_exists,
+                venv_exists=True,  # Always true in container
                 python_version=python_version,
             ),
             configuration=ConfigurationStatus(
-                env_exists=env_exists,
+                env_exists=True,  # Config is in database, not .env
                 anthropic_key_configured=anthropic_configured,
                 openai_key_configured=openai_configured,
             ),
@@ -274,45 +272,39 @@ class AdminService:
     # ========== Helper Methods ==========
 
     async def _check_docker_running(self) -> bool:
-        """Check if PostgreSQL Docker container is running"""
-        proc = await asyncio.create_subprocess_exec(
-            "docker", "ps", "--format", "{{.Names}}",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, _ = await proc.communicate()
-        return "knowledge-graph-postgres" in stdout.decode()
+        """Check if running in container (always true when API is containerized)"""
+        # When running in a container, we can't run docker commands
+        # Check if we're in a container by looking for /.dockerenv
+        return Path("/.dockerenv").exists()
 
     async def _get_docker_info(self) -> Dict[str, str]:
-        """Get Docker container info"""
-        proc = await asyncio.create_subprocess_exec(
-            "docker", "ps",
-            "--filter", "name=knowledge-graph-postgres",
-            "--format", "{{.Names}}\t{{.Status}}\t{{.Ports}}",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, _ = await proc.communicate()
-        parts = stdout.decode().strip().split("\t")
-        if len(parts) >= 3:
-            return {"name": parts[0], "status": parts[1], "ports": parts[2]}
+        """Get container info"""
+        # When running in a container, return info about current environment
+        if Path("/.dockerenv").exists():
+            return {
+                "name": "kg-api-dev",
+                "status": "running (containerized)",
+                "ports": "8000"
+            }
         return {}
 
     async def _check_database_connection(self) -> tuple[bool, Optional[str]]:
-        """Check if database is connectable"""
-        postgres_user = os.getenv("POSTGRES_USER", "admin")
-        postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
-        proc = await asyncio.create_subprocess_exec(
-            "docker", "exec", "knowledge-graph-postgres",
-            "psql", "-U", postgres_user, "-d", postgres_db,
-            "-c", "SELECT 1",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        connected = proc.returncode == 0
-        error = stderr.decode() if not connected else None
-        return connected, error
+        """Check if database is connectable using direct connection"""
+        import psycopg2
+
+        try:
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", "5432")),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
+                connect_timeout=5
+            )
+            conn.close()
+            return True, None
+        except Exception as e:
+            return False, str(e)
 
     async def _get_database_stats(self) -> DatabaseStats:
         """Get database statistics using Apache AGE via AGEClient"""
@@ -365,28 +357,44 @@ class AdminService:
             )
 
     async def _get_python_version(self) -> Optional[str]:
-        """Get Python version from venv"""
-        python_path = self.project_root / "venv" / "bin" / "python"
-        if not python_path.exists():
-            return None
-
-        proc = await asyncio.create_subprocess_exec(
-            str(python_path), "--version",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, _ = await proc.communicate()
-        return stdout.decode().strip()
+        """Get Python version from current interpreter"""
+        import sys
+        return f"Python {sys.version.split()[0]}"
 
     async def _check_api_keys(self) -> tuple[bool, bool]:
-        """Check if API keys are configured"""
-        env_file = self.project_root / ".env"
-        if not env_file.exists():
-            return False, False
+        """Check if API keys are configured (from encrypted database storage)"""
+        from ..lib.encrypted_keys import EncryptedKeyStore
+        import psycopg2
 
-        content = env_file.read_text()
-        anthropic = "ANTHROPIC_API_KEY=" in content and "ANTHROPIC_API_KEY=$" not in content
-        openai = "OPENAI_API_KEY=" in content and "OPENAI_API_KEY=$" not in content
+        anthropic = False
+        openai = False
+
+        try:
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", "5432")),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.getenv("POSTGRES_PASSWORD", "")
+            )
+            key_store = EncryptedKeyStore(conn)
+
+            try:
+                key_store.get_key("anthropic")
+                anthropic = True
+            except ValueError:
+                pass
+
+            try:
+                key_store.get_key("openai")
+                openai = True
+            except ValueError:
+                pass
+
+            conn.close()
+        except Exception:
+            pass
+
         return anthropic, openai
 
     async def _extract_backup_file_from_output(

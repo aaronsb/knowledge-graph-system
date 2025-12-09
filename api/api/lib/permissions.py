@@ -101,11 +101,32 @@ class PermissionChecker:
         """
         Get all active roles for a user.
 
-        Returns roles that:
-        - Are not expired
-        - Match resource scope if provided
+        Returns roles from:
+        - User's primary_role (from users table)
+        - Explicit role assignments (from user_roles table, not expired)
         """
+        roles = []
+
         with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # 1. Get user's primary role from users table
+            cur.execute("""
+                SELECT u.primary_role, r.parent_role
+                FROM kg_auth.users u
+                JOIN kg_auth.roles r ON u.primary_role = r.role_name
+                WHERE u.id = %s
+                  AND r.is_active = TRUE
+            """, (user_id,))
+
+            row = cur.fetchone()
+            if row:
+                roles.append({
+                    'role_name': row['primary_role'],
+                    'scope_type': 'global',
+                    'scope_id': None,
+                    'parent_role': row['parent_role']
+                })
+
+            # 2. Get explicit role assignments from user_roles table
             cur.execute("""
                 SELECT
                     ur.role_name,
@@ -119,7 +140,9 @@ class PermissionChecker:
                   AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
             """, (user_id,))
 
-            return cur.fetchall()
+            roles.extend(cur.fetchall())
+
+            return roles
 
     def _has_explicit_deny(
         self,

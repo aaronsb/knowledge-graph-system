@@ -31,7 +31,7 @@ from ..models.admin import (
     RestoreResponse,
     # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
 )
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_permission
 from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
@@ -48,10 +48,10 @@ logger = logging.getLogger(__name__)
 @router.get("/status", response_model=SystemStatusResponse)
 async def get_system_status(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
-    Get complete system status (Admin only - ADR-060)
+    Get complete system status
 
     Returns status of:
     - Docker containers
@@ -60,7 +60,7 @@ async def get_system_status(
     - Python environment
     - Configuration
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `admin:status` permission
     """
     service = AdminService()
     try:
@@ -75,14 +75,14 @@ async def get_system_status(
 @router.get("/backups", response_model=ListBackupsResponse)
 async def list_backups(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("backups", "read"))
 ):
     """
-    List all available backup files (Admin only - ADR-060)
+    List all available backup files
 
     Returns list of backup files with metadata (size, created date, etc.)
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `backups:read` permission
     """
     service = AdminService()
     try:
@@ -98,7 +98,7 @@ async def list_backups(
 async def create_backup(
     request: BackupRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("backups", "create"))
 ):
     """
     Create a database backup (ADR-015 Phase 2: Streaming Download)
@@ -128,7 +128,7 @@ async def create_backup(
 
     Returns streaming response with Content-Disposition header.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `backups:create` permission
 
     Example (JSON):
     ```json
@@ -190,7 +190,7 @@ async def create_backup(
 async def restore_backup(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("backups", "restore")),
     file: UploadFile = File(..., description="Backup JSON file to restore"),
     overwrite: bool = Form(False, description="Overwrite existing data"),
     handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
@@ -216,9 +216,9 @@ async def restore_backup(
     3. Queue restore worker with job ID
     4. Return job ID for progress tracking
 
-    **Authentication:** Requires admin role
-
     Returns job_id for polling restore progress via /jobs/{job_id}
+
+    **Authorization:** Requires `backups:restore` permission
 
     Example (multipart/form-data):
     ```
@@ -382,7 +382,7 @@ async def restore_backup(
 @router.get("/scheduler/status")
 async def get_scheduler_status(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
     Get job scheduler status and statistics (ADR-014)
@@ -394,7 +394,7 @@ async def get_scheduler_status(
     - Last cleanup time
     - Next scheduled cleanup
 
-    **Authentication:** Requires admin role
+    **Authorization:** Authenticated users (admin role)
 
     Example response:
     ```json
@@ -444,7 +444,7 @@ async def get_scheduler_status(
 @router.post("/scheduler/cleanup")
 async def trigger_scheduler_cleanup(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("admin", "status"))
 ):
     """
     Manually trigger job scheduler cleanup (ADR-014)
@@ -461,7 +461,7 @@ async def trigger_scheduler_cleanup(
 
     Returns cleanup results showing what was processed.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Authenticated users (admin role)
 
     Example response:
     ```json
@@ -512,7 +512,7 @@ async def trigger_scheduler_cleanup(
 async def set_api_key(
     provider: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("api_keys", "write")),
     api_key: str = Form(..., description="API key to store")
 ):
     """
@@ -531,7 +531,7 @@ async def set_api_key(
     - Stored in PostgreSQL
     - Decrypted only when needed for inference
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:write` permission
 
     Example:
     ```bash
@@ -626,7 +626,7 @@ async def set_api_key(
 @router.get("/keys")
 async def list_api_keys(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("api_keys", "read"))
 ):
     """
     List configured API providers with validation status (ADR-031, ADR-041)
@@ -643,7 +643,7 @@ async def list_api_keys(
     Does NOT return the actual API keys (security) - only masked versions showing
     prefix + last 6 characters (e.g., "sk-proj-...abc123").
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:read` permission
 
     Example response:
     ```json
@@ -714,7 +714,7 @@ async def list_api_keys(
 async def delete_api_key(
     provider: str,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("api_keys", "delete"))
 ):
     """
     Delete system API key for a provider (ADR-031)
@@ -723,7 +723,7 @@ async def delete_api_key(
     After deletion, inference using this provider will not work
     until a new key is configured.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `api_keys:delete` permission
 
     Example:
     ```bash
@@ -785,7 +785,7 @@ async def delete_api_key(
 @router.post("/regenerate-concept-embeddings")
 async def regenerate_concept_embeddings(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin")),
+    _: None = Depends(require_permission("embedding_config", "regenerate")),
     only_missing: bool = False,
     ontology: Optional[str] = None,
     limit: Optional[int] = None
@@ -796,7 +796,7 @@ async def regenerate_concept_embeddings(
     Useful after changing embedding models to update all concept embeddings
     to the new model/dimensions.
 
-    **Authentication:** Requires admin role
+    **Authorization:** Requires `embedding_config:regenerate` permission
 
     Args:
         only_missing: Only generate for concepts without embeddings

@@ -64,6 +64,7 @@ from api.api.dependencies.auth import (
     get_current_active_user,
     get_db_connection,
     require_role,
+    require_permission,
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -173,6 +174,9 @@ async def update_current_user_profile(
     """
     Update current user profile.
 
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Authenticated users (any valid token)
+
     Users can only update their own password.
     Role and disabled status can only be changed by admins.
     """
@@ -256,10 +260,10 @@ async def get_current_user_from_oauth(
     """
     Get current user profile (ADR-054, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-
     Replaces GET /auth/me (ADR-054).
     Returns user details for the authenticated user.
+
+    **Authorization:** Authenticated users (any valid token)
     """
     return UserRead(
         id=current_user.id,
@@ -271,18 +275,125 @@ async def get_current_user_from_oauth(
     )
 
 
+from pydantic import BaseModel
+from typing import Dict, List as TypingList
+
+class EffectivePermission(BaseModel):
+    resource: str
+    action: str
+    scope_type: str
+    granted: bool
+
+
+class UserPermissionsResponse(BaseModel):
+    """Response model for user's effective permissions"""
+    role: str
+    role_hierarchy: TypingList[str]  # e.g., ['platform_admin', 'admin', 'curator', 'contributor']
+    permissions: TypingList[EffectivePermission]
+    can: Dict[str, bool]  # Flat map of "resource:action" -> bool for easy client-side checking
+
+
+@admin_router.get("/me/permissions", response_model=UserPermissionsResponse)
+async def get_current_user_permissions(
+    current_user: CurrentUser
+):
+    """
+    Get current user's effective permissions (ADR-074)
+
+    Returns all permissions the user has based on their role and role hierarchy.
+    Includes a flat `can` map for easy client-side permission checks.
+
+    **Authorization:** Authenticated users (any valid token)
+
+    Example response:
+    ```json
+    {
+        "role": "admin",
+        "role_hierarchy": ["admin", "curator", "contributor"],
+        "permissions": [
+            {"resource": "users", "action": "read", "scope_type": "global", "granted": true},
+            ...
+        ],
+        "can": {
+            "users:read": true,
+            "users:write": true,
+            "admin:status": true,
+            ...
+        }
+    }
+    ```
+    """
+    from psycopg2.extras import RealDictCursor
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Build role hierarchy by traversing parent_role chain
+            role_hierarchy = []
+            current_role = current_user.role
+
+            while current_role:
+                role_hierarchy.append(current_role)
+                cur.execute("""
+                    SELECT parent_role FROM kg_auth.roles
+                    WHERE role_name = %s AND is_active = TRUE
+                """, (current_role,))
+                row = cur.fetchone()
+                current_role = row['parent_role'] if row else None
+
+            # Get all permissions for roles in hierarchy
+            cur.execute("""
+                SELECT DISTINCT
+                    rp.resource_type,
+                    rp.action,
+                    rp.scope_type,
+                    rp.granted
+                FROM kg_auth.role_permissions rp
+                WHERE rp.role_name = ANY(%s)
+                  AND rp.granted = TRUE
+                ORDER BY rp.resource_type, rp.action
+            """, (role_hierarchy,))
+
+            permissions = []
+            can_map = {}
+
+            for row in cur.fetchall():
+                perm = EffectivePermission(
+                    resource=row['resource_type'],
+                    action=row['action'],
+                    scope_type=row['scope_type'],
+                    granted=row['granted']
+                )
+                permissions.append(perm)
+
+                # Build can map (only for global scope, granted permissions)
+                if row['scope_type'] == 'global' and row['granted']:
+                    key = f"{row['resource_type']}:{row['action']}"
+                    can_map[key] = True
+
+            return UserPermissionsResponse(
+                role=current_user.role,
+                role_hierarchy=role_hierarchy,
+                permissions=permissions,
+                can=can_map
+            )
+    finally:
+        conn.close()
+
+
 @admin_router.get("", response_model=UserListResponse)
 async def list_users(
     current_user: CurrentUser,
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
+    _: None = Depends(require_permission("users", "read"))
 ):
     """
     List all users (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-
     Supports pagination and filtering by role.
+
+    **Authorization:** Requires `users:read` permission
     """
     conn = get_db_connection()
     try:
@@ -321,13 +432,15 @@ async def list_users(
 @admin_router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: int,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "read"))
 ):
     """
     Get user by ID (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-    **Authorization:** Users can view their own profile, admins can view any user
+    Users can view their own profile, admins can view any user.
+
+    **Authorization:** Requires `users:read` permission
     """
     # Ownership check
     if current_user.id != user_id and current_user.role != "admin":
@@ -368,15 +481,16 @@ async def get_user(
 async def update_user(
     user_id: int,
     update: UserUpdate,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("users", "write"))
 ):
     """
     Update user by ID (ADR-027, ADR-060)
 
-    **Authentication:** Requires valid OAuth token
-    **Authorization:** Users can update their own profile, admins can update any user
-
+    Users can update their own profile, admins can update any user.
     Can update role, disabled status, and password.
+
+    **Authorization:** Requires `users:write` permission
     """
     # Ownership check
     if current_user.id != user_id and current_user.role != "admin":
@@ -455,15 +569,15 @@ async def update_user(
 async def delete_user(
     user_id: int,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("users", "delete"))
 ):
     """
     Delete user by ID (Admin only - ADR-027, ADR-060)
 
-    **Authentication:** Requires admin role
-
     Cannot delete yourself.
     Cascade deletes API keys, sessions, and OAuth tokens.
+
+    **Authorization:** Requires `users:delete` permission
     """
     if user_id == current_user.id:
         raise HTTPException(

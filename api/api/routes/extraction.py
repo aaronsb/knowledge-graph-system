@@ -15,7 +15,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 
-from ..dependencies.auth import CurrentUser, require_role
+from ..dependencies.auth import CurrentUser, require_role, require_permission
 from ..models.extraction import (
     ExtractionConfigResponse,
     ExtractionConfigDetail,
@@ -63,12 +63,10 @@ async def get_extraction_config():
 @admin_router.get("/config", response_model=Optional[ExtractionConfigDetail])
 async def get_extraction_config_detail(
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("extraction_config", "read"))
 ):
     """
-    Get full AI extraction configuration details (Admin only - ADR-060).
-
-    **Authentication:** Requires admin role
+    Get full AI extraction configuration details
 
     Returns complete configuration including:
     - Provider and model details
@@ -77,6 +75,8 @@ async def get_extraction_config_detail(
     - Database config ID
 
     Returns null if no configuration is set.
+
+    **Authorization:** Requires `extraction_config:read` permission
     """
     try:
         config = load_active_extraction_config()
@@ -93,12 +93,10 @@ async def get_extraction_config_detail(
 async def update_extraction_config(
     request: UpdateExtractionConfigRequest,
     current_user: CurrentUser,
-    _: None = Depends(require_role("admin"))
+    _: None = Depends(require_permission("extraction_config", "write"))
 ):
     """
-    Update AI extraction configuration (Admin only - ADR-060).
-
-    **Authentication:** Requires admin role
+    Update AI extraction configuration
 
     Creates a new configuration entry and deactivates the previous one.
     Configuration is stored in kg_api.ai_extraction_config table.
@@ -113,6 +111,8 @@ async def update_extraction_config(
     Validation:
     - provider must be 'openai' or 'anthropic'
     - model_name is required
+
+    **Authorization:** Requires `extraction_config:write` permission
 
     Example (OpenAI):
     ```json

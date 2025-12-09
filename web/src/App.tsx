@@ -27,6 +27,7 @@ import { PolarityExplorerWorkspace } from './components/polarity/PolarityExplore
 import { GraphEditor } from './components/edit/GraphEditor';
 import { PreferencesWorkspace } from './components/preferences/PreferencesWorkspace';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { HomeWorkspace } from './components/home/HomeWorkspace';
 
 import './explorers'; // Import to register explorers
 
@@ -42,7 +43,7 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { setTypes, setLoading, setError } = useVocabularyStore();
-  const { checkAuth } = useAuthStore();
+  const { checkAuth, isAuthenticated } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
 
   // Initialize theme on mount
@@ -55,8 +56,12 @@ const AppContent: React.FC = () => {
     checkAuth();
   }, [checkAuth]);
 
-  // Load vocabulary on mount
+  // Load vocabulary only when authenticated
   useEffect(() => {
+    if (!isAuthenticated) {
+      return; // Don't load vocabulary until authenticated
+    }
+
     const loadVocabulary = async () => {
       setLoading(true);
       try {
@@ -103,13 +108,13 @@ const AppContent: React.FC = () => {
       }
     };
     loadVocabulary();
-  }, []); // Run once on mount
+  }, [isAuthenticated]); // Re-run when authentication changes
 
   return (
     <AppLayout>
       <Routes>
-        {/* Default redirect to 2D explorer */}
-        <Route path="/" element={<Navigate to="/explore/2d" replace />} />
+        {/* Home - welcome and login page */}
+        <Route path="/" element={<HomeWorkspace />} />
 
         {/* Explorers */}
         <Route path="/explore/2d" element={<ExplorerView explorerType="force-2d" />} />
