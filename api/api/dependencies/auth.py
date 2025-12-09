@@ -422,7 +422,7 @@ def check_permission(
         conn.close()
 
 
-async def require_permission(
+def require_permission(
     resource_type: str,
     action: str,
     resource_id_param: Optional[str] = None,
