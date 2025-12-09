@@ -26,8 +26,10 @@ import {
   Eye,
   EyeOff,
   ChevronRight,
+  ExternalLink,
+  FileText,
 } from 'lucide-react';
-import { apiClient } from '../../api/client';
+import { apiClient, API_BASE_URL } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 
 // Types
@@ -254,7 +256,7 @@ const NewClientCredentialsDisplay: React.FC<{
       env: {
         KG_OAUTH_CLIENT_ID: credentials.client_id,
         KG_OAUTH_CLIENT_SECRET: credentials.client_secret,
-        KG_API_URL: "http://localhost:8000"
+        KG_API_URL: API_BASE_URL
       }
     }
   }, null, 2);
@@ -263,7 +265,7 @@ const NewClientCredentialsDisplay: React.FC<{
   const claudeCliCommand = `claude mcp add knowledge-graph kg-mcp-server \\
   --env KG_OAUTH_CLIENT_ID=${credentials.client_id} \\
   --env KG_OAUTH_CLIENT_SECRET=${credentials.client_secret} \\
-  --env KG_API_URL=http://localhost:8000 \\
+  --env KG_API_URL=${API_BASE_URL} \\
   -s local`;
 
   return (
@@ -962,6 +964,40 @@ export const AdminDashboard: React.FC = () => {
                     Unable to load job queue status.
                   </p>
                 )}
+              </Section>
+
+              <Section
+                title="API Documentation"
+                icon={<FileText className="w-5 h-5" />}
+              >
+                <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                  Interactive API documentation for developers and integrations.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <a
+                    href={`${API_BASE_URL}/docs`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-gray-800 hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Swagger UI
+                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  </a>
+                  <a
+                    href={`${API_BASE_URL}/redoc`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-gray-800 hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
+                  >
+                    <FileText className="w-4 h-4" />
+                    ReDoc
+                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  </a>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground dark:text-gray-500">
+                  API: {API_BASE_URL}
+                </p>
               </Section>
             </>
           )}

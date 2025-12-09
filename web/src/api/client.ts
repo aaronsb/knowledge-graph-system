@@ -27,7 +27,7 @@ import { getAuthState } from '../lib/auth/oauth-utils';
 
 // API configuration - runtime config takes precedence over build-time env vars
 // This enables CDN deployment without rebuilding
-const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class APIClient {
   private client: AxiosInstance;
