@@ -669,6 +669,70 @@ class APIClient {
   }
 
   /**
+   * Create a new user (admin only)
+   */
+  async createUser(params: {
+    username: string;
+    password: string;
+    role: string;
+  }): Promise<{
+    id: number;
+    username: string;
+    role: string;
+    created_at: string;
+    last_login: string | null;
+    disabled: boolean;
+  }> {
+    const response = await this.client.post('/users', params);
+    return response.data;
+  }
+
+  /**
+   * Update a user (admin only)
+   */
+  async updateUser(
+    userId: number,
+    params: {
+      password?: string;
+      role?: string;
+      disabled?: boolean;
+    }
+  ): Promise<{
+    id: number;
+    username: string;
+    role: string;
+    created_at: string;
+    last_login: string | null;
+    disabled: boolean;
+  }> {
+    const response = await this.client.put(`/users/${userId}`, params);
+    return response.data;
+  }
+
+  /**
+   * Delete a user (admin only)
+   */
+  async deleteUser(userId: number): Promise<void> {
+    await this.client.delete(`/users/${userId}`);
+  }
+
+  /**
+   * Reset a user's password (admin only)
+   */
+  async resetUserPassword(
+    userId: number,
+    newPassword: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await this.client.post(`/users/${userId}/reset-password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  }
+
+  /**
    * Get user's own OAuth clients (personal clients)
    */
   async getMyOAuthClients(): Promise<Array<{
@@ -805,6 +869,221 @@ class APIClient {
   }> {
     const response = await this.client.get('/database/stats');
     return response.data;
+  }
+
+  // ============================================================
+  // RBAC MANAGEMENT (ADR-074)
+  // ============================================================
+
+  /**
+   * List all roles
+   */
+  async listRoles(): Promise<Array<{
+    role_name: string;
+    display_name: string;
+    description: string | null;
+    is_builtin: boolean;
+    is_active: boolean;
+    parent_role: string | null;
+    created_at: string;
+    created_by: string | null;
+    metadata: Record<string, unknown>;
+  }>> {
+    const response = await this.client.get('/rbac/roles');
+    return response.data;
+  }
+
+  /**
+   * Get role details including permissions
+   */
+  async getRole(roleName: string): Promise<{
+    role_name: string;
+    display_name: string;
+    description: string | null;
+    is_builtin: boolean;
+    is_active: boolean;
+    parent_role: string | null;
+    created_at: string;
+    created_by: string | null;
+    metadata: Record<string, unknown>;
+  }> {
+    const response = await this.client.get(`/rbac/roles/${roleName}`);
+    return response.data;
+  }
+
+  /**
+   * Create a new custom role
+   */
+  async createRole(params: {
+    role_name: string;
+    display_name: string;
+    description?: string;
+    parent_role?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<{
+    role_name: string;
+    display_name: string;
+    description: string | null;
+    is_builtin: boolean;
+    is_active: boolean;
+    parent_role: string | null;
+    created_at: string;
+    created_by: string | null;
+    metadata: Record<string, unknown>;
+  }> {
+    const response = await this.client.post('/rbac/roles', params);
+    return response.data;
+  }
+
+  /**
+   * Update a role
+   */
+  async updateRole(
+    roleName: string,
+    params: {
+      display_name?: string;
+      description?: string;
+      parent_role?: string | null;
+      is_active?: boolean;
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<{
+    role_name: string;
+    display_name: string;
+    description: string | null;
+    is_builtin: boolean;
+    is_active: boolean;
+    parent_role: string | null;
+    created_at: string;
+    created_by: string | null;
+    metadata: Record<string, unknown>;
+  }> {
+    const response = await this.client.put(`/rbac/roles/${roleName}`, params);
+    return response.data;
+  }
+
+  /**
+   * Delete a custom role (builtin roles cannot be deleted)
+   */
+  async deleteRole(roleName: string): Promise<void> {
+    await this.client.delete(`/rbac/roles/${roleName}`);
+  }
+
+  /**
+   * List all resources
+   */
+  async listResources(): Promise<Array<{
+    resource_type: string;
+    description: string | null;
+    parent_type: string | null;
+    available_actions: string[];
+    supports_scoping: boolean;
+    metadata: Record<string, unknown>;
+    registered_at: string;
+    registered_by: string | null;
+  }>> {
+    const response = await this.client.get('/rbac/resources');
+    return response.data;
+  }
+
+  /**
+   * Get resource details
+   */
+  async getResource(resourceType: string): Promise<{
+    resource_type: string;
+    description: string | null;
+    parent_type: string | null;
+    available_actions: string[];
+    supports_scoping: boolean;
+    metadata: Record<string, unknown>;
+    registered_at: string;
+    registered_by: string | null;
+  }> {
+    const response = await this.client.get(`/rbac/resources/${resourceType}`);
+    return response.data;
+  }
+
+  /**
+   * List permissions (optionally filtered by role)
+   */
+  async listPermissions(params?: {
+    role_name?: string;
+    resource_type?: string;
+  }): Promise<Array<{
+    id: number;
+    role_name: string;
+    resource_type: string;
+    action: string;
+    scope_type: string;
+    scope_id: string | null;
+    scope_filter: Record<string, unknown> | null;
+    granted: boolean;
+    inherited_from: string | null;
+    created_at: string;
+    created_by: string | null;
+  }>> {
+    const response = await this.client.get('/rbac/permissions', { params });
+    return response.data;
+  }
+
+  /**
+   * Grant a permission to a role
+   */
+  async grantPermission(params: {
+    role_name: string;
+    resource_type: string;
+    action: string;
+    scope_type?: string;
+    scope_id?: string;
+    scope_filter?: Record<string, unknown>;
+    granted?: boolean;
+  }): Promise<{
+    id: number;
+    role_name: string;
+    resource_type: string;
+    action: string;
+    scope_type: string;
+    scope_id: string | null;
+    scope_filter: Record<string, unknown> | null;
+    granted: boolean;
+    inherited_from: string | null;
+    created_at: string;
+    created_by: string | null;
+  }> {
+    const response = await this.client.post('/rbac/permissions', {
+      ...params,
+      scope_type: params.scope_type || 'global',
+      granted: params.granted ?? true,
+    });
+    return response.data;
+  }
+
+  /**
+   * Revoke a permission (delete by ID)
+   */
+  async revokePermission(permissionId: number): Promise<void> {
+    await this.client.delete(`/rbac/permissions/${permissionId}`);
+  }
+
+  /**
+   * Get effective permissions for a role (including inherited)
+   */
+  async getRoleEffectivePermissions(roleName: string): Promise<Array<{
+    resource_type: string;
+    action: string;
+    scope_type: string;
+    granted: boolean;
+    inherited_from: string | null;
+  }>> {
+    // Get permissions filtered by role
+    const permissions = await this.listPermissions({ role_name: roleName });
+    return permissions.map(p => ({
+      resource_type: p.resource_type,
+      action: p.action,
+      scope_type: p.scope_type,
+      granted: p.granted,
+      inherited_from: p.inherited_from,
+    }));
   }
 }
 

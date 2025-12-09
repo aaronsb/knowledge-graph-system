@@ -28,4 +28,9 @@ SET parent_role = 'admin'
 WHERE role_name = 'platform_admin'
   AND (parent_role IS NULL OR parent_role != 'admin');
 
+-- Record migration (idempotent)
+INSERT INTO public.schema_migrations (version, name)
+VALUES (29, 'fix_role_hierarchy')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;
