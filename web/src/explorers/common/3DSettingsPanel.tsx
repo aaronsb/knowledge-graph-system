@@ -55,7 +55,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 
   return (
     <div
-      className="bg-card/95 dark:bg-gray-800/95 border border-border dark:border-gray-600 rounded-lg shadow-xl flex flex-col"
+      className="bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
       style={{ width: '280px', maxHeight: '95vh' }}
     >
       {/* Content */}
@@ -64,19 +64,19 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
         <div>
           <button
             onClick={() => toggleSection('camera')}
-            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground dark:hover:text-gray-100 transition-colors"
+            className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground transition-colors"
           >
             <span>Camera Controls</span>
             {expandedSections.has('camera') ? (
-              <ChevronDown size={14} className="text-muted-foreground dark:text-gray-500" />
+              <ChevronDown size={14} className="text-muted-foreground" />
             ) : (
-              <ChevronRight size={14} className="text-muted-foreground dark:text-gray-500" />
+              <ChevronRight size={14} className="text-muted-foreground" />
             )}
           </button>
           {expandedSections.has('camera') && (
             <div className="mt-3 space-y-3">
               <div>
-                <label className="block text-xs text-foreground dark:text-gray-300 mb-1">
+                <label className="block text-xs text-foreground mb-1">
                   Field of View: {cameraSettings.fov}°
                 </label>
                 <input
@@ -88,7 +88,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                   onChange={(e) => updateCamera('fov', parseInt(e.target.value))}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground dark:text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>Narrow (30°)</span>
                   <span>Wide (120°)</span>
                 </div>
@@ -124,7 +124,7 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
                 <span className="text-card-foreground">Orient Labels to Camera</span>
               </label>
 
-              <div className="mt-3 p-2 bg-muted/50 dark:bg-gray-700/50 rounded text-xs text-foreground dark:text-gray-300">
+              <div className="mt-3 p-2 bg-muted/50 rounded text-xs text-foreground">
                 <p className="font-medium mb-1">Tip:</p>
                 <p>Auto-Level and Orient Labels work together: when you release the mouse, the camera smoothly levels and labels rotate to face you for easy reading.</p>
               </div>

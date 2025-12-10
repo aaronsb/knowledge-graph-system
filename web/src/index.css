@@ -124,4 +124,24 @@
   code, pre, .font-mono {
     font-family: "JetBrains Mono", monospace;
   }
+
+  /* Form element accent colors - use primary (warm amber) */
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: hsl(var(--primary));
+  }
+
+  /* Range slider track styling */
+  input[type="range"] {
+    @apply bg-muted rounded-full h-2 appearance-none cursor-pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 rounded-full bg-primary cursor-pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    @apply w-4 h-4 rounded-full bg-primary border-0 cursor-pointer;
+  }
 }
