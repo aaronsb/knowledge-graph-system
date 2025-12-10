@@ -93,6 +93,12 @@ export interface NodeFilterBlockParams {
   minConfidence?: number; // 0.0 - 1.0
 }
 
+// Combined filter params for the legacy FilterBlock component
+export interface FilterBlockParams {
+  ontologies?: string[];
+  minConfidence?: number; // 0.0 - 1.0
+}
+
 export interface LimitBlockParams {
   count: number;
 }

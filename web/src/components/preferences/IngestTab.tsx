@@ -11,6 +11,7 @@ import {
   Folder,
   Layers,
   Zap,
+  SplitSquareVertical,
 } from 'lucide-react';
 import { usePreferencesStore } from '../../store/preferencesStore';
 import { apiClient } from '../../api/client';
@@ -62,6 +63,16 @@ export const IngestTab: React.FC = () => {
         label="Default chunk size"
         description="Target words per chunk (200-3000)"
         icon={<Layers className="w-4 h-4" />}
+      />
+      <NumberInput
+        value={ingest.defaultOverlapWords}
+        onChange={(v) => updateIngestDefaults({ defaultOverlapWords: v })}
+        min={0}
+        max={500}
+        step={50}
+        label="Overlap words"
+        description="Words overlapping between chunks (0-500)"
+        icon={<SplitSquareVertical className="w-4 h-4" />}
       />
       <Select
         value={ingest.defaultProcessingMode}

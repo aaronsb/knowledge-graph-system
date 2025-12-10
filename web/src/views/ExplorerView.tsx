@@ -17,9 +17,10 @@ import { useSubgraph, useFindConnection } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
 import { apiClient } from '../api/client';
 import { getZIndexValue } from '../config/zIndex';
+import type { VisualizationType } from '../types/explorer';
 
 interface ExplorerViewProps {
-  explorerType: string;
+  explorerType: VisualizationType;
 }
 
 export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
@@ -380,7 +381,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       name: '', // Will auto-generate name based on content
       type: 'graph',
       data: reportData,
-      sourceExplorer: explorerType === 'force-graph-3d' ? '3d' : '2d',
+      sourceExplorer: explorerType === 'force-3d' ? '3d' : '2d',
     });
 
     navigate('/report');

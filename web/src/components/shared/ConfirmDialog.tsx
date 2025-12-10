@@ -139,7 +139,7 @@ export function useConfirmDialog(): UseConfirmDialogReturn {
     message: '',
     buttons: [],
   });
-  const resolveRef = React.useRef<(value: boolean) => void>();
+  const resolveRef = React.useRef<((value: boolean) => void) | undefined>(undefined);
 
   const show = React.useCallback(
     (newConfig: Omit<ConfirmDialogProps, 'isOpen' | 'onClose'>): Promise<boolean> => {

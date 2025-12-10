@@ -84,7 +84,7 @@ export const IngestWorkspace: React.FC = () => {
   // Options state
   const [showOptions, setShowOptions] = useState(false);
   const [targetWords, setTargetWords] = useState(ingestDefaults.defaultChunkSize);
-  const [overlapWords, setOverlapWords] = useState(200);
+  const [overlapWords, setOverlapWords] = useState(ingestDefaults.defaultOverlapWords);
   const [processingMode, setProcessingMode] = useState<'serial' | 'parallel'>(ingestDefaults.defaultProcessingMode);
   const [autoApprove, setAutoApprove] = useState(ingestDefaults.autoApprove);
   const [force, setForce] = useState(false);
@@ -329,7 +329,7 @@ export const IngestWorkspace: React.FC = () => {
             force,
             auto_approve: autoApprove,
             processing_mode: processingMode,
-            chunking: {
+            options: {
               target_words: targetWords,
               overlap_words: overlapWords,
             },
@@ -337,13 +337,14 @@ export const IngestWorkspace: React.FC = () => {
 
           const response = await apiClient.ingestFile(qf.file, request);
 
-          // Update status to submitted
+          // Update status to submitted - handle both success and duplicate responses
+          const jobId = 'job_id' in response ? response.job_id : response.existing_job_id;
           setSubmittedJobs(prev => {
             const updated = [...prev];
             updated[jobIndex] = {
               ...updated[jobIndex],
               status: 'submitted',
-              jobId: response.job_id,
+              jobId,
             };
             return updated;
           });
@@ -416,17 +417,17 @@ export const IngestWorkspace: React.FC = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4 text-primary" />
-            <span className="font-medium text-card-foreground dark:text-gray-200">
+            <span className="font-medium text-card-foreground">
               {ontologyName}
             </span>
-            <span className="text-xs text-muted-foreground dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               ({conceptCount} concepts)
             </span>
           </div>
           {hasFiles && (
             <button
               onClick={() => clearQueue(ontologyName)}
-              className="text-gray-400 hover:text-red-500 transition-colors"
+              className="text-muted-foreground hover:text-destructive transition-colors"
               title="Clear all files"
             >
               <Trash2 className="w-4 h-4" />
@@ -439,20 +440,20 @@ export const IngestWorkspace: React.FC = () => {
             {queue.files.map((qf) => (
               <div
                 key={qf.id}
-                className="flex items-center justify-between py-1 px-2 bg-white rounded border border-gray-200 dark:border-gray-700"
+                className="flex items-center justify-between py-1 px-2 bg-card rounded border border-border"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {getFileIcon(qf.file.name)}
-                  <span className="text-sm text-card-foreground dark:text-gray-200 truncate">
+                  <span className="text-sm text-card-foreground truncate">
                     {qf.file.name}
                   </span>
-                  <span className="text-xs text-muted-foreground dark:text-gray-400 flex-shrink-0">
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
                     {formatSize(qf.file.size)}
                   </span>
                 </div>
                 <button
                   onClick={() => removeFileFromQueue(ontologyName, qf.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -464,7 +465,7 @@ export const IngestWorkspace: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-12 text-sm text-muted-foreground dark:text-gray-400">
+          <div className="flex items-center justify-center h-12 text-sm text-muted-foreground">
             <Upload className="w-4 h-4 mr-2" />
             Drop files here
           </div>
@@ -505,12 +506,12 @@ export const IngestWorkspace: React.FC = () => {
                   if (e.key === 'Enter') renameNewOntology(ontologyName, (e.target as HTMLInputElement).value);
                   if (e.key === 'Escape') setEditingOntologyName(null);
                 }}
-                className="flex-1 px-2 py-1 text-sm bg-white border border-status-active/40 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-2 py-1 text-sm bg-input border border-status-active/40 rounded focus:outline-none focus:ring-2 focus:ring-status-active"
                 autoFocus
               />
             ) : (
               <>
-                <span className="font-medium text-card-foreground dark:text-gray-200">
+                <span className="font-medium text-card-foreground">
                   {ontologyName}
                 </span>
                 <span className="text-xs text-status-active bg-status-active/20 px-2 py-0.5 rounded">
@@ -518,7 +519,7 @@ export const IngestWorkspace: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setEditingOntologyName(ontologyName)}
-                  className="text-gray-400 hover:text-status-active transition-colors p-1"
+                  className="text-muted-foreground hover:text-status-active transition-colors p-1"
                   title="Edit name"
                 >
                   <PencilLine className="w-3 h-3" />
@@ -528,7 +529,7 @@ export const IngestWorkspace: React.FC = () => {
           </div>
           <button
             onClick={() => clearQueue(ontologyName)}
-            className="text-gray-400 hover:text-red-500 transition-colors"
+            className="text-muted-foreground hover:text-destructive transition-colors"
             title="Remove this ontology"
           >
             <Trash2 className="w-4 h-4" />
@@ -540,20 +541,20 @@ export const IngestWorkspace: React.FC = () => {
           {queue.files.map((qf) => (
             <div
               key={qf.id}
-              className="flex items-center justify-between py-1 px-2 bg-white rounded border border-gray-200 dark:border-gray-700"
+              className="flex items-center justify-between py-1 px-2 bg-card rounded border border-border"
             >
               <div className="flex items-center gap-2 min-w-0">
                 {getFileIcon(qf.file.name)}
-                <span className="text-sm text-card-foreground dark:text-gray-200 truncate">
+                <span className="text-sm text-card-foreground truncate">
                   {qf.file.name}
                 </span>
-                <span className="text-xs text-muted-foreground dark:text-gray-400 flex-shrink-0">
+                <span className="text-xs text-muted-foreground flex-shrink-0">
                   {formatSize(qf.file.size)}
                 </span>
               </div>
               <button
                 onClick={() => removeFileFromQueue(ontologyName, qf.id)}
-                className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                className="text-muted-foreground hover:text-destructive transition-colors p-1"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -597,7 +598,7 @@ export const IngestWorkspace: React.FC = () => {
                 value={pendingNewOntologyName}
                 onChange={(e) => setPendingNewOntologyName(e.target.value)}
                 placeholder="Enter new ontology name"
-                className="flex-1 px-3 py-2 bg-white border border-status-active/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 bg-input border border-status-active/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-status-active"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && pendingNewOntologyName.trim()) {
@@ -613,7 +614,7 @@ export const IngestWorkspace: React.FC = () => {
               <button
                 onClick={confirmPendingOntology}
                 disabled={!pendingNewOntologyName.trim()}
-                className="px-4 py-2 bg-status-active hover:bg-status-active disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-status-active hover:bg-status-active/90 disabled:bg-muted disabled:text-muted-foreground text-white rounded-lg transition-colors"
               >
                 Create
               </button>
@@ -623,20 +624,20 @@ export const IngestWorkspace: React.FC = () => {
                   setPendingNewOntologyName('');
                   clearQueue('__PENDING_NEW__');
                 }}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                className="px-4 py-2 bg-muted hover:bg-muted/80 text-card-foreground rounded-lg transition-colors"
               >
                 Cancel
               </button>
             </div>
             {hasPendingFiles && (
               <div className="space-y-1">
-                <div className="text-xs text-amber-600 dark:text-amber-400">
+                <div className="text-xs text-status-warning">
                   Name this ontology to continue:
                 </div>
                 {pendingQueue.files.map((qf) => (
                   <div
                     key={qf.id}
-                    className="flex items-center gap-2 py-1 px-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-700"
+                    className="flex items-center gap-2 py-1 px-2 bg-status-warning/10 rounded border border-status-warning/30"
                   >
                     {getFileIcon(qf.file.name)}
                     <span className="text-sm truncate">{qf.file.name}</span>
@@ -646,7 +647,7 @@ export const IngestWorkspace: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Plus className="w-6 h-6 mb-2 text-status-active" />
             <div className="text-sm font-medium text-status-active">Create New Ontology</div>
             <div className="text-xs">Drop files to start</div>
@@ -689,11 +690,11 @@ export const IngestWorkspace: React.FC = () => {
     if (total === 0) return null;
 
     return (
-      <div className="p-4 bg-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <div className="text-sm font-medium text-foreground dark:text-gray-200 mb-2">
+      <div className="p-4 bg-surface-1 border border-border rounded-lg">
+        <div className="text-sm font-medium text-card-foreground mb-2">
           Summary
         </div>
-        <div className="text-sm text-muted-foreground dark:text-gray-400 space-y-1">
+        <div className="text-sm text-muted-foreground space-y-1">
           {existingCount > 0 && (
             <div>
               {existingCount} file{existingCount !== 1 ? 's' : ''} → {existingOntologies} existing ontolog{existingOntologies !== 1 ? 'ies' : 'y'}
@@ -704,7 +705,7 @@ export const IngestWorkspace: React.FC = () => {
               {newCount} file{newCount !== 1 ? 's' : ''} → {newOntologies} new ontolog{newOntologies !== 1 ? 'ies' : 'y'} (will be created)
             </div>
           )}
-          <div className="pt-1 border-t border-gray-200 dark:border-gray-600 font-medium text-foreground dark:text-gray-200">
+          <div className="pt-1 border-t border-border font-medium text-card-foreground">
             Total: {total} file{total !== 1 ? 's' : ''} ready
           </div>
         </div>
@@ -737,8 +738,8 @@ export const IngestWorkspace: React.FC = () => {
 
           {/* Show guidance based on auto-approve setting */}
           {ingestState === 'completed' && successfulJobs > 0 && !autoApprove && (
-            <div className="mb-4 p-3 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
+            <div className="mb-4 p-3 bg-status-warning/10 border border-status-warning/30 rounded-lg">
+              <p className="text-sm text-status-warning">
                 <strong>Next step:</strong> Review cost estimates in the Jobs workspace, then approve jobs to start processing.
               </p>
             </div>
@@ -748,18 +749,18 @@ export const IngestWorkspace: React.FC = () => {
             {submittedJobs.map((job, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 px-3 bg-white rounded border border-gray-200 dark:border-gray-700"
+                className="flex items-center justify-between py-2 px-3 bg-card rounded border border-border"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {job.status === 'uploading' && <Loader2 className="w-4 h-4 text-status-info animate-spin" />}
                   {job.status === 'submitted' && <CheckCircle2 className="w-4 h-4 text-status-active" />}
-                  {job.status === 'failed' && <AlertCircle className="w-4 h-4 text-red-500" />}
-                  {job.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
+                  {job.status === 'failed' && <AlertCircle className="w-4 h-4 text-destructive" />}
+                  {job.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30" />}
                   <span className="text-sm truncate">{job.filename}</span>
                   <span className="text-xs text-muted-foreground">→ {job.ontology}</span>
                 </div>
                 {job.status === 'failed' && (
-                  <span className="text-xs text-red-500">{job.error}</span>
+                  <span className="text-xs text-destructive">{job.error}</span>
                 )}
               </div>
             ))}
@@ -780,7 +781,7 @@ export const IngestWorkspace: React.FC = () => {
                 </button>
                 <button
                   onClick={() => window.location.href = '/jobs'}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted hover:bg-muted/80 text-card-foreground rounded-lg font-medium transition-colors"
                 >
                   View Jobs
                 </button>
@@ -790,13 +791,13 @@ export const IngestWorkspace: React.FC = () => {
               <>
                 <button
                   onClick={() => window.location.href = '/jobs'}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-status-warning hover:bg-status-warning/90 text-white rounded-lg font-medium transition-colors"
                 >
                   Review & Approve Jobs
                 </button>
                 <button
                   onClick={resetWorkspace}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-card-foreground dark:text-gray-200 rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted hover:bg-muted/80 text-card-foreground rounded-lg font-medium transition-colors"
                 >
                   <Plus className="w-5 h-5" />
                   Ingest More
@@ -813,14 +814,14 @@ export const IngestWorkspace: React.FC = () => {
   if (ingestState === 'submitting' || ingestState === 'completed') {
     return (
       <div className="h-full flex flex-col bg-background">
-        <div className="flex-none p-6 border-b border-border dark:border-gray-800">
+        <div className="flex-none p-6 border-b border-border">
           <div className="flex items-center gap-3">
             <Upload className="w-6 h-6 text-primary" />
             <div>
-              <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
+              <h1 className="text-xl font-semibold text-foreground">
                 Ingest Content
               </h1>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {ingestState === 'submitting' ? 'Uploading files...' : 'Files submitted'}
               </p>
             </div>
@@ -838,22 +839,22 @@ export const IngestWorkspace: React.FC = () => {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex-none p-6 border-b border-border dark:border-gray-800">
+      <div className="flex-none p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Upload className="w-6 h-6 text-primary" />
             <div>
-              <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
+              <h1 className="text-xl font-semibold text-foreground">
                 Ingest Content
               </h1>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Drag files into ontology zones to queue for ingestion
               </p>
             </div>
           </div>
           <button
             onClick={loadOntologies}
-            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            className="p-2 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
             title="Refresh ontologies"
             disabled={loadingOntologies}
           >
@@ -867,7 +868,7 @@ export const IngestWorkspace: React.FC = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Error display */}
           {submitError && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+            <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm whitespace-pre-line">{submitError}</div>
               <button onClick={() => setSubmitError(null)} className="ml-auto">
@@ -879,7 +880,7 @@ export const IngestWorkspace: React.FC = () => {
           {/* Existing Ontologies */}
           {ontologies.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-sm font-medium text-muted-foreground dark:text-gray-400 uppercase tracking-wide">
+              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 Existing Ontologies
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -902,7 +903,7 @@ export const IngestWorkspace: React.FC = () => {
 
           {/* Create New Ontology Zone - Always visible */}
           <div className="space-y-3">
-            <h2 className="text-sm font-medium text-muted-foreground dark:text-gray-400 uppercase tracking-wide">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
               {ontologies.length > 0 || getProposedOntologies().length > 0 ? 'Add Another Ontology' : 'Create Ontology'}
             </h2>
             {renderCreateNewZone()}
@@ -913,14 +914,14 @@ export const IngestWorkspace: React.FC = () => {
 
           {/* Options */}
           {getTotalFileCount() > 0 && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-card-foreground dark:text-gray-200">
+                  <span className="text-sm font-medium text-card-foreground">
                     Ingestion Options
                   </span>
                 </div>
@@ -932,31 +933,31 @@ export const IngestWorkspace: React.FC = () => {
               </button>
 
               {showOptions && (
-                <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="p-4 space-y-4 border-t border-border">
                   {/* Chunking settings */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                      <label className="block text-sm text-muted-foreground mb-2">
                         Target Words per Chunk
                       </label>
                       <input
                         type="number"
                         value={targetWords}
                         onChange={(e) => setTargetWords(parseInt(e.target.value) || 1000)}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-3 py-2 bg-input border border-border rounded-lg"
                         min={100}
                         max={5000}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                      <label className="block text-sm text-muted-foreground mb-2">
                         Overlap Words
                       </label>
                       <input
                         type="number"
                         value={overlapWords}
                         onChange={(e) => setOverlapWords(parseInt(e.target.value) || 200)}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-3 py-2 bg-input border border-border rounded-lg"
                         min={0}
                         max={500}
                       />
@@ -965,7 +966,7 @@ export const IngestWorkspace: React.FC = () => {
 
                   {/* Processing mode */}
                   <div>
-                    <label className="block text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                    <label className="block text-sm text-muted-foreground mb-2">
                       Processing Mode
                     </label>
                     <div className="flex gap-4">
@@ -1011,8 +1012,8 @@ export const IngestWorkspace: React.FC = () => {
           {getTotalFileCount() > 0 && (
             <div className={`p-4 rounded-lg border-2 transition-colors ${
               autoApprove
-                ? 'border-status-active/40 bg-green-50 dark:bg-green-900/20'
-                : 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20'
+                ? 'border-status-active/40 bg-status-active/10'
+                : 'border-status-warning/40 bg-status-warning/10'
             }`}>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -1022,10 +1023,10 @@ export const IngestWorkspace: React.FC = () => {
                   className="mt-1 rounded text-status-active w-5 h-5"
                 />
                 <div>
-                  <span className="font-medium text-card-foreground dark:text-gray-200">
+                  <span className="font-medium text-card-foreground">
                     {autoApprove ? 'Auto-approve enabled' : 'Review costs before processing'}
                   </span>
-                  <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {autoApprove
                       ? 'Jobs will start processing immediately after submission.'
                       : 'Jobs will be created with cost estimates. Review them in the Jobs workspace before approving.'
@@ -1045,9 +1046,9 @@ export const IngestWorkspace: React.FC = () => {
                 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
                 ${canSubmit
                   ? autoApprove
-                    ? 'bg-status-active hover:bg-status-active text-white'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    ? 'bg-status-active hover:bg-status-active/90 text-white'
+                    : 'bg-status-warning hover:bg-status-warning/90 text-white'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }
               `}
             >
