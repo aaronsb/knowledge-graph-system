@@ -105,6 +105,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     selectedAnalysisId,
     maxCandidates,
     maxHops,
+    minSimilarity,
     autoDiscover,
     activeTab,
   } = polarityState;
@@ -128,9 +129,9 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   // UI state (not persisted)
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
-    positive: true,
-    neutral: true,
-    negative: true,
+    positive: false,
+    neutral: false,
+    negative: false,
   });
 
   // Computed: Get currently selected analysis
@@ -157,7 +158,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       const response = await apiClient.searchConcepts({
         query: query.trim(),
         limit: 10,
-        min_similarity: 0.6,
+        min_similarity: minSimilarity,
       });
 
       const concepts = response.results.map((r) => ({
@@ -176,7 +177,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [minSimilarity]);
 
   // Auto-search when debounced positive query changes
   useEffect(() => {
@@ -462,61 +463,93 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   // Settings tab content
   const settingsContent = (
     <div className="flex-1 overflow-auto p-4">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="max-w-2xl mx-auto space-y-6">
         <h2 className="text-lg font-semibold mb-4">Analysis Options</h2>
 
-        <div>
-          <label className="flex items-center gap-2 mb-2">
+        {/* Search Settings */}
+        <div className="border rounded-lg p-4 bg-card">
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Search Settings</h3>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Similarity Threshold</label>
+              <span className="text-sm font-mono text-primary">{Math.round(minSimilarity * 100)}%</span>
+            </div>
             <input
-              type="checkbox"
-              checked={autoDiscover}
-              onChange={(e) => setPolarityState({ autoDiscover: e.target.checked })}
-              className="rounded"
+              type="range"
+              min="0.3"
+              max="0.95"
+              step="0.05"
+              value={minSimilarity}
+              onChange={(e) => setPolarityState({ minSimilarity: parseFloat(e.target.value) })}
+              className="w-full"
             />
-            <span className="text-sm font-medium">Auto-discover related concepts</span>
-          </label>
-          <p className="text-xs text-muted-foreground ml-6">
-            Automatically find concepts connected to the poles via graph traversal
-          </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Minimum similarity for pole concept search results
+            </p>
+          </div>
         </div>
 
-        {autoDiscover && (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Max Candidates: {maxCandidates}
-              </label>
-              <input
-                type="range"
-                min="5"
-                max="100"
-                step="5"
-                value={maxCandidates}
-                onChange={(e) => setPolarityState({ maxCandidates: parseInt(e.target.value) })}
-                className="w-full"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Maximum number of concepts to discover and analyze
-              </p>
-            </div>
+        {/* Auto-Discovery Settings */}
+        <div className="border rounded-lg p-4 bg-card">
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Auto-Discovery</h3>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Max Hops: {maxHops}</label>
+          <div className="mb-4">
+            <label className="flex items-center gap-2 mb-2">
               <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={maxHops}
-                onChange={(e) => setPolarityState({ maxHops: parseInt(e.target.value) })}
-                className="w-full"
+                type="checkbox"
+                checked={autoDiscover}
+                onChange={(e) => setPolarityState({ autoDiscover: e.target.checked })}
+                className="rounded"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Maximum graph distance from poles to search for related concepts
-              </p>
+              <span className="text-sm font-medium">Auto-discover related concepts</span>
+            </label>
+            <p className="text-xs text-muted-foreground ml-6">
+              Automatically find concepts connected to the poles via graph traversal
+            </p>
+          </div>
+
+          {autoDiscover && (
+            <div className="space-y-4 border-t pt-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Max Candidates</label>
+                  <span className="text-sm font-mono text-primary">{maxCandidates}</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  step="5"
+                  value={maxCandidates}
+                  onChange={(e) => setPolarityState({ maxCandidates: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Maximum number of concepts to discover and analyze
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Max Hops</label>
+                  <span className="text-sm font-mono text-primary">{maxHops}</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={maxHops}
+                  onChange={(e) => setPolarityState({ maxHops: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Maximum graph distance from poles to search for related concepts (BFS optimized)
+                </p>
+              </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -573,7 +606,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const analysisReportContent = selectedAnalysis ? (
     // Show full report for selected analysis
     <div className="flex-1 overflow-auto p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Top Actions Bar */}
         <div className="flex items-center justify-between">
           <button
@@ -595,28 +628,38 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         {/* Axis Info */}
         <div className="border rounded-lg p-4 bg-card">
           <h3 className="font-semibold mb-3">Polarity Axis</h3>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex-1">
               <div className="text-sm font-medium text-blue-500">
                 {selectedAnalysis.result.axis.positive_pole.label}
               </div>
-              <div className="text-xs text-muted-foreground">
+              {selectedAnalysis.result.axis.positive_pole.description && (
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {selectedAnalysis.result.axis.positive_pole.description}
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground mt-1">
                 Grounding: {selectedAnalysis.result.axis.positive_pole.grounding.toFixed(3)}
               </div>
             </div>
-            <div className="px-4">
+            <div className="px-4 pt-1">
               <ArrowRight className="w-6 h-6 text-muted-foreground" />
             </div>
             <div className="flex-1 text-right">
               <div className="text-sm font-medium text-orange-500">
                 {selectedAnalysis.result.axis.negative_pole.label}
               </div>
-              <div className="text-xs text-muted-foreground">
+              {selectedAnalysis.result.axis.negative_pole.description && (
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {selectedAnalysis.result.axis.negative_pole.description}
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground mt-1">
                 Grounding: {selectedAnalysis.result.axis.negative_pole.grounding.toFixed(3)}
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm border-t pt-3">
             <div>
               <span className="text-muted-foreground">Axis Magnitude:</span>{' '}
               <span className="font-mono">{selectedAnalysis.result.axis.magnitude.toFixed(4)}</span>

@@ -8,7 +8,7 @@
  * - Size: Inverse of axis distance (larger = better fit)
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ScatterChart,
@@ -16,7 +16,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Cell,
   ReferenceLine,
@@ -25,6 +24,7 @@ import {
   Area,
 } from 'recharts';
 import type { PolarityAxisResponse, ProjectedConcept } from '../../types/polarity';
+import { NodeInfoBox } from '../../explorers/common/NodeInfoBox';
 
 interface PolarityScatterPlotProps {
   analysisResult: PolarityAxisResponse;
@@ -65,6 +65,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
   onConceptClick,
 }) => {
   const navigate = useNavigate();
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<Set<string>>(
     new Set(['positive', 'negative', 'neutral'])
   );
@@ -75,8 +76,20 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     concept: ProjectedConcept;
   } | null>(null);
 
+  // Selected concept for NodeInfoBox (left-click)
+  const [selectedConcept, setSelectedConcept] = useState<{
+    nodeId: string;
+    label: string;
+    group: string; // direction as group
+    degree: number; // use 0 since we don't have this in polarity view
+    x: number;
+    y: number;
+  } | null>(null);
+
   // Visualization layer toggles
   const [visualLayers, setVisualLayers] = useState({
+    showBubbles: true,
+    labels: false,
     regressionLine: true,
     confidenceBand: false,
     centroid: false,
@@ -157,37 +170,6 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     return filtered;
   }, [analysisResult.projections, activeFilters]);
 
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload || !payload[0]) return null;
-
-    const concept: ProjectedConcept & { size: number; color: string } = payload[0].payload;
-
-    return (
-      <div className="bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg p-3 shadow-lg">
-        <div className="font-semibold text-sm mb-2 text-card-foreground dark:text-gray-100">
-          {concept.label}
-        </div>
-        <div className="space-y-1 text-xs text-muted-foreground dark:text-gray-400">
-          <div>
-            <span className="font-medium">Position:</span> {concept.position.toFixed(3)}
-          </div>
-          <div>
-            <span className="font-medium">Grounding:</span> {concept.grounding.toFixed(3)}
-          </div>
-          <div>
-            <span className="font-medium">Direction:</span>{' '}
-            <span className={`font-medium`} style={{ color: concept.color }}>
-              {concept.direction}
-            </span>
-          </div>
-          <div>
-            <span className="font-medium">Axis Distance:</span> {concept.axis_distance.toFixed(3)}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Toggle filter
   const toggleFilter = (direction: 'positive' | 'negative' | 'neutral') => {
@@ -370,13 +352,13 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
               fillOpacity={1}
               stroke="none"
               ifOverflow="hidden"
+              style={{ pointerEvents: 'none' }}
             />
           );
         }
       }
     }
 
-    console.log('Heatmap rendered:', cells.length, 'cells');
     return cells;
   }, [analysisResult.projections, visualLayers.heatmap]);
 
@@ -395,7 +377,21 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
   }, [contextMenu, closeContextMenu]);
 
   return (
-    <div className="flex flex-col gap-4" onClick={closeContextMenu}>
+    <div className="flex flex-col gap-4 relative" ref={chartContainerRef} onClick={(e) => {
+      closeContextMenu();
+      // Dismiss NodeInfoBox on click outside (unless clicking on a concept)
+      if (selectedConcept && !(e.target as HTMLElement).closest('.recharts-scatter-symbol')) {
+        setSelectedConcept(null);
+      }
+    }}>
+      {/* NodeInfoBox for selected concept (left-click) */}
+      {selectedConcept && (
+        <NodeInfoBox
+          info={selectedConcept}
+          onDismiss={() => setSelectedConcept(null)}
+        />
+      )}
+
       {/* Context Menu */}
       {contextMenu && (
         <div
@@ -498,6 +494,28 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
           </span>
           <div className="flex gap-2 flex-wrap">
             <button
+              onClick={() => toggleLayer('showBubbles')}
+              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                visualLayers.showBubbles
+                  ? 'bg-blue-500/20 text-blue-500 border-blue-500'
+                  : 'bg-transparent text-muted-foreground border-muted-foreground/30'
+              } border`}
+              title="Show concept bubbles (size = relevance to axis)"
+            >
+              Bubbles
+            </button>
+            <button
+              onClick={() => toggleLayer('labels')}
+              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                visualLayers.labels
+                  ? 'bg-cyan-500/20 text-cyan-500 border-cyan-500'
+                  : 'bg-transparent text-muted-foreground border-muted-foreground/30'
+              } border`}
+              title="Show concept name labels"
+            >
+              Labels
+            </button>
+            <button
               onClick={() => toggleLayer('regressionLine')}
               className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                 visualLayers.regressionLine
@@ -542,7 +560,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
               Heatmap
             </button>
             <button
-              onClick={() => setVisualLayers({ regressionLine: true, confidenceBand: true, centroid: true, heatmap: true })}
+              onClick={() => setVisualLayers({ showBubbles: true, labels: true, regressionLine: true, confidenceBand: true, centroid: true, heatmap: true })}
               className="px-2 py-1 rounded text-xs font-medium bg-muted-foreground/10 text-muted-foreground border border-muted-foreground/30 hover:bg-muted-foreground/20 transition-all"
               title="Show all visualization layers"
             >
@@ -552,8 +570,10 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
         </div>
       </div>
 
-      {/* Scatter Plot */}
-      <ResponsiveContainer width="100%" height={500}>
+      {/* Scatter Plot - responsive with aspect ratio constraint */}
+      {/* [&_*] selector removes focus outlines from all nested elements to prevent white rectangle on click */}
+      <div className="w-full aspect-[4/3] [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*:focus]:outline-none [&_*]:focus-visible:outline-none">
+      <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
         >
@@ -628,8 +648,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             />
           </YAxis>
 
-          {/* Tooltip */}
-          <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+          {/* Tooltip disabled - use labels layer and click for NodeInfoBox instead */}
 
           {/* Zero reference lines */}
           <ReferenceLine
@@ -686,10 +705,11 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             <Scatter
               data={[{ position: centroid.position, grounding: centroid.grounding }]}
               fill="none"
+              isAnimationActive={false}
               shape={(props: any) => {
                 const { cx, cy } = props;
                 return (
-                  <g>
+                  <g style={{ pointerEvents: 'none' }}>
                     {/* Outer circle */}
                     <circle
                       cx={cx}
@@ -723,7 +743,6 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
           <Scatter
             name="Concepts"
             data={chartData}
-            onClick={(data) => onConceptClick?.(data)}
             onMouseEnter={(data) => setHoveredConcept(data)}
             onMouseLeave={() => setHoveredConcept(null)}
             cursor="pointer"
@@ -763,37 +782,103 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
               const strokeDasharray = payload.direction === 'neutral' ? '2,2' : 'none';
               const strokeWidth = isHovered ? 2.5 : (payload.direction === 'neutral' ? 1.5 : 2);
 
+              // Click handler for showing NodeInfoBox
+              const handleClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                const containerRect = chartContainerRef.current?.getBoundingClientRect();
+                if (containerRect) {
+                  const x = e.clientX - containerRect.left;
+                  const y = e.clientY - containerRect.top;
+                  setSelectedConcept({
+                    nodeId: payload.concept_id,
+                    label: payload.label,
+                    group: payload.direction,
+                    degree: 0,
+                    x,
+                    y,
+                  });
+                }
+                onConceptClick?.(payload);
+              };
+
               return (
                 <g>
                   {/* Direction indicator (flow telltale) - shows trend direction for each concept */}
                   <line
-                    x1={lineStartX}
-                    y1={lineStartY}
+                    x1={visualLayers.showBubbles ? lineStartX : cx}
+                    y1={visualLayers.showBubbles ? lineStartY : cy}
                     x2={lineEndX}
                     y2={lineEndY}
                     stroke={fill}
-                    strokeWidth={isHovered ? 2 : 1.5}
-                    strokeOpacity={isHovered ? 0.9 : 0.6}
+                    strokeWidth={isHovered ? 2.5 : (visualLayers.showBubbles ? 1.5 : 2)}
+                    strokeOpacity={isHovered ? 0.95 : (visualLayers.showBubbles ? 0.6 : 0.8)}
                     strokeLinecap="round"
                     pointerEvents="none"
                   />
 
-                  {/* Bubble */}
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={radius}
-                    fill={fill}
-                    fillOpacity={isHovered ? 0.9 : 0.6}
-                    stroke={fill}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDasharray}
-                    strokeOpacity={isHovered ? 1 : 0.8}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      handleContextMenu(e as any, payload);
-                    }}
-                  />
+                  {/* Bubble (conditionally rendered) */}
+                  {visualLayers.showBubbles && (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={radius}
+                      fill={fill}
+                      fillOpacity={isHovered ? 0.9 : 0.6}
+                      stroke={fill}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDasharray}
+                      strokeOpacity={isHovered ? 1 : 0.8}
+                      style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                      onMouseDown={(e) => {
+                        if (e.button === 0) { // Left click only
+                          handleClick(e);
+                        }
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleContextMenu(e as any, payload);
+                      }}
+                    />
+                  )}
+
+                  {/* Small dot at telltale origin when bubbles hidden (for hover/click target) */}
+                  {!visualLayers.showBubbles && (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={isHovered ? 4 : 3}
+                      fill={fill}
+                      fillOpacity={isHovered ? 0.9 : 0.7}
+                      stroke={fill}
+                      strokeWidth={1}
+                      style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                      onMouseDown={(e) => {
+                        if (e.button === 0) { // Left click only
+                          handleClick(e);
+                        }
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleContextMenu(e as any, payload);
+                      }}
+                    />
+                  )}
+
+                  {/* Label (conditionally rendered) */}
+                  {visualLayers.labels && (
+                    <text
+                      x={cx + radius + 4}
+                      y={cy}
+                      fontSize={10}
+                      fill={fill}
+                      fillOpacity={0.9}
+                      dominantBaseline="middle"
+                      pointerEvents="none"
+                      style={{ userSelect: 'none' }}
+                    >
+                      {payload.label.length > 15 ? payload.label.substring(0, 15) + '…' : payload.label}
+                    </text>
+                  )}
                 </g>
               );
             }}
@@ -807,6 +892,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
           </Scatter>
         </ScatterChart>
       </ResponsiveContainer>
+      </div>
 
       {/* Legend */}
       <div className="flex flex-col gap-3 px-4">
