@@ -8,9 +8,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { FileSpreadsheet } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { useGraphStore } from '../store/graphStore';
+import { useReportStore } from '../store/reportStore';
+import type { GraphReportData } from '../store/reportStore';
 import { useSubgraph, useFindConnection } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
 import { apiClient } from '../api/client';
@@ -21,6 +24,7 @@ interface ExplorerViewProps {
 }
 
 export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
+  const navigate = useNavigate();
   const [urlParams, setUrlParams] = useSearchParams();
   const {
     searchParams,
@@ -33,6 +37,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setSearchParams,
     setSimilarityThreshold,
   } = useGraphStore();
+  const { addReport } = useReportStore();
 
   // Track if we're initializing from URL to prevent loops
   const initializingFromUrl = React.useRef(false);
@@ -344,6 +349,44 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     });
   }, []);
 
+  // Send current graph to Reports
+  const handleSendToReports = useCallback(() => {
+    if (!rawGraphData || rawGraphData.nodes.length === 0) return;
+
+    const reportData: GraphReportData = {
+      type: 'graph',
+      nodes: rawGraphData.nodes.map((n: any) => ({
+        id: n.concept_id || n.id,
+        label: n.label,
+        description: n.description,
+        ontology: n.ontology,
+        grounding_strength: n.grounding_strength,
+        diversity_score: n.diversity_score,
+        evidence_count: n.evidence_count,
+      })),
+      links: rawGraphData.links.map((l: any) => ({
+        source: l.from_id || l.source,
+        target: l.to_id || l.target,
+        type: l.relationship_type || l.type || 'RELATED',
+        grounding_strength: l.grounding_strength,
+      })),
+      searchParams: {
+        mode: searchParams.mode || 'unknown',
+        conceptId: searchParams.conceptId || searchParams.centerConceptId,
+        depth: searchParams.depth,
+      },
+    };
+
+    addReport({
+      name: '', // Will auto-generate name based on content
+      type: 'graph',
+      data: reportData,
+      sourceExplorer: explorerType === 'force-graph-3d' ? '3d' : '2d',
+    });
+
+    navigate('/report');
+  }, [rawGraphData, searchParams, explorerType, addReport, navigate]);
+
   return (
     <div className="h-full flex flex-col">
       {/* Search Bar / Query Interface */}
@@ -406,6 +449,18 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
             onSettingsChange={setExplorerSettings}
             onNodeClick={handleNodeClick}
           />
+        )}
+
+        {/* Send to Reports button - shown when graph has data */}
+        {rawGraphData && rawGraphData.nodes.length > 0 && !isLoading && (
+          <button
+            onClick={handleSendToReports}
+            className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-lg transition-colors z-20"
+            title="Send to Reports"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span className="text-sm font-medium">Send to Reports</span>
+          </button>
         )}
       </div>
     </div>

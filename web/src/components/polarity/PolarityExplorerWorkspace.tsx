@@ -5,7 +5,8 @@
  * Projects concepts onto bidirectional semantic dimensions.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   GitBranch,
   Search,
@@ -16,9 +17,12 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
+import { useReportStore } from '../../store/reportStore';
+import type { PolarityReportData } from '../../store/reportStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { PolarityHelpModal } from './PolarityHelpModal';
 import { PolarityScatterPlot } from './PolarityScatterPlot';
@@ -81,6 +85,9 @@ interface StoredAnalysis {
 }
 
 export const PolarityExplorerWorkspace: React.FC = () => {
+  const navigate = useNavigate();
+  const { addReport } = useReportStore();
+
   // Get polarity state from Zustand store
   const {
     polarityState,
@@ -203,6 +210,43 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       [section]: !prev[section],
     }));
   };
+
+  // Send current polarity analysis to Reports
+  const handleSendToReports = useCallback(() => {
+    if (!selectedAnalysis) return;
+
+    const reportData: PolarityReportData = {
+      type: 'polarity',
+      positivePole: {
+        concept_id: selectedAnalysis.result.axis.positive_pole.concept_id,
+        label: selectedAnalysis.result.axis.positive_pole.label,
+      },
+      negativePole: {
+        concept_id: selectedAnalysis.result.axis.negative_pole.concept_id,
+        label: selectedAnalysis.result.axis.negative_pole.label,
+      },
+      axisMagnitude: selectedAnalysis.result.axis.magnitude,
+      concepts: selectedAnalysis.result.projections.map((p) => ({
+        concept_id: p.concept_id,
+        label: p.label,
+        position: p.position,
+        positive_similarity: p.alignment.positive_pole_similarity,
+        negative_similarity: p.alignment.negative_pole_similarity,
+        grounding_strength: p.grounding,
+      })),
+      directionDistribution: selectedAnalysis.result.statistics.direction_distribution,
+      groundingCorrelation: selectedAnalysis.result.grounding_correlation.pearson_r,
+    };
+
+    addReport({
+      name: '', // Will auto-generate name based on content
+      type: 'polarity',
+      data: reportData,
+      sourceExplorer: 'polarity',
+    });
+
+    navigate('/report');
+  }, [selectedAnalysis, addReport, navigate]);
 
   const getDirectionColor = (direction: string) => {
     switch (direction) {
@@ -517,14 +561,23 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     // Show full report for selected analysis
     <div className="flex-1 overflow-auto p-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Back to List Button */}
-        <button
-          onClick={() => setPolarityState({ selectedAnalysisId: null })}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronDown className="w-4 h-4 rotate-90" />
-          <span>Back to Analysis List</span>
-        </button>
+        {/* Top Actions Bar */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setPolarityState({ selectedAnalysisId: null })}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronDown className="w-4 h-4 rotate-90" />
+            <span>Back to Analysis List</span>
+          </button>
+          <button
+            onClick={handleSendToReports}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Send to Reports
+          </button>
+        </div>
 
         {/* Axis Info */}
         <div className="border rounded-lg p-4 bg-card">
