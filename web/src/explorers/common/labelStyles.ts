@@ -149,11 +149,13 @@ export const ColorTransform = {
    *
    * @param baseColor - Base color from visual settings (node/edge color)
    * @param type - Label type ('node' or 'edge')
-   * @param theme - Theme mode ('light' or 'dark'), defaults to 'dark' for backward compatibility
+   * @param theme - Theme mode ('light', 'dark', or 'twilight'), defaults to 'dark' for backward compatibility
    * @returns Object with fill and stroke colors
    */
-  getLabelColors(baseColor: string, type: 'node' | 'edge', theme: 'light' | 'dark' = 'dark'): { fill: string; stroke: string } {
-    const transforms = LUMINANCE_TRANSFORMS[type][theme];
+  getLabelColors(baseColor: string, type: 'node' | 'edge', theme: 'light' | 'dark' | 'twilight' = 'dark'): { fill: string; stroke: string } {
+    // Map twilight to dark since it uses similar color scheme
+    const effectiveTheme = theme === 'twilight' ? 'dark' : theme;
+    const transforms = LUMINANCE_TRANSFORMS[type][effectiveTheme];
 
     return {
       fill: this.setLuminance(baseColor, transforms.fillLuminance),
@@ -170,7 +172,7 @@ export function applyEdgeLabelStyle(
   ctx: CanvasRenderingContext2D,
   baseColor: string,
   fontSize: number,
-  theme: 'light' | 'dark' = 'dark'
+  theme: 'light' | 'dark' | 'twilight' = 'dark'
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
   const colors = ColorTransform.getLabelColors(baseColor, 'edge', theme);
@@ -194,7 +196,7 @@ export function applyNodeLabelStyle(
   ctx: CanvasRenderingContext2D,
   baseColor: string,
   fontSize: number,
-  theme: 'light' | 'dark' = 'dark'
+  theme: 'light' | 'dark' | 'twilight' = 'dark'
 ): void {
   const scale = LABEL_RENDERING.canvasScale;
   const colors = ColorTransform.getLabelColors(baseColor, 'node', theme);

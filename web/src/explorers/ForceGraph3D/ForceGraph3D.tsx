@@ -50,8 +50,8 @@ export const ForceGraph3D: React.FC<
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [focusedNode, setFocusedNode] = useState<string | null>(null);
 
-  // Get current theme for label colors
-  const { theme } = useThemeStore();
+  // Get current theme for label colors (use appliedTheme which resolves 'system' to actual theme)
+  const { appliedTheme: theme } = useThemeStore();
 
   // Get edge category filters from store
   const { filters } = useGraphStore();
