@@ -1,8 +1,8 @@
 /**
  * Appearance Tab
  *
- * Advanced theme customization with mode selection and independent
- * background/foreground/accent color controls. Mode provides soft
+ * Advanced theme customization with mode selection, typography, background style,
+ * and independent background/foreground/accent color controls. Mode provides soft
  * guidance (lightness ranges, fg lightness) while user controls hue/saturation.
  *
  * Hue, saturation, and accent are shared across modes for easy comparison.
@@ -17,6 +17,8 @@ import {
   Sunset,
   Palette,
   RotateCcw,
+  Type,
+  Grid3X3,
 } from 'lucide-react';
 import { useThemeStore, type ThemePreference } from '../../store/themeStore';
 import {
@@ -37,9 +39,25 @@ import {
   loadColorSettings,
   saveColorSettings,
   clearColorSettings,
+  fontOptions,
+  defaultFontSettings,
+  loadFontSettings,
+  saveFontSettings,
+  clearFontSettings,
+  applyFontsToCSS,
+  getFontFamily,
+  backgroundStyleOptions,
+  defaultBackgroundStyle,
+  loadBackgroundStyle,
+  saveBackgroundStyle,
+  clearBackgroundStyle,
+  applyBackgroundStyle,
   type ColorSettings,
   type SharedColorSettings,
   type ModeLightnessSettings,
+  type FontSettings,
+  type FontCategory,
+  type BackgroundStyle,
 } from '../../lib/themeHarmony';
 
 export const AppearanceTab: React.FC = () => {
@@ -49,6 +67,17 @@ export const AppearanceTab: React.FC = () => {
   const [colorSettings, setColorSettings] = useState<ColorSettings>(() => {
     const stored = loadColorSettings();
     return stored || { ...defaultColorSettings };
+  });
+
+  // Font settings
+  const [fontSettings, setFontSettings] = useState<FontSettings>(() => {
+    const stored = loadFontSettings();
+    return stored || { ...defaultFontSettings };
+  });
+
+  // Background style
+  const [bgStyle, setBgStyle] = useState<BackgroundStyle>(() => {
+    return loadBackgroundStyle() || defaultBackgroundStyle;
   });
 
   const modeConfig = modeConfigs[appliedTheme] || modeConfigs.dark;
@@ -83,6 +112,24 @@ export const AppearanceTab: React.FC = () => {
     saveColorSettings(newSettings);
   };
 
+  // Update font for a category
+  const updateFont = (category: FontCategory, fontId: string) => {
+    const newSettings: FontSettings = {
+      ...fontSettings,
+      [category]: fontId,
+    };
+    setFontSettings(newSettings);
+    saveFontSettings(newSettings);
+    applyFontsToCSS(newSettings);
+  };
+
+  // Update background style
+  const updateBgStyle = (style: BackgroundStyle) => {
+    setBgStyle(style);
+    saveBackgroundStyle(style);
+    applyBackgroundStyle(style);
+  };
+
   // Apply harmony whenever settings or mode change
   useEffect(() => {
     const harmony = computeHarmony(appliedTheme, colorSettings);
@@ -95,13 +142,28 @@ export const AppearanceTab: React.FC = () => {
 
   // Reset all to defaults
   const handleResetAll = () => {
-    const defaults = { ...defaultColorSettings };
-    setColorSettings(defaults);
+    // Reset colors
+    const colorDefaults = { ...defaultColorSettings };
+    setColorSettings(colorDefaults);
     clearColorSettings();
+
+    // Reset fonts
+    const fontDefaults = { ...defaultFontSettings };
+    setFontSettings(fontDefaults);
+    clearFontSettings();
+    applyFontsToCSS(fontDefaults);
+
+    // Reset background style
+    setBgStyle(defaultBackgroundStyle);
+    clearBackgroundStyle();
+    applyBackgroundStyle(defaultBackgroundStyle);
   };
 
   // Check if settings are customized
-  const isCustomized = JSON.stringify(colorSettings) !== JSON.stringify(defaultColorSettings);
+  const isColorCustomized = JSON.stringify(colorSettings) !== JSON.stringify(defaultColorSettings);
+  const isFontCustomized = JSON.stringify(fontSettings) !== JSON.stringify(defaultFontSettings);
+  const isBgStyleCustomized = bgStyle !== defaultBackgroundStyle;
+  const isCustomized = isColorCustomized || isFontCustomized || isBgStyleCustomized;
 
   const themeOptions: { id: ThemePreference; label: string; icon: React.ComponentType<{ className?: string }>; time: string }[] = [
     { id: 'dark', label: 'Dark', icon: Moon, time: '23:00' },
@@ -340,6 +402,129 @@ export const AppearanceTab: React.FC = () => {
         </div>
       </Section>
 
+      {/* Typography */}
+      <Section title="Typography" icon={<Type className="w-5 h-5" />}>
+        <div className="py-4 space-y-6">
+          {/* Display Font */}
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-3">
+              Headings
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {fontOptions.display.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => updateFont('display', font.id)}
+                  className={`
+                    p-3 border text-left transition-all
+                    ${fontSettings.display === font.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'}
+                  `}
+                  style={{ fontFamily: font.family }}
+                >
+                  <div className="text-sm font-semibold">{font.label}</div>
+                  <div className="text-[10px] text-muted-foreground font-mono mt-1">Aa Bb Cc</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Body Font */}
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-3">
+              Body Text
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {fontOptions.body.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => updateFont('body', font.id)}
+                  className={`
+                    p-3 border text-left transition-all
+                    ${fontSettings.body === font.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'}
+                  `}
+                  style={{ fontFamily: font.family }}
+                >
+                  <div className="text-sm">{font.label}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    The quick brown fox jumps over the lazy dog
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mono Font */}
+          <div>
+            <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-3">
+              Code / Monospace
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {fontOptions.mono.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => updateFont('mono', font.id)}
+                  className={`
+                    p-3 border text-left transition-all
+                    ${fontSettings.mono === font.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'}
+                  `}
+                  style={{ fontFamily: font.family }}
+                >
+                  <div className="text-sm">{font.label}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    {'const x = 42;'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Background Style */}
+      <Section
+        title="Background Style"
+        icon={<Grid3X3 className="w-5 h-5" />}
+        description="Add subtle texture with ordered dithering patterns"
+      >
+        <div className="py-4">
+          <div className="grid grid-cols-4 gap-2">
+            {backgroundStyleOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => updateBgStyle(option.id)}
+                className={`
+                  relative p-4 border text-center transition-all overflow-hidden
+                  ${bgStyle === option.id
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-muted-foreground'}
+                `}
+              >
+                {/* Preview pattern */}
+                <div
+                  className={`
+                    absolute inset-0 opacity-30
+                    ${option.id === 'dither-25' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
+                    ${option.id === 'dither-50' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'2\' height=\'2\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3Crect x=\'1\' y=\'1\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
+                    ${option.id === 'dither-75' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'4\' height=\'4\' fill=\'%23888\'/%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'transparent\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
+                  `}
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <div className="relative">
+                  <div className="text-xs font-mono font-semibold mb-1">{option.label}</div>
+                  <div className="text-[9px] text-muted-foreground">{option.description}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* Reset */}
       {isCustomized && (
         <div className="flex justify-end">
@@ -348,7 +533,7 @@ export const AppearanceTab: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
-            Reset all colors to defaults
+            Reset all appearance settings
           </button>
         </div>
       )}

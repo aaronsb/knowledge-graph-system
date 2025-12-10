@@ -252,8 +252,96 @@ export function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
 }
 
-// localStorage key for color settings
+// ============================================
+// TYPOGRAPHY SETTINGS
+// ============================================
+
+export type FontCategory = 'display' | 'body' | 'mono';
+
+export interface FontOption {
+  id: string;
+  label: string;
+  family: string;
+  category: FontCategory;
+  style?: string; // 'condensed', 'expanded', etc.
+}
+
+// Available font options organized by category
+export const fontOptions: Record<FontCategory, FontOption[]> = {
+  display: [
+    { id: 'space-grotesk', label: 'Space Grotesk', family: '"Space Grotesk", sans-serif', category: 'display' },
+    { id: 'inter', label: 'Inter', family: '"Inter", sans-serif', category: 'display' },
+    { id: 'system', label: 'System UI', family: 'system-ui, sans-serif', category: 'display' },
+  ],
+  body: [
+    { id: 'ibm-plex-condensed', label: 'IBM Plex Condensed', family: '"IBM Plex Sans Condensed", sans-serif', category: 'body', style: 'condensed' },
+    { id: 'ibm-plex', label: 'IBM Plex Sans', family: '"IBM Plex Sans", sans-serif', category: 'body' },
+    { id: 'inter', label: 'Inter', family: '"Inter", sans-serif', category: 'body' },
+    { id: 'system', label: 'System UI', family: 'system-ui, sans-serif', category: 'body' },
+  ],
+  mono: [
+    { id: 'jetbrains', label: 'JetBrains Mono', family: '"JetBrains Mono", monospace', category: 'mono' },
+    { id: 'fira-code', label: 'Fira Code', family: '"Fira Code", monospace', category: 'mono' },
+    { id: 'ibm-plex-mono', label: 'IBM Plex Mono', family: '"IBM Plex Mono", monospace', category: 'mono' },
+    { id: 'system', label: 'System Mono', family: 'ui-monospace, monospace', category: 'mono' },
+  ],
+};
+
+// ============================================
+// BACKGROUND STYLE SETTINGS
+// ============================================
+
+export type BackgroundStyle = 'solid' | 'dither-25' | 'dither-50' | 'dither-75';
+
+export interface BackgroundStyleOption {
+  id: BackgroundStyle;
+  label: string;
+  description: string;
+}
+
+export const backgroundStyleOptions: BackgroundStyleOption[] = [
+  { id: 'solid', label: 'Solid', description: 'Clean, solid background' },
+  { id: 'dither-25', label: '25% Dither', description: 'Sparse dot pattern' },
+  { id: 'dither-50', label: '50% Dither', description: 'Classic checkerboard' },
+  { id: 'dither-75', label: '75% Dither', description: 'Dense dot pattern' },
+];
+
+export const defaultBackgroundStyle: BackgroundStyle = 'solid';
+
+export interface FontSettings {
+  display: string; // font id
+  body: string;
+  mono: string;
+}
+
+export const defaultFontSettings: FontSettings = {
+  display: 'space-grotesk',
+  body: 'ibm-plex-condensed',
+  mono: 'jetbrains',
+};
+
+/**
+ * Get font family string from font ID
+ */
+export function getFontFamily(category: FontCategory, fontId: string): string {
+  const options = fontOptions[category];
+  const font = options.find(f => f.id === fontId);
+  return font?.family || options[0].family;
+}
+
+/**
+ * Apply font settings to CSS custom properties
+ */
+export function applyFontsToCSS(settings: FontSettings) {
+  const root = document.documentElement;
+  root.style.setProperty('--font-display', getFontFamily('display', settings.display));
+  root.style.setProperty('--font-body', getFontFamily('body', settings.body));
+  root.style.setProperty('--font-mono', getFontFamily('mono', settings.mono));
+}
+
+// localStorage keys
 const STORAGE_KEY = 'kg-color-settings';
+const FONT_STORAGE_KEY = 'kg-font-settings';
 
 /**
  * Load color settings from localStorage
@@ -286,4 +374,84 @@ export function saveColorSettings(settings: ColorSettings) {
  */
 export function clearColorSettings() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+/**
+ * Load font settings from localStorage
+ */
+export function loadFontSettings(): FontSettings | null {
+  try {
+    const stored = localStorage.getItem(FONT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.display && parsed?.body && parsed?.mono) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+/**
+ * Save font settings to localStorage
+ */
+export function saveFontSettings(settings: FontSettings) {
+  localStorage.setItem(FONT_STORAGE_KEY, JSON.stringify(settings));
+}
+
+/**
+ * Clear font settings from localStorage
+ */
+export function clearFontSettings() {
+  localStorage.removeItem(FONT_STORAGE_KEY);
+}
+
+// ============================================
+// BACKGROUND STYLE PERSISTENCE
+// ============================================
+
+const BG_STYLE_STORAGE_KEY = 'kg-background-style';
+
+/**
+ * Load background style from localStorage
+ */
+export function loadBackgroundStyle(): BackgroundStyle | null {
+  try {
+    const stored = localStorage.getItem(BG_STYLE_STORAGE_KEY);
+    if (stored && ['solid', 'dither-25', 'dither-50', 'dither-75'].includes(stored)) {
+      return stored as BackgroundStyle;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+/**
+ * Save background style to localStorage
+ */
+export function saveBackgroundStyle(style: BackgroundStyle) {
+  localStorage.setItem(BG_STYLE_STORAGE_KEY, style);
+}
+
+/**
+ * Apply background style to document body
+ */
+export function applyBackgroundStyle(style: BackgroundStyle) {
+  const body = document.body;
+  // Remove all dither classes
+  body.classList.remove('dither-25', 'dither-50', 'dither-75');
+  // Add new style class if not solid
+  if (style !== 'solid') {
+    body.classList.add(style);
+  }
+}
+
+/**
+ * Clear background style from localStorage
+ */
+export function clearBackgroundStyle() {
+  localStorage.removeItem(BG_STYLE_STORAGE_KEY);
 }

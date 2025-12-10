@@ -44,6 +44,11 @@
     /* Squared-off borders (postmodern brutalist aesthetic) */
     --radius: 2px;
 
+    /* Typography (computed by JS) */
+    --font-display: "Space Grotesk", sans-serif;
+    --font-body: "IBM Plex Sans Condensed", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
     /* Status colors (constant across modes) */
     --status-active: 145 65% 45%;
     --status-warning: 40 85% 55%;
@@ -115,18 +120,19 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   /* Headings use display font */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    font-family: var(--font-display);
   }
 
   /* Code and technical content use mono */
   code, pre, .font-mono {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--font-mono);
   }
 
   /* Form element accent colors - use primary (warm amber) */
@@ -186,4 +192,54 @@
 
 .loading-dots span:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+/* ===== ORDERED DITHERING PATTERNS ===== */
+/* Based on 4x4 Bayer matrix pattern for retro/postmodern aesthetic */
+
+/* DPI scaling for dither patterns */
+:root {
+  --dither-size: 4px;
+}
+
+/* ~25% density dither - sparse dots */
+body.dither-25::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.03;
+}
+
+/* ~50% density dither - classic checkerboard */
+body.dither-50::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23ffffff'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.04;
+}
+
+/* ~75% density dither - dense dots */
+body.dither-75::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='4' height='4' fill='%23ffffff'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23000000'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.05;
 }
