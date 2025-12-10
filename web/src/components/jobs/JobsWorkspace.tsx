@@ -206,10 +206,10 @@ export const JobsWorkspace: React.FC = () => {
         key={job.job_id}
         onClick={() => handleSelectJob(job)}
         className={`
-          p-3 border-b border-border dark:border-gray-700
-          hover:bg-gray-50 dark:hover:bg-gray-800/50
+          p-3 border-b border-border
+          hover:bg-accent
           cursor-pointer transition-colors
-          ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-l-blue-500' : ''}
+          ${isSelected ? 'bg-status-info/20 border-l-2 border-l-primary' : ''}
         `}
       >
         <div className="flex items-center justify-between gap-3">
@@ -217,10 +217,10 @@ export const JobsWorkspace: React.FC = () => {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <StatusBadge status={job.status} size="sm" showLabel={false} />
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-card-foreground dark:text-gray-200 truncate">
+              <div className="font-medium text-card-foreground truncate">
                 {job.source_path || job.filename || 'Unknown source'}
               </div>
-              <div className="text-xs text-muted-foreground dark:text-gray-400 truncate">
+              <div className="text-xs text-muted-foreground truncate">
                 {job.ontology || 'No ontology'} • {job.job_id.substring(0, 12)}...
               </div>
             </div>
@@ -228,10 +228,10 @@ export const JobsWorkspace: React.FC = () => {
 
           {/* Progress (for processing jobs) */}
           {job.status === 'processing' && job.progress?.percent !== undefined && (
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
-              <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
+                  className="h-full bg-status-info transition-all duration-300"
                   style={{ width: `${job.progress.percent}%` }}
                 />
               </div>
@@ -240,7 +240,7 @@ export const JobsWorkspace: React.FC = () => {
           )}
 
           {/* Time */}
-          <div className="text-xs text-muted-foreground dark:text-gray-400 whitespace-nowrap">
+          <div className="text-xs text-muted-foreground whitespace-nowrap">
             {formatRelativeTime(job.created_at)}
           </div>
 
@@ -251,7 +251,7 @@ export const JobsWorkspace: React.FC = () => {
                 <button
                   onClick={(e) => { e.stopPropagation(); handleApprove(job.job_id); }}
                   disabled={actionLoading === job.job_id}
-                  className="p-1 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors disabled:opacity-50"
+                  className="p-1 text-status-active hover:bg-status-active/20 rounded transition-colors disabled:opacity-50"
                   title="Approve"
                 >
                   {actionLoading === job.job_id ? (
@@ -264,7 +264,7 @@ export const JobsWorkspace: React.FC = () => {
               <button
                 onClick={(e) => { e.stopPropagation(); handleCancel(job.job_id); }}
                 disabled={actionLoading === job.job_id}
-                className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors disabled:opacity-50"
+                className="p-1 text-destructive hover:bg-destructive/20 rounded transition-colors disabled:opacity-50"
                 title="Cancel"
               >
                 <XCircle className="w-4 h-4" />
@@ -284,32 +284,32 @@ export const JobsWorkspace: React.FC = () => {
     const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing'].includes(job.status);
 
     return (
-      <div className="h-full flex flex-col bg-card dark:bg-gray-900">
+      <div className="h-full flex flex-col bg-card">
         {/* Header */}
-        <div className="p-4 border-b border-border dark:border-gray-700">
+        <div className="p-4 border-b border-border">
           <button
             onClick={handleBackToList}
-            className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 hover:text-card-foreground dark:hover:text-gray-200 mb-3"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-card-foreground mb-3"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to list
           </button>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold text-card-foreground dark:text-gray-200 truncate">
+              <h2 className="text-lg font-semibold text-card-foreground truncate">
                 {job.source_path || job.filename || 'Unknown source'}
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 <StatusBadge status={job.status} size="sm" />
                 {job.ontology && (
-                  <span className="text-sm text-muted-foreground dark:text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     {job.ontology}
                   </span>
                 )}
               </div>
             </div>
             {selectedJobLoading && (
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground dark:text-gray-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             )}
           </div>
         </div>
@@ -317,46 +317,46 @@ export const JobsWorkspace: React.FC = () => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Metadata */}
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-2">
+          <div className="bg-muted rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2 text-sm">
-              <Info className="w-4 h-4 text-muted-foreground dark:text-gray-400" />
-              <span className="font-medium text-card-foreground dark:text-gray-200">Details</span>
+              <Info className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium text-card-foreground">Details</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-muted-foreground dark:text-gray-400">Job ID:</div>
-              <div className="text-card-foreground dark:text-gray-200 font-mono text-xs break-all">
+              <div className="text-muted-foreground">Job ID:</div>
+              <div className="text-card-foreground font-mono text-xs break-all">
                 {job.job_id}
               </div>
-              <div className="text-muted-foreground dark:text-gray-400">Type:</div>
-              <div className="text-card-foreground dark:text-gray-200">{job.job_type}</div>
-              <div className="text-muted-foreground dark:text-gray-400">Created:</div>
-              <div className="text-card-foreground dark:text-gray-200">
+              <div className="text-muted-foreground">Type:</div>
+              <div className="text-card-foreground">{job.job_type}</div>
+              <div className="text-muted-foreground">Created:</div>
+              <div className="text-card-foreground">
                 {new Date(job.created_at).toLocaleString()}
               </div>
               {job.started_at && (
                 <>
-                  <div className="text-muted-foreground dark:text-gray-400">Started:</div>
-                  <div className="text-card-foreground dark:text-gray-200">
+                  <div className="text-muted-foreground">Started:</div>
+                  <div className="text-card-foreground">
                     {new Date(job.started_at).toLocaleString()}
                   </div>
                 </>
               )}
               {job.completed_at && (
                 <>
-                  <div className="text-muted-foreground dark:text-gray-400">Completed:</div>
-                  <div className="text-card-foreground dark:text-gray-200">
+                  <div className="text-muted-foreground">Completed:</div>
+                  <div className="text-card-foreground">
                     {new Date(job.completed_at).toLocaleString()}
                   </div>
-                  <div className="text-muted-foreground dark:text-gray-400">Duration:</div>
-                  <div className="text-card-foreground dark:text-gray-200">
+                  <div className="text-muted-foreground">Duration:</div>
+                  <div className="text-card-foreground">
                     {formatDuration(job.created_at, job.completed_at)}
                   </div>
                 </>
               )}
               {job.username && (
                 <>
-                  <div className="text-muted-foreground dark:text-gray-400">User:</div>
-                  <div className="text-card-foreground dark:text-gray-200">{job.username}</div>
+                  <div className="text-muted-foreground">User:</div>
+                  <div className="text-card-foreground">{job.username}</div>
                 </>
               )}
             </div>
@@ -364,20 +364,20 @@ export const JobsWorkspace: React.FC = () => {
 
           {/* Analysis (for awaiting_approval) */}
           {job.analysis && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-3">
+            <div className="bg-status-warning/20 rounded-lg p-3 space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span className="font-medium text-amber-800 dark:text-amber-300">
+                <FileText className="w-4 h-4 text-status-warning" />
+                <span className="font-medium text-foreground">
                   Pre-Ingestion Analysis
                 </span>
               </div>
 
               {job.analysis.file_stats && (
                 <div className="text-sm space-y-1">
-                  <div className="text-amber-700 dark:text-amber-300">
+                  <div className="text-foreground">
                     {job.analysis.file_stats.filename} ({job.analysis.file_stats.size_human})
                   </div>
-                  <div className="text-amber-600 dark:text-amber-400">
+                  <div className="text-muted-foreground">
                     {job.analysis.file_stats.word_count.toLocaleString()} words •
                     ~{job.analysis.file_stats.estimated_chunks} chunks
                   </div>
@@ -389,12 +389,12 @@ export const JobsWorkspace: React.FC = () => {
               )}
 
               {job.analysis.warnings && job.analysis.warnings.length > 0 && (
-                <div className="pt-2 border-t border-amber-200 dark:border-amber-800">
-                  <div className="flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400 mb-1">
+                <div className="pt-2 border-t border-status-warning/30">
+                  <div className="flex items-center gap-1 text-sm text-status-warning mb-1">
                     <AlertTriangle className="w-3 h-3" />
                     Warnings
                   </div>
-                  <ul className="text-sm text-amber-600 dark:text-amber-400 list-disc list-inside">
+                  <ul className="text-sm text-muted-foreground list-disc list-inside">
                     {job.analysis.warnings.map((w, i) => (
                       <li key={i}>{w}</li>
                     ))}
@@ -406,36 +406,36 @@ export const JobsWorkspace: React.FC = () => {
 
           {/* Progress */}
           {job.progress && job.status === 'processing' && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+            <div className="bg-status-info/20 rounded-lg p-3">
               <ProgressIndicator progress={job.progress} variant="detailed" />
             </div>
           )}
 
           {/* Results */}
           {job.result && job.status === 'completed' && (
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 space-y-3">
+            <div className="bg-status-active/10 rounded-lg p-3 space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="font-medium text-green-800 dark:text-green-300">Results</span>
+                <CheckCircle2 className="w-4 h-4 text-status-active" />
+                <span className="font-medium text-status-active">Results</span>
               </div>
 
               {job.result.stats && (
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-green-700 dark:text-green-400">Chunks processed:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.chunks_processed}</div>
-                  <div className="text-green-700 dark:text-green-400">Concepts created:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.concepts_created}</div>
-                  <div className="text-green-700 dark:text-green-400">Concepts linked:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.concepts_linked}</div>
-                  <div className="text-green-700 dark:text-green-400">Sources created:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.sources_created}</div>
-                  <div className="text-green-700 dark:text-green-400">Relationships:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.relationships_created}</div>
+                  <div className="text-muted-foreground">Chunks processed:</div>
+                  <div className="text-foreground">{job.result.stats.chunks_processed}</div>
+                  <div className="text-muted-foreground">Concepts created:</div>
+                  <div className="text-foreground">{job.result.stats.concepts_created}</div>
+                  <div className="text-muted-foreground">Concepts linked:</div>
+                  <div className="text-foreground">{job.result.stats.concepts_linked}</div>
+                  <div className="text-muted-foreground">Sources created:</div>
+                  <div className="text-foreground">{job.result.stats.sources_created}</div>
+                  <div className="text-muted-foreground">Relationships:</div>
+                  <div className="text-foreground">{job.result.stats.relationships_created}</div>
                 </div>
               )}
 
               {job.result.cost && (
-                <div className="pt-2 border-t border-green-200 dark:border-green-800">
+                <div className="pt-2 border-t border-status-active/30">
                   <CostDisplay actual={job.result.cost} />
                 </div>
               )}
@@ -444,12 +444,12 @@ export const JobsWorkspace: React.FC = () => {
 
           {/* Error */}
           {job.error && (
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+            <div className="bg-destructive/20 rounded-lg p-3">
               <div className="flex items-center gap-2 text-sm mb-2">
-                <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                <span className="font-medium text-red-800 dark:text-red-300">Error</span>
+                <XCircle className="w-4 h-4 text-destructive" />
+                <span className="font-medium text-destructive">Error</span>
               </div>
-              <div className="text-sm text-red-700 dark:text-red-400 font-mono break-words">
+              <div className="text-sm text-foreground font-mono break-words">
                 {job.error}
               </div>
             </div>
@@ -458,12 +458,12 @@ export const JobsWorkspace: React.FC = () => {
 
         {/* Actions */}
         {isActionable && (
-          <div className="p-4 border-t border-border dark:border-gray-700 flex gap-2">
+          <div className="p-4 border-t border-border flex gap-2">
             {job.status === 'awaiting_approval' && (
               <button
                 onClick={() => handleApprove(job.job_id)}
                 disabled={actionLoading === job.job_id}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-status-active hover:bg-status-active/80 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 {actionLoading === job.job_id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -479,8 +479,8 @@ export const JobsWorkspace: React.FC = () => {
               className={`
                 flex items-center justify-center gap-2 px-4 py-2
                 ${job.status === 'awaiting_approval'
-                  ? 'border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
-                  : 'flex-1 bg-red-600 hover:bg-red-700 text-white'
+                  ? 'border border-destructive/50 text-destructive hover:bg-destructive/20'
+                  : 'flex-1 bg-destructive hover:bg-destructive/80 text-white'
                 }
                 rounded-lg transition-colors disabled:opacity-50
               `}
@@ -496,17 +496,17 @@ export const JobsWorkspace: React.FC = () => {
 
   // Main render
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex-none p-4 border-b border-border dark:border-gray-800">
+      <div className="flex-none p-4 border-b border-border">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <ListTodo className="w-5 h-5 text-primary dark:text-blue-400" />
-            <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">
+            <ListTodo className="w-5 h-5 text-primary" />
+            <h1 className="text-lg font-semibold text-foreground">
               Jobs
             </h1>
             {!loading && (
-              <span className="text-sm text-muted-foreground dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 ({jobs.length})
               </span>
             )}
@@ -515,7 +515,7 @@ export const JobsWorkspace: React.FC = () => {
           <button
             onClick={() => fetchJobs(true)}
             disabled={refreshing}
-            className="p-2 text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -531,8 +531,8 @@ export const JobsWorkspace: React.FC = () => {
               className={`
                 px-3 py-1.5 text-sm rounded-lg whitespace-nowrap transition-colors
                 ${statusFilter === filter.value
-                  ? 'bg-primary dark:bg-blue-600 text-primary-foreground dark:text-white'
-                  : 'text-muted-foreground dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-foreground dark:hover:text-gray-200'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }
               `}
             >
@@ -546,25 +546,25 @@ export const JobsWorkspace: React.FC = () => {
       <div className="flex-1 flex min-h-0">
         {/* Job list (or full screen if no selection) */}
         <div className={`
-          ${selectedJob ? 'hidden md:block md:w-1/2 lg:w-2/5 border-r border-border dark:border-gray-800' : 'w-full'}
+          ${selectedJob ? 'hidden md:block md:w-1/2 lg:w-2/5 border-r border-border' : 'w-full'}
           overflow-y-auto
         `}>
           {loading ? (
             <div className="flex items-center justify-center h-48">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground dark:text-gray-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
             <div className="p-4 text-center">
-              <div className="text-red-600 dark:text-red-400 mb-2">{error}</div>
+              <div className="text-destructive mb-2">{error}</div>
               <button
                 onClick={() => fetchJobs()}
-                className="text-sm text-primary dark:text-blue-400 hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 Try again
               </button>
             </div>
           ) : jobs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground dark:text-gray-400">
+            <div className="p-8 text-center text-muted-foreground">
               <ListTodo className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <div className="font-medium mb-1">No jobs found</div>
               <div className="text-sm">

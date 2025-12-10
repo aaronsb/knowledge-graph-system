@@ -50,7 +50,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
         />
         {/* Info box content - theme-aware */}
         <div
-          className="bg-card dark:bg-gray-800 rounded-lg border border-border dark:border-gray-600 px-4 py-3 cursor-pointer transition-shadow shadow-lg dark:shadow-[8px_8px_12px_rgba(0,0,0,0.8)]"
+          className="bg-card rounded-lg border border-border px-4 py-3 cursor-pointer transition-shadow shadow-lg dark:shadow-[8px_8px_12px_rgba(0,0,0,0.8)]"
           onClick={(e) => {
             e.stopPropagation();
             onDismiss();
@@ -60,30 +60,30 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
           }}
         >
           <div className="space-y-2 text-sm">
-            <div className="font-semibold text-card-foreground border-b border-border dark:border-gray-700 pb-2">
+            <div className="font-semibold text-card-foreground border-b border-border pb-2">
               Edge Information
             </div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-muted-foreground dark:text-gray-400">Type:</span>
+                <span className="text-muted-foreground">Type:</span>
                 <span className="font-medium text-card-foreground">{info.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground dark:text-gray-400">Confidence:</span>
+                <span className="text-muted-foreground">Confidence:</span>
                 <span className="font-medium text-card-foreground">
                   {(info.confidence * 100).toFixed(1)}%
                 </span>
               </div>
               {info.category && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-gray-400">Category:</span>
+                  <span className="text-muted-foreground">Category:</span>
                   <span className="font-medium text-card-foreground">{info.category}</span>
                 </div>
               )}
               {/* ADR-065: Epistemic status metadata */}
               {info.avg_grounding !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-gray-400">Grounding:</span>
+                  <span className="text-muted-foreground">Grounding:</span>
                   <span className="font-medium text-card-foreground">
                     {info.avg_grounding.toFixed(2)}
                   </span>
@@ -91,31 +91,31 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
               )}
               {info.epistemic_status && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-gray-400">Status:</span>
+                  <span className="text-muted-foreground">Status:</span>
                   <span className="font-medium text-card-foreground text-xs">{info.epistemic_status}</span>
                 </div>
               )}
               {/* ADR-051: Provenance metadata section */}
               {(info.created_by || info.source || info.job_id || info.document_id || info.created_at) && (
                 <>
-                  <div className="pt-2 border-t border-border dark:border-gray-700">
-                    <div className="text-xs font-semibold text-foreground dark:text-gray-300 mb-1">Provenance</div>
+                  <div className="pt-2 border-t border-border">
+                    <div className="text-xs font-semibold text-foreground mb-1">Provenance</div>
                   </div>
                   {info.source && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Source:</span>
+                      <span className="text-muted-foreground text-xs">Source:</span>
                       <span className="font-medium text-card-foreground text-xs">{info.source}</span>
                     </div>
                   )}
                   {info.created_by && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Created By:</span>
+                      <span className="text-muted-foreground text-xs">Created By:</span>
                       <span className="font-medium text-card-foreground text-xs">{info.created_by}</span>
                     </div>
                   )}
                   {info.created_at && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Created:</span>
+                      <span className="text-muted-foreground text-xs">Created:</span>
                       <span className="font-medium text-card-foreground text-xs">
                         {new Date(info.created_at).toLocaleString()}
                       </span>
@@ -123,7 +123,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   )}
                   {info.job_id && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Job ID:</span>
+                      <span className="text-muted-foreground text-xs">Job ID:</span>
                       <span className="font-mono text-card-foreground text-xs">
                         {info.job_id.substring(0, 8)}...
                       </span>
@@ -131,7 +131,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   )}
                   {info.document_id && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground dark:text-gray-400 text-xs">Document:</span>
+                      <span className="text-muted-foreground text-xs">Document:</span>
                       <span className="font-mono text-card-foreground text-xs">
                         {info.document_id.substring(0, 8)}...
                       </span>
@@ -139,7 +139,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   )}
                 </>
               )}
-              <div className="text-xs text-muted-foreground dark:text-gray-400 pt-2 border-t border-border dark:border-gray-700">
+              <div className="text-xs text-muted-foreground pt-2 border-t border-border">
                 Click to dismiss
               </div>
             </div>

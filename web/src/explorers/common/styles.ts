@@ -7,63 +7,65 @@
  */
 
 export const explorerTheme = {
-  // Info box styling (theme-aware)
+  // Info box styling (theme-aware via CSS variables)
   infoBox: {
-    background: 'bg-card dark:bg-gray-800',
-    border: 'border-border dark:border-gray-600',
-    shadow: 'shadow-lg dark:shadow-[8px_8px_12px_rgba(0,0,0,0.8)]',
-    textPrimary: 'text-card-foreground dark:text-gray-100',
-    textSecondary: 'text-muted-foreground dark:text-gray-400',
-    textMuted: 'text-muted-foreground dark:text-gray-500',
-    hoverBg: 'hover:bg-muted dark:hover:bg-gray-700',
+    background: 'bg-card',
+    border: 'border-border',
+    shadow: 'shadow-lg',
+    textPrimary: 'text-card-foreground',
+    textSecondary: 'text-muted-foreground',
+    textMuted: 'text-muted-foreground',
+    hoverBg: 'hover:bg-muted',
     minWidth: '280px',
     maxWidth: '400px',
     zIndex: 9999,
   },
 
-  // Panel styling (stats, legend, settings) - theme-aware
+  // Panel styling (stats, legend, settings) - theme-aware via CSS variables
   panel: {
-    background: 'bg-card/95 dark:bg-gray-800/95',
-    border: 'border-border dark:border-gray-600',
-    borderLine: 'border-b border-border dark:border-gray-700',
+    background: 'bg-card/95',
+    border: 'border-border',
+    borderLine: 'border-b border-border',
     shadow: 'shadow-xl',
-    textPrimary: 'text-card-foreground dark:text-gray-200',
-    textSecondary: 'text-muted-foreground dark:text-gray-400',
-    textMuted: 'text-muted-foreground dark:text-gray-500',
+    textPrimary: 'text-card-foreground',
+    textSecondary: 'text-muted-foreground',
+    textMuted: 'text-muted-foreground',
     zIndex: 10,
   },
 
-  // Context menu styling - theme-aware
+  // Context menu styling - theme-aware via CSS variables
   contextMenu: {
-    background: 'bg-card dark:bg-gray-800',
-    border: 'border-border dark:border-gray-600',
+    background: 'bg-card',
+    border: 'border-border',
     shadow: 'shadow-xl',
-    hoverBg: 'hover:bg-muted dark:hover:bg-gray-700',
-    textPrimary: 'text-card-foreground dark:text-gray-100',
+    hoverBg: 'hover:bg-muted',
+    textPrimary: 'text-card-foreground',
     zIndex: 10000,
   },
 
-  // Canvas background - theme-aware gradients
+  // Canvas background - theme-aware (uses CSS variable)
   canvas: {
-    light: 'bg-gradient-to-br from-gray-300 to-gray-400',
-    dark: 'bg-gradient-to-br from-gray-900 to-black',
+    light: 'bg-background',
+    dark: 'bg-background',
   },
 
   // 3D Canvas background colors (Three.js backgroundColor prop)
+  // Warm charcoal for dark mode to match postmodern theme (hue 18°)
   canvas3D: {
-    light: '#bcc1c9',
-    dark: '#1a1a2e',
+    light: '#ede8e4',  // Warm cream
+    dark: '#1f1b19',   // Warm charcoal (hsl 18 8% 11%)
   },
 
   // 3D Grid colors (Three.js GridHelper colors)
+  // Warm tones to match the postmodern theme
   grid3D: {
     light: {
-      centerLine: 0xa0a8b0,  // Slightly darker than light background
-      gridLines: 0xb0b5bd,   // Very close to light background
+      centerLine: 0xc4b8ac,  // Warm taupe
+      gridLines: 0xd4c8bc,   // Lighter warm taupe
     },
     dark: {
-      centerLine: 0x2a2a3e,  // Slightly lighter than dark background
-      gridLines: 0x20202e,   // Very close to dark background
+      centerLine: 0x3d3532,  // Warm dark brown
+      gridLines: 0x2d2825,   // Darker warm brown
     },
   },
 

@@ -5,7 +5,7 @@
  * Projects concepts onto bidirectional semantic dimensions.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   GitBranch,
@@ -13,13 +13,14 @@ import {
   Play,
   Settings,
   ArrowRight,
-  Loader2,
   ChevronDown,
   ChevronUp,
   HelpCircle,
   FileSpreadsheet,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore } from '../../store/reportStore';
 import type { PolarityReportData } from '../../store/reportStore';
@@ -114,8 +115,13 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const [positivePoleResults, setPositivePoleResults] = useState<Concept[]>([]);
   const [negativePoleResults, setNegativePoleResults] = useState<Concept[]>([]);
 
+  // Debounced search queries for autocomplete
+  const debouncedPositiveQuery = useDebouncedValue(positivePoleQuery, 500);
+  const debouncedNegativeQuery = useDebouncedValue(negativePoleQuery, 500);
+
   // Loading/error state (not persisted)
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingPositive, setIsSearchingPositive] = useState(false);
+  const [isSearchingNegative, setIsSearchingNegative] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,10 +138,19 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     ? analysisHistory.find((a) => a.id === selectedAnalysisId)
     : null;
 
-  const searchConcepts = async (query: string, setPole: 'positive' | 'negative') => {
-    if (query.trim().length < 2) return;
+  const searchConcepts = useCallback(async (query: string, pole: 'positive' | 'negative') => {
+    if (query.trim().length < 2) {
+      // Clear results if query is too short
+      if (pole === 'positive') {
+        setPositivePoleResults([]);
+      } else {
+        setNegativePoleResults([]);
+      }
+      return;
+    }
 
-    setIsSearching(true);
+    const setLoading = pole === 'positive' ? setIsSearchingPositive : setIsSearchingNegative;
+    setLoading(true);
     setError(null);
 
     try {
@@ -151,7 +166,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         description: r.description,
       }));
 
-      if (setPole === 'positive') {
+      if (pole === 'positive') {
         setPositivePoleResults(concepts);
       } else {
         setNegativePoleResults(concepts);
@@ -159,9 +174,23 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Search failed');
     } finally {
-      setIsSearching(false);
+      setLoading(false);
     }
-  };
+  }, []);
+
+  // Auto-search when debounced positive query changes
+  useEffect(() => {
+    if (debouncedPositiveQuery && !selectedPositivePole) {
+      searchConcepts(debouncedPositiveQuery, 'positive');
+    }
+  }, [debouncedPositiveQuery, selectedPositivePole, searchConcepts]);
+
+  // Auto-search when debounced negative query changes
+  useEffect(() => {
+    if (debouncedNegativeQuery && !selectedNegativePole) {
+      searchConcepts(debouncedNegativeQuery, 'negative');
+    }
+  }, [debouncedNegativeQuery, selectedNegativePole, searchConcepts]);
 
   const runAnalysis = async () => {
     if (!selectedPositivePole || !selectedNegativePole) {
@@ -279,28 +308,20 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
         {/* Positive Pole */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-blue-500">
             Positive Pole (e.g., "Modern", "Centralized")
           </label>
-          <div className="flex gap-2 mb-2">
+          <div className="relative mb-2">
             <input
               type="text"
               value={positivePoleQuery}
               onChange={(e) => setPositivePoleQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') searchConcepts(positivePoleQuery, 'positive');
-              }}
-              placeholder="Search for positive pole concept..."
-              className="flex-1 px-3 py-2 border rounded-lg bg-background text-sm"
+              placeholder="Type to search..."
+              className="w-full px-3 py-2 pr-10 border border-blue-500/30 rounded-lg bg-background text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
-            <button
-              onClick={() => searchConcepts(positivePoleQuery, 'positive')}
-              disabled={isSearching || positivePoleQuery.trim().length < 2}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" />
-              Search
-            </button>
+            {isSearchingPositive && (
+              <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
+            )}
           </div>
 
           {selectedPositivePole ? (
@@ -353,28 +374,20 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
         {/* Negative Pole */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-orange-500">
             Negative Pole (e.g., "Traditional", "Distributed")
           </label>
-          <div className="flex gap-2 mb-2">
+          <div className="relative mb-2">
             <input
               type="text"
               value={negativePoleQuery}
               onChange={(e) => setNegativePoleQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') searchConcepts(negativePoleQuery, 'negative');
-              }}
-              placeholder="Search for negative pole concept..."
-              className="flex-1 px-3 py-2 border rounded-lg bg-background text-sm"
+              placeholder="Type to search..."
+              className="w-full px-3 py-2 pr-10 border border-orange-500/30 rounded-lg bg-background text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
             />
-            <button
-              onClick={() => searchConcepts(negativePoleQuery, 'negative')}
-              disabled={isSearching || negativePoleQuery.trim().length < 2}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" />
-              Search
-            </button>
+            {isSearchingNegative && (
+              <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500" />
+            )}
           </div>
 
           {selectedNegativePole ? (
@@ -426,7 +439,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
         >
           {isAnalyzing ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <LoadingSpinner className="text-primary-foreground" />
               Analyzing...
             </>
           ) : (

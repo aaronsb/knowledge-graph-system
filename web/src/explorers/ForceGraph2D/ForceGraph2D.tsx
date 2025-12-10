@@ -130,8 +130,8 @@ export const ForceGraph2D: React.FC<
   const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
-  // Get current theme for label colors
-  const { theme } = useThemeStore();
+  // Get current theme for label colors (use appliedTheme which resolves 'system' to actual theme)
+  const { appliedTheme: theme } = useThemeStore();
 
   // Get edge category filters from store
   const { filters } = useGraphStore();

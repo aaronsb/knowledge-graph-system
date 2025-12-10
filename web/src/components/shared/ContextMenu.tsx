@@ -74,7 +74,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     <>
       <div
         ref={menuRef}
-        className={`fixed bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 ${getZIndexClass('contextMenu')} min-w-[180px]`}
+        className={`fixed bg-card border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 ${getZIndexClass('contextMenu')} min-w-[180px]`}
         style={{ left: x, top: y }}
       >
         {items.map((item, index) => {
@@ -138,7 +138,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       {openSubmenu !== null && items[openSubmenu]?.submenu && submenuPosition && (
         <div
           ref={submenuRef}
-          className={`fixed bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 ${getZIndexClass('contextMenu')} min-w-[180px]`}
+          className={`fixed bg-card border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 ${getZIndexClass('contextMenu')} min-w-[180px]`}
           style={{ left: submenuPosition.left, top: submenuPosition.top }}
           onMouseEnter={() => {
             // Cancel any pending close timeout when entering submenu

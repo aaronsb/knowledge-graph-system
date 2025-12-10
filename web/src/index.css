@@ -3,45 +3,115 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Postmodern Theme - Dynamic Harmony System
+   * HSL-based with computed color relationships
+   * Reference: ADR-075
+   *
+   * CSS variables are dynamically computed from:
+   * - --bg-h, --bg-s, --bg-l (background tone)
+   * - --fg-h, --fg-s, --fg-l (foreground tone)
+   * - --primary-h, --primary-s, --primary-l (accent color)
+   * - --border-h, --border-s, --border-l (border tone)
+   * - --surface-s, --surface-step (surface hierarchy)
+   */
+
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    /* Primary accent - warm amber (default) */
+    --primary-h: 18;
+    --primary-s: 100%;
+    --primary-l: 60%;
+
+    /* Background tone (computed by JS, defaults for light) */
+    --bg-h: 18;
+    --bg-s: 8%;
+    --bg-l: 94%;
+
+    /* Foreground tone (computed by JS) */
+    --fg-h: 18;
+    --fg-s: 15%;
+    --fg-l: 15%;
+
+    /* Border tone (computed by JS) */
+    --border-h: 18;
+    --border-s: 10%;
+    --border-l: 79%;
+
+    /* Surface saturation and step (computed by JS) */
+    --surface-s: 8%;
+    --surface-step: -3%;
+
+    /* Squared-off borders (postmodern brutalist aesthetic) */
+    --radius: 2px;
+
+    /* Typography (computed by JS) */
+    --font-display: "Space Grotesk", sans-serif;
+    --font-body: "IBM Plex Sans Condensed", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    /* Status colors (constant across modes) */
+    --status-active: 145 65% 45%;
+    --status-warning: 40 85% 55%;
+    --status-info: 210 70% 55%;
   }
 
+  /* ===== LIGHT MODE ===== */
+  /* Derived from computed harmony variables */
+  :root {
+    --background: var(--bg-h) var(--bg-s) var(--bg-l);
+    --foreground: var(--fg-h) var(--fg-s) var(--fg-l);
+    --card: var(--bg-h) var(--surface-s) calc(var(--bg-l) + var(--surface-step));
+    --card-foreground: var(--fg-h) var(--fg-s) var(--fg-l);
+    --popover: var(--bg-h) var(--bg-s) var(--bg-l);
+    --popover-foreground: var(--fg-h) var(--fg-s) var(--fg-l);
+    --primary: var(--primary-h) var(--primary-s) var(--primary-l);
+    --primary-foreground: var(--bg-h) var(--fg-s) 10%;
+    --secondary: var(--bg-h) calc(var(--bg-s) * 0.75) calc(var(--bg-l) + var(--surface-step) * 2);
+    --secondary-foreground: var(--fg-h) var(--fg-s) calc(var(--fg-l) + 5%);
+    --muted: var(--bg-h) calc(var(--bg-s) * 0.75) calc(var(--bg-l) + var(--surface-step) * 2);
+    --muted-foreground: var(--fg-h) calc(var(--fg-s) * 0.7) calc((var(--fg-l) + 50%) / 2);
+    --accent: var(--bg-h) var(--bg-s) calc(var(--bg-l) + var(--surface-step) * 3);
+    --accent-foreground: var(--fg-h) var(--fg-s) var(--fg-l);
+    --border: var(--border-h) var(--border-s) var(--border-l);
+    --input: var(--border-h) var(--border-s) var(--border-l);
+    --ring: var(--primary-h) var(--primary-s) var(--primary-l);
+
+    /* Surface hierarchy (computed from bg with surface-step) */
+    --surface-1: var(--bg-h) var(--surface-s) calc(var(--bg-l) + var(--surface-step));
+    --surface-2: var(--bg-h) var(--surface-s) calc(var(--bg-l) + var(--surface-step) * 2);
+    --surface-3: var(--bg-h) var(--surface-s) calc(var(--bg-l) + var(--surface-step) * 3);
+  }
+
+  /* ===== DARK MODE ===== */
+  /* Override computed defaults for dark mode initial state */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --bg-h: 18;
+    --bg-s: 8%;
+    --bg-l: 10%;
+    --fg-h: 18;
+    --fg-s: 15%;
+    --fg-l: 85%;
+    --border-h: 18;
+    --border-s: 10%;
+    --border-l: 22%;
+    --surface-s: 8%;
+    --surface-step: 3%;
+  }
+
+  /* ===== TWILIGHT MODE ===== */
+  /* Override computed defaults for twilight mode initial state */
+  .twilight {
+    --bg-h: 18;
+    --bg-s: 15%;
+    --bg-l: 16%;
+    --fg-h: 18;
+    --fg-s: 15%;
+    --fg-l: 96%;
+    --border-h: 18;
+    --border-s: 17%;
+    --border-l: 31%;
+    --surface-s: 18%;
+    --surface-step: 5%;
   }
 }
 
@@ -51,6 +121,125 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Headings use display font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+
+  /* Code and technical content use mono */
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Form element accent colors - use primary (warm amber) */
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: hsl(var(--primary));
+  }
+
+  /* Range slider track styling */
+  input[type="range"] {
+    @apply bg-muted rounded-full h-2 appearance-none cursor-pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 rounded-full bg-primary cursor-pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    @apply w-4 h-4 rounded-full bg-primary border-0 cursor-pointer;
+  }
+}
+
+/* Pulsing dots loader animation */
+@keyframes pulse-dot {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.loading-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* ===== ORDERED DITHERING PATTERNS ===== */
+/* Based on 4x4 Bayer matrix pattern for retro/postmodern aesthetic */
+
+/* DPI scaling for dither patterns */
+:root {
+  --dither-size: 4px;
+}
+
+/* ~25% density dither - sparse dots */
+body.dither-25::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.03;
+}
+
+/* ~50% density dither - classic checkerboard */
+body.dither-50::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23ffffff'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.04;
+}
+
+/* ~75% density dither - dense dots */
+body.dither-75::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='4' height='4' fill='%23ffffff'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23000000'/%3E%3C/svg%3E");
+  background-size: var(--dither-size) var(--dither-size);
+  opacity: 0.05;
 }
