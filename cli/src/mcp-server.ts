@@ -25,6 +25,7 @@ import {
   formatConnectionPaths,
   formatRelatedConcepts,
   formatJobStatus,
+  formatJobList,
   formatInspectFileResult,
   formatIngestFileResult,
   formatIngestDirectoryResult,
@@ -1034,8 +1035,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               undefined,
               toolArgs.limit as number || 50
             );
+            const formattedText = formatJobList(result);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formattedText }],
             };
           }
 
