@@ -5,7 +5,7 @@
  * Uses IconRailPanel for saved reports list navigation.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import {
@@ -283,7 +283,6 @@ export const ReportWorkspace: React.FC = () => {
     selectReport,
     deleteReport,
     renameReport,
-    getSelectedReport,
     updateReportData,
   } = useReportStore();
 
@@ -299,7 +298,51 @@ export const ReportWorkspace: React.FC = () => {
   const [relationshipSort, setRelationshipSort] = useState<SortState>({ field: null, direction: null });
   const [polaritySort, setPolaritySort] = useState<SortState>({ field: null, direction: null });
 
-  const selectedReport = getSelectedReport();
+  // Derive selected report from reactive state (not getSelectedReport which isn't reactive)
+  const selectedReport = useMemo(
+    () => reports.find((r) => r.id === selectedReportId) || null,
+    [reports, selectedReportId]
+  );
+
+  // Reset sort states when switching reports
+  useEffect(() => {
+    setConceptSort({ field: null, direction: null });
+    setRelationshipSort({ field: null, direction: null });
+    setPolaritySort({ field: null, direction: null });
+  }, [selectedReportId]);
+
+  // Memoized sorted data - must be at top level to follow Rules of Hooks
+  const sortedNodes = useMemo(() => {
+    if (!selectedReport || selectedReport.type !== 'graph') return [];
+    const data = selectedReport.data as GraphReportData;
+    return sortData(data.nodes, conceptSort.field || '', conceptSort.direction);
+  }, [selectedReport, conceptSort.field, conceptSort.direction]);
+
+  const linksWithLabels = useMemo(() => {
+    if (!selectedReport || selectedReport.type !== 'graph') return [];
+    const data = selectedReport.data as GraphReportData;
+    return data.links.map((link) => {
+      const sourceNode = data.nodes.find((n) => n.id === link.source);
+      const targetNode = data.nodes.find((n) => n.id === link.target);
+      return {
+        ...link,
+        sourceLabel: sourceNode?.label || link.source,
+        targetLabel: targetNode?.label || link.target,
+        category: (link as any).category,
+      };
+    });
+  }, [selectedReport]);
+
+  const sortedLinks = useMemo(
+    () => sortData(linksWithLabels, relationshipSort.field || '', relationshipSort.direction),
+    [linksWithLabels, relationshipSort.field, relationshipSort.direction]
+  );
+
+  const sortedPolarityConcepts = useMemo(() => {
+    if (!selectedReport || selectedReport.type !== 'polarity') return [];
+    const data = selectedReport.data as PolarityReportData;
+    return sortData(data.concepts, polaritySort.field || '', polaritySort.direction);
+  }, [selectedReport, polaritySort.field, polaritySort.direction]);
 
   // Sort handler - toggles through: null -> asc -> desc -> null
   const handleSort = (setter: React.Dispatch<React.SetStateAction<SortState>>) => (field: string) => {
@@ -526,31 +569,6 @@ export const ReportWorkspace: React.FC = () => {
   const renderGraphTable = (data: GraphReportData, report: Report) => {
     const prevValues = report.previousValues || {};
 
-    // Sort nodes and links
-    const sortedNodes = useMemo(
-      () => sortData(data.nodes, conceptSort.field || '', conceptSort.direction),
-      [data.nodes, conceptSort.field, conceptSort.direction]
-    );
-
-    // For relationships, we need to add source/target labels for sorting
-    const linksWithLabels = useMemo(() => {
-      return data.links.map((link) => {
-        const sourceNode = data.nodes.find((n) => n.id === link.source);
-        const targetNode = data.nodes.find((n) => n.id === link.target);
-        return {
-          ...link,
-          sourceLabel: sourceNode?.label || link.source,
-          targetLabel: targetNode?.label || link.target,
-          category: (link as any).category,
-        };
-      });
-    }, [data.links, data.nodes]);
-
-    const sortedLinks = useMemo(
-      () => sortData(linksWithLabels, relationshipSort.field || '', relationshipSort.direction),
-      [linksWithLabels, relationshipSort.field, relationshipSort.direction]
-    );
-
     return (
       <div className="space-y-6">
         {/* Query Info */}
@@ -681,12 +699,6 @@ export const ReportWorkspace: React.FC = () => {
 
   // Render table for polarity report
   const renderPolarityTable = (data: PolarityReportData) => {
-    // Sort polarity concepts
-    const sortedPolarityConcepts = useMemo(
-      () => sortData(data.concepts, polaritySort.field || '', polaritySort.direction),
-      [data.concepts, polaritySort.field, polaritySort.direction]
-    );
-
     return (
       <div className="space-y-6">
         {/* Axis Info */}
