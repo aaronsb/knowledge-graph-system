@@ -61,7 +61,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   if (!isOpen) return null;
 
   const Icon = variant === 'warning' ? AlertTriangle : variant === 'info' ? Info : HelpCircle;
-  const iconColor = variant === 'warning' ? 'text-yellow-500' : variant === 'info' ? 'text-blue-500' : 'text-muted-foreground';
+  const iconColor = variant === 'warning' ? 'text-status-warning' : variant === 'info' ? 'text-status-info' : 'text-muted-foreground';
 
   const getButtonClasses = (btnVariant?: string) => {
     const base = 'px-4 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';

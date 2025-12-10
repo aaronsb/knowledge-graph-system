@@ -35,9 +35,9 @@ const statusConfig: Record<JobStatusValue, {
   completed: {
     icon: CheckCircle2,
     label: 'Completed',
-    bgClass: 'bg-green-100 dark:bg-green-900/30',
-    textClass: 'text-green-800 dark:text-green-300',
-    iconClass: 'text-green-600 dark:text-green-400',
+    bgClass: 'bg-status-active/20',
+    textClass: 'text-status-active',
+    iconClass: 'text-status-active',
   },
   failed: {
     icon: XCircle,
@@ -49,9 +49,9 @@ const statusConfig: Record<JobStatusValue, {
   processing: {
     icon: Loader2,
     label: 'Processing',
-    bgClass: 'bg-blue-100 dark:bg-blue-900/30',
-    textClass: 'text-blue-800 dark:text-blue-300',
-    iconClass: 'text-blue-600 dark:text-blue-400 animate-spin',
+    bgClass: 'bg-status-info/20',
+    textClass: 'text-status-info',
+    iconClass: 'text-status-info animate-spin',
   },
   approved: {
     icon: CheckCircle2,

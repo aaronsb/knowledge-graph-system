@@ -130,11 +130,11 @@ export const UserProfile: React.FC = () => {
           <div className="px-4 py-2 text-xs text-muted-foreground">
             <div className="flex justify-between">
               <span>Authentication:</span>
-              <span className="text-green-500">OAuth 2.0</span>
+              <span className="text-status-active">OAuth 2.0</span>
             </div>
             <div className="flex justify-between mt-1">
               <span>Status:</span>
-              <span className="text-green-500">Connected</span>
+              <span className="text-status-active">Connected</span>
             </div>
           </div>
 

@@ -163,7 +163,7 @@ const TabButton: React.FC<{
     className={`
       flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
       ${active
-        ? 'bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white'
+        ? 'bg-primary text-primary-foreground'
         : 'text-muted-foreground hover:text-foreground hover:bg-muted dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800'
       }
     `}
@@ -188,7 +188,7 @@ const Section: React.FC<{
   children: React.ReactNode;
   action?: React.ReactNode;
 }> = ({ title, icon, children, action }) => (
-  <section className="bg-card dark:bg-gray-900 rounded-lg border border-border dark:border-gray-800 overflow-hidden">
+  <section className="bg-card rounded-lg border border-border dark:border-gray-800 overflow-hidden">
     <div className="px-4 py-3 border-b border-border dark:border-gray-800 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground dark:text-gray-400">{icon}</span>
@@ -223,14 +223,14 @@ const OAuthClientCard: React.FC<{
   const ownerUsername = client.metadata?.username;
 
   return (
-    <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg border border-border dark:border-gray-700">
+    <div className="p-4 bg-muted/50/50 rounded-lg border border-border dark:border-gray-700">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-foreground dark:text-gray-200">
               {client.client_name}
             </h3>
-            <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary dark:bg-blue-900/50 dark:text-blue-300">
+            <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
               {client.client_type}
             </span>
             {client.is_active === false && (
@@ -291,7 +291,7 @@ const OAuthClientCard: React.FC<{
                 <button
                   onClick={() => onRotate(client.client_id)}
                   disabled={isRotating}
-                  className="p-1.5 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50"
+                  className="p-1.5 text-muted-foreground hover:text-status-info hover:bg-status-info/10 rounded transition-colors disabled:opacity-50"
                   title="Rotate secret"
                 >
                   {isRotating ? (
@@ -351,64 +351,64 @@ const NewClientCredentialsDisplay: React.FC<{
   -s local`;
 
   return (
-    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg overflow-hidden">
+    <div className="p-4 bg-status-active/10 border border-status-active/30 rounded-lg overflow-hidden">
       <div className="flex items-start gap-3 min-w-0">
-        <Check className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+        <Check className="w-5 h-5 text-status-active mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0 overflow-hidden">
-          <h3 className="font-medium text-green-800 dark:text-green-300">
+          <h3 className="font-medium text-status-active">
             Client Created: {credentials.client_name}
           </h3>
-          <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+          <p className="text-sm text-status-active mt-1">
             Save these credentials now - the secret will not be shown again.
           </p>
 
           <div className="mt-4 space-y-3">
             <div>
-              <label className="text-xs font-medium text-green-700 dark:text-green-400">Client ID</label>
+              <label className="text-xs font-medium text-status-active">Client ID</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 rounded border border-green-200 dark:border-green-700 text-sm font-mono overflow-x-auto">
+                <code className="flex-1 px-3 py-2 bg-white rounded border border-status-active/30 text-sm font-mono overflow-x-auto">
                   {credentials.client_id}
                 </code>
                 <button
                   onClick={() => copyToClipboard(credentials.client_id, 'id')}
-                  className="p-2 hover:bg-green-100 dark:hover:bg-green-800/50 rounded transition-colors"
+                  className="p-2 hover:bg-status-active/20 rounded transition-colors"
                   title="Copy Client ID"
                 >
                   {copied === 'id' ? (
-                    <Check className="w-4 h-4 text-green-600" />
+                    <Check className="w-4 h-4 text-status-active" />
                   ) : (
-                    <Copy className="w-4 h-4 text-green-600" />
+                    <Copy className="w-4 h-4 text-status-active" />
                   )}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-green-700 dark:text-green-400">Client Secret</label>
+              <label className="text-xs font-medium text-status-active">Client Secret</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 rounded border border-green-200 dark:border-green-700 text-sm font-mono overflow-x-auto">
+                <code className="flex-1 px-3 py-2 bg-white rounded border border-status-active/30 text-sm font-mono overflow-x-auto">
                   {showSecret ? credentials.client_secret : '••••••••••••••••••••••••'}
                 </code>
                 <button
                   onClick={() => setShowSecret(!showSecret)}
-                  className="p-2 hover:bg-green-100 dark:hover:bg-green-800/50 rounded transition-colors"
+                  className="p-2 hover:bg-status-active/20 rounded transition-colors"
                   title={showSecret ? "Hide Secret" : "Show Secret"}
                 >
                   {showSecret ? (
-                    <EyeOff className="w-4 h-4 text-green-600" />
+                    <EyeOff className="w-4 h-4 text-status-active" />
                   ) : (
-                    <Eye className="w-4 h-4 text-green-600" />
+                    <Eye className="w-4 h-4 text-status-active" />
                   )}
                 </button>
                 <button
                   onClick={() => copyToClipboard(credentials.client_secret, 'secret')}
-                  className="p-2 hover:bg-green-100 dark:hover:bg-green-800/50 rounded transition-colors"
+                  className="p-2 hover:bg-status-active/20 rounded transition-colors"
                   title="Copy Client Secret"
                 >
                   {copied === 'secret' ? (
-                    <Check className="w-4 h-4 text-green-600" />
+                    <Check className="w-4 h-4 text-status-active" />
                   ) : (
-                    <Copy className="w-4 h-4 text-green-600" />
+                    <Copy className="w-4 h-4 text-status-active" />
                   )}
                 </button>
               </div>
@@ -418,7 +418,7 @@ const NewClientCredentialsDisplay: React.FC<{
           {/* MCP Config Toggle */}
           <button
             onClick={() => setShowMcpConfig(!showMcpConfig)}
-            className="mt-4 flex items-center gap-2 text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+            className="mt-4 flex items-center gap-2 text-sm text-status-active hover:text-status-active"
           >
             <Server className="w-4 h-4" />
             {showMcpConfig ? 'Hide' : 'Show'} MCP Server Config
@@ -427,16 +427,16 @@ const NewClientCredentialsDisplay: React.FC<{
 
           {/* MCP Config Panel */}
           {showMcpConfig && (
-            <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-700 space-y-4 w-full max-w-full overflow-hidden">
+            <div className="mt-3 p-3 bg-white rounded-lg border border-status-active/30 space-y-4 w-full max-w-full overflow-hidden">
               {/* Claude Desktop JSON Config */}
               <div className="w-full max-w-full">
                 <div className="flex items-center justify-between mb-2 gap-2">
-                  <label className="text-xs font-medium text-green-700 dark:text-green-400 truncate">
+                  <label className="text-xs font-medium text-status-active truncate">
                     Claude Desktop Config
                   </label>
                   <button
                     onClick={() => copyToClipboard(mcpJsonConfig, 'json')}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-green-100 dark:bg-green-800/50 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-700/50 transition-colors"
+                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
                   >
                     {copied === 'json' ? (
                       <>
@@ -451,7 +451,7 @@ const NewClientCredentialsDisplay: React.FC<{
                     )}
                   </button>
                 </div>
-                <div className="overflow-x-auto rounded bg-gray-50 dark:bg-gray-900 max-w-full">
+                <div className="overflow-x-auto rounded bg-gray-50 max-w-full">
                   <pre className="p-3 text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre w-max">
                     {mcpJsonConfig}
                   </pre>
@@ -461,12 +461,12 @@ const NewClientCredentialsDisplay: React.FC<{
               {/* Claude CLI Command */}
               <div className="w-full max-w-full">
                 <div className="flex items-center justify-between mb-2 gap-2">
-                  <label className="text-xs font-medium text-green-700 dark:text-green-400 truncate">
+                  <label className="text-xs font-medium text-status-active truncate">
                     Claude CLI Command
                   </label>
                   <button
                     onClick={() => copyToClipboard(claudeCliCommand, 'cli')}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-green-100 dark:bg-green-800/50 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-700/50 transition-colors"
+                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
                   >
                     {copied === 'cli' ? (
                       <>
@@ -481,14 +481,14 @@ const NewClientCredentialsDisplay: React.FC<{
                     )}
                   </button>
                 </div>
-                <div className="overflow-x-auto rounded bg-gray-50 dark:bg-gray-900 max-w-full">
+                <div className="overflow-x-auto rounded bg-gray-50 max-w-full">
                   <pre className="p-3 text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre w-max">
                     {claudeCliCommand}
                   </pre>
                 </div>
               </div>
 
-              <p className="text-xs text-green-600 dark:text-green-500">
+              <p className="text-xs text-status-active">
                 Add to your Claude Desktop config file or use the CLI command to set up MCP server access.
               </p>
             </div>
@@ -497,7 +497,7 @@ const NewClientCredentialsDisplay: React.FC<{
           <div className="mt-4 flex gap-2">
             <button
               onClick={onDismiss}
-              className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              className="px-3 py-1.5 text-sm bg-status-active text-white rounded hover:bg-status-active transition-colors"
             >
               Done
             </button>
@@ -532,14 +532,14 @@ const UserRow: React.FC<{
   const showActions = (canEdit || canDelete) && !isCurrentUser;
 
   return (
-    <tr className={`border-b border-border dark:border-gray-800 last:border-0 ${isCurrentUser ? 'bg-primary/5 dark:bg-blue-900/10' : ''}`}>
+    <tr className={`border-b border-border dark:border-gray-800 last:border-0 ${isCurrentUser ? 'bg-primary/5' : ''}`}>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground dark:text-gray-200">
             {user.username}
           </span>
           {isCurrentUser && (
-            <span className="px-1.5 py-0.5 text-xs rounded bg-primary/20 text-primary dark:bg-blue-900/50 dark:text-blue-300">
+            <span className="px-1.5 py-0.5 text-xs rounded bg-primary/20 text-primary">
               you
             </span>
           )}
@@ -554,12 +554,14 @@ const UserRow: React.FC<{
         <span className={`
           px-2 py-0.5 text-xs rounded-full
           ${user.role === 'platform_admin'
-            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 font-medium'
+            ? 'bg-status-warning/20 text-status-warning font-medium'
             : user.role === 'admin'
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+            ? 'bg-status-info/20 text-status-info'
             : user.role === 'curator'
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
-            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            ? 'bg-status-active/20 text-status-active'
+            : user.role === 'contributor'
+            ? 'bg-primary/20 text-primary'
+            : 'bg-purple-500/20 text-purple-400'
           }
         `}>
           {user.role}
@@ -616,11 +618,11 @@ const StatusBadge: React.FC<{
   <div className={`
     flex items-center gap-2 px-3 py-2 rounded-lg
     ${connected
-      ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+      ? 'bg-status-active/10 text-status-active'
       : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
     }
   `}>
-    <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+    <span className={`w-2 h-2 rounded-full ${connected ? 'bg-status-active' : 'bg-red-500'}`} />
     {label}
   </div>
 );
@@ -1035,7 +1037,7 @@ export const AdminDashboard: React.FC = () => {
   // Not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="h-full flex items-center justify-center bg-background dark:bg-gray-950">
+      <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">
@@ -1050,12 +1052,12 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
       <div className="flex-none p-4 border-b border-border dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary dark:text-blue-400" />
+            <Shield className="w-5 h-5 text-primary" />
             <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">
               Administration
             </h1>
@@ -1067,7 +1069,7 @@ export const AdminDashboard: React.FC = () => {
             )}
             {/* Role indicator for non-platform admins */}
             {!isPlatformAdmin() && permissions?.role && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:text-gray-400">
                 {permissions.role}
               </span>
             )}
@@ -1134,9 +1136,9 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Success message */}
           {successMessage && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <p className="text-green-800 dark:text-green-300">{successMessage}</p>
+            <div className="p-4 bg-status-active/10 border border-status-active/30 rounded-lg flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-status-active" />
+              <p className="text-status-active">{successMessage}</p>
             </div>
           )}
 
@@ -1173,13 +1175,13 @@ export const AdminDashboard: React.FC = () => {
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
                     placeholder="Client name (e.g., 'My Laptop CLI')"
-                    className="flex-1 px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateClient()}
                   />
                   <button
                     onClick={handleCreateClient}
                     disabled={creatingClient || !newClientName.trim()}
-                    className="px-4 py-2 bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {creatingClient ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1240,7 +1242,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex justify-end mb-4">
                   <button
                     onClick={() => setShowCreateUserModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <UserPlus className="w-4 h-4" />
                     Create User
@@ -1333,7 +1335,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                   <button
                     onClick={() => setShowCreateRoleModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Create Role
@@ -1361,7 +1363,7 @@ export const AdminDashboard: React.FC = () => {
                     {resources.map((resource) => (
                       <div
                         key={resource.resource_type}
-                        className="p-3 bg-muted/50 dark:bg-gray-800/50 rounded-lg"
+                        className="p-3 bg-muted/50/50 rounded-lg"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -1379,7 +1381,7 @@ export const AdminDashboard: React.FC = () => {
                           {resource.available_actions.map((action) => (
                             <span
                               key={action}
-                              className="px-2 py-0.5 text-xs bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-blue-300 rounded"
+                              className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded"
                             >
                               {action}
                             </span>
@@ -1419,7 +1421,7 @@ export const AdminDashboard: React.FC = () => {
                       {/* Role Header */}
                       <div
                         className={`p-4 cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 transition-colors ${
-                          expandedRoles.has(role.role_name) ? 'bg-muted/30 dark:bg-gray-800/30' : ''
+                          expandedRoles.has(role.role_name) ? 'bg-muted/30/30' : ''
                         }`}
                         onClick={() => toggleRoleExpanded(role.role_name)}
                       >
@@ -1481,7 +1483,7 @@ export const AdminDashboard: React.FC = () => {
 
                       {/* Role Permissions (Expanded) */}
                       {expandedRoles.has(role.role_name) && (
-                        <div className="border-t border-border dark:border-gray-700 p-4 bg-muted/20 dark:bg-gray-800/20">
+                        <div className="border-t border-border dark:border-gray-700 p-4 bg-muted/20/20">
                           <h4 className="text-sm font-medium text-foreground dark:text-gray-300 mb-3">
                             Permissions
                           </h4>
@@ -1513,7 +1515,7 @@ export const AdminDashboard: React.FC = () => {
                                       className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded ${
                                         p.inherited_from
                                           ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                                          : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+                                          : 'bg-status-active/20 text-status-active'
                                       }`}
                                     >
                                       {p.action}
@@ -1547,10 +1549,10 @@ export const AdminDashboard: React.FC = () => {
                               <div className="flex flex-wrap gap-2">
                                 {resources.map((resource) => (
                                   <div key={resource.resource_type} className="relative group">
-                                    <button className="px-2 py-1 text-xs bg-muted dark:bg-gray-800 rounded hover:bg-muted/80 dark:hover:bg-gray-700 transition-colors">
+                                    <button className="px-2 py-1 text-xs bg-muted rounded hover:bg-muted/80 dark:hover:bg-gray-700 transition-colors">
                                       {resource.resource_type}
                                     </button>
-                                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10 bg-card dark:bg-gray-900 border border-border dark:border-gray-700 rounded shadow-lg p-2 min-w-[120px]">
+                                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10 bg-card border border-border dark:border-gray-700 rounded shadow-lg p-2 min-w-[120px]">
                                       {resource.available_actions.map((action) => {
                                         const hasPermission = rolePermissions.some(
                                           p => p.role_name === role.role_name &&
@@ -1654,13 +1656,13 @@ export const AdminDashboard: React.FC = () => {
                       <>
                         <div>
                           <span className="text-muted-foreground dark:text-gray-400">OpenAI Key:</span>
-                          <span className={`ml-2 font-mono ${systemStatus.configuration.openai_key_configured ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          <span className={`ml-2 font-mono ${systemStatus.configuration.openai_key_configured ? 'text-status-active' : 'text-red-600 dark:text-red-400'}`}>
                             {systemStatus.configuration.openai_key_configured ? 'Configured' : 'Not Set'}
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground dark:text-gray-400">Anthropic Key:</span>
-                          <span className={`ml-2 font-mono ${systemStatus.configuration.anthropic_key_configured ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          <span className={`ml-2 font-mono ${systemStatus.configuration.anthropic_key_configured ? 'text-status-active' : 'text-red-600 dark:text-red-400'}`}>
                             {systemStatus.configuration.anthropic_key_configured ? 'Configured' : 'Not Set'}
                           </span>
                         </div>
@@ -1676,25 +1678,25 @@ export const AdminDashboard: React.FC = () => {
               >
                 {dbStats ? (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="p-4 bg-muted/50/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
                         {(dbStats.nodes?.concepts ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Concepts</div>
                     </div>
-                    <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="p-4 bg-muted/50/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
                         {(dbStats.nodes?.sources ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Sources</div>
                     </div>
-                    <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="p-4 bg-muted/50/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
                         {(dbStats.nodes?.instances ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Instances</div>
                     </div>
-                    <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="p-4 bg-muted/50/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
                         {(dbStats.relationships?.total ?? 0).toLocaleString()}
                       </div>
@@ -1714,23 +1716,23 @@ export const AdminDashboard: React.FC = () => {
               >
                 {schedulerStatus?.jobs_by_status ? (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+                    <div className="p-4 bg-status-warning/10 rounded-lg">
+                      <div className="text-2xl font-bold text-status-warning">
                         {(schedulerStatus.jobs_by_status.pending ?? 0) + (schedulerStatus.jobs_by_status.awaiting_approval ?? 0)}
                       </div>
-                      <div className="text-sm text-yellow-600 dark:text-yellow-400">Pending</div>
+                      <div className="text-sm text-status-warning">Pending</div>
                     </div>
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                    <div className="p-4 bg-status-info/20 rounded-lg">
+                      <div className="text-2xl font-bold text-status-info">
                         {schedulerStatus.jobs_by_status.processing ?? 0}
                       </div>
-                      <div className="text-sm text-blue-600 dark:text-blue-400">Running</div>
+                      <div className="text-sm text-status-info">Running</div>
                     </div>
-                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                    <div className="p-4 bg-status-active/10 rounded-lg">
+                      <div className="text-2xl font-bold text-status-active">
                         {schedulerStatus.jobs_by_status.completed ?? 0}
                       </div>
-                      <div className="text-sm text-green-600 dark:text-green-400">Completed</div>
+                      <div className="text-sm text-status-active">Completed</div>
                     </div>
                     <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                       <div className="text-2xl font-bold text-red-700 dark:text-red-300">
@@ -1758,7 +1760,7 @@ export const AdminDashboard: React.FC = () => {
                     href={`${API_BASE_URL}/docs`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-gray-800 hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
                   >
                     <FileText className="w-4 h-4" />
                     Swagger UI
@@ -1768,7 +1770,7 @@ export const AdminDashboard: React.FC = () => {
                     href={`${API_BASE_URL}/redoc`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-gray-800 hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 dark:hover:bg-gray-700 rounded-lg transition-colors text-foreground dark:text-gray-200"
                   >
                     <FileText className="w-4 h-4" />
                     ReDoc
@@ -1795,14 +1797,14 @@ export const AdminDashboard: React.FC = () => {
                         key={config.id}
                         className={`p-4 rounded-lg border ${
                           config.active
-                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                            : 'bg-muted/50 dark:bg-gray-800/50 border-border dark:border-gray-700'
+                            ? 'bg-status-active/10 border-status-active/30'
+                            : 'bg-muted/50/50 border-border dark:border-gray-700'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {config.active ? (
-                              <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-medium rounded">
+                              <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-status-active text-xs font-medium rounded">
                                 ACTIVE
                               </span>
                             ) : (
@@ -1814,10 +1816,10 @@ export const AdminDashboard: React.FC = () => {
                               Config {config.id}
                             </span>
                             {config.delete_protected && (
-                              <Lock className="w-3 h-3 text-yellow-600 dark:text-yellow-400" title="Delete protected" />
+                              <Lock className="w-3 h-3 text-status-warning" title="Delete protected" />
                             )}
                             {config.change_protected && (
-                              <Shield className="w-3 h-3 text-blue-600 dark:text-blue-400" title="Change protected" />
+                              <Shield className="w-3 h-3 text-status-info" title="Change protected" />
                             )}
                           </div>
                         </div>
@@ -1861,7 +1863,7 @@ export const AdminDashboard: React.FC = () => {
                   LLM provider for concept extraction from documents.
                 </p>
                 {extractionConfig ? (
-                  <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg border border-border dark:border-gray-700">
+                  <div className="p-4 bg-muted/50/50 rounded-lg border border-border dark:border-gray-700">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground dark:text-gray-400">Provider:</span>
@@ -1877,13 +1879,13 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground dark:text-gray-400">Vision:</span>
-                        <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                        <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-status-active' : 'text-gray-500'}`}>
                           {extractionConfig.supports_vision ? 'Yes' : 'No'}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground dark:text-gray-400">JSON Mode:</span>
-                        <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                        <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-status-active' : 'text-gray-500'}`}>
                           {extractionConfig.supports_json_mode ? 'Yes' : 'No'}
                         </span>
                       </div>
@@ -1920,7 +1922,7 @@ export const AdminDashboard: React.FC = () => {
                     {apiKeys.map((key) => (
                       <div
                         key={key.provider}
-                        className="flex items-center justify-between p-3 bg-muted/50 dark:bg-gray-800/50 rounded-lg border border-border dark:border-gray-700"
+                        className="flex items-center justify-between p-3 bg-muted/50/50 rounded-lg border border-border dark:border-gray-700"
                       >
                         <div className="flex items-center gap-3">
                           <span className="font-medium text-foreground dark:text-gray-200 capitalize w-24">
@@ -1929,12 +1931,12 @@ export const AdminDashboard: React.FC = () => {
                           {key.configured ? (
                             <>
                               {key.validation_status === 'valid' ? (
-                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
+                                <span className="flex items-center gap-1 text-status-active text-sm">
                                   <CheckCircle className="w-4 h-4" />
                                   Valid
                                 </span>
                               ) : (
-                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-sm">
+                                <span className="flex items-center gap-1 text-status-warning text-sm">
                                   <AlertCircle className="w-4 h-4" />
                                   {key.validation_status ?? 'Unknown'}
                                 </span>
@@ -1976,7 +1978,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Create User Modal */}
       {showCreateUserModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
@@ -2002,7 +2004,7 @@ export const AdminDashboard: React.FC = () => {
                   value={newUserData.username}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="Enter username"
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -2014,7 +2016,7 @@ export const AdminDashboard: React.FC = () => {
                   value={newUserData.password}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="Minimum 8 characters"
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -2024,7 +2026,7 @@ export const AdminDashboard: React.FC = () => {
                 <select
                   value={newUserData.role}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 >
                   <option value="read_only">Read Only</option>
                   <option value="contributor">Contributor</option>
@@ -2047,7 +2049,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleCreateUser}
                 disabled={creatingUser || !newUserData.username.trim() || !newUserData.password.trim()}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {creatingUser ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2064,7 +2066,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Edit User Modal */}
       {editingUserId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
                 <Edit2 className="w-5 h-5" />
@@ -2082,7 +2084,7 @@ export const AdminDashboard: React.FC = () => {
                 <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                   Username
                 </label>
-                <div className="px-3 py-2 bg-muted/50 dark:bg-gray-800/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
+                <div className="px-3 py-2 bg-muted/50/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
                   {users.find(u => u.id === editingUserId)?.username}
                 </div>
               </div>
@@ -2093,7 +2095,7 @@ export const AdminDashboard: React.FC = () => {
                 <select
                   value={editUserData.role}
                   onChange={(e) => setEditUserData(prev => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 >
                   <option value="read_only">Read Only</option>
                   <option value="contributor">Contributor</option>
@@ -2108,7 +2110,7 @@ export const AdminDashboard: React.FC = () => {
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
                     editUserData.disabled
                       ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
-                      : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                      : 'bg-status-active/10 border-status-active/30 text-status-active'
                   }`}
                 >
                   {editUserData.disabled ? (
@@ -2135,7 +2137,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleSaveUser}
                 disabled={savingUser}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {savingUser ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2152,7 +2154,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Delete User Confirmation Dialog */}
       {confirmDeleteUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
@@ -2200,7 +2202,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Reset Password Modal */}
       {resetPasswordUserId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
                 <KeyRound className="w-5 h-5" />
@@ -2221,7 +2223,7 @@ export const AdminDashboard: React.FC = () => {
                 <label className="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                   User
                 </label>
-                <div className="px-3 py-2 bg-muted/50 dark:bg-gray-800/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
+                <div className="px-3 py-2 bg-muted/50/50 border border-border dark:border-gray-700 rounded-lg text-muted-foreground dark:text-gray-400">
                   {users.find(u => u.id === resetPasswordUserId)?.username}
                 </div>
               </div>
@@ -2234,7 +2236,7 @@ export const AdminDashboard: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimum 8 characters"
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -2251,7 +2253,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleResetPassword}
                 disabled={resettingPassword || !newPassword.trim()}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {resettingPassword ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2268,7 +2270,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Create Role Modal */}
       {showCreateRoleModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-foreground dark:text-gray-200 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5" />
@@ -2294,7 +2296,7 @@ export const AdminDashboard: React.FC = () => {
                   value={newRoleData.role_name}
                   onChange={(e) => setNewRoleData({ ...newRoleData, role_name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
                   placeholder="e.g., data_analyst"
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 />
                 <p className="text-xs text-muted-foreground mt-1">Lowercase letters, numbers, and underscores only</p>
               </div>
@@ -2307,7 +2309,7 @@ export const AdminDashboard: React.FC = () => {
                   value={newRoleData.display_name}
                   onChange={(e) => setNewRoleData({ ...newRoleData, display_name: e.target.value })}
                   placeholder="e.g., Data Analyst"
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -2319,7 +2321,7 @@ export const AdminDashboard: React.FC = () => {
                   onChange={(e) => setNewRoleData({ ...newRoleData, description: e.target.value })}
                   placeholder="Describe the role's purpose..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 resize-none"
                 />
               </div>
               <div>
@@ -2329,7 +2331,7 @@ export const AdminDashboard: React.FC = () => {
                 <select
                   value={newRoleData.parent_role}
                   onChange={(e) => setNewRoleData({ ...newRoleData, parent_role: e.target.value })}
-                  className="w-full px-3 py-2 bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-muted border border-border dark:border-gray-700 rounded-lg text-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
                 >
                   <option value="">No parent (standalone role)</option>
                   {roles.filter(r => r.is_active).map(role => (
@@ -2356,7 +2358,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleCreateRole}
                 disabled={creatingRole || !newRoleData.role_name.trim() || !newRoleData.display_name.trim()}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white rounded-lg hover:bg-primary/90 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {creatingRole ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -2373,7 +2375,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Delete Role Confirmation Modal */}
       {confirmDeleteRole && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4 border border-border dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-gray-700">
               <h3 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
@@ -2390,8 +2392,8 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-foreground dark:text-gray-200">
                 Are you sure you want to delete the role <strong>&quot;{confirmDeleteRole.display_name}&quot;</strong>?
               </p>
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <div className="p-3 bg-status-warning/10 border border-status-warning/20 rounded-lg">
+                <p className="text-sm text-status-warning">
                   <strong>Warning:</strong> This will remove all permission assignments for this role.
                   Users assigned to this role will lose those permissions.
                 </p>

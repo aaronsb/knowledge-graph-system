@@ -380,7 +380,7 @@ export const IngestWorkspace: React.FC = () => {
     if (isImageFile(filename)) {
       return <Image className="w-4 h-4 text-purple-500" />;
     }
-    return <FileText className="w-4 h-4 text-blue-500" />;
+    return <FileText className="w-4 h-4 text-status-info" />;
   };
 
   // Format file size
@@ -406,16 +406,16 @@ export const IngestWorkspace: React.FC = () => {
         className={`
           p-4 rounded-lg border-2 transition-all min-h-[120px]
           ${isDragOver
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 border-solid'
+            ? 'border-primary bg-status-info/10 border-solid'
             : hasFiles
-              ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/10 border-solid'
-              : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 border-dashed'
+              ? 'border-status-info bg-status-info/10 border-solid'
+              : 'border-border bg-muted/50 border-dashed'
           }
         `}
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-blue-500" />
+            <FolderOpen className="w-4 h-4 text-primary" />
             <span className="font-medium text-card-foreground dark:text-gray-200">
               {ontologyName}
             </span>
@@ -439,7 +439,7 @@ export const IngestWorkspace: React.FC = () => {
             {queue.files.map((qf) => (
               <div
                 key={qf.id}
-                className="flex items-center justify-between py-1 px-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+                className="flex items-center justify-between py-1 px-2 bg-white rounded border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {getFileIcon(qf.file.name)}
@@ -459,7 +459,7 @@ export const IngestWorkspace: React.FC = () => {
               </div>
             ))}
             {/* Embedded summary for this ontology */}
-            <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700 text-xs text-blue-600 dark:text-blue-400">
+            <div className="mt-2 pt-2 border-t border-status-info text-xs text-status-info">
               {queue.files.length} file{queue.files.length !== 1 ? 's' : ''} ready to add
             </div>
           </div>
@@ -488,14 +488,14 @@ export const IngestWorkspace: React.FC = () => {
         className={`
           p-4 rounded-lg border-2 border-dashed transition-all
           ${isDragOver
-            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-            : 'border-green-400 dark:border-green-600 bg-green-50/50 dark:bg-green-900/10'
+            ? 'border-status-active bg-status-active/10'
+            : 'border-status-active/60 bg-status-active/10'
           }
         `}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 flex-1">
-            <Plus className="w-4 h-4 text-green-500 flex-shrink-0" />
+            <Plus className="w-4 h-4 text-status-active flex-shrink-0" />
             {isEditing ? (
               <input
                 type="text"
@@ -505,7 +505,7 @@ export const IngestWorkspace: React.FC = () => {
                   if (e.key === 'Enter') renameNewOntology(ontologyName, (e.target as HTMLInputElement).value);
                   if (e.key === 'Escape') setEditingOntologyName(null);
                 }}
-                className="flex-1 px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-2 py-1 text-sm bg-white border border-status-active/40 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 autoFocus
               />
             ) : (
@@ -513,12 +513,12 @@ export const IngestWorkspace: React.FC = () => {
                 <span className="font-medium text-card-foreground dark:text-gray-200">
                   {ontologyName}
                 </span>
-                <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                <span className="text-xs text-status-active bg-status-active/20 px-2 py-0.5 rounded">
                   will be created
                 </span>
                 <button
                   onClick={() => setEditingOntologyName(ontologyName)}
-                  className="text-gray-400 hover:text-green-600 transition-colors p-1"
+                  className="text-gray-400 hover:text-status-active transition-colors p-1"
                   title="Edit name"
                 >
                   <PencilLine className="w-3 h-3" />
@@ -540,7 +540,7 @@ export const IngestWorkspace: React.FC = () => {
           {queue.files.map((qf) => (
             <div
               key={qf.id}
-              className="flex items-center justify-between py-1 px-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              className="flex items-center justify-between py-1 px-2 bg-white rounded border border-gray-200 dark:border-gray-700"
             >
               <div className="flex items-center gap-2 min-w-0">
                 {getFileIcon(qf.file.name)}
@@ -562,7 +562,7 @@ export const IngestWorkspace: React.FC = () => {
         </div>
 
         {/* Embedded summary */}
-        <div className="pt-2 border-t border-green-200 dark:border-green-700 text-xs text-green-600 dark:text-green-400">
+        <div className="pt-2 border-t border-status-active/30 text-xs text-status-active">
           Ready: Create "{ontologyName}" with {queue.files.length} file{queue.files.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -584,8 +584,8 @@ export const IngestWorkspace: React.FC = () => {
         className={`
           p-4 rounded-lg border-2 border-dashed transition-all min-h-[100px]
           ${isDragOver
-            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-            : 'border-green-400 dark:border-green-600 bg-gray-50 dark:bg-gray-800/50'
+            ? 'border-status-active bg-status-active/10'
+            : 'border-status-active/60 bg-muted/50'
           }
         `}
       >
@@ -597,7 +597,7 @@ export const IngestWorkspace: React.FC = () => {
                 value={pendingNewOntologyName}
                 onChange={(e) => setPendingNewOntologyName(e.target.value)}
                 placeholder="Enter new ontology name"
-                className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 bg-white border border-status-active/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && pendingNewOntologyName.trim()) {
@@ -613,7 +613,7 @@ export const IngestWorkspace: React.FC = () => {
               <button
                 onClick={confirmPendingOntology}
                 disabled={!pendingNewOntologyName.trim()}
-                className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-status-active hover:bg-status-active disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors"
               >
                 Create
               </button>
@@ -647,8 +647,8 @@ export const IngestWorkspace: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground dark:text-gray-400">
-            <Plus className="w-6 h-6 mb-2 text-green-500" />
-            <div className="text-sm font-medium text-green-600 dark:text-green-400">Create New Ontology</div>
+            <Plus className="w-6 h-6 mb-2 text-status-active" />
+            <div className="text-sm font-medium text-status-active">Create New Ontology</div>
             <div className="text-xs">Drop files to start</div>
           </div>
         )}
@@ -689,7 +689,7 @@ export const IngestWorkspace: React.FC = () => {
     if (total === 0) return null;
 
     return (
-      <div className="p-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+      <div className="p-4 bg-gray-100 border border-gray-200 dark:border-gray-700 rounded-lg">
         <div className="text-sm font-medium text-foreground dark:text-gray-200 mb-2">
           Summary
         </div>
@@ -700,7 +700,7 @@ export const IngestWorkspace: React.FC = () => {
             </div>
           )}
           {newCount > 0 && (
-            <div className="text-green-600 dark:text-green-400">
+            <div className="text-status-active">
               {newCount} file{newCount !== 1 ? 's' : ''} → {newOntologies} new ontolog{newOntologies !== 1 ? 'ies' : 'y'} (will be created)
             </div>
           )}
@@ -718,17 +718,17 @@ export const IngestWorkspace: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="p-4 bg-status-info/20 border border-status-info rounded-lg">
           <div className="flex items-center gap-2 mb-4">
             {ingestState === 'submitting' ? (
               <>
-                <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                <span className="font-medium text-blue-800 dark:text-blue-200">Submitting files...</span>
+                <Loader2 className="w-5 h-5 text-status-info animate-spin" />
+                <span className="font-medium text-status-info">Submitting files...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium text-green-800 dark:text-green-200">
+                <CheckCircle2 className="w-5 h-5 text-status-active" />
+                <span className="font-medium text-status-active">
                   {successfulJobs} job{successfulJobs !== 1 ? 's' : ''} submitted
                 </span>
               </>
@@ -748,11 +748,11 @@ export const IngestWorkspace: React.FC = () => {
             {submittedJobs.map((job, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 px-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+                className="flex items-center justify-between py-2 px-3 bg-white rounded border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  {job.status === 'uploading' && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
-                  {job.status === 'submitted' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {job.status === 'uploading' && <Loader2 className="w-4 h-4 text-status-info animate-spin" />}
+                  {job.status === 'submitted' && <CheckCircle2 className="w-4 h-4 text-status-active" />}
                   {job.status === 'failed' && <AlertCircle className="w-4 h-4 text-red-500" />}
                   {job.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
                   <span className="text-sm truncate">{job.filename}</span>
@@ -773,7 +773,7 @@ export const IngestWorkspace: React.FC = () => {
               <>
                 <button
                   onClick={resetWorkspace}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors"
                 >
                   <Plus className="w-5 h-5" />
                   Ingest More
@@ -812,10 +812,10 @@ export const IngestWorkspace: React.FC = () => {
   // Main render
   if (ingestState === 'submitting' || ingestState === 'completed') {
     return (
-      <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+      <div className="h-full flex flex-col bg-background">
         <div className="flex-none p-6 border-b border-border dark:border-gray-800">
           <div className="flex items-center gap-3">
-            <Upload className="w-6 h-6 text-primary dark:text-blue-400" />
+            <Upload className="w-6 h-6 text-primary" />
             <div>
               <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
                 Ingest Content
@@ -836,12 +836,12 @@ export const IngestWorkspace: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
       <div className="flex-none p-6 border-b border-border dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Upload className="w-6 h-6 text-primary dark:text-blue-400" />
+            <Upload className="w-6 h-6 text-primary" />
             <div>
               <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
                 Ingest Content
@@ -891,7 +891,7 @@ export const IngestWorkspace: React.FC = () => {
           {/* Proposed New Ontologies */}
           {getProposedOntologies().length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
+              <h2 className="text-sm font-medium text-status-active uppercase tracking-wide">
                 New Ontologies (will be created)
               </h2>
               <div className="space-y-4">
@@ -916,7 +916,7 @@ export const IngestWorkspace: React.FC = () => {
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 text-muted-foreground" />
@@ -943,7 +943,7 @@ export const IngestWorkspace: React.FC = () => {
                         type="number"
                         value={targetWords}
                         onChange={(e) => setTargetWords(parseInt(e.target.value) || 1000)}
-                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg"
                         min={100}
                         max={5000}
                       />
@@ -956,7 +956,7 @@ export const IngestWorkspace: React.FC = () => {
                         type="number"
                         value={overlapWords}
                         onChange={(e) => setOverlapWords(parseInt(e.target.value) || 200)}
-                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 dark:border-gray-600 rounded-lg"
                         min={0}
                         max={500}
                       />
@@ -974,7 +974,7 @@ export const IngestWorkspace: React.FC = () => {
                           type="radio"
                           checked={processingMode === 'serial'}
                           onChange={() => setProcessingMode('serial')}
-                          className="text-blue-500"
+                          className="text-primary"
                         />
                         <span className="text-sm">Serial (better quality)</span>
                       </label>
@@ -983,7 +983,7 @@ export const IngestWorkspace: React.FC = () => {
                           type="radio"
                           checked={processingMode === 'parallel'}
                           onChange={() => setProcessingMode('parallel')}
-                          className="text-blue-500"
+                          className="text-primary"
                         />
                         <span className="text-sm">Parallel (faster)</span>
                       </label>
@@ -997,7 +997,7 @@ export const IngestWorkspace: React.FC = () => {
                         type="checkbox"
                         checked={force}
                         onChange={(e) => setForce(e.target.checked)}
-                        className="rounded text-blue-500"
+                        className="rounded text-primary"
                       />
                       <span className="text-sm">Force re-ingestion (skip duplicate check)</span>
                     </label>
@@ -1011,7 +1011,7 @@ export const IngestWorkspace: React.FC = () => {
           {getTotalFileCount() > 0 && (
             <div className={`p-4 rounded-lg border-2 transition-colors ${
               autoApprove
-                ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                ? 'border-status-active/40 bg-green-50 dark:bg-green-900/20'
                 : 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20'
             }`}>
               <label className="flex items-start gap-3 cursor-pointer">
@@ -1019,7 +1019,7 @@ export const IngestWorkspace: React.FC = () => {
                   type="checkbox"
                   checked={autoApprove}
                   onChange={(e) => setAutoApprove(e.target.checked)}
-                  className="mt-1 rounded text-green-500 w-5 h-5"
+                  className="mt-1 rounded text-status-active w-5 h-5"
                 />
                 <div>
                   <span className="font-medium text-card-foreground dark:text-gray-200">
@@ -1045,7 +1045,7 @@ export const IngestWorkspace: React.FC = () => {
                 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
                 ${canSubmit
                   ? autoApprove
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    ? 'bg-status-active hover:bg-status-active text-white'
                     : 'bg-amber-500 hover:bg-amber-600 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }

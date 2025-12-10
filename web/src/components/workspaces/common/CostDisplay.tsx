@@ -38,7 +38,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
   if (actual) {
     if (compact) {
       return (
-        <span className={`text-sm font-medium text-green-600 dark:text-green-400 ${className}`}>
+        <span className={`text-sm font-medium text-status-active ${className}`}>
           {actual.total}
         </span>
       );
@@ -58,7 +58,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
           <span className="text-card-foreground dark:text-gray-200">{actual.extraction}</span>
 
           <div className="flex items-center gap-2">
-            <Database className="w-3 h-3 text-blue-500" />
+            <Database className="w-3 h-3 text-status-info" />
             <span className="text-muted-foreground dark:text-gray-400">Embeddings:</span>
           </div>
           <span className="text-card-foreground dark:text-gray-200">{actual.embeddings}</span>
@@ -66,7 +66,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
         <div className="pt-2 border-t border-border dark:border-gray-700">
           <div className="flex justify-between items-center">
             <span className="font-medium text-card-foreground dark:text-gray-200">Total:</span>
-            <span className="font-bold text-green-600 dark:text-green-400">{actual.total}</span>
+            <span className="font-bold text-status-active">{actual.total}</span>
           </div>
           {actual.extraction_model && (
             <div className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
@@ -114,7 +114,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
           {/* Embeddings */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Database className="w-3 h-3 text-blue-500" />
+              <Database className="w-3 h-3 text-status-info" />
               <span className="font-medium text-card-foreground dark:text-gray-300">
                 Embeddings ({estimate.embeddings.model})
               </span>
@@ -148,7 +148,7 @@ export const CostBadge: React.FC<{
 }> = ({ value, variant = 'actual', className = '' }) => {
   const colorClass = variant === 'estimate'
     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+    : 'bg-status-active/20 text-status-active';
 
   const displayValue = typeof value === 'number' ? formatCost(value) : value;
 

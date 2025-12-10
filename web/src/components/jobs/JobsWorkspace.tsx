@@ -209,7 +209,7 @@ export const JobsWorkspace: React.FC = () => {
           p-3 border-b border-border dark:border-gray-700
           hover:bg-gray-50 dark:hover:bg-gray-800/50
           cursor-pointer transition-colors
-          ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-l-blue-500' : ''}
+          ${isSelected ? 'bg-status-info/20 border-l-2 border-l-primary' : ''}
         `}
       >
         <div className="flex items-center justify-between gap-3">
@@ -231,7 +231,7 @@ export const JobsWorkspace: React.FC = () => {
             <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
               <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
+                  className="h-full bg-status-info transition-all duration-300"
                   style={{ width: `${job.progress.percent}%` }}
                 />
               </div>
@@ -251,7 +251,7 @@ export const JobsWorkspace: React.FC = () => {
                 <button
                   onClick={(e) => { e.stopPropagation(); handleApprove(job.job_id); }}
                   disabled={actionLoading === job.job_id}
-                  className="p-1 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors disabled:opacity-50"
+                  className="p-1 text-status-active hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors disabled:opacity-50"
                   title="Approve"
                 >
                   {actionLoading === job.job_id ? (
@@ -284,7 +284,7 @@ export const JobsWorkspace: React.FC = () => {
     const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing'].includes(job.status);
 
     return (
-      <div className="h-full flex flex-col bg-card dark:bg-gray-900">
+      <div className="h-full flex flex-col bg-card">
         {/* Header */}
         <div className="p-4 border-b border-border dark:border-gray-700">
           <button
@@ -406,36 +406,36 @@ export const JobsWorkspace: React.FC = () => {
 
           {/* Progress */}
           {job.progress && job.status === 'processing' && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+            <div className="bg-status-info/20 rounded-lg p-3">
               <ProgressIndicator progress={job.progress} variant="detailed" />
             </div>
           )}
 
           {/* Results */}
           {job.result && job.status === 'completed' && (
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 space-y-3">
+            <div className="bg-status-active/10 rounded-lg p-3 space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="font-medium text-green-800 dark:text-green-300">Results</span>
+                <CheckCircle2 className="w-4 h-4 text-status-active" />
+                <span className="font-medium text-status-active">Results</span>
               </div>
 
               {job.result.stats && (
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-green-700 dark:text-green-400">Chunks processed:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.chunks_processed}</div>
-                  <div className="text-green-700 dark:text-green-400">Concepts created:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.concepts_created}</div>
-                  <div className="text-green-700 dark:text-green-400">Concepts linked:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.concepts_linked}</div>
-                  <div className="text-green-700 dark:text-green-400">Sources created:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.sources_created}</div>
-                  <div className="text-green-700 dark:text-green-400">Relationships:</div>
-                  <div className="text-green-800 dark:text-green-300">{job.result.stats.relationships_created}</div>
+                  <div className="text-status-active">Chunks processed:</div>
+                  <div className="text-status-active">{job.result.stats.chunks_processed}</div>
+                  <div className="text-status-active">Concepts created:</div>
+                  <div className="text-status-active">{job.result.stats.concepts_created}</div>
+                  <div className="text-status-active">Concepts linked:</div>
+                  <div className="text-status-active">{job.result.stats.concepts_linked}</div>
+                  <div className="text-status-active">Sources created:</div>
+                  <div className="text-status-active">{job.result.stats.sources_created}</div>
+                  <div className="text-status-active">Relationships:</div>
+                  <div className="text-status-active">{job.result.stats.relationships_created}</div>
                 </div>
               )}
 
               {job.result.cost && (
-                <div className="pt-2 border-t border-green-200 dark:border-green-800">
+                <div className="pt-2 border-t border-status-active/30">
                   <CostDisplay actual={job.result.cost} />
                 </div>
               )}
@@ -496,12 +496,12 @@ export const JobsWorkspace: React.FC = () => {
 
   // Main render
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
       <div className="flex-none p-4 border-b border-border dark:border-gray-800">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <ListTodo className="w-5 h-5 text-primary dark:text-blue-400" />
+            <ListTodo className="w-5 h-5 text-primary" />
             <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">
               Jobs
             </h1>
@@ -531,7 +531,7 @@ export const JobsWorkspace: React.FC = () => {
               className={`
                 px-3 py-1.5 text-sm rounded-lg whitespace-nowrap transition-colors
                 ${statusFilter === filter.value
-                  ? 'bg-primary dark:bg-blue-600 text-primary-foreground dark:text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-foreground dark:hover:text-gray-200'
                 }
               `}
@@ -558,7 +558,7 @@ export const JobsWorkspace: React.FC = () => {
               <div className="text-red-600 dark:text-red-400 mb-2">{error}</div>
               <button
                 onClick={() => fetchJobs()}
-                className="text-sm text-primary dark:text-blue-400 hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 Try again
               </button>

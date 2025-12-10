@@ -63,7 +63,7 @@ const Toggle: React.FC<{
       onClick={() => onChange(!enabled)}
       className={`
         relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-        ${enabled ? 'bg-primary dark:bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}
+        ${enabled ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}
       `}
     >
       <span
@@ -111,7 +111,7 @@ const NumberInput: React.FC<{
       min={min}
       max={max}
       step={step}
-      className="w-24 px-3 py-1.5 text-sm text-right bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+      className="w-24 px-3 py-1.5 text-sm text-right bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
     />
   </div>
 );
@@ -140,7 +140,7 @@ const Select: React.FC<{
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 text-sm bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+      className="px-3 py-1.5 text-sm bg-muted dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg text-card-foreground dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -157,7 +157,7 @@ const Section: React.FC<{
   icon: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
-  <section className="bg-card dark:bg-gray-900 rounded-lg border border-border dark:border-gray-800 overflow-hidden">
+  <section className="bg-card rounded-lg border border-border dark:border-gray-800 overflow-hidden">
     <div className="px-4 py-3 border-b border-border dark:border-gray-800 flex items-center gap-2">
       <span className="text-muted-foreground dark:text-gray-400">{icon}</span>
       <h2 className="font-semibold text-card-foreground dark:text-gray-200">{title}</h2>
@@ -198,12 +198,12 @@ export const PreferencesWorkspace: React.FC = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-background dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
       <div className="flex-none p-4 border-b border-border dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-primary dark:text-blue-400" />
+            <Settings className="w-5 h-5 text-primary" />
             <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">
               Preferences
             </h1>
@@ -243,13 +243,13 @@ export const PreferencesWorkspace: React.FC = () => {
                       className={`
                         flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
                         ${isSelected
-                          ? 'border-primary dark:border-blue-500 bg-primary/10 dark:bg-blue-900/30'
-                          : 'border-border dark:border-gray-700 hover:border-primary/50 dark:hover:border-blue-500/50'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border dark:border-gray-700 hover:border-primary/50'
                         }
                       `}
                     >
-                      <Icon className={`w-5 h-5 ${isSelected ? 'text-primary dark:text-blue-400' : 'text-muted-foreground dark:text-gray-400'}`} />
-                      <span className={`text-sm font-medium ${isSelected ? 'text-primary dark:text-blue-400' : 'text-muted-foreground dark:text-gray-400'}`}>
+                      <Icon className={`w-5 h-5 ${isSelected ? 'text-primary' : 'text-muted-foreground dark:text-gray-400'}`} />
+                      <span className={`text-sm font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground dark:text-gray-400'}`}>
                         {option.label}
                       </span>
                     </button>

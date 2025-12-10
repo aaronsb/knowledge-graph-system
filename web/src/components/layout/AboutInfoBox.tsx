@@ -26,7 +26,7 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
       <div className="relative">
         {/* Info box content */}
         <div
-          className="bg-card dark:bg-gray-800 rounded-lg border border-border dark:border-gray-600 shadow-xl"
+          className="bg-card rounded-lg border border-border dark:border-gray-600 shadow-xl"
           style={{
             minWidth: '280px',
             maxWidth: '320px',
