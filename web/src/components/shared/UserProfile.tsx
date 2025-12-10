@@ -7,15 +7,23 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogIn, LogOut, Shield, Moon, Sun } from 'lucide-react';
+import { User, LogIn, LogOut, Shield, Moon, Sun, Sunset } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { LoginModal } from '../auth/LoginModal';
 import { getZIndexClass } from '../../config/zIndex';
 
+// Theme icon and label mapping
+const THEME_CONFIG = {
+  light: { icon: Sun, label: 'Light', next: 'Twilight' },
+  twilight: { icon: Sunset, label: 'Twilight', next: 'Dark' },
+  dark: { icon: Moon, label: 'Dark', next: 'Light' },
+} as const;
+
 export const UserProfile: React.FC = () => {
   const { user, isAuthenticated, isLoading, error, logout, clearError } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { appliedTheme, cycleTheme } = useThemeStore();
+  const themeConfig = THEME_CONFIG[appliedTheme];
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -66,15 +74,16 @@ export const UserProfile: React.FC = () => {
   }
 
   if (!isAuthenticated) {
+    const ThemeIcon = themeConfig.icon;
     return (
       <>
         <div className="flex items-center gap-2">
           <button
-            onClick={toggleTheme}
+            onClick={cycleTheme}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={`${themeConfig.label} Mode (click for ${themeConfig.next})`}
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <ThemeIcon className="w-4 h-4" />
           </button>
           <button
             onClick={handleLogin}
@@ -141,20 +150,12 @@ export const UserProfile: React.FC = () => {
           {/* Actions */}
           <div className="border-t border-border">
             <button
-              onClick={toggleTheme}
+              onClick={cycleTheme}
               className="w-full flex items-center gap-2 px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"
             >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-4 h-4" />
-                  <span>Light Mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4" />
-                  <span>Dark Mode</span>
-                </>
-              )}
+              <themeConfig.icon className="w-4 h-4" />
+              <span>{themeConfig.label} Mode</span>
+              <span className="text-xs text-muted-foreground ml-auto">→ {themeConfig.next}</span>
             </button>
             <button
               onClick={handleLogout}

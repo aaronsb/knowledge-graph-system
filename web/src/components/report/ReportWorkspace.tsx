@@ -23,8 +23,10 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
+import * as d3 from 'd3';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { apiClient } from '../../api/client';
+import { getCategoryColor } from '../../config/categoryColors';
 import {
   useReportStore,
   type Report,
@@ -32,6 +34,15 @@ import {
   type PolarityReportData,
   type PreviousValues,
 } from '../../store/reportStore';
+
+// Generate ontology color using same d3.interpolateTurbo scale as explorers
+const getOntologyColor = (ontology: string, allOntologies: string[]): string => {
+  const sortedOntologies = [...allOntologies].sort();
+  const index = sortedOntologies.indexOf(ontology);
+  if (index === -1) return '#6b7280';
+  const t = sortedOntologies.length === 1 ? 0.5 : 0.1 + (index / (sortedOntologies.length - 1)) * 0.8;
+  return d3.interpolateTurbo(t);
+};
 
 // Format utilities
 const formatDate = (dateString: string) => {
@@ -130,7 +141,7 @@ const DeltaIndicator: React.FC<{
     return (
       <span className="font-mono">
         {current.toFixed(precision)}
-        <span className="ml-1 text-green-600 dark:text-green-400">↑</span>
+        <span className="ml-1 text-status-active">↑</span>
       </span>
     );
   }
@@ -138,7 +149,7 @@ const DeltaIndicator: React.FC<{
   return (
     <span className="font-mono">
       {current.toFixed(precision)}
-      <span className="ml-1 text-red-600 dark:text-red-400">↓</span>
+      <span className="ml-1 text-destructive">↓</span>
     </span>
   );
 };
@@ -568,6 +579,8 @@ export const ReportWorkspace: React.FC = () => {
   // Render table for graph report
   const renderGraphTable = (data: GraphReportData, report: Report) => {
     const prevValues = report.previousValues || {};
+    // Get all unique ontologies for color calculation
+    const allOntologies = [...new Set(data.nodes.map(n => n.ontology).filter(Boolean))];
 
     return (
       <div className="space-y-6">
@@ -623,9 +636,17 @@ export const ReportWorkspace: React.FC = () => {
                           {node.description || '-'}
                         </td>
                         <td className="px-3 py-2">
-                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                            {node.ontology || '-'}
-                          </span>
+                          {node.ontology ? (
+                            <span
+                              className="px-1.5 py-0.5 text-xs rounded"
+                              style={{
+                                backgroundColor: `${getOntologyColor(node.ontology, allOntologies)}40`,
+                                color: getOntologyColor(node.ontology, allOntologies),
+                              }}
+                            >
+                              {node.ontology}
+                            </span>
+                          ) : '-'}
                         </td>
                         <td className="px-3 py-2 text-right text-xs">
                           <DeltaIndicator
@@ -671,14 +692,26 @@ export const ReportWorkspace: React.FC = () => {
                   <tr key={i} className="hover:bg-muted/30">
                     <td className="px-3 py-2">{link.sourceLabel}</td>
                     <td className="px-3 py-2 text-center">
-                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
+                      <span
+                        className="px-2 py-0.5 text-xs rounded"
+                        style={{
+                          backgroundColor: `${getCategoryColor(link.category)}30`,
+                          color: getCategoryColor(link.category),
+                        }}
+                      >
                         {link.type}
                       </span>
                     </td>
                     <td className="px-3 py-2">{link.targetLabel}</td>
                     <td className="px-3 py-2">
                       {link.category ? (
-                        <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded capitalize">
+                        <span
+                          className="px-1.5 py-0.5 text-xs rounded capitalize"
+                          style={{
+                            backgroundColor: `${getCategoryColor(link.category)}20`,
+                            color: getCategoryColor(link.category),
+                          }}
+                        >
                           {link.category}
                         </span>
                       ) : '-'}
@@ -705,7 +738,7 @@ export const ReportWorkspace: React.FC = () => {
         <div className="grid grid-cols-3 gap-4">
           <div className="p-4 border rounded-lg">
             <div className="text-xs text-muted-foreground mb-1">Positive Pole</div>
-            <div className="font-semibold text-green-600 dark:text-green-400">
+            <div className="font-semibold text-blue-500">
               {data.positivePole.label}
             </div>
           </div>
@@ -715,7 +748,7 @@ export const ReportWorkspace: React.FC = () => {
           </div>
           <div className="p-4 border rounded-lg text-right">
             <div className="text-xs text-muted-foreground mb-1">Negative Pole</div>
-            <div className="font-semibold text-red-600 dark:text-red-400">
+            <div className="font-semibold text-orange-500">
               {data.negativePole.label}
             </div>
           </div>
@@ -724,15 +757,15 @@ export const ReportWorkspace: React.FC = () => {
         {/* Direction Distribution */}
         <div className="flex gap-4 justify-center text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500"></div>
+            <div className="w-3 h-3 rounded bg-blue-500"></div>
             <span>Positive: {data.directionDistribution.positive}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-400"></div>
+            <div className="w-3 h-3 rounded bg-muted-foreground"></div>
             <span>Neutral: {data.directionDistribution.neutral}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-500"></div>
+            <div className="w-3 h-3 rounded bg-orange-500"></div>
             <span>Negative: {data.directionDistribution.negative}</span>
           </div>
         </div>
@@ -762,10 +795,10 @@ export const ReportWorkspace: React.FC = () => {
                       <td className="px-3 py-2 text-right">
                         <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
                           concept.position > 0.1
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                            ? 'bg-blue-500/20 text-blue-500'
                             : concept.position < -0.1
-                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                            ? 'bg-orange-500/20 text-orange-500'
+                            : 'bg-muted text-muted-foreground'
                         }`}>
                           {concept.position > 0 ? '+' : ''}{concept.position.toFixed(3)}
                         </span>
