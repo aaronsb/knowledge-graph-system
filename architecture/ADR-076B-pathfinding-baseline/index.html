@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../../">
+        <link rel="prev" href="../ADR-076-pathfinding-optimization/">
       
       
-        <link rel="next" href="../../01-getting-started/02-CLI_USAGE/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>What is the Knowledge Graph System? - Knowledge Graph System</title>
+        <title>ADR-076B: Pathfinding Performance Baseline - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#what-is-the-knowledge-graph-system" class="md-skip">
+        <a href="#adr-076b-pathfinding-performance-baseline" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              What is the Knowledge Graph System?
+              ADR-076B: Pathfinding Performance Baseline
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -386,20 +386,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -420,7 +418,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -438,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../manual/" class="md-nav__link">
         
   
   
@@ -463,20 +461,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -497,7 +493,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -512,37 +508,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    What is the Knowledge Graph System?
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -558,214 +527,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-core-innovation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Core Innovation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-this-matters-for-ai-systems" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why This Matters for AI Systems
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Why This Matters for AI Systems">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#activating-latent-llm-knowledge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Activating Latent LLM Knowledge
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#persistent-conceptual-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Persistent Conceptual Memory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multi-hop-reasoning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multi-Hop Reasoning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cross-document-synthesis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-Document Synthesis
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-difference-from-other-approaches" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Difference from Other Approaches
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Difference from Other Approaches">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vs-vector-databases-traditional-rag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        vs. Vector Databases (Traditional RAG)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#vs-pure-knowledge-graphs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        vs. Pure Knowledge Graphs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#vs-graphrag-systems" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        vs. GraphRAG Systems
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works-simplified" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works (Simplified)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Real-World Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#whats-actually-unique" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What's Actually Unique
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#who-should-use-this" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Who Should Use This
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-documentation-covers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What This Documentation Covers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -833,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -861,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -944,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -972,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1000,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1028,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1056,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1084,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1167,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1195,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1278,7 +1039,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1306,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1334,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1362,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1445,7 +1206,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1473,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1556,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1584,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1612,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1640,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1668,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1696,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1724,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1752,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1780,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1808,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1836,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1926,7 +1687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -2001,7 +1762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -2076,7 +1837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -2104,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -2132,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -2160,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -2188,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -2216,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2244,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2272,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2300,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2328,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2356,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2384,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2467,7 +2228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/media/" class="md-nav__link">
+      <a href="../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2558,7 +2319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/" class="md-nav__link">
+      <a href="../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2633,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2716,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2744,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2772,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2800,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2828,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2856,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2884,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2912,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2940,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -3085,7 +2846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3113,7 +2874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -3153,18 +2914,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -3185,7 +2948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3203,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -3231,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -3256,10 +3019,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../architecture/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-076B: Pathfinding Performance Baseline
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3275,6 +3065,209 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph Characteristics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#baseline-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline Measurements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Baseline Measurements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-1-connected-path-buddhism-nirvana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Case 1: Connected Path (Buddhism → Nirvana)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-2-cross-ontology-conscious-ego-illusion-of-self" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-3-new-bridge-path-borrowed-ego-illusion-of-self" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-structure-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path Structure Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path Structure Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#buddhism-nirvana-5-paths-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Buddhism → Nirvana (5 paths found)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extrapolated-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extrapolated Performance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-with-age-issue-195" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison with AGE Issue #195
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-optimization-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-Optimization Targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3287,7 +3280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3315,7 +3308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3343,7 +3336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3371,7 +3364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3446,7 +3439,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3474,7 +3467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3502,7 +3495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3530,7 +3523,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3558,7 +3551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3586,7 +3579,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3614,7 +3607,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3697,7 +3690,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3725,7 +3718,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3753,7 +3746,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3781,7 +3774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3809,7 +3802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3837,7 +3830,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3865,7 +3858,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3893,7 +3886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -3921,7 +3914,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -3949,7 +3942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -3977,7 +3970,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -4005,7 +3998,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -4080,7 +4073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -4171,7 +4164,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -4199,7 +4192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4227,7 +4220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4255,7 +4248,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4283,7 +4276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4311,7 +4304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4339,7 +4332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4367,7 +4360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4395,7 +4388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4478,7 +4471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4506,7 +4499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4534,7 +4527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4562,7 +4555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4645,7 +4638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4673,7 +4666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -4701,7 +4694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -4729,7 +4722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -4757,7 +4750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -4785,7 +4778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4813,7 +4806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4841,7 +4834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4924,7 +4917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4952,7 +4945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4980,7 +4973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -5008,7 +5001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -5036,7 +5029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -5064,7 +5057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -5092,7 +5085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -5120,7 +5113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -5148,7 +5141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5231,7 +5224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5259,7 +5252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5287,7 +5280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5315,7 +5308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5343,7 +5336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5426,7 +5419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5454,7 +5447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5482,7 +5475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5510,7 +5503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5538,7 +5531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5566,7 +5559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5594,7 +5587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5622,7 +5615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5650,7 +5643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5678,7 +5671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -5761,7 +5754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5789,7 +5782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5817,7 +5810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5845,7 +5838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5873,7 +5866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5901,7 +5894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5929,7 +5922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5957,7 +5950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -5985,7 +5978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -6013,7 +6006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6041,7 +6034,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6069,7 +6062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6159,7 +6152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6187,7 +6180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6215,7 +6208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6243,7 +6236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6271,7 +6264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6299,7 +6292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6327,7 +6320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -6409,7 +6402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6437,7 +6430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -6465,7 +6458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -6493,7 +6486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -6521,7 +6514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -6549,7 +6542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -6577,7 +6570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -6632,10 +6625,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-core-innovation" class="md-nav__link">
+  <a href="#purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Core Innovation
+        Purpose
       
     </span>
   </a>
@@ -6643,55 +6636,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-this-matters-for-ai-systems" class="md-nav__link">
+  <a href="#test-environment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why This Matters for AI Systems
+        Test Environment
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Why This Matters for AI Systems">
+    <nav class="md-nav" aria-label="Test Environment">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#activating-latent-llm-knowledge" class="md-nav__link">
+  <a href="#graph-characteristics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Activating Latent LLM Knowledge
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#persistent-conceptual-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Persistent Conceptual Memory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multi-hop-reasoning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multi-Hop Reasoning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cross-document-synthesis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-Document Synthesis
+        Graph Characteristics
       
     </span>
   </a>
@@ -6704,22 +6664,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-difference-from-other-approaches" class="md-nav__link">
+  <a href="#baseline-measurements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Difference from Other Approaches
+        Baseline Measurements
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The Difference from Other Approaches">
+    <nav class="md-nav" aria-label="Baseline Measurements">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#vs-vector-databases-traditional-rag" class="md-nav__link">
+  <a href="#test-case-1-connected-path-buddhism-nirvana" class="md-nav__link">
     <span class="md-ellipsis">
       
-        vs. Vector Databases (Traditional RAG)
+        Test Case 1: Connected Path (Buddhism → Nirvana)
       
     </span>
   </a>
@@ -6727,10 +6687,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#vs-pure-knowledge-graphs" class="md-nav__link">
+  <a href="#test-case-2-cross-ontology-conscious-ego-illusion-of-self" class="md-nav__link">
     <span class="md-ellipsis">
       
-        vs. Pure Knowledge Graphs
+        Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)
       
     </span>
   </a>
@@ -6738,10 +6698,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#vs-graphrag-systems" class="md-nav__link">
+  <a href="#test-case-3-new-bridge-path-borrowed-ego-illusion-of-self" class="md-nav__link">
     <span class="md-ellipsis">
       
-        vs. GraphRAG Systems
+        Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)
       
     </span>
   </a>
@@ -6754,10 +6714,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works-simplified" class="md-nav__link">
+  <a href="#path-structure-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works (Simplified)
+        Path Structure Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path Structure Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#buddhism-nirvana-5-paths-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Buddhism → Nirvana (5 paths found)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extrapolated-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extrapolated Performance
       
     </span>
   </a>
@@ -6765,10 +6753,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#real-world-example" class="md-nav__link">
+  <a href="#comparison-with-age-issue-195" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Real-World Example
+        Comparison with AGE Issue #195
       
     </span>
   </a>
@@ -6776,10 +6764,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#whats-actually-unique" class="md-nav__link">
+  <a href="#conclusions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What's Actually Unique
+        Conclusions
       
     </span>
   </a>
@@ -6787,10 +6775,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#who-should-use-this" class="md-nav__link">
+  <a href="#post-optimization-targets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Who Should Use This
+        Post-Optimization Targets
       
     </span>
   </a>
@@ -6798,10 +6786,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-this-documentation-covers" class="md-nav__link">
+  <a href="#test-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What This Documentation Covers
+        Test Commands
       
     </span>
   </a>
@@ -6809,10 +6797,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        References
       
     </span>
   </a>
@@ -6839,176 +6827,310 @@
   
 
 
-<h1 id="what-is-the-knowledge-graph-system">What is the Knowledge Graph System?</h1>
-<h2 id="the-core-innovation">The Core Innovation</h2>
-<p>The Knowledge Graph System is a <strong>hybrid graph-vector platform</strong> that transforms documents into queryable, interconnected concept networks. Unlike traditional retrieval systems that find similar text chunks, this system understands and preserves the <em>relationships</em> between ideas across your entire document corpus.</p>
-<p>At its heart is <strong>recursive upsert</strong> - a unique process where:</p>
-<ol>
-<li><strong>Vector embeddings</strong> find semantically similar concepts (the "vector" part)</li>
-<li><strong>Graph relationships</strong> connect concepts through typed edges like IMPLIES, CONTRADICTS, ENABLES (the "graph" part)</li>
-<li><strong>Recursive enhancement</strong> means each new document doesn't just add data - it enriches existing concepts, discovers new connections, and builds understanding over time (the "recursive" part)</li>
-</ol>
-<p>When you ingest a second document mentioning concepts from the first, the system recognizes them through semantic similarity (≥0.85 cosine threshold), merges evidence, and discovers new relationships. By the tenth document, the graph knows your domain - concept hit rates climb from 0% to 60%+ as the system learns.</p>
-<h2 id="why-this-matters-for-ai-systems">Why This Matters for AI Systems</h2>
-<p><strong>This platform is purpose-built as a memory and reasoning substrate for AI agents.</strong></p>
-<p>Large language models have vast latent knowledge, but they lack persistent, queryable memory about <em>your</em> specific domain knowledge and how concepts relate within it. This system provides that missing layer:</p>
-<h3 id="activating-latent-llm-knowledge">Activating Latent LLM Knowledge</h3>
-<p>When an AI agent queries the graph and receives results like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Concept: &quot;Apache AGE Migration&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ENABLES → &quot;RBAC Capabilities&quot; (confidence: 0.92)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  PREVENTS → &quot;Dual Database Complexity&quot; (confidence: 0.88)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  RESULTS_FROM → &quot;Unified Architecture&quot; (confidence: 0.85)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Evidence from: commits, pull requests, architecture docs
-</code></pre></div>
-<p>...the LLM can activate its latent understanding of PostgreSQL, graph databases, and system architecture to reason about the <em>specific</em> architectural decisions in <em>your</em> codebase. The graph provides the structured facts and relationships; the LLM provides the reasoning capability.</p>
-<h3 id="persistent-conceptual-memory">Persistent Conceptual Memory</h3>
-<p>Unlike conversation context that resets, or RAG systems that rebuild understanding on every query:</p>
+<h1 id="adr-076b-pathfinding-performance-baseline">ADR-076B: Pathfinding Performance Baseline</h1>
+<p><strong>Status:</strong> Reference Data
+<strong>Date:</strong> 2025-12-10
+<strong>Related:</strong> ADR-076 (Pathfinding Optimization)</p>
+<h2 id="purpose">Purpose</h2>
+<p>This document records baseline performance measurements for the current exhaustive pathfinding implementation. These measurements establish the "before" state against which the Bidirectional BFS optimization (ADR-076) will be compared.</p>
+<h2 id="test-environment">Test Environment</h2>
 <ul>
-<li><strong>Concepts persist</strong> as first-class entities with embeddings, labels, and search terms</li>
-<li><strong>Relationships persist</strong> with confidence scores and provenance</li>
-<li><strong>Evidence persists</strong> with exact quotes and document references</li>
-<li><strong>Understanding compounds</strong> - each document makes the graph smarter</li>
+<li><strong>Graph Size:</strong> 833 concepts, 4856 relationships</li>
+<li><strong>Database:</strong> Apache AGE on PostgreSQL 16</li>
+<li><strong>Hardware:</strong> Development workstation (specifics vary)</li>
+<li><strong>Date:</strong> December 10, 2025</li>
+<li><strong>Ontologies:</strong> AI_Semantics, Watts-Zen, Watts-Tao</li>
 </ul>
-<p>An AI agent can query "what architectural decisions enabled RBAC?" and receive precise graph-traversal results showing the chain of decisions, their relationships, and source evidence - without re-reading hundreds of pages.</p>
-<h3 id="multi-hop-reasoning">Multi-Hop Reasoning</h3>
-<p>Graph traversal enables multi-hop reasoning that's explicit and traceable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="k">start</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Linear Scanning&#39;</span><span class="p">})</span><span class="o">-[</span><span class="p">*</span><span class="m">1</span><span class="p">..</span><span class="m">3</span><span class="o">]-&gt;</span><span class="p">(</span><span class="k">end</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">end</span><span class="p">.</span><span class="n">label</span><span class="w"> </span><span class="n">CONTAINS</span><span class="w"> </span><span class="s">&#39;Intelligence&#39;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
-</code></pre></div>
-<p>The system finds conceptual pathways like: <code>Linear Scanning → Sequential Processing → Pattern Recognition → Intelligence</code>, with each hop backed by evidence and confidence scores. This gives AI agents structured reasoning paths instead of implicit token associations.</p>
-<h3 id="cross-document-synthesis">Cross-Document Synthesis</h3>
-<p>When you ingest:
-- Project commit messages → "Project History" ontology
-- Pull request descriptions → "Project PRs" ontology
-- Architecture decision records → "Project ADRs" ontology</p>
-<p>...the system automatically merges semantically identical concepts across ontologies. An AI agent asking about "authentication implementation" gets a unified view synthesized from code, discussions, and design docs - without manual linking.</p>
-<h2 id="the-difference-from-other-approaches">The Difference from Other Approaches</h2>
-<h3 id="vs-vector-databases-traditional-rag">vs. Vector Databases (Traditional RAG)</h3>
-<p><strong>Vector databases</strong> excel at semantic similarity but lose relational context:
-- Find documents <em>similar to</em> your query
-- No understanding of how concepts relate
-- Rebuild context on every query
-- Can't traverse relationships or reason about causality</p>
-<p><strong>This system</strong> combines vectors with explicit relationships:
-- Find concepts <em>and their connections</em>
-- IMPLIES, CONTRADICTS, ENABLES relationships are explicit
-- Persistent understanding that compounds
-- Multi-hop traversal reveals reasoning paths</p>
-<h3 id="vs-pure-knowledge-graphs">vs. Pure Knowledge Graphs</h3>
-<p><strong>Pure knowledge graphs</strong> preserve relationships but lack semantic flexibility:
-- Require exact entity/predicate matches
-- Rigid schema requirements
-- Manual concept definition
-- Poor fuzzy matching</p>
-<p><strong>This system</strong> adds semantic understanding:
-- Vector similarity matches variations ("auth", "authentication", "user login")
-- LLM extraction adapts to domain vocabulary
-- Automatic concept recognition and merging
-- Semantic search finds conceptually related ideas</p>
-<h3 id="vs-graphrag-systems">vs. GraphRAG Systems</h3>
-<p><strong>GraphRAG</strong> is the emerging pattern of combining graphs and vectors - this system is a production implementation of that approach, with critical additions:</p>
-<ul>
-<li><strong>Job approval workflow</strong> with cost controls (ADR-014)</li>
-<li><strong>Authentication and RBAC</strong> for production deployment (ADR-018, ADR-019)</li>
-<li><strong>Custom relationship vocabularies</strong> that evolve with your domain (ADR-025)</li>
-<li><strong>Visual query builder</strong> and interactive graph exploration (ADR-034)</li>
-<li><strong>REST API and MCP integration</strong> for agent access</li>
-<li><strong>Apache AGE + PostgreSQL</strong> - production-grade graph database with openCypher</li>
-</ul>
-<p>These aren't just "nice features" - they're what makes the system <em>usable at scale</em> in real organizations with multiple users, sensitive data, cost constraints, and integration requirements.</p>
-<h2 id="how-it-works-simplified">How It Works (Simplified)</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Document Submission
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   ↓
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>2. Intelligent Chunking (~1000 words, respecting boundaries)
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>   ↓
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>3. Vector Embedding (1536-dimensional semantic representation)
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>   ↓
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>4. Semantic Matching (query existing concepts, ≥0.75 similarity)
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>   ↓
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>5. LLM Extraction (with context from matched concepts)
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>   ↓
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>6. Recursive Upsert (merge or create concepts + relationships)
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>   ↓
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>7. Graph Storage (Apache AGE with provenance)
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>   ↓
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>8. Available for Query (REST API, CLI, MCP, Visual Explorer)
-</code></pre></div>
-<p>The "recursive" part is critical: each chunk queries recent concepts before extraction. Early chunks populate the graph; later chunks connect to existing concepts. The LLM sees what the graph already knows, enabling cross-chunk relationship detection.</p>
-<h2 id="real-world-example">Real-World Example</h2>
-<p><strong>Input:</strong> Company ingests 50 meeting transcripts into "Product Discussions" ontology</p>
-<p><strong>After 10 documents:</strong>
-- 234 concepts extracted
-- 15% hit rate (finding existing concepts)
-- Concepts: "User Authentication", "Mobile App", "API Gateway"</p>
-<p><strong>After 30 documents:</strong>
-- 612 concepts total
-- 52% hit rate (growing recognition)
-- New relationships discovered: "API Gateway ENABLES Mobile App", "User Authentication REQUIRED_BY Mobile App"</p>
-<p><strong>After 50 documents:</strong>
-- 891 concepts total (growth slowing - domain is learned)
-- 64% hit rate (high reuse)
-- Cross-document synthesis reveals: "Performance Issues CONTRADICT Mobile First Strategy" with evidence from 8 different meetings</p>
-<p><strong>AI Agent Query:</strong> "What's blocking our mobile strategy?"</p>
-<p><strong>System Response:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Graph traversal found:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  &quot;Mobile First Strategy&quot; ← CONTRADICTS ← &quot;Performance Issues&quot;
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  &quot;Performance Issues&quot; ← CAUSED_BY ← &quot;API Gateway Latency&quot;
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  &quot;API Gateway&quot; ← DEPENDS_ON ← &quot;Legacy Authentication System&quot;
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Evidence:
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  - &quot;Our mobile experience suffers from 3-second load times...&quot; (Meeting 12, para 4)
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  - &quot;The gateway times out waiting for auth...&quot; (Meeting 24, para 2)
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  - &quot;Can&#39;t refactor auth without breaking desktop...&quot; (Meeting 38, para 6)
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>Related concepts: &quot;Authentication Refactoring&quot;, &quot;Performance Optimization&quot;, &quot;Service Mesh&quot;
+<h3 id="graph-characteristics">Graph Characteristics</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Concepts</td>
+<td>833</td>
+</tr>
+<tr>
+<td>Relationships</td>
+<td>4,856</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>221</td>
+</tr>
+<tr>
+<td>Instances</td>
+<td>1,163</td>
+</tr>
+<tr>
+<td>Avg relationships/concept</td>
+<td>~5.8</td>
+</tr>
+</tbody>
+</table>
+<h2 id="baseline-measurements">Baseline Measurements</h2>
+<h3 id="test-case-1-connected-path-buddhism-nirvana">Test Case 1: Connected Path (Buddhism → Nirvana)</h3>
+<p>Query: <code>kg search connect "buddhism meditation" "nirvana" --min-similarity 0.8</code></p>
+<p>Semantic matches:
+- From: "Meditation in Buddhism" (87.1% match)
+- To: "Nirvana" (84.8% match)
+- Shortest path exists: 2 hops</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Time (s)</th>
+<th>Paths Found</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>1.54</td>
+<td>5</td>
+<td>Acceptable</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1.86</td>
+<td>5</td>
+<td>Acceptable</td>
+</tr>
+<tr>
+<td>6</td>
+<td>4.68</td>
+<td>5</td>
+<td>Noticeable delay</td>
+</tr>
+<tr>
+<td>7</td>
+<td>33.35</td>
+<td>5</td>
+<td>Significant slowdown</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Growth pattern:</strong> ~2.5x per hop increase (exponential)</p>
+<h3 id="test-case-2-cross-ontology-conscious-ego-illusion-of-self">Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)</h3>
+<p>Query: <code>kg search connect "conscious ego" "illusion of self" --max-hops 6 --min-similarity 0.75</code></p>
+<p>Semantic matches:
+- From: "Conscious Ego" (matched)
+- To: "Illusion of Self" (matched)
+- No direct path exists</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Time (s)</th>
+<th>Paths Found</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>14.33</td>
+<td>0</td>
+<td>Full exhaustive search</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Observation:</strong> Even failed searches take significant time because the algorithm must enumerate all possible paths before determining no connection exists.</p>
+<h3 id="test-case-3-new-bridge-path-borrowed-ego-illusion-of-self">Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)</h3>
+<p>After ingesting reflective content that created an explicit bridge:</p>
+<p>Query: Direct concept ID connection test</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Time (s)</th>
+<th>Paths Found</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td>&lt;2</td>
+<td>1</td>
+<td>Borrowed Ego → Human ego → Spotlight Consciousness → Illusion of Self</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path details:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Borrowed Ego
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    ↓ REQUIRES
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Human ego
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    ↓ DEFINED_AS
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Spotlight and Floodlight Consciousness
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓ CONTRASTS_WITH
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Spotlight Consciousness
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓ ENABLES
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Illusion of Self
 </code></pre></div></p>
-<p>The AI agent receives structured facts, relationships, and evidence - exactly what it needs to reason about the problem and propose solutions.</p>
-<h2 id="whats-actually-unique">What's Actually Unique</h2>
-<p>Many systems do graphs. Many do vectors. Some combine them. What makes this system different:</p>
+<h2 id="path-structure-analysis">Path Structure Analysis</h2>
+<h3 id="buddhism-nirvana-5-paths-found">Buddhism → Nirvana (5 paths found)</h3>
+<p><strong>Path 1 (2 hops):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → RESULTS_FROM → Nirvana
+</code></pre></div></p>
+<p><strong>Path 2 (3 hops):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Meditation in Buddhism → DEFINED_AS → Meditation in Buddhism → UTILIZES → Zen Buddhism → RESULTS_FROM → Nirvana
+</code></pre></div></p>
+<p><strong>Path 3 (3 hops):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → SUPPORTS → Middle Way → ENABLES → Nirvana
+</code></pre></div></p>
+<p><strong>Path 4 (4 hops):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → ASSOCIATED_WITH → Karlfried Graf Dürckheim → PRACTITIONER_OF → Zen Buddhism → RESULTS_FROM → Nirvana
+</code></pre></div></p>
+<p><strong>Path 5 (4 hops):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → PRACTITIONER_OF → Karlfried Graf Dürckheim → ASSOCIATED_WITH → Zen Buddhism → RESULTS_FROM → Nirvana
+</code></pre></div></p>
+<p><strong>Observation:</strong> Paths 4 and 5 are essentially the same path traversed in different directions through the Dürckheim node. The exhaustive search finds both.</p>
+<h2 id="extrapolated-performance">Extrapolated Performance</h2>
+<p>Based on observed exponential growth (~2.5-7x per hop):</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Estimated Time</th>
+<th>Usability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>~1.5s</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>5</td>
+<td>~2s</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>6</td>
+<td>~5s</td>
+<td>Marginal</td>
+</tr>
+<tr>
+<td>7</td>
+<td>~33s</td>
+<td>Poor</td>
+</tr>
+<tr>
+<td>8</td>
+<td>~2-4 min</td>
+<td>Unusable</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Hours</td>
+<td>Timeout</td>
+</tr>
+</tbody>
+</table>
+<h2 id="comparison-with-age-issue-195">Comparison with AGE Issue #195</h2>
+<p>From GitHub Issue #195 (1.5M nodes, 1.2M edges):</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Issue #195 Time</th>
+<th>Our Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>7s</td>
+<td>1.5s</td>
+</tr>
+<tr>
+<td>5</td>
+<td>3.5 min</td>
+<td>1.9s</td>
+</tr>
+<tr>
+<td>6</td>
+<td>~7 min</td>
+<td>4.7s</td>
+</tr>
+<tr>
+<td>7</td>
+<td>-</td>
+<td>33s</td>
+</tr>
+</tbody>
+</table>
+<p>Our graph is much smaller (~800 vs 1.5M nodes) which explains faster times, but the exponential growth pattern is consistent.</p>
+<h2 id="conclusions">Conclusions</h2>
 <ol>
-<li><strong>Recursive upsert with LLM context</strong> - extraction sees what the graph already knows</li>
-<li><strong>Built for AI agent memory</strong> - persistent, queryable, relationship-rich</li>
-<li><strong>Production-ready infrastructure</strong> - auth, RBAC, cost controls, APIs</li>
-<li><strong>Evidence provenance</strong> - every concept links to source quotes</li>
-<li><strong>Cross-ontology enrichment</strong> - concepts bridge document collections</li>
-<li><strong>Interactive exploration</strong> - visual query builder, graph visualization</li>
-<li><strong>Apache AGE foundation</strong> - production PostgreSQL with openCypher and full ACID guarantees</li>
+<li>
+<p><strong>Exponential degradation confirmed:</strong> Each additional hop multiplies query time by 2.5-7x</p>
+</li>
+<li>
+<p><strong>Practical limit:</strong> Max 5-6 hops before UX degrades significantly</p>
+</li>
+<li>
+<p><strong>Failed searches are expensive:</strong> Full exhaustive enumeration even when no path exists</p>
+</li>
+<li>
+<p><strong>Current implementation scales poorly:</strong> With graph growth to 10K+ concepts, even 4-hop queries will become problematic</p>
+</li>
+<li>
+<p><strong>Bidirectional BFS justified:</strong> The O(b^d) → O(b^(d/2)) improvement from ADR-076 is necessary for production use</p>
+</li>
 </ol>
-<p>The recursive upsert creates a <strong>learning system</strong> - not just storage, but a knowledge base that becomes more valuable with each document because it <em>understands</em> more.</p>
-<h2 id="who-should-use-this">Who Should Use This</h2>
-<p><strong>AI Agent Developers</strong>
-- Give your agents persistent conceptual memory
-- Enable graph-structured reasoning over domain knowledge
-- Provide explicit relationship traversal instead of pure similarity</p>
-<p><strong>Research &amp; Knowledge Work</strong>
-- Navigate philosophical or scientific texts by concept relationships
-- Discover connections across papers you didn't know were related
-- Build synthetic understanding that compounds over time</p>
-<p><strong>Development Teams</strong>
-- Ingest commit history, PRs, and ADRs into queryable knowledge
-- Understand why architectural decisions enabled or prevented features
-- Create living documentation that evolves with your codebase</p>
-<p><strong>Organizations with Knowledge Silos</strong>
-- Connect meeting notes, reports, and strategy docs through shared concepts
-- Discover implicit dependencies and contradictions across teams
-- Build institutional knowledge that doesn't reset when people leave</p>
-<h2 id="what-this-documentation-covers">What This Documentation Covers</h2>
-<p>The rest of this manual walks through:</p>
+<h2 id="post-optimization-targets">Post-Optimization Targets</h2>
+<p>After implementing Bidirectional BFS, target performance:</p>
+<table>
+<thead>
+<tr>
+<th>Max Hops</th>
+<th>Target Time</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>&lt;1s</td>
+<td>5x</td>
+</tr>
+<tr>
+<td>7</td>
+<td>&lt;2s</td>
+<td>15x</td>
+</tr>
+<tr>
+<td>10</td>
+<td>&lt;5s</td>
+<td>Orders of magnitude</td>
+</tr>
+</tbody>
+</table>
+<h2 id="test-commands">Test Commands</h2>
+<p>To reproduce these measurements:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Basic timing test</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Full JSON output for analysis</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.&#39;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Cross-ontology test</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;conscious ego&quot;</span><span class="w"> </span><span class="s2">&quot;illusion of self&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">6</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.75<span class="w"> </span>--no-evidence
+</code></pre></div>
+<h2 id="references">References</h2>
 <ul>
-<li><strong>Getting Started</strong> - Installation, first ingestion, basic queries</li>
-<li><strong>Configuration</strong> - AI providers (OpenAI, Anthropic, Ollama), embeddings, extraction tuning</li>
-<li><strong>Integration</strong> - MCP setup for Claude Desktop/Code, vocabulary management</li>
-<li><strong>Security &amp; Access</strong> - Authentication, RBAC, encrypted API keys</li>
-<li><strong>Maintenance</strong> - Backup/restore, schema migrations</li>
-<li><strong>Reference</strong> - Complete schema docs, query patterns, examples</li>
+<li>ADR-076: Pathfinding Optimization for Apache AGE</li>
+<li><a href="https://github.com/apache/age/issues/195">GitHub Issue #195</a> - Variable-length path performance</li>
+<li>Graph state captured during Watts + AI_Semantics ingestion session</li>
 </ul>
-<p>The infrastructure (auth, RBAC, API, visualizer) exists to support the recursive upsert approach at production scale - it's mentioned where relevant but not the focus.</p>
-<h2 id="next-steps">Next Steps</h2>
-<p>Ready to try it? Start with <a href="../../../guides/QUICKSTART/">Quickstart</a> to get running in 5 minutes.</p>
-<p>Want to understand the architecture? See <a href="../../../architecture/ARCHITECTURE_OVERVIEW/">Architecture Overview</a> and <a href="../../architecture/ADR-016-apache-age-migration.md">ADR-016: Apache AGE Migration</a>.</p>
-<p>Curious about the recursive upsert pattern in depth? See <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/">Recursive Upsert Architecture</a> (referenced in the knowledge graph) and <a href="../../06-reference/07-ENRICHMENT_JOURNEY/">Enrichment Journey</a> for a real example.</p>
 
 
 
@@ -7058,10 +7180,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>
