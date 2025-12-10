@@ -4,14 +4,23 @@
  * A decorative animated graph visualization.
  * Renders ~18 nodes with edges, slowly rotating in 3D space.
  * Pure canvas-based, no external dependencies.
+ *
+ * Supports click interactions - clicking on a node creates a ripple
+ * perturbation effect that spreads through the graph.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 
 interface Node {
   x: number;
   y: number;
   z: number;
+  baseX: number;  // Original position for perturbation recovery
+  baseY: number;
+  baseZ: number;
+  vx: number;     // Velocity for perturbation
+  vy: number;
+  vz: number;
   radius: number;
   color: string;
 }
@@ -42,10 +51,20 @@ const generateGraph = (): { nodes: Node[]; edges: Edge[] } => {
     const phi = Math.acos(2 * Math.random() - 1);
     const radius = 80 + Math.random() * 40; // Varying distance from center
 
+    const x = radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.sin(phi) * Math.sin(theta);
+    const z = radius * Math.cos(phi);
+
     nodes.push({
-      x: radius * Math.sin(phi) * Math.cos(theta),
-      y: radius * Math.sin(phi) * Math.sin(theta),
-      z: radius * Math.cos(phi),
+      x,
+      y,
+      z,
+      baseX: x,
+      baseY: y,
+      baseZ: z,
+      vx: 0,
+      vy: 0,
+      vz: 0,
       radius: 3 + Math.random() * 4,
       color: colors[Math.floor(Math.random() * colors.length)],
     });
@@ -104,17 +123,83 @@ interface GraphAnimationProps {
   className?: string;
   width?: number;
   height?: number;
+  interactive?: boolean;  // Enable click interactions
 }
 
 export const GraphAnimation: React.FC<GraphAnimationProps> = ({
   className = '',
   width = 400,
   height = 400,
+  interactive = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const graphRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const animationRef = useRef<number>(0);
   const angleRef = useRef({ y: 0, x: 0.3 }); // Start with slight tilt
+  const projectedRef = useRef<Array<{ x: number; y: number; z: number; scale: number; radius: number; color: string }>>([]);
+
+  // Handle click to perturb nearby nodes
+  const handleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!interactive || !graphRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    const { nodes } = graphRef.current;
+    const projected = projectedRef.current;
+
+    // Find clicked node or closest node
+    let closestNode = -1;
+    let closestDist = 50; // Max click distance
+
+    projected.forEach((p, i) => {
+      const dx = clickX - p.x;
+      const dy = clickY - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestNode = i;
+      }
+    });
+
+    // Apply perturbation - ripple effect from click point
+    const perturbStrength = 30;
+    const perturbRadius = 200;
+
+    nodes.forEach((node, i) => {
+      const p = projected[i];
+      if (!p) return;
+
+      const dx = clickX - p.x;
+      const dy = clickY - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < perturbRadius) {
+        // Strength falls off with distance
+        const strength = (1 - dist / perturbRadius) * perturbStrength;
+
+        // Push nodes away from click point (in 3D space)
+        // Use the node's current position relative to center
+        const magnitude = Math.sqrt(node.x * node.x + node.y * node.y + node.z * node.z);
+        if (magnitude > 0) {
+          // Radial push outward + random jitter
+          node.vx += (node.x / magnitude) * strength + (Math.random() - 0.5) * strength * 0.5;
+          node.vy += (node.y / magnitude) * strength + (Math.random() - 0.5) * strength * 0.5;
+          node.vz += (node.z / magnitude) * strength + (Math.random() - 0.5) * strength * 0.5;
+        }
+      }
+    });
+
+    // Extra boost for clicked node
+    if (closestNode >= 0) {
+      const node = nodes[closestNode];
+      node.vx += (Math.random() - 0.5) * perturbStrength * 2;
+      node.vy += (Math.random() - 0.5) * perturbStrength * 2;
+      node.vz += (Math.random() - 0.5) * perturbStrength * 2;
+    }
+  }, [interactive]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -141,6 +226,27 @@ export const GraphAnimation: React.FC<GraphAnimationProps> = ({
       angleRef.current.y += 0.003;
       angleRef.current.x = 0.3 + Math.sin(angleRef.current.y * 0.5) * 0.1;
 
+      // Update node positions (perturbation physics)
+      const damping = 0.92;
+      const springStrength = 0.08;
+
+      nodes.forEach((node) => {
+        // Apply velocity
+        node.x += node.vx;
+        node.y += node.vy;
+        node.z += node.vz;
+
+        // Spring back to base position
+        node.vx += (node.baseX - node.x) * springStrength;
+        node.vy += (node.baseY - node.y) * springStrength;
+        node.vz += (node.baseZ - node.z) * springStrength;
+
+        // Damping
+        node.vx *= damping;
+        node.vy *= damping;
+        node.vz *= damping;
+      });
+
       // Project nodes to 2D
       const projected = nodes.map((node) => {
         // Apply rotations
@@ -161,6 +267,9 @@ export const GraphAnimation: React.FC<GraphAnimationProps> = ({
           color: node.color,
         };
       });
+
+      // Store for click detection
+      projectedRef.current = projected;
 
       // Sort by z for proper depth rendering
       const sortedIndices = projected
@@ -227,7 +336,8 @@ export const GraphAnimation: React.FC<GraphAnimationProps> = ({
       ref={canvasRef}
       width={width}
       height={height}
-      className={`pointer-events-none ${className}`}
+      onClick={handleClick}
+      className={`${interactive ? 'cursor-pointer' : 'pointer-events-none'} ${className}`}
     />
   );
 };

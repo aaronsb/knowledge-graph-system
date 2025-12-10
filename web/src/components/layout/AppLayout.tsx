@@ -15,7 +15,7 @@
  * - Admin
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Compass,
@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
+import { GraphAnimation } from '../home/GraphAnimation';
+import { AboutInfoBox } from './AboutInfoBox';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -42,6 +44,13 @@ interface AppLayoutProps {
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [aboutBox, setAboutBox] = useState<{ x: number; y: number } | null>(null);
+
+  // Handle right-click on branding area to show About box
+  const handleBrandingContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setAboutBox({ x: e.clientX, y: e.clientY });
+  }, []);
 
   // Determine active item from current path
   const isActive = (path: string) => {
@@ -72,9 +81,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-background text-foreground">
       {/* Sidebar - Workstation Navigation */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h1 className="text-xl font-bold">Knowledge Graph</h1>
-          <p className="text-sm text-muted-foreground">Workstation</p>
+        <div
+          className="p-4 border-b border-border relative overflow-hidden cursor-pointer"
+          onContextMenu={handleBrandingContextMenu}
+        >
+          {/* Animated graph background */}
+          <div className="absolute inset-0 opacity-30">
+            <GraphAnimation
+              width={256}
+              height={80}
+              interactive={true}
+            />
+          </div>
+          {/* Branding text */}
+          <h1 className="text-xl font-bold relative z-10">Knowledge Graph</h1>
+          <p className="text-sm text-muted-foreground relative z-10">Workstation</p>
         </div>
 
         <nav className="flex-1 p-2 overflow-y-auto">
@@ -202,6 +223,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </div>
       </aside>
+
+      {/* About Info Box (shown on right-click in branding area) */}
+      {aboutBox && (
+        <AboutInfoBox
+          x={aboutBox.x}
+          y={aboutBox.y}
+          onDismiss={() => setAboutBox(null)}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
