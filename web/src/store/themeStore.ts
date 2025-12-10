@@ -7,8 +7,8 @@
 
 import { create } from 'zustand';
 
-type ThemePreference = 'light' | 'dark' | 'twilight' | 'system';
-type AppliedTheme = 'light' | 'dark' | 'twilight';
+export type ThemePreference = 'light' | 'dark' | 'twilight' | 'system';
+export type AppliedTheme = 'light' | 'dark' | 'twilight';
 
 interface ThemeStore {
   theme: ThemePreference;

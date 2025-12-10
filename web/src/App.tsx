@@ -13,6 +13,7 @@ import { OAuthCallback } from './components/auth/OAuthCallback';
 import { useVocabularyStore } from './store/vocabularyStore';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
+import { useThemeHarmony } from './hooks/useThemeHarmony';
 import { apiClient } from './api/client';
 
 // Explorer view (existing functionality)
@@ -45,6 +46,9 @@ const AppContent: React.FC = () => {
   const { setTypes, setLoading, setError } = useVocabularyStore();
   const { checkAuth, isAuthenticated } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+
+  // Initialize theme harmony (applies stored color settings)
+  useThemeHarmony();
 
   // Initialize theme on mount
   useEffect(() => {
