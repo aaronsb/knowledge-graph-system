@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { X, Github, BookOpen, Database, Brain, Sparkles } from 'lucide-react';
+import { X, Github, BookOpen, Database, Brain, Sparkles, User, Bot } from 'lucide-react';
 
 export interface AboutInfoBoxProps {
   x: number;
@@ -57,6 +57,11 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
               Explore semantic relationships beyond sequential reading.
             </p>
 
+            <p className="text-muted-foreground dark:text-gray-400 text-xs italic">
+              "Honest architecture - it doesn't pretend continuity exists,
+              but makes ideas persistent in a form we can genuinely engage with."
+            </p>
+
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-card-foreground">
                 <Database className="w-4 h-4 text-blue-500" />
@@ -72,6 +77,24 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
               </div>
             </div>
 
+            {/* Credits */}
+            <div className="pt-2 border-t border-border dark:border-gray-700">
+              <div className="text-xs text-muted-foreground dark:text-gray-500 mb-2">
+                Created by
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-card-foreground">
+                  <User className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Aaron Bockelie</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-card-foreground">
+                  <Bot className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Claude Code (Anthropic)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Links */}
             <div className="pt-2 border-t border-border dark:border-gray-700 flex items-center gap-4">
               <a
                 href="https://github.com/aaronsb/knowledge-graph-system"
@@ -83,7 +106,7 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
                 <span>GitHub</span>
               </a>
               <a
-                href="https://github.com/aaronsb/knowledge-graph-system/tree/main/docs"
+                href="https://aaronsb.github.io/knowledge-graph-system/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-card-foreground transition-colors"
