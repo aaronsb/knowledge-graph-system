@@ -33,6 +33,7 @@ export interface ExplorerProps<TData = any, TSettings = any> {
   onSettingsChange?: (settings: TSettings) => void;
   onNodeClick?: (nodeId: string) => void;
   onSelectionChange?: (selection: string[]) => void;
+  onSendToReports?: () => void;
   className?: string;
 }
 

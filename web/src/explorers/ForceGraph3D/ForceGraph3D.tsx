@@ -21,6 +21,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { getZIndexValue } from '../../config/zIndex';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { FileSpreadsheet } from 'lucide-react';
 import {
   NodeInfoBox,
   EdgeInfoBox,
@@ -42,7 +43,7 @@ import { SLIDER_RANGES } from './types';
 
 export const ForceGraph3D: React.FC<
   ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
-> = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
+> = ({ data, settings, onSettingsChange, onNodeClick, onSendToReports, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
@@ -1930,7 +1931,20 @@ export const ForceGraph3D: React.FC<
 
       {/* Right-side panel stack */}
       <PanelStack side="right" gap={16} initialTop={16}>
-        <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
+        {/* Stats and Send to Reports row */}
+        <div className="flex items-center gap-2">
+          <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
+          {onSendToReports && (
+            <button
+              onClick={onSendToReports}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-lg transition-colors text-sm font-medium"
+              title="Send to Reports"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Reports</span>
+            </button>
+          )}
+        </div>
 
         {onSettingsChange && (
           <GraphSettingsPanel
