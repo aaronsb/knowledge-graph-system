@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
+import { GraphAnimation } from '../home/GraphAnimation';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -72,9 +73,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-background text-foreground">
       {/* Sidebar - Workstation Navigation */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h1 className="text-xl font-bold">Knowledge Graph</h1>
-          <p className="text-sm text-muted-foreground">Workstation</p>
+        <div className="p-4 border-b border-border relative overflow-hidden">
+          {/* Animated graph background */}
+          <div className="absolute inset-0 opacity-30">
+            <GraphAnimation
+              width={256}
+              height={80}
+              interactive={true}
+            />
+          </div>
+          {/* Branding text */}
+          <h1 className="text-xl font-bold relative z-10">Knowledge Graph</h1>
+          <p className="text-sm text-muted-foreground relative z-10">Workstation</p>
         </div>
 
         <nav className="flex-1 p-2 overflow-y-auto">
