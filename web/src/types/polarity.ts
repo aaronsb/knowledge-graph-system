@@ -76,9 +76,15 @@ export interface ConceptSearchResult {
   label: string;
   description?: string;
   similarity?: number;
+  score?: number;          // Alias for similarity in some API responses
+  evidence_count?: number; // Number of evidence instances
 }
 
 export interface ConceptSearchResponse {
   results: ConceptSearchResult[];
   total: number;
+  // Smart search recommendation fields (optional)
+  below_threshold_count?: number;
+  suggested_threshold?: number;
+  top_match?: ConceptSearchResult;
 }

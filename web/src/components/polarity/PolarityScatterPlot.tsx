@@ -236,9 +236,9 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     neutral: 'Show concepts balanced between both poles',
   };
 
-  // Generate regression line points
-  const regressionPoints = useMemo(() => {
-    if (!regressionLine) return [];
+  // Generate regression line points as a tuple for ReferenceLineSegment
+  const regressionPoints = useMemo((): [{ x: number; y: number }, { x: number; y: number }] | null => {
+    if (!regressionLine) return null;
     const { slope, intercept } = regressionLine;
     return [
       { x: -1, y: slope * -1 + intercept },
@@ -348,8 +348,8 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
     const maxDensity = Math.max(...grid.flat());
     if (maxDensity === 0) return null;
 
-    // Render cells directly as JSX (cached)
-    const cells: JSX.Element[] = [];
+    // Render cells directly as React elements (cached)
+    const cells: React.ReactElement[] = [];
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
         const density = grid[y][x];
@@ -369,7 +369,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
               fill={getHeatColor(intensity)}
               fillOpacity={1}
               stroke="none"
-              isFront={false}
+              ifOverflow="hidden"
             />
           );
         }
@@ -667,9 +667,9 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
           )}
 
           {/* Regression line (color shows significance via p-value) */}
-          {visualLayers.regressionLine && regressionLine && (
+          {visualLayers.regressionLine && regressionLine && regressionPoints && (
             <ReferenceLine
-              segment={regressionPoints.map(p => ({ x: p.x, y: p.y }))}
+              segment={regressionPoints}
               stroke={regressionLineColor}
               strokeWidth={2}
               strokeDasharray="5 5"

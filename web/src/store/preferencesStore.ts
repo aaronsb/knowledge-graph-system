@@ -19,6 +19,7 @@ export interface IngestDefaults {
   autoApprove: boolean;
   defaultOntology: string;
   defaultChunkSize: number;
+  defaultOverlapWords: number;
   defaultProcessingMode: 'serial' | 'parallel';
 }
 
@@ -53,6 +54,7 @@ const DEFAULT_INGEST: IngestDefaults = {
   autoApprove: false,
   defaultOntology: '',
   defaultChunkSize: 1000,
+  defaultOverlapWords: 200,
   defaultProcessingMode: 'serial',
 };
 

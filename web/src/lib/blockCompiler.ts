@@ -291,7 +291,7 @@ function compileNeighborhoodBlock(
   inputVariable: string,
   _isFirst: boolean,
   counter: number
-): { cypher: string; outputVariable: string } {
+): { cypher: string; outputVariable: string; pathVariable: string } {
   if (_isFirst) {
     throw new Error('Neighborhood block cannot be the first block');
   }
