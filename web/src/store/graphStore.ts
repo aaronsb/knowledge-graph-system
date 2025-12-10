@@ -132,6 +132,7 @@ interface GraphStore {
     selectedAnalysisId: string | null;
     maxCandidates: number;
     maxHops: number;
+    minSimilarity: number; // Similarity threshold for pole search
     autoDiscover: boolean;
     activeTab: string;
   };
@@ -308,7 +309,8 @@ export const useGraphStore = create<GraphStore>((set) => ({
     analysisHistory: [],
     selectedAnalysisId: null,
     maxCandidates: 20,
-    maxHops: 1,
+    maxHops: 3, // Increased from 1 - BFS optimization (ADR-076) makes higher hops practical
+    minSimilarity: 0.6, // Similarity threshold for pole search
     autoDiscover: true,
     activeTab: 'search',
   },
