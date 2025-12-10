@@ -48,6 +48,7 @@ from ..models.queries import (
 )
 from ..services.query_service import QueryService
 from ..services.diversity_analyzer import DiversityAnalyzer
+from ..lib.pathfinding_facade import PathfindingFacade
 from api.api.lib.age_client import AGEClient
 from api.api.lib.ai_providers import get_provider
 
@@ -1121,94 +1122,74 @@ async def find_connection(
             request.exclude_epistemic_status
         )
 
-        # Build and execute shortest path query
-        query = QueryService.build_shortest_path_query(request.max_hops, allowed_rel_types)
-
-        records = client._execute_cypher(
-            query.replace("$from_id", f"'{request.from_id}'")
-                 .replace("$to_id", f"'{request.to_id}'")
+        # ADR-076: Use Bidirectional BFS instead of exhaustive Cypher patterns
+        pathfinder = PathfindingFacade(client)
+        raw_paths = pathfinder.find_paths(
+            from_id=request.from_id,
+            to_id=request.to_id,
+            max_hops=request.max_hops,
+            max_paths=5,
+            allowed_rel_types=allowed_rel_types
         )
 
-        # Extract properties from AGE vertex and edge objects
+        # Convert facade output to API response format
         paths = []
-        for record in (records or []):
-            # path_nodes is a list of AGE vertex dicts: {id, label, properties: {...}}
-            # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
-
+        for raw_path in raw_paths:
             nodes = []
-            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+            for node_data in raw_path.get('path_nodes', []):
+                concept_id = node_data.get('concept_id', '')
+                label = node_data.get('label', '')
+                description = node_data.get('description', '')
 
-            for node in record['path_nodes']:
-                if isinstance(node, dict):
-                    props = node.get('properties', {})
-                    concept_id = props.get('concept_id', '')
-                    label = props.get('label', '')
-                    description = props.get('description', '')
+                # Calculate grounding strength if requested (default: true)
+                grounding_strength = None
+                if request.include_grounding and concept_id:
+                    try:
+                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                    # Check if this is a metadata node (Source or Instance)
-                    # Metadata nodes lack concept_id and label properties
-                    if not concept_id or not label:
-                        has_metadata_node = True
+                # Fetch sample evidence if requested (ADR-057: include image metadata)
+                sample_evidence = None
+                if request.include_evidence and concept_id:
+                    evidence_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        f"s.content_type as content_type, s.storage_key as storage_key "
+                        f"ORDER BY s.document, s.paragraph "
+                        f"LIMIT 3"
+                    )
+                    if evidence_query:
+                        sample_evidence = [
+                            ConceptInstance(
+                                quote=e['quote'],
+                                document=e['document'],
+                                paragraph=e['paragraph'],
+                                source_id=e['source_id'],
+                                content_type=e.get('content_type'),
+                                has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                storage_key=e.get('storage_key')
+                            )
+                            for e in evidence_query
+                        ]
 
-                    # Calculate grounding strength if requested (default: true)
-                    grounding_strength = None
-                    if request.include_grounding and concept_id:
-                        try:
-                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                        except Exception as e:
-                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+                nodes.append(PathNode(
+                    id=concept_id,
+                    label=label,
+                    description=description,
+                    grounding_strength=grounding_strength,
+                    sample_evidence=sample_evidence
+                ))
 
-                    # Fetch sample evidence if requested (ADR-057: include image metadata)
-                    sample_evidence = None
-                    if request.include_evidence and concept_id:
-                        evidence_query = client._execute_cypher(
-                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.storage_key as storage_key "
-                            f"ORDER BY s.document, s.paragraph "
-                            f"LIMIT 3"
-                        )
-                        if evidence_query:
-                            sample_evidence = [
-                                ConceptInstance(
-                                    quote=e['quote'],
-                                    document=e['document'],
-                                    paragraph=e['paragraph'],
-                                    source_id=e['source_id'],
-                                    content_type=e.get('content_type'),
-                                    has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
-                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
-                                    storage_key=e.get('storage_key')
-                                )
-                                for e in evidence_query
-                            ]
-
-                    nodes.append(PathNode(
-                        id=concept_id,
-                        label=label,
-                        description=description,
-                        grounding_strength=grounding_strength,
-                        sample_evidence=sample_evidence
-                    ))
-
-            # Skip paths that go through Source or Instance nodes
-            if has_metadata_node:
-                continue
-
-            # Relationship type is in the 'label' field of AGE edge object
-            rel_types = []
-            for rel in record['path_rels']:
-                if isinstance(rel, dict):
-                    rel_types.append(rel.get('label', ''))
+            # Extract relationship types from facade output
+            rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
 
             paths.append(ConnectionPath(
                 nodes=nodes,
                 relationships=rel_types,
-                hops=record['hops']
+                hops=raw_path.get('hops', len(rel_types))
             ))
-
-        # Limit to 5 paths after filtering
-        paths = paths[:5]
 
         return FindConnectionResponse(
             from_id=request.from_id,
@@ -1348,94 +1329,74 @@ async def find_connection_by_search(
             request.exclude_epistemic_status
         )
 
-        # Build and execute shortest path query
-        query = QueryService.build_shortest_path_query(request.max_hops, allowed_rel_types)
-
-        records = client._execute_cypher(
-            query.replace("$from_id", f"'{from_concept_id}'")
-                 .replace("$to_id", f"'{to_concept_id}'")
+        # ADR-076: Use Bidirectional BFS instead of exhaustive Cypher patterns
+        pathfinder = PathfindingFacade(client)
+        raw_paths = pathfinder.find_paths(
+            from_id=from_concept_id,
+            to_id=to_concept_id,
+            max_hops=request.max_hops,
+            max_paths=5,
+            allowed_rel_types=allowed_rel_types
         )
 
-        # Extract properties from AGE vertex and edge objects
+        # Convert facade output to API response format
         paths = []
-        for record in (records or []):
-            # path_nodes is a list of AGE vertex dicts: {id, label, properties: {...}}
-            # path_rels is a list of AGE edge dicts: {id, label, properties: {...}}
-
+        for raw_path in raw_paths:
             nodes = []
-            has_metadata_node = False  # Flag to skip paths with Source/Instance nodes
+            for node_data in raw_path.get('path_nodes', []):
+                concept_id = node_data.get('concept_id', '')
+                label = node_data.get('label', '')
+                description = node_data.get('description', '')
 
-            for node in record['path_nodes']:
-                if isinstance(node, dict):
-                    props = node.get('properties', {})
-                    concept_id = props.get('concept_id', '')
-                    label = props.get('label', '')
-                    description = props.get('description', '')
+                # Calculate grounding strength if requested (default: true)
+                grounding_strength = None
+                if request.include_grounding and concept_id:
+                    try:
+                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-                    # Check if this is a metadata node (Source or Instance)
-                    # Metadata nodes lack concept_id and label properties
-                    if not concept_id or not label:
-                        has_metadata_node = True
+                # Fetch sample evidence if requested (ADR-057: include image metadata)
+                sample_evidence = None
+                if request.include_evidence and concept_id:
+                    evidence_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        f"s.content_type as content_type, s.storage_key as storage_key "
+                        f"ORDER BY s.document, s.paragraph "
+                        f"LIMIT 3"
+                    )
+                    if evidence_query:
+                        sample_evidence = [
+                            ConceptInstance(
+                                quote=e['quote'],
+                                document=e['document'],
+                                paragraph=e['paragraph'],
+                                source_id=e['source_id'],
+                                content_type=e.get('content_type'),
+                                has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                                storage_key=e.get('storage_key')
+                            )
+                            for e in evidence_query
+                        ]
 
-                    # Calculate grounding strength if requested (default: true)
-                    grounding_strength = None
-                    if request.include_grounding and concept_id:
-                        try:
-                            grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                        except Exception as e:
-                            logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+                nodes.append(PathNode(
+                    id=concept_id,
+                    label=label,
+                    description=description,
+                    grounding_strength=grounding_strength,
+                    sample_evidence=sample_evidence
+                ))
 
-                    # Fetch sample evidence if requested (ADR-057: include image metadata)
-                    sample_evidence = None
-                    if request.include_evidence and concept_id:
-                        evidence_query = client._execute_cypher(
-                            f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.storage_key as storage_key "
-                            f"ORDER BY s.document, s.paragraph "
-                            f"LIMIT 3"
-                        )
-                        if evidence_query:
-                            sample_evidence = [
-                                ConceptInstance(
-                                    quote=e['quote'],
-                                    document=e['document'],
-                                    paragraph=e['paragraph'],
-                                    source_id=e['source_id'],
-                                    content_type=e.get('content_type'),
-                                    has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
-                                    image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
-                                    storage_key=e.get('storage_key')
-                                )
-                                for e in evidence_query
-                            ]
-
-                    nodes.append(PathNode(
-                        id=concept_id,
-                        label=label,
-                        description=description,
-                        grounding_strength=grounding_strength,
-                        sample_evidence=sample_evidence
-                    ))
-
-            # Skip paths that go through Source or Instance nodes
-            if has_metadata_node:
-                continue
-
-            # Relationship type is in the 'label' field of AGE edge object
-            rel_types = []
-            for rel in record['path_rels']:
-                if isinstance(rel, dict):
-                    rel_types.append(rel.get('label', ''))
+            # Extract relationship types from facade output
+            rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
 
             paths.append(ConnectionPath(
                 nodes=nodes,
                 relationships=rel_types,
-                hops=record['hops']
+                hops=raw_path.get('hops', len(rel_types))
             ))
-
-        # Limit to 5 paths after filtering
-        paths = paths[:5]
 
         return FindConnectionBySearchResponse(
             from_query=request.from_query,
