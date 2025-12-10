@@ -13,7 +13,8 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Loader2, Network, GitBranch, Blocks, Code, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Network, GitBranch, Blocks, Code, ChevronDown, ChevronRight } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
@@ -471,7 +472,7 @@ LIMIT 50`);
                       className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {isLoadingConcepts && (
-                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+                      <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                     )}
                   </div>
 
@@ -637,7 +638,7 @@ LIMIT 50`);
                       className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {isLoadingNeighborhoodSearch && (
-                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+                      <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                     )}
                   </div>
 
@@ -770,7 +771,7 @@ LIMIT 50`);
                       className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {isLoadingPathFromSearch && (
-                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+                      <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                     )}
                   </div>
 
@@ -834,7 +835,7 @@ LIMIT 50`);
                         className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                       {isLoadingPathToSearch && (
-                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+                        <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                       )}
                     </div>
 
@@ -936,7 +937,7 @@ LIMIT 50`);
                   >
                     {isLoadingPath ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <LoadingSpinner className="text-primary-foreground" />
                         Searching...
                       </>
                     ) : (
@@ -1125,7 +1126,7 @@ LIMIT 50`);
             >
               {isExecutingCypher ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner className="text-primary-foreground" />
                   Executing Query...
                 </>
               ) : (
