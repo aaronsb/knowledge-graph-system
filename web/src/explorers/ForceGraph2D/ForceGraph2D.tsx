@@ -15,6 +15,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { FileSpreadsheet } from 'lucide-react';
 import {
   NodeInfoBox,
   EdgeInfoBox,
@@ -120,7 +121,7 @@ function calculateEdgeMidpoint(
 
 export const ForceGraph2D: React.FC<
   ExplorerProps<ForceGraph2DData, ForceGraph2DSettings>
-> = ({ data, settings, onSettingsChange, onNodeClick, className }) => {
+> = ({ data, settings, onSettingsChange, onNodeClick, onSendToReports, className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1000, height: 800 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -1734,7 +1735,20 @@ export const ForceGraph2D: React.FC<
 
       {/* Right-side panel stack */}
       <PanelStack side="right" gap={16} initialTop={16}>
-        <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
+        {/* Stats and Send to Reports row */}
+        <div className="flex items-center gap-2">
+          <StatsPanel nodeCount={filteredData.nodes.length} edgeCount={filteredData.links.length} />
+          {onSendToReports && (
+            <button
+              onClick={onSendToReports}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-lg transition-colors text-sm font-medium"
+              title="Send to Reports"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Reports</span>
+            </button>
+          )}
+        </div>
 
         {onSettingsChange && (
           <GraphSettingsPanel

@@ -41,6 +41,9 @@ import {
   Lock,
   Unlock,
   GitBranch,
+  Cpu,
+  BrainCircuit,
+  Zap,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
@@ -73,20 +76,31 @@ interface UserInfo {
 }
 
 interface SystemStatus {
-  database: {
-    connected: boolean;
-    postgres_version?: string;
-    age_version?: string;
+  docker: {
+    running: boolean;
+    container_name?: string;
+    status?: string;
+    ports?: string;
   };
-  jobs: {
-    pending: number;
-    running: number;
-    completed: number;
-    failed: number;
-  };
-  storage?: {
+  database_connection: {
     connected: boolean;
-    bucket_count?: number;
+    uri: string;
+    error?: string;
+  };
+  database_stats?: {
+    concepts: number;
+    sources: number;
+    instances: number;
+    relationships: number;
+  };
+  python_env: {
+    venv_exists: boolean;
+    python_version?: string;
+  };
+  configuration: {
+    env_exists: boolean;
+    anthropic_key_configured: boolean;
+    openai_key_configured: boolean;
   };
 }
 
@@ -641,6 +655,44 @@ export const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
+  const [schedulerStatus, setSchedulerStatus] = useState<{
+    jobs_by_status: Record<string, number>;
+    last_cleanup: string | null;
+    next_cleanup: string | null;
+  } | null>(null);
+
+  // AI Configuration states
+  const [embeddingConfigs, setEmbeddingConfigs] = useState<Array<{
+    id: number;
+    provider: string;
+    model_name: string;
+    embedding_dimensions: number;
+    precision: string;
+    device: string | null;
+    active: boolean;
+    delete_protected: boolean;
+    change_protected: boolean;
+    updated_at: string;
+    updated_by: string;
+  }>>([]);
+  const [extractionConfig, setExtractionConfig] = useState<{
+    provider: string;
+    model: string;
+    supports_vision: boolean;
+    supports_json_mode: boolean;
+    max_tokens: number;
+    rate_limit_config?: {
+      max_concurrent_requests: number;
+      max_retries: number;
+    };
+  } | null>(null);
+  const [apiKeys, setApiKeys] = useState<Array<{
+    provider: string;
+    configured: boolean;
+    validation_status: string | null;
+    masked_key: string | null;
+    last_validated_at: string | null;
+  }>>([]);
 
   // RBAC data states
   const [roles, setRoles] = useState<RoleInfo[]>([]);
@@ -710,12 +762,20 @@ export const AdminDashboard: React.FC = () => {
           setRoles(rolesData);
           setResources(resourcesData);
         } else if (activeTab === 'system' && canViewSystemStatus) {
-          const [status, stats] = await Promise.all([
+          const [status, stats, scheduler, embeddings, extraction, keys] = await Promise.all([
             apiClient.getSystemStatus().catch(() => null),
             apiClient.getDatabaseStats().catch(() => null),
+            apiClient.getSchedulerStatus().catch(() => null),
+            apiClient.listEmbeddingConfigs().catch(() => []),
+            apiClient.getExtractionConfig().catch(() => null),
+            apiClient.listApiKeys().catch(() => []),
           ]);
           setSystemStatus(status);
           setDbStats(stats);
+          setSchedulerStatus(scheduler);
+          setEmbeddingConfigs(embeddings);
+          setExtractionConfig(extraction);
+          setApiKeys(keys);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -1532,18 +1592,26 @@ export const AdminDashboard: React.FC = () => {
           {!loading && activeTab === 'system' && canViewSystemStatus && (
             <>
               <Section
-                title="System Status"
+                title="System Config"
                 icon={<Server className="w-5 h-5" />}
                 action={
                   <button
                     onClick={async () => {
                       setLoading(true);
-                      const [status, stats] = await Promise.all([
+                      const [status, stats, scheduler, embeddings, extraction, keys] = await Promise.all([
                         apiClient.getSystemStatus().catch(() => null),
                         apiClient.getDatabaseStats().catch(() => null),
+                        apiClient.getSchedulerStatus().catch(() => null),
+                        apiClient.listEmbeddingConfigs().catch(() => []),
+                        apiClient.getExtractionConfig().catch(() => null),
+                        apiClient.listApiKeys().catch(() => []),
                       ]);
                       setSystemStatus(status);
                       setDbStats(stats);
+                      setSchedulerStatus(scheduler);
+                      setEmbeddingConfigs(embeddings);
+                      setExtractionConfig(extraction);
+                      setApiKeys(keys);
                       setLoading(false);
                     }}
                     className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -1555,32 +1623,48 @@ export const AdminDashboard: React.FC = () => {
               >
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <StatusBadge
-                    connected={systemStatus?.database?.connected ?? false}
-                    label={systemStatus?.database?.connected ? 'Database Connected' : 'Database Offline'}
+                    connected={systemStatus?.database_connection?.connected ?? false}
+                    label={systemStatus?.database_connection?.connected ? 'Database Connected' : 'Database Offline'}
                   />
                   <StatusBadge
-                    connected={systemStatus?.storage?.connected ?? false}
-                    label={systemStatus?.storage?.connected ? 'Storage Connected' : 'Storage Offline'}
+                    connected={systemStatus?.docker?.running ?? false}
+                    label={systemStatus?.docker?.running ? 'Container Running' : 'Container Offline'}
                   />
                 </div>
 
-                {systemStatus?.database && (
+                {systemStatus && (
                   <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                    {systemStatus.database.postgres_version && (
+                    {systemStatus.python_env?.python_version && (
                       <div>
-                        <span className="text-muted-foreground dark:text-gray-400">PostgreSQL:</span>
+                        <span className="text-muted-foreground dark:text-gray-400">Python:</span>
                         <span className="ml-2 font-mono text-foreground dark:text-gray-200">
-                          {systemStatus.database.postgres_version}
+                          {systemStatus.python_env.python_version}
                         </span>
                       </div>
                     )}
-                    {systemStatus.database.age_version && (
+                    {systemStatus.docker?.status && (
                       <div>
-                        <span className="text-muted-foreground dark:text-gray-400">Apache AGE:</span>
+                        <span className="text-muted-foreground dark:text-gray-400">Docker:</span>
                         <span className="ml-2 font-mono text-foreground dark:text-gray-200">
-                          {systemStatus.database.age_version}
+                          {systemStatus.docker.status}
                         </span>
                       </div>
+                    )}
+                    {systemStatus.configuration && (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground dark:text-gray-400">OpenAI Key:</span>
+                          <span className={`ml-2 font-mono ${systemStatus.configuration.openai_key_configured ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {systemStatus.configuration.openai_key_configured ? 'Configured' : 'Not Set'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground dark:text-gray-400">Anthropic Key:</span>
+                          <span className={`ml-2 font-mono ${systemStatus.configuration.anthropic_key_configured ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {systemStatus.configuration.anthropic_key_configured ? 'Configured' : 'Not Set'}
+                          </span>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
@@ -1594,25 +1678,25 @@ export const AdminDashboard: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
-                        {dbStats.nodes?.Concept?.toLocaleString() ?? 0}
+                        {(dbStats.nodes?.concepts ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Concepts</div>
                     </div>
                     <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
-                        {dbStats.nodes?.Source?.toLocaleString() ?? 0}
+                        {(dbStats.nodes?.sources ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Sources</div>
                     </div>
                     <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
-                        {dbStats.nodes?.Instance?.toLocaleString() ?? 0}
+                        {(dbStats.nodes?.instances ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Instances</div>
                     </div>
                     <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg">
                       <div className="text-2xl font-bold text-foreground dark:text-gray-200">
-                        {dbStats.relationships?.total?.toLocaleString() ?? 0}
+                        {(dbStats.relationships?.total ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-muted-foreground dark:text-gray-400">Relationships</div>
                     </div>
@@ -1628,29 +1712,29 @@ export const AdminDashboard: React.FC = () => {
                 title="Job Queue"
                 icon={<Activity className="w-5 h-5" />}
               >
-                {systemStatus?.jobs ? (
+                {schedulerStatus?.jobs_by_status ? (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                       <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-                        {systemStatus.jobs.pending}
+                        {(schedulerStatus.jobs_by_status.pending ?? 0) + (schedulerStatus.jobs_by_status.awaiting_approval ?? 0)}
                       </div>
                       <div className="text-sm text-yellow-600 dark:text-yellow-400">Pending</div>
                     </div>
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                        {systemStatus.jobs.running}
+                        {schedulerStatus.jobs_by_status.processing ?? 0}
                       </div>
                       <div className="text-sm text-blue-600 dark:text-blue-400">Running</div>
                     </div>
                     <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {systemStatus.jobs.completed}
+                        {schedulerStatus.jobs_by_status.completed ?? 0}
                       </div>
                       <div className="text-sm text-green-600 dark:text-green-400">Completed</div>
                     </div>
                     <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                       <div className="text-2xl font-bold text-red-700 dark:text-red-300">
-                        {systemStatus.jobs.failed}
+                        {schedulerStatus.jobs_by_status.failed ?? 0}
                       </div>
                       <div className="text-sm text-red-600 dark:text-red-400">Failed</div>
                     </div>
@@ -1693,6 +1777,195 @@ export const AdminDashboard: React.FC = () => {
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground dark:text-gray-500">
                   API: {API_BASE_URL}
+                </p>
+              </Section>
+
+              {/* Embedding Profiles Section */}
+              <Section
+                title="Embedding Profiles"
+                icon={<Cpu className="w-5 h-5" />}
+              >
+                <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                  Vector embedding model configurations for semantic search.
+                </p>
+                {embeddingConfigs.length > 0 ? (
+                  <div className="space-y-3">
+                    {embeddingConfigs.map((config) => (
+                      <div
+                        key={config.id}
+                        className={`p-4 rounded-lg border ${
+                          config.active
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                            : 'bg-muted/50 dark:bg-gray-800/50 border-border dark:border-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {config.active ? (
+                              <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-medium rounded">
+                                ACTIVE
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs font-medium rounded">
+                                Inactive
+                              </span>
+                            )}
+                            <span className="font-medium text-foreground dark:text-gray-200">
+                              Config {config.id}
+                            </span>
+                            {config.delete_protected && (
+                              <Lock className="w-3 h-3 text-yellow-600 dark:text-yellow-400" title="Delete protected" />
+                            )}
+                            {config.change_protected && (
+                              <Shield className="w-3 h-3 text-blue-600 dark:text-blue-400" title="Change protected" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground dark:text-gray-400">Provider:</span>
+                            <span className="ml-1 text-foreground dark:text-gray-200">{config.provider}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground dark:text-gray-400">Model:</span>
+                            <span className="ml-1 text-foreground dark:text-gray-200 font-mono text-xs">{config.model_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground dark:text-gray-400">Dims:</span>
+                            <span className="ml-1 text-foreground dark:text-gray-200">{config.embedding_dimensions}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground dark:text-gray-400">Device:</span>
+                            <span className="ml-1 text-foreground dark:text-gray-200">{config.device ?? 'cloud'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground dark:text-gray-400 text-center py-4">
+                    No embedding configurations found.
+                  </p>
+                )}
+                <p className="mt-3 text-xs text-muted-foreground dark:text-gray-500">
+                  Use <code className="bg-muted dark:bg-gray-700 px-1 rounded">kg admin embedding</code> to manage profiles
+                </p>
+              </Section>
+
+              {/* Extraction Config Section */}
+              <Section
+                title="AI Extraction"
+                icon={<BrainCircuit className="w-5 h-5" />}
+              >
+                <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                  LLM provider for concept extraction from documents.
+                </p>
+                {extractionConfig ? (
+                  <div className="p-4 bg-muted/50 dark:bg-gray-800/50 rounded-lg border border-border dark:border-gray-700">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground dark:text-gray-400">Provider:</span>
+                        <span className="ml-2 font-medium text-foreground dark:text-gray-200 capitalize">{extractionConfig.provider}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground dark:text-gray-400">Model:</span>
+                        <span className="ml-2 font-mono text-foreground dark:text-gray-200">{extractionConfig.model}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground dark:text-gray-400">Max Tokens:</span>
+                        <span className="ml-2 text-foreground dark:text-gray-200">{extractionConfig.max_tokens?.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground dark:text-gray-400">Vision:</span>
+                        <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                          {extractionConfig.supports_vision ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground dark:text-gray-400">JSON Mode:</span>
+                        <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                          {extractionConfig.supports_json_mode ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      {extractionConfig.rate_limit_config && (
+                        <div>
+                          <span className="text-muted-foreground dark:text-gray-400">Concurrency:</span>
+                          <span className="ml-2 text-foreground dark:text-gray-200">
+                            {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground dark:text-gray-400 text-center py-4">
+                    No extraction configuration found.
+                  </p>
+                )}
+                <p className="mt-3 text-xs text-muted-foreground dark:text-gray-500">
+                  Use <code className="bg-muted dark:bg-gray-700 px-1 rounded">kg admin extraction</code> to configure
+                </p>
+              </Section>
+
+              {/* API Keys Section */}
+              <Section
+                title="API Keys"
+                icon={<Key className="w-5 h-5" />}
+              >
+                <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+                  API keys for AI providers (encrypted at rest).
+                </p>
+                {apiKeys.length > 0 ? (
+                  <div className="space-y-2">
+                    {apiKeys.map((key) => (
+                      <div
+                        key={key.provider}
+                        className="flex items-center justify-between p-3 bg-muted/50 dark:bg-gray-800/50 rounded-lg border border-border dark:border-gray-700"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-foreground dark:text-gray-200 capitalize w-24">
+                            {key.provider}
+                          </span>
+                          {key.configured ? (
+                            <>
+                              {key.validation_status === 'valid' ? (
+                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Valid
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-sm">
+                                  <AlertCircle className="w-4 h-4" />
+                                  {key.validation_status ?? 'Unknown'}
+                                </span>
+                              )}
+                              {key.masked_key && (
+                                <span className="text-xs text-muted-foreground dark:text-gray-500 font-mono">
+                                  {key.masked_key}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground dark:text-gray-500 text-sm">
+                              Not configured
+                            </span>
+                          )}
+                        </div>
+                        {key.last_validated_at && (
+                          <span className="text-xs text-muted-foreground dark:text-gray-500">
+                            Validated: {new Date(key.last_validated_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground dark:text-gray-400 text-center py-4">
+                    No API keys configured.
+                  </p>
+                )}
+                <p className="mt-3 text-xs text-muted-foreground dark:text-gray-500">
+                  Use <code className="bg-muted dark:bg-gray-700 px-1 rounded">kg admin keys</code> to manage keys
                 </p>
               </Section>
             </>

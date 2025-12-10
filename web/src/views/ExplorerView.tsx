@@ -9,7 +9,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileSpreadsheet } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { useGraphStore } from '../store/graphStore';
 import { useReportStore } from '../store/reportStore';
@@ -448,19 +447,8 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
             settings={explorerSettings}
             onSettingsChange={setExplorerSettings}
             onNodeClick={handleNodeClick}
+            onSendToReports={rawGraphData && rawGraphData.nodes.length > 0 ? handleSendToReports : undefined}
           />
-        )}
-
-        {/* Send to Reports button - shown when graph has data */}
-        {rawGraphData && rawGraphData.nodes.length > 0 && !isLoading && (
-          <button
-            onClick={handleSendToReports}
-            className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-lg transition-colors z-20"
-            title="Send to Reports"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span className="text-sm font-medium">Send to Reports</span>
-          </button>
         )}
       </div>
     </div>

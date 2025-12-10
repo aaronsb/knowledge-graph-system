@@ -794,24 +794,37 @@ class APIClient {
 
   /**
    * Get system status (admin)
+   * Returns actual API response structure from /admin/status
    */
   async getSystemStatus(): Promise<{
-    database: {
+    docker: {
+      running: boolean;
+      container_name?: string;
+      status?: string;
+      ports?: string;
+    };
+    database_connection: {
       connected: boolean;
-      postgres_version?: string;
-      age_version?: string;
+      uri: string;
+      error?: string;
     };
-    jobs: {
-      pending: number;
-      running: number;
-      completed: number;
-      failed: number;
+    database_stats?: {
+      concepts: number;
+      sources: number;
+      instances: number;
+      relationships: number;
     };
-    storage?: {
-      connected: boolean;
-      bucket_count?: number;
+    python_env: {
+      venv_exists: boolean;
+      python_version?: string;
     };
-    uptime_seconds?: number;
+    configuration: {
+      env_exists: boolean;
+      anthropic_key_configured: boolean;
+      openai_key_configured: boolean;
+    };
+    neo4j_browser_url?: string;
+    bolt_url?: string;
   }> {
     const response = await this.client.get('/admin/status');
     return response.data;
@@ -848,26 +861,145 @@ class APIClient {
 
   /**
    * Get scheduler status (admin)
+   * Returns stats object with job counts from /admin/scheduler/status
    */
   async getSchedulerStatus(): Promise<{
     jobs_by_status: Record<string, number>;
     last_cleanup: string | null;
     next_cleanup: string | null;
-  }> {
+  } | null> {
     const response = await this.client.get('/admin/scheduler/status');
-    return response.data;
+    // API returns { running, config, stats } - extract stats for convenience
+    return response.data?.stats ?? null;
   }
 
   /**
    * Get database statistics
-   * Response format: { nodes: { Concept, Source, Instance }, relationships: { total, by_type } }
+   * Response format: { nodes: { concepts, sources, instances }, relationships: { total, by_type } }
    */
   async getDatabaseStats(): Promise<{
-    nodes: { Concept?: number; Source?: number; Instance?: number };
+    nodes: { concepts?: number; sources?: number; instances?: number };
     relationships: { total?: number; by_type?: Array<{ rel_type: string; count: number }> };
     metrics?: Record<string, unknown>;
   }> {
     const response = await this.client.get('/database/stats');
+    return response.data;
+  }
+
+  // ============================================================
+  // AI CONFIGURATION (ADR-039, ADR-041)
+  // ============================================================
+
+  /**
+   * List all embedding configurations (admin)
+   */
+  async listEmbeddingConfigs(): Promise<Array<{
+    id: number;
+    provider: string;
+    model_name: string;
+    embedding_dimensions: number;
+    precision: string;
+    device: string | null;
+    active: boolean;
+    delete_protected: boolean;
+    change_protected: boolean;
+    created_at: string;
+    updated_at: string;
+    updated_by: string;
+  }>> {
+    const response = await this.client.get('/admin/embedding/configs');
+    return response.data;
+  }
+
+  /**
+   * Activate an embedding configuration (admin)
+   */
+  async activateEmbeddingConfig(configId: number, force?: boolean): Promise<{
+    success: boolean;
+    message: string;
+    config_id: number;
+    previous_config_id?: number;
+  }> {
+    const params = force ? { force: true } : {};
+    const response = await this.client.post(`/admin/embedding/config/${configId}/activate`, null, { params });
+    return response.data;
+  }
+
+  /**
+   * Get extraction configuration (admin)
+   */
+  async getExtractionConfig(): Promise<{
+    provider: string;
+    model: string;
+    supports_vision: boolean;
+    supports_json_mode: boolean;
+    max_tokens: number;
+    rate_limit_config?: {
+      max_concurrent_requests: number;
+      max_retries: number;
+    };
+    config_id?: number;
+  }> {
+    const response = await this.client.get('/admin/extraction/config');
+    return response.data;
+  }
+
+  /**
+   * Update extraction configuration (admin)
+   */
+  async updateExtractionConfig(config: {
+    provider: string;
+    model: string;
+    max_concurrent_requests?: number;
+    max_retries?: number;
+    updated_by?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    config: any;
+  }> {
+    const response = await this.client.post('/admin/extraction/config', config);
+    return response.data;
+  }
+
+  /**
+   * List API keys with validation status (admin)
+   */
+  async listApiKeys(): Promise<Array<{
+    provider: string;
+    configured: boolean;
+    validation_status: string | null;
+    masked_key: string | null;
+    last_validated_at: string | null;
+    validation_error: string | null;
+  }>> {
+    const response = await this.client.get('/admin/keys');
+    return response.data;
+  }
+
+  /**
+   * Set API key for a provider (admin)
+   */
+  async setApiKey(provider: string, apiKey: string): Promise<{
+    success: boolean;
+    message: string;
+    provider: string;
+    valid: boolean;
+  }> {
+    const formData = new FormData();
+    formData.append('api_key', apiKey);
+    const response = await this.client.post(`/admin/keys/${provider}`, formData);
+    return response.data;
+  }
+
+  /**
+   * Delete API key for a provider (admin)
+   */
+  async deleteApiKey(provider: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await this.client.delete(`/admin/keys/${provider}`);
     return response.data;
   }
 
