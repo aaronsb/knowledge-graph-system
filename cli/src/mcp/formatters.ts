@@ -303,6 +303,115 @@ export function formatRelatedConcepts(result: RelatedConceptsResponse): string {
 }
 
 /**
+ * Format job list as markdown (token-efficient summary view)
+ */
+export function formatJobList(jobs: JobStatus[]): string {
+  let output = `# Ingestion Jobs\n\n`;
+  output += `Total: ${jobs.length} job(s)\n\n`;
+
+  if (jobs.length === 0) {
+    output += 'No jobs found.\n';
+    return output;
+  }
+
+  // Group by status for quick overview
+  const byStatus: { [key: string]: JobStatus[] } = {};
+  jobs.forEach(job => {
+    const status = job.status;
+    if (!byStatus[status]) byStatus[status] = [];
+    byStatus[status].push(job);
+  });
+
+  // Status summary
+  output += '## Status Summary\n\n';
+  const statusOrder = ['processing', 'awaiting_approval', 'pending', 'approved', 'queued', 'completed', 'failed', 'cancelled'];
+  statusOrder.forEach(status => {
+    if (byStatus[status] && byStatus[status].length > 0) {
+      const icon = status === 'completed' ? '✓' :
+                   status === 'processing' ? '▶' :
+                   status === 'awaiting_approval' ? '⏳' :
+                   status === 'failed' ? '✗' :
+                   status === 'cancelled' ? '⊘' : '○';
+      output += `- ${icon} **${status}**: ${byStatus[status].length}\n`;
+    }
+  });
+  output += '\n';
+
+  // Detailed list
+  output += '## Jobs\n\n';
+
+  jobs.forEach((job, idx) => {
+    const statusIcon = job.status === 'completed' ? '✓' :
+                       job.status === 'processing' ? '▶' :
+                       job.status === 'awaiting_approval' ? '⏳' :
+                       job.status === 'failed' ? '✗' :
+                       job.status === 'cancelled' ? '⊘' : '○';
+
+    // Header with status and filename
+    const filename = job.filename || job.analysis?.file_stats?.filename || 'Unknown';
+    output += `### ${idx + 1}. ${statusIcon} ${filename}\n\n`;
+
+    // Core info
+    output += `- **Job ID:** ${job.job_id}\n`;
+    output += `- **Status:** ${job.status}`;
+    if (job.progress?.stage) {
+      output += ` (${job.progress.stage})`;
+    }
+    output += '\n';
+
+    if (job.ontology) {
+      output += `- **Ontology:** ${job.ontology}\n`;
+    }
+
+    // Progress for processing jobs
+    if (job.status === 'processing' && job.progress) {
+      const p = job.progress;
+      if (p.percent !== undefined) {
+        output += `- **Progress:** ${p.percent}%`;
+        if (p.chunks_total !== undefined) {
+          output += ` (${p.chunks_processed || 0}/${p.chunks_total} chunks)`;
+        }
+        output += '\n';
+      }
+      if (p.concepts_created !== undefined) {
+        output += `- **Created:** ${p.concepts_created} concepts, ${p.sources_created || 0} sources\n`;
+      }
+    }
+
+    // Cost for awaiting_approval
+    if (job.status === 'awaiting_approval' && job.analysis?.cost_estimate?.total) {
+      const cost = job.analysis.cost_estimate.total;
+      output += `- **Est. Cost:** $${cost.cost_low.toFixed(3)} - $${cost.cost_high.toFixed(3)}\n`;
+    }
+
+    // Results for completed jobs
+    if (job.status === 'completed' && job.result?.stats) {
+      const s = job.result.stats;
+      output += `- **Result:** ${s.concepts_created || 0} concepts, ${s.relationships_created || 0} relationships\n`;
+      if (job.result.cost?.total) {
+        output += `- **Cost:** ${job.result.cost.total}\n`;
+      }
+    }
+
+    // Error for failed jobs
+    if (job.status === 'failed' && job.error) {
+      const truncatedError = job.error.length > 100 ? job.error.substring(0, 100) + '...' : job.error;
+      output += `- **Error:** ${truncatedError}\n`;
+    }
+
+    output += '\n';
+  });
+
+  // Usage hints
+  output += '## Actions\n\n';
+  output += '- Use `job` tool with action "status" and job_id for full details\n';
+  output += '- Use `job` tool with action "approve" to start awaiting jobs\n';
+  output += '- Use `job` tool with action "cancel" to cancel pending jobs\n';
+
+  return output;
+}
+
+/**
  * Format job status as markdown (token-efficient)
  */
 export function formatJobStatus(job: JobStatus): string {
