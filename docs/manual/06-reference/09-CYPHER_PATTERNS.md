@@ -115,23 +115,11 @@ LIMIT 30
 
 Find connections between concepts with various scoring strategies.
 
-### 1. Shortest Path with Regex Matching
+> **⚠️ Apache AGE Limitation:** AGE does NOT support Neo4j's `shortestPath()` function.
+> See [GitHub Issue #2162](https://github.com/apache/age/issues/2162) and [ADR-076](../../architecture/ADR-076-pathfinding-optimization.md).
+> Use variable-length patterns with caution - they enumerate ALL paths and have exponential complexity.
 
-Simple shortest path between fuzzy-matched concepts.
-
-```cypher
-MATCH (start:Concept), (end:Concept)
-WHERE start.label =~ "(?i).*agile.*"
-  AND end.label =~ "(?i).*human.*"
-MATCH path = shortestPath((start)-[*]-(end))
-RETURN start.label, end.label, path, length(path) as pathLength
-ORDER BY pathLength ASC
-LIMIT 10
-```
-
-**Returns:** Shortest connection between any "agile" and "human" concepts.
-
-### 2. All Paths with Length Limit
+### 1. All Paths with Length Limit (Use with Caution)
 
 More comprehensive - finds multiple paths up to specified depth.
 
@@ -173,16 +161,18 @@ LIMIT 10
 
 **Use when:** Your graph has `weight` or `confidence` properties on relationships.
 
-### 4. Multiple Start/End Concepts with Best Path
+### 4. Multiple Start/End Concepts with Bounded Path
 
 Search across multiple concept variations simultaneously.
+
+> **Note:** This uses variable-length patterns, not `shortestPath()` (which AGE doesn't support).
+> Keep `max_hops` ≤ 4 to avoid exponential blowup.
 
 ```cypher
 MATCH (start:Concept), (end:Concept)
 WHERE start.label =~ "(?i).*(agile|scrum|lean).*"
   AND end.label =~ "(?i).*(human|person|people).*"
-MATCH path = shortestPath((start)-[*..6]-(end))
-WHERE length(path) > 0
+MATCH path = (start)-[*1..4]-(end)
 WITH start, end, path, length(path) as pathLength
 RETURN start.label as fromConcept,
        end.label as toConcept,
@@ -342,13 +332,23 @@ LIMIT 10
    - AGE doesn't support ORDER BY with path variables directly
    - Use WITH clause to extract sortable values first:
    ```cypher
-   MATCH path = shortestPath(...)
+   MATCH path = (start)-[*1..4]-(end)
    WITH path, length(path) as len
    RETURN path, len
    ORDER BY len  -- Now works!
    ```
 
-3. **Result Type Casting:**
+3. **No `shortestPath()` Function:**
+   - AGE does NOT support Neo4j's `shortestPath()` or `SHORTEST` keyword
+   - See [GitHub Issue #2162](https://github.com/apache/age/issues/2162)
+   - Use application-level BFS for optimal pathfinding (see [ADR-076](../../architecture/ADR-076-pathfinding-optimization.md))
+
+4. **Variable-Length Path Performance:**
+   - Patterns like `-[*1..N]-` enumerate ALL paths (exponential complexity)
+   - Keep max hops ≤ 4 for interactive queries
+   - See [GitHub Issue #195](https://github.com/apache/age/issues/195) for benchmarks
+
+5. **Result Type Casting:**
    - AGE returns `agtype` values
    - Parse with `_parse_agtype()` in Python
    - Extract column names with `_extract_column_spec()`
