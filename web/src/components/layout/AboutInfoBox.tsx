@@ -64,15 +64,15 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-card-foreground">
-                <Database className="w-4 h-4 text-blue-500" />
+                <Database className="w-4 h-4 text-status-info" />
                 <span>Apache AGE / PostgreSQL</span>
               </div>
               <div className="flex items-center gap-2 text-card-foreground">
-                <Brain className="w-4 h-4 text-purple-500" />
+                <Brain className="w-4 h-4 text-primary" />
                 <span>LLM Concept Extraction</span>
               </div>
               <div className="flex items-center gap-2 text-card-foreground">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Sparkles className="w-4 h-4 text-status-warning" />
                 <span>Vector Similarity Search</span>
               </div>
             </div>
@@ -84,11 +84,11 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 text-xs text-card-foreground">
-                  <User className="w-3.5 h-3.5 text-blue-500" />
+                  <User className="w-3.5 h-3.5 text-status-info" />
                   <span>Aaron Bockelie</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-card-foreground">
-                  <Bot className="w-3.5 h-3.5 text-orange-500" />
+                  <Bot className="w-3.5 h-3.5 text-primary" />
                   <span>Claude Code (Anthropic)</span>
                 </div>
               </div>

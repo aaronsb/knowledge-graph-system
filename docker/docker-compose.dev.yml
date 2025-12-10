@@ -59,6 +59,7 @@ services:
       - ../web/public:/app/public
       - ../web/index.html:/app/index.html
       - ../web/vite.config.ts:/app/vite.config.ts
+      - ../web/tailwind.config.js:/app/tailwind.config.js
       - ../web/tsconfig.json:/app/tsconfig.json
       - ../web/tsconfig.node.json:/app/tsconfig.node.json
       # Preserve node_modules from image (don't mount from host)

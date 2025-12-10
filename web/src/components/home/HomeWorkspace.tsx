@@ -91,31 +91,31 @@ export const HomeWorkspace: React.FC = () => {
     }
   };
 
-  // Quick action cards
+  // Quick action cards - using semantic theme colors
   const quickActions = [
     {
       icon: Network,
       label: 'Explore Graph',
       description: 'Interactive 2D visualization',
       path: '/explore/2d',
-      color: 'text-blue-500 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-primary',
+      bg: 'bg-primary/10',
     },
     {
       icon: Upload,
       label: 'Ingest Content',
       description: 'Upload documents',
       path: '/ingest',
-      color: 'text-green-500 dark:text-green-400',
-      bg: 'bg-green-50 dark:bg-green-900/20',
+      color: 'text-status-active',
+      bg: 'bg-status-active/10',
     },
     {
       icon: ListTodo,
       label: 'View Jobs',
       description: 'Monitor extractions',
       path: '/jobs',
-      color: 'text-amber-500 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      color: 'text-status-warning',
+      bg: 'bg-status-warning/10',
     },
   ];
 
@@ -134,7 +134,7 @@ export const HomeWorkspace: React.FC = () => {
           <div className="max-w-lg text-center">
             {/* Logo/Icon */}
             <div className="mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg backdrop-blur-sm">
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg backdrop-blur-sm">
                 <Network className="w-12 h-12 text-white" />
               </div>
             </div>
@@ -151,7 +151,7 @@ export const HomeWorkspace: React.FC = () => {
             {/* Login Button */}
             <button
               onClick={() => setShowLoginModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary dark:bg-blue-600 text-primary-foreground dark:text-white rounded-lg font-medium hover:bg-primary/90 dark:hover:bg-blue-700 transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md"
             >
               <LogIn className="w-5 h-5" />
               Sign In to Continue
@@ -160,12 +160,12 @@ export const HomeWorkspace: React.FC = () => {
             {/* Features */}
             <div className="mt-12 grid grid-cols-3 gap-4 text-sm">
               <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">
-                <Database className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+                <Database className="w-6 h-6 mx-auto mb-2 text-status-info" />
                 <div className="font-medium text-card-foreground dark:text-gray-200">Graph Database</div>
                 <div className="text-xs text-muted-foreground dark:text-gray-500">Apache AGE</div>
               </div>
               <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">
-                <Activity className="w-6 h-6 mx-auto mb-2 text-green-500 dark:text-green-400" />
+                <Activity className="w-6 h-6 mx-auto mb-2 text-status-active" />
                 <div className="font-medium text-card-foreground dark:text-gray-200">LLM Extraction</div>
                 <div className="text-xs text-muted-foreground dark:text-gray-500">GPT-4 / Claude</div>
               </div>
@@ -189,7 +189,7 @@ export const HomeWorkspace: React.FC = () => {
       {/* Header */}
       <div className="flex-none p-6 border-b border-border dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <Home className="w-6 h-6 text-primary dark:text-blue-400" />
+          <Home className="w-6 h-6 text-primary" />
           <div>
             <h1 className="text-xl font-semibold text-foreground dark:text-gray-100">
               Welcome back, {user?.username || 'User'}
@@ -219,7 +219,7 @@ export const HomeWorkspace: React.FC = () => {
                 <div className="p-4 rounded-lg bg-card dark:bg-gray-900 border border-border dark:border-gray-800">
                   <div className="flex items-center gap-2 mb-2">
                     {status.health ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      <CheckCircle2 className="w-5 h-5 text-status-active" />
                     ) : (
                       <AlertCircle className="w-5 h-5 text-red-500" />
                     )}
@@ -283,12 +283,12 @@ export const HomeWorkspace: React.FC = () => {
                     onClick={() => navigate(action.path)}
                     className={`
                       p-6 rounded-lg border border-border dark:border-gray-800
-                      ${action.bg} hover:border-primary dark:hover:border-blue-500
+                      ${action.bg} hover:border-primary
                       transition-all text-left group
                     `}
                   >
                     <Icon className={`w-8 h-8 ${action.color} mb-3`} />
-                    <div className="font-semibold text-card-foreground dark:text-gray-200 group-hover:text-primary dark:group-hover:text-blue-400">
+                    <div className="font-semibold text-card-foreground group-hover:text-primary">
                       {action.label}
                     </div>
                     <div className="text-sm text-muted-foreground dark:text-gray-400">
