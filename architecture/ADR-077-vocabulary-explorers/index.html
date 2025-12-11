@@ -13,6 +13,10 @@
       
       
       
+        <link rel="prev" href="../ADR-076B-pathfinding-baseline/">
+      
+      
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>Web Workspaces Implementation Plan - Knowledge Graph System</title>
+        <title>ADR-077: Vocabulary Explorers - Knowledge Graph System</title>
       
     
     
@@ -64,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#web-workspaces-implementation-plan" class="md-skip">
+        <a href="#adr-077-vocabulary-explorers" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Web Workspaces Implementation Plan
+              ADR-077: Vocabulary Explorers
             
           </span>
         </div>
@@ -2910,18 +2914,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -2942,7 +2948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2960,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -2988,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -3016,7 +3022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+      <a href="../ADR-076B-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -3041,10 +3047,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/ADR-077-vocabulary-explorers/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-077: Vocabulary Explorers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3060,6 +3093,348 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-distinct-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two Distinct Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-edge-explorer-vocabularyedge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Edge Explorer (/vocabulary/edge)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-vocabulary-chord-view-vocabularychord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Vocabulary Chord View (/vocabulary/chord)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d3-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D3 Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-colors-from-prototypes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category Colors (From Prototypes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-explorer-with-tabs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single Explorer with Tabs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force-directed-edge-type-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Force-Directed Edge Type Graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sankey-diagram-instead-of-chord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sankey Diagram Instead of Chord
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3072,7 +3447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3100,7 +3475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3128,7 +3503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3156,7 +3531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3231,7 +3606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3259,7 +3634,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3287,7 +3662,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3315,7 +3690,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3343,7 +3718,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3371,7 +3746,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3399,7 +3774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3482,7 +3857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3510,7 +3885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3538,7 +3913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3566,7 +3941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3594,7 +3969,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3622,7 +3997,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3650,7 +4025,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3678,7 +4053,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -3706,7 +4081,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -3734,7 +4109,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -3762,7 +4137,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -3790,7 +4165,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -3865,7 +4240,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -3956,7 +4331,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -3984,7 +4359,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4012,7 +4387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4040,7 +4415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4068,7 +4443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4096,7 +4471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4124,7 +4499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4152,7 +4527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4180,7 +4555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4263,7 +4638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4291,7 +4666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4319,7 +4694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4347,7 +4722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4430,7 +4805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4458,7 +4833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -4486,7 +4861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -4514,7 +4889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -4542,7 +4917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -4570,7 +4945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4598,7 +4973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4626,7 +5001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4709,7 +5084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4737,7 +5112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4765,7 +5140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -4793,7 +5168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -4821,7 +5196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4849,7 +5224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4877,7 +5252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4905,7 +5280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -4933,7 +5308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5016,7 +5391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5044,7 +5419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5072,7 +5447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5100,7 +5475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5128,7 +5503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5211,7 +5586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5239,7 +5614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5267,7 +5642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5295,7 +5670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5323,7 +5698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5351,7 +5726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5379,7 +5754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5407,7 +5782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5435,7 +5810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5463,7 +5838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -5546,7 +5921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5574,7 +5949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5602,7 +5977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5630,7 +6005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5658,7 +6033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5686,7 +6061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5714,7 +6089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5742,7 +6117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -5770,7 +6145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -5798,7 +6173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5826,7 +6201,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -5854,7 +6229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6417,10 +6792,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Status
       
     </span>
   </a>
@@ -6428,10 +6803,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#progress-tracking" class="md-nav__link">
+  <a href="#date" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Progress Tracking
+        Date
       
     </span>
   </a>
@@ -6439,44 +6814,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-1-shared-foundation" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: Shared Foundation
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 1: Shared Foundation">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#types" class="md-nav__link">
+  <a href="#two-distinct-use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-client-methods-websrcapiclientts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Client Methods (web/src/api/client.ts)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#common-components-websrccomponentsworkspacescommon" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Components (web/src/components/workspaces/common/)
+        Two Distinct Use Cases
       
     </span>
   </a>
@@ -6489,22 +6842,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-2-ingestworkspace" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2: IngestWorkspace
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 2: IngestWorkspace">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#1-edge-explorer-vocabularyedge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        1. Edge Explorer (/vocabulary/edge)
       
     </span>
   </a>
@@ -6512,21 +6865,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#2-vocabulary-chord-view-vocabularychord" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#state-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        State Management
+        2. Vocabulary Chord View (/vocabulary/chord)
       
     </span>
   </a>
@@ -6539,22 +6881,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-3-jobsworkspace" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: JobsWorkspace
+        Implementation Plan
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 3: JobsWorkspace">
+    <nav class="md-nav" aria-label="Implementation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#components_1" class="md-nav__link">
+  <a href="#phase-1-api-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        Phase 1: API Endpoints
       
     </span>
   </a>
@@ -6562,10 +6904,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#features_1" class="md-nav__link">
+  <a href="#phase-2-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Phase 2: Components
       
     </span>
   </a>
@@ -6573,10 +6915,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#state-management_1" class="md-nav__link">
+  <a href="#phase-3-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        State Management
+        Phase 3: Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Data Flow
       
     </span>
   </a>
@@ -6589,22 +6942,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-4-preferencesworkspace" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 4: PreferencesWorkspace
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 4: PreferencesWorkspace">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#components_2" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        Positive
       
     </span>
   </a>
@@ -6612,10 +6965,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#features_2" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Negative
       
     </span>
   </a>
@@ -6623,10 +6976,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#state-management_2" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        State Management
+        Neutral
       
     </span>
   </a>
@@ -6639,33 +6992,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#api-endpoints-reference" class="md-nav__link">
+  <a href="#technical-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Endpoints Reference
+        Technical Notes
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#design-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design Patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Design Patterns">
+    <nav class="md-nav" aria-label="Technical Notes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#follow-existing-patterns-from" class="md-nav__link">
+  <a href="#d3-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Follow existing patterns from:
+        D3 Integration
       
     </span>
   </a>
@@ -6673,10 +7015,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ui-consistency" class="md-nav__link">
+  <a href="#category-colors-from-prototypes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UI Consistency
+        Category Colors (From Prototypes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Considerations
       
     </span>
   </a>
@@ -6689,33 +7042,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Notes
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-explorer-with-tabs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single Explorer with Tabs
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#session-log" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#force-directed-edge-type-graph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Session Log
+        Force-Directed Edge Type Graph
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Session Log">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#2025-12-07" class="md-nav__link">
+  <a href="#sankey-diagram-instead-of-chord" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2025-12-07
+        Sankey Diagram Instead of Chord
       
     </span>
   </a>
@@ -6724,6 +7088,28 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6747,246 +7133,207 @@
   
 
 
-<h1 id="web-workspaces-implementation-plan">Web Workspaces Implementation Plan</h1>
-<p><strong>Branch:</strong> <code>feature/web-workspaces</code>
-<strong>Created:</strong> 2025-12-07
-<strong>Status:</strong> In Progress</p>
-<h2 id="overview">Overview</h2>
-<p>Implement the placeholder workspaces in the web UI: Ingest, Jobs, and Preferences. The API endpoints already exist and are tested via the CLI - this is purely frontend work.</p>
-<h2 id="progress-tracking">Progress Tracking</h2>
+<h1 id="adr-077-vocabulary-explorers">ADR-077: Vocabulary Explorers</h1>
+<h2 id="status">Status</h2>
+<p>Proposed</p>
+<h2 id="date">Date</h2>
+<p>2025-12-10</p>
+<h2 id="context">Context</h2>
+<p>The knowledge graph system uses a self-refining vocabulary of edge types (ADR-032) that grows organically as documents are ingested. With 100 edge types across 9+ categories and 4,856 relationships in the current database, understanding vocabulary usage patterns becomes increasingly important for:</p>
+<ol>
+<li><strong>System health monitoring</strong> - Which vocabulary types are heavily used vs dormant?</li>
+<li><strong>Ontology debugging</strong> - Why do certain edge types dominate? Are relationships being correctly categorized?</li>
+<li><strong>Semantic flow understanding</strong> - How do categories interconnect? What patterns emerge?</li>
+<li><strong>Query-specific analysis</strong> - What vocabulary characterizes a specific graph neighborhood?</li>
+</ol>
+<p>Currently, vocabulary insights are only available via CLI (<code>kg vocab list</code>, <code>kg db stats</code>). The web interface lacks visual exploration tools for understanding edge type distribution and inter-category flows.</p>
+<h3 id="two-distinct-use-cases">Two Distinct Use Cases</h3>
+<p><strong>1. System-Wide Exploration (Edge Explorer)</strong>
+- View all vocabulary across the entire graph
+- Understand category-level flows (Causation → Semantic, Evidential → Modification)
+- Monitor vocabulary health: active vs dormant types, builtin vs custom
+- Identify vocabulary consolidation opportunities
+- No concept query required - operates on global statistics</p>
+<p><strong>2. Query-Specific Exploration (Chord View)</strong>
+- Analyze vocabulary within a specific graph neighborhood (from 2D/3D explorer)
+- Understand how a particular set of concepts are connected
+- Filter/highlight specific edge types within the queried subgraph
+- Complement to existing spatial visualization (2D/3D shows structure, chord shows vocabulary)</p>
+<h2 id="decision">Decision</h2>
+<p>Implement two vocabulary exploration tools as part of the web UI explorer framework:</p>
+<h3 id="1-edge-explorer-vocabularyedge">1. Edge Explorer (<code>/vocabulary/edge</code>)</h3>
+<p>A system-wide visualization with three view modes:</p>
+<p><strong>Chord View (Category Flow)</strong>
+- D3 chord diagram showing inter-category edge flows
+- Arc width proportional to edge count per category
+- Ribbon width proportional to edges between category pairs
+- Hover to isolate specific category connections
+- Interactive: click category to filter edge type list</p>
+<p><strong>Edge Types View (Radial Bar)</strong>
+- Radial visualization with each edge type as a spoke
+- Spoke length and width encode edge count
+- Color-coded by category
+- Click to show edge type details and flow patterns</p>
+<p><strong>Matrix View</strong>
+- Category × Category adjacency matrix
+- Cell size/intensity encodes edge count
+- Hover rows/columns to highlight flows
+- Good for dense category relationships</p>
+<p><strong>Side Panel</strong>
+- Category health breakdown (types active/total, utilization %)
+- Edge type ranking by count
+- Dormant vocabulary list (unused types)
+- Click edge type to see: category, builtin/custom, flow breakdown</p>
+<h3 id="2-vocabulary-chord-view-vocabularychord">2. Vocabulary Chord View (<code>/vocabulary/chord</code>)</h3>
+<p>Query-specific vocabulary analysis:</p>
+<p><strong>Input</strong>: Graph data from 2D/3D explorer (shared state via graphStore)
+- When user performs a query in 2D explorer, vocabulary chord can analyze the same result set
+- Alternatively: direct concept search within the vocabulary chord workspace</p>
+<p><strong>Visualization</strong>
+- Chord diagram showing edge types used within the subgraph
+- Nodes = concepts from the query result
+- Chords = edges between them, colored by edge type category
+- Filter/highlight by category or specific edge type</p>
+<p><strong>Side Panel</strong>
+- Edge type breakdown for this specific subgraph
+- Comparison to system-wide distribution (is this subgraph typical?)
+- Concept-to-concept edge listing with types</p>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-api-endpoints">Phase 1: API Endpoints</h3>
+<p>Add endpoints to <code>/vocabulary</code> routes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># System-wide statistics</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">GET</span> <span class="o">/</span><span class="n">vocabulary</span><span class="o">/</span><span class="n">system</span><span class="o">-</span><span class="n">stats</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">Response</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  <span class="n">stats</span><span class="p">:</span> <span class="p">{</span> <span class="n">concepts</span><span class="p">,</span> <span class="n">sources</span><span class="p">,</span> <span class="n">instances</span><span class="p">,</span> <span class="n">totalRelationships</span><span class="p">,</span> <span class="n">vocabularySize</span><span class="p">,</span> <span class="n">activeVocabulary</span> <span class="p">},</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  <span class="n">categories</span><span class="p">:</span> <span class="p">[{</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">totalTypes</span><span class="p">,</span> <span class="n">activeTypes</span><span class="p">,</span> <span class="n">totalEdges</span> <span class="p">}],</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  <span class="n">edgeTypes</span><span class="p">:</span> <span class="p">[{</span> <span class="nb">type</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">builtin</span><span class="p">,</span> <span class="n">confidence</span> <span class="p">}],</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  <span class="n">categoryFlows</span><span class="p">:</span> <span class="p">[{</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="p">[{</span><span class="nb">type</span><span class="p">,</span> <span class="n">count</span><span class="p">}]</span> <span class="p">}]</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Query-specific vocabulary analysis</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">POST</span> <span class="o">/</span><span class="n">vocabulary</span><span class="o">/</span><span class="n">analyze</span><span class="o">-</span><span class="n">subgraph</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">Body</span><span class="p">:</span> <span class="p">{</span> <span class="n">conceptIds</span><span class="p">:</span> <span class="n">string</span><span class="p">[]</span> <span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">Response</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  <span class="n">edgeTypes</span><span class="p">:</span> <span class="p">[{</span> <span class="nb">type</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">count</span> <span class="p">}],</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  <span class="n">categoryFlows</span><span class="p">:</span> <span class="p">[{</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">count</span> <span class="p">}],</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  <span class="n">conceptEdges</span><span class="p">:</span> <span class="p">[{</span> <span class="n">from</span><span class="p">,</span> <span class="n">to</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">category</span> <span class="p">}]</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="phase-2-components">Phase 2: Components</h3>
+<p><strong>Directory Structure:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>web/src/components/vocabulary/
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── EdgeExplorerWorkspace.tsx      # Main workspace for system-wide
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── VocabularyChordWorkspace.tsx   # Main workspace for query-specific
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── visualizations/
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   ├── ChordDiagram.tsx           # D3 chord diagram (shared)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   ├── RadialEdgeTypes.tsx        # Radial bar chart
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   ├── CategoryMatrix.tsx         # Matrix view
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   └── EdgeTypeList.tsx           # Ranked list panel
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>├── panels/
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   ├── CategoryHealthPanel.tsx    # Category breakdown
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   ├── EdgeTypeDetailPanel.tsx    # Single type details
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   └── SubgraphComparisonPanel.tsx # Compare to system average
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>└── types.ts                       # TypeScript interfaces
+</code></pre></div></p>
+<h3 id="phase-3-integration">Phase 3: Integration</h3>
+<ol>
+<li><strong>Routing</strong>: Add <code>/vocabulary/edge</code> and <code>/vocabulary/chord</code> routes</li>
+<li><strong>Navigation</strong>: Add to sidebar under "Vocabulary" section</li>
+<li><strong>Graph Store Integration</strong>: Share query results between 2D/3D explorer and chord view</li>
+<li><strong>Theme Integration</strong>: Use existing theming system (postmodern, etc.)</li>
+</ol>
+<h3 id="phase-4-data-flow">Phase 4: Data Flow</h3>
+<p><strong>Edge Explorer</strong> (System-Wide):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Page Load → GET /vocabulary/system-stats → Render chord/radial/matrix
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Hover category → Filter ribbons/bars
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Click edge type → Show detail panel
+</code></pre></div></p>
+<p><strong>Vocabulary Chord</strong> (Query-Specific):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Option A: Import from 2D/3D
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  User queries in 2D → graphStore.nodes/edges populated
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  Navigate to Vocabulary Chord → POST /vocabulary/analyze-subgraph with concept IDs
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Option B: Direct search
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  User enters search in Vocabulary Chord
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  Query concepts → POST /vocabulary/analyze-subgraph
+</code></pre></div></p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li>[x] <strong>Phase 1: Shared Foundation</strong> (completed 2025-12-07)</li>
-<li>[x] <strong>Phase 2: IngestWorkspace</strong> (completed 2025-12-07)</li>
-<li>[x] <strong>Phase 3: JobsWorkspace</strong> (completed 2025-12-07)</li>
-<li>[x] <strong>Phase 4: PreferencesWorkspace</strong> (completed 2025-12-07)</li>
+<li>Visual insight into vocabulary health and distribution</li>
+<li>Easier identification of vocabulary consolidation candidates</li>
+<li>Complement to spatial graph views (2D/3D shows structure, chord shows vocabulary)</li>
+<li>Query-specific analysis enables debugging specific neighborhoods</li>
+<li>Reusable chord diagram component for future use</li>
 </ul>
-<hr />
-<h2 id="phase-1-shared-foundation">Phase 1: Shared Foundation</h2>
-<h3 id="types">Types</h3>
+<h3 id="negative">Negative</h3>
 <ul>
-<li>[x] <code>web/src/types/jobs.ts</code> - Job types (JobStatus, JobProgress, JobResult, etc.)</li>
-<li>[x] <code>web/src/types/ingest.ts</code> - Ingest types (IngestRequest, IngestResponse, DuplicateJobResponse)</li>
+<li>D3 chord diagrams are complex to implement well</li>
+<li>Performance considerations for large vocabularies (100+ types)</li>
+<li>Additional API endpoints and database queries</li>
+<li>More components to maintain</li>
 </ul>
-<h3 id="api-client-methods-websrcapiclientts">API Client Methods (<code>web/src/api/client.ts</code>)</h3>
+<h3 id="neutral">Neutral</h3>
 <ul>
-<li>[x] <code>ingestFile(file, options)</code> - Multipart file upload</li>
-<li>[x] <code>ingestText(text, options)</code> - Raw text ingestion</li>
-<li>[x] <code>listJobs(filters)</code> - List jobs with status/user filters</li>
-<li>[x] <code>getJob(jobId)</code> - Get job status and details</li>
-<li>[x] <code>approveJob(jobId)</code> - Approve job for processing</li>
-<li>[x] <code>cancelJob(jobId)</code> - Cancel a job</li>
-<li>[x] <code>streamJobProgress(jobId, callbacks)</code> - SSE streaming with polling fallback</li>
-<li>[x] <code>pollJobUntilComplete(jobId, callbacks)</code> - Polling fallback</li>
-<li>[x] <code>listOntologies()</code> - Get available ontologies for selector</li>
+<li>Natural extension of existing explorer pattern (2D, 3D, Polarity, now Vocabulary)</li>
+<li>Follows established workspace structure</li>
 </ul>
-<h3 id="common-components-websrccomponentsworkspacescommon">Common Components (<code>web/src/components/workspaces/common/</code>)</h3>
+<h2 id="technical-notes">Technical Notes</h2>
+<h3 id="d3-integration">D3 Integration</h3>
 <ul>
-<li>[x] <code>StatusBadge.tsx</code> - Consistent job status display (icons + colors)</li>
-<li>[x] <code>CostDisplay.tsx</code> - Format cost estimates ($0.15 - $0.25)</li>
-<li>[x] <code>ProgressIndicator.tsx</code> - Reusable progress bar with percentage</li>
-<li>[x] <code>index.ts</code> - Re-exports for easy importing</li>
+<li>Use <code>d3-chord</code> for chord layout computation</li>
+<li>Render via React SVG (not raw D3 DOM manipulation)</li>
+<li><code>useMemo</code> for expensive layout calculations</li>
+<li>Responsive sizing via <code>ResponsiveContainer</code> pattern (see Polarity)</li>
 </ul>
-<hr />
-<h2 id="phase-2-ingestworkspace">Phase 2: IngestWorkspace</h2>
-<p><strong>Location:</strong> <code>web/src/components/ingest/</code></p>
-<h3 id="components">Components</h3>
+<h3 id="category-colors-from-prototypes">Category Colors (From Prototypes)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">categoryColors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nx">evidential</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#4ade80&quot;</span><span class="p">,</span><span class="w">    </span><span class="c1">// Green</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">causation</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#f97316&quot;</span><span class="p">,</span><span class="w">     </span><span class="c1">// Orange</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">modification</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#a78bfa&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Purple</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nx">semantic</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#38bdf8&quot;</span><span class="p">,</span><span class="w">      </span><span class="c1">// Blue</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nx">logical</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#fbbf24&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// Yellow</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nx">composition</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#f472b6&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1">// Pink</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="nx">dependency</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#ef4444&quot;</span><span class="p">,</span><span class="w">    </span><span class="c1">// Red</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="nx">hierarchical</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#94a3b8&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Gray</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nx">temporal</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#2dd4bf&quot;</span><span class="p">,</span><span class="w">      </span><span class="c1">// Teal</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#fb923c&quot;</span><span class="p">,</span><span class="w">     </span><span class="c1">// Light orange</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">};</span>
+</code></pre></div>
+<h3 id="performance-considerations">Performance Considerations</h3>
 <ul>
-<li>[x] <code>IngestWorkspace.tsx</code> - Main workspace (all-in-one implementation)</li>
+<li>Category flow matrix is O(categories²) - manageable with ~10 categories</li>
+<li>Edge type list can be virtualized if needed (&gt;100 types)</li>
+<li>Chord ribbons scale with category pairs, not total edges</li>
 </ul>
-<h3 id="features">Features</h3>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="single-explorer-with-tabs">Single Explorer with Tabs</h3>
+<p>Could combine Edge Explorer and Chord View into one workspace with tabs. Rejected because:
+- Different data sources (system-wide vs query-specific)
+- Different mental models (monitoring vs analysis)
+- Cleaner separation of concerns</p>
+<h3 id="force-directed-edge-type-graph">Force-Directed Edge Type Graph</h3>
+<p>Could show edge types as nodes connected by co-occurrence. Rejected because:
+- Chord diagram more effectively shows flows
+- Force layout less intuitive for vocabulary relationships</p>
+<h3 id="sankey-diagram-instead-of-chord">Sankey Diagram Instead of Chord</h3>
+<p>Sankey good for flow but:
+- Chord better shows bidirectional flows (A→B and B→A)
+- Chord more compact for self-loops (semantic→semantic)
+- Chord established in prototype designs</p>
+<h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li>[x] Drag-and-drop file upload</li>
-<li>[x] Manual file picker fallback</li>
-<li>[x] Ontology selection (existing or new)</li>
-<li>[x] Chunking options (target words, overlap)</li>
-<li>[x] Processing mode (serial/parallel)</li>
-<li>[x] Force re-ingest option</li>
-<li>[x] Duplicate detection handling</li>
-<li>[x] Cost estimate before approval</li>
-<li>[x] Real-time progress tracking (SSE with polling fallback)</li>
-<li>[x] Success/error feedback</li>
+<li>ADR-032: Automatic Edge Vocabulary Expansion</li>
+<li>ADR-047: Vocabulary Category Scoring</li>
+<li>ADR-053: Vocabulary Similarity Analysis</li>
+<li>ADR-065: Epistemic Status Classification</li>
+<li>ADR-070: Polarity Axis Analysis (similar explorer pattern)</li>
 </ul>
-<h3 id="state-management">State Management</h3>
+<h2 id="references">References</h2>
 <ul>
-<li>[x] Local component state (simpler than Zustand for single-component use)</li>
-</ul>
-<hr />
-<h2 id="phase-3-jobsworkspace">Phase 3: JobsWorkspace</h2>
-<p><strong>Location:</strong> <code>web/src/components/jobs/</code></p>
-<h3 id="components_1">Components</h3>
-<ul>
-<li>[x] <code>JobsWorkspace.tsx</code> - Main workspace (all-in-one implementation)</li>
-</ul>
-<h3 id="features_1">Features</h3>
-<ul>
-<li>[x] Job list with filtering</li>
-<li>[x] Filter by status (all, pending, processing, completed, failed, cancelled)</li>
-<li>[x] Real-time status updates (auto-refresh when active jobs present)</li>
-<li>[x] Job detail view with:</li>
-<li>Metadata (ID, type, timestamps, duration)</li>
-<li>Pre-ingestion analysis (file stats, cost estimate, warnings)</li>
-<li>Progress indicator (chunks, concepts, relationships)</li>
-<li>Results (stats, actual cost)</li>
-<li>Error messages (if failed)</li>
-<li>[x] Approve action (for awaiting_approval jobs)</li>
-<li>[x] Cancel action (with confirmation)</li>
-<li>[x] Responsive layout (list-only on mobile, split view on desktop)</li>
-<li>[x] Polling-based updates (3s interval for active jobs)</li>
-</ul>
-<h3 id="state-management_1">State Management</h3>
-<ul>
-<li>[x] Local component state (simpler than Zustand for single-component use)</li>
-</ul>
-<hr />
-<h2 id="phase-4-preferencesworkspace">Phase 4: PreferencesWorkspace</h2>
-<p><strong>Location:</strong> <code>web/src/components/preferences/</code></p>
-<h3 id="components_2">Components</h3>
-<ul>
-<li>[x] <code>PreferencesWorkspace.tsx</code> - Enhanced with all preference sections</li>
-</ul>
-<h3 id="features_2">Features</h3>
-<ul>
-<li>[x] Theme selection (Light/Dark/System with system preference tracking)</li>
-<li>[x] Search preferences:</li>
-<li>[x] Show evidence quotes in results</li>
-<li>[x] Show images inline</li>
-<li>[x] Default result limit</li>
-<li>[x] Ingest defaults:</li>
-<li>[x] Auto-approve new jobs</li>
-<li>[x] Default ontology (with dynamic ontology list)</li>
-<li>[x] Default chunk size</li>
-<li>[x] Default processing mode</li>
-<li>[x] Display preferences:</li>
-<li>[x] Compact mode</li>
-<li>[x] Animation settings</li>
-<li>[x] Job notifications</li>
-<li>[x] Reset to defaults button</li>
-</ul>
-<h3 id="state-management_2">State Management</h3>
-<ul>
-<li>[x] <code>web/src/store/preferencesStore.ts</code> - Zustand store with localStorage persistence</li>
-<li>[x] Enhanced <code>web/src/store/themeStore.ts</code> - Added system theme support</li>
-<li>[x] IngestWorkspace uses preferences for defaults</li>
-</ul>
-<hr />
-<h2 id="api-endpoints-reference">API Endpoints Reference</h2>
-<p>All endpoints already exist and work via CLI:</p>
-<table>
-<thead>
-<tr>
-<th>Endpoint</th>
-<th>Method</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>/ingest</code></td>
-<td>POST</td>
-<td>File upload (multipart)</td>
-</tr>
-<tr>
-<td><code>/ingest/text</code></td>
-<td>POST</td>
-<td>Raw text ingestion</td>
-</tr>
-<tr>
-<td><code>/jobs</code></td>
-<td>GET</td>
-<td>List jobs with filters</td>
-</tr>
-<tr>
-<td><code>/jobs/{id}</code></td>
-<td>GET</td>
-<td>Get job status</td>
-</tr>
-<tr>
-<td><code>/jobs/{id}/approve</code></td>
-<td>POST</td>
-<td>Approve job</td>
-</tr>
-<tr>
-<td><code>/jobs/{id}</code></td>
-<td>DELETE</td>
-<td>Cancel job</td>
-</tr>
-<tr>
-<td><code>/jobs/{id}/stream</code></td>
-<td>GET</td>
-<td>SSE progress stream</td>
-</tr>
-<tr>
-<td><code>/ontology/</code></td>
-<td>GET</td>
-<td>List ontologies</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="design-patterns">Design Patterns</h2>
-<h3 id="follow-existing-patterns-from">Follow existing patterns from:</h3>
-<ul>
-<li><code>web/src/explorers/common/</code> - Shared panel components</li>
-<li><code>web/src/components/polarity/</code> - Complex workspace example</li>
-<li><code>web/src/store/graphStore.ts</code> - Zustand store pattern</li>
-<li><code>web/src/hooks/useGraphData.ts</code> - React Query hooks</li>
-</ul>
-<h3 id="ui-consistency">UI Consistency</h3>
-<ul>
-<li>Use existing Tailwind classes and color scheme</li>
-<li>Match panel styling from explorers</li>
-<li>Use same icon library (Lucide React)</li>
-<li>Consistent spacing and typography</li>
-</ul>
-<hr />
-<h2 id="notes">Notes</h2>
-<ul>
-<li><strong>No API changes needed</strong> - All endpoints tested via CLI</li>
-<li><strong>Client-side preferences</strong> - localStorage for now, DB persistence later</li>
-<li><strong>SSE with fallback</strong> - Use EventSource for real-time, poll if unavailable</li>
-<li><strong>Type reuse</strong> - Reference CLI types but create web-specific versions</li>
-</ul>
-<hr />
-<h2 id="session-log">Session Log</h2>
-<h3 id="2025-12-07">2025-12-07</h3>
-<ul>
-<li>Created feature branch <code>feature/web-workspaces</code></li>
-<li>Created this plan document</li>
-<li>Researched existing web UI structure and CLI implementations</li>
-<li><strong>Phase 1 completed:</strong></li>
-<li>Created <code>web/src/types/jobs.ts</code> with full job lifecycle types</li>
-<li>Created <code>web/src/types/ingest.ts</code> with ingest request/response types</li>
-<li>Added ingest methods to API client (ingestFile, ingestText, listOntologies)</li>
-<li>Added job methods to API client (getJob, listJobs, approveJob, cancelJob)</li>
-<li>Added SSE streaming (streamJobProgress) and polling fallback (pollJobUntilComplete)</li>
-<li>Created common components: StatusBadge, CostDisplay, ProgressIndicator</li>
-<li>All components use theme-aware Tailwind classes (dark: variants)</li>
-<li><strong>Phase 2 completed:</strong></li>
-<li>Implemented IngestWorkspace with drag-drop file upload</li>
-<li>Ontology selector with create-new option</li>
-<li>Advanced options (chunking, processing mode, auto-approve)</li>
-<li>Duplicate detection and force re-ingest</li>
-<li>Real-time job progress monitoring</li>
-<li>Success/error state handling</li>
-<li><strong>Phase 3 completed:</strong></li>
-<li>Implemented JobsWorkspace with job list and detail view</li>
-<li>Status filter tabs (All, Pending, Processing, Completed, Failed, Cancelled)</li>
-<li>Auto-refresh for active jobs (3s polling interval)</li>
-<li>Job detail panel with full metadata, analysis, progress, results</li>
-<li>Approve/cancel actions with loading states</li>
-<li>Responsive split-view layout</li>
-<li><strong>Phase 4 completed:</strong></li>
-<li>Created preferencesStore.ts with localStorage persistence</li>
-<li>Enhanced themeStore.ts with system theme preference support</li>
-<li>Enhanced PreferencesWorkspace with all preference sections:<ul>
-<li>Appearance (Light/Dark/System theme)</li>
-<li>Search Results (quotes, images, result limit)</li>
-<li>Ingest Defaults (auto-approve, ontology, chunk size, processing mode)</li>
-<li>Display (compact mode, animations, notifications)</li>
-</ul>
-</li>
-<li>Connected IngestWorkspace to use preference defaults</li>
-<li>Added reset-to-defaults functionality</li>
+<li>Prototype: <code>kg-edge-explorer-v3.jsx</code> (system-wide chord/radial/matrix)</li>
+<li>Prototype: <code>vocabulary-chord-view.jsx</code> (query-specific analysis)</li>
+<li>D3 Chord: https://d3js.org/d3-chord</li>
 </ul>
 
 
