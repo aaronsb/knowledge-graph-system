@@ -6,7 +6,7 @@
  * Arcs represent categories, ribbons represent co-occurrence at shared nodes.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import * as d3 from 'd3';
 import { getCategoryColor } from '../../../config/categoryColors';
 import type { CategoryStats, EdgeTypeData } from '../types';
@@ -32,8 +32,6 @@ interface ChordDiagramProps {
   links?: GraphLink[]; // Optional: if provided, computes inter-category flows
   flows?: CategoryFlow[]; // Optional: pre-computed flows from API (takes precedence over links)
   categoryTotals?: Record<string, number>; // Optional: pre-computed category totals for diagonal
-  width?: number;
-  height?: number;
   onCategoryClick?: (category: string) => void;
   onCategoryHover?: (category: string | null) => void;
   onChordHover?: (source: string, target: string, count: number) => void;
@@ -46,15 +44,40 @@ export function ChordDiagram({
   links,
   flows,
   categoryTotals,
-  width = 500,
-  height = 500,
   onCategoryClick,
   onCategoryHover,
   onChordHover,
   selectedCategory,
 }: ChordDiagramProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredChord, setHoveredChord] = useState<{ source: string; target: string; count: number } | null>(null);
+
+  // Self-sizing: fill the container
+  useLayoutEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          // Use the smaller dimension for a square visualization
+          const size = Math.min(rect.width, rect.height);
+          setDimensions({ width: size, height: size });
+        }
+      }
+    };
+
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const { width, height } = dimensions;
 
   // Build a map from edge type to category
   const typeToCategory = useMemo(() => {
@@ -108,7 +131,10 @@ export function ChordDiagram({
     }
     // Priority 2: Compute flows from raw links (used by VocabularyChordWorkspace)
     else if (links && links.length > 0) {
-      // Build a map of concept -> list of edge categories touching it
+      // First, count total edges per category for the diagonal
+      const categoryCounts = new Map<string, number>();
+
+      // Build a map of concept -> list of edge categories touching it (for inter-category flows)
       const conceptCategories = new Map<string, string[]>();
 
       for (const link of links) {
@@ -117,6 +143,10 @@ export function ChordDiagram({
         const edgeType = link.relationship_type || link.type || '';
         const category = link.category || typeToCategory.get(edgeType) || 'unknown';
 
+        // Count edges per category
+        categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+
+        // Track which categories touch each concept (for inter-category flows)
         if (sourceId) {
           const existing = conceptCategories.get(sourceId) || [];
           existing.push(category);
@@ -129,32 +159,32 @@ export function ChordDiagram({
         }
       }
 
-      // For each concept, create connections between all category pairs
+      // Populate diagonal with total edge counts per category
+      for (const [cat, count] of categoryCounts) {
+        const idx = categoryIndex.get(cat);
+        if (idx !== undefined) {
+          matrix[idx][idx] = count;
+        }
+      }
+
+      // For each concept, create inter-category connections (off-diagonal)
       for (const [, cats] of conceptCategories) {
         // Get unique categories at this concept
         const uniqueCats = [...new Set(cats)];
 
-        // Connect all pairs (including self if multiple edges of same category)
-        for (let i = 0; i < uniqueCats.length; i++) {
-          for (let j = i; j < uniqueCats.length; j++) {
-            const catA = uniqueCats[i];
-            const catB = uniqueCats[j];
-            const idxA = categoryIndex.get(catA);
-            const idxB = categoryIndex.get(catB);
+        // Only process if multiple different categories meet at this concept
+        if (uniqueCats.length > 1) {
+          for (let i = 0; i < uniqueCats.length; i++) {
+            for (let j = i + 1; j < uniqueCats.length; j++) {
+              const catA = uniqueCats[i];
+              const catB = uniqueCats[j];
+              const idxA = categoryIndex.get(catA);
+              const idxB = categoryIndex.get(catB);
 
-            if (idxA !== undefined && idxB !== undefined) {
-              // Count how many times each category appears at this node
-              const countA = cats.filter(c => c === catA).length;
-              const countB = cats.filter(c => c === catB).length;
-
-              if (i === j) {
-                // Self-connection: edges of same category meeting at same concept
-                // Only count if there are multiple edges of this category
-                if (countA > 1) {
-                  matrix[idxA][idxA] += countA - 1;
-                }
-              } else {
-                // Cross-category connection
+              if (idxA !== undefined && idxB !== undefined) {
+                // Cross-category connection - count how many times each appears
+                const countA = cats.filter(c => c === catA).length;
+                const countB = cats.filter(c => c === catB).length;
                 const connections = Math.min(countA, countB);
                 matrix[idxA][idxB] += connections;
                 matrix[idxB][idxA] += connections;
@@ -207,7 +237,7 @@ export function ChordDiagram({
 
   if (!chordData || categoryNames.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div ref={containerRef} className="w-full h-full flex items-center justify-center text-muted-foreground">
         No category data available
       </div>
     );
@@ -230,7 +260,7 @@ export function ChordDiagram({
   const totalFlows = matrix.reduce((sum, row) => sum + row.reduce((s, v) => s + v, 0), 0);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center relative">
       <svg width={width} height={height} className="overflow-visible">
         <g transform={`translate(${width / 2}, ${height / 2})`}>
           {/* Category arcs */}

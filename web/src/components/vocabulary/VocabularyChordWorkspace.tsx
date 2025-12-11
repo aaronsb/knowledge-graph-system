@@ -6,7 +6,7 @@
  * vocabulary usage and compares to system-wide patterns.
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { getCategoryColor } from '../../config/categoryColors';
 import { useGraphStore } from '../../store/graphStore';
@@ -28,39 +28,10 @@ export function VocabularyChordWorkspace() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<VocabularyStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Track container dimensions for responsive sizing
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        // Use minimum of width/height for square visualization, with padding
-        const size = Math.min(rect.width - 32, rect.height - 32);
-        setDimensions({
-          width: Math.max(size, 300),
-          height: Math.max(size, 300),
-        });
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   // Get graph data from store
   const rawGraphData = useGraphStore((state) => state.rawGraphData);
+  const getCategory = useVocabularyStore((state) => state.getCategory);
   const vocabularyTypes = useVocabularyStore((state) => state.typesMap);
 
   // Fetch system-wide vocabulary stats for comparison
@@ -136,9 +107,9 @@ export function VocabularyChordWorkspace() {
     // Build edge type data with categories
     const edgeTypes: EdgeTypeData[] = [];
     for (const [type, count] of typeCountMap) {
-      // Look up category from vocabulary store or link data
+      // Look up category from vocabulary store (case-insensitive)
+      const category = getCategory(type) || 'unknown';
       const vocabType = vocabularyTypes.get(type);
-      const category = vocabType?.category || 'unknown';
 
       edgeTypes.push({
         relationship_type: type,
@@ -181,7 +152,7 @@ export function VocabularyChordWorkspace() {
       categories,
       edgeTypes,
     };
-  }, [rawGraphData, vocabularyTypes]);
+  }, [rawGraphData, vocabularyTypes, getCategory]);
 
   // Compute comparison between subgraph and system
   const comparison = useMemo((): SubgraphComparison[] => {
@@ -287,19 +258,19 @@ export function VocabularyChordWorkspace() {
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Visualization area - responsive container */}
-        <div ref={containerRef} className="flex-1 flex items-center justify-center overflow-hidden">
+        {/* Visualization area - fills available space */}
+        <div className="flex-1 relative">
           {subgraphStats && viewMode === 'chord' && (
-            <ChordDiagram
-              categories={subgraphStats.categories}
-              edgeTypes={subgraphStats.edgeTypes}
-              links={rawGraphData?.links}
-              width={dimensions.width}
-              height={dimensions.height}
-              selectedCategory={selectedCategory}
-              onCategoryClick={handleCategoryClick}
-              onCategoryHover={setHoveredCategory}
-            />
+            <div className="absolute inset-0">
+              <ChordDiagram
+                categories={subgraphStats.categories}
+                edgeTypes={subgraphStats.edgeTypes}
+                links={rawGraphData?.links}
+                selectedCategory={selectedCategory}
+                onCategoryClick={handleCategoryClick}
+                onCategoryHover={setHoveredCategory}
+              />
+            </div>
           )}
           {viewMode === 'radial' && (
             <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -424,7 +395,7 @@ export function VocabularyChordWorkspace() {
                   </span>
                 )}
               </h2>
-              <div className="space-y-1 max-h-64 overflow-y-auto">
+              <div className="space-y-1">
                 {filteredEdgeTypes
                   .sort((a, b) => b.edge_count - a.edge_count)
                   .map((et) => {

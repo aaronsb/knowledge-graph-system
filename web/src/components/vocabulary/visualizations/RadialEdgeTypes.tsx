@@ -5,15 +5,13 @@
  * grouped by category. Bar length encodes edge count.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { getCategoryColor } from '../../../config/categoryColors';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface RadialEdgeTypesProps {
   categories: CategoryStats[];
   edgeTypes: EdgeTypeData[];
-  width?: number;
-  height?: number;
   onTypeClick?: (type: string) => void;
   onTypeHover?: (type: string | null) => void;
   onCategoryHover?: (category: string | null) => void;
@@ -24,16 +22,40 @@ interface RadialEdgeTypesProps {
 export function RadialEdgeTypes({
   categories,
   edgeTypes,
-  width = 600,
-  height = 600,
   onTypeClick,
   onTypeHover,
   onCategoryHover,
   selectedType,
   selectedCategory,
 }: RadialEdgeTypesProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const [hoveredType, setHoveredType] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  // Self-sizing: fill the container
+  useLayoutEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const size = Math.min(rect.width, rect.height);
+          setDimensions({ width: size, height: size });
+        }
+      }
+    };
+
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const { width, height } = dimensions;
 
   // Sort edge types by category and edge count
   const sortedTypes = useMemo(() => {
@@ -76,7 +98,7 @@ export function RadialEdgeTypes({
 
   if (sortedTypes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div ref={containerRef} className="w-full h-full flex items-center justify-center text-muted-foreground">
         No edge type data available
       </div>
     );
@@ -97,7 +119,8 @@ export function RadialEdgeTypes({
   const activeType = hoveredType || selectedType;
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center">
+      <svg width={width} height={height} className="overflow-visible">
       <g transform={`translate(${centerX}, ${centerY})`}>
         {/* Center circle */}
         <circle
@@ -240,6 +263,7 @@ export function RadialEdgeTypes({
         })}
       </g>
     </svg>
+    </div>
   );
 }
 

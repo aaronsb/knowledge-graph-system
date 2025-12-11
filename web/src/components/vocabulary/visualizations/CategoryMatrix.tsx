@@ -5,15 +5,13 @@
  * Cell color intensity encodes edge count.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { getCategoryColor } from '../../../config/categoryColors';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface CategoryMatrixProps {
   categories: CategoryStats[];
   edgeTypes: EdgeTypeData[];
-  width?: number;
-  height?: number;
   onTypeClick?: (type: string) => void;
   onTypeHover?: (type: string | null) => void;
   onCategoryHover?: (category: string | null) => void;
@@ -24,16 +22,39 @@ interface CategoryMatrixProps {
 export function CategoryMatrix({
   categories,
   edgeTypes,
-  width = 800,
-  height = 600,
   onTypeClick,
   onTypeHover,
   onCategoryHover,
   selectedType,
   selectedCategory,
 }: CategoryMatrixProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredType, setHoveredType] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+
+  // Self-sizing: fill the container
+  useLayoutEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setDimensions({ width: rect.width, height: rect.height });
+        }
+      }
+    };
+
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const { width, height } = dimensions;
 
   // Group edge types by category
   const categoryGroups = useMemo(() => {
@@ -77,7 +98,7 @@ export function CategoryMatrix({
 
   if (sortedCategories.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div ref={containerRef} className="w-full h-full flex items-center justify-center text-muted-foreground">
         No category data available
       </div>
     );
@@ -97,7 +118,7 @@ export function CategoryMatrix({
   const activeType = hoveredType || selectedType;
 
   return (
-    <div className="overflow-auto" style={{ maxWidth: width, maxHeight: height }}>
+    <div ref={containerRef} className="w-full h-full overflow-auto">
       <svg
         width={margin.left + maxTypesInCategory * cellSize + margin.right}
         height={margin.top + sortedCategories.length * cellSize + margin.bottom}

@@ -7,7 +7,7 @@
  * - Matrix: Category adjacency matrix
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { RadialEdgeTypes } from './visualizations/RadialEdgeTypes';
 import { CategoryMatrix } from './visualizations/CategoryMatrix';
@@ -29,37 +29,6 @@ export function EdgeExplorerWorkspace() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [stats, setStats] = useState<VocabularyStats | null>(null);
   const [categoryFlows, setCategoryFlows] = useState<CategoryFlowData | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Track container dimensions for responsive sizing
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        // Use minimum of width/height for square visualizations, with some padding
-        const size = Math.min(rect.width - 32, rect.height - 32);
-        setDimensions({
-          width: Math.max(size, 300),
-          height: Math.max(size, 300),
-        });
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-
-    // Also observe container changes
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   // Fetch vocabulary data
   useEffect(() => {
@@ -210,41 +179,37 @@ export function EdgeExplorerWorkspace() {
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Visualization area - responsive container */}
-        <div ref={containerRef} className="flex-1 flex items-center justify-center overflow-hidden">
-          {viewMode === 'chord' && (
-            <ChordDiagram
-              categories={stats.categories}
-              edgeTypes={stats.edgeTypes}
-              flows={categoryFlows?.flows}
-              categoryTotals={categoryFlows?.categoryTotals}
-              width={dimensions.width}
-              height={dimensions.height}
-              selectedCategory={selectedCategory}
-              onCategoryClick={handleCategoryClick}
-              onCategoryHover={setHoveredCategory}
-            />
-          )}
-          {viewMode === 'radial' && (
-            <RadialEdgeTypes
-              categories={stats.categories}
-              edgeTypes={stats.edgeTypes}
-              width={dimensions.width}
-              height={dimensions.height}
-              selectedCategory={selectedCategory}
-              onCategoryHover={setHoveredCategory}
-            />
-          )}
-          {viewMode === 'matrix' && (
-            <CategoryMatrix
-              categories={stats.categories}
-              edgeTypes={stats.edgeTypes}
-              width={dimensions.width}
-              height={dimensions.height}
-              selectedCategory={selectedCategory}
-              onCategoryHover={setHoveredCategory}
-            />
-          )}
+        {/* Visualization area - fills available space */}
+        <div className="flex-1 relative">
+          <div className="absolute inset-0">
+            {viewMode === 'chord' && (
+              <ChordDiagram
+                categories={stats.categories}
+                edgeTypes={stats.edgeTypes}
+                flows={categoryFlows?.flows}
+                categoryTotals={categoryFlows?.categoryTotals}
+                selectedCategory={selectedCategory}
+                onCategoryClick={handleCategoryClick}
+                onCategoryHover={setHoveredCategory}
+              />
+            )}
+            {viewMode === 'radial' && (
+              <RadialEdgeTypes
+                categories={stats.categories}
+                edgeTypes={stats.edgeTypes}
+                selectedCategory={selectedCategory}
+                onCategoryHover={setHoveredCategory}
+              />
+            )}
+            {viewMode === 'matrix' && (
+              <CategoryMatrix
+                categories={stats.categories}
+                edgeTypes={stats.edgeTypes}
+                selectedCategory={selectedCategory}
+                onCategoryHover={setHoveredCategory}
+              />
+            )}
+          </div>
         </div>
 
         {/* Side panel */}
@@ -331,7 +296,7 @@ export function EdgeExplorerWorkspace() {
                 </span>
               )}
             </h2>
-            <div className="space-y-1 max-h-96 overflow-y-auto">
+            <div className="space-y-1">
               {filteredEdgeTypes
                 .sort((a, b) => b.edge_count - a.edge_count)
                 .slice(0, 50)
