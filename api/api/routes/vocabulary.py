@@ -80,6 +80,11 @@ from ..models.vocabulary import (
     CategoryFlowInfo,
     CategoryFlowsResponse,
 
+    # Vocabulary Sync (ADR-077)
+    SyncVocabularyRequest,
+    SyncVocabularyResponse,
+    SyncFailedType,
+
     # Enums
     ZoneEnum,
     PruningModeEnum,
@@ -1470,3 +1475,85 @@ async def get_category_flows():
     except Exception as e:
         logger.error(f"Failed to get category flows: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get category flows: {str(e)}")
+
+
+# =============================================================================
+# Vocabulary Sync (ADR-077)
+# =============================================================================
+
+@router.post(
+    "/sync",
+    response_model=SyncVocabularyResponse,
+    summary="Sync missing edge types from graph",
+    description="Discover edge types used in the graph but not registered in vocabulary, and optionally add them."
+)
+async def sync_vocabulary(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("vocabulary", "write")),
+    request: SyncVocabularyRequest = None
+):
+    """
+    Sync missing edge types from graph edges to vocabulary (ADR-077).
+
+    **Authorization:** Requires `vocabulary:write` permission
+
+    Scans all unique relationship types used in the graph and ensures each
+    has a corresponding entry in the vocabulary table and VocabType node.
+    This fixes the gap where predefined types from constants.py are used
+    during ingestion but never registered in the vocabulary.
+
+    Args:
+        request: Sync options including dry_run flag
+
+    Returns:
+        SyncVocabularyResponse with lists of missing, synced, and failed types
+
+    Example (dry run):
+        POST /vocabulary/sync
+        {"dry_run": true}
+
+    Example (execute):
+        POST /vocabulary/sync
+        {"dry_run": false}
+    """
+    try:
+        client = AGEClient()
+        try:
+            # Handle default request
+            if request is None:
+                request = SyncVocabularyRequest()
+
+            result = client.sync_missing_edge_types(dry_run=request.dry_run)
+
+            # Convert failed list to proper model
+            failed_list = [
+                SyncFailedType(type=f['type'], error=f['error'])
+                for f in result.get('failed', [])
+            ]
+
+            # Build message
+            if request.dry_run:
+                message = f"Dry run: Found {len(result['missing'])} missing types"
+            elif result['synced']:
+                message = f"Synced {len(result['synced'])} types to vocabulary"
+            else:
+                message = "No types needed syncing"
+
+            return SyncVocabularyResponse(
+                success=len(failed_list) == 0,
+                dry_run=request.dry_run,
+                missing=result['missing'],
+                synced=result['synced'],
+                failed=failed_list,
+                system_types=result['system_types'],
+                total_graph_types=result['total_graph_types'],
+                total_vocab_types=result['total_vocab_types'],
+                message=message
+            )
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        logger.error(f"Failed to sync vocabulary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to sync vocabulary: {str(e)}")

@@ -567,3 +567,31 @@ class CategoryFlowsResponse(BaseModel):
     categories: List[str] = Field(..., description="List of category names")
     flows: List[CategoryFlowInfo] = Field(..., description="Inter-category flows")
     category_totals: Dict[str, int] = Field(..., description="Total edges per category")
+
+
+# =============================================================================
+# Vocabulary Sync Models (ADR-077)
+# =============================================================================
+
+class SyncFailedType(BaseModel):
+    """Info about a failed sync attempt"""
+    type: str = Field(..., description="Relationship type that failed to sync")
+    error: str = Field(..., description="Error message")
+
+
+class SyncVocabularyRequest(BaseModel):
+    """Request to sync missing edge types from graph"""
+    dry_run: bool = Field(True, description="If true, only report missing types without creating them")
+
+
+class SyncVocabularyResponse(BaseModel):
+    """Response from vocabulary sync operation"""
+    success: bool = Field(..., description="Whether operation completed without errors")
+    dry_run: bool = Field(..., description="Whether this was a dry run")
+    missing: List[str] = Field(..., description="Edge types in graph but not vocabulary")
+    synced: List[str] = Field(default_factory=list, description="Types that were synced (if not dry_run)")
+    failed: List[SyncFailedType] = Field(default_factory=list, description="Types that failed to sync")
+    system_types: List[str] = Field(default_factory=list, description="System types (skipped)")
+    total_graph_types: int = Field(..., description="Count of unique types in graph")
+    total_vocab_types: int = Field(..., description="Count of types in vocabulary")
+    message: str = Field(..., description="Summary message")

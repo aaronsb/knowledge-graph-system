@@ -1181,6 +1181,16 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Sync missing edge types from graph to vocabulary (ADR-077)
+   */
+  async syncVocabulary(dryRun: boolean = true): Promise<any> {
+    const response = await this.client.post('/vocabulary/sync', {
+      dry_run: dryRun
+    });
+    return response.data;
+  }
+
   // ========== AI Configuration Methods (ADR-039, ADR-041) ==========
 
   /**

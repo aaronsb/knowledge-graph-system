@@ -10,7 +10,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { getCategoryColor } from '../../config/categoryColors';
 import { useGraphStore } from '../../store/graphStore';
-import { useVocabularyStore } from '../../store/vocabularyStore';
 import { apiClient } from '../../api/client';
 import type { CategoryStats, EdgeTypeData, ViewMode, VocabularyStats } from './types';
 
@@ -31,8 +30,6 @@ export function VocabularyChordWorkspace() {
 
   // Get graph data from store
   const rawGraphData = useGraphStore((state) => state.rawGraphData);
-  const getCategory = useVocabularyStore((state) => state.getCategory);
-  const vocabularyTypes = useVocabularyStore((state) => state.typesMap);
 
   // Fetch system-wide vocabulary stats for comparison
   useEffect(() => {
@@ -91,7 +88,19 @@ export function VocabularyChordWorkspace() {
     fetchSystemStats();
   }, []);
 
-  // Compute subgraph vocabulary stats from rawGraphData
+  // Build a lookup map from systemStats for category information
+  const systemTypeMap = useMemo(() => {
+    if (!systemStats?.edgeTypes) return new Map<string, EdgeTypeData>();
+    const map = new Map<string, EdgeTypeData>();
+    for (const et of systemStats.edgeTypes) {
+      // Store with both original and uppercase for flexible matching
+      map.set(et.relationship_type, et);
+      map.set(et.relationship_type.toUpperCase(), et);
+    }
+    return map;
+  }, [systemStats]);
+
+  // Compute subgraph vocabulary stats from rawGraphData using systemStats for categories
   const subgraphStats = useMemo((): VocabularyStats | null => {
     if (!rawGraphData?.links || rawGraphData.links.length === 0) {
       return null;
@@ -104,19 +113,21 @@ export function VocabularyChordWorkspace() {
       typeCountMap.set(type, (typeCountMap.get(type) || 0) + 1);
     }
 
-    // Build edge type data with categories
+    // Build edge type data with categories from system vocabulary
     const edgeTypes: EdgeTypeData[] = [];
     for (const [type, count] of typeCountMap) {
-      // Look up category from vocabulary store (case-insensitive)
-      const category = getCategory(type) || 'unknown';
-      const vocabType = vocabularyTypes.get(type);
+      // Look up category from system vocabulary (which has complete API data)
+      const systemType = systemTypeMap.get(type) || systemTypeMap.get(type.toUpperCase());
+      const category = systemType?.category || 'unknown';
 
       edgeTypes.push({
         relationship_type: type,
         category,
         edge_count: count,
-        is_builtin: vocabType?.is_active ?? true, // Assume builtin if not found
-        is_active: true,
+        is_builtin: systemType?.is_builtin ?? true,
+        is_active: systemType?.is_active ?? true,
+        category_confidence: systemType?.category_confidence,
+        category_ambiguous: systemType?.category_ambiguous,
       });
     }
 
@@ -152,7 +163,7 @@ export function VocabularyChordWorkspace() {
       categories,
       edgeTypes,
     };
-  }, [rawGraphData, vocabularyTypes, getCategory]);
+  }, [rawGraphData, systemTypeMap]);
 
   // Compute comparison between subgraph and system
   const comparison = useMemo((): SubgraphComparison[] => {

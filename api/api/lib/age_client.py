@@ -1324,6 +1324,108 @@ class AGEClient:
             logger.error(f"Failed to get edge types from graph: {e}")
             return []
 
+    def sync_missing_edge_types(self, dry_run: bool = True) -> Dict[str, Any]:
+        """
+        Sync edge types from graph edges to vocabulary (ADR-077).
+
+        Scans all unique relationship types used in the graph and ensures each
+        has a corresponding entry in the vocabulary table and VocabType node.
+        This fixes the gap where predefined types from constants.py are used
+        during ingestion but never registered in the vocabulary.
+
+        Args:
+            dry_run: If True, only report missing types without creating them
+
+        Returns:
+            Dict with:
+                - missing: List of types in graph but not vocabulary
+                - synced: List of types that were synced (if not dry_run)
+                - failed: List of types that failed to sync
+                - system_types: List of system types (skipped)
+                - total_graph_types: Count of unique types in graph
+
+        Example:
+            >>> result = client.sync_missing_edge_types(dry_run=True)
+            >>> print(f"Missing: {len(result['missing'])}")
+            >>> # If satisfied, run without dry_run
+            >>> result = client.sync_missing_edge_types(dry_run=False)
+        """
+        from api.api.constants import RELATIONSHIP_TYPE_TO_CATEGORY
+
+        # System relationship types - internal use only, not user-facing vocabulary
+        SYSTEM_TYPES = {
+            'APPEARS_IN', 'EVIDENCED_BY', 'FROM_SOURCE', 'IN_CATEGORY',
+            'LOAD', 'SET', 'APPEARS'  # LOAD/SET may appear from SQL parsing artifacts
+        }
+
+        try:
+            # Step 1: Get all unique edge types from the graph
+            graph_types_query = """
+                MATCH ()-[r]->()
+                RETURN DISTINCT type(r) AS rel_type
+            """
+            graph_results = self._execute_cypher(graph_types_query)
+            graph_types = set()
+            for row in graph_results:
+                rel_type = str(row['rel_type']).strip('"')
+                if rel_type and rel_type.isupper():  # Only valid uppercase types
+                    graph_types.add(rel_type)
+
+            # Step 2: Get all types in vocabulary (VocabType nodes)
+            vocab_types = set(self.get_all_edge_types(include_inactive=True))
+
+            # Step 3: Find missing types
+            missing_types = graph_types - vocab_types - SYSTEM_TYPES
+            system_types_found = graph_types & SYSTEM_TYPES
+
+            result = {
+                'missing': sorted(list(missing_types)),
+                'synced': [],
+                'failed': [],
+                'system_types': sorted(list(system_types_found)),
+                'total_graph_types': len(graph_types),
+                'total_vocab_types': len(vocab_types),
+                'dry_run': dry_run
+            }
+
+            if dry_run:
+                logger.info(f"Dry run: Found {len(missing_types)} missing types")
+                return result
+
+            # Step 4: Add missing types to vocabulary
+            for rel_type in sorted(missing_types):
+                try:
+                    # Get category from constants.py if defined
+                    category = RELATIONSHIP_TYPE_TO_CATEGORY.get(rel_type, 'llm_generated')
+                    is_builtin = rel_type in RELATIONSHIP_TYPE_TO_CATEGORY
+
+                    # Use add_edge_type which handles both SQL table and VocabType node
+                    success = self.add_edge_type(
+                        relationship_type=rel_type,
+                        category=category,
+                        description=f"Auto-synced from graph edges",
+                        added_by="vocabulary_sync",
+                        is_builtin=is_builtin
+                    )
+
+                    if success:
+                        result['synced'].append(rel_type)
+                        logger.info(f"✓ Synced '{rel_type}' → {category}")
+                    else:
+                        # add_edge_type returns False if type already exists
+                        result['synced'].append(rel_type)
+                        logger.debug(f"Type '{rel_type}' already exists (race condition)")
+
+                except Exception as e:
+                    logger.error(f"✗ Failed to sync '{rel_type}': {e}")
+                    result['failed'].append({'type': rel_type, 'error': str(e)})
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to sync missing edge types: {e}")
+            raise
+
     def get_edge_type_info(self, relationship_type: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a relationship type.
