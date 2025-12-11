@@ -6,7 +6,7 @@
  * vocabulary usage and compares to system-wide patterns.
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { getCategoryColor } from '../../config/categoryColors';
 import { useGraphStore } from '../../store/graphStore';
@@ -28,6 +28,36 @@ export function VocabularyChordWorkspace() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<VocabularyStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track container dimensions for responsive sizing
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        // Use minimum of width/height for square visualization, with padding
+        const size = Math.min(rect.width - 32, rect.height - 32);
+        setDimensions({
+          width: Math.max(size, 300),
+          height: Math.max(size, 300),
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Get graph data from store
   const rawGraphData = useGraphStore((state) => state.rawGraphData);
@@ -257,21 +287,19 @@ export function VocabularyChordWorkspace() {
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Visualization area */}
-        <div className="flex-1 p-4 overflow-auto">
+        {/* Visualization area - responsive container */}
+        <div ref={containerRef} className="flex-1 flex items-center justify-center overflow-hidden">
           {subgraphStats && viewMode === 'chord' && (
-            <div className="flex items-center justify-center h-full">
-              <ChordDiagram
-                categories={subgraphStats.categories}
-                edgeTypes={subgraphStats.edgeTypes}
-                links={rawGraphData?.links}
-                width={450}
-                height={450}
-                selectedCategory={selectedCategory}
-                onCategoryClick={handleCategoryClick}
-                onCategoryHover={setHoveredCategory}
-              />
-            </div>
+            <ChordDiagram
+              categories={subgraphStats.categories}
+              edgeTypes={subgraphStats.edgeTypes}
+              links={rawGraphData?.links}
+              width={dimensions.width}
+              height={dimensions.height}
+              selectedCategory={selectedCategory}
+              onCategoryClick={handleCategoryClick}
+              onCategoryHover={setHoveredCategory}
+            />
           )}
           {viewMode === 'radial' && (
             <div className="flex items-center justify-center h-full text-muted-foreground">
