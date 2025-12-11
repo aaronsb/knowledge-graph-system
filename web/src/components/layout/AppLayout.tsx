@@ -31,6 +31,8 @@ import {
   GitBranch,
   FlaskConical,
   Home,
+  Waypoints,
+  PieChart,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
@@ -71,6 +73,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path.startsWith('/jobs')) return 'Jobs';
     if (path.startsWith('/report')) return 'Report';
     if (path.startsWith('/polarity')) return 'Polarity Explorer';
+    if (path === '/vocabulary') return 'Edge Explorer';
+    if (path.startsWith('/vocabulary/chord')) return 'Vocabulary Analysis';
     if (path.startsWith('/edit')) return 'Edit';
     if (path.startsWith('/preferences')) return 'Preferences';
     if (path.startsWith('/admin')) return 'Admin';
@@ -132,6 +136,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Bidirectional semantic dimensions"
               isActive={isActive('/polarity')}
               onClick={() => navigate('/polarity')}
+            />
+            <SidebarItem
+              icon={Waypoints}
+              label="Edge Explorer"
+              description="System-wide vocabulary analysis"
+              isActive={isActive('/vocabulary') && !location.pathname.includes('/chord')}
+              onClick={() => navigate('/vocabulary')}
+            />
+            <SidebarItem
+              icon={PieChart}
+              label="Vocabulary Analysis"
+              description="Query-specific vocabulary breakdown"
+              isActive={isActive('/vocabulary/chord')}
+              onClick={() => navigate('/vocabulary/chord')}
             />
           </SidebarCategory>
 

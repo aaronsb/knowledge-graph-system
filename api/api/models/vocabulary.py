@@ -547,3 +547,23 @@ class EpistemicStatusListResponse(BaseModel):
     types: List[EpistemicStatusInfo]
     last_measurement_at: Optional[str] = None  # Global measurement timestamp
     vocabulary_changes_since_measurement: Optional[int] = None  # Staleness delta
+
+
+# =============================================================================
+# Category Flow Models (ADR-077 - Vocabulary Explorers)
+# =============================================================================
+
+class CategoryFlowInfo(BaseModel):
+    """A single inter-category flow (edge between two categories)"""
+    source: str = Field(..., description="Source category name")
+    target: str = Field(..., description="Target category name")
+    count: int = Field(..., description="Number of concept nodes where both categories meet")
+
+
+class CategoryFlowsResponse(BaseModel):
+    """Response with inter-category flow matrix for chord diagram visualization"""
+    total_concepts: int = Field(..., description="Total concepts analyzed")
+    total_edges: int = Field(..., description="Total edges analyzed")
+    categories: List[str] = Field(..., description="List of category names")
+    flows: List[CategoryFlowInfo] = Field(..., description="Inter-category flows")
+    category_totals: Dict[str, int] = Field(..., description="Total edges per category")
