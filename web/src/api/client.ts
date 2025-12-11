@@ -337,6 +337,21 @@ class APIClient {
   }
 
   /**
+   * Get inter-category flow matrix for chord diagram visualization (ADR-077)
+   * Returns how vocabulary categories connect through shared concept nodes
+   */
+  async getCategoryFlows(): Promise<{
+    total_concepts: number;
+    total_edges: number;
+    categories: string[];
+    flows: Array<{ source: string; target: string; count: number }>;
+    category_totals: Record<string, number>;
+  }> {
+    const response = await this.client.get('/vocabulary/category-flows');
+    return response.data;
+  }
+
+  /**
    * Get image for a source node (ADR-057)
    * @param sourceId - Source ID from concept instance
    * @returns Image URL (blob URL for display)

@@ -29,6 +29,8 @@ import { GraphEditor } from './components/edit/GraphEditor';
 import { PreferencesWorkspace } from './components/preferences/PreferencesWorkspace';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { HomeWorkspace } from './components/home/HomeWorkspace';
+import { EdgeExplorerWorkspace } from './components/vocabulary/EdgeExplorerWorkspace';
+import { VocabularyChordWorkspace } from './components/vocabulary/VocabularyChordWorkspace';
 
 import './explorers'; // Import to register explorers
 
@@ -139,6 +141,10 @@ const AppContent: React.FC = () => {
 
         {/* Polarity Explorer (ADR-070) */}
         <Route path="/polarity" element={<PolarityExplorerWorkspace />} />
+
+        {/* Vocabulary Explorer (ADR-077) */}
+        <Route path="/vocabulary" element={<EdgeExplorerWorkspace />} />
+        <Route path="/vocabulary/chord" element={<VocabularyChordWorkspace />} />
 
         {/* Edit */}
         <Route path="/edit" element={<GraphEditor />} />

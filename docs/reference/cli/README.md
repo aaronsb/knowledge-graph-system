@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-11-29
+> Last updated: 2025-12-11
 
 ---
 
@@ -1043,6 +1043,7 @@ kg vocabulary [options]
 - `profiles-create` - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.
 - `profiles-delete` - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.
 - `epistemic-status` - Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg >0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (<-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.
+- `sync` - Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
 
 ---
 
@@ -1071,6 +1072,7 @@ kg list [options]
 | `--inactive` | Include inactive/deprecated types | - |
 | `--no-builtin` | Exclude builtin types | - |
 | `--sort <fields>` | Sort by comma-separated fields: edges, type, conf, grounding, category, status (case-insensitive). Default: edges (descending) | - |
+| `--json` | Output as JSON for programmatic use | - |
 
 ### consolidate
 
@@ -1361,6 +1363,23 @@ kg measure [options]
 | `--sample-size <n>` | Edges to sample per type (default: 100) | `100` |
 | `--no-store` | Run measurement without storing to database | - |
 | `--verbose` | Include detailed statistics in output | - |
+
+### sync
+
+Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
+
+**Usage:**
+```bash
+kg sync [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--dry-run` | Preview missing types without syncing (default) | `true` |
+| `--execute` | Actually sync missing types to vocabulary | `false` |
+| `--json` | Output as JSON for scripting | - |
 
 
 ## admin

@@ -349,6 +349,17 @@ def run_ingestion_worker(
             logger.warning(f"Failed to create DocumentMeta node: {e}")
             # Job still succeeds - metadata creation failure shouldn't kill the ingestion
 
+        # Sync any new vocabulary types (ADR-077)
+        # Edge types may be used in the graph during ingestion but not registered
+        # in the vocabulary table. This ensures all types are registered.
+        try:
+            sync_result = age_client.sync_missing_edge_types(dry_run=False)
+            if sync_result['synced']:
+                logger.info(f"✓ Synced {len(sync_result['synced'])} new vocabulary types")
+        except Exception as e:
+            # Non-fatal - log but don't fail the job
+            logger.warning(f"Failed to sync vocabulary: {e}")
+
         # Close AGE connection
         age_client.close()
 

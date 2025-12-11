@@ -76,6 +76,15 @@ from ..models.vocabulary import (
     EpistemicStatusInfo,
     EpistemicStatusStats,
 
+    # Category Flows (ADR-077 - Vocabulary Explorers)
+    CategoryFlowInfo,
+    CategoryFlowsResponse,
+
+    # Vocabulary Sync (ADR-077)
+    SyncVocabularyRequest,
+    SyncVocabularyResponse,
+    SyncFailedType,
+
     # Enums
     ZoneEnum,
     PruningModeEnum,
@@ -1359,3 +1368,192 @@ async def get_epistemic_status(
     except Exception as e:
         logger.error(f"Failed to get epistemic status for {relationship_type}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get epistemic status: {str(e)}")
+
+
+# =============================================================================
+# Category Flows (ADR-077 - Vocabulary Explorers)
+# =============================================================================
+
+@router.get("/category-flows", response_model=CategoryFlowsResponse)
+async def get_category_flows():
+    """
+    Get inter-category flow matrix for chord diagram visualization.
+
+    Computes how vocabulary categories connect through shared concept nodes:
+    - For each concept node, find all edge types (and their categories) connected to it
+    - For each pair of different categories meeting at the same node, count as a flow
+
+    This shows "vocabulary-to-vocabulary" connections - how edges of different
+    categories meet at the same concepts in the graph.
+    """
+    try:
+        client = AGEClient()
+
+        # Get vocabulary types with their categories (same pattern as /types endpoint)
+        all_type_names = client.get_all_edge_types(include_inactive=False)
+        type_to_category: dict[str, str] = {}
+        category_totals: dict[str, int] = {}
+
+        for type_name in all_type_names:
+            info = client.get_edge_type_info(type_name)
+            if info:
+                cat = info.get('category', 'UNCATEGORIZED')
+                type_to_category[type_name] = cat
+                edge_count = info.get('edge_count', 0)
+                category_totals[cat] = category_totals.get(cat, 0) + edge_count
+
+        # Query all edges grouped by source/target concept
+        # This gets us: for each concept, what edge types touch it
+        query = """
+            MATCH (c:Concept)-[r]->(other:Concept)
+            RETURN c.concept_id AS concept_id, type(r) AS rel_type
+        """
+
+        edges = client._execute_cypher(query)
+
+        # Build concept -> categories mapping
+        concept_categories: dict[str, dict[str, int]] = {}  # concept_id -> {category: count}
+        total_edges = 0
+
+        for edge in edges:
+            total_edges += 1
+            concept_id = str(edge.get('concept_id', '')).strip('"')
+            rel_type = str(edge.get('rel_type', '')).strip('"')
+            category = type_to_category.get(rel_type, 'UNCATEGORIZED')
+
+            if concept_id not in concept_categories:
+                concept_categories[concept_id] = {}
+            concept_categories[concept_id][category] = concept_categories[concept_id].get(category, 0) + 1
+
+        # Also count incoming edges (target side of relationships)
+        query_incoming = """
+            MATCH (other:Concept)-[r]->(c:Concept)
+            RETURN c.concept_id AS concept_id, type(r) AS rel_type
+        """
+
+        incoming_edges = client._execute_cypher(query_incoming)
+
+        for edge in incoming_edges:
+            concept_id = str(edge.get('concept_id', '')).strip('"')
+            rel_type = str(edge.get('rel_type', '')).strip('"')
+            category = type_to_category.get(rel_type, 'UNCATEGORIZED')
+
+            if concept_id not in concept_categories:
+                concept_categories[concept_id] = {}
+            concept_categories[concept_id][category] = concept_categories[concept_id].get(category, 0) + 1
+
+        # Compute inter-category flows
+        # For each concept with multiple categories, connect all category pairs
+        flow_matrix: dict[tuple[str, str], int] = {}
+
+        for concept_id, cat_counts in concept_categories.items():
+            categories = list(cat_counts.keys())
+            if len(categories) < 2:
+                continue
+
+            # For each pair of different categories at this concept
+            for i, cat_a in enumerate(categories):
+                for cat_b in categories[i+1:]:
+                    # Symmetric - count both directions
+                    key = tuple(sorted([cat_a, cat_b]))
+                    count = min(cat_counts[cat_a], cat_counts[cat_b])
+                    flow_matrix[key] = flow_matrix.get(key, 0) + count
+
+        # Convert to response format
+        flows = []
+        for (cat_a, cat_b), count in sorted(flow_matrix.items(), key=lambda x: -x[1]):
+            flows.append(CategoryFlowInfo(source=cat_a, target=cat_b, count=count))
+
+        return CategoryFlowsResponse(
+            total_concepts=len(concept_categories),
+            total_edges=total_edges,
+            categories=sorted(category_totals.keys()),
+            flows=flows,
+            category_totals=category_totals
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get category flows: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get category flows: {str(e)}")
+
+
+# =============================================================================
+# Vocabulary Sync (ADR-077)
+# =============================================================================
+
+@router.post(
+    "/sync",
+    response_model=SyncVocabularyResponse,
+    summary="Sync missing edge types from graph",
+    description="Discover edge types used in the graph but not registered in vocabulary, and optionally add them."
+)
+async def sync_vocabulary(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("vocabulary", "write")),
+    request: SyncVocabularyRequest = None
+):
+    """
+    Sync missing edge types from graph edges to vocabulary (ADR-077).
+
+    **Authorization:** Requires `vocabulary:write` permission
+
+    Scans all unique relationship types used in the graph and ensures each
+    has a corresponding entry in the vocabulary table and VocabType node.
+    This fixes the gap where predefined types from constants.py are used
+    during ingestion but never registered in the vocabulary.
+
+    Args:
+        request: Sync options including dry_run flag
+
+    Returns:
+        SyncVocabularyResponse with lists of missing, synced, and failed types
+
+    Example (dry run):
+        POST /vocabulary/sync
+        {"dry_run": true}
+
+    Example (execute):
+        POST /vocabulary/sync
+        {"dry_run": false}
+    """
+    try:
+        client = AGEClient()
+        try:
+            # Handle default request
+            if request is None:
+                request = SyncVocabularyRequest()
+
+            result = client.sync_missing_edge_types(dry_run=request.dry_run)
+
+            # Convert failed list to proper model
+            failed_list = [
+                SyncFailedType(type=f['type'], error=f['error'])
+                for f in result.get('failed', [])
+            ]
+
+            # Build message
+            if request.dry_run:
+                message = f"Dry run: Found {len(result['missing'])} missing types"
+            elif result['synced']:
+                message = f"Synced {len(result['synced'])} types to vocabulary"
+            else:
+                message = "No types needed syncing"
+
+            return SyncVocabularyResponse(
+                success=len(failed_list) == 0,
+                dry_run=request.dry_run,
+                missing=result['missing'],
+                synced=result['synced'],
+                failed=failed_list,
+                system_types=result['system_types'],
+                total_graph_types=result['total_graph_types'],
+                total_vocab_types=result['total_vocab_types'],
+                message=message
+            )
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        logger.error(f"Failed to sync vocabulary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to sync vocabulary: {str(e)}")
