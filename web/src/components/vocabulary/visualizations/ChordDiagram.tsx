@@ -258,12 +258,12 @@ export function ChordDiagram({
                 />
                 {/* Category label */}
                 <text
-                  transform={`rotate(${(group.startAngle + group.endAngle) / 2 * 180 / Math.PI - 90}) translate(${outerRadius + 8}, 0) ${
+                  transform={`rotate(${(group.startAngle + group.endAngle) / 2 * 180 / Math.PI - 90}) translate(${outerRadius + 10}, 0) ${
                     (group.startAngle + group.endAngle) / 2 > Math.PI ? 'rotate(180)' : ''
                   }`}
                   textAnchor={(group.startAngle + group.endAngle) / 2 > Math.PI ? 'end' : 'start'}
-                  fontSize={10}
-                  fontWeight={500}
+                  fontSize={13}
+                  fontWeight={600}
                   fill="currentColor"
                   className={`pointer-events-none transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-30'}`}
                 >
@@ -271,11 +271,11 @@ export function ChordDiagram({
                 </text>
                 {/* Edge count label */}
                 <text
-                  transform={`rotate(${(group.startAngle + group.endAngle) / 2 * 180 / Math.PI - 90}) translate(${outerRadius + 8}, 12) ${
+                  transform={`rotate(${(group.startAngle + group.endAngle) / 2 * 180 / Math.PI - 90}) translate(${outerRadius + 10}, 14) ${
                     (group.startAngle + group.endAngle) / 2 > Math.PI ? 'rotate(180)' : ''
                   }`}
                   textAnchor={(group.startAngle + group.endAngle) / 2 > Math.PI ? 'end' : 'start'}
-                  fontSize={9}
+                  fontSize={11}
                   fill="currentColor"
                   className={`pointer-events-none transition-opacity duration-200 ${isActive ? 'opacity-60' : 'opacity-20'}`}
                 >
