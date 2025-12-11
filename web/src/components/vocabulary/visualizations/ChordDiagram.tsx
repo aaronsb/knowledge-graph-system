@@ -12,8 +12,12 @@ import { getCategoryColor } from '../../../config/categoryColors';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface GraphLink {
-  source: string | { id: string };
-  target: string | { id: string };
+  // Transformed format (used by graph visualizations)
+  source?: string | { id: string };
+  target?: string | { id: string };
+  // Raw API format (from_id/to_id)
+  from_id?: string;
+  to_id?: string;
   relationship_type?: string;
   type?: string;
   category?: string;
@@ -138,8 +142,9 @@ export function ChordDiagram({
       const conceptCategories = new Map<string, string[]>();
 
       for (const link of links) {
-        const sourceId = typeof link.source === 'string' ? link.source : link.source?.id;
-        const targetId = typeof link.target === 'string' ? link.target : link.target?.id;
+        // Handle both raw API format (from_id/to_id) and transformed format (source/target)
+        const sourceId = link.from_id || (typeof link.source === 'string' ? link.source : link.source?.id);
+        const targetId = link.to_id || (typeof link.target === 'string' ? link.target : link.target?.id);
         const edgeType = link.relationship_type || link.type || '';
         const category = link.category || typeToCategory.get(edgeType) || 'unknown';
 
