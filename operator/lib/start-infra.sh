@@ -3,7 +3,7 @@ set -e
 
 # ============================================================================
 # start-infra.sh
-# Start infrastructure containers (postgres + garage)
+# Start infrastructure containers (postgres + garage + operator)
 # ============================================================================
 
 # Colors
@@ -17,6 +17,9 @@ NC='\033[0m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 DOCKER_DIR="$PROJECT_ROOT/docker"
+
+# Source common functions (provides run_compose, load_operator_config)
+source "$SCRIPT_DIR/common.sh"
 
 echo -e "${BLUE}Starting infrastructure containers...${NC}"
 echo ""
@@ -39,9 +42,9 @@ fi
 
 cd "$DOCKER_DIR"
 
-# Start postgres and garage
+# Start postgres and garage (uses config from .operator.conf)
 echo -e "${BLUE}→ Starting postgres and garage...${NC}"
-docker-compose --env-file "$PROJECT_ROOT/.env" up -d postgres garage
+run_compose up -d postgres garage
 
 echo ""
 echo -e "${BLUE}→ Waiting for PostgreSQL to be healthy...${NC}"
@@ -224,7 +227,7 @@ export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 if docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
     echo -e "${GREEN}✓ Operator already running${NC}"
 else
-    docker-compose --env-file "$PROJECT_ROOT/.env" up -d --build operator
+    run_compose up -d --build operator
 
     # Wait for operator to be ready
     echo -e "${BLUE}  Waiting for operator to start...${NC}"

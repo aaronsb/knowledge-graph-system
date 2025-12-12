@@ -1050,7 +1050,8 @@ class OllamaProvider(AIProvider):
             raise Exception(
                 f"Cannot connect to Ollama at {self.base_url}. "
                 "Ensure Ollama is running:\n"
-                "  - Docker: docker-compose -f docker-compose.ollama.yml up -d\n"
+                "  - Local: ollama serve\n"
+                "  - Docker: docker run -d -p 11434:11434 ollama/ollama\n"
                 "  - System: systemctl status ollama\n"
                 "  - Remote: Check base_url configuration"
             )

@@ -18,13 +18,17 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 DOCKER_DIR="$PROJECT_ROOT/docker"
 
+# Source common functions (provides run_compose)
+source "$SCRIPT_DIR/common.sh"
+
 # Parse arguments
 STOP_APP=true
 STOP_INFRA=true
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --app-only)
+        --app-only|--keep-infra)
+            # --keep-infra is alias for --app-only (stop app, keep infrastructure)
             STOP_INFRA=false
             shift
             ;;
@@ -37,6 +41,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --app-only      Stop only application containers (api, web)"
+            echo "  --keep-infra    Alias for --app-only"
             echo "  --infra-only    Stop only infrastructure containers (postgres, garage)"
             echo "  -h, --help      Show this help message"
             echo ""
@@ -63,16 +68,16 @@ if [ "$STOP_APP" = true ]; then
 
     if [ -n "$API_RUNNING" ] || [ -n "$WEB_RUNNING" ]; then
         # Stop web first
-        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "web.*Up|viz.*Up"; then
+        if run_compose ps | grep -qE "web.*Up|viz.*Up"; then
             echo -e "${BLUE}→ Stopping web visualization...${NC}"
-            docker-compose --env-file "$PROJECT_ROOT/.env" stop web 2>/dev/null || docker-compose --env-file "$PROJECT_ROOT/.env" stop viz 2>/dev/null || true
+            run_compose stop web 2>/dev/null || run_compose stop viz 2>/dev/null || true
             echo -e "${GREEN}✓ Web stopped${NC}"
         fi
 
         # Stop API
-        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "api.*Up"; then
+        if run_compose ps | grep -qE "api.*Up"; then
             echo -e "${BLUE}→ Stopping API server...${NC}"
-            docker-compose --env-file "$PROJECT_ROOT/.env" stop api
+            run_compose stop api
             echo -e "${GREEN}✓ API stopped${NC}"
         fi
 
@@ -94,16 +99,16 @@ if [ "$STOP_INFRA" = true ]; then
 
     if [ -n "$POSTGRES_RUNNING" ] || [ -n "$GARAGE_RUNNING" ]; then
         # Stop garage
-        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "garage.*Up"; then
+        if run_compose ps | grep -qE "garage.*Up"; then
             echo -e "${BLUE}→ Stopping Garage storage...${NC}"
-            docker-compose --env-file "$PROJECT_ROOT/.env" stop garage
+            run_compose stop garage
             echo -e "${GREEN}✓ Garage stopped${NC}"
         fi
 
         # Stop postgres last (might have open connections)
-        if docker-compose --env-file "$PROJECT_ROOT/.env" ps | grep -qE "postgres.*Up"; then
+        if run_compose ps | grep -qE "postgres.*Up"; then
             echo -e "${BLUE}→ Stopping PostgreSQL...${NC}"
-            docker-compose --env-file "$PROJECT_ROOT/.env" stop postgres
+            run_compose stop postgres
             echo -e "${GREEN}✓ PostgreSQL stopped${NC}"
         fi
 

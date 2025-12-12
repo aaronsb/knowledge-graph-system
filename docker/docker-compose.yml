@@ -244,8 +244,7 @@ services:
       garage:
         condition: service_healthy
 
-    # Keep container running for exec commands
-    command: ["tail", "-f", "/dev/null"]
+    # CMD defined in Dockerfile (operator-start.sh with startup message)
 
     networks:
       - kg-network

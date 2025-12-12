@@ -19,9 +19,13 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 DOCKER_DIR="$PROJECT_ROOT/docker"
 
-# Parse arguments
-DEV_MODE=false
-FORCE_MAC_MODE=false
+# Source common functions (provides run_compose, load_operator_config)
+source "$SCRIPT_DIR/common.sh"
+
+# Load config from .operator.conf (can be overridden by args)
+load_operator_config
+
+# Parse arguments (override config file settings)
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
@@ -29,7 +33,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --mac)
-            FORCE_MAC_MODE=true
+            GPU_MODE=mac
             shift
             ;;
         --help|-h)
@@ -47,6 +51,7 @@ while [[ $# -gt 0 ]]; do
             echo "           • Skips GPU detection and uses CPU for embeddings"
             echo "  --help   Show this help"
             echo ""
+            echo "Config is loaded from .operator.conf if it exists."
             exit 0
             ;;
         *)
@@ -127,38 +132,18 @@ detect_platform() {
     echo "cpu"
 }
 
-# Prepare docker-compose command with optional dev and platform overrides
-COMPOSE_FILES="-f docker-compose.yml"
+# Show configuration from .operator.conf (loaded by common.sh)
+echo -e "${BLUE}→ Configuration: dev=$DEV_MODE, gpu=$GPU_MODE${NC}"
 
-# Add dev mode override if requested
-if [ "$DEV_MODE" = true ]; then
-    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.dev.yml"
-fi
-
-# Add platform-specific GPU override
-if [ "$FORCE_MAC_MODE" = true ]; then
-    # Mac mode forced via --mac flag (from quickstart or manual)
-    PLATFORM="mac"
-    echo -e "${YELLOW}→ Mac mode forced via --mac flag${NC}"
-else
-    # Auto-detect platform
-    PLATFORM=$(detect_platform)
-fi
-
-case "$PLATFORM" in
+case "$GPU_MODE" in
     mac)
-        COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.override.mac.yml"
         echo -e "${BLUE}→ Using Mac configuration (MPS GPU acceleration via Metal)${NC}"
         ;;
     nvidia)
-        COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.gpu-nvidia.yml"
         echo -e "${BLUE}→ Using NVIDIA GPU configuration (CUDA acceleration)${NC}"
         ;;
-    cpu)
+    cpu|*)
         echo -e "${BLUE}→ Using CPU-only mode (no GPU acceleration)${NC}"
-        ;;
-    *)
-        echo -e "${YELLOW}⚠  Unknown platform: $PLATFORM, using CPU-only mode${NC}"
         ;;
 esac
 echo ""
@@ -170,7 +155,7 @@ echo -e "${BLUE}→ Starting API server...${NC}"
 export GIT_COMMIT=$(cd "$PROJECT_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build api
+run_compose up -d --build api
 
 echo -e "${BLUE}→ Waiting for API to be healthy...${NC}"
 
@@ -190,11 +175,11 @@ for i in {1..30}; do
 done
 
 # Start web viz app (if defined in docker-compose)
-if docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
+if run_compose config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
     echo ""
     echo -e "${BLUE}→ Starting web visualization...${NC}"
     # Build metadata already exported above
-    docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build web 2>/dev/null || docker-compose $COMPOSE_FILES --env-file "$PROJECT_ROOT/.env" up -d --build viz 2>/dev/null || true
+    run_compose up -d --build web 2>/dev/null || run_compose up -d --build viz 2>/dev/null || true
 
     if [ "$DEV_MODE" = true ]; then
         echo -e "${GREEN}✓ Web dev server starting (Vite HMR enabled)${NC}"

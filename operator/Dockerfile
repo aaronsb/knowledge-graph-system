@@ -69,11 +69,32 @@ RUN echo '#!/bin/bash' > /root/.bashrc \
     && echo '    /usr/local/bin/operator-help' >> /root/.bashrc \
     && echo 'fi' >> /root/.bashrc \
     && echo '' >> /root/.bashrc \
+    && echo '# PostgreSQL convenience - use existing POSTGRES_PASSWORD for psql' >> /root/.bashrc \
+    && echo 'export PGPASSWORD="${POSTGRES_PASSWORD}"' >> /root/.bashrc \
+    && echo 'export PGHOST="${POSTGRES_HOST:-knowledge-graph-postgres}"' >> /root/.bashrc \
+    && echo 'export PGUSER="${POSTGRES_USER:-admin}"' >> /root/.bashrc \
+    && echo 'export PGDATABASE="${POSTGRES_DB:-knowledge_graph}"' >> /root/.bashrc \
+    && echo '' >> /root/.bashrc \
     && echo '# Convenient aliases' >> /root/.bashrc \
     && echo 'alias configure="python /workspace/operator/configure.py"' >> /root/.bashrc \
     && echo 'alias help="operator-help"' >> /root/.bashrc \
+    && echo 'alias pg="psql"' >> /root/.bashrc \
+    && echo 'alias status="configure status"' >> /root/.bashrc \
     && chmod +x /root/.bashrc
 
-# Default command: Keep container running for exec commands
-# The kg-operator wrapper will exec into this container
-CMD ["tail", "-f", "/dev/null"]
+# Create startup script that logs a message then keeps container running
+RUN echo '#!/bin/bash' > /usr/local/bin/operator-start.sh \
+    && echo 'echo "════════════════════════════════════════════════════════════"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "  Knowledge Graph Operator Container"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "  Started: $(date -Iseconds)"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "════════════════════════════════════════════════════════════"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo ""' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Configuration plane ready."' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Enter shell: docker exec -it kg-operator /bin/bash"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Quick status: docker exec kg-operator configure.py status"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo ""' >> /usr/local/bin/operator-start.sh \
+    && echo 'exec tail -f /dev/null' >> /usr/local/bin/operator-start.sh \
+    && chmod +x /usr/local/bin/operator-start.sh
+
+# Default command: Show startup message then keep container running
+CMD ["/usr/local/bin/operator-start.sh"]

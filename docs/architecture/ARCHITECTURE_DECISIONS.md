@@ -92,6 +92,7 @@ All ADRs follow a consistent format:
 | [ADR-074](authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Proposed | Three-tier admin structure (user → admin → platform_admin) with 6 new resource types (api_keys, embedding_config, extraction_config, oauth_clients, ontologies, backups) and hardcoded permission bypass for platform_admin role to ensure emergency recovery |
 | [ADR-076](ADR-076-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Accepted | Bidirectional BFS in application code replaces exhaustive Cypher path enumeration - O(b^(d/2)) vs O(b^d) complexity. AGE lacks shortestPath() function; variable-length patterns cause exponential blowup. Includes incremental depth search, path caching, and documentation fixes |
 | [ADR-077](ADR-077-vocabulary-explorers.md) | Vocabulary Explorers | Proposed | Two visual exploration tools for edge vocabulary: Edge Explorer (system-wide chord/radial/matrix views) and Vocabulary Chord (query-specific analysis from 2D/3D explorer). Shows category flows, type distribution, vocabulary health, builtin vs custom types |
+| [ADR-078](visualization/ADR-078-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Proposed | 3D t-SNE/UMAP visualization of concept embeddings with epistemic overlays (grounding color, diversity size) - enables visual axis discovery by clicking two points to define polarity axis, bridging macro exploration with existing micro neighborhood exploration |
 
 ## How to Use This Index
 
@@ -165,6 +166,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-12-09
+**Last Updated:** 2025-12-11
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
