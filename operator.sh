@@ -2,20 +2,17 @@
 # ============================================================================
 # operator.sh - Knowledge Graph Platform Lifecycle Manager
 #
-# Convenience wrapper that executes commands inside the kg-operator container.
-# The operator container is the control plane for the platform.
+# Single entry point for platform management. Dispatches to scripts in
+# operator/lib/ or executes commands inside the kg-operator container.
 #
 # Usage:
-#   ./operator.sh start              Start the platform (api + web)
+#   ./operator.sh init               First-time interactive setup
+#   ./operator.sh start              Start the platform
 #   ./operator.sh stop               Stop the platform
-#   ./operator.sh stop --keep-infra  Stop but keep database running
+#   ./operator.sh teardown           Remove all containers and data
 #   ./operator.sh status             Show platform status
-#   ./operator.sh config --gpu nvidia  Change GPU mode
 #   ./operator.sh logs [service]     Tail logs
 #   ./operator.sh shell              Open shell in operator container
-#
-# First-time setup:
-#   ./quickstart.sh                  Interactive setup wizard
 #
 # ============================================================================
 
@@ -37,11 +34,8 @@ check_operator() {
     if ! docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
         echo -e "${YELLOW}Operator container not running.${NC}"
         echo ""
-        echo "Start infrastructure first:"
-        echo "  ./operator/lib/start-infra.sh"
-        echo ""
-        echo "Or run quickstart for first-time setup:"
-        echo "  ./quickstart.sh"
+        echo "Run init first:"
+        echo "  ./operator.sh init"
         exit 1
     fi
 }
@@ -52,41 +46,46 @@ show_help() {
     echo ""
     echo "Usage: $0 <command> [options]"
     echo ""
-    echo -e "${BOLD}Commands:${NC}"
+    echo -e "${BOLD}Lifecycle Commands:${NC}"
+    echo "  init               First-time interactive setup"
     echo "  start              Start the platform (API + web)"
     echo "  stop               Stop the platform"
+    echo "  teardown           Remove all containers and data"
+    echo ""
+    echo -e "${BOLD}Management Commands:${NC}"
     echo "  status             Show platform and container status"
     echo "  config             Update platform configuration"
     echo "  logs [service]     Tail logs (api, web, postgres, garage)"
     echo "  shell              Open interactive shell in operator"
     echo "  help               Show this help"
     echo ""
-    echo -e "${BOLD}Start options:${NC}"
-    echo "  --dev              Override to development mode"
-    echo "  --gpu MODE         Override GPU mode (nvidia, mac, cpu)"
-    echo ""
     echo -e "${BOLD}Stop options:${NC}"
     echo "  --keep-infra       Keep infrastructure running (postgres, garage)"
+    echo ""
+    echo -e "${BOLD}Teardown options:${NC}"
+    echo "  --keep-env         Keep .env secrets file"
     echo ""
     echo -e "${BOLD}Config options:${NC}"
     echo "  --dev true|false   Set development mode"
     echo "  --gpu MODE         Set GPU mode (nvidia, mac, cpu, auto)"
     echo ""
     echo -e "${BOLD}Examples:${NC}"
+    echo "  $0 init                     # First-time setup"
     echo "  $0 start                    # Start with saved configuration"
-    echo "  $0 start --gpu nvidia       # Start with NVIDIA GPU"
     echo "  $0 stop --keep-infra        # Stop app but keep database"
-    echo "  $0 config --gpu cpu         # Change to CPU mode"
+    echo "  $0 teardown --keep-env      # Full reset, keep secrets"
+    echo "  $0 config --gpu nvidia      # Change GPU mode"
     echo "  $0 logs api                 # Tail API logs"
-    echo "  $0 shell                    # Open operator shell"
-    echo ""
-    echo -e "${BOLD}First-time setup:${NC}"
-    echo "  ./quickstart.sh             # Interactive setup wizard"
     echo ""
 }
 
 # Main command dispatch
 case "${1:-help}" in
+    init)
+        shift
+        "$SCRIPT_DIR/quickstart.sh" "$@"
+        ;;
+
     start)
         check_operator
         shift
@@ -97,6 +96,11 @@ case "${1:-help}" in
         check_operator
         shift
         docker exec kg-operator python /workspace/operator/platform.py stop "$@"
+        ;;
+
+    teardown)
+        shift
+        "$SCRIPT_DIR/operator/lib/teardown.sh" "$@"
         ;;
 
     status)
