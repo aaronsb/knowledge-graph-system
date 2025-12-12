@@ -1,7 +1,8 @@
 # ADR-078: Embedding Landscape Explorer
 
-**Status:** Proposed
+**Status:** Accepted (Phase 1 implemented)
 **Date:** 2025-12-11
+**Updated:** 2025-12-12
 **Deciders:** Engineering Team
 **Related ADRs:**
 - ADR-070: Polarity Axis Analysis (downstream consumer of discovered axes)
@@ -585,6 +586,36 @@ const projection = await umap(embeddings, { useGPU: true });
 **Performance:**
 - 95th percentile projection time < 5s
 - Smooth 3D interaction (no jank at 1000 concepts)
+
+---
+
+## Future Considerations
+
+### Projection History in Garage Storage
+
+Currently, projections are cached as ephemeral JSON files in `/tmp/kg_projections/`. For production use and historical analysis, projections should be stored in Garage (S3-compatible object storage):
+
+**Benefits:**
+- **Time-series snapshots**: Track how the semantic landscape evolves as documents are ingested
+- **Persistence**: Survives container restarts
+- **Versioning**: Compare projections before/after significant ingestion events
+- **Audit trail**: Understand how knowledge structure changed over time
+
+**Proposed bucket structure:**
+```
+kg-projections/
+├── {ontology}/
+│   ├── latest.json              # Current projection (symlink or copy)
+│   ├── 2025-12-12T23:55:11Z.json  # Historical snapshots
+│   ├── 2025-12-11T14:30:00Z.json
+│   └── ...
+```
+
+**Related work:**
+This overlaps with a broader consideration for storing original source documents (not just images) in Garage. Currently only images are stored in object storage (ADR-057). A future ADR should address:
+- Storing original text documents alongside extracted concepts
+- Linking Source nodes to object storage URIs
+- Retention policies for source materials vs. derived data (projections)
 
 ---
 
