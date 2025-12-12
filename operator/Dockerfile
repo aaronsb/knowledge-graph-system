@@ -82,6 +82,19 @@ RUN echo '#!/bin/bash' > /root/.bashrc \
     && echo 'alias status="configure status"' >> /root/.bashrc \
     && chmod +x /root/.bashrc
 
-# Default command: Keep container running for exec commands
-# The kg-operator wrapper will exec into this container
-CMD ["tail", "-f", "/dev/null"]
+# Create startup script that logs a message then keeps container running
+RUN echo '#!/bin/bash' > /usr/local/bin/operator-start.sh \
+    && echo 'echo "════════════════════════════════════════════════════════════"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "  Knowledge Graph Operator Container"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "  Started: $(date -Iseconds)"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "════════════════════════════════════════════════════════════"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo ""' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Configuration plane ready."' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Enter shell: docker exec -it kg-operator /bin/bash"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo "Quick status: docker exec kg-operator configure.py status"' >> /usr/local/bin/operator-start.sh \
+    && echo 'echo ""' >> /usr/local/bin/operator-start.sh \
+    && echo 'exec tail -f /dev/null' >> /usr/local/bin/operator-start.sh \
+    && chmod +x /usr/local/bin/operator-start.sh
+
+# Default command: Show startup message then keep container running
+CMD ["/usr/local/bin/operator-start.sh"]
