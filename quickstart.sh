@@ -378,17 +378,28 @@ else
     echo ""
 fi
 
-# Step 8: Start application
+# Step 8: Initialize platform and start application
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}Step 8/8: Starting application (API + Web)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-# Add --mac flag if Mac mode selected
-if [ "$USE_MAC_MODE" = true ]; then
-    ./operator/lib/start-app.sh $START_APP_FLAGS --mac
-else
-    ./operator/lib/start-app.sh $START_APP_FLAGS
+
+# Build platform init flags
+PLATFORM_FLAGS="--quickstart --start"
+
+if [ "$USE_HOT_RELOAD" = true ]; then
+    PLATFORM_FLAGS="$PLATFORM_FLAGS --dev"
 fi
+
+if [ "$USE_MAC_MODE" = true ]; then
+    PLATFORM_FLAGS="$PLATFORM_FLAGS --gpu mac"
+else
+    # Auto-detect GPU on Linux
+    PLATFORM_FLAGS="$PLATFORM_FLAGS --gpu auto"
+fi
+
+echo -e "${BLUE}→${NC} Initializing platform configuration..."
+docker exec kg-operator python /workspace/operator/platform.py init $PLATFORM_FLAGS
 APP_STARTED=true
 echo ""
 
@@ -470,8 +481,12 @@ if [ "$USE_RANDOM_PASSWORDS" = false ]; then
     echo ""
 fi
 
-echo -e "${YELLOW}To stop services:${NC}"
-echo "  ./operator/lib/stop.sh"
+echo -e "${YELLOW}To manage the platform:${NC}"
+echo "  ./operator.sh start             # Start platform"
+echo "  ./operator.sh stop              # Stop platform"
+echo "  ./operator.sh stop --keep-infra # Stop but keep database"
+echo "  ./operator.sh status            # Show status"
+echo "  ./operator.sh logs api          # View API logs"
 echo ""
 echo -e "${YELLOW}To remove all data and containers:${NC}"
 echo "  ./operator/lib/teardown.sh"
