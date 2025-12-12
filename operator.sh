@@ -313,10 +313,10 @@ cmd_logs() {
 }
 
 # ============================================================================
-# Help
+# Help System
 # ============================================================================
 
-show_help() {
+show_help_overview() {
     echo -e "${BOLD}Knowledge Graph Platform Manager${NC}"
     echo ""
     echo "Usage: $0 <command> [options]"
@@ -336,28 +336,154 @@ show_help() {
     echo "  config [options]   Update platform configuration"
     echo "  logs [service]     Tail logs (default: api)"
     echo "  shell              Open shell in operator container"
-    echo "  help               Show this help"
     echo ""
-    echo -e "${BOLD}Stop Options:${NC}"
-    echo "  --keep-infra       Keep infrastructure running (postgres, garage)"
+    echo -e "${BOLD}Help Topics:${NC}"
+    echo "  help               Show this overview"
+    echo "  help lifecycle     Detailed lifecycle command help"
+    echo "  help services      Service management details"
+    echo "  help config        Configuration options"
     echo ""
-    echo -e "${BOLD}Teardown Options:${NC}"
-    echo "  --keep-env         Keep .env secrets file"
-    echo "  --include-operator Also remove operator container"
-    echo "  --full             Remove everything (volumes, images, operator)"
-    echo ""
-    echo -e "${BOLD}Config Options:${NC}"
-    echo "  --dev true|false   Set development mode"
-    echo "  --gpu <mode>       Set GPU mode (nvidia, mac, cpu, auto)"
-    echo ""
-    echo -e "${BOLD}Examples:${NC}"
+    echo -e "${BOLD}Quick Examples:${NC}"
     echo "  $0 init                    # First-time setup"
     echo "  $0 start                   # Start with saved config"
     echo "  $0 stop --keep-infra       # Stop app, keep database"
-    echo "  $0 config --gpu nvidia     # Change GPU mode"
-    echo "  $0 rebuild api             # Rebuild API after code changes"
-    echo "  $0 logs api                # Tail API logs"
+    echo "  $0 shell                   # Enter operator shell for configuration"
     echo ""
+}
+
+show_help_lifecycle() {
+    echo -e "${BOLD}Lifecycle Commands${NC}"
+    echo ""
+    echo "These commands manage the platform lifecycle on your host machine."
+    echo ""
+    echo -e "${BLUE}init${NC}"
+    echo "  Guided first-time setup wizard."
+    echo "  - Generates secrets (.env file)"
+    echo "  - Detects GPU (NVIDIA, Mac, or CPU-only)"
+    echo "  - Creates .operator.conf with your settings"
+    echo "  - Starts all services"
+    echo "  - Prompts for admin password and API keys"
+    echo ""
+    echo -e "${BLUE}start${NC}"
+    echo "  Start the platform using saved configuration."
+    echo "  - Reads .operator.conf for dev mode and GPU settings"
+    echo "  - Starts infrastructure (postgres, garage, operator)"
+    echo "  - Applies database migrations"
+    echo "  - Starts application (api, web)"
+    echo ""
+    echo -e "${BLUE}stop [options]${NC}"
+    echo "  Stop all containers gracefully."
+    echo "  Options:"
+    echo "    --keep-infra    Stop only app containers (api, web)"
+    echo "                    Keep infrastructure running (postgres, garage, operator)"
+    echo ""
+    echo -e "${BLUE}teardown [options]${NC}"
+    echo "  Remove containers and optionally all data."
+    echo "  Options:"
+    echo "    (default)           Remove containers, keep volumes and .env"
+    echo "    --keep-env          Remove containers and volumes, keep .env"
+    echo "    --include-operator  Also remove operator container"
+    echo "    --full              Remove everything (volumes, images, .env)"
+    echo ""
+    echo -e "${BOLD}Typical Workflow:${NC}"
+    echo "  $0 init              # First time only"
+    echo "  $0 start             # Daily startup"
+    echo "  $0 stop              # End of session"
+    echo "  $0 teardown --full   # Complete reset"
+    echo ""
+}
+
+show_help_services() {
+    echo -e "${BOLD}Service Management${NC}"
+    echo ""
+    echo "Manage individual services without full restart."
+    echo ""
+    echo -e "${BLUE}restart <service>${NC}"
+    echo "  Restart a running service container."
+    echo "  Services: api, web, postgres, garage, operator"
+    echo ""
+    echo "  Examples:"
+    echo "    $0 restart api        # Restart API server"
+    echo "    $0 restart postgres   # Restart database"
+    echo ""
+    echo -e "${BLUE}rebuild <service>${NC}"
+    echo "  Rebuild image and restart (for code changes)."
+    echo "  Services: api, web (custom images only)"
+    echo ""
+    echo "  Examples:"
+    echo "    $0 rebuild api        # After Python code changes"
+    echo "    $0 rebuild web        # After React code changes"
+    echo ""
+    echo -e "${YELLOW}Note:${NC} In dev mode, code is mounted as volumes, so most changes"
+    echo "auto-reload without rebuild. Use rebuild for:"
+    echo "  - requirements.txt / package.json changes"
+    echo "  - Dockerfile changes"
+    echo "  - Schema changes requiring rebuild"
+    echo ""
+    echo -e "${BLUE}logs [service]${NC}"
+    echo "  Tail logs from a service (default: api)."
+    echo "  Press Ctrl+C to stop."
+    echo ""
+    echo "  Examples:"
+    echo "    $0 logs              # API logs (default)"
+    echo "    $0 logs web          # Web server logs"
+    echo "    $0 logs postgres     # Database logs"
+    echo ""
+}
+
+show_help_config() {
+    echo -e "${BOLD}Configuration${NC}"
+    echo ""
+    echo -e "${BLUE}status${NC}"
+    echo "  Show platform configuration and container status."
+    echo "  Displays: dev mode, GPU mode, container health"
+    echo ""
+    echo -e "${BLUE}config [options]${NC}"
+    echo "  Update platform configuration (saved to .operator.conf)."
+    echo ""
+    echo "  Options:"
+    echo "    --dev true|false    Enable/disable development mode"
+    echo "                        Dev mode: hot reload, source mounts, Vite HMR"
+    echo "    --gpu <mode>        Set GPU acceleration mode"
+    echo "                        Modes: nvidia, mac, cpu, auto"
+    echo ""
+    echo "  Examples:"
+    echo "    $0 config --dev true           # Enable dev mode"
+    echo "    $0 config --gpu nvidia         # Use NVIDIA GPU"
+    echo "    $0 config --dev true --gpu auto # Dev mode, auto-detect GPU"
+    echo ""
+    echo -e "${YELLOW}Note:${NC} After changing config, restart to apply:"
+    echo "    $0 stop && $0 start"
+    echo ""
+    echo -e "${BLUE}shell${NC}"
+    echo "  Open interactive shell in operator container."
+    echo "  Use for detailed platform configuration:"
+    echo "    - Admin user management"
+    echo "    - AI provider setup"
+    echo "    - Embedding configuration"
+    echo "    - API key management"
+    echo ""
+    echo "  Inside shell, run: operator-help"
+    echo ""
+}
+
+cmd_help() {
+    local topic="${1:-}"
+
+    case "$topic" in
+        lifecycle)
+            show_help_lifecycle
+            ;;
+        services|service)
+            show_help_services
+            ;;
+        config|configuration)
+            show_help_config
+            ;;
+        *)
+            show_help_overview
+            ;;
+    esac
 }
 
 # ============================================================================
@@ -405,12 +531,13 @@ case "${1:-help}" in
         "$SCRIPT_DIR/operator/lib/teardown.sh" "$@"
         ;;
     help|--help|-h)
-        show_help
+        shift
+        cmd_help "$@"
         ;;
     *)
         echo -e "${RED}Unknown command: $1${NC}"
         echo ""
-        show_help
+        show_help_overview
         exit 1
         ;;
 esac
