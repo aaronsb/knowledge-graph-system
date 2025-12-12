@@ -57,7 +57,7 @@ trap cleanup ERR INT TERM
 # Banner
 clear
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║${NC}  ${BOLD}Knowledge Graph System - TL;DR Quickstart${NC}             ${BLUE}    ║${NC}"
+echo -e "${BLUE}║${NC}  ${BOLD}Knowledge Graph System - Platform Setup${NC}               ${BLUE}    ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BOLD}This script will get you started in minutes.${NC}"
@@ -93,11 +93,11 @@ echo "  • Install the 'kg' CLI command globally"
 echo ""
 echo -e "${BOLD}Ready to proceed?${NC}"
 echo ""
-read -p "Continue with quickstart? (yes/no): " -r
+read -p "Continue with setup? (yes/no): " -r
 echo ""
 
 if [[ ! $REPLY =~ ^[Yy]es$ ]]; then
-    echo "Quickstart cancelled."
+    echo "Setup cancelled."
     exit 0
 fi
 
@@ -461,7 +461,7 @@ fi
 # Success banner
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║${NC}  ${BOLD}🎉 Quickstart Complete!${NC}                                ${GREEN}║${NC}"
+echo -e "${GREEN}║${NC}  ${BOLD}Setup Complete!${NC}                                        ${GREEN}║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BOLD}Your Knowledge Graph system is ready!${NC}"
