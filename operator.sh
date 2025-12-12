@@ -207,7 +207,7 @@ cmd_rebuild() {
     local service="${1:-}"
     if [ -z "$service" ]; then
         echo -e "${RED}Usage: $0 rebuild <service>${NC}"
-        echo "Services: api, web"
+        echo "Services: api, web, operator"
         echo ""
         echo -e "${YELLOW}Note: postgres/garage use stock images, use teardown + init to recreate${NC}"
         exit 1
@@ -217,11 +217,11 @@ cmd_rebuild() {
     load_config
 
     case "$service" in
-        api|web)
+        api|web|operator)
             echo -e "${BLUE}→ Rebuilding $service...${NC}"
             local compose_cmd=$(get_compose_cmd)
-            $compose_cmd stop $service
-            $compose_cmd rm -f $service
+            $compose_cmd stop $service 2>/dev/null || true
+            $compose_cmd rm -f $service 2>/dev/null || true
             $compose_cmd up -d --build $service
             echo -e "${GREEN}✓ $service rebuilt and started${NC}"
             ;;
@@ -531,7 +531,7 @@ case "${1:-help}" in
         "$SCRIPT_DIR/operator/lib/teardown.sh" "$@"
         ;;
     help|--help|-h)
-        shift
+        shift 2>/dev/null || true
         cmd_help "$@"
         ;;
     *)

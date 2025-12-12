@@ -69,9 +69,17 @@ RUN echo '#!/bin/bash' > /root/.bashrc \
     && echo '    /usr/local/bin/operator-help' >> /root/.bashrc \
     && echo 'fi' >> /root/.bashrc \
     && echo '' >> /root/.bashrc \
+    && echo '# PostgreSQL convenience - use existing POSTGRES_PASSWORD for psql' >> /root/.bashrc \
+    && echo 'export PGPASSWORD="${POSTGRES_PASSWORD}"' >> /root/.bashrc \
+    && echo 'export PGHOST="${POSTGRES_HOST:-knowledge-graph-postgres}"' >> /root/.bashrc \
+    && echo 'export PGUSER="${POSTGRES_USER:-admin}"' >> /root/.bashrc \
+    && echo 'export PGDATABASE="${POSTGRES_DB:-knowledge_graph}"' >> /root/.bashrc \
+    && echo '' >> /root/.bashrc \
     && echo '# Convenient aliases' >> /root/.bashrc \
     && echo 'alias configure="python /workspace/operator/configure.py"' >> /root/.bashrc \
     && echo 'alias help="operator-help"' >> /root/.bashrc \
+    && echo 'alias pg="psql"' >> /root/.bashrc \
+    && echo 'alias status="configure status"' >> /root/.bashrc \
     && chmod +x /root/.bashrc
 
 # Default command: Keep container running for exec commands
