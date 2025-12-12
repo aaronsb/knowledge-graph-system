@@ -34,8 +34,9 @@ from .workers.vocab_refresh_worker import run_vocab_refresh_worker
 from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
 from .workers.source_embedding_worker import run_source_embedding_worker
-from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources
+from .workers.projection_worker import run_projection_worker
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -152,8 +153,9 @@ async def startup_event():
     queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
     queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
     queue.register_worker("source_embedding", run_source_embedding_worker)  # ADR-068 Phase 1
+    queue.register_worker("projection", run_projection_worker)  # ADR-078: Embedding landscape
     # Note: polarity_axis_analysis uses direct query pattern (ADR-070), not job queue
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding")
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection")
 
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
@@ -336,6 +338,7 @@ app.include_router(embedding.public_router)  # ADR-039: Public embedding config
 app.include_router(embedding.admin_router)  # ADR-039: Admin embedding management
 app.include_router(extraction.public_router)  # ADR-041: Public extraction config
 app.include_router(extraction.admin_router)  # ADR-041: Admin extraction management
+app.include_router(projection.router)  # ADR-078: Embedding landscape projections
 
 
 # Root endpoint
