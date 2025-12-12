@@ -1,252 +1,205 @@
-# Knowledge Graph Scripts
+# Knowledge Graph Operator
 
-Organized collection of scripts for managing the Knowledge Graph System.
+The operator is the **configuration plane** for the Knowledge Graph System. It provides platform lifecycle management from the host and detailed configuration from within the operator container.
+
+## Quick Start
+
+```bash
+# First-time setup (generates secrets, detects GPU, starts everything)
+./operator.sh init
+
+# Daily operations
+./operator.sh start              # Start platform
+./operator.sh stop               # Stop platform
+./operator.sh status             # Check status
+./operator.sh shell              # Enter configuration shell
+```
 
 ## Directory Structure
 
 ```
-scripts/
-├── setup/           # Initial setup and configuration
-├── database/        # Database lifecycle and operations
-├── services/        # Application service management
-├── ollama/          # Local AI infrastructure (Docker)
-├── diagnostics/     # Monitoring and debugging tools
-├── admin/           # User and security administration
-├── tools/           # Utility scripts
-└── teardown/        # System cleanup and removal
+operator/
+├── lib/                    # Shell scripts for lifecycle management
+│   ├── common.sh           # Shared functions (run_compose, load_config)
+│   ├── guided-init.sh      # First-time setup wizard
+│   ├── start-infra.sh      # Start postgres, garage, operator
+│   ├── start-app.sh        # Start api, web
+│   ├── stop.sh             # Stop containers
+│   ├── teardown.sh         # Remove containers/volumes
+│   └── operator-help.sh    # In-shell help system
+├── database/               # Database operations
+│   ├── migrate-db.sh       # Apply schema migrations
+│   ├── backup-database.sh  # Create database backup
+│   └── restore-database.sh # Restore from backup
+├── admin/                  # Administration scripts
+│   ├── manage_api_keys.py  # API key management
+│   └── calculate_concept_grounding.py
+├── configure.py            # Main configuration CLI
+├── Dockerfile              # Operator container image
+└── README.md               # This file
 ```
 
-## Quick Reference
+## Two-Layer Architecture
 
-### Initial Setup
+### Layer 1: Host (operator.sh)
 
-**Recommended: Complete cold start orchestration**
+Run on your host machine for **lifecycle management**:
 
 ```bash
-# One command to rule them all - handles database, Garage, API, auth, and CLI
-./scripts/setup/bootstrap.sh          # Production mode (interactive password)
-./scripts/setup/bootstrap.sh --dev    # Development mode (uses Password1!)
+./operator.sh init               # Guided first-time setup
+./operator.sh start              # Start platform (uses saved config)
+./operator.sh stop               # Stop all containers
+./operator.sh stop --keep-infra  # Stop app only, keep database
+./operator.sh restart <service>  # Restart specific service
+./operator.sh rebuild <service>  # Rebuild and restart (api, web, operator)
+./operator.sh status             # Show config and container status
+./operator.sh config --dev true  # Update configuration
+./operator.sh logs [service]     # Tail logs
+./operator.sh shell              # Enter operator container
+./operator.sh teardown           # Remove containers
+./operator.sh help [topic]       # Show help (lifecycle, services, config)
 ```
 
-**Manual step-by-step (if you prefer control):**
+### Layer 2: Operator Shell (inside container)
+
+Enter with `./operator.sh shell` for **platform configuration**:
 
 ```bash
-# 1. Start database
-#    - Starts PostgreSQL + Apache AGE container
-#    - Automatically runs migrate-db.sh to apply all schema migrations
-./scripts/services/start-database.sh
+# Quick commands (aliases)
+status                   # View platform configuration
+pg                       # Connect to database (credentials auto-loaded)
+configure                # Run configure.py
 
-# 2. Start Garage object storage
-./scripts/services/start-garage.sh -y
+# Configuration commands
+configure.py admin                           # Create/update admin user
+configure.py ai-provider openai --model gpt-4o  # Set extraction provider
+configure.py embedding                       # List embedding profiles
+configure.py embedding 2                     # Activate profile ID 2
+configure.py api-key openai                  # Store API key (encrypted)
+configure.py status                          # Show all configuration
 
-# 3. Start API server
-./scripts/services/start-api.sh -y
-
-# 4. Initialize authentication and secrets
-./scripts/setup/initialize-platform.sh          # Production
-./scripts/setup/initialize-platform.sh --dev    # Development
-
-# 5. Install kg CLI
-cd client && ./install.sh && cd ..
-
-# Optional: Configure database performance profile
-./scripts/setup/configure-db-profile.sh <small|medium|large>
-
-# Optional: Configure AI providers (legacy - now via kg CLI)
-./scripts/setup/configure-ai.sh
+# Help system
+operator-help                    # Overview
+operator-help admin              # Admin user management
+operator-help embedding          # Embedding configuration
+operator-help extraction         # AI extraction provider
+operator-help api-keys           # API key management
+operator-help diagnostics        # Diagnostic tools
+operator-help database           # Database operations
+operator-help all                # Show everything
 ```
 
-### Daily Operations
+## Configuration Files
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `.env` | Infrastructure secrets (generated by init) | Project root |
+| `.operator.conf` | Platform settings (dev mode, GPU mode) | Project root |
+| Database | Application config (providers, API keys) | PostgreSQL |
+
+## Typical Workflows
+
+### First-Time Setup
 
 ```bash
-# Database operations
-./scripts/services/start-database.sh    # Start PostgreSQL + Apache AGE (auto-runs migrations)
-./scripts/services/stop-database.sh     # Stop database
-./scripts/database/migrate-db.sh        # Apply schema migrations (manual - auto-runs during start)
-./scripts/database/backup-database.sh   # Create binary backup
-./scripts/database/restore-database.sh  # Restore from backup
-
-# Service management
-./scripts/services/start-api.sh         # Start FastAPI server
-./scripts/services/start-viz.sh         # Start visualization server
-./scripts/services/stop-api.sh          # [Placeholder] Stop API (not containerized yet)
-./scripts/services/stop-viz.sh          # [Placeholder] Stop viz (not containerized yet)
-
-# Local AI (Ollama)
-./scripts/ollama/start-ollama.sh        # Start Ollama container
-./scripts/ollama/stop-ollama.sh         # Stop Ollama container
-
-# Diagnostics
-./scripts/diagnostics/monitor-db.sh     # Real-time database monitoring
-./scripts/diagnostics/list-tables.sh    # List database tables/schemas
-./scripts/diagnostics/explain-query.sh  # Query performance analysis
-./scripts/diagnostics/lint_queries.py   # Query safety linter (CI)
-
-# Administration
-./scripts/admin/set-admin-password.sh   # Set/update admin password
-./scripts/admin/reset-password.sh       # Reset any user password
-
-# Utilities
-./scripts/tools/graph_to_mermaid.py     # Export graph to Mermaid diagrams
-
-# System teardown
-./scripts/teardown/teardown.sh          # Complete system teardown
+./operator.sh init
+# Guided wizard:
+# 1. Generates .env with secrets
+# 2. Detects GPU (nvidia/mac/cpu)
+# 3. Asks for dev mode preference
+# 4. Starts all containers
+# 5. Prompts for admin password
+# 6. Prompts for AI provider API keys
 ```
 
-## Automation Flags
-
-Most scripts support automation flags for CI/CD:
+### Daily Development
 
 ```bash
-./scripts/services/start-database.sh -y         # Skip confirmation
-./scripts/database/backup-database.sh -y        # Auto-confirm backup
-./scripts/setup/initialize-auth.sh --dev        # Development mode (Password1!)
+./operator.sh start              # Start with saved config
+# ... work ...
+./operator.sh stop               # End of day
 ```
 
-## Script Organization Principles
-
-### setup/
-**Purpose:** One-time or infrequent configuration tasks
-- Initial authentication setup
-- Database performance tuning
-- AI provider configuration (legacy)
-
-**When to use:** First-time setup or major configuration changes
-
-### database/
-**Purpose:** PostgreSQL + Apache AGE database lifecycle
-- Start/stop database container
-- Schema migrations (migrate-db.sh runs automatically during start-database.sh)
-- Backup/restore operations
-
-**All database operations** (except diagnostics) go here
-
-**Migration workflow:**
-- Initial setup: `start-database.sh` automatically applies all pending migrations
-- After adding new migrations: Run `migrate-db.sh` manually or restart database
-
-### services/
-**Purpose:** Application-level services
-- API server (FastAPI)
-- Visualization server
-- Future: containerized services
-
-**Note:** stop-api.sh and stop-viz.sh are placeholders until services are containerized
-
-### ollama/
-**Purpose:** Local AI inference with Ollama (Docker)
-- Start/stop Ollama container
-- Separate from services/ because it's infrastructure, not application
-
-### diagnostics/
-**Purpose:** Monitoring, debugging, and analysis tools
-- Real-time monitoring
-- Schema inspection
-- Query performance analysis
-- CI linters
-
-**Read-only operations** that help understand system state
-
-### admin/
-**Purpose:** User and security management
-- Password management
-- User administration
-
-**Security-sensitive operations** separate from general setup
-
-### tools/
-**Purpose:** Utility scripts for data export, conversion, etc.
-- Graph visualization exports
-- Data transformation utilities
-
-**One-off utilities** that don't fit other categories
-
-### teardown/
-**Purpose:** System cleanup and removal
-- Complete system teardown
-- Destructive operations
-
-**Dangerous operations** isolated for safety
-
-## Migration from Flat Structure
-
-**Old paths** → **New paths:**
+### Change AI Provider
 
 ```bash
-./scripts/start-database.sh     → ./scripts/services/start-database.sh
-./scripts/stop-database.sh      → ./scripts/services/stop-database.sh
-./scripts/start-api.sh          → ./scripts/services/start-api.sh
-./scripts/migrate-db.sh         → ./scripts/database/migrate-db.sh
-./scripts/backup-database.sh    → ./scripts/database/backup-database.sh
-./scripts/restore-database.sh   → ./scripts/database/restore-database.sh
-./scripts/initialize-auth.sh    → ./scripts/setup/initialize-auth.sh
-./scripts/configure-ai.sh       → ./scripts/setup/configure-ai.sh
-./scripts/start-ollama.sh       → ./scripts/ollama/start-ollama.sh
-./scripts/stop-ollama.sh        → ./scripts/ollama/stop-ollama.sh
-./scripts/monitor-db.sh         → ./scripts/diagnostics/monitor-db.sh
-./scripts/list-tables.sh        → ./scripts/diagnostics/list-tables.sh
+./operator.sh shell
+configure.py ai-provider anthropic --model claude-sonnet-4-20250514
+configure.py api-key anthropic
+exit
+./operator.sh restart api
 ```
 
-## Adding New Scripts
-
-When creating a new script, place it in the appropriate directory:
-
-1. **Setup** - One-time configuration tasks
-2. **Database** - PostgreSQL/AGE lifecycle operations
-3. **Services** - Application service management
-4. **Ollama** - Local AI infrastructure
-5. **Diagnostics** - Monitoring and debugging (read-only)
-6. **Admin** - User and security management
-7. **Tools** - Data utilities and exports
-8. **Teardown** - Destructive cleanup operations
-
-**Template for new scripts:**
+### Database Operations
 
 ```bash
-#!/bin/bash
-# ============================================================================
-# Script Name
-# ============================================================================
-# Brief description of what this script does
-# ============================================================================
-
-set -e
-
-# Colors for output
-BOLD="\033[1m"
-GREEN="\033[0;32m"
-BLUE="\033[0;34m"
-YELLOW="\033[0;33m"
-RED="\033[0;31m"
-NC="\033[0m" # No Color
-
-# Project root (adjust based on depth in scripts/)
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-
-# Your script logic here
+./operator.sh shell
+pg                               # Connect to database
+pg -c "SELECT count(*) FROM ..."  # Run query
+/workspace/operator/database/backup-database.sh
+exit
 ```
 
-## Cross-References
-
-Scripts may reference other scripts using relative paths from project root:
+### Complete Reset
 
 ```bash
-# From scripts/services/start-database.sh
-"$PROJECT_ROOT/scripts/database/migrate-db.sh" -y
-
-# From scripts/setup/initialize-auth.sh
-echo "Next: ./scripts/services/start-api.sh"
+./operator.sh teardown --full    # Remove everything
+./operator.sh init               # Start fresh
 ```
 
-## Documentation
+## Security Model
 
-After modifying scripts, update:
-- `docs/guides/QUICKSTART.md` - Getting started guide
-- `docs/guides/DEPLOYMENT.md` - Production deployment
-- `docs/manual/` - User manual references
-- `CLAUDE.md` - Development guide
-- `README.md` - Main project documentation
+**Two tiers of secrets:**
+
+1. **Infrastructure secrets** (`.env` file):
+   - `ENCRYPTION_KEY` - Master key for encrypting application secrets
+   - `POSTGRES_PASSWORD` - Database password
+   - `OAUTH_SIGNING_KEY` - JWT signing key
+   - `GARAGE_RPC_SECRET` - Object storage cluster secret
+   - Generated once, loaded into containers via docker-compose
+
+2. **Application secrets** (encrypted in PostgreSQL):
+   - OpenAI/Anthropic API keys
+   - Stored via `configure.py api-key`
+   - Encrypted using `ENCRYPTION_KEY`
+
+The operator container has access to both tiers - it's the trusted configuration plane.
+
+## Diagnostic Tools
+
+Available inside operator shell (`./operator.sh shell`):
+
+```bash
+# Database
+/workspace/scripts/development/diagnostics/monitor-db.sh
+/workspace/scripts/development/diagnostics/list-tables.sh
+/workspace/scripts/development/diagnostics/explain-query.sh
+
+# Garage S3 storage
+/workspace/scripts/development/diagnostics/garage-status.sh
+/workspace/scripts/development/diagnostics/garage-keys.sh
+/workspace/scripts/development/diagnostics/garage-list-images.sh
+
+# Code quality
+python /workspace/scripts/development/diagnostics/lint_queries.py
+```
+
+## Extending the Operator
+
+### Adding New Configuration Commands
+
+Edit `operator/configure.py`:
+1. Add handler method to `OperatorConfig` class
+2. Add argparse subparser in `main()`
+3. Update `operator-help.sh` with documentation
+
+### Adding New Lifecycle Commands
+
+Edit `operator.sh`:
+1. Add `cmd_<name>()` function
+2. Add case in main dispatch
+3. Update `show_help_*` functions
 
 ---
 
-**Last Updated:** 2025-11-02
+**Last Updated:** 2025-12-12
