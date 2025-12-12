@@ -7,7 +7,12 @@
 -- Inspired by Kubernetes operator pattern where the control plane remembers
 -- desired state and reconciles actual state to match.
 
--- Platform configuration key-value store
+BEGIN;
+
+-- ============================================================================
+-- Platform Configuration Table
+-- ============================================================================
+
 CREATE TABLE IF NOT EXISTS kg_api.platform_config (
     key VARCHAR(100) PRIMARY KEY,
     value TEXT NOT NULL,
@@ -16,10 +21,12 @@ CREATE TABLE IF NOT EXISTS kg_api.platform_config (
     updated_by VARCHAR(100) DEFAULT 'system'
 );
 
--- Add comment
 COMMENT ON TABLE kg_api.platform_config IS 'Platform lifecycle configuration for operator control plane (ADR-061)';
 
--- Insert default configuration
+-- ============================================================================
+-- Default Configuration
+-- ============================================================================
+
 INSERT INTO kg_api.platform_config (key, value, description) VALUES
     ('dev_mode', 'false', 'Enable development mode with hot reload (true/false)'),
     ('gpu_mode', 'auto', 'GPU acceleration mode: auto, nvidia, mac, cpu'),
@@ -27,6 +34,10 @@ INSERT INTO kg_api.platform_config (key, value, description) VALUES
     ('initialized_by', '', 'How platform was initialized (quickstart/manual)'),
     ('compose_files', '', 'Comma-separated list of compose files used')
 ON CONFLICT (key) DO NOTHING;
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
 
 -- Function to update platform config with timestamp
 CREATE OR REPLACE FUNCTION kg_api.set_platform_config(
@@ -54,3 +65,13 @@ BEGIN
     RETURN v_value;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================================================
+-- Record Migration
+-- ============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (31, 'platform_config')
+ON CONFLICT (version) DO NOTHING;
+
+COMMIT;

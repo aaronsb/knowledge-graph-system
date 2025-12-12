@@ -30,6 +30,7 @@ KEEP_ENV=false
 AUTO_YES=false
 REMOVE_IMAGES=false
 REMOVE_VOLUMES=false
+INCLUDE_OPERATOR=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -45,9 +46,14 @@ while [[ $# -gt 0 ]]; do
             REMOVE_VOLUMES=true
             shift
             ;;
+        --include-operator)
+            INCLUDE_OPERATOR=true
+            shift
+            ;;
         --full)
             REMOVE_IMAGES=true
             REMOVE_VOLUMES=true
+            INCLUDE_OPERATOR=true
             shift
             ;;
         -y|--yes)
@@ -60,32 +66,26 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --keep-env        Keep .env file (don't delete secrets)"
-            echo "  --remove-images   Also remove Docker images (Level 2)"
-            echo "  --remove-volumes  Also remove ALL volumes including caches (Level 2)"
-            echo "  --full            Complete teardown: images + volumes (Level 3)"
-            echo "  -y, --yes         Skip confirmation prompt"
-            echo "  -h, --help        Show this help"
+            echo "  --keep-env          Keep .env file (don't delete secrets)"
+            echo "  --remove-images     Also remove Docker images"
+            echo "  --remove-volumes    Also remove ALL volumes including caches"
+            echo "  --include-operator  Also teardown the operator container (default: preserve)"
+            echo "  --full              Complete teardown: images + volumes + operator"
+            echo "  -y, --yes           Skip confirmation prompt"
+            echo "  -h, --help          Show this help"
             echo ""
-            echo "Teardown Levels:"
-            echo "  Level 1 (default):     Stop containers, preserve volumes & images"
-            echo "                         • Keeps: database data, Garage storage, HF cache"
-            echo "                         • Use for: Quick restart with data intact"
-            echo ""
-            echo "  Level 2 (--remove-images):"
-            echo "                         Level 1 + remove Docker images"
-            echo "                         • Forces clean rebuild (2-3 min next start)"
-            echo "                         • Use for: Testing image build changes"
-            echo ""
-            echo "  Level 3 (--full):      Level 2 + remove ALL volumes"
-            echo "                         • Deletes: database, Garage, HF cache (~1GB)"
-            echo "                         • Use for: Complete fresh start"
+            echo "Default Behavior:"
+            echo "  • Stops app containers (api, web) and infra (postgres, garage)"
+            echo "  • Preserves operator container (for quick restart)"
+            echo "  • Preserves volumes (database data, Garage storage, HF cache)"
+            echo "  • Preserves Docker images"
             echo ""
             echo "Examples:"
-            echo "  $0                    # Level 1: Quick restart"
-            echo "  $0 --remove-images    # Level 2: Force image rebuild"
-            echo "  $0 --full             # Level 3: Nuclear option"
-            echo "  $0 --keep-env --full  # Level 3 but keep secrets"
+            echo "  $0                      # Stop platform, keep operator + data"
+            echo "  $0 --include-operator   # Stop everything including operator"
+            echo "  $0 --remove-images      # Force image rebuild on next start"
+            echo "  $0 --full               # Nuclear option: remove everything"
+            echo "  $0 --keep-env --full    # Full reset but keep secrets"
             echo ""
             exit 0
             ;;
@@ -103,24 +103,39 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 echo ""
 
-# Determine teardown level
-if [ "$REMOVE_VOLUMES" = true ] && [ "$REMOVE_IMAGES" = true ]; then
-    LEVEL="Level 3 (Full)"
-    LEVEL_COLOR="${RED}"
-elif [ "$REMOVE_IMAGES" = true ]; then
-    LEVEL="Level 2 (Images)"
-    LEVEL_COLOR="${YELLOW}"
-else
-    LEVEL="Level 1 (Containers Only)"
-    LEVEL_COLOR="${GREEN}"
+# Determine teardown level description
+LEVEL_PARTS=()
+if [ "$INCLUDE_OPERATOR" = true ]; then
+    LEVEL_PARTS+=("operator")
+fi
+if [ "$REMOVE_IMAGES" = true ]; then
+    LEVEL_PARTS+=("images")
+fi
+if [ "$REMOVE_VOLUMES" = true ]; then
+    LEVEL_PARTS+=("volumes")
 fi
 
-echo -e "${BOLD}Teardown Level: ${LEVEL_COLOR}${LEVEL}${NC}"
+if [ ${#LEVEL_PARTS[@]} -eq 0 ]; then
+    LEVEL="Platform only (operator preserved)"
+    LEVEL_COLOR="${GREEN}"
+elif [ "$REMOVE_VOLUMES" = true ] && [ "$REMOVE_IMAGES" = true ] && [ "$INCLUDE_OPERATOR" = true ]; then
+    LEVEL="Full (everything)"
+    LEVEL_COLOR="${RED}"
+else
+    LEVEL="Platform + ${LEVEL_PARTS[*]}"
+    LEVEL_COLOR="${YELLOW}"
+fi
+
+echo -e "${BOLD}Teardown: ${LEVEL_COLOR}${LEVEL}${NC}"
 echo ""
 
 echo -e "${YELLOW}This will:${NC}"
-echo "  • Stop all containers"
-echo "  • Remove all containers"
+if [ "$INCLUDE_OPERATOR" = true ]; then
+    echo "  • Stop ALL containers (including operator)"
+else
+    echo "  • Stop platform containers (api, web, postgres, garage)"
+    echo "  • ${GREEN}Preserve${NC} operator container"
+fi
 echo "  • Remove Docker networks"
 
 if [ "$REMOVE_VOLUMES" = true ]; then
@@ -205,7 +220,12 @@ echo -e "${GREEN}✓ Docker Compose services stopped and removed${NC}"
 
 # Force remove any remaining containers
 echo -e "${BLUE}→ Cleaning up any remaining containers...${NC}"
-REMAINING=$(docker ps -a --format '{{.Names}}' | grep -E "knowledge-graph|kg-" || true)
+if [ "$INCLUDE_OPERATOR" = true ]; then
+    REMAINING=$(docker ps -a --format '{{.Names}}' | grep -E "knowledge-graph|kg-" || true)
+else
+    # Exclude operator container
+    REMAINING=$(docker ps -a --format '{{.Names}}' | grep -E "knowledge-graph|kg-" | grep -v "^kg-operator$" || true)
+fi
 if [ -n "$REMAINING" ]; then
     while IFS= read -r container; do
         echo -e "  ${YELLOW}Removing:${NC} $container"
@@ -214,6 +234,13 @@ if [ -n "$REMAINING" ]; then
     echo -e "${GREEN}✓ Removed remaining containers${NC}"
 else
     echo -e "${GREEN}✓ No remaining containers${NC}"
+fi
+
+if [ "$INCLUDE_OPERATOR" = false ]; then
+    # Check if operator is still running
+    if docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
+        echo -e "${GREEN}✓ Operator container preserved${NC}"
+    fi
 fi
 
 # Only manually remove volumes if --remove-volumes specified and docker-compose down didn't catch them
