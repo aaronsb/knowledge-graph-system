@@ -45,6 +45,9 @@ class ProjectionParametersResponse(BaseModel):
     perplexity: Optional[int] = None
     n_neighbors: Optional[int] = None
     min_dist: Optional[float] = None
+    spread: Optional[float] = None  # UMAP spread (cluster separation)
+    metric: Optional[str] = None  # "cosine" or "euclidean"
+    normalize_l2: Optional[bool] = None  # L2 normalization applied
 
 
 class ProjectionStatisticsResponse(BaseModel):
@@ -99,15 +102,37 @@ class RegenerateRequest(BaseModel):
         default=0.1,
         ge=0.0,
         le=1.0,
-        description="UMAP min_dist"
+        description="UMAP min_dist (cluster tightness, lower=tighter)"
+    )
+    spread: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=5.0,
+        description="UMAP spread (embedding scale, higher=more cluster separation)"
+    )
+    metric: Literal["cosine", "euclidean"] = Field(
+        default="cosine",
+        description="Distance metric: cosine (angular, best for embeddings) or euclidean (L2)"
+    )
+    normalize_l2: bool = Field(
+        default=True,
+        description="L2-normalize embeddings before projection (recommended for semantic vectors)"
     )
     include_grounding: bool = Field(
         default=True,
         description="Include grounding strength"
     )
+    refresh_grounding: bool = Field(
+        default=False,
+        description="Compute fresh grounding values (slower but accurate)"
+    )
     include_diversity: bool = Field(
         default=False,
         description="Include diversity scores (slower)"
+    )
+    embedding_source: Literal["concepts", "sources", "vocabulary", "combined"] = Field(
+        default="concepts",
+        description="Which embeddings to project: concepts (default), sources, vocabulary, or combined"
     )
 
 
@@ -144,7 +169,8 @@ async def get_available_algorithms(
 async def get_projection(
     ontology: str,
     request: Request,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    embedding_source: Literal["concepts", "sources", "vocabulary", "combined"] = "concepts"
 ):
     """
     Get cached projection dataset for an ontology.
@@ -152,16 +178,26 @@ async def get_projection(
     Returns pre-computed projection coordinates for visualization.
     If no cache exists, returns 404.
 
+    Args:
+        embedding_source: Which embeddings to retrieve (default: concepts)
+
     Supports conditional requests:
     - If-None-Match: changelist_id → returns 304 if unchanged
     """
+    # Cache key includes embedding source
+    cache_key = f"{ontology}:{embedding_source}"
+
     # Check for cached projection
-    dataset = get_cached_projection(ontology)
+    dataset = get_cached_projection(cache_key)
+
+    # Fall back to legacy cache key (without source) for backward compatibility
+    if dataset is None and embedding_source == "concepts":
+        dataset = get_cached_projection(ontology)
 
     if dataset is None:
         raise HTTPException(
             status_code=404,
-            detail=f"No projection found for ontology '{ontology}'. "
+            detail=f"No {embedding_source} projection found for ontology '{ontology}'. "
                    f"Use POST /projection/{ontology}/regenerate to compute."
         )
 
@@ -215,10 +251,13 @@ async def regenerate_projection(
 
     concept_count = len(concepts)
 
+    # Cache key includes embedding source
+    cache_key = f"{ontology}:{body.embedding_source}"
+
     # For small/medium ontologies, compute synchronously (t-SNE is fast)
     # Only queue for very large ontologies (>500 concepts) where t-SNE takes >10s
     if concept_count < 500:
-        logger.info(f"Computing projection synchronously for '{ontology}' ({concept_count} concepts)")
+        logger.info(f"Computing projection synchronously for '{ontology}' ({concept_count} {body.embedding_source})")
 
         dataset = service.generate_projection_dataset(
             ontology=ontology,
@@ -227,17 +266,22 @@ async def regenerate_projection(
             perplexity=body.perplexity,
             n_neighbors=body.n_neighbors,
             min_dist=body.min_dist,
+            spread=body.spread,
+            metric=body.metric,
+            normalize_l2=body.normalize_l2,
             include_grounding=body.include_grounding,
-            include_diversity=body.include_diversity
+            refresh_grounding=body.refresh_grounding,
+            include_diversity=body.include_diversity,
+            embedding_source=body.embedding_source
         )
 
-        # Store to cache
+        # Store to cache (with embedding source in key)
         from api.api.workers.projection_worker import _store_projection
-        _store_projection(ontology, dataset)
+        _store_projection(cache_key, dataset)
 
         return RegenerateResponse(
             status="computed",
-            message=f"Projection computed for {concept_count} concepts",
+            message=f"Projection computed for {concept_count} {body.embedding_source}",
             changelist_id=dataset.get("changelist_id")
         )
 
@@ -253,9 +297,14 @@ async def regenerate_projection(
             "perplexity": body.perplexity,
             "n_neighbors": body.n_neighbors,
             "min_dist": body.min_dist,
+            "spread": body.spread,
+            "metric": body.metric,
+            "normalize_l2": body.normalize_l2,
             "include_grounding": body.include_grounding,
+            "refresh_grounding": body.refresh_grounding,
             "include_diversity": body.include_diversity,
-            "description": f"Regenerate projection for '{ontology}'",
+            "embedding_source": body.embedding_source,
+            "description": f"Regenerate {body.embedding_source} projection for '{ontology}'",
             "user_id": current_user.id
         }
     )

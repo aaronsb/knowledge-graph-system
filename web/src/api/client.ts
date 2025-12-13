@@ -1240,16 +1240,24 @@ class APIClient {
   /**
    * Get projection data for an ontology
    * Returns 3D coordinates for visualization
+   * @param ontology - Ontology name
+   * @param embedding_source - Which embeddings to retrieve: concepts, sources, vocabulary, or combined
    */
-  async getProjection(ontology: string): Promise<{
+  async getProjection(
+    ontology: string,
+    embedding_source: 'concepts' | 'sources' | 'vocabulary' | 'combined' = 'concepts'
+  ): Promise<{
     ontology: string;
     changelist_id: string;
     algorithm: string;
     parameters: {
       n_components: number;
-      perplexity: number | null;
-      n_neighbors: number | null;
-      min_dist: number | null;
+      perplexity: number | null;       // t-SNE
+      n_neighbors: number | null;      // UMAP
+      min_dist: number | null;         // UMAP cluster tightness
+      spread: number | null;           // UMAP cluster separation
+      metric: 'cosine' | 'euclidean' | null;
+      normalize_l2: boolean | null;
     };
     computed_at: string;
     concepts: Array<{
@@ -1261,6 +1269,7 @@ class APIClient {
       grounding_strength: number | null;
       diversity_score: number | null;
       diversity_related_count: number | null;
+      item_type?: 'concept' | 'source' | 'vocabulary';
     }>;
     statistics: {
       concept_count: number;
@@ -1270,7 +1279,9 @@ class APIClient {
       diversity_range: [number, number] | null;
     };
   }> {
-    const response = await this.client.get(`/projection/${ontology}`);
+    const response = await this.client.get(`/projection/${ontology}`, {
+      params: { embedding_source }
+    });
     return response.data;
   }
 
@@ -1287,21 +1298,31 @@ class APIClient {
 
   /**
    * Regenerate projection for an ontology
+   * @param ontology - Ontology name
+   * @param options - Projection options
    */
   async regenerateProjection(
     ontology: string,
     options?: {
       force?: boolean;
-      algorithm?: string;
-      perplexity?: number;
+      algorithm?: 'tsne' | 'umap';
+      perplexity?: number;         // t-SNE: local vs global (5-100)
+      n_neighbors?: number;        // UMAP: local structure
+      min_dist?: number;           // UMAP: cluster tightness (0-1)
+      spread?: number;             // UMAP: cluster separation (0.5-5)
+      metric?: 'cosine' | 'euclidean';
+      normalize_l2?: boolean;      // L2-normalize before projection
       include_grounding?: boolean;
+      refresh_grounding?: boolean; // Compute fresh grounding values
       include_diversity?: boolean;
+      embedding_source?: 'concepts' | 'sources' | 'vocabulary' | 'combined';
     }
   ): Promise<{
     status: 'computed' | 'queued' | 'skipped';
     message: string;
     job_id?: string;
     concept_count?: number;
+    changelist_id?: string;
   }> {
     const response = await this.client.post(`/projection/${ontology}/regenerate`, options);
     return response.data;

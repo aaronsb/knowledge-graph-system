@@ -71,12 +71,19 @@ def run_projection_worker(
         perplexity = job_data.get("perplexity", 30)
         n_neighbors = job_data.get("n_neighbors", 15)
         min_dist = job_data.get("min_dist", 0.1)
+        spread = job_data.get("spread", 1.0)
+        metric = job_data.get("metric", "cosine")
+        normalize_l2 = job_data.get("normalize_l2", True)
         include_grounding = job_data.get("include_grounding", True)
+        refresh_grounding = job_data.get("refresh_grounding", False)
         include_diversity = job_data.get("include_diversity", False)
+        embedding_source = job_data.get("embedding_source", "concepts")
 
         logger.info(
             f"Projection params: ontology={ontology}, algorithm={algorithm}, "
-            f"n_components={n_components}, perplexity={perplexity}"
+            f"n_components={n_components}, perplexity={perplexity}, metric={metric}, "
+            f"spread={spread}, normalize_l2={normalize_l2}, refresh_grounding={refresh_grounding}, "
+            f"embedding_source={embedding_source}"
         )
 
         # Initialize service
@@ -90,7 +97,7 @@ def run_projection_worker(
 
         # Update progress
         job_queue.update_job(job_id, {
-            "progress": f"Fetching embeddings for '{ontology}'"
+            "progress": f"Fetching {embedding_source} embeddings for '{ontology}'"
         })
 
         # Generate projection dataset
@@ -101,8 +108,13 @@ def run_projection_worker(
             perplexity=perplexity,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
+            spread=spread,
+            metric=metric,
+            normalize_l2=normalize_l2,
             include_grounding=include_grounding,
-            include_diversity=include_diversity
+            refresh_grounding=refresh_grounding,
+            include_diversity=include_diversity,
+            embedding_source=embedding_source
         )
 
         # Check for errors
@@ -112,16 +124,18 @@ def run_projection_worker(
         # Update progress
         concept_count = dataset.get("statistics", {}).get("concept_count", 0)
         job_queue.update_job(job_id, {
-            "progress": f"Computed projection for {concept_count} concepts"
+            "progress": f"Computed projection for {concept_count} {embedding_source}"
         })
 
-        # Store projection to cache file
-        cache_file = _store_projection(ontology, dataset)
+        # Store projection to cache file (with embedding source in key)
+        cache_key = f"{ontology}:{embedding_source}"
+        cache_file = _store_projection(cache_key, dataset)
 
         # Prepare result
         result = {
             "success": True,
             "ontology": ontology,
+            "embedding_source": embedding_source,
             "algorithm": algorithm,
             "concept_count": concept_count,
             "changelist_id": dataset.get("changelist_id"),
@@ -131,7 +145,7 @@ def run_projection_worker(
 
         logger.info(
             f"✅ Projection worker completed: {job_id} "
-            f"({concept_count} concepts, {algorithm})"
+            f"({concept_count} {embedding_source}, {algorithm})"
         )
         return result
 
