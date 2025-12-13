@@ -13,7 +13,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Projection storage directory
+# TEMPORARY: Ephemeral file storage for projections
+# This is an accepted anti-pattern until we implement proper Garage bucket storage.
+# Projections are lost on container restart but recompute quickly (~1s for 400 concepts).
+# TODO: Move to Garage storage with time-series snapshots (see ADR-078 Future Considerations)
 PROJECTION_CACHE_DIR = Path("/tmp/kg_projections")
 
 
