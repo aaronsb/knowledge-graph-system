@@ -5963,6 +5963,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#projection-history-in-garage-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Projection History in Garage Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7275,6 +7303,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#projection-history-in-garage-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Projection History in Garage Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7317,8 +7373,9 @@
 
 
 <h1 id="adr-078-embedding-landscape-explorer">ADR-078: Embedding Landscape Explorer</h1>
-<p><strong>Status:</strong> Proposed
+<p><strong>Status:</strong> Accepted (Phase 1 implemented)
 <strong>Date:</strong> 2025-12-11
+<strong>Updated:</strong> 2025-12-12
 <strong>Deciders:</strong> Engineering Team
 <strong>Related ADRs:</strong>
 - ADR-070: Polarity Axis Analysis (downstream consumer of discovered axes)
@@ -7836,6 +7893,28 @@
 <p><strong>Performance:</strong>
 - 95th percentile projection time &lt; 5s
 - Smooth 3D interaction (no jank at 1000 concepts)</p>
+<hr />
+<h2 id="future-considerations">Future Considerations</h2>
+<h3 id="projection-history-in-garage-storage">Projection History in Garage Storage</h3>
+<p>Currently, projections are cached as ephemeral JSON files in <code>/tmp/kg_projections/</code>. For production use and historical analysis, projections should be stored in Garage (S3-compatible object storage):</p>
+<p><strong>Benefits:</strong>
+- <strong>Time-series snapshots</strong>: Track how the semantic landscape evolves as documents are ingested
+- <strong>Persistence</strong>: Survives container restarts
+- <strong>Versioning</strong>: Compare projections before/after significant ingestion events
+- <strong>Audit trail</strong>: Understand how knowledge structure changed over time</p>
+<p><strong>Proposed bucket structure:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg-projections/
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── {ontology}/
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>│   ├── latest.json              # Current projection (symlink or copy)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>│   ├── 2025-12-12T23:55:11Z.json  # Historical snapshots
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>│   ├── 2025-12-11T14:30:00Z.json
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>│   └── ...
+</code></pre></div></p>
+<p><strong>Related work:</strong>
+This overlaps with a broader consideration for storing original source documents (not just images) in Garage. Currently only images are stored in object storage (ADR-057). A future ADR should address:
+- Storing original text documents alongside extracted concepts
+- Linking Source nodes to object storage URIs
+- Retention policies for source materials vs. derived data (projections)</p>
 <hr />
 <h2 id="references">References</h2>
 <ul>
