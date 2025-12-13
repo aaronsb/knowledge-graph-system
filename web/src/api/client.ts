@@ -901,6 +901,41 @@ class APIClient {
     return response.data;
   }
 
+  /**
+   * Get graph metrics counters organized by type (ADR-079)
+   * Returns snapshot counters, activity counters, and legacy structure counters
+   */
+  async getDatabaseCounters(): Promise<{
+    counters: {
+      snapshot: Array<{ name: string; value: number; last_measured: number; delta: number; updated_at: string | null; notes: string | null }>;
+      activity: Array<{ name: string; value: number; last_measured: number; delta: number; updated_at: string | null; notes: string | null }>;
+      legacy_structure: Array<{ name: string; value: number; last_measured: number; delta: number; updated_at: string | null; notes: string | null }>;
+    };
+    current_snapshot: {
+      concepts: number;
+      edges: number;
+      sources: number;
+      vocab_types: number;
+      total_objects: number;
+    } | null;
+  }> {
+    const response = await this.client.get('/database/counters');
+    return response.data;
+  }
+
+  /**
+   * Refresh graph metrics counters from current graph state (ADR-079)
+   * Safe to call repeatedly (idempotent)
+   */
+  async refreshDatabaseCounters(): Promise<{
+    success: boolean;
+    changes: Array<{ metric: string; old_value: number; new_value: number; changed: boolean }>;
+    changed_count: number;
+  }> {
+    const response = await this.client.post('/database/counters/refresh');
+    return response.data;
+  }
+
   // ============================================================
   // AI CONFIGURATION (ADR-039, ADR-041)
   // ============================================================
