@@ -250,4 +250,81 @@ export const databaseCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('counters')
+      .description('Show graph metrics counters organized by type (ADR-079). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.')
+      .option('--refresh', 'Refresh counters from current graph state before displaying')
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // If refresh requested, do that first
+          if (options.refresh) {
+            console.log('\n' + colors.status.dim('Refreshing counters from graph state...'));
+            const refreshResult = await client.refreshDatabaseCounters();
+            if (refreshResult.changed_count > 0) {
+              console.log(colors.status.success(`✓ ${refreshResult.changed_count} counters updated`));
+            } else {
+              console.log(colors.status.dim('  No counters changed'));
+            }
+          }
+
+          const data = await client.getDatabaseCounters();
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title('📊 Graph Metrics Counters'));
+          console.log(separator());
+
+          // Display current snapshot
+          if (data.current_snapshot) {
+            console.log('\n' + colors.stats.section('Current Graph Snapshot'));
+            const snap = data.current_snapshot;
+            console.log(`  ${colors.stats.label('Concepts:')} ${coloredCount(snap.concepts)}`);
+            console.log(`  ${colors.stats.label('Edges:')} ${coloredCount(snap.edges)}`);
+            console.log(`  ${colors.stats.label('Sources:')} ${coloredCount(snap.sources)}`);
+            console.log(`  ${colors.stats.label('Vocab Types:')} ${coloredCount(snap.vocab_types)}`);
+            console.log(`  ${colors.stats.label('Total Objects:')} ${coloredCount(snap.total_objects)}`);
+          }
+
+          // Display counters by type
+          const counters = data.counters;
+
+          if (counters.snapshot && counters.snapshot.length > 0) {
+            console.log('\n' + colors.stats.section('Snapshot Counters'));
+            console.log(colors.status.dim('  (Current counts from COUNT(*) queries)'));
+            for (const c of counters.snapshot) {
+              const deltaStr = c.delta !== 0 ? ` (${c.delta > 0 ? '+' : ''}${c.delta})` : '';
+              const deltaColor = c.delta === 0 ? colors.status.dim : c.delta > 0 ? colors.status.success : colors.status.warning;
+              console.log(`  ${colors.stats.label(c.name + ':')} ${coloredCount(c.value)}${deltaColor(deltaStr)}`);
+            }
+          }
+
+          if (counters.activity && counters.activity.length > 0) {
+            console.log('\n' + colors.stats.section('Activity Counters'));
+            console.log(colors.status.dim('  (Application-incremented event counters)'));
+            for (const c of counters.activity) {
+              const deltaStr = c.delta !== 0 ? ` (${c.delta > 0 ? '+' : ''}${c.delta})` : '';
+              const deltaColor = c.delta === 0 ? colors.status.dim : c.delta > 0 ? colors.status.success : colors.status.warning;
+              console.log(`  ${colors.stats.label(c.name + ':')} ${coloredCount(c.value)}${deltaColor(deltaStr)}`);
+            }
+          }
+
+          if (counters.legacy_structure && counters.legacy_structure.length > 0) {
+            console.log('\n' + colors.stats.section('Legacy Structure Counters'));
+            console.log(colors.status.dim('  (Historical counters, kept for compatibility)'));
+            for (const c of counters.legacy_structure) {
+              console.log(`  ${colors.stats.label(c.name + ':')} ${coloredCount(c.value)}`);
+            }
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.status.dim('  Tip: Use --refresh to update counters from current graph state'));
+          console.log('\n' + separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to get graph counters'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
   );

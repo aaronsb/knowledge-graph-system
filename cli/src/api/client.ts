@@ -532,6 +532,22 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Get all graph metrics counters organized by type (ADR-079)
+   */
+  async getDatabaseCounters(): Promise<any> {
+    const response = await this.client.get('/database/counters');
+    return response.data;
+  }
+
+  /**
+   * Refresh graph metrics counters from current graph state (ADR-079)
+   */
+  async refreshDatabaseCounters(): Promise<any> {
+    const response = await this.client.post('/database/counters/refresh');
+    return response.data;
+  }
+
   // ========== Ontology Methods ==========
 
   /**
