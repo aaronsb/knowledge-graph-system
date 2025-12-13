@@ -10,23 +10,33 @@ Philosophy:
 - Delta = current_counter - last_measured_counter indicates staleness
 
 Counter Types:
-- vocabulary_change_counter: Any vocabulary type create/delete/consolidate
-- concept_creation_counter: New concepts added
-- relationship_creation_counter: New edges added
-- epistemic_measurement_counter: Measurements completed
+  GRAPH STRUCTURE (auto-incremented by database triggers - Migration 033):
+  - graph_change_counter: ANY graph modification
+  - concept_creation/deletion_counter: Concept changes
+  - relationship_creation/deletion_counter: Edge changes
+  - vocabulary_change/creation/deletion_counter: VocabType/VocabCategory changes
+
+  ACTIVITY (application-incremented via this service):
+  - document_ingestion_counter: Documents ingested
+  - epistemic_measurement_counter: Measurements completed
+  - vocabulary_consolidation_counter: Vocabulary merges (application-level)
 
 Usage:
     metrics = VocabularyMetricsService(db_connection)
 
-    # Increment on vocabulary changes
-    metrics.increment_vocabulary_change()
-    metrics.increment_concept_creation()
+    # Activity counters (application must call these)
+    metrics.increment_document_ingestion()
+    metrics.increment_epistemic_measurement()
+    metrics.increment_vocabulary_consolidation()
 
     # Check if re-measurement needed
     if metrics.should_remeasure(threshold=10):
-        # Trigger epistemic status measurement
         measure_epistemic_status()
         metrics.mark_measurement_complete()
+
+Note: Graph structure counters (concept_creation, relationship_creation, etc.)
+are now automatically incremented by database triggers. Do NOT call increment
+methods for these - they would cause double-counting.
 """
 
 import logging
@@ -70,40 +80,55 @@ class VocabularyMetricsService:
             self.conn.rollback()
             return False
 
-    def increment_vocabulary_change(self) -> bool:
-        """Increment vocabulary_change_counter (any create/delete/consolidate)"""
-        success = self.increment_counter('vocabulary_change_counter')
-        if success:
-            logger.debug("Incremented vocabulary_change_counter")
-        return success
-
-    def increment_vocabulary_creation(self) -> bool:
-        """Increment vocabulary_creation_counter"""
-        return self.increment_counter('vocabulary_creation_counter')
-
-    def increment_vocabulary_deletion(self) -> bool:
-        """Increment vocabulary_deletion_counter"""
-        return self.increment_counter('vocabulary_deletion_counter')
+    # =========================================================================
+    # ACTIVITY COUNTERS (application must call these - not trigger-based)
+    # =========================================================================
 
     def increment_vocabulary_consolidation(self) -> bool:
-        """Increment vocabulary_consolidation_counter"""
+        """
+        Increment vocabulary_consolidation_counter.
+
+        Call this when vocabulary types are merged/consolidated.
+        This is an application-level operation, not a simple graph change.
+        """
         return self.increment_counter('vocabulary_consolidation_counter')
 
-    def increment_concept_creation(self) -> bool:
-        """Increment concept_creation_counter"""
-        return self.increment_counter('concept_creation_counter')
-
-    def increment_relationship_creation(self) -> bool:
-        """Increment relationship_creation_counter"""
-        return self.increment_counter('relationship_creation_counter')
-
     def increment_document_ingestion(self) -> bool:
-        """Increment document_ingestion_counter"""
+        """
+        Increment document_ingestion_counter.
+
+        Call this when a document is successfully ingested.
+        """
         return self.increment_counter('document_ingestion_counter')
 
     def increment_epistemic_measurement(self) -> bool:
-        """Increment epistemic_measurement_counter"""
+        """
+        Increment epistemic_measurement_counter.
+
+        Call this when epistemic status measurement completes.
+        """
         return self.increment_counter('epistemic_measurement_counter')
+
+    # =========================================================================
+    # DEPRECATED: Graph structure counters are now trigger-based (Migration 033)
+    # These methods are kept for backwards compatibility but should NOT be called.
+    # The database triggers handle these automatically.
+    # =========================================================================
+
+    def _deprecated_increment_vocabulary_change(self) -> bool:
+        """DEPRECATED: Now handled by database trigger on VocabType/VocabCategory"""
+        logger.warning("increment_vocabulary_change() is deprecated - triggers handle this automatically")
+        return True  # No-op, triggers handle it
+
+    def _deprecated_increment_concept_creation(self) -> bool:
+        """DEPRECATED: Now handled by database trigger on Concept table"""
+        logger.warning("increment_concept_creation() is deprecated - triggers handle this automatically")
+        return True  # No-op, triggers handle it
+
+    def _deprecated_increment_relationship_creation(self) -> bool:
+        """DEPRECATED: Now handled by database trigger on edge tables"""
+        logger.warning("increment_relationship_creation() is deprecated - triggers handle this automatically")
+        return True  # No-op, triggers handle it
 
     def get_counter_delta(self, metric_name: str) -> int:
         """
