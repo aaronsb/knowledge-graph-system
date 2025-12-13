@@ -1,15 +1,15 @@
 """
-Garage Client - S3-compatible object storage for image assets (ADR-057)
+Garage Client - S3-compatible object storage for assets (ADR-057, ADR-079)
 
-This module provides a clean interface for storing and retrieving images in Garage.
-Uses source-ID based object keys for 1:1 mapping with database records.
+This module provides a clean interface for storing and retrieving assets in Garage.
 
-Object Key Structure:
-    images/{ontology}/{source_id}.{ext}
+Storage Domains:
+    1. Images (ADR-057): Source-ID based object keys for multimodal ingestion
+       Key format: images/{ontology}/{source_id}.{ext}
 
-Examples:
-    images/Research Notes/src_abc123.jpg
-    images/Meeting Notes/src_xyz789.png
+    2. Projections (ADR-079): Embedding landscape projection artifacts
+       Key format: projections/{ontology}/latest.json
+                   projections/{ontology}/{timestamp}.json (historical)
 
 Security:
     Garage credentials are stored encrypted in PostgreSQL (ADR-031) using the same
@@ -22,8 +22,10 @@ Migration Note:
 """
 
 import os
+import json
 import logging
-from typing import Optional, Dict, List
+from datetime import datetime
+from typing import Optional, Dict, List, Any
 from io import BytesIO
 import mimetypes
 
@@ -464,6 +466,237 @@ class GarageClient:
         except Exception as e:
             logger.error(f"Garage health check failed: {e}")
             return False
+
+    # ================================================================
+    # Projection Storage Methods (ADR-079)
+    # ================================================================
+
+    def _build_projection_key(self, ontology: str, embedding_source: str, timestamp: Optional[str] = None) -> str:
+        """
+        Build object key for a projection artifact.
+
+        Format:
+            projections/{ontology}/{embedding_source}/latest.json
+            projections/{ontology}/{embedding_source}/{timestamp}.json
+
+        Args:
+            ontology: Ontology name
+            embedding_source: Source type (concepts, sources, vocabulary, combined)
+            timestamp: ISO timestamp for historical snapshots (None for latest)
+
+        Returns:
+            Object key string
+        """
+        safe_ontology = ontology.replace(" ", "_").replace("/", "_")
+        if timestamp:
+            return f"projections/{safe_ontology}/{embedding_source}/{timestamp}.json"
+        return f"projections/{safe_ontology}/{embedding_source}/latest.json"
+
+    def store_projection(
+        self,
+        ontology: str,
+        embedding_source: str,
+        projection_data: Dict[str, Any],
+        keep_history: bool = True
+    ) -> str:
+        """
+        Store a projection to Garage (ADR-079).
+
+        Stores both the latest version and optionally a timestamped snapshot
+        for historical analysis.
+
+        Args:
+            ontology: Ontology name
+            embedding_source: Source type (concepts, sources, vocabulary, combined)
+            projection_data: Projection dataset dict
+            keep_history: If True, also store timestamped snapshot (default: True)
+
+        Returns:
+            Object key of stored latest projection
+
+        Raises:
+            ClientError: If storage fails
+        """
+        json_data = json.dumps(projection_data, indent=2)
+        json_bytes = json_data.encode('utf-8')
+
+        # Store as latest
+        latest_key = self._build_projection_key(ontology, embedding_source)
+        try:
+            self.client.put_object(
+                Bucket=self.bucket_name,
+                Key=latest_key,
+                Body=BytesIO(json_bytes),
+                ContentType='application/json',
+                Metadata={
+                    'ontology': ontology,
+                    'embedding-source': embedding_source,
+                    'stored-at': datetime.utcnow().isoformat() + 'Z'
+                }
+            )
+            logger.info(f"Stored projection: {latest_key} ({len(json_bytes)} bytes)")
+        except ClientError as e:
+            logger.error(f"Failed to store projection {latest_key}: {e}")
+            raise
+
+        # Optionally store timestamped snapshot
+        if keep_history:
+            timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            history_key = self._build_projection_key(ontology, embedding_source, timestamp)
+            try:
+                self.client.put_object(
+                    Bucket=self.bucket_name,
+                    Key=history_key,
+                    Body=BytesIO(json_bytes),
+                    ContentType='application/json',
+                    Metadata={
+                        'ontology': ontology,
+                        'embedding-source': embedding_source,
+                        'stored-at': timestamp
+                    }
+                )
+                logger.debug(f"Stored projection snapshot: {history_key}")
+            except ClientError as e:
+                # Non-fatal - historical snapshot failure shouldn't fail the main storage
+                logger.warning(f"Failed to store projection snapshot {history_key}: {e}")
+
+        return latest_key
+
+    def get_projection(self, ontology: str, embedding_source: str = "concepts") -> Optional[Dict[str, Any]]:
+        """
+        Retrieve the latest projection for an ontology.
+
+        Args:
+            ontology: Ontology name
+            embedding_source: Source type (default: concepts)
+
+        Returns:
+            Projection dataset dict or None if not found
+        """
+        object_key = self._build_projection_key(ontology, embedding_source)
+
+        try:
+            response = self.client.get_object(Bucket=self.bucket_name, Key=object_key)
+            json_bytes = response['Body'].read()
+            logger.info(f"Retrieved projection: {object_key} ({len(json_bytes)} bytes)")
+            return json.loads(json_bytes)
+
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                logger.debug(f"Projection not found: {object_key}")
+                return None
+            logger.error(f"Failed to get projection {object_key}: {e}")
+            raise
+
+    def get_projection_history(
+        self,
+        ontology: str,
+        embedding_source: str = "concepts",
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        List historical projection snapshots for an ontology.
+
+        Args:
+            ontology: Ontology name
+            embedding_source: Source type (default: concepts)
+            limit: Maximum snapshots to return (default: 10)
+
+        Returns:
+            List of snapshot metadata dicts (sorted newest first)
+        """
+        safe_ontology = ontology.replace(" ", "_").replace("/", "_")
+        prefix = f"projections/{safe_ontology}/{embedding_source}/"
+
+        try:
+            paginator = self.client.get_paginator('list_objects_v2')
+            pages = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
+
+            snapshots = []
+            for page in pages:
+                if 'Contents' not in page:
+                    continue
+
+                for obj in page['Contents']:
+                    # Skip the latest.json file
+                    if obj['Key'].endswith('latest.json'):
+                        continue
+
+                    snapshots.append({
+                        'object_key': obj['Key'],
+                        'size': obj['Size'],
+                        'last_modified': obj['LastModified'].isoformat(),
+                        'etag': obj['ETag'].strip('"')
+                    })
+
+            # Sort by last_modified descending, limit results
+            snapshots.sort(key=lambda x: x['last_modified'], reverse=True)
+            return snapshots[:limit]
+
+        except ClientError as e:
+            logger.error(f"Failed to list projection history for {ontology}: {e}")
+            return []
+
+    def delete_projection(self, ontology: str, embedding_source: str = "concepts") -> bool:
+        """
+        Delete the latest projection for an ontology.
+
+        Note: Does not delete historical snapshots.
+
+        Args:
+            ontology: Ontology name
+            embedding_source: Source type (default: concepts)
+
+        Returns:
+            True if deleted, False if not found
+        """
+        object_key = self._build_projection_key(ontology, embedding_source)
+
+        try:
+            self.client.delete_object(Bucket=self.bucket_name, Key=object_key)
+            logger.info(f"Deleted projection: {object_key}")
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                return False
+            logger.error(f"Failed to delete projection {object_key}: {e}")
+            raise
+
+    def delete_all_projections(self, ontology: str) -> int:
+        """
+        Delete all projections (latest + history) for an ontology.
+
+        Args:
+            ontology: Ontology name
+
+        Returns:
+            Number of objects deleted
+        """
+        safe_ontology = ontology.replace(" ", "_").replace("/", "_")
+        prefix = f"projections/{safe_ontology}/"
+
+        deleted_count = 0
+        try:
+            paginator = self.client.get_paginator('list_objects_v2')
+            pages = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
+
+            for page in pages:
+                if 'Contents' not in page:
+                    continue
+
+                for obj in page['Contents']:
+                    try:
+                        self.client.delete_object(Bucket=self.bucket_name, Key=obj['Key'])
+                        deleted_count += 1
+                    except ClientError as e:
+                        logger.warning(f"Failed to delete {obj['Key']}: {e}")
+
+            logger.info(f"Deleted {deleted_count} projection objects for {ontology}")
+            return deleted_count
+
+        except ClientError as e:
+            logger.error(f"Failed to delete projections for {ontology}: {e}")
+            raise
 
 
 # Global singleton instance

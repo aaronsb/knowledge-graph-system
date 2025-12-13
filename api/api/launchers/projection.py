@@ -1,21 +1,20 @@
 """
-Embedding Projection Launcher (ADR-078).
+Embedding Projection Launcher (ADR-078, ADR-079).
 
 Automatically re-compute projections when concept counts change significantly.
 Follows the same pattern as EpistemicRemeasurementLauncher from ADR-065.
+
+Storage:
+    Projections are stored in Garage (S3-compatible object storage) via
+    the projection worker (ADR-079).
 """
 
 from .base import JobLauncher
 from api.api.lib.age_client import AGEClient
 from typing import Dict, List, Optional
 import logging
-import json
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-# Same cache dir as worker
-PROJECTION_CACHE_DIR = Path("/tmp/kg_projections")
 
 
 class ProjectionLauncher(JobLauncher):
@@ -178,21 +177,20 @@ class ProjectionLauncher(JobLauncher):
 
     def _get_cached_concept_count(self, ontology: str) -> Optional[int]:
         """
-        Get concept count from cached projection.
+        Get concept count from cached projection in Garage (ADR-079).
 
         Returns:
             Cached concept count or None if no cache
         """
-        safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in ontology)
-        cache_file = PROJECTION_CACHE_DIR / f"{safe_name}.json"
-
-        if not cache_file.exists():
-            return None
-
         try:
-            with open(cache_file) as f:
-                data = json.load(f)
-                return data.get("statistics", {}).get("concept_count")
+            from api.api.workers.projection_worker import get_cached_projection
+
+            # Get cached projection from Garage
+            data = get_cached_projection(ontology, "concepts")
+            if data is None:
+                return None
+
+            return data.get("statistics", {}).get("concept_count")
         except Exception as e:
-            logger.warning(f"Failed to read cache for {ontology}: {e}")
+            logger.warning(f"Failed to get cached projection for {ontology}: {e}")
             return None

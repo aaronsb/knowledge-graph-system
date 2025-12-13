@@ -1,23 +1,23 @@
 """
-Embedding Projection Worker (ADR-078).
+Embedding Projection Worker (ADR-078, ADR-079).
 
 Computes t-SNE/UMAP projections for ontology embeddings and stores results
 for the Embedding Landscape Explorer. Triggered by ProjectionLauncher when
 concept counts change significantly.
+
+Storage:
+    Projections are stored in Garage (S3-compatible object storage) with both
+    latest version and timestamped historical snapshots for tracking semantic
+    landscape evolution over time.
+
+    Key format: projections/{ontology}/{embedding_source}/latest.json
+                projections/{ontology}/{embedding_source}/{timestamp}.json
 """
 
-import json
 import logging
-from typing import Dict, Any
-from pathlib import Path
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
-
-# TEMPORARY: Ephemeral file storage for projections
-# This is an accepted anti-pattern until we implement proper Garage bucket storage.
-# Projections are lost on container restart but recompute quickly (~1s for 400 concepts).
-# TODO: Move to Garage storage with time-series snapshots (see ADR-078 Future Considerations)
-PROJECTION_CACHE_DIR = Path("/tmp/kg_projections")
 
 
 def run_projection_worker(
@@ -127,9 +127,8 @@ def run_projection_worker(
             "progress": f"Computed projection for {concept_count} {embedding_source}"
         })
 
-        # Store projection to cache file (with embedding source in key)
-        cache_key = f"{ontology}:{embedding_source}"
-        cache_file = _store_projection(cache_key, dataset)
+        # Store projection to Garage (ADR-079)
+        storage_key = _store_projection(ontology, embedding_source, dataset)
 
         # Prepare result
         result = {
@@ -140,7 +139,7 @@ def run_projection_worker(
             "concept_count": concept_count,
             "changelist_id": dataset.get("changelist_id"),
             "computation_time_ms": dataset.get("statistics", {}).get("computation_time_ms"),
-            "cache_file": str(cache_file) if cache_file else None
+            "storage_key": storage_key
         }
 
         logger.info(
@@ -162,71 +161,104 @@ def run_projection_worker(
         raise Exception(error_msg) from e
 
 
-def _store_projection(ontology: str, dataset: Dict[str, Any]) -> Path:
+def _store_projection(ontology: str, embedding_source: str, dataset: Dict[str, Any]) -> Optional[str]:
     """
-    Store projection dataset to cache file.
+    Store projection dataset to Garage (ADR-079).
+
+    Stores both latest version and timestamped historical snapshot.
 
     Args:
         ontology: Ontology name
+        embedding_source: Source type (concepts, sources, vocabulary, combined)
         dataset: Projection dataset dict
 
     Returns:
-        Path to cached file
+        Object key of stored projection, or None if storage failed
     """
-    # Ensure cache directory exists
-    PROJECTION_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        from api.api.lib.garage_client import get_garage_client
 
-    # Sanitize ontology name for filename
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in ontology)
-    cache_file = PROJECTION_CACHE_DIR / f"{safe_name}.json"
+        garage = get_garage_client()
+        storage_key = garage.store_projection(
+            ontology=ontology,
+            embedding_source=embedding_source,
+            projection_data=dataset,
+            keep_history=True  # Store timestamped snapshot for historical analysis
+        )
 
-    # Write dataset
-    with open(cache_file, 'w') as f:
-        json.dump(dataset, f, indent=2)
+        logger.info(f"Stored projection to Garage: {storage_key}")
+        return storage_key
 
-    logger.info(f"Stored projection to {cache_file}")
-    return cache_file
+    except Exception as e:
+        logger.error(f"Failed to store projection to Garage: {e}")
+        # Return None instead of raising - worker continues with result
+        return None
 
 
-def get_cached_projection(ontology: str) -> Dict[str, Any] | None:
+def get_cached_projection(ontology: str, embedding_source: str = "concepts") -> Optional[Dict[str, Any]]:
     """
-    Retrieve cached projection for an ontology.
+    Retrieve cached projection for an ontology from Garage.
 
     Args:
         ontology: Ontology name
+        embedding_source: Source type (default: concepts)
 
     Returns:
         Projection dataset dict or None if not cached
     """
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in ontology)
-    cache_file = PROJECTION_CACHE_DIR / f"{safe_name}.json"
-
-    if not cache_file.exists():
-        return None
-
     try:
-        with open(cache_file) as f:
-            return json.load(f)
+        from api.api.lib.garage_client import get_garage_client
+
+        garage = get_garage_client()
+        return garage.get_projection(ontology, embedding_source)
+
     except Exception as e:
-        logger.warning(f"Failed to read cached projection for {ontology}: {e}")
+        logger.warning(f"Failed to get cached projection from Garage for {ontology}: {e}")
         return None
 
 
-def invalidate_cached_projection(ontology: str) -> bool:
+def invalidate_cached_projection(ontology: str, embedding_source: str = "concepts") -> bool:
     """
     Invalidate (delete) cached projection for an ontology.
 
+    Note: Does not delete historical snapshots, only the latest version.
+
     Args:
         ontology: Ontology name
+        embedding_source: Source type (default: concepts)
 
     Returns:
         True if cache was deleted, False if not found
     """
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in ontology)
-    cache_file = PROJECTION_CACHE_DIR / f"{safe_name}.json"
+    try:
+        from api.api.lib.garage_client import get_garage_client
 
-    if cache_file.exists():
-        cache_file.unlink()
-        logger.info(f"Invalidated projection cache for {ontology}")
-        return True
-    return False
+        garage = get_garage_client()
+        return garage.delete_projection(ontology, embedding_source)
+
+    except Exception as e:
+        logger.warning(f"Failed to invalidate projection cache for {ontology}: {e}")
+        return False
+
+
+def get_projection_history(ontology: str, embedding_source: str = "concepts", limit: int = 10) -> list:
+    """
+    List historical projection snapshots for an ontology.
+
+    Args:
+        ontology: Ontology name
+        embedding_source: Source type (default: concepts)
+        limit: Maximum snapshots to return (default: 10)
+
+    Returns:
+        List of snapshot metadata dicts (sorted newest first)
+    """
+    try:
+        from api.api.lib.garage_client import get_garage_client
+
+        garage = get_garage_client()
+        return garage.get_projection_history(ontology, embedding_source, limit)
+
+    except Exception as e:
+        logger.warning(f"Failed to get projection history from Garage for {ontology}: {e}")
+        return []
