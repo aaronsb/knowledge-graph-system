@@ -284,7 +284,8 @@ async def startup_event():
     launcher_registry = {
         'CategoryRefreshLauncher': CategoryRefreshLauncher,
         'VocabConsolidationLauncher': VocabConsolidationLauncher,
-        'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher
+        'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
+        'ProjectionLauncher': ProjectionLauncher  # ADR-078: Embedding projections
     }
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()
