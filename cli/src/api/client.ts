@@ -1359,6 +1359,51 @@ export class KnowledgeGraphClient {
     const response = await this.client.post('/query/polarity-axis', request);
     return response.data;
   }
+
+  // ============================================================================
+  // Projection Methods (ADR-078)
+  // ============================================================================
+
+  /**
+   * Get available projection algorithms
+   */
+  async getProjectionAlgorithms(): Promise<{ available: string[]; default: string }> {
+    const response = await this.client.get('/projection/algorithms');
+    return response.data;
+  }
+
+  /**
+   * Get cached projection for an ontology
+   */
+  async getProjection(ontology: string): Promise<any> {
+    const response = await this.client.get(`/projection/${encodeURIComponent(ontology)}`);
+    return response.data;
+  }
+
+  /**
+   * Regenerate projection for an ontology
+   */
+  async regenerateProjection(ontology: string, options?: {
+    force?: boolean;
+    algorithm?: 'tsne' | 'umap';
+    perplexity?: number;
+    include_grounding?: boolean;
+    include_diversity?: boolean;
+  }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string }> {
+    const response = await this.client.post(
+      `/projection/${encodeURIComponent(ontology)}/regenerate`,
+      options || {}
+    );
+    return response.data;
+  }
+
+  /**
+   * Invalidate (delete) cached projection
+   */
+  async invalidateProjection(ontology: string): Promise<{ message: string }> {
+    const response = await this.client.delete(`/projection/${encodeURIComponent(ontology)}`);
+    return response.data;
+  }
 }
 
 /**
