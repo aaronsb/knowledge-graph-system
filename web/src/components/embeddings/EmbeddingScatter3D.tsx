@@ -116,6 +116,7 @@ interface Props {
   selectedPoint: EmbeddingPoint | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selectedPoint }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);

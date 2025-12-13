@@ -294,6 +294,7 @@ export function EmbeddingLandscapeWorkspace() {
   // Load available ontologies on mount
   useEffect(() => {
     loadOntologies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadOntologies = async () => {
@@ -319,8 +320,9 @@ export function EmbeddingLandscapeWorkspace() {
 
       // Load projections for all ontologies
       await loadAllProjections(selections);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to load ontologies');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } }; message?: string };
+      setError(error.response?.data?.detail || error.message || 'Failed to load ontologies');
     } finally {
       setLoading(false);
     }
@@ -352,9 +354,10 @@ export function EmbeddingLandscapeWorkspace() {
         try {
           const projection = await apiClient.getProjection(ontology, source);
           loadedProjections.set(key, projection);
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Projection might not exist yet - that's okay
-          console.warn(`No projection for ${key}:`, err.message);
+          const error = err as { message?: string };
+          console.warn(`No projection for ${key}:`, error.message);
         }
       })
     );
@@ -384,8 +387,9 @@ export function EmbeddingLandscapeWorkspace() {
       // Reload the projection with compound key
       const projection = await apiClient.getProjection(ontologyName, source);
       setProjections(prev => new Map(prev).set(key, projection));
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } }; message?: string };
+      setError(error.response?.data?.detail || error.message || 'Failed to regenerate projection');
     } finally {
       setLoading(false);
     }
@@ -434,8 +438,9 @@ export function EmbeddingLandscapeWorkspace() {
 
       // Reload all projections
       await loadAllProjections(enabledOntologies);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } }; message?: string };
+      setError(error.response?.data?.detail || error.message || 'Failed to regenerate projections');
     } finally {
       setLoading(false);
     }
