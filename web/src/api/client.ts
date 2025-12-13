@@ -1232,6 +1232,80 @@ class APIClient {
       inherited_from: p.inherited_from,
     }));
   }
+
+  // ============================================================
+  // EMBEDDING PROJECTIONS (ADR-078)
+  // ============================================================
+
+  /**
+   * Get projection data for an ontology
+   * Returns 3D coordinates for visualization
+   */
+  async getProjection(ontology: string): Promise<{
+    ontology: string;
+    changelist_id: string;
+    algorithm: string;
+    parameters: {
+      n_components: number;
+      perplexity: number | null;
+      n_neighbors: number | null;
+      min_dist: number | null;
+    };
+    computed_at: string;
+    concepts: Array<{
+      concept_id: string;
+      label: string;
+      x: number;
+      y: number;
+      z: number;
+      grounding_strength: number | null;
+      diversity_score: number | null;
+      diversity_related_count: number | null;
+    }>;
+    statistics: {
+      concept_count: number;
+      computation_time_ms: number;
+      embedding_dims: number;
+      grounding_range: [number, number] | null;
+      diversity_range: [number, number] | null;
+    };
+  }> {
+    const response = await this.client.get(`/projection/${ontology}`);
+    return response.data;
+  }
+
+  /**
+   * List available projection algorithms
+   */
+  async getProjectionAlgorithms(): Promise<{
+    available: string[];
+    default: string;
+  }> {
+    const response = await this.client.get('/projection/algorithms');
+    return response.data;
+  }
+
+  /**
+   * Regenerate projection for an ontology
+   */
+  async regenerateProjection(
+    ontology: string,
+    options?: {
+      force?: boolean;
+      algorithm?: string;
+      perplexity?: number;
+      include_grounding?: boolean;
+      include_diversity?: boolean;
+    }
+  ): Promise<{
+    status: 'computed' | 'queued' | 'skipped';
+    message: string;
+    job_id?: string;
+    concept_count?: number;
+  }> {
+    const response = await this.client.post(`/projection/${ontology}/regenerate`, options);
+    return response.data;
+  }
 }
 
 // Export singleton instance
