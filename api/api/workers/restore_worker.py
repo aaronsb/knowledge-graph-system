@@ -130,6 +130,22 @@ def run_restore_worker(
             }
         })
 
+        # Refresh graph metrics after restore (ADR-079: cache invalidation)
+        # This is critical after restore since the entire graph may have changed
+        try:
+            client = AGEClient()
+            conn = client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT refresh_graph_metrics()")
+                conn.commit()
+                logger.info(f"[{job_id}] Refreshed graph metrics after restore")
+            finally:
+                client.pool.putconn(conn)
+                client.close()
+        except Exception as e:
+            logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
+
         # Success: Delete checkpoint
         if checkpoint_path and checkpoint_path.exists():
             logger.info(f"[{job_id}] Deleting checkpoint backup (restore successful)")

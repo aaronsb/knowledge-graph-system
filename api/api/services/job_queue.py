@@ -218,7 +218,7 @@ class PostgreSQLJobQueue(JobQueue):
                     job_type,
                     "pending",  # ADR-014: Start as pending for analysis
                     job_data.get("ontology"),
-                    job_data.get("user_id", "anonymous"),
+                    job_data.get("user_id", 1),  # Default to admin user (id=1) for system jobs
                     job_data.get("content_hash"),
                     json.dumps(job_data),
                     None,  # progress

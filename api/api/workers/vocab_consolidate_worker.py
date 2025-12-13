@@ -110,6 +110,19 @@ def run_vocab_consolidate_worker(
                 "dry_run": not auto_mode
             }
 
+            # Refresh graph metrics after consolidation (ADR-079: cache invalidation)
+            try:
+                conn = client.pool.getconn()
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT refresh_graph_metrics()")
+                    conn.commit()
+                    logger.debug(f"[{job_id}] Refreshed graph metrics after consolidation")
+                finally:
+                    client.pool.putconn(conn)
+            except Exception as e:
+                logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
+
             logger.info(
                 f"✅ Vocab consolidation worker completed: {job_id} "
                 f"({size_reduction} types reduced, {result['auto_executed_count']} auto-executed)"
