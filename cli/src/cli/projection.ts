@@ -204,6 +204,42 @@ export const projectionCommand = setCommandHelp(
       })
   )
   .addCommand(
+    new Command('data')
+      .description('Get full projection data as JSON (for visualization pipelines)')
+      .argument('<ontology>', 'Ontology name')
+      .option('-o, --output <file>', 'Write to file instead of stdout')
+      .option('--pretty', 'Pretty-print JSON output')
+      .action(async (ontology: string, options) => {
+        try {
+          const client = createClientFromEnv();
+          const proj = await client.getProjection(ontology);
+
+          const jsonOutput = options.pretty
+            ? JSON.stringify(proj, null, 2)
+            : JSON.stringify(proj);
+
+          if (options.output) {
+            const fs = await import('fs');
+            fs.writeFileSync(options.output, jsonOutput);
+            console.error(colors.status.success(`Wrote projection data to ${options.output}`));
+            console.error(colors.status.dim(`  ${proj.statistics.concept_count} concepts, ${proj.algorithm} algorithm`));
+          } else {
+            console.log(jsonOutput);
+          }
+
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            console.error(colors.status.error(`No projection found for '${ontology}'`));
+            console.error(colors.status.dim(`Run: kg projection regenerate ${ontology}`));
+          } else {
+            console.error(colors.status.error('Failed to get projection data'));
+            console.error(colors.status.error(error.response?.data?.detail || error.message));
+          }
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
     new Command('algorithms')
       .description('List available projection algorithms')
       .action(async () => {
