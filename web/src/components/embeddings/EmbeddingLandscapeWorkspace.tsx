@@ -37,7 +37,7 @@ const COLOR_SCHEME_INFO: Record<ColorScheme, { label: string; description: strin
   },
   position: {
     label: 'By Position',
-    description: 'RGB mapped to XYZ coordinates',
+    description: 'Color wheel around Y axis, brightness by height',
   },
 };
 
@@ -212,9 +212,10 @@ function getNextGroundingRamp(current: GroundingColorRamp): GroundingColorRamp {
 }
 
 /**
- * Map 3D position to vibrant RGB color.
- * Normalizes coordinates to 0-1 range and maps to saturated color channels.
- * Uses higher base values and more saturation for dark background visibility.
+ * Map 3D position to vibrant RGB color using HSL color space.
+ * - Hue: derived from X and Z position (color wheel around Y axis)
+ * - Saturation: high (80-100%) for vibrancy
+ * - Lightness: modulated by Y position (50-70%) for depth cue
  */
 function positionToColor(
   x: number, y: number, z: number,
@@ -229,12 +230,19 @@ function positionToColor(
   const ny = (y - bounds.minY) / rangeY;
   const nz = (z - bounds.minZ) / rangeZ;
 
-  // Map to vibrant colors with higher brightness floor (80-255 range)
-  const r = Math.round(nx * 175 + 80);
-  const g = Math.round(ny * 175 + 80);
-  const b = Math.round(nz * 175 + 80);
+  // Map XZ plane to hue (0-360 degrees) - creates color wheel around Y axis
+  // atan2 gives angle from -π to π, normalize to 0-360
+  const angle = Math.atan2(nz - 0.5, nx - 0.5);
+  const hue = ((angle + Math.PI) / (2 * Math.PI)) * 360;
 
-  return `rgb(${r}, ${g}, ${b})`;
+  // Distance from center in XZ plane affects saturation (80-100%)
+  const distFromCenter = Math.sqrt((nx - 0.5) ** 2 + (nz - 0.5) ** 2) * 2;
+  const saturation = 80 + Math.min(distFromCenter, 1) * 20;
+
+  // Y position affects lightness (50-70%) - higher = brighter
+  const lightness = 50 + ny * 20;
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 // Helper to create compound cache key for projections
@@ -995,18 +1003,32 @@ export function EmbeddingLandscapeWorkspace() {
               </div>
             )}
             {colorScheme === 'position' && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(255, 80, 80)' }} />
-                  <span className="text-muted-foreground">+X axis</span>
+              <div className="space-y-2">
+                {/* Color wheel for XZ plane */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-12 h-12 rounded-full border border-border/50"
+                    style={{
+                      background: 'conic-gradient(from 180deg, hsl(0, 90%, 60%), hsl(60, 90%, 60%), hsl(120, 90%, 60%), hsl(180, 90%, 60%), hsl(240, 90%, 60%), hsl(300, 90%, 60%), hsl(360, 90%, 60%))',
+                    }}
+                  />
+                  <div className="text-[10px] text-muted-foreground">
+                    <div>XZ position</div>
+                    <div className="text-muted-foreground/60">= hue angle</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(80, 255, 80)' }} />
-                  <span className="text-muted-foreground">+Y axis</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(80, 80, 255)' }} />
-                  <span className="text-muted-foreground">+Z axis</span>
+                {/* Lightness gradient for Y axis */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-12 h-3 rounded"
+                    style={{
+                      background: 'linear-gradient(to right, hsl(200, 90%, 50%), hsl(200, 90%, 70%))',
+                    }}
+                  />
+                  <div className="text-[10px] text-muted-foreground">
+                    <div>Y height</div>
+                    <div className="text-muted-foreground/60">= brightness</div>
+                  </div>
                 </div>
               </div>
             )}
