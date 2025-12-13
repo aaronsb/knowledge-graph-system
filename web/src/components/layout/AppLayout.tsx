@@ -33,6 +33,7 @@ import {
   Home,
   Waypoints,
   PieChart,
+  Layers,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
@@ -73,6 +74,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path.startsWith('/jobs')) return 'Jobs';
     if (path.startsWith('/report')) return 'Report';
     if (path.startsWith('/polarity')) return 'Polarity Explorer';
+    if (path.startsWith('/embeddings')) return 'Embedding Landscape';
     if (path === '/vocabulary') return 'Edge Explorer';
     if (path.startsWith('/vocabulary/chord')) return 'Vocabulary Analysis';
     if (path.startsWith('/edit')) return 'Edit';
@@ -136,6 +138,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Bidirectional semantic dimensions"
               isActive={isActive('/polarity')}
               onClick={() => navigate('/polarity')}
+            />
+            <SidebarItem
+              icon={Layers}
+              label="Embedding Landscape"
+              description="3D t-SNE projection of concepts"
+              isActive={isActive('/embeddings')}
+              onClick={() => navigate('/embeddings')}
             />
             <SidebarItem
               icon={Waypoints}

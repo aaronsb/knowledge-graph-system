@@ -13,10 +13,12 @@ from .base import JobLauncher
 from .category_refresh import CategoryRefreshLauncher
 from .vocab_consolidation import VocabConsolidationLauncher
 from .epistemic_remeasurement import EpistemicRemeasurementLauncher
+from .projection import ProjectionLauncher
 
 __all__ = [
     "JobLauncher",
     "CategoryRefreshLauncher",
     "VocabConsolidationLauncher",
     "EpistemicRemeasurementLauncher",
+    "ProjectionLauncher",
 ]

@@ -31,6 +31,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { HomeWorkspace } from './components/home/HomeWorkspace';
 import { EdgeExplorerWorkspace } from './components/vocabulary/EdgeExplorerWorkspace';
 import { VocabularyChordWorkspace } from './components/vocabulary/VocabularyChordWorkspace';
+import { EmbeddingLandscapeWorkspace } from './components/embeddings';
 
 import './explorers'; // Import to register explorers
 
@@ -145,6 +146,9 @@ const AppContent: React.FC = () => {
         {/* Vocabulary Explorer (ADR-077) */}
         <Route path="/vocabulary" element={<EdgeExplorerWorkspace />} />
         <Route path="/vocabulary/chord" element={<VocabularyChordWorkspace />} />
+
+        {/* Embedding Landscape (ADR-078) */}
+        <Route path="/embeddings" element={<EmbeddingLandscapeWorkspace />} />
 
         {/* Edit */}
         <Route path="/edit" element={<GraphEditor />} />

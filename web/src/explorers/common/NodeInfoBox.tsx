@@ -196,7 +196,9 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Connections:</span>
-                    <span className="font-medium text-card-foreground">{info.degree}</span>
+                    <span className="font-medium text-card-foreground">
+                      {detailedData?.relationships?.length ?? info.degree}
+                    </span>
                   </div>
                   {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
                     const grounding = formatGrounding(detailedData.grounding_strength);

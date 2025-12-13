@@ -781,3 +781,63 @@ export interface DeleteApiKeyResponse {
   message: string;
   provider: string;
 }
+
+// Projection Types (ADR-078)
+export interface ProjectionAlgorithmsResponse {
+  available: string[];
+  default: string;
+}
+
+export interface ProjectionConcept {
+  concept_id: string;
+  label: string;
+  x: number;
+  y: number;
+  z: number;
+  grounding_strength?: number | null;
+  diversity_score?: number | null;
+  diversity_related_count?: number | null;
+}
+
+export interface ProjectionParameters {
+  n_components: number;
+  perplexity?: number | null;
+  n_neighbors?: number | null;
+  min_dist?: number | null;
+}
+
+export interface ProjectionStatistics {
+  concept_count: number;
+  computation_time_ms: number;
+  embedding_dims: number;
+  grounding_range?: number[] | null;
+  diversity_range?: number[] | null;
+}
+
+export interface ProjectionDataset {
+  ontology: string;
+  changelist_id: string;
+  algorithm: string;
+  parameters: ProjectionParameters;
+  computed_at: string;
+  concepts: ProjectionConcept[];
+  statistics: ProjectionStatistics;
+}
+
+export interface ProjectionRegenerateRequest {
+  force?: boolean;
+  algorithm?: 'tsne' | 'umap';
+  n_components?: number;
+  perplexity?: number;
+  n_neighbors?: number;
+  min_dist?: number;
+  include_grounding?: boolean;
+  include_diversity?: boolean;
+}
+
+export interface ProjectionRegenerateResponse {
+  status: 'queued' | 'skipped' | 'computed';
+  job_id?: string | null;
+  message: string;
+  changelist_id?: string | null;
+}

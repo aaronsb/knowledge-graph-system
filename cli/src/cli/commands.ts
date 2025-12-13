@@ -17,6 +17,7 @@ import { adminCommand } from './admin';
 import { vocabularyCommand } from './vocabulary';
 import { mcpConfigCommand } from './mcp-config';
 import { polarityCommand } from './polarity';
+import { projectionCommand } from './projection';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -99,6 +100,7 @@ export async function registerCommands(program: Command) {
     vocabularyCommand,
     adminCommand,
     polarityCommand,
+    projectionCommand,
   ];
 
   subcommands.forEach(cmd => {
