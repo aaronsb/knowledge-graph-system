@@ -484,9 +484,46 @@ async def ingest_as_version(
 
 Graph properties are schemaless, so new fields can be added incrementally during ingestion. Existing Source nodes without the new properties continue to work.
 
+## Enables: Semantic FUSE Filesystem (ADR-069)
+
+This ADR provides the final foundational piece for the Semantic FUSE Filesystem (ADR-069):
+
+```
+ADR-057 (Images in Garage)
+    ↓
+ADR-079 (Projections in Garage)
+    ↓
+ADR-081 (Source Documents in Garage) ← THIS ADR
+    ↓
+ADR-069 (Semantic FUSE Filesystem)
+```
+
+**Why source document storage enables FUSE:**
+
+1. **Document Retrieval**: FUSE can serve original documents via `cat /mnt/knowledge/ontology/source.txt`
+2. **Position Highlighting**: Offset information (`char_offset_start/end`, `line_start/end`) enables displaying exact evidence locations within source documents
+3. **Bidirectional Navigation**: From concept → evidence → source chunk → original document (all resolvable)
+4. **Backup/Restore Symmetry**: FUSE can operate on either graph or Garage as authoritative source
+
+**Future FUSE operations enabled:**
+
+```bash
+# Navigate to source document from concept
+cat /mnt/knowledge/embedding-models/unified-regeneration.concept/evidence/1/source.txt
+
+# The source.txt is fetched from Garage using garage_key
+# Offset metadata enables highlighting the exact quote
+
+# Regenerate graph from FUSE-mounted Garage sources
+find /mnt/garage/sources/Philosophy/*.txt | xargs kg ingest --strategy hybrid
+```
+
+Without source documents in Garage (this ADR), FUSE would only expose graph-derived content. With this ADR, FUSE can expose the complete document lifecycle - original sources, extracted concepts, and their relationships.
+
 ## References
 
 - Issue #172: Expand Garage storage for projections and source documents
+- ADR-069: Semantic FUSE Filesystem (enabled by this ADR)
 - ADR-080: Garage Service Architecture
 - ADR-057: Multimodal Image Ingestion
 - Concept matching modes: random sampling, popularity-weighted, hybrid
