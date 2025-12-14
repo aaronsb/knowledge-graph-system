@@ -307,7 +307,13 @@ class AGEClient:
         content_type: str = "document",
         storage_key: str = None,
         visual_embedding: list = None,
-        embedding: list = None
+        embedding: list = None,
+        # ADR-081: Source document lifecycle
+        garage_key: str = None,
+        content_hash: str = None,
+        char_offset_start: int = None,
+        char_offset_end: int = None,
+        chunk_index: int = None
     ) -> Dict[str, Any]:
         """
         Create a Source node in the graph.
@@ -322,6 +328,11 @@ class AGEClient:
             storage_key: MinIO object key for image storage (images only, ADR-057)
             visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-057)
             embedding: Text embedding of full_text (both documents and image prose, ADR-057)
+            garage_key: Garage object key for source document (ADR-081)
+            content_hash: SHA-256 hash of original document content (ADR-081)
+            char_offset_start: Starting character position in original document (ADR-081)
+            char_offset_end: Ending character position in original document (ADR-081)
+            chunk_index: Zero-based chunk index for ordering (ADR-081)
 
         Returns:
             Dictionary with created node properties
@@ -339,7 +350,12 @@ class AGEClient:
             content_type: $content_type,
             storage_key: $storage_key,
             visual_embedding: $visual_embedding,
-            embedding: $embedding
+            embedding: $embedding,
+            garage_key: $garage_key,
+            content_hash: $content_hash,
+            char_offset_start: $char_offset_start,
+            char_offset_end: $char_offset_end,
+            chunk_index: $chunk_index
         })
         RETURN s
         """
@@ -356,7 +372,12 @@ class AGEClient:
                     "content_type": content_type,
                     "storage_key": storage_key,
                     "visual_embedding": visual_embedding,
-                    "embedding": embedding
+                    "embedding": embedding,
+                    "garage_key": garage_key,
+                    "content_hash": content_hash,
+                    "char_offset_start": char_offset_start,
+                    "char_offset_end": char_offset_end,
+                    "chunk_index": chunk_index
                 },
                 fetch_one=True
             )
