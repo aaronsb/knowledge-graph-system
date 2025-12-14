@@ -61,8 +61,8 @@ class ProjectionLauncher(JobLauncher):
         Returns:
             True if at least one ontology has stale projection
         """
+        client = AGEClient()
         try:
-            client = AGEClient()
             conn = client.pool.getconn()
             try:
                 # Get current concept counts per ontology
@@ -115,6 +115,8 @@ class ProjectionLauncher(JobLauncher):
         except Exception as e:
             logger.error(f"ProjectionLauncher condition check failed: {e}")
             raise
+        finally:
+            client.close()
 
     def prepare_job_data(self) -> Dict:
         """

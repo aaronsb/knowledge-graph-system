@@ -130,7 +130,7 @@ def run_projection_worker(
         # Store projection to Garage (ADR-079)
         storage_key = _store_projection(ontology, embedding_source, dataset)
 
-        # Prepare result
+        # Prepare result - include warning if storage failed (ADR-079 review feedback)
         result = {
             "success": True,
             "ontology": ontology,
@@ -139,13 +139,21 @@ def run_projection_worker(
             "concept_count": concept_count,
             "changelist_id": dataset.get("changelist_id"),
             "computation_time_ms": dataset.get("statistics", {}).get("computation_time_ms"),
-            "storage_key": storage_key
+            "storage_key": storage_key,
+            "storage_warning": None if storage_key else "Projection computed but cache storage failed - will recompute on next request"
         }
 
-        logger.info(
-            f"✅ Projection worker completed: {job_id} "
-            f"({concept_count} {embedding_source}, {algorithm})"
-        )
+        if storage_key:
+            logger.info(
+                f"✅ Projection worker completed: {job_id} "
+                f"({concept_count} {embedding_source}, {algorithm})"
+            )
+        else:
+            logger.warning(
+                f"⚠️ Projection worker completed but storage failed: {job_id} "
+                f"({concept_count} {embedding_source}, {algorithm})"
+            )
+
         return result
 
     except Exception as e:

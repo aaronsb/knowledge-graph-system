@@ -30,6 +30,7 @@ from io import BytesIO
 import mimetypes
 
 import boto3
+from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError, BotoCoreError
 from dotenv import load_dotenv
 
@@ -100,9 +101,17 @@ def _get_garage_credentials() -> tuple[str, str]:
 
 class GarageClient:
     """
-    Garage client for image storage operations.
+    Garage client for object storage operations.
 
     Thread-safe singleton pattern - all methods use stateless connections.
+
+    TODO (ADR-079 Review): This class violates Single Responsibility Principle.
+    It handles both image storage (ADR-057) and projection storage (ADR-079).
+    Consider refactoring into:
+      - GarageBaseClient: Core S3 operations, credentials, bucket management
+      - ImageStorageService: Image upload/download/delete (ADR-057)
+      - ProjectionStorageService: Projection store/get/history (ADR-079)
+    See GraphQueryFacade (ADR-048) for similar separation pattern.
     """
 
     def __init__(
@@ -134,23 +143,35 @@ class GarageClient:
         self.bucket_name = bucket_name or os.getenv("GARAGE_BUCKET", "knowledge-graph-images")
         self.region = region or os.getenv("GARAGE_REGION", "garage")
 
-        # Load credentials from encrypted store or environment
+        # Load credentials - don't store as instance attributes for security
+        # Credentials are passed directly to boto3 and not retained
         if access_key and secret_key:
             # Explicit credentials provided (for testing)
-            self.access_key = access_key
-            self.secret_key = secret_key
+            _access_key, _secret_key = access_key, secret_key
             logger.debug("Using explicitly provided Garage credentials")
         else:
             # Load from encrypted store or environment
-            self.access_key, self.secret_key = _get_garage_credentials()
+            _access_key, _secret_key = _get_garage_credentials()
+
+        # Configure retry logic for resilience (ADR-079 review feedback)
+        retry_config = BotoConfig(
+            retries={
+                'max_attempts': 3,
+                'mode': 'adaptive'  # Backs off exponentially on failures
+            },
+            connect_timeout=5,
+            read_timeout=30
+        )
 
         # Initialize boto3 S3 client for Garage
+        # Credentials passed directly, not stored as instance attributes
         self.client = boto3.client(
             's3',
             endpoint_url=self.endpoint,
-            aws_access_key_id=self.access_key,
-            aws_secret_access_key=self.secret_key,
-            region_name=self.region
+            aws_access_key_id=_access_key,
+            aws_secret_access_key=_secret_key,
+            region_name=self.region,
+            config=retry_config
         )
 
         logger.info(f"Garage client initialized: {self.endpoint}, bucket: {self.bucket_name}, region: {self.region}")

@@ -1,6 +1,6 @@
 # ADR-079: Projection Artifact Storage in Garage
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2025-12-13
 **Deciders:** @aaronsb, @claude
 **Related ADRs:** ADR-057 (Multimodal Image Ingestion - Garage setup), ADR-078 (Embedding Landscape Explorer)
@@ -78,61 +78,36 @@ This separation ensures:
 2. Custom analysis is preserved but doesn't clutter the timeline
 3. Simple mental model: "default view" vs "custom exploration"
 
-### Storage Structure
+### Storage Structure (Implemented)
+
+The implementation uses a simple, flat structure without manifest files:
 
 ```
-kg-projections/
+projections/
 ├── {ontology}/
-│   ├── manifest.json              # Index of primary projections (timeline)
-│   ├── latest.json.gz             # Most recent primary projection
-│   ├── primary/                   # Default parameters (perplexity=30)
-│   │   ├── {timestamp}_{changelist}.json.gz
-│   │   └── {timestamp}_{changelist}.json.gz
-│   └── outliers/                  # Non-default parameters
-│       ├── perplexity_50/
-│       │   └── {timestamp}_{changelist}.json.gz
-│       └── perplexity_10/
-│           └── {timestamp}_{changelist}.json.gz
+│   └── {embedding_source}/        # concepts, sources, vocabulary, combined
+│       ├── latest.json            # Most recent projection
+│       ├── 2025-12-13T22:52:00Z.json   # Historical snapshot
+│       └── 2025-12-13T23:15:00Z.json   # Historical snapshot
 ```
 
-### Manifest Schema
+**Design Decision**: We opted for simplicity over the originally proposed manifest system:
 
-```json
-{
-  "ontology": "Philosophy",
-  "global_defaults": {
-    "algorithm": "tsne",
-    "perplexity": 30,
-    "metric": "cosine",
-    "n_components": 3
-  },
-  "primary": {
-    "latest": "2025-12-13T14:30:00Z_c1847",
-    "snapshots": [
-      {
-        "id": "2025-12-13T14:30:00Z_c1847",
-        "timestamp": "2025-12-13T14:30:00Z",
-        "changelist_id": "c1847",
-        "statistics": {
-          "concept_count": 412,
-          "computation_time_ms": 1847,
-          "embedding_dims": 768
-        },
-        "file_key": "Philosophy/primary/2025-12-13T14:30:00Z_c1847.json.gz",
-        "file_size_bytes": 45230
-      }
-    ]
-  },
-  "outliers": [
-    {
-      "parameter_key": "perplexity_50",
-      "parameters": { "perplexity": 50 },
-      "latest": "2025-12-12T10:15:00Z_c1800",
-      "file_key": "Philosophy/outliers/perplexity_50/2025-12-12T10:15:00Z_c1800.json.gz"
-    }
-  ]
-}
-```
+- **No manifest files**: History is discovered via S3 `list_objects` with prefix
+- **No primary/outlier split**: All projections use current parameters
+- **No gzip compression**: JSON files are small enough (~10-100KB) that compression overhead isn't worth it
+- **Flat structure**: Single directory per ontology/source type
+
+This simpler approach:
+1. Reduces implementation complexity
+2. Eliminates manifest synchronization bugs
+3. Makes debugging easier (just list the bucket)
+4. Can be extended to manifest-based system later if needed
+
+**Trade-offs accepted**:
+- S3 listing is slightly slower than manifest lookup
+- No parameter-keyed caching (regenerate if parameters change)
+- History limited by retention policy, not manifest tracking
 
 ### Projection File Schema
 
@@ -174,22 +149,18 @@ kg-projections/
 }
 ```
 
-### Efficient Storage Format
+### Storage Format (Implemented)
 
-For large projections (1000+ concepts), use compressed binary format:
+We use plain JSON files (not gzip-compressed):
 
 | Format | Size (1000 concepts) | Parse Time | Use Case |
 |--------|---------------------|------------|----------|
-| JSON | ~150KB | ~50ms | Default, readable |
-| Gzip JSON | ~25KB | ~60ms | Storage efficiency |
-| MessagePack | ~80KB | ~20ms | Fast parsing |
-| Gzip MessagePack | ~20KB | ~30ms | Optimal balance |
+| **JSON** | ~150KB | ~50ms | **Current implementation** |
+| Gzip JSON | ~25KB | ~60ms | Future optimization |
 
-**Recommendation**: Store as gzip-compressed JSON (`.json.gz`) for:
-- 6x size reduction
-- Human-readable when decompressed
-- Standard tooling support
-- Negligible decompression overhead
+**Rationale**: For current graph sizes (100-1000 concepts), JSON files are 10-100KB. The complexity of gzip compression/decompression isn't justified. Garage storage is cheap, and the boto3 retry logic handles transient failures.
+
+**Future consideration**: If projections grow significantly (10K+ concepts), gzip compression can be added transparently by changing the storage methods.
 
 ### Changelist-Based Cache Validation
 
