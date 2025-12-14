@@ -236,57 +236,7 @@ Track document-level metadata separately from chunks:
 (:Document)-[:HAS_CHUNK {index: 1}]->(:Source)
 ```
 
-### 5. Bidirectional Regeneration
-
-#### Graph → Garage (Source Recovery)
-
-When Garage is unavailable or corrupted, reconstruct from graph:
-
-```python
-async def regenerate_source_from_graph(garage_key: str) -> bytes:
-    """
-    Reconstruct original document from graph evidence.
-
-    Chunks are stored with offset information, enabling
-    precise reconstruction of the original document.
-    """
-    # Get all chunks for this document, ordered by offset
-    chunks = await graph.query("""
-        MATCH (s:Source {garage_key: $key})
-        RETURN s.full_text, s.char_offset_start, s.chunk_index
-        ORDER BY s.chunk_index
-    """, key=garage_key)
-
-    # Handle overlaps - chunks may have 200 char overlap
-    # Use char_offset_start to deduplicate overlapping regions
-    content = reconstruct_with_overlaps(chunks)
-
-    return content.encode('utf-8')
-
-
-async def restore_garage_from_graph(ontology: str = None):
-    """
-    Bulk restore Garage sources from graph evidence.
-
-    Use cases:
-    - Garage failure recovery
-    - Migration to new Garage instance
-    - Disaster recovery
-    """
-    documents = await graph.query("""
-        MATCH (d:Document)
-        WHERE $ontology IS NULL OR d.ontology = $ontology
-        RETURN d.garage_key
-    """, ontology=ontology)
-
-    for doc in documents:
-        content = await regenerate_source_from_graph(doc.garage_key)
-        await garage.store(doc.garage_key, content)
-
-    return {"restored": len(documents)}
-```
-
-#### Garage → Graph (Graph Regeneration)
+### 5. Graph Regeneration (New Keeper Scenario)
 
 When the graph is corrupted or needs re-processing:
 
@@ -473,12 +423,12 @@ async def ingest_as_version(
 
 ### Positive
 
-1. **Bidirectional Recovery**: Either storage layer can restore the other
+1. **New Keeper Recovery**: Re-ingest from Garage with different extraction strategy
 2. **Strategy Experimentation**: Re-generate graph with different matching modes
 3. **Audit Trail**: Original documents preserved for compliance/debugging
 4. **Version History**: Track document evolution over time
 5. **Precise Provenance**: Line/character offsets enable source highlighting
-6. **Simplified Backup**: Either database OR Garage backup is sufficient
+6. **Backup Flexibility**: Garage backup preserves source truth; graph is rebuildable
 
 ### Negative
 
@@ -509,9 +459,8 @@ async def ingest_as_version(
 
 ### Phase 3: Document Node + Regeneration
 1. Create Document node type
-2. Implement graph → Garage regeneration
-3. Implement Garage → graph regeneration
-4. Add admin endpoints for recovery operations
+2. Implement Garage → graph regeneration ("new keeper" scenario)
+3. Add admin endpoints for recovery operations
 
 ### Phase 4: Deletion
 1. Implement cascade deletion
@@ -567,6 +516,24 @@ find /mnt/garage/sources/Philosophy/*.txt | xargs kg ingest --strategy hybrid
 ```
 
 Without source documents in Garage (this ADR), FUSE would only expose graph-derived content. With this ADR, FUSE can expose the complete document lifecycle - original sources, extracted concepts, and their relationships.
+
+## Future Considerations
+
+### Graph → Garage Reconstruction (YAGNI)
+
+The offset information stored in Source nodes (`char_offset_start`, `char_offset_end`, `chunk_index`) theoretically enables reconstructing original documents from graph chunks. This would allow recovery if Garage is lost but the graph is intact.
+
+**Not implemented because:**
+- Rare scenario (Garage lost, graph intact, no Garage backup)
+- Garage backups are simpler and more reliable
+- Adds complexity without clear near-term value
+
+**If needed later**, the implementation would:
+1. Query all Source nodes for a `garage_key`, ordered by `chunk_index`
+2. Handle chunk overlaps using `char_offset_start` to deduplicate
+3. Concatenate to reconstruct original document
+
+A TODO comment in the code will document this possibility without implementing it.
 
 ## References
 
