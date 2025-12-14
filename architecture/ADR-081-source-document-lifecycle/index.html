@@ -13,6 +13,10 @@
       
       
       
+        <link rel="prev" href="../ADR-080-garage-service-architecture/">
+      
+      
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>Scheduled Jobs - Knowledge Graph System</title>
+        <title>ADR-081: Source Document Lifecycle - Knowledge Graph System</title>
       
     
     
@@ -64,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#scheduled-jobs" class="md-skip">
+        <a href="#adr-081-source-document-lifecycle" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Scheduled Jobs
+              ADR-081: Source Document Lifecycle
             
           </span>
         </div>
@@ -294,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../COLD-START.md" class="md-nav__link">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -322,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DEPLOYMENT/" class="md-nav__link">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -350,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -2910,18 +2914,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -2942,7 +2948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2960,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -2988,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -3016,7 +3022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+      <a href="../ADR-076B-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -3044,7 +3050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -3072,7 +3078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -3100,7 +3106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -3125,10 +3131,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/ADR-081-source-document-lifecycle/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-081: Source Document Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3144,6 +3177,370 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-knowledge-keeper-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Knowledge Keeper Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-redundancy-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Redundancy Question
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-evolution-insurance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Evolution Insurance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-pre-ingestion-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Pre-Ingestion Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-content-based-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Content-Based Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deduplication-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deduplication Tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Schema Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Schema Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-node-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Node Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-node-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Node (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-graph-regeneration-new-keeper-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Graph Regeneration (New Keeper Scenario)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deletion-cascade-forgetting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deletion Cascade (Forgetting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Version Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pre-ingestion-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Pre-Ingestion Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-deduplication-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Deduplication Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-document-node-regeneration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Document Node + Regeneration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Deletion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enables-semantic-fuse-filesystem-adr-069" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enables: Semantic FUSE Filesystem (ADR-069)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-garage-reconstruction-yagni" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph → Garage Reconstruction (YAGNI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3156,7 +3553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3184,7 +3581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3212,7 +3609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3240,7 +3637,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3315,7 +3712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3343,7 +3740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3371,7 +3768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3399,7 +3796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3427,7 +3824,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3455,7 +3852,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3483,7 +3880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3566,7 +3963,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3594,7 +3991,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3622,7 +4019,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3650,7 +4047,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3678,7 +4075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3706,7 +4103,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3734,7 +4131,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3762,7 +4159,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -3790,7 +4187,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -3818,7 +4215,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -3846,7 +4243,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -3874,7 +4271,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -3949,7 +4346,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -4040,7 +4437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -4068,7 +4465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4096,7 +4493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4124,7 +4521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4152,7 +4549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4180,7 +4577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4208,7 +4605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4236,7 +4633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4264,7 +4661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4347,7 +4744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4375,7 +4772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4403,7 +4800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4431,7 +4828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4514,7 +4911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4542,7 +4939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -4570,7 +4967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -4598,7 +4995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -4626,7 +5023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -4654,7 +5051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4682,7 +5079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4710,7 +5107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4793,7 +5190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4821,7 +5218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4849,7 +5246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -4877,7 +5274,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -4905,7 +5302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4933,7 +5330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4961,7 +5358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4989,7 +5386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -5017,7 +5414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5100,7 +5497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5128,7 +5525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5156,7 +5553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5184,7 +5581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5212,7 +5609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5295,7 +5692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5323,7 +5720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5351,7 +5748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5379,7 +5776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5407,7 +5804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5435,7 +5832,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5463,7 +5860,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5491,7 +5888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5519,7 +5916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5547,7 +5944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -5630,7 +6027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -5713,7 +6110,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5741,7 +6138,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5769,7 +6166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5797,7 +6194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5825,7 +6222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5853,7 +6250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5881,7 +6278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5909,7 +6306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -5937,7 +6334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -5965,7 +6362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5993,7 +6390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6021,7 +6418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6584,33 +6981,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#active-scheduled-jobs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Active Scheduled Jobs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Active Scheduled Jobs">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-category-refresh-every-6-hours" class="md-nav__link">
+  <a href="#the-knowledge-keeper-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Category Refresh (Every 6 Hours)
+        The Knowledge Keeper Model
       
     </span>
   </a>
@@ -6618,10 +7004,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-vocabulary-consolidation-every-12-hours" class="md-nav__link">
+  <a href="#the-redundancy-question" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Vocabulary Consolidation (Every 12 Hours)
+        The Redundancy Question
       
     </span>
   </a>
@@ -6629,10 +7015,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-epistemic-re-measurement-every-hour" class="md-nav__link">
+  <a href="#model-evolution-insurance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Epistemic Re-measurement (Every Hour)
+        Model Evolution Insurance
       
     </span>
   </a>
@@ -6645,22 +7031,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-scheduled-jobs-work" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Scheduled Jobs Work
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How Scheduled Jobs Work">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pattern-polling-with-rare-execution" class="md-nav__link">
+  <a href="#1-pre-ingestion-storage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern: Polling with Rare Execution
+        1. Pre-Ingestion Storage
       
     </span>
   </a>
@@ -6668,10 +7054,93 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#schedule-as-rate-limit" class="md-nav__link">
+  <a href="#2-content-based-identity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Schedule as Rate Limit
+        2. Content-Based Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deduplication-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deduplication Tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Schema Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Schema Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-node-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Node Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-node-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Node (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-graph-regeneration-new-keeper-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Graph Regeneration (New Keeper Scenario)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deletion-cascade-forgetting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deletion Cascade (Forgetting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Version Management
       
     </span>
   </a>
@@ -6684,22 +7153,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#managing-scheduled-jobs" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Managing Scheduled Jobs
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Managing Scheduled Jobs">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#viewing-status" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Viewing Status
+        Positive
       
     </span>
   </a>
@@ -6707,10 +7176,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#viewing-job-history" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Viewing Job History
+        Negative
       
     </span>
   </a>
@@ -6718,21 +7187,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#manual-triggering-testing" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Manual Triggering (Testing)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#disablingenabling-jobs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Disabling/Enabling Jobs
+        Neutral
       
     </span>
   </a>
@@ -6745,22 +7203,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#monitoring" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Monitoring
+        Implementation Plan
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Monitoring">
+    <nav class="md-nav" aria-label="Implementation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#understanding-log-messages" class="md-nav__link">
+  <a href="#phase-1-pre-ingestion-storage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Understanding Log Messages
+        Phase 1: Pre-Ingestion Storage
       
     </span>
   </a>
@@ -6768,10 +7226,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#key-metrics-to-watch" class="md-nav__link">
+  <a href="#phase-2-deduplication-enhancement" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Metrics to Watch
+        Phase 2: Deduplication Enhancement
       
     </span>
   </a>
@@ -6779,10 +7237,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#common-issues" class="md-nav__link">
+  <a href="#phase-3-document-node-regeneration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Issues
+        Phase 3: Document Node + Regeneration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Deletion
       
     </span>
   </a>
@@ -6795,10 +7264,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#performance-impact" class="md-nav__link">
+  <a href="#migration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance Impact
+        Migration
       
     </span>
   </a>
@@ -6806,33 +7275,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#customizing-thresholds" class="md-nav__link">
+  <a href="#enables-semantic-fuse-filesystem-adr-069" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Customizing Thresholds
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Customizing Thresholds">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#epistemic-re-measurement-threshold" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Epistemic Re-measurement Threshold
+        Enables: Semantic FUSE Filesystem (ADR-069)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#vocabulary-consolidation-thresholds" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vocabulary Consolidation Thresholds
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-garage-reconstruction-yagni" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph → Garage Reconstruction (YAGNI)
       
     </span>
   </a>
@@ -6845,10 +7314,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#related-documentation" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Related Documentation
+        References
       
     </span>
   </a>
@@ -6875,232 +7344,586 @@
   
 
 
-<h1 id="scheduled-jobs">Scheduled Jobs</h1>
-<p>The knowledge graph system runs automated maintenance tasks in the background to keep your vocabulary organized and epistemic status measurements up-to-date.</p>
-<h2 id="overview">Overview</h2>
-<p>Scheduled jobs are background tasks that run on timers to perform system maintenance:</p>
-<ul>
-<li><strong>Check frequently</strong> (every hour or few hours)</li>
-<li><strong>Run conditionally</strong> (only when work is needed)</li>
-<li><strong>Self-regulate</strong> (won't over-execute if nothing to do)</li>
-</ul>
-<p>Think of them as smart maintenance workers that check if there's work to do, and only do it when needed.</p>
-<h2 id="active-scheduled-jobs">Active Scheduled Jobs</h2>
-<h3 id="1-category-refresh-every-6-hours">1. Category Refresh (Every 6 Hours)</h3>
-<p><strong>Schedule:</strong> <code>0 */6 * * *</code> (Every 6 hours at minute 0)
-<strong>Worker:</strong> <code>vocab_refresh_worker</code>
-<strong>Launcher:</strong> <code>CategoryRefreshLauncher</code></p>
-<p><strong>What it does:</strong>
-Re-integrates LLM-generated vocabulary categories back into the main vocabulary system.</p>
-<p><strong>When it runs:</strong>
-Only when there are categories with <code>llm_generated</code> relationship types that need integration.</p>
-<p><strong>Why you need it:</strong>
-When the LLM discovers new relationship types during ingestion, they're initially marked as <code>llm_generated</code>. This job periodically checks for these entries and integrates them into the permanent vocabulary, ensuring your graph vocabulary stays current with the concepts being extracted.</p>
-<p><strong>Typical behavior:</strong>
-- Checks 4 times per day (every 6 hours)
-- Usually runs only when new documents have been ingested
-- Might skip 10-20 checks before finding work</p>
-<hr />
-<h3 id="2-vocabulary-consolidation-every-12-hours">2. Vocabulary Consolidation (Every 12 Hours)</h3>
-<p><strong>Schedule:</strong> <code>0 */12 * * *</code> (Every 12 hours at minute 0)
-<strong>Worker:</strong> <code>vocab_consolidate_worker</code>
-<strong>Launcher:</strong> <code>VocabConsolidationLauncher</code></p>
-<p><strong>What it does:</strong>
-Automatically consolidates vocabulary types that have become inactive or redundant.</p>
-<p><strong>When it runs:</strong>
-Only when the ratio of inactive types exceeds a threshold (typically &gt;20% of active types).</p>
-<p><strong>Why you need it:</strong>
-As your graph evolves, some vocabulary types naturally become inactive (no longer used in new extractions). When too many inactive types accumulate, they create clutter. This job consolidates them to maintain a clean, efficient vocabulary.</p>
-<p><strong>Hysteresis thresholds:</strong>
-- <strong>Consolidate when:</strong> inactive_types &gt; 20% of active_types
-- <strong>Don't consolidate when:</strong> inactive_types &lt; 10% of active_types
-- <strong>Purpose:</strong> Prevents thrashing (repeated consolidate/expand cycles)</p>
-<p><strong>Typical behavior:</strong>
-- Checks twice per day (every 12 hours)
-- Usually runs once every week or two
-- Self-regulating based on actual vocabulary spread</p>
-<hr />
-<h3 id="3-epistemic-re-measurement-every-hour">3. Epistemic Re-measurement (Every Hour)</h3>
-<p><strong>Schedule:</strong> <code>0 * * * *</code> (Every hour at minute 0)
-<strong>Worker:</strong> <code>epistemic_remeasurement_worker</code>
-<strong>Launcher:</strong> <code>EpistemicRemeasurementLauncher</code></p>
-<p><strong>What it does:</strong>
-Re-measures epistemic status (grounding statistics) for all vocabulary relationship types when significant vocabulary changes have accumulated.</p>
-<p><strong>When it runs:</strong>
-Only when the vocabulary change counter delta exceeds the threshold (default: 10 changes).</p>
-<p><strong>Why you need it:</strong>
-Epistemic status measurements (WELL_GROUNDED, MIXED_GROUNDING, etc.) are based on sampling relationship edges. As your graph evolves, these measurements become stale. This job automatically refreshes them when enough vocabulary changes have occurred.</p>
-<p><strong>How it works:</strong>
-1. Every hour, check the <code>vocabulary_change_counter</code> delta
-2. If delta &gt;= 10 changes, trigger measurement job
-3. Measure all vocabulary types (sample 100 edges per type)
-4. Store results to VocabType nodes
-5. Reset vocabulary_change_counter delta to 0</p>
-<p><strong>Typical behavior:</strong>
-- Checks 24 times per day (every hour)
-- Usually runs after vocabulary refresh or consolidation jobs
-- Skips most hours when no vocabulary changes have occurred</p>
-<p><strong>Counter-based staleness:</strong>
-Instead of using timestamps, this job uses a change counter that increments whenever vocabulary is modified. This ensures measurements stay fresh relative to actual graph changes, not just elapsed time.</p>
-<hr />
-<h2 id="how-scheduled-jobs-work">How Scheduled Jobs Work</h2>
-<h3 id="pattern-polling-with-rare-execution">Pattern: Polling with Rare Execution</h3>
-<p>All scheduled jobs follow this pattern:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Schedule fires → Check conditions → Work needed?
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                    ├─ YES → Enqueue job
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                                    └─ NO  → Skip (not an error)
+<h1 id="adr-081-source-document-lifecycle">ADR-081: Source Document Lifecycle</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2025-12-14
+<strong>Deciders:</strong> @aaronsb, @claude
+<strong>Related ADRs:</strong> ADR-080 (Garage Service Architecture), ADR-057 (Multimodal Image Ingestion)
+<strong>Closes:</strong> #172 (partially)</p>
+<h2 id="context">Context</h2>
+<p>When documents are ingested into the knowledge graph, the original source material is currently discarded after extraction. We retain:
+- Chunked text in Source nodes (<code>full_text</code> property)
+- Evidence quotes in Instance nodes
+- Extracted concepts and relationships</p>
+<p>But we lose:
+- The original document as a cohesive unit
+- Precise position information (line/character offsets)
+- The ability to re-process with improved extraction
+- Version history when documents are updated</p>
+<h3 id="the-knowledge-keeper-model">The Knowledge Keeper Model</h3>
+<p>Think of the system as a knowledge keeper with a warehouse:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                        THE KNOWLEDGE KEEPER                         │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├─────────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│                                                                     │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  WAREHOUSE (Garage)              MIND (Graph)                       │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  ═══════════════════             ══════════════                     │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                                                                     │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│    Books                           WHY I kept them                  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│    Documents                       HOW they connect                 │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│    Pictures                        WHAT they mean together          │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│    Artifacts                       The project context              │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                                    The relationships I see          │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│    (storage)                       (understanding)                  │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│                                                                     │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│         │            FILING SYSTEM              │                   │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│         │            ══════════════             │                   │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│         └───────►    Document nodes    ◄────────┘                   │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                      Source nodes                                   │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│                      (where things are)                             │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│                                                                     │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└─────────────────────────────────────────────────────────────────────┘
 </code></pre></div>
-<p><strong>Example: Epistemic Re-measurement</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Hour 00:00 → Check delta (5)  → Skip (&lt; 10)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Hour 01:00 → Check delta (5)  → Skip (&lt; 10)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Hour 02:00 → Check delta (7)  → Skip (&lt; 10)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Hour 03:00 → Check delta (12) → RUN! (&gt;= 10)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Hour 04:00 → Check delta (0)  → Skip (&lt; 10, just reset)
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>... many more skips ...
-</code></pre></div></p>
-<p><strong>Why this design:</strong>
-- ✅ <strong>Responsive:</strong> Don't wait hours when work becomes ready
-- ✅ <strong>Efficient:</strong> Condition checks are cheap (~1ms SQL query)
-- ✅ <strong>Self-regulating:</strong> Jobs only run when actually needed
-- ✅ <strong>No guessing:</strong> Don't need to predict optimal timing</p>
-<h3 id="schedule-as-rate-limit">Schedule as Rate Limit</h3>
-<p>The schedule interval is really a <strong>minimum spacing</strong> / <strong>cooldown period</strong>, not precise execution time:</p>
 <ul>
-<li><strong>Schedule:</strong> "Every hour" means "Don't run more often than every hour"</li>
-<li><strong>Condition:</strong> Determines if work is actually needed</li>
-<li><strong>Result:</strong> Job runs when needed, but never too frequently</li>
+<li><strong>Garage</strong> = The warehouse (physical artifacts, content storage)</li>
+<li><strong>Document/Source nodes</strong> = The filing system (organization, location, offsets)</li>
+<li><strong>Concepts + Relationships</strong> = The mind (meaning, context, the "why")</li>
 </ul>
-<p>This prevents over-execution while staying responsive to actual system state.</p>
-<hr />
-<h2 id="managing-scheduled-jobs">Managing Scheduled Jobs</h2>
-<h3 id="viewing-status">Viewing Status</h3>
-<p><strong>Database query:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">schedule_cron</span><span class="p">,</span><span class="w"> </span><span class="n">enabled</span><span class="p">,</span><span class="w"> </span><span class="n">last_run</span><span class="p">,</span><span class="w"> </span><span class="n">last_success</span><span class="p">,</span><span class="w"> </span><span class="n">next_run</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">scheduled_jobs</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
-</code></pre></div></p>
-<p><strong>Expected output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>name                    | schedule_cron | enabled | last_run            | last_success        | next_run
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>------------------------+---------------+---------+---------------------+---------------------+---------------------
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>category_refresh        | 0 */6 * * *   | t       | 2025-11-17 18:00:00 | 2025-11-17 12:00:00 | 2025-11-18 00:00:00
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>epistemic_remeasurement | 0 * * * *     | t       | 2025-11-17 19:00:00 | 2025-11-17 15:00:00 | 2025-11-17 20:00:00
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>vocab_consolidation     | 0 */12 * * *  | t       | 2025-11-17 12:00:00 | 2025-11-16 00:00:00 | 2025-11-18 00:00:00
-</code></pre></div></p>
-<h3 id="viewing-job-history">Viewing Job History</h3>
-<p><strong>Check recent jobs created by scheduled tasks:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">job_id</span><span class="p">,</span><span class="w"> </span><span class="n">job_type</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">completed_at</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">is_system_job</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">job_source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;scheduled_task&#39;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="k">DESC</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
-</code></pre></div></p>
-<h3 id="manual-triggering-testing">Manual Triggering (Testing)</h3>
-<p><strong>Force a schedule to run immediately:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Set next_run to now to trigger on next scheduler check</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">scheduled_jobs</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">SET</span><span class="w"> </span><span class="n">next_run</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;epistemic_remeasurement&#39;</span><span class="p">;</span>
-</code></pre></div></p>
-<p><strong>Note:</strong> The job will still check conditions! If conditions aren't met, it will skip.</p>
-<h3 id="disablingenabling-jobs">Disabling/Enabling Jobs</h3>
-<p><strong>Disable a scheduled job:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">scheduled_jobs</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;epistemic_remeasurement&#39;</span><span class="p">;</span>
-</code></pre></div></p>
-<p><strong>Enable a scheduled job:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">scheduled_jobs</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">,</span><span class="w"> </span><span class="n">retry_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;epistemic_remeasurement&#39;</span><span class="p">;</span>
-</code></pre></div></p>
-<hr />
-<h2 id="monitoring">Monitoring</h2>
-<h3 id="understanding-log-messages">Understanding Log Messages</h3>
-<p><strong>Normal operation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>INFO: ⏰ Schedule &#39;epistemic_remeasurement&#39; is due, triggering launcher
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>INFO: ✓ EpistemicRemeasurementLauncher: Vocabulary change delta (12) &gt;= threshold (10)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>INFO: ✅ EpistemicRemeasurementLauncher: Enqueued job job_abc123
-</code></pre></div></p>
-<p><strong>Healthy skip (no work needed):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>INFO: ⏰ Schedule &#39;epistemic_remeasurement&#39; is due, triggering launcher
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>INFO: ⏭️  EpistemicRemeasurementLauncher: Delta (5) below threshold (10)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>INFO: ⏭️  Schedule &#39;epistemic_remeasurement&#39; skipped (conditions not met)
-</code></pre></div></p>
-<p><strong>Failure with retry:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>ERROR: ❌ Schedule &#39;category_refresh&#39; launcher failed: Database connection timeout
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>WARNING: ⚠️  Schedule &#39;category_refresh&#39; failed (retry 1/5), retrying in 2min
-</code></pre></div></p>
-<p><strong>Max retries exceeded (schedule disabled):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ERROR: ❌ Schedule &#39;category_refresh&#39; max retries exceeded, disabling
-</code></pre></div></p>
-<h3 id="key-metrics-to-watch">Key Metrics to Watch</h3>
+<p>The graph isn't just an index - it's the <strong>understanding layer</strong>. Concepts and relationships capture what a filing system never could: <em>"I collected these systems architecture docs because of that project, which connects to these project management behaviors..."</em></p>
+<h3 id="the-redundancy-question">The Redundancy Question</h3>
+<p>Storing source documents in Garage while also keeping chunked evidence in the graph creates apparent duplication. However, this <strong>intentional redundancy</strong> enables resilience:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>What Happens</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Warehouse disaster</strong></td>
+<td>Garage storage lost</td>
+<td>Mind rebuilds warehouse from last backup</td>
+</tr>
+<tr>
+<td><strong>New keeper</strong></td>
+<td>Graph cleared or strategy change</td>
+<td>New keeper re-reads all documents, builds fresh understanding</td>
+</tr>
+<tr>
+<td><strong>Routine backup</strong></td>
+<td>Either layer backed up</td>
+<td>Database backup OR Garage backup sufficient</td>
+</tr>
+</tbody>
+</table>
+<p>The "new keeper" scenario is particularly valuable: re-ingesting the same documents with a different extraction strategy (random sampling → popularity-weighted → hybrid) produces different interpretations of the same source material.</p>
+<h3 id="model-evolution-insurance">Model Evolution Insurance</h3>
+<p>In traditional software, storing both source documents and parsed data might be overbuilding. However, in LLM-based knowledge graphs, the "parser" (the LLM + prompts) is <strong>non-deterministic and rapidly evolving</strong>.</p>
+<p>Consider: today we extract concepts using a 2024-era model. When next-generation models arrive with superior reasoning, documents ingested today would be locked to 2024 extraction quality - unless we kept the sources.</p>
+<table>
+<thead>
+<tr>
+<th>Without Source Storage</th>
+<th>With Source Storage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Locked to extraction model at ingestion time</td>
+<td>Re-extract with future models</td>
+</tr>
+<tr>
+<td>Graph quality is frozen</td>
+<td>Graph intelligence grows with model improvements</td>
+</tr>
+<tr>
+<td>No way to benefit from prompt improvements</td>
+<td>Re-run with better prompts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ADR-081 is an insurance policy against model obsolescence.</strong> It allows replaying history with smarter agents later.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-pre-ingestion-storage">1. Pre-Ingestion Storage</h3>
+<p>Store documents in Garage <strong>before</strong> ingestion begins:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│  Document Ingestion Flow                                        │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│                                                                 │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  Document ──► [Compute Hash] ──► [Dedup Check] ──► Decision     │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│                     │                  │              │         │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│                     ▼                  ▼              ▼         │
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│              content_hash        Exact match?    Similarity?    │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                                       │              │          │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│                     ┌─────────────────┴──────────────┘          │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│                     ▼                                           │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│              [Store in Garage] ◄─── garage_key assigned         │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│                     │                                           │
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│                     ▼                                           │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│              [Chunk Document] ──► AST with offsets              │
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│                     │                                           │
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│                     ▼                                           │
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│              [Extract Concepts] ──► Graph with positions        │
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│                                                                 │
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>└─────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Why pre-ingestion:</strong>
+- <code>garage_key</code> is known before Source nodes are created
+- Deduplication check can reference stored content
+- Even refused documents are archived (audit trail)
+- Failure at any later step doesn't lose the original</p>
+<h3 id="2-content-based-identity">2. Content-Based Identity</h3>
+<p>Documents are identified by content hash, not filename:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DocumentIdentity</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Compute content-based identity for a document.</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">        DocumentIdentity with hash, garage_key, and metadata</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">content_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="c1"># Garage key uses hash prefix (32 chars = 128 bits = UUID-equivalent)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="c1"># This provides collision resistance for a future sharded universe</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="c1"># where billions of documents may exist across many shards.</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="c1"># Extension preserved for content-type inference.</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">garage_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">sanitize</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">content_hash</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="k">return</span> <span class="n">DocumentIdentity</span><span class="p">(</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="n">content_hash</span><span class="o">=</span><span class="n">content_hash</span><span class="p">,</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="n">garage_key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">,</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">size_bytes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="p">)</span>
+</code></pre></div>
+<p><strong>Benefits:</strong>
+- Same content always gets same key (idempotent)
+- Different content never collides
+- Filename changes don't create duplicates
+- Natural deduplication</p>
+<p><strong>Why 32 characters (128 bits)?</strong></p>
+<table>
+<thead>
+<tr>
+<th>Hash Length</th>
+<th>Bits</th>
+<th>50% Collision At</th>
+<th>Suitability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12 chars</td>
+<td>48</td>
+<td>~17 million</td>
+<td>Single instance only</td>
+</tr>
+<tr>
+<td>16 chars</td>
+<td>64</td>
+<td>~4 billion</td>
+<td>Tight for universe</td>
+</tr>
+<tr>
+<td>32 chars</td>
+<td>128</td>
+<td>~18 quintillion</td>
+<td>UUID-equivalent ✓</td>
+</tr>
+</tbody>
+</table>
+<p>The 128-bit namespace provides collision resistance for a future sharded universe where billions of documents may exist across many shards. This follows the well-understood UUID pattern with extensive library support.</p>
+<h3 id="3-deduplication-tiers">3. Deduplication Tiers</h3>
+<table>
+<thead>
+<tr>
+<th>Match Level</th>
+<th>Detection</th>
+<th>Behavior</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Exact</strong> (100%)</td>
+<td>SHA-256 hash match</td>
+<td>Refuse</td>
+<td>Already ingested, no new information</td>
+</tr>
+<tr>
+<td><strong>High similarity</strong> (80-95%)</td>
+<td>Cosine similarity of chunk embeddings</td>
+<td>Warn + refuse</td>
+<td>Likely same document with minor edits</td>
+</tr>
+<tr>
+<td><strong>Forced similar</strong></td>
+<td>User overrides warning</td>
+<td>Ingest as version</td>
+<td>Explicit acknowledgment of near-duplicate</td>
+</tr>
+<tr>
+<td><strong>Novel</strong> (&lt;80%)</td>
+<td>Below threshold</td>
+<td>Normal ingest</td>
+<td>Sufficiently different content</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>80% threshold</strong> aligns with existing concept deduplication - consistency across the system.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">DeduplicationResult</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact_match&quot;</span><span class="p">,</span> <span class="s2">&quot;high_similarity&quot;</span><span class="p">,</span> <span class="s2">&quot;novel&quot;</span><span class="p">]</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">similarity_score</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>  <span class="c1"># 0.0-1.0 for similar matches</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">matching_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>   <span class="c1"># garage_key of match</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">can_force</span><span class="p">:</span> <span class="nb">bool</span>                    <span class="c1"># True if force=True would proceed</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">check_deduplication</span><span class="p">(</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeduplicationResult</span><span class="p">:</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="sd">    Check if document is duplicate or near-duplicate.</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="sd">    1. Compute hash, check for exact match</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="sd">    2. If no exact match, chunk and embed</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="sd">    3. Compare embeddings against existing sources</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="sd">    4. Return result with similarity info</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+</code></pre></div>
+<h3 id="4-schema-changes">4. Schema Changes</h3>
+<h4 id="source-node-enhancement">Source Node Enhancement</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;src-abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span><span class="w">                    </span><span class="c1">// Ontology name</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="c1">// Existing fields</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;The chunk text content...&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1">// Still needed for graph queries</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">paragraph</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                              </span><span class="c1">// Legacy paragraph number</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="c1">// NEW: Garage reference (32-char hash = 128 bits)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="c1">// NEW: Position in original document</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">char_offset_start</span><span class="p">:</span><span class="w"> </span><span class="m">4521</span><span class="p">,</span><span class="w">                  </span><span class="c1">// Character position</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">char_offset_end</span><span class="p">:</span><span class="w"> </span><span class="m">5847</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="n">line_start</span><span class="p">:</span><span class="w"> </span><span class="m">142</span><span class="p">,</span><span class="w">                          </span><span class="c1">// Line numbers</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="n">line_end</span><span class="p">:</span><span class="w"> </span><span class="m">189</span><span class="p">,</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="n">chunk_index</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                           </span><span class="c1">// Sequential chunk number</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">    </span><span class="c1">// NEW: Chunking metadata</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span><span class="n">chunk_method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ast_semantic&quot;</span><span class="p">,</span><span class="w">             </span><span class="c1">// How it was chunked</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">    </span><span class="n">overlap_chars</span><span class="p">:</span><span class="w"> </span><span class="m">200</span><span class="w">                        </span><span class="c1">// Overlap with adjacent chunks</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="p">})</span>
+</code></pre></div>
+<h4 id="document-node-new">Document Node (New)</h4>
+<p>Track document-level metadata separately from chunks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">(:</span><span class="n">Document</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="c1">// Metadata</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="n">original_filename</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;watts_zen.txt&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// For display only</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="n">size_bytes</span><span class="p">:</span><span class="w"> </span><span class="m">45230</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="n">chunk_count</span><span class="p">:</span><span class="w"> </span><span class="m">12</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="n">ingested_at</span><span class="p">:</span><span class="w"> </span><span class="n">datetime</span><span class="p">(),</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="c1">// Versioning</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="n">version</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="n">supersedes</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                         </span><span class="c1">// Previous version&#39;s garage_key</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="n">superseded_by</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                      </span><span class="c1">// Newer version&#39;s garage_key</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="c1">// Shard provenance (for future universe of shards)</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="n">shard_origin</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="w">                        </span><span class="c1">// Shard ID if received via trade</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">})</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1">// Relationship to chunks</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="p">(:</span><span class="n">Document</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">HAS_CHUNK</span><span class="w"> </span><span class="p">{</span><span class="n">index</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="p">(:</span><span class="n">Document</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">HAS_CHUNK</span><span class="w"> </span><span class="p">{</span><span class="n">index</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="5-graph-regeneration-new-keeper-scenario">5. Graph Regeneration (New Keeper Scenario)</h3>
+<p>When the graph is corrupted or needs re-processing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">regenerate_graph_from_garage</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">strategy</span><span class="p">:</span> <span class="n">ConceptMatchingStrategy</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegenerationPlan</span><span class="p">:</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="sd">    Re-ingest all documents for an ontology from Garage.</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="sd">    Use cases:</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="sd">    - Graph corruption recovery</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="sd">    - Strategy experimentation (random vs popularity vs hybrid)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="sd">    - Schema migration requiring full re-extraction</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="sd">    - Testing extraction improvements</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="sd">    Args:</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="sd">        ontology: Which ontology to regenerate</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="sd">        strategy: Concept matching strategy to use</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="sd">            - &quot;random&quot;: Full random sampling for matches</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="sd">            - &quot;popularity&quot;: Max popularity by edge count</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="sd">            - &quot;hybrid&quot;: Popularity with random tail</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="sd">        dry_run: If True, return plan without executing</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="sd">        RegenerationPlan with estimated cost and changes</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="c1"># List all source documents for ontology</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    <span class="n">documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>        <span class="k">return</span> <span class="n">RegenerationPlan</span><span class="p">(</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>            <span class="n">document_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>            <span class="n">estimated_chunks</span><span class="o">=</span><span class="n">estimate_chunks</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="n">estimated_cost</span><span class="o">=</span><span class="n">estimate_llm_cost</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>            <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>        <span class="p">)</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>    <span class="c1"># Clear existing graph data for ontology</span>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="s2">        MATCH (s:Source {document: $ontology})</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="s2">        DETACH DELETE s</span>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="s2">        MATCH (c:Concept)-[:APPEARS_IN]-&gt;(:Source {document: $ontology})</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="s2">        WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="s2">        DETACH DELETE c</span>
+<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a>
+<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a>    <span class="c1"># Re-ingest each document</span>
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a>    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">:</span>
+<a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a>        <span class="n">content</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>        <span class="k">await</span> <span class="n">ingest_document</span><span class="p">(</span>
+<a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a>            <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+<a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a>            <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
+<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a>            <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span>
+<a id="__codelineno-6-56" name="__codelineno-6-56" href="#__codelineno-6-56"></a>            <span class="n">skip_dedup</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># We know these are unique</span>
+<a id="__codelineno-6-57" name="__codelineno-6-57" href="#__codelineno-6-57"></a>        <span class="p">)</span>
+<a id="__codelineno-6-58" name="__codelineno-6-58" href="#__codelineno-6-58"></a>
+<a id="__codelineno-6-59" name="__codelineno-6-59" href="#__codelineno-6-59"></a>    <span class="k">return</span> <span class="n">RegenerationResult</span><span class="p">(</span>
+<a id="__codelineno-6-60" name="__codelineno-6-60" href="#__codelineno-6-60"></a>        <span class="n">documents_processed</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-6-61" name="__codelineno-6-61" href="#__codelineno-6-61"></a>        <span class="n">concepts_created</span><span class="o">=...</span><span class="p">,</span>
+<a id="__codelineno-6-62" name="__codelineno-6-62" href="#__codelineno-6-62"></a>        <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span>
+<a id="__codelineno-6-63" name="__codelineno-6-63" href="#__codelineno-6-63"></a>    <span class="p">)</span>
+</code></pre></div>
+<h3 id="6-deletion-cascade-forgetting">6. Deletion Cascade (Forgetting)</h3>
+<p>Remove a document and its associated knowledge:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_document</span><span class="p">(</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">garage_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">cascade</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;orphans&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeletionResult</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="sd">    Delete a document and optionally its derived knowledge.</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="sd">    Args:</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="sd">        garage_key: Document to delete</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="sd">        cascade: What to delete beyond the document</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="sd">            - &quot;none&quot;: Only delete from Garage, leave graph intact</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="sd">            - &quot;orphans&quot;: Delete Sources, delete Concepts with no other evidence</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="sd">            - &quot;all&quot;: Delete Sources and ALL connected Concepts</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="sd">    Use cases:</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="sd">    - Removing incorrect/outdated information</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="sd">    - GDPR/privacy compliance (right to be forgotten)</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="sd">    - &quot;Compressing memories&quot; - removing low-value evidence</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">DeletionResult</span><span class="p">(</span><span class="n">garage_key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="k">if</span> <span class="n">cascade</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">):</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>        <span class="c1"># Delete Source nodes for this document</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>        <span class="n">sources</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="s2">            MATCH (s:Source {garage_key: $key})</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="s2">            DETACH DELETE s</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="s2">            RETURN count(s) as deleted</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>        <span class="n">result</span><span class="o">.</span><span class="n">sources_deleted</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">deleted</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>        <span class="k">if</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;orphans&quot;</span><span class="p">:</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>            <span class="c1"># Delete concepts with no remaining evidence</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>            <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="s2">                MATCH (c:Concept)</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="s2">                WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="s2">                  AND NOT EXISTS((c)-[:EVIDENCED_BY]-&gt;(:Instance))</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="s2">                DETACH DELETE c</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="s2">                RETURN count(c) as deleted</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>            <span class="n">result</span><span class="o">.</span><span class="n">concepts_deleted</span> <span class="o">=</span> <span class="n">concepts</span><span class="o">.</span><span class="n">deleted</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a>        <span class="k">elif</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>            <span class="c1"># More aggressive - would need concept tracking</span>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a>            <span class="c1"># Not implemented in v1</span>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Full cascade not yet supported&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a>
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a>    <span class="c1"># Delete from Garage</span>
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a>    <span class="n">result</span><span class="o">.</span><span class="n">garage_deleted</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a>    <span class="c1"># Delete Document node</span>
+<a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="s2">        MATCH (d:Document {garage_key: $key})</span>
+<a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a><span class="s2">        DELETE d</span>
+<a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a>
+<a id="__codelineno-7-57" name="__codelineno-7-57" href="#__codelineno-7-57"></a>    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+<h3 id="7-version-management">7. Version Management</h3>
+<p>When a similar document is force-ingested:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_as_version</span><span class="p">(</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">supersedes</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># garage_key of previous version</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IngestResult</span><span class="p">:</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="sd">    Ingest document as a new version of an existing document.</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="sd">    The new version:</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="sd">    - Gets its own garage_key (based on new content hash)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="sd">    - Links to previous version via supersedes relationship</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="sd">    - Creates new Source nodes (may deduplicate to same Concepts)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="sd">    - Novel concepts from the 5-20% difference become new nodes</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="c1"># Compute identity for new content</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="n">identity</span> <span class="o">=</span> <span class="n">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="c1"># Store in Garage</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="c1"># Create Document node with version link</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="s2">        MATCH (old:Document {garage_key: $supersedes})</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="s2">        CREATE (new:Document {</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="s2">            garage_key: $new_key,</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="s2">            content_hash: $hash,</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="s2">            ontology: $ontology,</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="s2">            version: old.version + 1,</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="s2">            supersedes: $supersedes,</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="s2">            ingested_at: datetime()</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="s2">        })</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="s2">        SET old.superseded_by = $new_key</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>        <span class="n">supersedes</span><span class="o">=</span><span class="n">supersedes</span><span class="p">,</span>
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>        <span class="n">new_key</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span>
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>        <span class="nb">hash</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">content_hash</span><span class="p">,</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>        <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>    <span class="p">)</span>
+<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>
+<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a>    <span class="c1"># Normal ingestion - dedup will attach to existing concepts</span>
+<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a>    <span class="c1"># where appropriate, create new for novel content</span>
+<a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">ingest_document</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ontology</span><span class="p">,</span> <span class="n">garage_key</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ol>
-<li><strong>Success Rate:</strong> <code>last_success</code> should advance regularly (when work is available)</li>
-<li><strong>Skip Rate:</strong> High skip rate is normal and healthy for polling pattern</li>
-<li><strong>Retry Count:</strong> Should be 0 most of the time</li>
-<li><strong>Enabled Status:</strong> All jobs should be enabled unless manually disabled</li>
+<li><strong>Model Evolution Insurance</strong>: Re-extract with future LLMs as they improve</li>
+<li><strong>New Keeper Recovery</strong>: Re-ingest from Garage with different extraction strategy</li>
+<li><strong>Strategy Experimentation</strong>: Re-generate graph with different matching modes</li>
+<li><strong>Audit Trail</strong>: Original documents preserved for compliance/debugging</li>
+<li><strong>Version History</strong>: Track document evolution over time</li>
+<li><strong>Precise Provenance</strong>: Line/character offsets enable source highlighting</li>
+<li><strong>Backup Flexibility</strong>: Garage backup preserves source truth; graph is rebuildable</li>
 </ol>
-<h3 id="common-issues">Common Issues</h3>
-<p><strong>Schedule disabled after max retries:</strong>
-- <strong>Cause:</strong> Job failed 5 times in a row (launcher exception, not skips)
-- <strong>Fix:</strong> Investigate error logs, fix root cause, re-enable schedule
-- <strong>Prevention:</strong> Monitor <code>retry_count</code> and investigate failures early</p>
-<p><strong>Jobs not running even when needed:</strong>
-- <strong>Check:</strong> Is schedule enabled? (<code>enabled = true</code>)
-- <strong>Check:</strong> Is <code>next_run</code> in the past? (should be)
-- <strong>Check:</strong> Are conditions actually met? (check launcher condition logic)
-- <strong>Check:</strong> Is scheduler running? (look for scheduler loop logs every ~60s)</p>
-<p><strong>Multiple jobs created for one schedule:</strong>
-- <strong>Cause:</strong> Multi-worker deployment without advisory lock
-- <strong>Fix:</strong> Verify PostgreSQL advisory lock is working (see ADR-050)
-- <strong>Check:</strong> Logs should show only one worker acquiring scheduler lock per minute</p>
-<hr />
-<h2 id="performance-impact">Performance Impact</h2>
-<p>All scheduled jobs are designed to have minimal performance impact:</p>
-<p><strong>Condition Checks:</strong>
-- <strong>Frequency:</strong> Every schedule interval (hourly, every 6h, every 12h)
-- <strong>Cost:</strong> ~1ms SQL query
-- <strong>Impact:</strong> Negligible</p>
-<p><strong>Job Execution:</strong>
-- <strong>Frequency:</strong> Only when conditions met (rarely compared to checks)
-- <strong>Cost:</strong> Depends on job (epistemic measurement ~10-30s, consolidation ~5-60s)
-- <strong>Impact:</strong> Runs asynchronously, doesn't block user operations</p>
-<p><strong>Database Load:</strong>
-- Scheduled jobs use the same job queue as manual operations
-- No additional database connections or tables needed
-- Advisory locks prevent duplicate execution in multi-worker setups</p>
-<hr />
-<h2 id="customizing-thresholds">Customizing Thresholds</h2>
-<h3 id="epistemic-re-measurement-threshold">Epistemic Re-measurement Threshold</h3>
-<p><strong>Default:</strong> Delta &gt;= 10 changes</p>
-<p><strong>To change:</strong>
-The threshold is currently hardcoded in <code>EpistemicRemeasurementLauncher.__init__()</code>. To adjust:</p>
+<h3 id="negative">Negative</h3>
 <ol>
-<li>Edit <code>api/api/launchers/epistemic_remeasurement.py</code></li>
-<li>Change <code>threshold</code> parameter in <code>__init__()</code> (default: 10)</li>
-<li>Restart API server</li>
+<li><strong>Storage Duplication</strong>: Same content in Garage and graph (intentional)</li>
+<li><strong>Schema Changes</strong>: Requires migration for new Source/Document properties</li>
+<li><strong>Complexity</strong>: More moving parts in ingestion pipeline</li>
+<li><strong>Regeneration Cost</strong>: Re-ingesting is expensive (LLM calls)</li>
 </ol>
-<p><strong>Considerations:</strong>
-- <strong>Lower threshold (5):</strong> More frequent measurements, fresher epistemic status
-- <strong>Higher threshold (20):</strong> Less frequent measurements, reduced overhead
-- <strong>Recommended range:</strong> 5-20 changes</p>
-<h3 id="vocabulary-consolidation-thresholds">Vocabulary Consolidation Thresholds</h3>
-<p><strong>Default:</strong>
-- Consolidate when inactive &gt; 20% of active
-- Don't consolidate when inactive &lt; 10% of active</p>
-<p><strong>To change:</strong>
-Edit <code>VocabConsolidationLauncher.check_conditions()</code> in <code>api/api/launchers/vocab_consolidation.py</code>.</p>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>Eventual Consistency</strong>: Graph and Garage may briefly diverge during operations</li>
+<li><strong>Deletion is Rare</strong>: Most use cases are additive, not subtractive</li>
+<li><strong>Versioning Optional</strong>: Can ignore version management if not needed</li>
+</ol>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-pre-ingestion-storage">Phase 1: Pre-Ingestion Storage</h3>
+<ol>
+<li>Update ingestion to compute hash first</li>
+<li>Store document in Garage before chunking</li>
+<li>Add <code>garage_key</code> and <code>content_hash</code> to Source nodes</li>
+<li>Add offset tracking during chunking</li>
+</ol>
+<h3 id="phase-2-deduplication-enhancement">Phase 2: Deduplication Enhancement</h3>
+<ol>
+<li>Implement exact-match deduplication (hash)</li>
+<li>Implement similarity-based deduplication (embeddings)</li>
+<li>Add force override with versioning</li>
+<li>Update API to return dedup warnings</li>
+</ol>
+<h3 id="phase-3-document-node-regeneration">Phase 3: Document Node + Regeneration</h3>
+<ol>
+<li>Create Document node type</li>
+<li>Implement Garage → graph regeneration ("new keeper" scenario)</li>
+<li>Add admin endpoints for recovery operations</li>
+</ol>
+<h3 id="phase-4-deletion">Phase 4: Deletion</h3>
+<ol>
+<li>Implement cascade deletion</li>
+<li>Add orphan cleanup</li>
+<li>Document the "forgetting" workflow</li>
+</ol>
+<h2 id="migration">Migration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- Migration 034: Source document lifecycle</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">-- Add new columns to track document position</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">-- (Applied via AGE property updates, not ALTER TABLE)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">-- New Document label</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">-- (Created automatically when first Document node is created)</span>
+</code></pre></div>
+<p>Graph properties are schemaless, so new fields can be added incrementally during ingestion. Existing Source nodes without the new properties continue to work.</p>
+<h2 id="enables-semantic-fuse-filesystem-adr-069">Enables: Semantic FUSE Filesystem (ADR-069)</h2>
+<p>This ADR provides the final foundational piece for the Semantic FUSE Filesystem (ADR-069):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>ADR-057 (Images in Garage)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    ↓
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>ADR-079 (Projections in Garage)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    ↓
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>ADR-081 (Source Documents in Garage) ← THIS ADR
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    ↓
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>ADR-069 (Semantic FUSE Filesystem)
+</code></pre></div>
+<p><strong>Why source document storage enables FUSE:</strong></p>
+<ol>
+<li><strong>Document Retrieval</strong>: FUSE can serve original documents via <code>cat /mnt/knowledge/ontology/source.txt</code></li>
+<li><strong>Position Highlighting</strong>: Offset information (<code>char_offset_start/end</code>, <code>line_start/end</code>) enables displaying exact evidence locations within source documents</li>
+<li><strong>Bidirectional Navigation</strong>: From concept → evidence → source chunk → original document (all resolvable)</li>
+<li><strong>Backup/Restore Symmetry</strong>: FUSE can operate on either graph or Garage as authoritative source</li>
+</ol>
+<p><strong>Future FUSE operations enabled:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Navigate to source document from concept</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>cat<span class="w"> </span>/mnt/knowledge/embedding-models/unified-regeneration.concept/evidence/1/source.txt
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># The source.txt is fetched from Garage using garage_key</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Offset metadata enables highlighting the exact quote</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Regenerate graph from FUSE-mounted Garage sources</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>find<span class="w"> </span>/mnt/garage/sources/Philosophy/*.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>kg<span class="w"> </span>ingest<span class="w"> </span>--strategy<span class="w"> </span>hybrid
+</code></pre></div>
+<p>Without source documents in Garage (this ADR), FUSE would only expose graph-derived content. With this ADR, FUSE can expose the complete document lifecycle - original sources, extracted concepts, and their relationships.</p>
+<h2 id="future-considerations">Future Considerations</h2>
+<h3 id="graph-garage-reconstruction-yagni">Graph → Garage Reconstruction (YAGNI)</h3>
+<p>The offset information stored in Source nodes (<code>char_offset_start</code>, <code>char_offset_end</code>, <code>chunk_index</code>) theoretically enables reconstructing original documents from graph chunks. This would allow recovery if Garage is lost but the graph is intact.</p>
+<p><strong>Not implemented because:</strong>
+- Rare scenario (Garage lost, graph intact, no Garage backup)
+- Garage backups are simpler and more reliable
+- Adds complexity without clear near-term value</p>
+<p><strong>If needed later</strong>, the implementation would:
+1. Query all Source nodes for a <code>garage_key</code>, ordered by <code>chunk_index</code>
+2. Handle chunk overlaps using <code>char_offset_start</code> to deduplicate
+3. Concatenate to reconstruct original document</p>
+<p>A TODO comment in the code will document this possibility without implementing it.</p>
+<h2 id="references">References</h2>
 <ul>
-<li><strong><a href="../architecture/ADR-050-scheduled-jobs-system.md">ADR-050: Scheduled Jobs System</a></strong> - Technical architecture and design decisions</li>
-<li><strong><a href="../architecture/ADR-065-vocabulary-based-provenance-relationships.md">ADR-065: Vocabulary-Based Provenance</a></strong> - Epistemic status measurement design</li>
-<li><strong><a href="./VOCABULARY-MANAGEMENT.md">Vocabulary Management Guide</a></strong> - Understanding vocabulary categories and consolidation</li>
-<li><strong><a href="../EPISTEMIC-STATUS-FILTERING/">Epistemic Status Filtering Guide</a></strong> - Using epistemic status in queries</li>
+<li>Issue #172: Expand Garage storage for projections and source documents</li>
+<li>ADR-069: Semantic FUSE Filesystem (enabled by this ADR)</li>
+<li>ADR-080: Garage Service Architecture</li>
+<li>ADR-057: Multimodal Image Ingestion</li>
+<li>Concept matching modes: random sampling, popularity-weighted, hybrid</li>
 </ul>
-<hr />
-<p><strong>Last Updated:</strong> 2025-11-17</p>
 
 
 
