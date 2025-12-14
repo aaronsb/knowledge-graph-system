@@ -13,25 +13,21 @@
       
       
       
-        <link rel="prev" href="../ADR-052-vocabulary-expansion-consolidation-cycle/">
-      
-      
-        <link rel="next" href="../ADR-059-llm-determined-relationship-direction/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>ADR-053: Eager Vocabulary Categorization - Knowledge Graph System</title>
+        <title>Scaling t-SNE and Embedding Visualization for Knowledge Graphs - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
       
       
 
@@ -50,7 +46,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-053-eager-vocabulary-categorization" class="md-skip">
+        <a href="#scaling-t-sne-and-embedding-visualization-for-knowledge-graphs" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +80,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-053: Eager Vocabulary Categorization
+              Scaling t-SNE and Embedding Visualization for Knowledge Graphs
             
           </span>
         </div>
@@ -194,7 +190,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -298,7 +294,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -436,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/" class="md-nav__link">
+      <a href="../../manual/" class="md-nav__link">
         
   
   
@@ -511,7 +507,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -594,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -622,7 +618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -705,7 +701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -733,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -761,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -789,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -817,7 +813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -845,7 +841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -928,7 +924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -956,7 +952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1039,7 +1035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1067,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1095,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1123,7 +1119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1206,7 +1202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1234,7 +1230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1317,7 +1313,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1345,7 +1341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1373,7 +1369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1401,7 +1397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1429,7 +1425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1457,7 +1453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1485,7 +1481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1513,7 +1509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1541,7 +1537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1569,7 +1565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1597,7 +1593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1687,7 +1683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -1762,7 +1758,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -1837,7 +1833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -1865,7 +1861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -1893,7 +1889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -1921,7 +1917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -1949,7 +1945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -1977,7 +1973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2005,7 +2001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2033,7 +2029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2061,7 +2057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2089,7 +2085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2117,7 +2113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2145,7 +2141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2228,7 +2224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/media/" class="md-nav__link">
+      <a href="../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2319,7 +2315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/" class="md-nav__link">
+      <a href="../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2394,7 +2390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2477,7 +2473,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2505,7 +2501,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2533,7 +2529,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2561,7 +2557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2589,7 +2585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2617,7 +2613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2645,7 +2641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2673,7 +2669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2701,7 +2697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -2846,7 +2842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -2874,7 +2870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -2914,20 +2910,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -2948,7 +2942,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2966,7 +2960,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../architecture/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -2994,7 +2988,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../architecture/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -3022,7 +3016,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ADR-076B-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../architecture/ADR-076B-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -3050,7 +3044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../architecture/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -3078,7 +3072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../../architecture/ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -3106,7 +3100,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3134,7 +3128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3162,7 +3156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3190,7 +3184,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3265,7 +3259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3293,7 +3287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3321,7 +3315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3349,7 +3343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3377,7 +3371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3405,7 +3399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3433,7 +3427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -3516,7 +3510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -3544,7 +3538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -3572,7 +3566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -3600,7 +3594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -3628,7 +3622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -3656,7 +3650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -3684,7 +3678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -3712,7 +3706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -3740,7 +3734,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -3768,7 +3762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -3796,7 +3790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -3824,7 +3818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -3899,7 +3893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -3990,7 +3984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -4018,7 +4012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4046,7 +4040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4074,7 +4068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4102,7 +4096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4130,7 +4124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4158,7 +4152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4186,7 +4180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4214,7 +4208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4297,7 +4291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4325,7 +4319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4353,7 +4347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4381,7 +4375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4464,7 +4458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4492,7 +4486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -4520,7 +4514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -4548,7 +4542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -4576,7 +4570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -4604,7 +4598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -4632,7 +4626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -4660,7 +4654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -4743,7 +4737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -4771,7 +4765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -4799,7 +4793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -4827,7 +4821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -4855,7 +4849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -4883,7 +4877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -4911,7 +4905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -4939,7 +4933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -4967,7 +4961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5050,7 +5044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5078,7 +5072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5106,7 +5100,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5134,7 +5128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5162,7 +5156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5245,7 +5239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5273,7 +5267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5301,7 +5295,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5329,7 +5323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5357,7 +5351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5385,7 +5379,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5413,7 +5407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5441,7 +5435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5469,7 +5463,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5497,7 +5491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -5580,7 +5574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -5613,20 +5607,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_19" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_19" >
         
           
           <label class="md-nav__link" for="__nav_6_19" id="__nav_6_19_label" tabindex="0">
@@ -5647,7 +5639,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_19_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_19_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_19">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5665,7 +5657,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -5693,7 +5685,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -5721,7 +5713,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -5749,7 +5741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -5777,7 +5769,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -5805,7 +5797,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -5833,7 +5825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5861,7 +5853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -5889,7 +5881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -5914,37 +5906,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-053: Eager Vocabulary Categorization
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -5960,320 +5925,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current State Machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-bounded-exploration-model-adr-052" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Bounded Exploration Model (ADR-052)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problem-manual-categorization-step" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem: Manual Categorization Step
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#updated-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Updated State Machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backward-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backward Compatibility
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embedding-similarity-analysis-bonus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Embedding Similarity Analysis (Bonus)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Embedding Similarity Analysis (Bonus)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#find-synonyms-consolidation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Find Synonyms (Consolidation)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#find-antonyms-semantic-range" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Find Antonyms (Semantic Range)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validate-category-assignment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validate Category Assignment
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-keep-lazy-categorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Keep Lazy Categorization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-background-worker-categorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Background Worker Categorization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-defer-all-categorization-to-query-time" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Defer All Categorization to Query Time
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6286,7 +5937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6314,7 +5965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6404,7 +6055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6432,7 +6083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6460,7 +6111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6488,7 +6139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6516,7 +6167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6544,7 +6195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6572,7 +6223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -6654,7 +6305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6682,7 +6333,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -6710,7 +6361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -6738,7 +6389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -6766,7 +6417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -6794,7 +6445,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -6822,7 +6473,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -6877,10 +6528,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#scaling-to-millions-of-points-requires-algorithmic-acceleration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Scaling to millions of points requires algorithmic acceleration
       
     </span>
   </a>
@@ -6888,210 +6539,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#umap-and-pacmap-now-outperform-t-sne-for-most-use-cases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current State Machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-bounded-exploration-model-adr-052" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Bounded Exploration Model (ADR-052)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problem-manual-categorization-step" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem: Manual Categorization Step
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#updated-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Updated State Machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backward-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backward Compatibility
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embedding-similarity-analysis-bonus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Embedding Similarity Analysis (Bonus)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Embedding Similarity Analysis (Bonus)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#find-synonyms-consolidation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Find Synonyms (Consolidation)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#find-antonyms-semantic-range" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Find Antonyms (Semantic Range)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validate-category-assignment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validate Category Assignment
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
+        UMAP and PaCMAP now outperform t-SNE for most use cases
       
     </span>
   </a>
@@ -7099,60 +6550,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#initialization-determines-global-structure-more-than-algorithm-choice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-keep-lazy-categorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Keep Lazy Categorization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-background-worker-categorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Background Worker Categorization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-defer-all-categorization-to-query-time" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Defer All Categorization to Query Time
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validation
+        Initialization determines global structure more than algorithm choice
       
     </span>
   </a>
@@ -7160,10 +6561,87 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
+  <a href="#hyperparameter-selection-follows-predictable-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        References
+        Hyperparameter selection follows predictable rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hierarchical-visualization-enables-multi-scale-exploration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hierarchical visualization enables multi-scale exploration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-encodes-meaning-through-deliberate-design-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Color encodes meaning through deliberate design choices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spatial-arrangement-benefits-from-hybrid-layout-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spatial arrangement benefits from hybrid layout strategies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-systems-require-gpu-rendering-and-spatial-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive systems require GPU rendering and spatial indexing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-embedding-types-work-best-in-coordinated-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple embedding types work best in coordinated views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-libraries-span-cpu-gpu-and-web-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation libraries span CPU, GPU, and web rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
       
     </span>
   </a>
@@ -7190,285 +6668,205 @@
   
 
 
-<h1 id="adr-053-eager-vocabulary-categorization">ADR-053: Eager Vocabulary Categorization</h1>
-<p><strong>Status:</strong> Implemented
-<strong>Date:</strong> 2025-11-01
-<strong>Implemented:</strong> 2025-11-01
-<strong>Related:</strong> ADR-052 (Vocabulary Expansion-Consolidation Cycle), ADR-047 (Probabilistic Vocabulary Categorization)</p>
-<p><strong>Implementation Summary:</strong> Core eager categorization was already functional in ADR-047. Fixed transaction isolation bug preventing auto-categorization. Edge types now automatically categorized during ingestion with ~65-90% confidence. Similarity analysis tools (kg vocab similar/opposite/analyze) remain as future enhancements.</p>
-<h2 id="overview">Overview</h2>
-<p>When your system learns a new relationship type like "HARMONIZES_WITH" during document ingestion, should it immediately figure out what semantic category it belongs to (causation? composition? interaction?), or should it mark it as "uncategorized" and wait for you to manually run a separate categorization command later? The lazy approach means your vocabulary sits in limbo—unusable for category-based queries until you remember to categorize it.</p>
-<p>This ADR makes categorization happen automatically and immediately. The moment the system creates a new vocabulary type, it uses the embedding-based categorization logic (from ADR-047) to determine which semantic category it's most similar to. It's like having a librarian who immediately files each new book in the right section as it arrives, rather than stacking uncategorized books in a corner for later sorting. The implementation revealed that the core logic was already mostly there—what was missing was proper integration into the ingestion pipeline due to a database transaction isolation issue. Once fixed, new types get categorized with 65-90% confidence scores as they're created, eliminating the manual maintenance step. The vocabulary is always organized and queryable by category, without requiring you to remember to run refresh commands after ingestion completes.</p>
+<h1 id="scaling-t-sne-and-embedding-visualization-for-knowledge-graphs">Scaling t-SNE and Embedding Visualization for Knowledge Graphs</h1>
+<p>Modern knowledge graph visualization demands techniques that handle millions of points while preserving both local cluster structure and global semantic relationships. <strong>PaCMAP and properly-initialized UMAP/t-SNE now offer the best trade-offs</strong>, with GPU implementations achieving 50-700x speedups over traditional approaches. The most critical insight from recent research: initialization—not algorithm choice—determines whether global structure survives the projection.</p>
+<p>For systems with multiple embedding types (concepts, evidence, edge text), the emerging consensus favors <strong>linked coordinated views</strong> with a unified embedding space for semantically related elements. This report synthesizes academic research and production best practices across scaling, algorithms, visualization design, and implementation.</p>
 <hr />
-<h2 id="context">Context</h2>
-<p>The knowledge graph system manages edge vocabulary through a lifecycle: LLMs discover new relationship types during ingestion, and the system must categorize them into semantic groups (causation, temporal, logical, etc.) for organization and query purposes.</p>
-<h3 id="current-state-machine">Current State Machine</h3>
-<p>Vocabulary flows through a one-way state machine:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>LLM Extraction → llm_generated → Manual Refresh → computed
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    (ingestion)     (initial)    (kg vocab refresh)  (final)
-</code></pre></div>
-<p><strong>State Transitions:</strong></p>
-<ol>
-<li><strong>Initial:</strong> LLM discovers new edge type during chunk processing → <code>category = "llm_generated", category_source = "llm"</code></li>
-<li><strong>Classification:</strong> User runs <code>kg vocab refresh-categories</code> → system computes category via embedding similarity → <code>category_source = "computed"</code></li>
-<li><strong>One-way property:</strong> <code>llm_generated</code> → <code>computed</code> never reverses (prevents reclassification loops)</li>
-</ol>
-<h3 id="the-bounded-exploration-model-adr-052">The Bounded Exploration Model (ADR-052)</h3>
-<p><strong>Components:</strong>
-- <strong>c</strong> = 11 protected categories (causation, composition, logical, evidential, semantic, temporal, dependency, derivation, operation, interaction, modification)
-- <strong>a</strong> = 30 protected seed types (curator-controlled via <code>CATEGORY_SEEDS</code> constant)
-- <strong>b</strong> = LLM-generated types (unbounded, emergent during ingestion)</p>
-<p><strong>Formula:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Total Semantic Space = c × (a + b)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Where:
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  c = bounded dimensionality (11 categories)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  a = bounded initial coverage (30 seed types)
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  b = unbounded emergent expansion (LLM-discovered types)
-</code></pre></div></p>
-<p><strong>Why This Works:</strong>
-1. <strong>Bounded initial space:</strong> Curator controls c and a (prevents category proliferation)
-2. <strong>Emergent expansion:</strong> LLM freely generates b (supports general methods over hand-coding)
-3. <strong>One-way classification:</strong> State transition prevents infinite loops
-4. <strong>Consolidation cycle:</strong> ADR-052 provides pruning and synonym merging to manage growth</p>
-<h3 id="problem-manual-categorization-step">Problem: Manual Categorization Step</h3>
-<p>The current approach has inefficiencies:</p>
-<ol>
-<li><strong>Lazy categorization:</strong> New edge types remain <code>llm_generated</code> until manual refresh</li>
-<li><strong>Extra maintenance step:</strong> User must remember to run <code>kg vocab refresh-categories</code></li>
-<li><strong>Wasted computation:</strong> We already generate embeddings during ingestion</li>
-<li><strong>Delayed organization:</strong> Edge types uncategorized until refresh</li>
-</ol>
-<p><strong>Missed Opportunity:</strong></p>
-<p>During ingestion, we:
-1. Extract relationship type from LLM
-2. Generate embedding for the type
-3. Store in vocabulary table as <code>llm_generated</code>
-4. <strong>Stop</strong> ❌</p>
-<p>We have everything needed to categorize immediately:
-- Edge type embedding (just generated)
-- Category seed embeddings (already in database)
-- Categorization algorithm (cosine similarity)</p>
-<p><strong>Why not categorize right then?</strong></p>
-<h2 id="decision">Decision</h2>
-<p><strong>Move categorization from lazy (manual refresh) to eager (automatic during ingestion).</strong></p>
-<h3 id="updated-state-machine">Updated State Machine</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>LLM Extraction → llm_generated → Immediate Categorization → computed
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    (ingestion)     (transient)      (ingestion pipeline)    (final)
-</code></pre></div>
-<p><strong>New Flow:</strong></p>
-<ol>
-<li><strong>LLM discovers edge type</strong> → Extract "IMPLIES" from chunk</li>
-<li><strong>Generate embedding</strong> → Create vector representation (already happening)</li>
-<li><strong>Categorize immediately</strong> → Compare to category seeds via cosine similarity</li>
-<li><strong>Store categorized</strong> → <code>category = "logical", category_source = "computed"</code></li>
-</ol>
-<p><strong>State duration change:</strong>
-- <strong>Before:</strong> <code>llm_generated</code> persists until user runs refresh (hours/days/never)
-- <strong>After:</strong> <code>llm_generated</code> is transient (milliseconds), immediately becomes <code>computed</code></p>
-<h3 id="implementation">Implementation</h3>
-<p><strong>Modify ingestion pipeline:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/lib/ingestion.py (or llm_extractor.py)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_extracted_relationships</span><span class="p">(</span><span class="n">relationships</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">db_client</span><span class="p">):</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Process and categorize LLM-extracted relationships.&quot;&quot;&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="k">for</span> <span class="n">rel_type</span> <span class="ow">in</span> <span class="n">relationships</span><span class="p">:</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="c1"># 1. Check if relationship type exists</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">existing</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db_client</span><span class="o">.</span><span class="n">get_vocabulary_entry</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="c1"># 2. Generate embedding (already happens)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            <span class="n">embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ai_provider</span><span class="o">.</span><span class="n">generate_embedding</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>            <span class="c1"># 3. Categorize immediately (NEW)</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>            <span class="n">category</span> <span class="o">=</span> <span class="k">await</span> <span class="n">categorize_edge_type</span><span class="p">(</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>                <span class="n">edge_embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>                <span class="n">category_seeds</span><span class="o">=</span><span class="n">CATEGORY_SEEDS</span><span class="p">,</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>                <span class="n">db_client</span><span class="o">=</span><span class="n">db_client</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>            <span class="p">)</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>            <span class="c1"># 4. Store as already-categorized</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>            <span class="k">await</span> <span class="n">db_client</span><span class="o">.</span><span class="n">insert_vocabulary_entry</span><span class="p">(</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>                <span class="n">relationship_type</span><span class="o">=</span><span class="n">rel_type</span><span class="p">,</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>                <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>                <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>                <span class="n">category_source</span><span class="o">=</span><span class="s2">&quot;computed&quot;</span><span class="p">,</span>  <span class="c1"># Not &quot;llm&quot;</span>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>                <span class="n">is_builtin</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>                <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>            <span class="p">)</span>
-</code></pre></div>
-<p><strong>Helper function:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">categorize_edge_type</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">edge_embedding</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">category_seeds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">db_client</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="sd">    Categorize edge type by finding best-matching category via seed similarity.</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="sd">    Returns category name (e.g., &quot;logical&quot;, &quot;temporal&quot;).</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="c1"># Get embeddings for all seed types (cached in practice)</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">seed_embeddings</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db_client</span><span class="o">.</span><span class="n">get_category_seed_embeddings</span><span class="p">()</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="c1"># For each category, find max similarity to any seed</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">category_scores</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">seeds</span> <span class="ow">in</span> <span class="n">category_seeds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="n">similarities</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="k">for</span> <span class="n">seed_type</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">:</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>            <span class="k">if</span> <span class="n">seed_type</span> <span class="ow">in</span> <span class="n">seed_embeddings</span><span class="p">:</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>                <span class="n">sim</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">edge_embedding</span><span class="p">,</span> <span class="n">seed_embeddings</span><span class="p">[</span><span class="n">seed_type</span><span class="p">])</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>                <span class="n">similarities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>        <span class="k">if</span> <span class="n">similarities</span><span class="p">:</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>            <span class="n">category_scores</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="c1"># Return category with highest similarity</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>    <span class="n">best_category</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">category_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">category_scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>    <span class="k">return</span> <span class="n">best_category</span>
-</code></pre></div>
-<h3 id="backward-compatibility">Backward Compatibility</h3>
-<p><strong>Keep <code>kg vocab refresh-categories</code> for edge cases:</strong></p>
-<ol>
-<li><strong>Seed changes:</strong> Curator updates <code>CATEGORY_SEEDS</code> → refresh all computed types</li>
-<li><strong>Migration:</strong> Categorize existing <code>llm_generated</code> entries from before this change</li>
-<li><strong>Manual override:</strong> User can force recategorization if needed</li>
-</ol>
-<p><strong>Use cases:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Refresh all computed types (if seeds changed)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--computed-only
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Refresh only uncategorized types (migration)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--uncategorized-only
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Force refresh everything</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--force
-</code></pre></div></p>
-<h2 id="embedding-similarity-analysis-bonus">Embedding Similarity Analysis (Bonus)</h2>
-<p>With embeddings available, we can add vocabulary quality tools:</p>
-<h3 id="find-synonyms-consolidation">Find Synonyms (Consolidation)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>similar<span class="w"> </span>IMPLIES<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Output:</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Most similar to IMPLIES:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1">#   SUGGESTS      0.92  (logical)  - potential synonym</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">#   LEADS_TO      0.87  (causation) - semantically close</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">#   INDICATES     0.85  (evidential) - similar meaning</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">#   ...</span>
-</code></pre></div>
-<h3 id="find-antonyms-semantic-range">Find Antonyms (Semantic Range)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>opposite<span class="w"> </span>IMPLIES<span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Output:</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Least similar to IMPLIES:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1">#   CONTRADICTS   0.12  (logical)  - opposite meaning</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1">#   REFUTES       0.18  (logical)  - negation</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1">#   PREVENTS      0.23  (causation) - blocking action</span>
-</code></pre></div>
-<h3 id="validate-category-assignment">Validate Category Assignment</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>analyze<span class="w"> </span>IMPLIES
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Output:</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Edge Type: IMPLIES</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Category: logical (computed)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Category fit: 0.89 (strong match to category seeds)</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1">#</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Most similar in same category:</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1">#   ENTAILS       0.91</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1">#   REQUIRES      0.88</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1">#</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># Most similar in other categories:</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1">#   CAUSES        0.76  (causation) - may indicate miscategorization</span>
-</code></pre></div>
-<p><strong>Use cases:</strong>
-1. <strong>Synonym detection</strong> for ADR-052 consolidation
-2. <strong>Category validation</strong> (does assignment make sense?)
-3. <strong>Semantic structure</strong> exploration (understand vocabulary space)
-4. <strong>Quality assurance</strong> (identify miscategorizations)</p>
-<h2 id="consequences">Consequences</h2>
-<h3 id="positive">Positive</h3>
-<ol>
-<li><strong>No manual step:</strong> Edge types automatically categorized during ingestion</li>
-<li><strong>Immediate organization:</strong> Vocabulary always properly categorized</li>
-<li><strong>Zero marginal cost:</strong> Leverages existing embedding generation</li>
-<li><strong>Better UX:</strong> Users don't need to remember refresh command</li>
-<li><strong>Quality tools:</strong> Similarity analysis enables vocabulary cleanup</li>
-</ol>
-<h3 id="negative">Negative</h3>
-<ol>
-<li><strong>Slight ingestion overhead:</strong> Additional cosine similarity computation per new edge type</li>
-<li><strong>Mitigated:</strong> Only happens once per new type, not per edge instance</li>
-<li>
-<p><strong>Cost:</strong> ~10-20ms per new type (negligible vs LLM extraction time)</p>
-</li>
-<li>
-<p><strong>Category seeds must exist:</strong> Requires <code>CATEGORY_SEEDS</code> to be populated</p>
-</li>
-<li><strong>Mitigated:</strong> Already required for current refresh system</li>
-<li><strong>Validated:</strong> System checks on startup</li>
-</ol>
-<h3 id="neutral">Neutral</h3>
-<ol>
-<li><strong>State machine change:</strong> <code>llm_generated</code> becomes transient instead of persistent</li>
-<li><strong>Impact:</strong> Minimal - state still exists briefly during ingestion</li>
-<li>
-<p><strong>Benefit:</strong> Clearer separation: uncategorized types are truly new</p>
-</li>
-<li>
-<p><strong><code>kg vocab refresh-categories</code> still needed:</strong> For seed changes and migrations</p>
-</li>
-<li><strong>Frequency:</strong> Rare (only when seeds change)</li>
-<li><strong>Previous:</strong> Regular maintenance (categorize new types)</li>
-</ol>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<ol>
-<li><strong>Phase 1:</strong> Add <code>categorize_edge_type()</code> helper function</li>
-<li><strong>Phase 2:</strong> Integrate into ingestion pipeline</li>
-<li><strong>Phase 3:</strong> Add <code>kg vocab similar/opposite/analyze</code> commands</li>
-<li><strong>Phase 4:</strong> Update documentation and tests</li>
-</ol>
-<h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="1-keep-lazy-categorization">1. Keep Lazy Categorization</h3>
-<p><strong>Pros:</strong> No changes needed, works today
-<strong>Cons:</strong> Manual maintenance, delayed organization, wasted computation
-<strong>Rejected:</strong> Eager is strictly better with no significant downsides</p>
-<h3 id="2-background-worker-categorization">2. Background Worker Categorization</h3>
-<p>Categorize in background job after ingestion completes.</p>
-<p><strong>Pros:</strong> No ingestion latency impact
-<strong>Cons:</strong> Added complexity, requires job queue, still delayed
-<strong>Rejected:</strong> Overhead ~10-20ms per new type is negligible vs 2-5s LLM extraction</p>
-<h3 id="3-defer-all-categorization-to-query-time">3. Defer All Categorization to Query Time</h3>
-<p>Never store category, compute on-demand via embedding similarity.</p>
-<p><strong>Pros:</strong> Always fresh, no storage
-<strong>Cons:</strong> Query overhead, no category-based filtering in database
-<strong>Rejected:</strong> Defeats purpose of categorization for organization</p>
-<h2 id="validation">Validation</h2>
-<p><strong>Success Criteria:</strong></p>
-<ol>
-<li>New edge types automatically categorized during ingestion</li>
-<li><code>kg vocab list</code> shows no <code>llm_generated</code> types (unless just created)</li>
-<li>Ingestion latency increase &lt; 50ms per chunk</li>
-<li><code>kg vocab similar</code> produces sensible synonym candidates</li>
-</ol>
-<p><strong>Testing:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Before: New type is llm_generated</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>test.txt
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>SOME_NEW_TYPE<span class="w">  </span><span class="c1"># category: llm_generated</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># After: New type is immediately categorized</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>test.txt
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>SOME_NEW_TYPE<span class="w">  </span><span class="c1"># category: logical (or appropriate)</span>
-</code></pre></div>
-<h2 id="references">References</h2>
-<p><strong>Related ADRs:</strong>
-- ADR-052: Vocabulary Expansion-Consolidation Cycle
-- ADR-047: Probabilistic Vocabulary Categorization</p>
-<p><strong>Technical:</strong>
-- Shannon (1948): "A Mathematical Theory of Communication"
-- Mikolov et al. (2013): "Distributed Representations of Words and Phrases"</p>
+<h2 id="scaling-to-millions-of-points-requires-algorithmic-acceleration">Scaling to millions of points requires algorithmic acceleration</h2>
+<p>The original t-SNE algorithm's O(N²) complexity makes it impractical beyond ~10,000 points. Three acceleration strategies now enable million-scale visualization:</p>
+<p><strong>Barnes-Hut t-SNE</strong> reduces complexity to O(N log N) by approximating gradient computations using space-partitioning trees. It treats clusters of distant points as single nodes when computing repulsive forces, controlled by a trade-off parameter θ (default <strong>0.5</strong>). While faster, it still struggles beyond ~500K points due to memory access patterns in tree traversal.</p>
+<p><strong>FFT-accelerated t-SNE (FIt-SNE)</strong> achieves effectively O(N) complexity by interpolating points onto an equispaced grid and using Fast Fourier Transform for convolutions. Benchmarks show <strong>30-100x speedups</strong> over Barnes-Hut on million-point datasets. The limitation: it currently supports only 2D embeddings.</p>
+<p><strong>GPU implementations</strong> deliver the most dramatic improvements. NVIDIA's cuML t-SNE achieves up to <strong>2000x speedup</strong> versus scikit-learn, processing MNIST (70K points) in ~7 seconds versus 19 minutes. The t-SNE-CUDA library handles 10M+ points on consumer GPUs. Most GPU implementations restrict output to 2D due to architectural constraints.</p>
+<table>
+<thead>
+<tr>
+<th>Dataset Size</th>
+<th>Recommended Approach</th>
+<th>Expected Runtime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 10K</td>
+<td>Standard Barnes-Hut</td>
+<td>Seconds</td>
+</tr>
+<tr>
+<td>10K - 100K</td>
+<td>FIt-SNE or UMAP</td>
+<td>Minutes</td>
+</tr>
+<tr>
+<td>100K - 1M</td>
+<td>FIt-SNE with Annoy, GPU</td>
+<td>1-10 minutes</td>
+</tr>
+<tr>
+<td>1M - 10M</td>
+<td>t-SNE-CUDA, cuML</td>
+<td>10-30 minutes</td>
+</tr>
+<tr>
+<td>&gt; 10M</td>
+<td>Sampling + GPU, hierarchical</td>
+<td>Variable</td>
+</tr>
+</tbody>
+</table>
 <hr />
-<p><strong>Last Updated:</strong> 2025-11-01</p>
+<h2 id="umap-and-pacmap-now-outperform-t-sne-for-most-use-cases">UMAP and PaCMAP now outperform t-SNE for most use cases</h2>
+<p>The dimensionality reduction landscape has shifted significantly. <strong>UMAP</strong> offers comparable local structure preservation to t-SNE with 2-10x faster computation, better scaling with embedding dimensionality, and no restriction on output dimensions. Its default spectral initialization provides reasonable global structure out of the box.</p>
+<p><strong>PaCMAP</strong> (Pairwise Controlled Manifold Approximation) has emerged as the strongest all-around performer. It uses three types of point pairs—neighbor pairs for local structure, mid-near pairs for global structure in early optimization, and further pairs for repulsion—achieving the <strong>best combined local and global structure preservation</strong> in comprehensive evaluations. It's also less sensitive to initialization and hyperparameter choices.</p>
+<p><strong>TriMAP</strong> excels when global cluster relationships matter more than fine local detail. Its triplet-based approach scales to millions of points without memory issues, though it struggles with fine structure preservation.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Local Structure</th>
+<th>Global Structure</th>
+<th>Speed</th>
+<th>Best Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t-SNE (FIt-SNE)</td>
+<td>Excellent</td>
+<td>Poor without init</td>
+<td>Medium</td>
+<td>Tight cluster identification</td>
+</tr>
+<tr>
+<td>UMAP</td>
+<td>Excellent</td>
+<td>Medium</td>
+<td>Fast</td>
+<td>General purpose, large data</td>
+</tr>
+<tr>
+<td>PaCMAP</td>
+<td>Very Good</td>
+<td>Excellent</td>
+<td>Fast</td>
+<td>When both structures matter</td>
+</tr>
+<tr>
+<td>TriMAP</td>
+<td>Good</td>
+<td>Very Good</td>
+<td>Very Fast</td>
+<td>Global structure priority</td>
+</tr>
+</tbody>
+</table>
+<p>For knowledge graph embeddings where both semantic neighborhoods (local) and ontological relationships (global) matter, <strong>PaCMAP or UMAP with PCA initialization</strong> is the recommended starting point.</p>
+<hr />
+<h2 id="initialization-determines-global-structure-more-than-algorithm-choice">Initialization determines global structure more than algorithm choice</h2>
+<p>A crucial finding from Kobak &amp; Linderman (Nature Biotechnology, 2021): UMAP's apparent global structure advantage over t-SNE comes primarily from its <strong>default spectral initialization</strong>, not the algorithm itself. With identical initialization, both algorithms preserve global structure similarly.</p>
+<p><strong>Practical recommendation</strong>: Always initialize with PCA (first two principal components scaled to standard deviation <strong>0.0001</strong>) or Laplacian eigenmaps. Random initialization should be avoided for any application where cluster relationships matter.</p>
+<p>Additional techniques for global structure:
+- <strong>Late exaggeration</strong>: Increasing the exaggeration coefficient late in optimization (to ~4x) improves cluster separation
+- <strong>Multi-scale perplexity</strong>: Combining multiple perplexity values captures structure at different scales
+- <strong>PaCMAP's mid-near pairs</strong>: Automatically captures global structure during early iterations without manual tuning</p>
+<hr />
+<h2 id="hyperparameter-selection-follows-predictable-rules">Hyperparameter selection follows predictable rules</h2>
+<p>For t-SNE, <strong>perplexity</strong> controls the effective number of neighbors considered. The classic recommendation of 5-50 has been refined: modern guidance suggests <strong>perplexity ≈ N/100</strong> for large datasets (where N is sample count), with a minimum of ~30 for small datasets. Higher perplexity increases runtime linearly.</p>
+<p><strong>Learning rate</strong> should scale with dataset size: the formula <code>learning_rate ≈ N/12</code> works well across scales. Scikit-learn's 'auto' setting uses <code>max(N / early_exaggeration / 4, 50)</code>. Note that scikit-learn's learning rate definition is 4x larger than other implementations.</p>
+<p>For UMAP, <strong>n_neighbors</strong> (analogous to perplexity) controls local vs global balance:
+- 2-5: Very local structure, may miss global patterns
+- <strong>15-30</strong>: Balanced (recommended for most applications)
+- 50-100: Emphasizes global structure, loses fine detail</p>
+<p><strong>min_dist</strong> (0.0 to 1.0) controls cluster tightness:
+- 0.0-0.1: Tight, dense clusters revealing fine structure
+- <strong>0.1-0.3</strong>: Good separation between groups (commonly used)
+- 0.5+: Dispersed, smoother layout</p>
+<hr />
+<h2 id="hierarchical-visualization-enables-multi-scale-exploration">Hierarchical visualization enables multi-scale exploration</h2>
+<p>Point clouds at scale require <strong>level-of-detail (LOD)</strong> strategies. The most effective approaches:</p>
+<p><strong>Semantic zooming</strong> implements three layers: an information layer controlling which attributes appear, an aggregation layer that groups elements at low zoom, and a visual appearance layer managing graphical detail. At overview zoom, show only cluster hulls or centroids with counts; at medium zoom, show cluster boundaries with representative samples; at maximum zoom, reveal individual points with full metadata.</p>
+<p><strong>Continuous LOD</strong> eliminates jarring transitions by adding a random value (0-1) to each point's level, creating smooth dither-like transitions as the camera moves. Points are filtered based on camera distance, screen position, and orientation.</p>
+<p><strong>HDBSCAN integration</strong> provides automatic hierarchical clustering that can drive LOD. The condensed tree visualization shows cluster hierarchy where width represents point counts at each level. Soft clustering probabilities can modulate point saturation—confident assignments appear vivid, uncertain ones desaturated.</p>
+<hr />
+<h2 id="color-encodes-meaning-through-deliberate-design-choices">Color encodes meaning through deliberate design choices</h2>
+<p><strong>For cluster assignment</strong>: Use categorical palettes with high discriminability (Seaborn's "deep" or "tab10"). Limit to <strong>8-12 distinct colors</strong> maximum; beyond this, combine color with shape or use faceting. Reserve gray (0.5, 0.5, 0.5) for noise points. Apply desaturation proportional to cluster membership probability for soft clustering results.</p>
+<p><strong>For continuous attributes</strong>: Perceptually uniform scales are essential. <strong>Viridis</strong> remains the default recommendation—wide perceptual range, colorblind-safe, grayscale-printable. <strong>Magma</strong> works well for density visualization (dark backgrounds, high contrast). <strong>Cividis</strong> is specifically optimized for color vision deficiency.</p>
+<p><strong>For multiple embedding types</strong> in knowledge graphs:
+- <strong>Concepts</strong>: Circles, colored by ontological category, sized by degree/importance
+- <strong>Evidence</strong>: Squares (smaller than concepts), colored by source or confidence
+- <strong>Edge centroids</strong>: Diamonds, positioned between connected concepts
+- <strong>Outliers</strong>: Triangles in red, positioned peripherally</p>
+<p>Handle overlapping points with <strong>alpha blending</strong> (start with <code>alpha = min(1/sqrt(n_points), 0.8)</code>), smaller point sizes in dense regions, and density contour underlays.</p>
+<hr />
+<h2 id="spatial-arrangement-benefits-from-hybrid-layout-strategies">Spatial arrangement benefits from hybrid layout strategies</h2>
+<p>For knowledge graphs, pure embedding-based layout ignores valuable structural information. The research supports <strong>hybrid approaches</strong>:</p>
+<p><strong>DR-first, force-refinement</strong>: Apply UMAP/t-SNE on embeddings for initial 2D positions, then apply constrained force-directed refinement for aesthetics and edge bundling. This preserves embedding semantics while improving graph readability.</p>
+<p><strong>Hierarchical initialization</strong>: Place ontology anchors (power nodes) first using embedding distances, position regular nodes within their ontological neighborhoods, then apply Fruchterman-Reingold for within-cluster refinement. This approach preserves both semantic similarity and ontological hierarchy.</p>
+<p><strong>DRGraph algorithm</strong> achieves O(N) complexity for graph layout by combining sparse distance matrix approximation with negative sampling and multi-level schemes, scaling to millions of nodes.</p>
+<hr />
+<h2 id="interactive-systems-require-gpu-rendering-and-spatial-indexing">Interactive systems require GPU rendering and spatial indexing</h2>
+<p>WebGL enables million-point interactivity that SVG and Canvas cannot achieve:</p>
+<table>
+<thead>
+<tr>
+<th>Rendering Tech</th>
+<th>Max Points (60 FPS)</th>
+<th>Max Points (Interactive)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SVG</td>
+<td>~1,000</td>
+<td>~5,000</td>
+</tr>
+<tr>
+<td>Canvas 2D</td>
+<td>~10,000</td>
+<td>~50,000</td>
+</tr>
+<tr>
+<td>WebGL</td>
+<td>~1,000,000</td>
+<td>~10,000,000</td>
+</tr>
+</tbody>
+</table>
+<p><strong>regl-scatterplot</strong> handles up to <strong>20 million points</strong> with performance mode enabled (square points, disabled alpha blending, point size ~0.25). It supports lasso selection, pan/zoom, and integrates with Jupyter via jscatter.</p>
+<p><strong>deck.gl</strong> maintains 60 FPS up to ~1M points with its ScatterplotLayer, scaling to billions with 3D Tiles streaming. Key optimizations: disable picking for static views, use constant props instead of accessor functions, supply pre-computed attribute buffers.</p>
+<p><strong>Spatial indexing</strong> is essential for hover detection at scale. D3's quadtree reduces linear O(N) search to O(log N), enabling instant hover feedback on millions of points:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nx">quadtree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">d3</span><span class="p">.</span><span class="nx">quadtree</span><span class="p">().</span><span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">).</span><span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span><span class="p">).</span><span class="nx">addAll</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">nearest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">quadtree</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">mouseX</span><span class="p">,</span><span class="w"> </span><span class="nx">mouseY</span><span class="p">);</span>
+</code></pre></div></p>
+<p>For GPU-based picking, render the scene twice—once with object IDs encoded as colors to an off-screen framebuffer, then read the pixel under the cursor to identify the selected point.</p>
+<hr />
+<h2 id="multiple-embedding-types-work-best-in-coordinated-views">Multiple embedding types work best in coordinated views</h2>
+<p>For knowledge graph systems with concept, evidence, and edge embeddings, the research consensus favors <strong>linked coordinated views</strong> over forcing everything into one projection:</p>
+<p><strong>Primary view</strong>: Unified embedding space for concepts and evidence (semantically related types that benefit from joint projection). Apply lightweight projection layers to align different embedding dimensionalities to a common space before UMAP.</p>
+<p><strong>Secondary panels</strong>: Edge embeddings shown as a similarity heatmap or separate scatter linked to the main view. Ontology hierarchy as a tree view. Detail panel for selected items.</p>
+<p><strong>Coordination</strong>: Selections in any view highlight corresponding elements across all views. Cross-filtering enables focusing on subsets while maintaining context.</p>
+<p>The architecture pattern:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│           MAIN EMBEDDING VIEW (UMAP)                │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   Concepts (●) + Evidence (■) in joint projection   │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├──────────────┬──────────────┬───────────────────────┤
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  Ontology    │ Edge Text    │ Detail Panel          │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│  Tree View   │ Heatmap      │ (selected metadata)   │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>└──────────────┴──────────────┴───────────────────────┘
+</code></pre></div></p>
+<hr />
+<h2 id="implementation-libraries-span-cpu-gpu-and-web-rendering">Implementation libraries span CPU, GPU, and web rendering</h2>
+<p><strong>For CPU-based dimensionality reduction</strong>: <strong>openTSNE</strong> is the fastest Python implementation, automatically selecting Barnes-Hut for &lt;10K points and FIt-SNE for larger datasets. It supports PCA initialization, multi-perplexity runs, and mapping new data to existing embeddings. <strong>umap-learn</strong> is the standard UMAP implementation with numba JIT compilation.</p>
+<p><strong>For GPU acceleration</strong>: <strong>RAPIDS cuML</strong> provides drop-in replacements for scikit-learn with 10-80x speedups, including a zero-code-change mode that intercepts standard library calls. It supports batching for datasets larger than GPU memory.</p>
+<p><strong>For web rendering</strong>: 
+- <strong>regl-scatterplot</strong>: Best for dedicated 2D scatter plots up to 20M points
+- <strong>deck.gl</strong>: Best for geospatial integration and complex multi-layer visualizations
+- <strong>Potree/Three.js</strong>: Best for streaming billions of points with LOD</p>
+<p><strong>For production embedding exploration</strong>: Apple's <strong>Embedding Atlas</strong> (2025) uses WebGPU for millions of points at interactive framerates with automatic clustering, labeling, and coordinated metadata views. TensorFlow Embedding Projector remains useful for quick exploration with built-in nearest neighbor search.</p>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>Building a knowledge graph embedding visualization system at scale requires integrating multiple techniques: <strong>PaCMAP or PCA-initialized UMAP</strong> for projection, <strong>GPU-accelerated computation</strong> via cuML for training and <strong>WebGL/regl-scatterplot</strong> for rendering, <strong>hierarchical clustering</strong> (HDBSCAN) for automatic structure discovery, and <strong>coordinated multiple views</strong> for handling diverse embedding types.</p>
+<p>The most impactful single change for existing t-SNE/UMAP implementations is switching from random to PCA initialization—this alone transforms global structure preservation. For truly large-scale systems, progressive streaming, spatial indexing for interaction, and semantic zooming become essential rather than optional.</p>
+<p>The field continues advancing rapidly: WebGPU promises further rendering improvements, and methods like PaCMAP challenge assumptions about the local-global trade-off being fundamental. Systems designed with flexible architecture—separating projection computation from rendering and supporting multiple coordinated views—will adapt most readily to these advances.</p>
 
 
 
@@ -7518,10 +6916,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>

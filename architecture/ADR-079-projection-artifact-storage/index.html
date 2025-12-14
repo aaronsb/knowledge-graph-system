@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../QUERY_SAFETY_BASELINE/">
+        <link rel="prev" href="../ADR-077-vocabulary-explorers/">
       
       
-        <link rel="next" href="../access-workflow/ADR-001-multi-tier-agent-access/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Recursive Upsert Architecture - Knowledge Graph System</title>
+        <title>ADR-079: Projection Artifact Storage in Garage - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#recursive-upsert-architecture" class="md-skip">
+        <a href="#adr-079-projection-artifact-storage-in-garage" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Recursive Upsert Architecture
+              ADR-079: Projection Artifact Storage in Garage
             
           </span>
         </div>
@@ -3075,10 +3075,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-079: Projection Artifact Storage in Garage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3094,6 +3121,347 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rejected-approach-graph-node-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rejected Approach: Graph Node Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#better-approach-object-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Better Approach: Object Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#note-on-garage-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Note on Garage Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#global-parameter-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Parameter Defaults
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-vs-outlier-projections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary vs Outlier Projections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-structure-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Structure (Implemented)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#projection-file-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Projection File Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-format-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Format (Implemented)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changelist-based-cache-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelist-Based Cache Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-hit-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache Hit Logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-series-playback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Series Playback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changelist-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelist Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-adr-does-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This ADR Does NOT Do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-core-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Core Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-api-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: API Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-frontend-playback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Frontend Playback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3187,37 +3555,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Recursive Upsert Architecture
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3233,453 +3574,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#table-of-contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Table of Contents
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-solution-recursive-semantic-upsert" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solution: Recursive Semantic Upsert
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works-multi-stage-matching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works: Multi-Stage Matching
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How It Works: Multi-Stage Matching">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#stage-1-exact-id-match" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 1: Exact ID Match
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stage-2-vector-similarity-search-primary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 2: Vector Similarity Search (Primary)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stage-3-create-new-concept" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 3: Create New Concept
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stage-4-evidence-accumulation-always" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 4: Evidence Accumulation (Always)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why It Works
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Why It Works">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-semantic-tolerance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Semantic Tolerance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-llm-context-awareness" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. LLM Context Awareness
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-gradual-knowledge-synthesis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Gradual Knowledge Synthesis
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-complete-provenance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Complete Provenance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-on-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The O(N) Problem
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The O(N) Problem">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#full-scan-vector-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Full-Scan Vector Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#real-world-impact" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Real-World Impact
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-we-accept-this-trade-off" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why We Accept This Trade-off
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#evolution-how-later-adrs-improve-the-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Evolution: How Later ADRs Improve The Pattern
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Evolution: How Later ADRs Improve The Pattern">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#adr-028-grounding-strength-as-epistemic-feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ADR-028: Grounding Strength as Epistemic Feedback
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adr-048-graphqueryfacade-namespace-safety" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ADR-048: GraphQueryFacade (Namespace Safety)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adr-055-hnsw-vector-indexing-future" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ADR-055: HNSW Vector Indexing (Future)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adr-065-epistemic-status-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ADR-065: Epistemic Status Classification
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architectural-classification-vector-augmented-knowledge-graph" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architectural Classification: Vector-Augmented Knowledge Graph
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architectural Classification: Vector-Augmented Knowledge Graph">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-it-is-and-isnt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What It Is (and Isn't)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-distinction-matters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why This Distinction Matters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#connection-to-graph-learning-research" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connection to Graph Learning Research
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#feedback-loops-that-improve-early-cycle-attachment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Feedback Loops That Improve Early-Cycle Attachment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#future-true-tensor-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Future: True Tensor Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trade-offs-and-design-decisions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trade-offs and Design Decisions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Trade-offs and Design Decisions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#threshold-selection-085" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threshold Selection (0.85)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llm-context-show-existing-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM Context: Show Existing Concepts?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#merge-vs-create-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Merge vs Create Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Summary
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Summary">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architectural-identity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architectural Identity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related ADRs
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -7008,55 +6902,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#table-of-contents" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Table of Contents
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-solution-recursive-semantic-upsert" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Solution: Recursive Semantic Upsert
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works-multi-stage-matching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works: Multi-Stage Matching
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How It Works: Multi-Stage Matching">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stage-1-exact-id-match" class="md-nav__link">
+  <a href="#rejected-approach-graph-node-properties" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stage 1: Exact ID Match
+        Rejected Approach: Graph Node Properties
       
     </span>
   </a>
@@ -7064,10 +6925,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stage-2-vector-similarity-search-primary" class="md-nav__link">
+  <a href="#better-approach-object-storage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stage 2: Vector Similarity Search (Primary)
+        Better Approach: Object Storage
       
     </span>
   </a>
@@ -7075,21 +6936,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stage-3-create-new-concept" class="md-nav__link">
+  <a href="#note-on-garage-versioning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stage 3: Create New Concept
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stage-4-evidence-accumulation-always" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 4: Evidence Accumulation (Always)
+        Note on Garage Versioning
       
     </span>
   </a>
@@ -7102,22 +6952,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-it-works" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why It Works
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Why It Works">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-semantic-tolerance" class="md-nav__link">
+  <a href="#global-parameter-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Semantic Tolerance
+        Global Parameter Defaults
       
     </span>
   </a>
@@ -7125,10 +6975,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-llm-context-awareness" class="md-nav__link">
+  <a href="#primary-vs-outlier-projections" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. LLM Context Awareness
+        Primary vs Outlier Projections
       
     </span>
   </a>
@@ -7136,10 +6986,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-gradual-knowledge-synthesis" class="md-nav__link">
+  <a href="#storage-structure-implemented" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Gradual Knowledge Synthesis
+        Storage Structure (Implemented)
       
     </span>
   </a>
@@ -7147,10 +6997,87 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-complete-provenance" class="md-nav__link">
+  <a href="#projection-file-schema" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Complete Provenance
+        Projection File Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-format-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Format (Implemented)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changelist-based-cache-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelist-Based Cache Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-hit-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache Hit Logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-series-playback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Series Playback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changelist-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelist Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retention-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retention Policy
       
     </span>
   </a>
@@ -7163,22 +7090,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-on-problem" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The O(N) Problem
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The O(N) Problem">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#full-scan-vector-search" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full-Scan Vector Search
+        Positive
       
     </span>
   </a>
@@ -7186,10 +7113,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#real-world-impact" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Real-World Impact
+        Negative
       
     </span>
   </a>
@@ -7197,10 +7124,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#why-we-accept-this-trade-off" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why We Accept This Trade-off
+        Neutral
       
     </span>
   </a>
@@ -7213,22 +7140,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#evolution-how-later-adrs-improve-the-pattern" class="md-nav__link">
+  <a href="#what-this-adr-does-not-do" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evolution: How Later ADRs Improve The Pattern
+        What This ADR Does NOT Do
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Evolution: How Later ADRs Improve The Pattern">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#adr-028-grounding-strength-as-epistemic-feedback" class="md-nav__link">
+  <a href="#phase-1-core-storage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ADR-028: Grounding Strength as Epistemic Feedback
+        Phase 1: Core Storage
       
     </span>
   </a>
@@ -7236,10 +7174,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#adr-048-graphqueryfacade-namespace-safety" class="md-nav__link">
+  <a href="#phase-2-api-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ADR-048: GraphQueryFacade (Namespace Safety)
+        Phase 2: API Integration
       
     </span>
   </a>
@@ -7247,21 +7185,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#adr-055-hnsw-vector-indexing-future" class="md-nav__link">
+  <a href="#phase-3-frontend-playback" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ADR-055: HNSW Vector Indexing (Future)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adr-065-epistemic-status-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ADR-065: Epistemic Status Classification
+        Phase 3: Frontend Playback
       
     </span>
   </a>
@@ -7274,160 +7201,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architectural-classification-vector-augmented-knowledge-graph" class="md-nav__link">
+  <a href="#migration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architectural Classification: Vector-Augmented Knowledge Graph
+        Migration
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Architectural Classification: Vector-Augmented Knowledge Graph">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-it-is-and-isnt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What It Is (and Isn't)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-distinction-matters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why This Distinction Matters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#connection-to-graph-learning-research" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Connection to Graph Learning Research
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#feedback-loops-that-improve-early-cycle-attachment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Feedback Loops That Improve Early-Cycle Attachment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#future-true-tensor-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Future: True Tensor Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#trade-offs-and-design-decisions" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trade-offs and Design Decisions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Trade-offs and Design Decisions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#threshold-selection-085" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threshold Selection (0.85)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llm-context-show-existing-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM Context: Show Existing Concepts?
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#merge-vs-create-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Merge vs Create Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Summary
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Summary">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architectural-identity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architectural Identity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related ADRs
+        References
       
     </span>
   </a>
@@ -7454,391 +7242,621 @@
   
 
 
-<h1 id="recursive-upsert-architecture">Recursive Upsert Architecture</h1>
-<p><strong>Version:</strong> 2.0
-<strong>Date:</strong> November 22, 2025
-<strong>Status:</strong> Foundational Pattern</p>
-<blockquote>
-<p><strong>Core Innovation:</strong> A semantic matching system that intelligently merges or creates concepts based on vector similarity as documents are ingested. Each new document recursively matches against the accumulating knowledge graph, building a unified conceptual structure across multiple sources.</p>
-</blockquote>
-<hr />
-<h2 id="table-of-contents">Table of Contents</h2>
+<h1 id="adr-079-projection-artifact-storage-in-garage">ADR-079: Projection Artifact Storage in Garage</h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2025-12-13
+<strong>Deciders:</strong> @aaronsb, @claude
+<strong>Related ADRs:</strong> ADR-057 (Multimodal Image Ingestion - Garage setup), ADR-078 (Embedding Landscape Explorer)</p>
+<h2 id="context">Context</h2>
+<p>The Embedding Landscape Explorer (ADR-078) computes t-SNE/UMAP projections of concept embeddings into 3D space. These projections:</p>
+<ul>
+<li>Take 1-30 seconds to compute depending on ontology size</li>
+<li>Are deterministic given the same parameters and graph state</li>
+<li>Are expensive to recompute on every page load</li>
+<li>Could enable interesting time-series analysis if we kept historical versions</li>
+</ul>
+<p>Currently, projections are computed on-demand and discarded after the session. The <code>/tmp/kg_projections/</code> cache is ephemeral and lost on container restart.</p>
+<h3 id="rejected-approach-graph-node-properties">Rejected Approach: Graph Node Properties</h3>
+<p>Our initial ADR draft proposed caching computed values (grounding_strength, diversity_score, projection coordinates) as properties on Concept nodes. This was rejected because:</p>
 <ol>
-<li><a href="#the-problem">The Problem: Linear Information, Multidimensional Reality</a></li>
-<li><a href="#the-solution">The Solution: Recursive Semantic Upsert</a></li>
-<li><a href="#how-it-works">How It Works: Multi-Stage Matching</a></li>
-<li><a href="#why-it-works">Why It Works Well</a></li>
-<li><a href="#the-on-problem">The O(N) Problem</a></li>
-<li><a href="#evolution">Evolution: How Later ADRs Improve The Pattern</a></li>
-<li><a href="#architectural-classification-vector-augmented-knowledge-graph">Architectural Classification: Vector-Augmented Knowledge Graph</a></li>
-<li><a href="#trade-offs">Trade-offs and Design Decisions</a></li>
+<li><strong>ADR-044 Contradiction</strong>: Grounding strength must be calculated fresh per ADR-044's "always current" philosophy</li>
+<li><strong>Graph Pollution</strong>: Computed artifacts don't belong in the source-of-truth graph</li>
+<li><strong>Invalidation Complexity</strong>: Node properties require cache invalidation logic</li>
+<li><strong>Separation of Concerns</strong>: Projections are derived views, not graph data</li>
 </ol>
-<hr />
-<h2 id="the-problem">The Problem</h2>
-<p>As Alan Watts articulated, human intelligence is fundamentally limited by its linear, scanning nature:</p>
-<blockquote>
-<p>"Human intelligence has a very serious limitation. That limitation is that it is a scanning system, of conscious attention, which is linear. That is to say, it examines the world, in lines. Rather as you would pass the beam of a flashlight across a room or a spotlight."</p>
-</blockquote>
-<p>When we ingest documents into a knowledge system, we face two challenges:</p>
+<h3 id="better-approach-object-storage">Better Approach: Object Storage</h3>
+<p>We already have Garage (S3-compatible storage) set up for image ingestion (ADR-057). Projection artifacts are a natural fit:</p>
+<ul>
+<li><strong>Versioned files</strong>: Keep historical projections</li>
+<li><strong>Parameter-keyed</strong>: Different parameters = different files</li>
+<li><strong>Lazy loading</strong>: Fetch from storage, compute only if missing</li>
+<li><strong>Time-series capability</strong>: Load multiple versions for playback</li>
+</ul>
+<h3 id="note-on-garage-versioning">Note on Garage Versioning</h3>
+<p>Garage does <strong>not</strong> have native S3 object versioning (<a href="https://git.deuxfleurs.fr/Deuxfleurs/garage/issues/166">open feature request</a>). We implement our own versioning via manifest files that track snapshot history.</p>
+<h2 id="decision">Decision</h2>
+<p>Store projection artifacts in Garage as versioned JSON files, enabling:</p>
 <ol>
-<li><strong>Sequential Processing:</strong> Documents arrive one at a time, paragraph by paragraph</li>
-<li><strong>Conceptual Overlap:</strong> The same idea appears in different documents with different wording</li>
+<li><strong>Efficient retrieval</strong>: Skip recomputation when cached projection matches requested parameters</li>
+<li><strong>Historical playback</strong>: Animate how the concept landscape evolves over time</li>
+<li><strong>Clean graph</strong>: No computed properties pollute the graph schema</li>
 </ol>
-<p>Traditional approaches either:
-- <strong>Treat everything as new</strong> → Massive duplication, no knowledge synthesis
-- <strong>Force exact ID matching</strong> → Misses semantic equivalence, fragments knowledge
-- <strong>Use rigid schemas</strong> → Fails to capture emergent concepts</p>
-<p>We needed a pattern that could <strong>accumulate knowledge organically</strong> while <strong>recognizing semantic equivalence</strong> across different expressions of the same idea.</p>
-<hr />
-<h2 id="the-solution-recursive-semantic-upsert">The Solution: Recursive Semantic Upsert</h2>
-<p><strong>Recursive upsert</strong> is a pattern where each new concept extracted from a document is:</p>
-<ol>
-<li><strong>Compared</strong> against all existing concepts using semantic similarity</li>
-<li><strong>Merged</strong> with a matching concept (if similarity &gt; threshold)</li>
-<li><strong>Created</strong> as new (if no match found)</li>
-<li><strong>Evidence added</strong> regardless (quote + source provenance)</li>
-</ol>
-<p>The "recursive" aspect comes from processing multiple documents sequentially, where each document's concepts are matched against the <strong>accumulating graph state</strong> from previous documents.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Document 1: Extract concepts → Create all (graph is empty)
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              → Graph has 10 concepts
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Document 2: Extract concepts → Match against 10 existing
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                              → Merge 3, Create 5 new
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                              → Graph has 15 concepts
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Document 3: Extract concepts → Match against 15 existing
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                              → Merge 7, Create 2 new
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                              → Graph has 17 concepts
+<h3 id="global-parameter-defaults">Global Parameter Defaults</h3>
+<p>To enable meaningful time-series comparison, we establish <strong>global defaults</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Parameter</th>
+<th>Default</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t-SNE</td>
+<td><code>perplexity</code></td>
+<td><strong>30</strong></td>
+<td>Balance between local/global structure</td>
+</tr>
+<tr>
+<td>t-SNE</td>
+<td><code>metric</code></td>
+<td><code>cosine</code></td>
+<td>Angular similarity for embeddings</td>
+</tr>
+<tr>
+<td>UMAP</td>
+<td><code>n_neighbors</code></td>
+<td><strong>15</strong></td>
+<td>Local neighborhood size</td>
+</tr>
+<tr>
+<td>UMAP</td>
+<td><code>min_dist</code></td>
+<td><strong>0.1</strong></td>
+<td>Cluster tightness</td>
+</tr>
+</tbody>
+</table>
+<h3 id="primary-vs-outlier-projections">Primary vs Outlier Projections</h3>
+<p>Projections are categorized as <strong>primary</strong> or <strong>outlier</strong>:</p>
+<p><strong>Primary Projections</strong> (tracked in timeline):
+- Use global default parameters
+- Form the historical timeline for playback
+- Retained according to retention policy
+- Default view when loading the landscape explorer</p>
+<p><strong>Outlier Projections</strong> (exploratory analysis):
+- Use non-default parameters (e.g., <code>perplexity=50</code>)
+- Stored separately, not part of timeline
+- Useful for alternate analysis/comparison
+- More aggressive cleanup (shorter retention)</p>
+<p>This separation ensures:
+1. Time-series playback compares apples-to-apples (same parameters)
+2. Custom analysis is preserved but doesn't clutter the timeline
+3. Simple mental model: "default view" vs "custom exploration"</p>
+<h3 id="storage-structure-implemented">Storage Structure (Implemented)</h3>
+<p>The implementation uses a simple, flat structure without manifest files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>projections/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── {ontology}/
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── {embedding_source}/        # concepts, sources, vocabulary, combined
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│       ├── latest.json            # Most recent projection
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│       ├── 2025-12-13T22:52:00Z.json   # Historical snapshot
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│       └── 2025-12-13T23:15:00Z.json   # Historical snapshot
 </code></pre></div>
-<p>The graph <strong>learns</strong> as it grows. Concepts that appear frequently across documents accumulate more evidence, while rare concepts remain distinct.</p>
-<hr />
-<h2 id="how-it-works-multi-stage-matching">How It Works: Multi-Stage Matching</h2>
-<p>When a new concept is extracted, we run a <strong>cascade of matching strategies</strong>:</p>
-<h3 id="stage-1-exact-id-match">Stage 1: Exact ID Match</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>IF extracted concept_id exists in graph:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    → Use existing concept (LLM predicted correct ID)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    → Confidence: 100%
+<p><strong>Design Decision</strong>: We opted for simplicity over the originally proposed manifest system:</p>
+<ul>
+<li><strong>No manifest files</strong>: History is discovered via S3 <code>list_objects</code> with prefix</li>
+<li><strong>No primary/outlier split</strong>: All projections use current parameters</li>
+<li><strong>No gzip compression</strong>: JSON files are small enough (~10-100KB) that compression overhead isn't worth it</li>
+<li><strong>Flat structure</strong>: Single directory per ontology/source type</li>
+</ul>
+<p>This simpler approach:
+1. Reduces implementation complexity
+2. Eliminates manifest synchronization bugs
+3. Makes debugging easier (just list the bucket)
+4. Can be extended to manifest-based system later if needed</p>
+<p><strong>Trade-offs accepted</strong>:
+- S3 listing is slightly slower than manifest lookup
+- No parameter-keyed caching (regenerate if parameters change)
+- History limited by retention policy, not manifest tracking</p>
+<h3 id="projection-file-schema">Projection File Schema</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Philosophy&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;snapshot_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-12-13T14:30:00Z_c1847&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;computed_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-12-13T14:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;changelist_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;c1847&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">&quot;algorithm&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tsne&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">&quot;n_components&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;perplexity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cosine&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nt">&quot;normalize_l2&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="nt">&quot;statistics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">&quot;concept_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">412</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">&quot;computation_time_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1847</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nt">&quot;embedding_dims&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">768</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="nt">&quot;grounding_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-0.85</span><span class="p">,</span><span class="w"> </span><span class="mf">0.92</span><span class="p">],</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="nt">&quot;diversity_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="mf">0.67</span><span class="p">]</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">  </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">      </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;c-abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">      </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;recursive self-reference&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">      </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">45.23</span><span class="p">,</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">      </span><span class="nt">&quot;y&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-12.87</span><span class="p">,</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">      </span><span class="nt">&quot;z&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">8.41</span><span class="p">,</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">      </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.72</span><span class="p">,</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">      </span><span class="nt">&quot;diversity_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.34</span><span class="p">,</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">      </span><span class="nt">&quot;item_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept&quot;</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="p">}</span>
 </code></pre></div>
-<p>This happens when the LLM has seen similar text before and predicts an existing <code>concept_id</code>. We trust the LLM's judgment here.</p>
-<h3 id="stage-2-vector-similarity-search-primary">Stage 2: Vector Similarity Search (Primary)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Embed new concept: label + search_terms → 1536-dim vector
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. Cosine similarity against ALL existing concept embeddings
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. IF max_similarity &gt; 0.85:
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    → Use existing concept (semantic match)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    → Confidence: similarity_score
+<h3 id="storage-format-implemented">Storage Format (Implemented)</h3>
+<p>We use plain JSON files (not gzip-compressed):</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Size (1000 concepts)</th>
+<th>Parse Time</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>JSON</strong></td>
+<td>~150KB</td>
+<td>~50ms</td>
+<td><strong>Current implementation</strong></td>
+</tr>
+<tr>
+<td>Gzip JSON</td>
+<td>~25KB</td>
+<td>~60ms</td>
+<td>Future optimization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rationale</strong>: For current graph sizes (100-1000 concepts), JSON files are 10-100KB. The complexity of gzip compression/decompression isn't justified. Garage storage is cheap, and the boto3 retry logic handles transient failures.</p>
+<p><strong>Future consideration</strong>: If projections grow significantly (10K+ concepts), gzip compression can be added transparently by changing the storage methods.</p>
+<h3 id="changelist-based-cache-validation">Changelist-Based Cache Validation</h3>
+<p>The worker automatically determines freshness by comparing the current graph increment against what's stored. Clients simply request projections; the worker handles staleness detection.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>┌─────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>│  Client Request Flow                                            │
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├─────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│                                                                 │
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│  Web/CLI ──► API ──► Worker                                     │
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│                        │                                        │
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│                        ▼                                        │
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│              ┌─────────────────────┐                            │
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│              │ Get current graph   │                            │
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│              │ increment (c1900)   │                            │
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│              └──────────┬──────────┘                            │
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>│                         │                                       │
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>│                         ▼                                       │
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>│              ┌─────────────────────┐                            │
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>│              │ Get stored manifest │                            │
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>│              │ changelist (c1847)  │                            │
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>│              └──────────┬──────────┘                            │
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>│                         │                                       │
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>│            ┌────────────┴────────────┐                          │
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>│            │                         │                          │
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>│            ▼                         ▼                          │
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>│   c1900 &gt; c1847?              c1900 == c1847?                   │
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>│   ┌───────────┐               ┌───────────┐                     │
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>│   │ STALE     │               │ FRESH     │                     │
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>│   │ Compute   │               │ Retrieve  │                     │
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>│   │ Store     │               │ from      │                     │
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>│   │ Return    │               │ Garage    │                     │
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>│   └───────────┘               └───────────┘                     │
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>│                                                                 │
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>└─────────────────────────────────────────────────────────────────┘
 </code></pre></div>
-<p>This is the <strong>core of the pattern</strong>. Vector similarity captures semantic equivalence:
-- "linear scanning system" matches "sequential attention mechanism"
-- "human-directed evolution" matches "genetic self-modification"</p>
-<p>The threshold (0.85) balances:
-- <strong>Higher threshold (&gt;0.90):</strong> Fewer merges, more duplicates, safer
-- <strong>Lower threshold (&lt;0.80):</strong> More merges, potential false positives, aggressive</p>
-<h3 id="stage-3-create-new-concept">Stage 3: Create New Concept</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>IF no match found:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    → Generate new concept_id
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    → Store with embedding
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    → Add to graph
+<h3 id="cache-hit-logic">Cache Hit Logic</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Global defaults (configurable via system settings)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">GLOBAL_DEFAULTS</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s1">&#39;tsne&#39;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="s1">&#39;perplexity&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="s1">&#39;metric&#39;</span><span class="p">:</span> <span class="s1">&#39;cosine&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="s1">&#39;n_components&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="p">},</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="s1">&#39;umap&#39;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="s1">&#39;n_neighbors&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="s1">&#39;min_dist&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="s1">&#39;metric&#39;</span><span class="p">:</span> <span class="s1">&#39;cosine&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="s1">&#39;n_components&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="p">}</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">}</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_current_changelist</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="sd">    Get current graph state as integer increment.</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="sd">    Uses concept_creation_counter from graph_metrics table.</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="sd">    This counter increments on every concept/relationship addition.</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="s2">        SELECT concept_creation_counter + relationship_creation_counter</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="s2">        FROM kg_api.graph_metrics</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="s2">        WHERE id = 1</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_primary_projection</span><span class="p">(</span><span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">ProjectionParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if parameters match global defaults (primary) or are outliers.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>    <span class="n">defaults</span> <span class="o">=</span> <span class="n">GLOBAL_DEFAULTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;tsne&#39;</span><span class="p">:</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>        <span class="k">return</span> <span class="n">params</span><span class="o">.</span><span class="n">perplexity</span> <span class="o">==</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;perplexity&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;umap&#39;</span><span class="p">:</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>        <span class="k">return</span> <span class="p">(</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>            <span class="n">params</span><span class="o">.</span><span class="n">n_neighbors</span> <span class="o">==</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_neighbors&#39;</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span> <span class="ow">and</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>            <span class="n">params</span><span class="o">.</span><span class="n">min_dist</span> <span class="o">==</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;min_dist&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>        <span class="p">)</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>    <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_or_compute_projection</span><span class="p">(</span>
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;tsne&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a>    <span class="n">params</span><span class="p">:</span> <span class="n">ProjectionParams</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a>    <span class="n">force_refresh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Admin override - bypass changelist check</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProjectionData</span><span class="p">:</span>
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a><span class="sd">    Retrieve cached projection or compute fresh based on graph changelist.</span>
+<a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>
+<a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a><span class="sd">    If params is None, uses global defaults (primary projection).</span>
+<a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a>
+<a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a><span class="sd">    Freshness is automatic:</span>
+<a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a><span class="sd">    - Worker compares current graph increment vs stored changelist</span>
+<a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a><span class="sd">    - If graph changed → compute fresh, store, return</span>
+<a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a><span class="sd">    - If graph unchanged → retrieve from storage</span>
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>
+<a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a><span class="sd">    force_refresh (admin): Bypass changelist check and always recompute.</span>
+<a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a><span class="sd">    Useful for debugging or forcing regeneration after algorithm changes.</span>
+<a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a>    <span class="c1"># Default to global parameters if not specified</span>
+<a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>    <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>        <span class="n">params</span> <span class="o">=</span> <span class="n">ProjectionParams</span><span class="p">(</span><span class="o">**</span><span class="n">GLOBAL_DEFAULTS</span><span class="p">[</span><span class="n">algorithm</span><span class="p">])</span>
+<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>
+<a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>    <span class="n">is_primary</span> <span class="o">=</span> <span class="n">is_primary_projection</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a>
+<a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a>    <span class="c1"># Get current graph state</span>
+<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>    <span class="n">current_changelist</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_current_changelist</span><span class="p">()</span>
+<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>
+<a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>    <span class="c1"># Check stored manifest (unless force_refresh)</span>
+<a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">force_refresh</span><span class="p">:</span>
+<a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a>        <span class="n">manifest</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a>
+<a id="__codelineno-3-78" name="__codelineno-3-78" href="#__codelineno-3-78"></a>        <span class="k">if</span> <span class="n">manifest</span><span class="p">:</span>
+<a id="__codelineno-3-79" name="__codelineno-3-79" href="#__codelineno-3-79"></a>            <span class="k">if</span> <span class="n">is_primary</span><span class="p">:</span>
+<a id="__codelineno-3-80" name="__codelineno-3-80" href="#__codelineno-3-80"></a>                <span class="n">stored_changelist</span> <span class="o">=</span> <span class="n">get_stored_changelist</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="p">)</span>
+<a id="__codelineno-3-81" name="__codelineno-3-81" href="#__codelineno-3-81"></a>                <span class="k">if</span> <span class="n">stored_changelist</span> <span class="o">==</span> <span class="n">current_changelist</span><span class="p">:</span>
+<a id="__codelineno-3-82" name="__codelineno-3-82" href="#__codelineno-3-82"></a>                    <span class="c1"># Graph unchanged - retrieve from storage</span>
+<a id="__codelineno-3-83" name="__codelineno-3-83" href="#__codelineno-3-83"></a>                    <span class="n">cached</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-3-84" name="__codelineno-3-84" href="#__codelineno-3-84"></a>                    <span class="k">return</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get_projection</span><span class="p">(</span><span class="n">cached</span><span class="o">.</span><span class="n">file_key</span><span class="p">)</span>
+<a id="__codelineno-3-85" name="__codelineno-3-85" href="#__codelineno-3-85"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-3-86" name="__codelineno-3-86" href="#__codelineno-3-86"></a>                <span class="c1"># Outlier: check if we have this parameter set at current changelist</span>
+<a id="__codelineno-3-87" name="__codelineno-3-87" href="#__codelineno-3-87"></a>                <span class="n">cached</span> <span class="o">=</span> <span class="n">find_fresh_outlier</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">current_changelist</span><span class="p">)</span>
+<a id="__codelineno-3-88" name="__codelineno-3-88" href="#__codelineno-3-88"></a>                <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
+<a id="__codelineno-3-89" name="__codelineno-3-89" href="#__codelineno-3-89"></a>                    <span class="k">return</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get_projection</span><span class="p">(</span><span class="n">cached</span><span class="o">.</span><span class="n">file_key</span><span class="p">)</span>
+<a id="__codelineno-3-90" name="__codelineno-3-90" href="#__codelineno-3-90"></a>
+<a id="__codelineno-3-91" name="__codelineno-3-91" href="#__codelineno-3-91"></a>    <span class="c1"># Graph changed, no cache, or force_refresh - compute fresh</span>
+<a id="__codelineno-3-92" name="__codelineno-3-92" href="#__codelineno-3-92"></a>    <span class="n">projection</span> <span class="o">=</span> <span class="k">await</span> <span class="n">compute_projection</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-3-93" name="__codelineno-3-93" href="#__codelineno-3-93"></a>
+<a id="__codelineno-3-94" name="__codelineno-3-94" href="#__codelineno-3-94"></a>    <span class="c1"># Store in Garage with current changelist</span>
+<a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>    <span class="k">await</span> <span class="n">store_projection</span><span class="p">(</span>
+<a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a>        <span class="n">projection</span><span class="p">,</span>
+<a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a>        <span class="n">changelist</span><span class="o">=</span><span class="n">current_changelist</span><span class="p">,</span>
+<a id="__codelineno-3-98" name="__codelineno-3-98" href="#__codelineno-3-98"></a>        <span class="n">is_primary</span><span class="o">=</span><span class="n">is_primary</span>
+<a id="__codelineno-3-99" name="__codelineno-3-99" href="#__codelineno-3-99"></a>    <span class="p">)</span>
+<a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a>
+<a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a>    <span class="k">return</span> <span class="n">projection</span>
+<a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a>
+<a id="__codelineno-3-103" name="__codelineno-3-103" href="#__codelineno-3-103"></a>
+<a id="__codelineno-3-104" name="__codelineno-3-104" href="#__codelineno-3-104"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_stored_changelist</span><span class="p">(</span><span class="n">primary</span><span class="p">:</span> <span class="n">PrimarySection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-3-105" name="__codelineno-3-105" href="#__codelineno-3-105"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract changelist number from latest primary snapshot.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-106" name="__codelineno-3-106" href="#__codelineno-3-106"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">:</span>
+<a id="__codelineno-3-107" name="__codelineno-3-107" href="#__codelineno-3-107"></a>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+<a id="__codelineno-3-108" name="__codelineno-3-108" href="#__codelineno-3-108"></a>
+<a id="__codelineno-3-109" name="__codelineno-3-109" href="#__codelineno-3-109"></a>    <span class="n">latest</span> <span class="o">=</span> <span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-3-110" name="__codelineno-3-110" href="#__codelineno-3-110"></a>    <span class="c1"># Parse &quot;c1847&quot; → 1847</span>
+<a id="__codelineno-3-111" name="__codelineno-3-111" href="#__codelineno-3-111"></a>    <span class="n">changelist_str</span> <span class="o">=</span> <span class="n">latest</span><span class="o">.</span><span class="n">changelist_id</span>
+<a id="__codelineno-3-112" name="__codelineno-3-112" href="#__codelineno-3-112"></a>    <span class="k">if</span> <span class="n">changelist_str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">):</span>
+<a id="__codelineno-3-113" name="__codelineno-3-113" href="#__codelineno-3-113"></a>        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">changelist_str</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<a id="__codelineno-3-114" name="__codelineno-3-114" href="#__codelineno-3-114"></a>    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">changelist_str</span><span class="p">)</span>
+<a id="__codelineno-3-115" name="__codelineno-3-115" href="#__codelineno-3-115"></a>
+<a id="__codelineno-3-116" name="__codelineno-3-116" href="#__codelineno-3-116"></a>
+<a id="__codelineno-3-117" name="__codelineno-3-117" href="#__codelineno-3-117"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_fresh_outlier</span><span class="p">(</span>
+<a id="__codelineno-3-118" name="__codelineno-3-118" href="#__codelineno-3-118"></a>    <span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">,</span>
+<a id="__codelineno-3-119" name="__codelineno-3-119" href="#__codelineno-3-119"></a>    <span class="n">params</span><span class="p">:</span> <span class="n">ProjectionParams</span><span class="p">,</span>
+<a id="__codelineno-3-120" name="__codelineno-3-120" href="#__codelineno-3-120"></a>    <span class="n">current_changelist</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-3-121" name="__codelineno-3-121" href="#__codelineno-3-121"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Snapshot</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-122" name="__codelineno-3-122" href="#__codelineno-3-122"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Find outlier snapshot matching parameters AND current changelist.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-123" name="__codelineno-3-123" href="#__codelineno-3-123"></a>    <span class="n">param_key</span> <span class="o">=</span> <span class="n">get_parameter_key</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-3-124" name="__codelineno-3-124" href="#__codelineno-3-124"></a>
+<a id="__codelineno-3-125" name="__codelineno-3-125" href="#__codelineno-3-125"></a>    <span class="k">for</span> <span class="n">outlier</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">outliers</span><span class="p">:</span>
+<a id="__codelineno-3-126" name="__codelineno-3-126" href="#__codelineno-3-126"></a>        <span class="k">if</span> <span class="n">outlier</span><span class="o">.</span><span class="n">parameter_key</span> <span class="o">!=</span> <span class="n">param_key</span><span class="p">:</span>
+<a id="__codelineno-3-127" name="__codelineno-3-127" href="#__codelineno-3-127"></a>            <span class="k">continue</span>
+<a id="__codelineno-3-128" name="__codelineno-3-128" href="#__codelineno-3-128"></a>
+<a id="__codelineno-3-129" name="__codelineno-3-129" href="#__codelineno-3-129"></a>        <span class="c1"># Check if outlier is fresh</span>
+<a id="__codelineno-3-130" name="__codelineno-3-130" href="#__codelineno-3-130"></a>        <span class="n">stored</span> <span class="o">=</span> <span class="n">get_stored_changelist_from_id</span><span class="p">(</span><span class="n">outlier</span><span class="o">.</span><span class="n">latest</span><span class="p">)</span>
+<a id="__codelineno-3-131" name="__codelineno-3-131" href="#__codelineno-3-131"></a>        <span class="k">if</span> <span class="n">stored</span> <span class="o">==</span> <span class="n">current_changelist</span><span class="p">:</span>
+<a id="__codelineno-3-132" name="__codelineno-3-132" href="#__codelineno-3-132"></a>            <span class="k">return</span> <span class="n">outlier</span>
+<a id="__codelineno-3-133" name="__codelineno-3-133" href="#__codelineno-3-133"></a>
+<a id="__codelineno-3-134" name="__codelineno-3-134" href="#__codelineno-3-134"></a>    <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-3-135" name="__codelineno-3-135" href="#__codelineno-3-135"></a>
+<a id="__codelineno-3-136" name="__codelineno-3-136" href="#__codelineno-3-136"></a>
+<a id="__codelineno-3-137" name="__codelineno-3-137" href="#__codelineno-3-137"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_key</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ProjectionParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-3-138" name="__codelineno-3-138" href="#__codelineno-3-138"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate unique key for outlier parameters.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-139" name="__codelineno-3-139" href="#__codelineno-3-139"></a>    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-3-140" name="__codelineno-3-140" href="#__codelineno-3-140"></a>    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">perplexity</span> <span class="ow">and</span> <span class="n">params</span><span class="o">.</span><span class="n">perplexity</span> <span class="o">!=</span> <span class="mi">30</span><span class="p">:</span>
+<a id="__codelineno-3-141" name="__codelineno-3-141" href="#__codelineno-3-141"></a>        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;perplexity_</span><span class="si">{</span><span class="n">params</span><span class="o">.</span><span class="n">perplexity</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-142" name="__codelineno-3-142" href="#__codelineno-3-142"></a>    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">n_neighbors</span> <span class="ow">and</span> <span class="n">params</span><span class="o">.</span><span class="n">n_neighbors</span> <span class="o">!=</span> <span class="mi">15</span><span class="p">:</span>
+<a id="__codelineno-3-143" name="__codelineno-3-143" href="#__codelineno-3-143"></a>        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;neighbors_</span><span class="si">{</span><span class="n">params</span><span class="o">.</span><span class="n">n_neighbors</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-144" name="__codelineno-3-144" href="#__codelineno-3-144"></a>    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">min_dist</span> <span class="ow">and</span> <span class="n">params</span><span class="o">.</span><span class="n">min_dist</span> <span class="o">!=</span> <span class="mf">0.1</span><span class="p">:</span>
+<a id="__codelineno-3-145" name="__codelineno-3-145" href="#__codelineno-3-145"></a>        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mindist_</span><span class="si">{</span><span class="n">params</span><span class="o">.</span><span class="n">min_dist</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-146" name="__codelineno-3-146" href="#__codelineno-3-146"></a>    <span class="k">return</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;custom&quot;</span>
 </code></pre></div>
-<p>This concept is now <strong>available for future matching</strong> in subsequent documents.</p>
-<h3 id="stage-4-evidence-accumulation-always">Stage 4: Evidence Accumulation (Always)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Regardless of match/create:
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    → Store quote (exact text from source)
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    → Link to source (document + paragraph)
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    → Track provenance
+<h3 id="time-series-playback">Time-Series Playback</h3>
+<p>The manifest tracks all historical snapshots, enabling playback:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// Frontend: Load projection history for animation</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">loadProjectionTimeline</span><span class="p">(</span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ProjectionSnapshot</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">manifest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">api</span><span class="p">.</span><span class="nx">getProjectionManifest</span><span class="p">(</span><span class="nx">ontology</span><span class="p">);</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="c1">// Load all snapshots (or subset for performance)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">snapshots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nb">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nx">manifest</span><span class="p">.</span><span class="nx">snapshots</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">      </span><span class="p">.</span><span class="nx">sort</span><span class="p">((</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">timestamp</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">timestamp</span><span class="p">))</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">      </span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="o">-</span><span class="mf">10</span><span class="p">)</span><span class="w">  </span><span class="c1">// Last 10 snapshots</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">api</span><span class="p">.</span><span class="nx">getProjection</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">file_key</span><span class="p">))</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="p">);</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">snapshots</span><span class="p">;</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="p">}</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="c1">// Animate between snapshots</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="kd">function</span><span class="w"> </span><span class="nx">animateLandscapeEvolution</span><span class="p">(</span><span class="nx">snapshots</span><span class="o">:</span><span class="w"> </span><span class="kt">ProjectionSnapshot</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">animate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentIndex</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="nx">snapshots</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">      </span><span class="nx">currentIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w">  </span><span class="c1">// Loop</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">    </span><span class="nx">updateVisualization</span><span class="p">(</span><span class="nx">snapshots</span><span class="p">[</span><span class="nx">currentIndex</span><span class="p">]);</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">    </span><span class="nx">currentIndex</span><span class="o">++</span><span class="p">;</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="nx">setTimeout</span><span class="p">(</span><span class="nx">animate</span><span class="p">,</span><span class="w"> </span><span class="mf">1000</span><span class="p">);</span><span class="w">  </span><span class="c1">// 1 second per frame</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">  </span><span class="nx">animate</span><span class="p">();</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong>Key insight:</strong> Even merged concepts retain <strong>all evidence</strong> from all sources. You can trace back to where each instance appeared.</p>
-<hr />
-<h2 id="why-it-works">Why It Works</h2>
-<h3 id="1-semantic-tolerance">1. <strong>Semantic Tolerance</strong></h3>
-<p>Unlike exact string matching, vector similarity handles:
-- Paraphrasing: "linear thinking" ≈ "sequential reasoning"
-- Synonyms: "contradicts" ≈ "opposes"
-- Different granularity: "AI safety concerns" ≈ "risks of artificial intelligence"</p>
-<h3 id="2-llm-context-awareness">2. <strong>LLM Context Awareness</strong></h3>
-<p>The LLM sees existing concepts during extraction, so it can:
-- Predict existing IDs when confident
-- Create new search terms that match existing concepts
-- Understand domain-specific terminology</p>
-<h3 id="3-gradual-knowledge-synthesis">3. <strong>Gradual Knowledge Synthesis</strong></h3>
-<p>The graph <strong>evolves</strong> as documents are added:
-- Early documents create foundational concepts
-- Later documents either reinforce or extend them
-- Cross-document patterns emerge naturally</p>
-<h3 id="4-complete-provenance">4. <strong>Complete Provenance</strong></h3>
-<p>Every concept tracks:
-- Which documents mentioned it
-- What exact quotes support it
-- When it first appeared</p>
+<h3 id="changelist-tracking">Changelist Tracking</h3>
+<p>The <code>graph_change_counter</code> tracks ALL graph modifications via database triggers (Migration 033).</p>
+<p><strong>Trigger-based tracking (reliable):</strong>
+- Triggers on ALL vertex tables (Concept, VocabType, Source, Instance, etc.)
+- Triggers on ALL edge tables (108+ relationship types)
+- Increments <code>graph_change_counter</code> on every INSERT/UPDATE/DELETE
+- No application code required - database handles it automatically</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_current_changelist</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="sd">    Get current graph state as integer.</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="sd">    Uses the unified graph_change_counter from graph_metrics table.</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="sd">    This counter is incremented by database triggers on ALL graph modifications.</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s2">        SELECT counter</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s2">        FROM public.graph_metrics</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="s2">        WHERE metric_name = &#39;graph_change_counter&#39;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+</code></pre></div>
+<p><strong>Related counters (also trigger-based):</strong>
+- <code>concept_creation_counter</code> / <code>concept_deletion_counter</code>
+- <code>relationship_creation_counter</code> / <code>relationship_deletion_counter</code>
+- <code>vocabulary_change_counter</code></p>
+<p><strong>Maintenance function for new edge types:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">-- Call after ingestion if new relationship types were created</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">knowledge_graph</span><span class="p">.</span><span class="n">sync_edge_triggers</span><span class="p">();</span>
+</code></pre></div></p>
 <p>This enables:
-- Evidence-based reasoning
-- Source verification
-- Cross-document analysis</p>
-<hr />
-<h2 id="the-on-problem">The O(N) Problem</h2>
-<p>The recursive upsert pattern has a <strong>significant performance limitation</strong>:</p>
-<h3 id="full-scan-vector-search">Full-Scan Vector Search</h3>
-<p>Every new concept requires:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>1. Compute embedding (OpenAI API call, ~100ms)
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>2. Load ALL existing concept embeddings (N vectors)
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>3. Compute cosine similarity for each (N comparisons)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>4. Find maximum similarity
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>5. Compare to threshold
-</code></pre></div></p>
-<p><strong>Time Complexity:</strong> O(N) per concept
-<strong>Space Complexity:</strong> O(N × D) where D = embedding dimensions (1536)</p>
-<h3 id="real-world-impact">Real-World Impact</h3>
-<p>With 1,000 concepts in the graph:
-- Each new concept: ~1,000 similarity calculations
-- Document with 50 concepts: ~50,000 calculations
-- 10 documents per day: ~500,000 calculations</p>
-<p><strong>Current implementation:</strong> Python NumPy, full scan, no indexing
-<strong>Typical performance:</strong> 10-50ms per concept (acceptable for current scale)</p>
-<h3 id="why-we-accept-this-trade-off">Why We Accept This Trade-off</h3>
-<ol>
-<li><strong>Simplicity:</strong> No complex indexing logic, easy to debug</li>
-<li><strong>Accuracy:</strong> No false negatives from approximate search</li>
-<li><strong>Current scale:</strong> &lt;10,000 concepts, performance is acceptable</li>
-<li><strong>Future migration:</strong> Can add HNSW/IVF later if needed (see ADR-055)</li>
-</ol>
-<hr />
-<h2 id="evolution-how-later-adrs-improve-the-pattern">Evolution: How Later ADRs Improve The Pattern</h2>
-<p>The recursive upsert pattern is <strong>foundational</strong>, but later architectural decisions significantly enhance it:</p>
-<h3 id="adr-028-grounding-strength-as-epistemic-feedback">ADR-028: Grounding Strength as Epistemic Feedback</h3>
-<p><strong>Problem:</strong> Upsert creates concepts, but how do we know if they're <em>valid</em>?</p>
-<p><strong>Enhancement:</strong> Add <strong>grounding strength</strong> (-1.0 to 1.0) calculated from:
-- Evidence consistency across sources
-- Relationship support from connected concepts
-- Contradiction detection</p>
-<p><strong>Impact on Upsert:</strong>
-- Concepts with high grounding (&gt;0.8) are more likely to match
-- Concepts with negative grounding may indicate extraction errors
-- Guides threshold tuning: if low-grounding concepts proliferate, raise threshold</p>
-<h3 id="adr-048-graphqueryfacade-namespace-safety">ADR-048: GraphQueryFacade (Namespace Safety)</h3>
-<p><strong>Problem:</strong> As vocabulary metadata moves to the graph, upsert queries must not collide with vocabulary nodes.</p>
-<p><strong>Enhancement:</strong> Explicit <code>:Concept</code> labels in all queries, preventing namespace pollution.</p>
-<p><strong>Impact on Upsert:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// Before (unsafe)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="p">&lt;</span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="err">$</span><span class="n">vec</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">85</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">// After (safe)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="p">&lt;</span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="err">$</span><span class="n">vec</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">85</span>
-</code></pre></div></p>
-<h3 id="adr-055-hnsw-vector-indexing-future">ADR-055: HNSW Vector Indexing (Future)</h3>
-<p><strong>Problem:</strong> O(N) full scan becomes prohibitive at large scale.</p>
-<p><strong>Enhancement:</strong> Hierarchical Navigable Small World (HNSW) indexing for approximate nearest neighbor search.</p>
-<p><strong>Impact on Upsert:</strong>
-- O(log N) search instead of O(N)
-- Trade-off: 95-99% recall (might miss some matches)
-- Enables 100K+ concept graphs</p>
-<h3 id="adr-065-epistemic-status-classification">ADR-065: Epistemic Status Classification</h3>
-<p><strong>Problem:</strong> Not all concept merges are equally reliable.</p>
-<p><strong>Enhancement:</strong> Classify relationships by epistemic status:
-- <strong>AFFIRMATIVE:</strong> High grounding, reliable merges
-- <strong>CONTESTED:</strong> Mixed evidence, review recommended
-- <strong>CONTRADICTORY:</strong> Negative grounding, potential false positive</p>
-<p><strong>Impact on Upsert:</strong>
-- Flag uncertain merges for review
-- Adjust thresholds based on relationship type
-- Provide confidence metrics to users</p>
-<hr />
-<h2 id="architectural-classification-vector-augmented-knowledge-graph">Architectural Classification: Vector-Augmented Knowledge Graph</h2>
-<p>Understanding what this system <em>is</em> helps clarify design decisions and future directions.</p>
-<h3 id="what-it-is-and-isnt">What It Is (and Isn't)</h3>
-<p>The recursive upsert pattern operates within a <strong>three-layer architecture</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>┌─────────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>│  PROPERTY GRAPH STORAGE                                             │
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│  ─────────────────────                                              │
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│  Apache AGE / PostgreSQL                                            │
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│  Binary edges: (node)─[rel]→(node)                                  │
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│  Rich metadata: embeddings, confidence, timestamps                  │
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│                                                                     │
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>├─────────────────────────────────────────────────────────────────────┤
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│  QUERY-TIME SEMANTIC COMPUTATION                                    │
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│  ──────────────────────────────                                     │
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│  Cypher traversals construct node sets dynamically                  │
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│  No pre-materialized structures—computed on demand                  │
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│  Enables flexible analysis patterns without storage overhead        │
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>│                                                                     │
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>├─────────────────────────────────────────────────────────────────────┤
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>│  VECTOR OPERATIONS                                                  │
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>│  ────────────────                                                   │
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>│  Cosine similarity for concept matching                             │
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>│  Dot product projections onto semantic axes (ADR-058)               │
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>│  Polarity axis triangulation for grounding strength                 │
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>│  Collective epistemic agreement/disagreement analysis               │
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>└─────────────────────────────────────────────────────────────────────┘
+- Knowing exactly how stale a cached projection is
+- Comparing projections across graph changes
+- Automatic cache invalidation without application code</p>
+<h3 id="api-endpoints">API Endpoints</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Get projection (automatically fresh based on changelist)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">GET</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">projections</span><span class="o">/</span><span class="p">{</span><span class="n">ontology</span><span class="p">}</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">Query</span> <span class="n">params</span><span class="p">:</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  <span class="o">-</span> <span class="n">algorithm</span><span class="p">:</span> <span class="s2">&quot;tsne&quot;</span> <span class="o">|</span> <span class="s2">&quot;umap&quot;</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">tsne</span><span class="p">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  <span class="o">-</span> <span class="n">perplexity</span><span class="p">:</span> <span class="nb">int</span> <span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">SNE</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  <span class="o">-</span> <span class="n">n_neighbors</span><span class="p">:</span> <span class="nb">int</span> <span class="p">(</span><span class="n">UMAP</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="mi">15</span><span class="p">)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  <span class="o">-</span> <span class="n">min_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="p">(</span><span class="n">UMAP</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  <span class="o">-</span> <span class="n">metric</span><span class="p">:</span> <span class="s2">&quot;cosine&quot;</span> <span class="o">|</span> <span class="s2">&quot;euclidean&quot;</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">cosine</span><span class="p">)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>  <span class="o">-</span> <span class="n">force_refresh</span><span class="p">:</span> <span class="nb">bool</span> <span class="p">(</span><span class="n">optional</span><span class="p">,</span> <span class="n">admin</span> <span class="o">-</span> <span class="n">bypass</span> <span class="n">changelist</span> <span class="n">check</span><span class="p">)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">Response</span><span class="p">:</span> <span class="n">ProjectionData</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># Worker automatically computes if graph changelist &gt; stored changelist</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># force_refresh bypasses check and always recomputes (admin use only)</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="c1"># Get manifest (list available snapshots + current changelist)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="n">GET</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">projections</span><span class="o">/</span><span class="p">{</span><span class="n">ontology</span><span class="p">}</span><span class="o">/</span><span class="n">manifest</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="n">Response</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>  <span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">,</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>  <span class="n">current_changelist</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>  <span class="n">is_stale</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># True if graph changed since last projection</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="p">}</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1"># Get specific historical snapshot (for playback)</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="n">GET</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">projections</span><span class="o">/</span><span class="p">{</span><span class="n">ontology</span><span class="p">}</span><span class="o">/</span><span class="n">snapshots</span><span class="o">/</span><span class="p">{</span><span class="n">snapshot_id</span><span class="p">}</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="n">Response</span><span class="p">:</span> <span class="n">ProjectionData</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="c1"># Delete old snapshots (cleanup)</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="n">DELETE</span> <span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">projections</span><span class="o">/</span><span class="p">{</span><span class="n">ontology</span><span class="p">}</span><span class="o">/</span><span class="n">snapshots</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="n">Query</span> <span class="n">params</span><span class="p">:</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>  <span class="o">-</span> <span class="n">keep_last</span><span class="p">:</span> <span class="nb">int</span> <span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="mi">10</span><span class="p">)</span>
 </code></pre></div>
-<p><strong>Accurate terminology:</strong> "Vector-augmented knowledge graph" or "Property graph with query-time semantic computation"</p>
-<p><strong>Not accurate:</strong> "Hypergraph" (our edges connect exactly 2 nodes; true hyperedges connect N nodes as first-class entities)</p>
-<h3 id="why-this-distinction-matters">Why This Distinction Matters</h3>
-<p>The system's power comes from <strong>combining symbolic queryability with continuous semantic operations</strong>:</p>
-<table>
-<thead>
-<tr>
-<th>Layer</th>
-<th>Capability</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Property Graph</strong></td>
-<td>Structural traversal</td>
-<td>"Find all concepts within 2 hops of X"</td>
-</tr>
-<tr>
-<td><strong>Query-Time Computation</strong></td>
-<td>Dynamic set construction</td>
-<td>"Collect nodes along SUPPORTS path, expand to neighbors"</td>
-</tr>
-<tr>
-<td><strong>Vector Operations</strong></td>
-<td>Semantic analysis</td>
-<td>"Calculate epistemic agreement across collected set"</td>
-</tr>
-</tbody>
-</table>
-<p>This hybrid enables queries like:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>1. Traverse SUPPORTS chain from concept X to Y  (graph layer)
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>2. Collect all nodes on path + 2-hop neighbors  (computation layer)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>3. Project each onto polarity axis              (vector layer)
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>4. Calculate collective grounding agreement     (vector layer)
-</code></pre></div></p>
-<h3 id="connection-to-graph-learning-research">Connection to Graph Learning Research</h3>
-<p>The recursive upsert pattern shares conceptual DNA with <strong>Adaptive Neighborhood Feature Mixing (ANFM)</strong> from graph neural network research:</p>
-<table>
-<thead>
-<tr>
-<th>ANFM Approach</th>
-<th>Recursive Upsert Parallel</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Adaptive mixing weights via MLP</td>
-<td>Threshold-based vector similarity (0.85)</td>
-</tr>
-<tr>
-<td>Node embeddings for semantic content</td>
-<td>Concept embeddings (768-1536 dim)</td>
-</tr>
-<tr>
-<td>Edge embeddings for relationship semantics</td>
-<td>VocabType embeddings for relationship types</td>
-</tr>
-<tr>
-<td>Rejects uniform aggregation</td>
-<td>Uses context-aware matching, not blind merge/create</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Key shared insight:</strong> Both systems reject uniform strategies in favor of <strong>adaptive, context-aware aggregation</strong>. ANFM learns mixing weights through training; our system achieves similar adaptivity through:
-- Configurable similarity thresholds
-- Grounding-based feedback loops
-- Epistemic status classification</p>
-<p><strong>Our unique advantage:</strong> The recursive aspect. ANFM operates on static graphs; our system builds graphs incrementally where each document matches against the <strong>accumulating graph state</strong>, creating self-improving feedback loops.</p>
-<h3 id="feedback-loops-that-improve-early-cycle-attachment">Feedback Loops That Improve Early-Cycle Attachment</h3>
-<p>Later ADRs don't just extend the pattern—they create <strong>feedback loops</strong> that improve attachment quality even in early ingestion cycles:</p>
-<p><strong>Loop 1: LLM Context Awareness</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># LLM sees recent concepts during extraction</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">existing_concepts</span> <span class="o">=</span> <span class="n">get_document_concepts</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">recent_chunks_only</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># → Can predict existing IDs, generates matching search terms</span>
-</code></pre></div></p>
-<p><strong>Loop 2: Vocabulary Evolution</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>LLM generates: &quot;validates&quot; → normalized to &quot;VALIDATES&quot;
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>New type: &quot;ENHANCES&quot; → auto-categorized, embedded, available for future matching
+<h3 id="retention-policy">Retention Policy</h3>
+<p>Different retention for primary (timeline) vs outlier (exploratory) projections:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cleanup_old_projections</span><span class="p">(</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">primary_keep_last</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">primary_max_age_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">90</span><span class="p">,</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">outlier_keep_last</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>      <span class="c1"># Only keep latest per parameter set</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">outlier_max_age_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">7</span>    <span class="c1"># More aggressive cleanup</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="p">):</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="sd">    Remove old projection snapshots.</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="sd">    Primary projections (timeline):</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="sd">    - Keep most recent N snapshots (primary_keep_last)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="sd">    - Keep anything younger than primary_max_age_days</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="sd">    - Enable historical playback</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="sd">    Outlier projections (exploratory):</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="sd">    - Keep only most recent per parameter set (outlier_keep_last)</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="sd">    - Delete after outlier_max_age_days</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="sd">    - These are for ad-hoc analysis, not history</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">manifest</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>    <span class="c1"># Clean primary snapshots</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>    <span class="n">primary_to_keep</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="n">sorted_primary</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>        <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">,</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>        <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>    <span class="p">)</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>    <span class="k">for</span> <span class="n">snapshot</span> <span class="ow">in</span> <span class="n">sorted_primary</span><span class="p">[:</span><span class="n">primary_keep_last</span><span class="p">]:</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>        <span class="n">primary_to_keep</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>    <span class="n">cutoff</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">primary_max_age_days</span><span class="p">)</span>
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>    <span class="k">for</span> <span class="n">snapshot</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">:</span>
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">:</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>            <span class="n">primary_to_keep</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>
+<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>    <span class="c1"># Delete old primary snapshots</span>
+<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a>    <span class="k">for</span> <span class="n">snapshot</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span><span class="p">:</span>
+<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a>        <span class="k">if</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">primary_to_keep</span><span class="p">:</span>
+<a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a>            <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">file_key</span><span class="p">)</span>
+<a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a>
+<a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a>    <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a>        <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">snapshots</span>
+<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a>        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">primary_to_keep</span>
+<a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a>    <span class="p">]</span>
+<a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a>
+<a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a>    <span class="c1"># Clean outlier snapshots (more aggressive)</span>
+<a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a>    <span class="n">outlier_cutoff</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">outlier_max_age_days</span><span class="p">)</span>
+<a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a>    <span class="n">manifest</span><span class="o">.</span><span class="n">outliers</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a>        <span class="n">o</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">outliers</span>
+<a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a>        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">latest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">outlier_cutoff</span>
+<a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a>    <span class="p">]</span>
+<a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a>
+<a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a>    <span class="c1"># Delete orphaned outlier files</span>
+<a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a>    <span class="k">for</span> <span class="n">outlier</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">outliers</span><span class="p">:</span>
+<a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a>        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">outlier</span><span class="o">.</span><span class="n">latest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">outlier_cutoff</span><span class="p">:</span>
+<a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a>            <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">outlier</span><span class="o">.</span><span class="n">file_key</span><span class="p">)</span>
+<a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a>
+<a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">put_manifest</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
 </code></pre></div>
-The vocabulary <strong>grows with the graph</strong>, improving relationship normalization over time.</p>
-<p><strong>Loop 3: Grounding Feedback (ADR-044, ADR-058)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>High-grounding concepts → More likely to match (semantically stable)
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>Low-grounding concepts → May indicate extraction errors → Adjust threshold
-</code></pre></div></p>
-<p><strong>Loop 4: Epistemic Status (ADR-065)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>AFFIRMATIVE relationships → Increase merge confidence
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>CONTESTED relationships → Flag for review
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>CONTRADICTORY relationships → Valuable dialectical tension, not errors
-</code></pre></div></p>
-<h3 id="future-true-tensor-operations">Future: True Tensor Operations</h3>
-<p>Current implementation uses CPU-based NumPy for vector operations. Future enhancements could include:</p>
-<ul>
-<li><strong>pgvector</strong> for native PostgreSQL vector similarity (ADR-072)</li>
-<li><strong>GPU-accelerated embeddings</strong> for batch operations</li>
-<li><strong>Graph Neural Network layers</strong> for learned concept clustering</li>
-</ul>
-<p>The architecture is designed to support these without fundamental restructuring—the property graph provides stable indexing while the vector layer can be upgraded independently.</p>
-<hr />
-<h2 id="trade-offs-and-design-decisions">Trade-offs and Design Decisions</h2>
-<h3 id="threshold-selection-085">Threshold Selection (0.85)</h3>
-<p><strong>Higher (0.90+):</strong>
-- ✅ Fewer false positives (wrong merges)
-- ❌ More duplicates (missed semantic matches)
-- Use case: High-precision domains (legal, medical)</p>
-<p><strong>Current (0.85):</strong>
-- ✅ Balanced precision/recall
-- ✅ Good for philosophical/conceptual documents
-- ❌ Occasional false positives</p>
-<p><strong>Lower (0.75-0.80):</strong>
-- ✅ Aggressive merging, fewer duplicates
-- ❌ Higher false positive rate
-- Use case: Exploratory research, brainstorming</p>
-<h3 id="llm-context-show-existing-concepts">LLM Context: Show Existing Concepts?</h3>
-<p><strong>Current approach:</strong> YES, show top 50 existing concepts during extraction</p>
-<p><strong>Advantages:</strong>
-- LLM can predict existing IDs (Stage 1 match)
-- LLM generates search terms that match existing concepts
-- Reduces semantic drift over time</p>
-<p><strong>Disadvantages:</strong>
-- Token cost (50 concepts ≈ 500 tokens per extraction)
-- Potential bias toward existing concepts
-- Doesn't scale beyond ~100 concepts in context</p>
-<p><strong>Alternative:</strong> No context, rely purely on vector similarity
-<strong>Future:</strong> Hybrid approach with semantic retrieval</p>
-<h3 id="merge-vs-create-philosophy">Merge vs Create Philosophy</h3>
-<p><strong>Conservative (current):</strong>
-- Default to creating new concepts unless strong match
-- Preserves nuance and subtle distinctions
-- Accepts some duplication</p>
-<p><strong>Aggressive:</strong>
-- Default to merging similar concepts
-- Prioritizes deduplication over precision
-- Risks losing subtle distinctions</p>
-<p><strong>We chose conservative</strong> because:
-1. Duplicates can be merged later (manual or automated)
-2. False merges are harder to split
-3. Evidence accumulation works either way</p>
-<hr />
-<h2 id="summary">Summary</h2>
-<p><strong>Recursive upsert</strong> is a deceptively simple pattern with profound implications:</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ol>
-<li><strong>It works</strong> because vector similarity captures semantic equivalence</li>
-<li><strong>It scales</strong> reasonably well to thousands of concepts (O(N) is acceptable)</li>
-<li><strong>It evolves</strong> as later ADRs add grounding, epistemic status, and indexing</li>
-<li><strong>It's foundational</strong> to how the system builds knowledge across documents</li>
+<li><strong>No ADR-044 Conflict</strong>: Grounding/diversity still calculated fresh at query time</li>
+<li><strong>Clean Graph Schema</strong>: No computed properties pollute Concept nodes</li>
+<li><strong>Efficient Caching</strong>: Skip expensive t-SNE/UMAP when parameters match</li>
+<li><strong>Historical Analysis</strong>: Track how concept landscape evolves</li>
+<li><strong>Playback Capability</strong>: Animate landscape changes over time</li>
+<li><strong>Leverages Existing Infrastructure</strong>: Reuses Garage from ADR-057</li>
+<li><strong>Standard Storage</strong>: JSON files are debuggable and portable</li>
 </ol>
-<p>The key insight: <strong>Don't force exact matches, don't accept everything as new—find the semantic middle ground and let evidence accumulate.</strong></p>
-<h3 id="architectural-identity">Architectural Identity</h3>
-<p>The system is best described as a <strong>vector-augmented knowledge graph</strong>—a property graph foundation (Apache AGE) with query-time semantic computation and vector operations. This hybrid architecture:</p>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Additional Storage</strong>: Projection files consume Garage space (~25-150KB each)</li>
+<li><strong>Network Latency</strong>: Fetching from Garage adds ~10-50ms vs in-memory</li>
+<li><strong>Manifest Maintenance</strong>: Need to keep manifest in sync with files</li>
+<li><strong>Cleanup Required</strong>: Old snapshots accumulate without retention policy</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>Primary/Outlier Split</strong>: Default parameters form timeline; custom analysis stored separately</li>
+<li><strong>Freshness Is Caller's Choice</strong>: API doesn't auto-refresh; caller decides</li>
+<li><strong>Grounding Included</strong>: Each snapshot includes grounding values computed at that time</li>
+<li><strong>Global Defaults</strong>: Perplexity=30 is the canonical view; other values are exploratory</li>
+</ol>
+<h2 id="what-this-adr-does-not-do">What This ADR Does NOT Do</h2>
+<p>To be explicit about scope:</p>
+<ol>
+<li><strong>Does NOT cache grounding_strength on Concept nodes</strong> - Always calculated fresh per ADR-044</li>
+<li><strong>Does NOT cache diversity_score on Concept nodes</strong> - Always calculated fresh per ADR-063</li>
+<li><strong>Does NOT implement cache invalidation</strong> - Caller explicitly requests refresh</li>
+<li><strong>Does NOT change runtime calculation behavior</strong> - Only stores results</li>
+</ol>
+<p>The projection snapshots include grounding/diversity values, but these are:
+- Computed fresh when the projection is generated
+- Stored as part of the snapshot (point-in-time values)
+- NOT used as cache for future queries (always recalculate on next projection)</p>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-core-storage">Phase 1: Core Storage</h3>
+<ol>
+<li>Create Garage bucket: <code>kg-projections</code></li>
+<li>Implement manifest read/write</li>
+<li>Implement projection file read/write (gzip JSON)</li>
+<li>Update projection service to check cache before compute</li>
+</ol>
+<h3 id="phase-2-api-integration">Phase 2: API Integration</h3>
+<ol>
+<li>Add <code>force_refresh</code> parameter to projection endpoint</li>
+<li>Implement manifest endpoint</li>
+<li>Implement historical snapshot endpoint</li>
+<li>Add cleanup endpoint</li>
+</ol>
+<h3 id="phase-3-frontend-playback">Phase 3: Frontend Playback</h3>
+<ol>
+<li>Load projection timeline from manifest</li>
+<li>Implement snapshot selector UI</li>
+<li>Implement playback animation controls</li>
+<li>Show changelist/timestamp metadata</li>
+</ol>
+<h2 id="migration">Migration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- No database migration needed.</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1">-- Garage bucket created via operator:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">-- In operator/admin/init_projection_storage.py:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">async</span><span class="w"> </span><span class="n">def</span><span class="w"> </span><span class="n">init_projection_storage</span><span class="p">():</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="ss">&quot;&quot;&quot;Initialize Garage bucket for projection storage.&quot;&quot;&quot;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="n">await</span><span class="w"> </span><span class="n">garage</span><span class="p">.</span><span class="n">create_bucket_if_not_exists</span><span class="p">(</span><span class="s1">&#39;kg-projections&#39;</span><span class="p">)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="o">#</span><span class="w"> </span><span class="k">Set</span><span class="w"> </span><span class="n">bucket</span><span class="w"> </span><span class="n">policy</span><span class="w"> </span><span class="p">(</span><span class="n">private</span><span class="p">,</span><span class="w"> </span><span class="n">API</span><span class="o">-</span><span class="n">mediated</span><span class="w"> </span><span class="k">access</span><span class="p">)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="n">await</span><span class="w"> </span><span class="n">garage</span><span class="p">.</span><span class="n">set_bucket_policy</span><span class="p">(</span><span class="s1">&#39;kg-projections&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">{</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">        </span><span class="s1">&#39;Version&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;2012-10-17&#39;</span><span class="p">,</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="s1">&#39;Statement&#39;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">{</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">            </span><span class="s1">&#39;Effect&#39;</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Allow&#39;</span><span class="p">,</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">            </span><span class="s1">&#39;Principal&#39;</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="s1">&#39;AWS&#39;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;kg-api-key&#39;</span><span class="p">]</span><span class="err">}</span><span class="p">,</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">            </span><span class="s1">&#39;Action&#39;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;s3:GetObject&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;s3:PutObject&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;s3:DeleteObject&#39;</span><span class="p">],</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">            </span><span class="s1">&#39;Resource&#39;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;arn:aws:s3:::kg-projections/*&#39;</span><span class="p">]</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">        </span><span class="err">}</span><span class="p">]</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">    </span><span class="err">}</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="references">References</h2>
 <ul>
-<li><strong>Is NOT a hypergraph</strong> (our edges connect 2 nodes; true hyperedges connect N nodes)</li>
-<li><strong>IS a property graph</strong> with rich embeddings on nodes and relationship types</li>
-<li><strong>Enables hybrid queries</strong> combining structural traversal with semantic analysis</li>
+<li>ADR-057: Multimodal Image Ingestion (Garage infrastructure)</li>
+<li>ADR-078: Embedding Landscape Explorer (projection computation)</li>
+<li>ADR-044: Probabilistic Truth Convergence (grounding calculation philosophy)</li>
+<li>ADR-063: Semantic Diversity (diversity calculation philosophy)</li>
+<li>Migration 033: Graph Change Triggers (counter wiring)</li>
 </ul>
-<p>The innovation lies in <strong>systematically replacing boolean logic with probabilistic values</strong>. Where traditional systems ask "does this relationship exist?" (yes/no), we ask "how strongly does this concept ground that one?" (continuous score via vector projection).</p>
-<p>Later enhancements (grounding, namespace safety, HNSW indexing, epistemic classification) address the pattern's limitations while preserving its core strength: <strong>organic knowledge synthesis through semantic similarity.</strong></p>
-<hr />
-<h2 id="related-adrs">Related ADRs</h2>
-<ul>
-<li><strong>ADR-016:</strong> Apache AGE Migration (graph database foundation)</li>
-<li><strong>ADR-028:</strong> Grounding Strength Calculation (epistemic feedback)</li>
-<li><strong>ADR-042:</strong> Ollama Integration (affects extraction cost)</li>
-<li><strong>ADR-044:</strong> Probabilistic Truth Convergence (grounding calculation)</li>
-<li><strong>ADR-048:</strong> GraphQueryFacade (namespace safety)</li>
-<li><strong>ADR-055:</strong> HNSW Vector Indexing (scaling beyond O(N))</li>
-<li><strong>ADR-058:</strong> Polarity Axis Triangulation (continuous grounding scores)</li>
-<li><strong>ADR-065:</strong> Epistemic Status Classification (merge reliability)</li>
-<li><strong>ADR-072:</strong> Configuration-Driven Matching (threshold tuning)</li>
-</ul>
-<p>For complete system architecture, see <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
 
 
 
