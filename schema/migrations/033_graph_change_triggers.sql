@@ -188,8 +188,9 @@ COMMENT ON FUNCTION public.update_graph_snapshot_totals IS
 -- STEP 5: Initialize counters from current graph state
 -- ============================================================================
 
--- Run initial refresh to populate all counters
-SELECT public.refresh_graph_metrics();
+-- NOTE: We don't call refresh_graph_metrics() here because the AGE graph labels
+-- (Concept, Source, etc.) may not exist yet on a fresh database. The function
+-- will be called when the API starts up or when data is first ingested.
 
 -- ============================================================================
 -- STEP 6: Add helpful view for monitoring
