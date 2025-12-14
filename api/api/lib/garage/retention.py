@@ -155,13 +155,20 @@ class RetentionPolicyManager:
         """
         Run projection cleanup across all ontologies.
 
+        Gracefully handles failures - individual ontology cleanup errors
+        don't prevent cleanup of other ontologies.
+
         Returns:
             Dict mapping ontology names to CleanupResult
         """
         results = {}
 
         # List all projection directories
-        objects = self.base.list_objects("projections/")
+        try:
+            objects = self.base.list_objects("projections/")
+        except Exception as e:
+            logger.error(f"Failed to list projection objects: {e}")
+            return results  # Return empty results rather than crashing
 
         # Extract unique ontology names from keys
         ontologies = set()
@@ -171,7 +178,12 @@ class RetentionPolicyManager:
                 ontologies.add(parts[1])  # projections/{ontology}/...
 
         for ontology in ontologies:
-            results[ontology] = self.cleanup_projections(ontology)
+            try:
+                results[ontology] = self.cleanup_projections(ontology)
+            except Exception as e:
+                # Record failure but continue with other ontologies
+                logger.error(f"Failed to cleanup projections for {ontology}: {e}")
+                results[ontology] = CleanupResult(errors=[f"Cleanup failed: {e}"])
 
         total_deleted = sum(r.deleted_count for r in results.values())
         logger.info(f"Total projection cleanup: deleted {total_deleted} snapshots across {len(ontologies)} ontologies")
