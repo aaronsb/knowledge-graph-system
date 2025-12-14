@@ -65,6 +65,20 @@ Storing source documents in Garage while also keeping chunked evidence in the gr
 
 The "new keeper" scenario is particularly valuable: re-ingesting the same documents with a different extraction strategy (random sampling → popularity-weighted → hybrid) produces different interpretations of the same source material.
 
+### Model Evolution Insurance
+
+In traditional software, storing both source documents and parsed data might be overbuilding. However, in LLM-based knowledge graphs, the "parser" (the LLM + prompts) is **non-deterministic and rapidly evolving**.
+
+Consider: today we extract concepts using a 2024-era model. When next-generation models arrive with superior reasoning, documents ingested today would be locked to 2024 extraction quality - unless we kept the sources.
+
+| Without Source Storage | With Source Storage |
+|------------------------|---------------------|
+| Locked to extraction model at ingestion time | Re-extract with future models |
+| Graph quality is frozen | Graph intelligence grows with model improvements |
+| No way to benefit from prompt improvements | Re-run with better prompts |
+
+**ADR-081 is an insurance policy against model obsolescence.** It allows replaying history with smarter agents later.
+
 ## Decision
 
 ### 1. Pre-Ingestion Storage
@@ -423,12 +437,13 @@ async def ingest_as_version(
 
 ### Positive
 
-1. **New Keeper Recovery**: Re-ingest from Garage with different extraction strategy
-2. **Strategy Experimentation**: Re-generate graph with different matching modes
-3. **Audit Trail**: Original documents preserved for compliance/debugging
-4. **Version History**: Track document evolution over time
-5. **Precise Provenance**: Line/character offsets enable source highlighting
-6. **Backup Flexibility**: Garage backup preserves source truth; graph is rebuildable
+1. **Model Evolution Insurance**: Re-extract with future LLMs as they improve
+2. **New Keeper Recovery**: Re-ingest from Garage with different extraction strategy
+3. **Strategy Experimentation**: Re-generate graph with different matching modes
+4. **Audit Trail**: Original documents preserved for compliance/debugging
+5. **Version History**: Track document evolution over time
+6. **Precise Provenance**: Line/character offsets enable source highlighting
+7. **Backup Flexibility**: Garage backup preserves source truth; graph is rebuildable
 
 ### Negative
 
