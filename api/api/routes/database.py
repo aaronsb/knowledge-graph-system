@@ -265,6 +265,144 @@ async def check_database_health():
     return DatabaseHealthResponse(**health)
 
 
+@router.get("/counters")
+async def get_graph_counters(
+    current_user: CurrentUser
+):
+    """
+    Get all graph metrics counters with categorization (ADR-079).
+
+    Returns counters organized by type:
+    - **snapshot**: Current counts refreshed from actual graph state
+    - **activity**: Application-incremented counters
+    - **legacy_structure**: Historical counters (kept for compatibility)
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `database:read` permission
+
+    Example:
+        GET /database/counters
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            # Get all metrics using the summary view
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT metric_name, counter, last_measured_counter,
+                           (counter - last_measured_counter) as delta,
+                           updated_at, counter_type, notes
+                    FROM graph_metrics_summary
+                    ORDER BY counter_type, metric_name
+                """)
+                rows = cur.fetchall()
+
+            # Organize by type
+            counters = {
+                "snapshot": [],
+                "activity": [],
+                "legacy_structure": []
+            }
+
+            for row in rows:
+                counter_data = {
+                    "name": row[0],
+                    "value": row[1],
+                    "last_measured": row[2],
+                    "delta": row[3],
+                    "updated_at": row[4].isoformat() if row[4] else None,
+                    "notes": row[6]
+                }
+                counter_type = row[5] or "legacy_structure"
+                if counter_type in counters:
+                    counters[counter_type].append(counter_data)
+
+            # Get current snapshot for comparison
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM get_graph_snapshot()")
+                snapshot = cur.fetchone()
+
+            return {
+                "counters": counters,
+                "current_snapshot": {
+                    "concepts": snapshot[0],
+                    "edges": snapshot[1],
+                    "sources": snapshot[2],
+                    "vocab_types": snapshot[3],
+                    "total_objects": snapshot[4]
+                } if snapshot else None
+            }
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to get graph counters: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get graph counters: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/counters/refresh")
+async def refresh_graph_counters(
+    current_user: CurrentUser
+):
+    """
+    Refresh all graph metrics counters from current graph state (ADR-079).
+
+    This updates the snapshot counters to match current actual counts.
+    Safe to call repeatedly (idempotent). Typically called after:
+    - Document ingestion
+    - Vocabulary consolidation
+    - Database restore
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `database:write` permission
+
+    Returns:
+        List of counters that changed with old/new values
+
+    Example:
+        POST /database/counters/refresh
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM refresh_graph_metrics()")
+                rows = cur.fetchall()
+            conn.commit()
+
+            changes = []
+            for row in rows:
+                changes.append({
+                    "metric": row[0],
+                    "old_value": row[1],
+                    "new_value": row[2],
+                    "changed": row[3]
+                })
+
+            changed_count = sum(1 for c in changes if c["changed"])
+            logger.info(f"Refreshed graph metrics: {changed_count} counters changed")
+
+            return {
+                "success": True,
+                "changes": changes,
+                "changed_count": changed_count
+            }
+
+        finally:
+            client.pool.putconn(conn)
+
+    except Exception as e:
+        logger.error(f"Failed to refresh graph counters: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to refresh graph counters: {str(e)}")
+    finally:
+        client.close()
+
+
 @router.post("/query", response_model=CypherQueryResponse)
 async def execute_cypher_query(
     request: CypherQueryRequest,

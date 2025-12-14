@@ -360,6 +360,20 @@ def run_ingestion_worker(
             # Non-fatal - log but don't fail the job
             logger.warning(f"Failed to sync vocabulary: {e}")
 
+        # Refresh graph metrics after ingestion (ADR-079: cache invalidation)
+        # This updates the counters used for projection cache invalidation
+        try:
+            conn = age_client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT refresh_graph_metrics()")
+                conn.commit()
+                logger.debug(f"[{job_id}] Refreshed graph metrics after ingestion")
+            finally:
+                age_client.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
+
         # Close AGE connection
         age_client.close()
 

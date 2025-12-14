@@ -20,6 +20,7 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
+  BarChart3,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { Section, StatusBadge } from './components';
@@ -33,11 +34,13 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   // Data states
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
+  const [dbCounters, setDbCounters] = useState<any>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
   const [embeddingConfigs, setEmbeddingConfigs] = useState<EmbeddingConfig[]>([]);
   const [extractionConfig, setExtractionConfig] = useState<ExtractionConfig | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKeyInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingCounters, setRefreshingCounters] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -47,9 +50,10 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [status, stats, scheduler, embeddings, extraction, keys] = await Promise.all([
+      const [status, stats, counters, scheduler, embeddings, extraction, keys] = await Promise.all([
         apiClient.getSystemStatus().catch(() => null),
         apiClient.getDatabaseStats().catch(() => null),
+        apiClient.getDatabaseCounters().catch(() => null),
         apiClient.getSchedulerStatus().catch(() => null),
         apiClient.listEmbeddingConfigs().catch(() => []),
         apiClient.getExtractionConfig().catch(() => null),
@@ -57,6 +61,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       ]);
       setSystemStatus(status);
       setDbStats(stats);
+      setDbCounters(counters);
       setSchedulerStatus(scheduler);
       setEmbeddingConfigs(embeddings);
       setExtractionConfig(extraction);
@@ -65,6 +70,20 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       onError(err instanceof Error ? err.message : 'Failed to load system data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshCounters = async () => {
+    setRefreshingCounters(true);
+    try {
+      await apiClient.refreshDatabaseCounters();
+      // Reload counters after refresh
+      const counters = await apiClient.getDatabaseCounters();
+      setDbCounters(counters);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to refresh counters');
+    } finally {
+      setRefreshingCounters(false);
     }
   };
 
@@ -176,6 +195,120 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
             Unable to load database statistics.
           </p>
         )}
+      </Section>
+
+      <Section
+        title="Graph Metrics"
+        icon={<BarChart3 className="w-5 h-5" />}
+        action={
+          <button
+            onClick={handleRefreshCounters}
+            disabled={refreshingCounters}
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50"
+            title="Refresh counters from graph state"
+          >
+            {refreshingCounters ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+          </button>
+        }
+      >
+        <p className="text-sm text-muted-foreground mb-4">
+          Counters for tracking graph changes and cache invalidation (ADR-079).
+        </p>
+        {dbCounters?.current_snapshot ? (
+          <>
+            {/* Current Snapshot */}
+            <div className="mb-4">
+              <div className="text-sm font-medium text-foreground mb-2">Current Snapshot</div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-foreground">
+                    {dbCounters.current_snapshot.concepts.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Concepts</div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-foreground">
+                    {dbCounters.current_snapshot.edges.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Edges</div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-foreground">
+                    {dbCounters.current_snapshot.sources.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Sources</div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-foreground">
+                    {dbCounters.current_snapshot.vocab_types.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Vocab Types</div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-foreground">
+                    {dbCounters.current_snapshot.total_objects.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Snapshot Counters */}
+            {dbCounters.counters?.snapshot?.length > 0 && (
+              <div className="mb-4">
+                <div className="text-sm font-medium text-foreground mb-2">Snapshot Counters</div>
+                <div className="space-y-1">
+                  {dbCounters.counters.snapshot.map((c: any) => (
+                    <div key={c.name} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
+                      <span className="text-muted-foreground font-mono text-xs">{c.name}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-foreground font-medium">{c.value.toLocaleString()}</span>
+                        {c.delta !== 0 && (
+                          <span className={`text-xs ${c.delta > 0 ? 'text-status-active' : 'text-status-warning'}`}>
+                            ({c.delta > 0 ? '+' : ''}{c.delta})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Activity Counters */}
+            {dbCounters.counters?.activity?.length > 0 && (
+              <div className="mb-4">
+                <div className="text-sm font-medium text-foreground mb-2">Activity Counters</div>
+                <div className="space-y-1">
+                  {dbCounters.counters.activity.map((c: any) => (
+                    <div key={c.name} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
+                      <span className="text-muted-foreground font-mono text-xs">{c.name}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-foreground font-medium">{c.value.toLocaleString()}</span>
+                        {c.delta !== 0 && (
+                          <span className={`text-xs ${c.delta > 0 ? 'text-status-active' : 'text-status-warning'}`}>
+                            ({c.delta > 0 ? '+' : ''}{c.delta})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-muted-foreground text-center py-4">
+            Unable to load graph metrics.
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Use <code className="bg-muted px-1 rounded">kg database counters</code> for detailed CLI view
+        </p>
       </Section>
 
       <Section

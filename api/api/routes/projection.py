@@ -184,15 +184,8 @@ async def get_projection(
     Supports conditional requests:
     - If-None-Match: changelist_id → returns 304 if unchanged
     """
-    # Cache key includes embedding source
-    cache_key = f"{ontology}:{embedding_source}"
-
-    # Check for cached projection
-    dataset = get_cached_projection(cache_key)
-
-    # Fall back to legacy cache key (without source) for backward compatibility
-    if dataset is None and embedding_source == "concepts":
-        dataset = get_cached_projection(ontology)
+    # Check for cached projection from Garage (ADR-079)
+    dataset = get_cached_projection(ontology, embedding_source)
 
     if dataset is None:
         raise HTTPException(
@@ -222,9 +215,9 @@ async def regenerate_projection(
     By default, queues a background job. If the ontology is small (< 100 concepts),
     computes synchronously and returns immediately.
     """
-    # Check if cache exists and force=False
+    # Check if cache exists and force=False (ADR-079: Garage storage)
     if not body.force:
-        cached = get_cached_projection(ontology)
+        cached = get_cached_projection(ontology, body.embedding_source)
         if cached is not None:
             return RegenerateResponse(
                 status="skipped",
@@ -251,9 +244,6 @@ async def regenerate_projection(
 
     concept_count = len(concepts)
 
-    # Cache key includes embedding source
-    cache_key = f"{ontology}:{body.embedding_source}"
-
     # For small/medium ontologies, compute synchronously (t-SNE is fast)
     # Only queue for very large ontologies (>500 concepts) where t-SNE takes >10s
     if concept_count < 500:
@@ -275,9 +265,9 @@ async def regenerate_projection(
             embedding_source=body.embedding_source
         )
 
-        # Store to cache (with embedding source in key)
+        # Store to Garage (ADR-079)
         from api.api.workers.projection_worker import _store_projection
-        _store_projection(cache_key, dataset)
+        _store_projection(ontology, body.embedding_source, dataset)
 
         return RegenerateResponse(
             status="computed",
