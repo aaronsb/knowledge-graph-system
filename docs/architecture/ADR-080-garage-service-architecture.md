@@ -3,8 +3,8 @@
 **Status:** Proposed
 **Date:** 2025-12-14
 **Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-057 (Multimodal Image Ingestion), ADR-079 (Projection Artifact Storage)
-**Closes:** #172, #175
+**Related ADRs:** ADR-057 (Multimodal Image Ingestion), ADR-079 (Projection Artifact Storage), ADR-081 (Source Document Lifecycle)
+**Closes:** #175
 
 ## Context
 
@@ -16,12 +16,11 @@ The `GarageClient` class has grown to 732 lines handling multiple distinct respo
 
 This violates the Single Responsibility Principle (#175) and makes the code harder to maintain and test.
 
-Additionally, we have unfinished work from #172:
-- Source document storage (store original text in Garage)
-- Retention policies for projection snapshots
-- Automated cleanup of old artifacts
+This ADR focuses on **clean code refactoring** - establishing a modular service architecture that future features (like source document storage in ADR-081) can build upon.
 
-This ADR addresses both issues by establishing a modular Garage service architecture.
+**Scope clarification:**
+- **ADR-080 (this)**: Service architecture, SRP refactor, retention policies
+- **ADR-081**: Source document lifecycle, deduplication, versioning, regeneration
 
 ## Decision
 
