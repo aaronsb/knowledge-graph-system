@@ -37,6 +37,11 @@
   - Added `normalize_content_hash()` helper to strip prefix
   - Added `precomputed_hash` parameter to `compute_identity()` and `store()`
   - Worker now reuses hash from dedup check (avoids recomputing SHA-256)
+- [x] Code Review Fixes (PR #178)
+  - Added validation to `normalize_content_hash()` (reject None, empty, wrong length, non-hex)
+  - Made Garage storage failure fatal (fail-fast alerts operator)
+  - Added offset validation in `create_source_node()` (start >= 0, end >= start, index >= 0)
+  - Added 10 unit tests for hash normalization and precomputed hash
 
 ## Remaining
 
