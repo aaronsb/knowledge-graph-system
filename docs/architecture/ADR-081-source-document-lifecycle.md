@@ -19,18 +19,51 @@ But we lose:
 - The ability to re-process with improved extraction
 - Version history when documents are updated
 
+### The Knowledge Keeper Model
+
+Think of the system as a knowledge keeper with a warehouse:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        THE KNOWLEDGE KEEPER                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  WAREHOUSE (Garage)              MIND (Graph)                       │
+│  ═══════════════════             ══════════════                     │
+│                                                                     │
+│    Books                           WHY I kept them                  │
+│    Documents                       HOW they connect                 │
+│    Pictures                        WHAT they mean together          │
+│    Artifacts                       The project context              │
+│                                    The relationships I see          │
+│    (storage)                       (understanding)                  │
+│                                                                     │
+│         │            FILING SYSTEM              │                   │
+│         │            ══════════════             │                   │
+│         └───────►    Document nodes    ◄────────┘                   │
+│                      Source nodes                                   │
+│                      (where things are)                             │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+- **Garage** = The warehouse (physical artifacts, content storage)
+- **Document/Source nodes** = The filing system (organization, location, offsets)
+- **Concepts + Relationships** = The mind (meaning, context, the "why")
+
+The graph isn't just an index - it's the **understanding layer**. Concepts and relationships capture what a filing system never could: *"I collected these systems architecture docs because of that project, which connects to these project management behaviors..."*
+
 ### The Redundancy Question
 
-Storing source documents in Garage while also keeping chunked evidence in the graph creates apparent duplication. However, this **intentional redundancy** enables critical capabilities:
+Storing source documents in Garage while also keeping chunked evidence in the graph creates apparent duplication. However, this **intentional redundancy** enables resilience:
 
-| Scenario | Primary Source | Recovery From |
-|----------|---------------|---------------|
-| Garage unavailable | Graph evidence | Concatenate chunks to recreate source |
-| Graph corrupted | Garage sources | Re-ingest to rebuild graph |
-| Backup/restore | Either | Database backup OR Garage backup |
-| Strategy change | Garage sources | Re-ingest with new matching mode |
+| Scenario | What Happens | Recovery |
+|----------|--------------|----------|
+| **Warehouse disaster** | Garage storage lost | Mind rebuilds warehouse from last backup |
+| **New keeper** | Graph cleared or strategy change | New keeper re-reads all documents, builds fresh understanding |
+| **Routine backup** | Either layer backed up | Database backup OR Garage backup sufficient |
 
-This bidirectional relationship means the system can recover from either storage layer failing.
+The "new keeper" scenario is particularly valuable: re-ingesting the same documents with a different extraction strategy (random sampling → popularity-weighted → hybrid) produces different interpretations of the same source material.
 
 ## Decision
 
@@ -81,9 +114,11 @@ def compute_document_identity(content: bytes, ontology: str) -> DocumentIdentity
     """
     content_hash = hashlib.sha256(content).hexdigest()
 
-    # Garage key uses hash prefix (12 chars = 48 bits = collision-resistant)
-    # Extension preserved for content-type inference
-    garage_key = f"sources/{sanitize(ontology)}/{content_hash[:12]}.txt"
+    # Garage key uses hash prefix (32 chars = 128 bits = UUID-equivalent)
+    # This provides collision resistance for a future sharded universe
+    # where billions of documents may exist across many shards.
+    # Extension preserved for content-type inference.
+    garage_key = f"sources/{sanitize(ontology)}/{content_hash[:32]}.txt"
 
     return DocumentIdentity(
         content_hash=content_hash,
@@ -97,6 +132,16 @@ def compute_document_identity(content: bytes, ontology: str) -> DocumentIdentity
 - Different content never collides
 - Filename changes don't create duplicates
 - Natural deduplication
+
+**Why 32 characters (128 bits)?**
+
+| Hash Length | Bits | 50% Collision At | Suitability |
+|-------------|------|------------------|-------------|
+| 12 chars | 48 | ~17 million | Single instance only |
+| 16 chars | 64 | ~4 billion | Tight for universe |
+| 32 chars | 128 | ~18 quintillion | UUID-equivalent ✓ |
+
+The 128-bit namespace provides collision resistance for a future sharded universe where billions of documents may exist across many shards. This follows the well-understood UUID pattern with extensive library support.
 
 ### 3. Deduplication Tiers
 
@@ -144,9 +189,9 @@ async def check_deduplication(
     full_text: "The chunk text content...",   // Still needed for graph queries
     paragraph: 3,                              // Legacy paragraph number
 
-    // NEW: Garage reference
-    garage_key: "sources/Philosophy/a1b2c3d4e5f6.txt",
-    content_hash: "a1b2c3d4e5f6789...",       // Full SHA-256
+    // NEW: Garage reference (32-char hash = 128 bits)
+    garage_key: "sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt",
+    content_hash: "a1b2c3d4e5f6789012345678abcdef01...",  // Full SHA-256
 
     // NEW: Position in original document
     char_offset_start: 4521,                  // Character position
@@ -167,8 +212,8 @@ Track document-level metadata separately from chunks:
 
 ```cypher
 (:Document {
-    garage_key: "sources/Philosophy/a1b2c3d4e5f6.txt",
-    content_hash: "a1b2c3d4e5f6789...",
+    garage_key: "sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt",
+    content_hash: "a1b2c3d4e5f6789012345678abcdef01...",  // Full SHA-256
     ontology: "Philosophy",
 
     // Metadata
@@ -180,7 +225,10 @@ Track document-level metadata separately from chunks:
     // Versioning
     version: 1,
     supersedes: null,                         // Previous version's garage_key
-    superseded_by: null                       // Newer version's garage_key
+    superseded_by: null,                      // Newer version's garage_key
+
+    // Shard provenance (for future universe of shards)
+    shard_origin: null                        // Shard ID if received via trade
 })
 
 // Relationship to chunks
