@@ -177,3 +177,127 @@ class TestHashPrefixConstant:
         # 32 hex chars × 4 bits per char = 128 bits
         bits = 32 * 4
         assert bits == 128
+
+
+class TestNormalizeContentHash:
+    """Tests for normalize_content_hash utility (ADR-081 Phase 2c)."""
+
+    def test_strips_sha256_prefix(self):
+        """Strips 'sha256:' prefix from prefixed hash."""
+        from api.api.lib.garage import normalize_content_hash
+
+        prefixed = "sha256:" + "a" * 64
+        assert normalize_content_hash(prefixed) == "a" * 64
+
+    def test_passes_through_raw_hash(self):
+        """Raw hash (no prefix) passes through unchanged."""
+        from api.api.lib.garage import normalize_content_hash
+
+        raw = "b" * 64
+        assert normalize_content_hash(raw) == raw
+
+    def test_validates_hash_length(self):
+        """Rejects hashes that are not exactly 64 chars after normalization."""
+        from api.api.lib.garage import normalize_content_hash
+
+        with pytest.raises(ValueError, match="expected 64 chars"):
+            normalize_content_hash("tooshort")
+
+        with pytest.raises(ValueError, match="expected 64 chars"):
+            normalize_content_hash("sha256:alsotooshort")
+
+    def test_validates_hex_format(self):
+        """Rejects hashes with non-hex characters."""
+        from api.api.lib.garage import normalize_content_hash
+
+        # 64 chars but contains 'g' (not hex)
+        invalid_hex = "g" * 64
+        with pytest.raises(ValueError, match="Invalid hex format"):
+            normalize_content_hash(invalid_hex)
+
+    def test_rejects_none(self):
+        """Rejects None input."""
+        from api.api.lib.garage import normalize_content_hash
+
+        with pytest.raises(ValueError, match="cannot be None or empty"):
+            normalize_content_hash(None)
+
+    def test_rejects_empty_string(self):
+        """Rejects empty string input."""
+        from api.api.lib.garage import normalize_content_hash
+
+        with pytest.raises(ValueError, match="cannot be None or empty"):
+            normalize_content_hash("")
+
+    def test_valid_sha256_examples(self):
+        """Accepts real SHA-256 hash examples."""
+        from api.api.lib.garage import normalize_content_hash
+        import hashlib
+
+        # Generate a real hash
+        real_hash = hashlib.sha256(b"test content").hexdigest()
+
+        # Both formats should work
+        assert normalize_content_hash(real_hash) == real_hash
+        assert normalize_content_hash(f"sha256:{real_hash}") == real_hash
+
+
+class TestPrecomputedHash:
+    """Tests for precomputed_hash parameter in compute_identity."""
+
+    def test_uses_precomputed_hash_when_provided(self):
+        """Skips hashing when precomputed_hash is provided."""
+        from api.api.lib.garage.source_storage import SourceDocumentService
+        import hashlib
+
+        service = SourceDocumentService.__new__(SourceDocumentService)
+
+        # Provide precomputed hash (different from what content would produce)
+        precomputed = "a" * 64
+        identity = service.compute_identity(
+            content=b"Some content",
+            ontology="Test",
+            extension="txt",
+            precomputed_hash=precomputed
+        )
+
+        assert identity.content_hash == precomputed
+
+    def test_normalizes_prefixed_precomputed_hash(self):
+        """Strips sha256: prefix from precomputed hash."""
+        from api.api.lib.garage.source_storage import SourceDocumentService
+
+        service = SourceDocumentService.__new__(SourceDocumentService)
+
+        raw_hash = "b" * 64
+        prefixed_hash = f"sha256:{raw_hash}"
+
+        identity = service.compute_identity(
+            content=b"Content",
+            ontology="Test",
+            extension="txt",
+            precomputed_hash=prefixed_hash
+        )
+
+        # Should be stored without prefix
+        assert identity.content_hash == raw_hash
+        assert "sha256:" not in identity.content_hash
+
+    def test_computes_hash_when_not_provided(self):
+        """Computes SHA-256 when precomputed_hash is None."""
+        from api.api.lib.garage.source_storage import SourceDocumentService
+        import hashlib
+
+        service = SourceDocumentService.__new__(SourceDocumentService)
+
+        content = b"Hash this content"
+        expected_hash = hashlib.sha256(content).hexdigest()
+
+        identity = service.compute_identity(
+            content=content,
+            ontology="Test",
+            extension="txt",
+            precomputed_hash=None
+        )
+
+        assert identity.content_hash == expected_hash

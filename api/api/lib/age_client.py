@@ -338,8 +338,20 @@ class AGEClient:
             Dictionary with created node properties
 
         Raises:
+            ValueError: If offset parameters are invalid
             Exception: If node creation fails
         """
+        # ADR-081: Validate offset parameters
+        if char_offset_start is not None and char_offset_start < 0:
+            raise ValueError(f"char_offset_start must be >= 0, got {char_offset_start}")
+        if char_offset_end is not None and char_offset_end < 0:
+            raise ValueError(f"char_offset_end must be >= 0, got {char_offset_end}")
+        if char_offset_start is not None and char_offset_end is not None:
+            if char_offset_end < char_offset_start:
+                raise ValueError(f"char_offset_end ({char_offset_end}) must be >= char_offset_start ({char_offset_start})")
+        if chunk_index is not None and chunk_index < 0:
+            raise ValueError(f"chunk_index must be >= 0, got {chunk_index}")
+
         query = """
         CREATE (s:Source {
             source_id: $source_id,

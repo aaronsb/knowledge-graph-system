@@ -36,10 +36,27 @@ def normalize_content_hash(hash_value: str) -> str:
 
     Returns:
         Raw 64-character hex hash
+
+    Raises:
+        ValueError: If hash is None, empty, wrong length, or not valid hex
     """
+    if not hash_value:
+        raise ValueError("Hash value cannot be None or empty")
+
     if hash_value.startswith("sha256:"):
-        return hash_value[7:]  # Strip "sha256:" prefix
-    return hash_value
+        normalized = hash_value[7:]  # Strip "sha256:" prefix
+    else:
+        normalized = hash_value
+
+    if len(normalized) != 64:
+        raise ValueError(f"Invalid hash length: expected 64 chars, got {len(normalized)}")
+
+    try:
+        int(normalized, 16)  # Verify it's valid hex
+    except ValueError:
+        raise ValueError(f"Invalid hex format in hash: {normalized[:20]}...")
+
+    return normalized
 
 
 @dataclass
