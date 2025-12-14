@@ -152,6 +152,41 @@ def run_ingestion_worker(
         content = base64.b64decode(content_b64)
     filename = job_data.get("filename", f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
+    # ADR-081: Pre-ingestion source document storage
+    # Store document in Garage BEFORE chunking for:
+    # - Model evolution insurance (re-extract with future LLMs)
+    # - FUSE filesystem support (ADR-069)
+    # - Bidirectional recovery capability
+    if not is_image_job:
+        # ADR-081: Pre-ingestion Garage storage is REQUIRED
+        # If Garage fails, something is fundamentally wrong with the platform.
+        # Fail fast to alert the operator rather than silently degrading.
+        from api.api.lib.garage import get_source_storage
+        source_storage = get_source_storage()
+
+        # Determine file extension from filename
+        ext = Path(filename).suffix.lstrip('.') or 'txt'
+
+        # Reuse hash from dedup check (already computed by ContentHasher)
+        # This avoids recomputing SHA-256 and ensures format consistency
+        existing_hash = job_data.get("content_hash")
+
+        # Store document and get content-addressed identity
+        doc_identity = source_storage.store(
+            content=content,
+            ontology=ontology,
+            original_filename=filename,
+            extension=ext,
+            precomputed_hash=existing_hash
+        )
+
+        # Save for Source node association during chunk processing
+        # Note: doc_identity.content_hash is raw format (no "sha256:" prefix)
+        job_data["source_garage_key"] = doc_identity.garage_key
+        job_data["source_content_hash"] = doc_identity.content_hash
+
+        logger.info(f"📦 Stored source document in Garage: {doc_identity.garage_key} ({doc_identity.size_bytes} bytes)")
+
     # Extract options
     target_words = options.get("target_words", 1000)
     min_words = options.get("min_words", int(target_words * 0.8))
@@ -291,7 +326,10 @@ def run_ingestion_worker(
                 content_type=job_data.get("content_type", "document"),
                 storage_key=job_data.get("storage_key"),
                 visual_embedding=job_data.get("visual_embedding"),
-                text_embedding=None  # Will be generated during concept extraction
+                text_embedding=None,  # Will be generated during concept extraction
+                # ADR-081: Pass source document storage metadata
+                garage_key=job_data.get("source_garage_key"),
+                content_hash=job_data.get("source_content_hash")
             )
 
             # Update progress with detailed stats AND save resume checkpoint
@@ -341,7 +379,9 @@ def run_ingestion_worker(
                 source_type=job_data.get("source_type"),       # "file" | "stdin" | "mcp" | "api"
                 file_path=job_data.get("source_path"),         # Full path (not tmp_path)
                 hostname=job_data.get("source_hostname"),      # Hostname where ingested
-                source_ids=source_ids
+                source_ids=source_ids,
+                # ADR-081: Link to source document in Garage
+                garage_key=job_data.get("source_garage_key")
             )
             logger.info(f"✓ Created DocumentMeta node: {job_data['content_hash'][:16]}... ({stats.sources_created} sources)")
         except Exception as e:

@@ -36,7 +36,7 @@ from typing import Optional
 from .base import GarageBaseClient, sanitize_path_component
 from .image_storage import ImageStorageService
 from .projection_storage import ProjectionStorageService
-from .source_storage import SourceDocumentService, DocumentIdentity
+from .source_storage import SourceDocumentService, DocumentIdentity, normalize_content_hash
 from .retention import RetentionPolicyManager, CleanupResult, StorageStats
 
 

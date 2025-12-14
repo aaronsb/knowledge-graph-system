@@ -307,7 +307,13 @@ class AGEClient:
         content_type: str = "document",
         storage_key: str = None,
         visual_embedding: list = None,
-        embedding: list = None
+        embedding: list = None,
+        # ADR-081: Source document lifecycle
+        garage_key: str = None,
+        content_hash: str = None,
+        char_offset_start: int = None,
+        char_offset_end: int = None,
+        chunk_index: int = None
     ) -> Dict[str, Any]:
         """
         Create a Source node in the graph.
@@ -322,13 +328,30 @@ class AGEClient:
             storage_key: MinIO object key for image storage (images only, ADR-057)
             visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-057)
             embedding: Text embedding of full_text (both documents and image prose, ADR-057)
+            garage_key: Garage object key for source document (ADR-081)
+            content_hash: SHA-256 hash of original document content (ADR-081)
+            char_offset_start: Starting character position in original document (ADR-081)
+            char_offset_end: Ending character position in original document (ADR-081)
+            chunk_index: Zero-based chunk index for ordering (ADR-081)
 
         Returns:
             Dictionary with created node properties
 
         Raises:
+            ValueError: If offset parameters are invalid
             Exception: If node creation fails
         """
+        # ADR-081: Validate offset parameters
+        if char_offset_start is not None and char_offset_start < 0:
+            raise ValueError(f"char_offset_start must be >= 0, got {char_offset_start}")
+        if char_offset_end is not None and char_offset_end < 0:
+            raise ValueError(f"char_offset_end must be >= 0, got {char_offset_end}")
+        if char_offset_start is not None and char_offset_end is not None:
+            if char_offset_end < char_offset_start:
+                raise ValueError(f"char_offset_end ({char_offset_end}) must be >= char_offset_start ({char_offset_start})")
+        if chunk_index is not None and chunk_index < 0:
+            raise ValueError(f"chunk_index must be >= 0, got {chunk_index}")
+
         query = """
         CREATE (s:Source {
             source_id: $source_id,
@@ -339,7 +362,12 @@ class AGEClient:
             content_type: $content_type,
             storage_key: $storage_key,
             visual_embedding: $visual_embedding,
-            embedding: $embedding
+            embedding: $embedding,
+            garage_key: $garage_key,
+            content_hash: $content_hash,
+            char_offset_start: $char_offset_start,
+            char_offset_end: $char_offset_end,
+            chunk_index: $chunk_index
         })
         RETURN s
         """
@@ -356,7 +384,12 @@ class AGEClient:
                     "content_type": content_type,
                     "storage_key": storage_key,
                     "visual_embedding": visual_embedding,
-                    "embedding": embedding
+                    "embedding": embedding,
+                    "garage_key": garage_key,
+                    "content_hash": content_hash,
+                    "char_offset_start": char_offset_start,
+                    "char_offset_end": char_offset_end,
+                    "chunk_index": chunk_index
                 },
                 fetch_one=True
             )
@@ -2381,10 +2414,12 @@ class AGEClient:
         file_path: Optional[str] = None,
         hostname: Optional[str] = None,
         ingested_at: Optional[str] = None,
-        source_ids: Optional[List[str]] = None
+        source_ids: Optional[List[str]] = None,
+        # ADR-081: Source document lifecycle
+        garage_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Create a DocumentMeta node and link it to Source nodes (ADR-051).
+        Create a DocumentMeta node and link it to Source nodes (ADR-051, ADR-081).
 
         Tracks successfully ingested documents as first-class graph citizens.
         Enables deduplication via graph (persistent) instead of jobs table (ephemeral).
@@ -2402,6 +2437,7 @@ class AGEClient:
             hostname: Hostname where ingested (optional, CLI only)
             ingested_at: ISO timestamp (optional, defaults to now())
             source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
+            garage_key: Garage object key for source document (ADR-081)
 
         Returns:
             Created DocumentMeta node properties
@@ -2421,7 +2457,8 @@ class AGEClient:
             ...     source_type="file",
             ...     file_path="/home/user/docs/chapter1.txt",
             ...     hostname="workstation-01",
-            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...]
+            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...],
+            ...     garage_key="sources/My_Docs/a1b2c3d4...txt"
             ... )
         """
         from datetime import datetime, timezone
@@ -2445,6 +2482,9 @@ class AGEClient:
             properties["file_path"] = file_path
         if hostname:
             properties["hostname"] = hostname
+        # ADR-081: Link to source document in Garage
+        if garage_key:
+            properties["garage_key"] = garage_key
 
         # Add timestamp (default to now if not provided)
         if ingested_at:

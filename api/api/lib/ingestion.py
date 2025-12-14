@@ -176,7 +176,10 @@ def process_chunk(
     content_type: str = "document",
     storage_key: Optional[str] = None,
     visual_embedding: Optional[List[float]] = None,
-    text_embedding: Optional[List[float]] = None
+    text_embedding: Optional[List[float]] = None,
+    # ADR-081: Source document lifecycle
+    garage_key: Optional[str] = None,
+    content_hash: Optional[str] = None
 ) -> List[str]:
     """
     Process a single chunk: create source, extract concepts, create graph nodes.
@@ -231,7 +234,13 @@ def process_chunk(
             content_type=content_type,
             storage_key=storage_key,
             visual_embedding=visual_embedding,
-            embedding=text_embedding
+            embedding=text_embedding,
+            # ADR-081: Source document lifecycle
+            garage_key=garage_key,
+            content_hash=content_hash,
+            char_offset_start=chunk.start_char,
+            char_offset_end=chunk.end_char,
+            chunk_index=chunk.chunk_number - 1  # Convert to 0-indexed
         )
         stats.sources_created += 1
         logger.info(f"  ✓ Created Source node: {source_id} (type: {content_type})")
