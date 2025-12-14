@@ -32,14 +32,46 @@
   - Added `garage_key` to DocumentMeta node (ADR-081)
   - Reuses existing DocumentMeta (ADR-051) rather than creating new Document type
   - Complete linkage: DocumentMeta(garage_key) → Source(garage_key, offsets) → Garage
+- [x] Phase 2c: Hash Format Consistency
+  - Fixed inconsistency: ContentHasher uses "sha256:abc..." but Garage uses raw "abc..."
+  - Added `normalize_content_hash()` helper to strip prefix
+  - Added `precomputed_hash` parameter to `compute_identity()` and `store()`
+  - Worker now reuses hash from dedup check (avoids recomputing SHA-256)
 
 ## Remaining
 
 ### Phase 3: Deduplication
-- [ ] Implement exact-match deduplication (hash check)
-- [ ] Implement similarity-based deduplication (embedding comparison)
+- [x] Exact-match deduplication (hash check) — **Already implemented** via ContentHasher + DocumentMeta
+- [~] ~~Similarity-based deduplication (embedding comparison)~~ — **DEFERRED** (see rationale below)
 - [ ] Add force override with versioning
 - [ ] Update API to return dedup warnings
+
+## Deferred: Similarity-Based Document Deduplication
+
+**Decision:** Do NOT implement document-level similarity detection.
+
+**Rationale:**
+1. **Concept-level dedup is the unique strength** — The graph already deduplicates
+   semantically at the concept level during ingestion. Each concept is matched against
+   existing concepts via embedding similarity. This is where semantic understanding happens.
+
+2. **Wrong layer for intelligence** — Document-level similarity tries to be smart at
+   the file level instead of the knowledge level. We're not building MS GraphRAG.
+
+3. **Scope creep risk** — Opens a can of worms: embeddings, thresholds, batch latency,
+   approximate vs exact, etc. High effort, low unique value.
+
+4. **Hash exact-match is sufficient** — True duplicates (same bytes) are already caught.
+   Near-duplicates (formatting changes, typo fixes) are rare edge cases. If they occur,
+   the concept-level matching handles semantic overlap anyway.
+
+5. **Latency concern** — Similarity check requires embedding before decision, adding
+   ~100-500ms latency per document. For batch uploads this compounds badly.
+
+**What we have instead:**
+- Hash-based exact match (fast, via ContentHasher → DocumentMeta)
+- Concept-level semantic deduplication (during ingestion)
+- Time-based policy (allow re-ingest after 30 days)
 
 ### Phase 4: Regeneration
 - [ ] Implement Garage → Graph regeneration ("new keeper" scenario)

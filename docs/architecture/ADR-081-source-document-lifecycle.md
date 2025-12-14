@@ -157,38 +157,41 @@ def compute_document_identity(content: bytes, ontology: str) -> DocumentIdentity
 
 The 128-bit namespace provides collision resistance for a future sharded universe where billions of documents may exist across many shards. This follows the well-understood UUID pattern with extensive library support.
 
-### 3. Deduplication Tiers
+### 3. Deduplication Strategy
+
+**Implemented: Hash-Based Exact Match**
 
 | Match Level | Detection | Behavior | Rationale |
 |-------------|-----------|----------|-----------|
-| **Exact** (100%) | SHA-256 hash match | Refuse | Already ingested, no new information |
-| **High similarity** (80-95%) | Cosine similarity of chunk embeddings | Warn + refuse | Likely same document with minor edits |
-| **Forced similar** | User overrides warning | Ingest as version | Explicit acknowledgment of near-duplicate |
-| **Novel** (<80%) | Below threshold | Normal ingest | Sufficiently different content |
+| **Exact** (100%) | SHA-256 hash match | Refuse (unless `force=true`) | Already ingested, no new information |
+| **In progress** | Job status check | Refuse | Already processing or queued |
+| **Recent** (<30 days) | Timestamp check | Refuse (unless `force=true`) | Recently ingested |
+| **Novel** | No match | Normal ingest | New content |
 
-The **80% threshold** aligns with existing concept deduplication - consistency across the system.
+This is implemented via `ContentHasher` → `DocumentMeta` lookup (ADR-051).
 
-```python
-class DeduplicationResult:
-    status: Literal["exact_match", "high_similarity", "novel"]
-    similarity_score: Optional[float]  # 0.0-1.0 for similar matches
-    matching_document: Optional[str]   # garage_key of match
-    can_force: bool                    # True if force=True would proceed
+**Deferred: Similarity-Based Detection**
 
-async def check_deduplication(
-    content: bytes,
-    ontology: str,
-    force: bool = False
-) -> DeduplicationResult:
-    """
-    Check if document is duplicate or near-duplicate.
+Document-level embedding similarity was considered but **intentionally not implemented**:
 
-    1. Compute hash, check for exact match
-    2. If no exact match, chunk and embed
-    3. Compare embeddings against existing sources
-    4. Return result with similarity info
-    """
-```
+1. **Concept-level dedup is the unique strength** — The graph already deduplicates
+   semantically at the concept level during ingestion. Each concept is matched against
+   existing concepts via embedding similarity. This is where semantic understanding happens.
+
+2. **Wrong layer for intelligence** — Document-level similarity tries to be smart at
+   the file level instead of the knowledge level. We're not building a document
+   similarity engine.
+
+3. **Hash exact-match is sufficient** — True duplicates (same bytes) are caught by hash.
+   Near-duplicates (formatting changes, typo fixes) are rare edge cases. If they occur,
+   concept-level matching handles semantic overlap anyway.
+
+4. **Latency concern** — Similarity check requires embedding the document before
+   making the dedup decision, adding ~100-500ms latency per document.
+
+If similarity-based detection becomes necessary in the future, the infrastructure
+exists (embeddings, similarity functions) but should be an optional admin tool
+rather than a blocking gate.
 
 ### 4. Schema Changes
 
@@ -460,27 +463,29 @@ async def ingest_as_version(
 
 ## Implementation Plan
 
-### Phase 1: Pre-Ingestion Storage
-1. Update ingestion to compute hash first
-2. Store document in Garage before chunking
-3. Add `garage_key` and `content_hash` to Source nodes
-4. Add offset tracking during chunking
+### Phase 1: Pre-Ingestion Storage ✓
+1. ✓ Update ingestion to compute hash first
+2. ✓ Store document in Garage before chunking
+3. ✓ Add `garage_key` and `content_hash` to Source nodes
+4. ✓ Add offset tracking during chunking (`char_offset_start`, `char_offset_end`, `chunk_index`)
+5. ✓ Add `garage_key` to DocumentMeta node
 
-### Phase 2: Deduplication Enhancement
-1. Implement exact-match deduplication (hash)
-2. Implement similarity-based deduplication (embeddings)
-3. Add force override with versioning
-4. Update API to return dedup warnings
+### Phase 2: Deduplication
+1. ✓ Exact-match deduplication (hash) — Already implemented via ContentHasher + DocumentMeta
+2. ✗ Similarity-based deduplication — **Deferred** (see "Deduplication Strategy" section)
+3. Force override with versioning — Optional future enhancement
+4. Update API to return dedup warnings — Optional future enhancement
 
-### Phase 3: Document Node + Regeneration
-1. Create Document node type
-2. Implement Garage → graph regeneration ("new keeper" scenario)
-3. Add admin endpoints for recovery operations
+### Phase 3: Regeneration (Optional)
+1. Implement Garage → graph regeneration ("new keeper" scenario)
+2. Add admin endpoints for recovery operations
 
-### Phase 4: Deletion
+### Phase 4: Deletion (Optional)
 1. Implement cascade deletion
 2. Add orphan cleanup
 3. Document the "forgetting" workflow
+
+Note: DocumentMeta (ADR-051) serves as the Document node type. No separate :Document label needed.
 
 ## Migration
 

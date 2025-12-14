@@ -23,6 +23,25 @@ from .base import GarageBaseClient, sanitize_path_component
 logger = logging.getLogger(__name__)
 
 
+def normalize_content_hash(hash_value: str) -> str:
+    """
+    Normalize content hash to raw hex format (no prefix).
+
+    Handles both formats:
+    - "sha256:abc123..." → "abc123..."
+    - "abc123..." → "abc123..."
+
+    Args:
+        hash_value: Hash with or without "sha256:" prefix
+
+    Returns:
+        Raw 64-character hex hash
+    """
+    if hash_value.startswith("sha256:"):
+        return hash_value[7:]  # Strip "sha256:" prefix
+    return hash_value
+
+
 @dataclass
 class DocumentIdentity:
     """Content-based identity for a document."""
@@ -62,7 +81,8 @@ class SourceDocumentService:
         self,
         content: bytes,
         ontology: str,
-        extension: str = "txt"
+        extension: str = "txt",
+        precomputed_hash: Optional[str] = None
     ) -> DocumentIdentity:
         """
         Compute content-based identity for a document.
@@ -74,11 +94,19 @@ class SourceDocumentService:
             content: Document content as bytes
             ontology: Ontology name
             extension: File extension (default: txt)
+            precomputed_hash: Optional pre-computed hash (with or without "sha256:" prefix)
+                             Avoids recomputing hash if already known from dedup check.
 
         Returns:
             DocumentIdentity with hash, garage_key, and size
         """
-        content_hash = hashlib.sha256(content).hexdigest()
+        if precomputed_hash:
+            # Use provided hash, normalizing to raw format
+            content_hash = normalize_content_hash(precomputed_hash)
+        else:
+            # Compute fresh hash
+            content_hash = hashlib.sha256(content).hexdigest()
+
         safe_ontology = sanitize_path_component(ontology)
         ext = extension.lstrip(".")
 
@@ -100,7 +128,8 @@ class SourceDocumentService:
         content: bytes,
         ontology: str,
         original_filename: Optional[str] = None,
-        extension: str = "txt"
+        extension: str = "txt",
+        precomputed_hash: Optional[str] = None
     ) -> DocumentIdentity:
         """
         Store a source document in Garage.
@@ -114,6 +143,8 @@ class SourceDocumentService:
             ontology: Ontology name
             original_filename: Original filename for metadata (optional)
             extension: File extension (default: txt)
+            precomputed_hash: Optional pre-computed hash (with or without "sha256:" prefix)
+                             Avoids recomputing hash if already known from dedup check.
 
         Returns:
             DocumentIdentity with hash and garage_key
@@ -121,7 +152,7 @@ class SourceDocumentService:
         Raises:
             ClientError: If storage fails
         """
-        identity = self.compute_identity(content, ontology, extension)
+        identity = self.compute_identity(content, ontology, extension, precomputed_hash)
 
         metadata = {
             'ontology': ontology,

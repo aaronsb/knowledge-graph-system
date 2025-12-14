@@ -165,15 +165,21 @@ def run_ingestion_worker(
             # Determine file extension from filename
             ext = Path(filename).suffix.lstrip('.') or 'txt'
 
+            # Reuse hash from dedup check (already computed by ContentHasher)
+            # This avoids recomputing SHA-256 and ensures format consistency
+            existing_hash = job_data.get("content_hash")
+
             # Store document and get content-addressed identity
             doc_identity = source_storage.store(
                 content=content,
                 ontology=ontology,
                 original_filename=filename,
-                extension=ext
+                extension=ext,
+                precomputed_hash=existing_hash
             )
 
             # Save for Source node association during chunk processing
+            # Note: doc_identity.content_hash is raw format (no "sha256:" prefix)
             job_data["source_garage_key"] = doc_identity.garage_key
             job_data["source_content_hash"] = doc_identity.content_hash
 
