@@ -134,14 +134,14 @@ if [ "$INCLUDE_OPERATOR" = true ]; then
     echo "  • Stop ALL containers (including operator)"
 else
     echo "  • Stop platform containers (api, web, postgres, garage)"
-    echo "  • ${GREEN}Preserve${NC} operator container"
+    echo -e "  • ${GREEN}Preserve${NC} operator container"
 fi
 echo "  • Remove Docker networks"
 
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo "  • Delete ALL volumes (PostgreSQL, Garage, HF cache ~1GB)"
 else
-    echo "  • ${GREEN}Preserve${NC} volumes (database data, Garage storage, HF cache)"
+    echo -e "  • ${GREEN}Preserve${NC} volumes (database data, Garage storage, HF cache)"
 fi
 
 if [ "$KEEP_ENV" = false ]; then
@@ -153,7 +153,7 @@ fi
 if [ "$REMOVE_IMAGES" = true ]; then
     echo "  • Remove Docker images (forces 2-3 min rebuild)"
 else
-    echo "  • ${GREEN}Preserve${NC} Docker images"
+    echo -e "  • ${GREEN}Preserve${NC} Docker images"
 fi
 
 echo ""
