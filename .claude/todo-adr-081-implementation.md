@@ -1,7 +1,7 @@
 # ADR-081 Implementation Todo List
 
 **Branch:** `feature/adr-081-source-lifecycle`
-**PR:** Pending
+**PR:** #178
 **Date:** 2025-12-13
 
 ## Completed
