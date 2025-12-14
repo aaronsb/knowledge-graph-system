@@ -376,7 +376,9 @@ def run_ingestion_worker(
                 source_type=job_data.get("source_type"),       # "file" | "stdin" | "mcp" | "api"
                 file_path=job_data.get("source_path"),         # Full path (not tmp_path)
                 hostname=job_data.get("source_hostname"),      # Hostname where ingested
-                source_ids=source_ids
+                source_ids=source_ids,
+                # ADR-081: Link to source document in Garage
+                garage_key=job_data.get("source_garage_key")
             )
             logger.info(f"✓ Created DocumentMeta node: {job_data['content_hash'][:16]}... ({stats.sources_created} sources)")
         except Exception as e:

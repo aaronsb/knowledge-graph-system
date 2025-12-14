@@ -2402,10 +2402,12 @@ class AGEClient:
         file_path: Optional[str] = None,
         hostname: Optional[str] = None,
         ingested_at: Optional[str] = None,
-        source_ids: Optional[List[str]] = None
+        source_ids: Optional[List[str]] = None,
+        # ADR-081: Source document lifecycle
+        garage_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Create a DocumentMeta node and link it to Source nodes (ADR-051).
+        Create a DocumentMeta node and link it to Source nodes (ADR-051, ADR-081).
 
         Tracks successfully ingested documents as first-class graph citizens.
         Enables deduplication via graph (persistent) instead of jobs table (ephemeral).
@@ -2423,6 +2425,7 @@ class AGEClient:
             hostname: Hostname where ingested (optional, CLI only)
             ingested_at: ISO timestamp (optional, defaults to now())
             source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
+            garage_key: Garage object key for source document (ADR-081)
 
         Returns:
             Created DocumentMeta node properties
@@ -2442,7 +2445,8 @@ class AGEClient:
             ...     source_type="file",
             ...     file_path="/home/user/docs/chapter1.txt",
             ...     hostname="workstation-01",
-            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...]
+            ...     source_ids=["chapter1_txt_chunk1", "chapter1_txt_chunk2", ...],
+            ...     garage_key="sources/My_Docs/a1b2c3d4...txt"
             ... )
         """
         from datetime import datetime, timezone
@@ -2466,6 +2470,9 @@ class AGEClient:
             properties["file_path"] = file_path
         if hostname:
             properties["hostname"] = hostname
+        # ADR-081: Link to source document in Garage
+        if garage_key:
+            properties["garage_key"] = garage_key
 
         # Add timestamp (default to now if not provided)
         if ingested_at:
