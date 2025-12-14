@@ -28,14 +28,12 @@
   - Added `garage_key`, `content_hash` to Source nodes
   - Added `char_offset_start`, `char_offset_end` for offset tracking
   - Added `chunk_index` (0-indexed) for ordering
+- [x] Phase 2b: DocumentMeta Enhancement
+  - Added `garage_key` to DocumentMeta node (ADR-081)
+  - Reuses existing DocumentMeta (ADR-051) rather than creating new Document type
+  - Complete linkage: DocumentMeta(garage_key) → Source(garage_key, offsets) → Garage
 
 ## Remaining
-
-### Phase 2b: Document Node Type
-- [ ] Add Document node type
-  - Links to Source nodes via `HAS_CHUNK` relationship
-  - Stores document-level metadata
-  - `shard_origin` for future provenance
 
 ### Phase 3: Deduplication
 - [ ] Implement exact-match deduplication (hash check)
