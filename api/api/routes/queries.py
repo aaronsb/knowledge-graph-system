@@ -48,6 +48,29 @@ from ..models.queries import (
 )
 from ..services.query_service import QueryService
 from ..services.diversity_analyzer import DiversityAnalyzer
+
+
+def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstance]:
+    """
+    Deduplicate evidence instances by quote text.
+
+    This handles a data integrity issue where Instance nodes can have
+    multiple FROM_SOURCE relationships, causing duplicate rows in join queries.
+    Keeps the first occurrence of each unique quote.
+
+    Args:
+        evidence_list: List of ConceptInstance objects
+
+    Returns:
+        Deduplicated list preserving order
+    """
+    seen_quotes = set()
+    result = []
+    for e in evidence_list:
+        if e.quote not in seen_quotes:
+            seen_quotes.add(e.quote)
+            result.append(e)
+    return result
 from ..lib.pathfinding_facade import PathfindingFacade
 from api.api.lib.age_client import AGEClient
 from api.api.lib.ai_providers import get_provider
@@ -429,7 +452,8 @@ async def search_concepts(
                         f"LIMIT 3"  # Sample first 3 instances
                     )
                     if evidence_instances_query:
-                        sample_evidence = [
+                        # Dedupe evidence due to Instance->multiple Source data issue
+                        sample_evidence = _dedupe_evidence([
                             ConceptInstance(
                                 quote=e['quote'],
                                 document=e['document'],
@@ -445,7 +469,7 @@ async def search_concepts(
                                 source_hostname=e.get('source_hostname')
                             )
                             for e in evidence_instances_query
-                        ]
+                        ])
 
                 results.append(ConceptSearchResult(
                     concept_id=concept_id,
@@ -541,7 +565,8 @@ async def search_concepts(
                             f"LIMIT 3"
                         )
                         if top_evidence_instances_query:
-                            top_sample_evidence = [
+                            # Dedupe evidence due to Instance->multiple Source data issue
+                            top_sample_evidence = _dedupe_evidence([
                                 ConceptInstance(
                                     quote=e['quote'],
                                     document=e['document'],
@@ -557,7 +582,7 @@ async def search_concepts(
                                     source_hostname=e.get('source_hostname')
                                 )
                                 for e in top_evidence_instances_query
-                            ]
+                            ])
 
                     top_match = ConceptSearchResult(
                         concept_id=top_concept_id,
@@ -1160,7 +1185,8 @@ async def find_connection(
                         f"LIMIT 3"
                     )
                     if evidence_query:
-                        sample_evidence = [
+                        # Dedupe evidence due to Instance->multiple Source data issue
+                        sample_evidence = _dedupe_evidence([
                             ConceptInstance(
                                 quote=e['quote'],
                                 document=e['document'],
@@ -1172,7 +1198,7 @@ async def find_connection(
                                 storage_key=e.get('storage_key')
                             )
                             for e in evidence_query
-                        ]
+                        ])
 
                 nodes.append(PathNode(
                     id=concept_id,
@@ -1367,7 +1393,8 @@ async def find_connection_by_search(
                         f"LIMIT 3"
                     )
                     if evidence_query:
-                        sample_evidence = [
+                        # Dedupe evidence due to Instance->multiple Source data issue
+                        sample_evidence = _dedupe_evidence([
                             ConceptInstance(
                                 quote=e['quote'],
                                 document=e['document'],
@@ -1379,7 +1406,7 @@ async def find_connection_by_search(
                                 storage_key=e.get('storage_key')
                             )
                             for e in evidence_query
-                        ]
+                        ])
 
                 nodes.append(PathNode(
                     id=concept_id,
