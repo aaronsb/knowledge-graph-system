@@ -411,10 +411,10 @@ async def health():
     except Exception as e:
         components["database"] = {"status": "unhealthy", "error": str(e)}
 
-    # Check Garage storage
+    # Check Garage storage (use singleton base client to avoid log spam)
     try:
-        from .lib.garage_client import get_garage_client
-        garage = get_garage_client()
+        from .lib.garage import get_base_client
+        garage = get_base_client()
         if garage.health_check():
             components["garage"] = {"status": "healthy", "bucket": garage.bucket_name}
         else:

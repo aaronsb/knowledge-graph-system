@@ -98,15 +98,16 @@ class PRExtractor:
         max_prs = limit if limit else self.config.get("pr_limit", 100)
 
         # Fetch PRs using gh CLI
-        # Get all PRs (open, closed, merged) sorted by creation date (oldest first)
+        # Strategy: Fetch newest first, filter to PRs > last_pr, then re-sort oldest first
+        # This ensures we capture recent PRs even with a reasonable limit
         # Note: Avoid 'commits' field - causes GraphQL node explosion
-        # Use --search "sort:created-asc" to get oldest PRs first
+        fetch_limit = max(200, max_prs * 3)  # Fetch enough to cover the window
         cmd = [
             "gh", "pr", "list",
             "--repo", github_repo_name,
             "--state", "all",
-            "--search", "sort:created-asc",
-            "--limit", str(max_prs * 2),  # Fetch extra to account for already-processed
+            "--search", "sort:created-desc",  # Newest first to get recent PRs
+            "--limit", str(fetch_limit),
             "--json", "number,title,state,author,createdAt,updatedAt,mergedAt,mergedBy,body,url,labels,additions,deletions,changedFiles"
         ]
 
@@ -117,10 +118,10 @@ class PRExtractor:
             print(f"Error fetching PRs: {e.stderr}")
             return []
 
-        # Filter to new PRs only
+        # Filter to new PRs only (those after our last processed PR)
         prs = [pr for pr in all_prs if pr["number"] > (last_pr or 0)]
 
-        # Sort by number (oldest first)
+        # Sort by number (oldest first) for sequential processing
         prs.sort(key=lambda x: x["number"])
 
         # Limit
@@ -332,6 +333,11 @@ def main():
         help="Limit number of PRs to extract per repository"
     )
     parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Extract ALL remaining PRs (YOLO mode, ignores limit)"
+    )
+    parser.add_argument(
         "--confirm",
         action="store_true",
         help="Actually extract PRs (default is preview/what-if mode)"
@@ -342,7 +348,13 @@ def main():
     # Extract PRs
     extractor = PRExtractor(config_path=args.config)
     dry_run = not args.confirm
-    extractor.extract_all(limit=args.limit, dry_run=dry_run)
+
+    # In YOLO mode, use a very high limit to get everything
+    limit = None if args.all else args.limit
+    if args.all:
+        print("YOLO MODE: Extracting ALL remaining PRs")
+
+    extractor.extract_all(limit=limit, dry_run=dry_run)
 
     print("\n" + "="*60)
     print("EXTRACTION COMPLETE")
