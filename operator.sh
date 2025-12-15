@@ -312,6 +312,37 @@ cmd_logs() {
     esac
 }
 
+cmd_query() {
+    check_env
+
+    # Load credentials from .env
+    source "$ENV_FILE"
+
+    local query="$1"
+
+    if [ -z "$query" ]; then
+        echo -e "${RED}Usage: $0 query 'SQL query here'${NC}"
+        echo ""
+        echo "Examples:"
+        echo "  $0 query 'SELECT count(*) FROM pg_stat_activity'"
+        echo "  $0 query 'SHOW max_connections'"
+        echo ""
+        echo "For multi-line queries, use single quotes:"
+        echo "  $0 query '"
+        echo "    SELECT state, count(*)"
+        echo "    FROM pg_stat_activity"
+        echo "    GROUP BY state"
+        echo "  '"
+        exit 1
+    fi
+
+    # Run query against postgres container
+    docker exec knowledge-graph-postgres \
+        psql -U "${POSTGRES_USER:-admin}" \
+             -d "${POSTGRES_DB:-knowledge_graph}" \
+             -c "$query"
+}
+
 # ============================================================================
 # Help System
 # ============================================================================
@@ -336,6 +367,7 @@ show_help_overview() {
     echo "  config [options]   Update platform configuration"
     echo "  logs [service]     Tail logs (default: api)"
     echo "  shell              Open shell in operator container"
+    echo "  query 'SQL'        Run SQL query against database (alias: pg)"
     echo ""
     echo -e "${BOLD}Help Topics:${NC}"
     echo "  help               Show this overview"
@@ -465,6 +497,22 @@ show_help_config() {
     echo ""
     echo "  Inside shell, run: operator-help"
     echo ""
+    echo -e "${BLUE}query 'SQL'${NC} (alias: pg)"
+    echo "  Run SQL queries directly against the database."
+    echo "  No TTY required - works in scripts and automation."
+    echo ""
+    echo "  Examples:"
+    echo "    $0 query 'SELECT count(*) FROM pg_stat_activity'"
+    echo "    $0 query 'SHOW max_connections'"
+    echo "    $0 pg 'SELECT state, count(*) FROM pg_stat_activity GROUP BY state'"
+    echo ""
+    echo "  Multi-line queries (use single quotes):"
+    echo "    $0 query '"
+    echo "      SELECT ontology, count(*)"
+    echo "      FROM kg_api.sources"
+    echo "      GROUP BY ontology"
+    echo "    '"
+    echo ""
 }
 
 cmd_help() {
@@ -525,6 +573,10 @@ case "${1:-help}" in
     shell)
         check_operator
         docker exec -it kg-operator /bin/bash
+        ;;
+    query|pg)
+        shift
+        cmd_query "$*"
         ;;
     teardown)
         shift

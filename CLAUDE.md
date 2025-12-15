@@ -226,6 +226,20 @@ kg admin extraction info
 ./operator.sh logs web      # Web app logs
 ```
 
+**Direct Database Queries:**
+```bash
+# No TTY required - works in scripts and automation
+./operator.sh query 'SELECT count(*) FROM pg_stat_activity'
+./operator.sh pg 'SHOW max_connections'  # pg is an alias
+
+# Multi-line queries work with single quotes
+./operator.sh query '
+  SELECT state, count(*)
+  FROM pg_stat_activity
+  GROUP BY state
+'
+```
+
 ### Resetting Database (Clean State)
 
 When testing or after breaking changes, you can completely reset:
@@ -735,13 +749,16 @@ exit
 # Check postgres logs
 ./operator.sh logs postgres
 
-# Enter operator shell and use pg alias (auto-loads credentials)
-./operator.sh shell
+# Direct SQL queries (no TTY required - works in scripts/automation)
+./operator.sh query 'SELECT count(*) FROM pg_stat_activity'
+./operator.sh query 'SHOW max_connections'
+./operator.sh pg '\dt'                    # pg is an alias for query
 
+# For interactive exploration, use operator shell
+./operator.sh shell
 pg -l                    # List databases
 pg -c "\dx"              # Check AGE extension loaded
 pg -c "\dt"              # Check tables exist
-pg -c "SELECT * FROM schema_migrations ORDER BY applied_at;"
 exit
 ```
 
