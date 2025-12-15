@@ -491,6 +491,43 @@ export class KnowledgeGraphClient {
     return buffer.toString('base64');
   }
 
+  /**
+   * Get original document for a source node (ADR-081)
+   * @param sourceId - Source ID from search results or concept details
+   * @returns Document content as Buffer (binary data)
+   */
+  async getSourceDocument(sourceId: string): Promise<Buffer> {
+    const response = await this.client.get(`/sources/${sourceId}/document`, {
+      responseType: 'arraybuffer',
+    });
+    return Buffer.from(response.data);
+  }
+
+  /**
+   * Get source metadata
+   * @param sourceId - Source ID
+   * @returns Source metadata including garage_key, content_hash, etc.
+   */
+  async getSourceMetadata(sourceId: string): Promise<{
+    source_id: string;
+    document: string;
+    paragraph: number;
+    full_text: string;
+    file_path?: string;
+    content_type?: string;
+    storage_key?: string;
+    garage_key?: string;
+    content_hash?: string;
+    char_offset_start?: number;
+    char_offset_end?: number;
+    chunk_index?: number;
+    has_visual_embedding: boolean;
+    has_text_embedding: boolean;
+  }> {
+    const response = await this.client.get(`/sources/${sourceId}`);
+    return response.data;
+  }
+
   // ========== Database Methods ==========
 
   /**

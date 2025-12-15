@@ -18,6 +18,7 @@ import { vocabularyCommand } from './vocabulary';
 import { mcpConfigCommand } from './mcp-config';
 import { polarityCommand } from './polarity';
 import { projectionCommand } from './projection';
+import { sourceCommand } from './source';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -97,6 +98,7 @@ export async function registerCommands(program: Command) {
     searchCommand,
     databaseCommand,
     ontologyCommand,
+    sourceCommand,
     vocabularyCommand,
     adminCommand,
     polarityCommand,
