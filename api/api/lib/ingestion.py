@@ -341,30 +341,53 @@ def process_chunk(
             continue
 
         # Vector search for similar concepts
+        # Use two-tier matching: strict threshold (0.85) OR label-boosted threshold (0.75)
+        # This prevents duplicates when the same concept is described differently
         try:
+            # Search at lower threshold to catch potential label matches
             matches = age_client.vector_search(
                 embedding=embedding,
-                threshold=0.85,
+                threshold=0.75,  # Lower threshold to catch label-boosted matches
                 top_k=5
             )
 
+            matched = False
             if matches:
-                # Link to existing concept
-                actual_concept_id = matches[0]["concept_id"]
-                similarity = matches[0]["similarity"]
+                top_match = matches[0]
+                similarity = top_match["similarity"]
+                match_label = top_match["label"]
 
-                matched_concepts.append({
-                    "label": label,
-                    "matched_to": matches[0]["label"],
-                    "similarity": similarity
-                })
+                # Check if this should be considered a match:
+                # 1. High similarity (>=0.85) always matches
+                # 2. Medium similarity (>=0.75) matches if labels are identical/similar
+                if similarity >= 0.85:
+                    matched = True
+                elif similarity >= 0.75:
+                    # Label-based boosting: normalize and compare labels
+                    norm_label = label.lower().strip()
+                    norm_match = match_label.lower().strip()
+                    # Match if labels are identical or one contains the other
+                    if norm_label == norm_match or norm_label in norm_match or norm_match in norm_label:
+                        matched = True
+                        logger.info(f"  📎 Label-boosted match: '{label}' -> '{match_label}' at {similarity:.1%}")
 
-                age_client.link_concept_to_source(actual_concept_id, source_id)
-                stats.concepts_linked += 1
+                if matched:
+                    # Link to existing concept
+                    actual_concept_id = top_match["concept_id"]
 
-                # Map LLM ID to actual ID for relationships
-                concept_id_map[llm_concept_id] = actual_concept_id
-            else:
+                    matched_concepts.append({
+                        "label": label,
+                        "matched_to": match_label,
+                        "similarity": similarity
+                    })
+
+                    age_client.link_concept_to_source(actual_concept_id, source_id)
+                    stats.concepts_linked += 1
+
+                    # Map LLM ID to actual ID for relationships
+                    concept_id_map[llm_concept_id] = actual_concept_id
+
+            if not matched:
                 # Create new concept with unique ID
                 actual_concept_id = f"{source_id}_{uuid.uuid4().hex[:8]}"
 
