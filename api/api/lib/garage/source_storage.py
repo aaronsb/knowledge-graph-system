@@ -67,6 +67,26 @@ class DocumentIdentity:
     size_bytes: int         # Document size
 
 
+@dataclass
+class SourceMetadata:
+    """
+    Rich metadata for source documents (FUSE-friendly).
+
+    This metadata is stored in S3 object headers for fast retrieval
+    without database queries. Useful for FUSE filesystem operations
+    where stat() calls need file attributes quickly.
+
+    All fields are optional - only non-None values are stored.
+    """
+    user_id: Optional[int] = None           # User ID who ingested
+    username: Optional[str] = None          # Username for display
+    source_type: Optional[str] = None       # file, url, or text
+    file_path: Optional[str] = None         # Original file path
+    source_url: Optional[str] = None        # Source URL (for url type)
+    hostname: Optional[str] = None          # Source machine hostname
+    ingested_at: Optional[str] = None       # ISO 8601 timestamp
+
+
 class SourceDocumentService:
     """
     Source document storage for ingestion pipeline (ADR-081).
@@ -146,7 +166,8 @@ class SourceDocumentService:
         ontology: str,
         original_filename: Optional[str] = None,
         extension: str = "txt",
-        precomputed_hash: Optional[str] = None
+        precomputed_hash: Optional[str] = None,
+        source_metadata: Optional[SourceMetadata] = None
     ) -> DocumentIdentity:
         """
         Store a source document in Garage.
@@ -162,6 +183,9 @@ class SourceDocumentService:
             extension: File extension (default: txt)
             precomputed_hash: Optional pre-computed hash (with or without "sha256:" prefix)
                              Avoids recomputing hash if already known from dedup check.
+            source_metadata: Optional rich metadata for FUSE filesystem support.
+                            Includes user_id, username, source_type, file_path,
+                            source_url, hostname, ingested_at.
 
         Returns:
             DocumentIdentity with hash and garage_key
@@ -171,6 +195,7 @@ class SourceDocumentService:
         """
         identity = self.compute_identity(content, ontology, extension, precomputed_hash)
 
+        # Build S3 metadata - only include non-None values
         metadata = {
             'ontology': ontology,
             'content-hash': identity.content_hash,
@@ -178,6 +203,23 @@ class SourceDocumentService:
         }
         if original_filename:
             metadata['original-filename'] = original_filename
+
+        # Add rich metadata for FUSE support (only non-None values)
+        if source_metadata:
+            if source_metadata.user_id is not None:
+                metadata['user-id'] = str(source_metadata.user_id)
+            if source_metadata.username:
+                metadata['username'] = source_metadata.username
+            if source_metadata.source_type:
+                metadata['source-type'] = source_metadata.source_type
+            if source_metadata.file_path:
+                metadata['file-path'] = source_metadata.file_path
+            if source_metadata.source_url:
+                metadata['source-url'] = source_metadata.source_url
+            if source_metadata.hostname:
+                metadata['hostname'] = source_metadata.hostname
+            if source_metadata.ingested_at:
+                metadata['ingested-at'] = source_metadata.ingested_at
 
         # Determine content type
         content_type = 'text/plain'

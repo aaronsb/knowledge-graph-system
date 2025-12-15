@@ -255,6 +255,7 @@ async def ingest_document(
         "ontology": ontology,
         "filename": use_filename,
         "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
+        "username": current_user.username,  # For Garage metadata (FUSE support)
         "processing_mode": processing_mode,
         "options": {
             "target_words": options.target_words,
@@ -380,6 +381,7 @@ async def ingest_text(
         "ontology": ontology,
         "filename": use_filename,
         "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
+        "username": current_user.username,  # For Garage metadata (FUSE support)
         "processing_mode": processing_mode,
         "options": {
             "target_words": target_words,
