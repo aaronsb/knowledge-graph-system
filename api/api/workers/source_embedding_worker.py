@@ -321,6 +321,7 @@ def generate_source_embeddings(
                     embedding_bytes = embedding_array.tobytes()
 
                     # Insert into source_embeddings table
+                    # Use ON CONFLICT DO NOTHING for idempotency (same source + chunk = same embedding)
                     cursor.execute("""
                         INSERT INTO kg_api.source_embeddings (
                             source_id,
@@ -336,6 +337,7 @@ def generate_source_embeddings(
                             embedding_dimension,
                             embedding_provider
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (source_id, chunk_index, chunk_strategy) DO NOTHING
                         RETURNING embedding_id
                     """, (
                         source_id,
@@ -352,14 +354,21 @@ def generate_source_embeddings(
                         embedding_provider
                     ))
 
-                    embedding_id = cursor.fetchone()[0]
-                    embedding_ids.append(embedding_id)
-
-                    logger.debug(
-                        f"Chunk {chunk.index}: embedding_id={embedding_id}, "
-                        f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
-                        f"hash={chunk_hash[:16]}..."
-                    )
+                    result = cursor.fetchone()
+                    if result:
+                        embedding_id = result[0]
+                        embedding_ids.append(embedding_id)
+                        logger.debug(
+                            f"Chunk {chunk.index}: embedding_id={embedding_id}, "
+                            f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
+                            f"hash={chunk_hash[:16]}..."
+                        )
+                    else:
+                        # Embedding already exists (ON CONFLICT DO NOTHING)
+                        logger.debug(
+                            f"Chunk {chunk.index}: already exists, "
+                            f"offsets=[{chunk.start_offset}:{chunk.end_offset}]"
+                        )
 
                 # Commit all inserts (atomic transaction)
                 conn.commit()

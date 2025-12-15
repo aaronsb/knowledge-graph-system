@@ -163,12 +163,16 @@ class ProjectionLauncher(JobLauncher):
                 WHERE c.embedding IS NOT NULL
                 WITH c.concept_id as cid
                 MATCH (c2:Concept {concept_id: cid})-[:APPEARS]->(s:Source)
-                RETURN s.document as ontology, count(DISTINCT c2) as count
-            $$) AS (ontology agtype, count agtype)
+                RETURN s.document as ontology, count(DISTINCT c2) as concept_count
+            $$) AS (ontology agtype, concept_count agtype)
         """
 
         counts = {}
         with conn.cursor() as cursor:
+            # Load AGE extension (required for cypher function)
+            cursor.execute("LOAD 'age';")
+            cursor.execute("SET search_path = ag_catalog, \"$user\", public;")
+
             cursor.execute(query)
             for row in cursor.fetchall():
                 ontology = str(row[0]).strip('"')
