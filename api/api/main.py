@@ -385,8 +385,50 @@ async def root():
 
 @app.get("/health", tags=["health"])
 async def health():
-    """Simple health check"""
-    return {"status": "healthy"}
+    """
+    Health check endpoint with component status.
+
+    Checks:
+    - Database (PostgreSQL + AGE) connectivity
+    - Garage (S3 storage) bucket accessibility
+
+    Returns 200 with status details. Individual component failures
+    are reported in the response but don't fail the overall check
+    (allows partial operation / graceful degradation).
+    """
+    components = {}
+
+    # API is healthy if we're responding
+    components["api"] = {"status": "healthy"}
+
+    # Check database
+    try:
+        from .lib.age_client import AGEClient
+        client = AGEClient()
+        client._execute_cypher("RETURN 1 as ping", fetch_one=True)
+        client.close()
+        components["database"] = {"status": "healthy"}
+    except Exception as e:
+        components["database"] = {"status": "unhealthy", "error": str(e)}
+
+    # Check Garage storage
+    try:
+        from .lib.garage_client import get_garage_client
+        garage = get_garage_client()
+        if garage.health_check():
+            components["garage"] = {"status": "healthy", "bucket": garage.bucket_name}
+        else:
+            components["garage"] = {"status": "unhealthy", "bucket": garage.bucket_name}
+    except Exception as e:
+        components["garage"] = {"status": "unhealthy", "error": str(e)}
+
+    # Overall status - healthy if at least database is up
+    all_healthy = all(c.get("status") == "healthy" for c in components.values())
+
+    return {
+        "status": "healthy" if all_healthy else "degraded",
+        "components": components
+    }
 
 
 # For running with uvicorn directly

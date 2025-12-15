@@ -363,7 +363,7 @@ fi
 echo -e "${GREEN}✓${NC} Garage API key created"
 
 # Grant bucket permissions
-GARAGE_BUCKET="${GARAGE_BUCKET:-knowledge-graph-images}"
+GARAGE_BUCKET="${GARAGE_BUCKET:-kg-storage}"
 docker exec knowledge-graph-garage /garage bucket allow --read --write --key kg-api-key "$GARAGE_BUCKET" >/dev/null 2>&1
 echo -e "${GREEN}✓${NC} Bucket permissions configured"
 

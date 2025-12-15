@@ -295,38 +295,51 @@ async def delete_ontology(
                     detail=f"Ontology '{ontology_name}' not found"
                 )
 
-        # ADR-057: Clean up Garage objects before deleting sources
-        # Query for all Garage object keys in this ontology
-        storage_objects_result = client._execute_cypher(f"""
-            MATCH (s:Source {{document: '{ontology_name}'}})
-            WHERE s.storage_key IS NOT NULL
-            RETURN s.storage_key as storage_key
-        """)
+        # ADR-057/ADR-081: Clean up ALL Garage objects before deleting sources
+        # This includes: images, source documents, and projections
+        try:
+            from ..lib.garage_client import get_garage_client
+            garage_client = get_garage_client()
 
-        storage_keys_to_delete = []
-        if storage_objects_result:
-            for row in storage_objects_result:
-                if row.get('storage_key'):
-                    storage_keys_to_delete.append(row['storage_key'])
+            # 1. Delete images (via storage_key on Source nodes)
+            storage_objects_result = client._execute_cypher(f"""
+                MATCH (s:Source {{document: '{ontology_name}'}})
+                WHERE s.storage_key IS NOT NULL
+                RETURN s.storage_key as storage_key
+            """)
 
-        # Delete Garage objects
-        if storage_keys_to_delete:
+            if storage_objects_result:
+                image_deleted_count = 0
+                for row in storage_objects_result:
+                    if row.get('storage_key'):
+                        try:
+                            garage_client.delete_image(row['storage_key'])
+                            image_deleted_count += 1
+                        except Exception as e:
+                            logger.warning(f"Failed to delete Garage image {row['storage_key']}: {e}")
+                if image_deleted_count > 0:
+                    logger.info(f"Deleted {image_deleted_count} images from Garage for ontology '{ontology_name}'")
+
+            # 2. Delete source documents (ADR-081)
             try:
-                from ..lib.garage_client import get_garage_client
-                garage_client = get_garage_client()
-
-                deleted_count = 0
-                for object_key in storage_keys_to_delete:
-                    try:
-                        garage_client.delete_image(object_key)
-                        deleted_count += 1
-                    except Exception as e:
-                        logger.warning(f"Failed to delete Garage object {object_key}: {e}")
-
-                if deleted_count > 0:
-                    logger.info(f"Deleted {deleted_count} images from Garage for ontology '{ontology_name}'")
+                from ..lib.garage import get_source_storage
+                source_storage = get_source_storage()
+                source_docs_deleted = source_storage.delete_by_ontology(ontology_name)
+                if source_docs_deleted:
+                    logger.info(f"Deleted {len(source_docs_deleted)} source documents from Garage for ontology '{ontology_name}'")
             except Exception as e:
-                logger.warning(f"Failed to initialize Garage client for cleanup: {e}")
+                logger.warning(f"Failed to delete source documents from Garage: {e}")
+
+            # 3. Delete projections (ADR-079)
+            try:
+                projections_deleted = garage_client.delete_all_projections(ontology_name)
+                if projections_deleted > 0:
+                    logger.info(f"Deleted {projections_deleted} projections from Garage for ontology '{ontology_name}'")
+            except Exception as e:
+                logger.warning(f"Failed to delete projections from Garage: {e}")
+
+        except Exception as e:
+            logger.warning(f"Failed to initialize Garage client for cleanup: {e}")
 
         # Delete instances linked to sources in this ontology
         client._execute_cypher(f"""
@@ -355,8 +368,9 @@ async def delete_ontology(
 
         # Delete source_embeddings for the deleted sources
         if source_ids:
+            conn = None
             try:
-                conn = client.conn
+                conn = client.pool.getconn()
                 with conn.cursor() as cur:
                     # Use ANY to match source_ids in the list
                     cur.execute("""
@@ -369,6 +383,9 @@ async def delete_ontology(
                         logger.info(f"Deleted {embeddings_deleted} source embeddings for ontology '{ontology_name}'")
             except Exception as e:
                 logger.warning(f"Failed to delete source embeddings: {e}")
+            finally:
+                if conn:
+                    client.pool.putconn(conn)
 
         # ADR-051: Delete DocumentMeta nodes for this ontology
         # This ensures cascade deletion of provenance metadata

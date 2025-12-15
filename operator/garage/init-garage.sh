@@ -10,7 +10,7 @@
 # Environment Variables (optional, from .env):
 #   GARAGE_RPC_SECRET      - RPC secret for cluster coordination
 #   GARAGE_S3_ENDPOINT     - S3 API endpoint (default: http://localhost:3900)
-#   GARAGE_BUCKET          - Bucket name (default: knowledge-graph-images)
+#   GARAGE_BUCKET          - Bucket name (default: kg-storage)
 #
 # Note: Application retrieves credentials from encrypted key store (ADR-031)
 #       Configure via: ./scripts/setup/initialize-platform.sh (option 7)
@@ -31,7 +31,7 @@ if [ -f .env ]; then
 fi
 
 GARAGE_ENDPOINT="${GARAGE_S3_ENDPOINT:-http://localhost:3900}"
-GARAGE_BUCKET="${GARAGE_BUCKET:-knowledge-graph-images}"
+GARAGE_BUCKET="${GARAGE_BUCKET:-kg-storage}"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}Garage Initialization${NC}"
