@@ -161,7 +161,7 @@ def run_ingestion_worker(
         # ADR-081: Pre-ingestion Garage storage is REQUIRED
         # If Garage fails, something is fundamentally wrong with the platform.
         # Fail fast to alert the operator rather than silently degrading.
-        from api.api.lib.garage import get_source_storage
+        from api.api.lib.garage import get_source_storage, SourceMetadata
         source_storage = get_source_storage()
 
         # Determine file extension from filename
@@ -171,13 +171,25 @@ def run_ingestion_worker(
         # This avoids recomputing SHA-256 and ensures format consistency
         existing_hash = job_data.get("content_hash")
 
+        # Build rich metadata for FUSE filesystem support
+        source_metadata = SourceMetadata(
+            user_id=job_data.get("user_id"),
+            username=job_data.get("username"),
+            source_type=job_data.get("source_type"),
+            file_path=job_data.get("source_path"),
+            source_url=job_data.get("source_url"),  # For URL ingestion
+            hostname=job_data.get("source_hostname"),
+            ingested_at=datetime.utcnow().isoformat() + "Z"
+        )
+
         # Store document and get content-addressed identity
         doc_identity = source_storage.store(
             content=content,
             ontology=ontology,
             original_filename=filename,
             extension=ext,
-            precomputed_hash=existing_hash
+            precomputed_hash=existing_hash,
+            source_metadata=source_metadata
         )
 
         # Save for Source node association during chunk processing
