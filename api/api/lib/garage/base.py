@@ -128,7 +128,7 @@ class GarageBaseClient:
         """
         # Load endpoint configuration from environment
         self.endpoint = endpoint or os.getenv("GARAGE_S3_ENDPOINT", "http://localhost:3900")
-        self.bucket_name = bucket_name or os.getenv("GARAGE_BUCKET", "knowledge-graph-images")
+        self.bucket_name = bucket_name or os.getenv("GARAGE_BUCKET", "kg-storage")
         self.region = region or os.getenv("GARAGE_REGION", "garage")
 
         # Load credentials - don't store as instance attributes for security

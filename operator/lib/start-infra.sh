@@ -168,7 +168,7 @@ else
 fi
 
 # Create bucket
-GARAGE_BUCKET="${GARAGE_BUCKET:-knowledge-graph-images}"
+GARAGE_BUCKET="${GARAGE_BUCKET:-kg-storage}"
 if docker exec knowledge-graph-garage /garage bucket info "${GARAGE_BUCKET}" > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Bucket '${GARAGE_BUCKET}' exists${NC}"
 else
@@ -257,7 +257,7 @@ echo "    - Extensions: Apache AGE"
 echo "    - Migrations: Applied"
 echo ""
 echo "  • Garage S3 storage (port 3900)"
-echo "    - Bucket: ${GARAGE_BUCKET:-knowledge-graph-images}"
+echo "    - Bucket: ${GARAGE_BUCKET:-kg-storage}"
 echo "    - API key: ${KEY_NAME}"
 echo ""
 echo "  • Operator container"
