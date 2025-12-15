@@ -46,13 +46,14 @@ class CommitExtractor:
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f, indent=2)
 
-    def get_commits(self, repo_config: Dict, limit: Optional[int] = None) -> List:
+    def get_commits(self, repo_config: Dict, limit: Optional[int] = None, all_mode: bool = False) -> List:
         """
         Get commits from repository.
 
         Args:
             repo_config: Repository configuration dict
-            limit: Optional limit on number of commits to extract
+            limit: Optional limit on number of commits to extract (windowed mode)
+            all_mode: If True, ignore limit and get all remaining commits (YOLO mode)
 
         Returns:
             List of commit objects
@@ -68,22 +69,32 @@ class CommitExtractor:
 
         # Get commits
         last_commit_hash = repo_config.get("last_commit")
+        max_count = None if all_mode else (limit if limit else self.config.get("commit_limit"))
+
+        if all_mode:
+            print(f"  Mode: ALL (no limit)")
+        elif max_count:
+            print(f"  Mode: WINDOWED (limit: {max_count})")
 
         if last_commit_hash:
-            # Get commits since last processed
+            # Get commits since last processed (incremental)
             print(f"  Extracting commits since: {last_commit_hash[:8]}")
             commits = list(repo.iter_commits(f"{last_commit_hash}..HEAD"))
             commits.reverse()  # Oldest first
+
+            # Apply limit to incremental runs too (windowed mode)
+            if max_count and len(commits) > max_count:
+                print(f"  Limiting to next {max_count} of {len(commits)} remaining commits")
+                commits = commits[:max_count]
         else:
             # Get commits from the BEGINNING (oldest first)
             print(f"  Extracting commits from the beginning...")
-            max_count = limit if limit else self.config.get("commit_limit")
 
             # Get all commits, then take the oldest N
             all_commits = list(repo.iter_commits())
             all_commits.reverse()  # Now oldest first
 
-            # Take only the first N commits
+            # Take only the first N commits (unless YOLO mode)
             if max_count:
                 commits = all_commits[:max_count]
             else:
@@ -117,7 +128,8 @@ class CommitExtractor:
         subject = lines[0]
         body = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ""
 
-        # Build frontmatter
+        # Build frontmatter (use commits-specific ontology)
+        commits_ontology = f"{repo_config['ontology']}-Commits"
         frontmatter = [
             "---",
             "type: commit",
@@ -128,7 +140,7 @@ class CommitExtractor:
             f"date: {date}",
             f"time: {time}",
             f"repository: {repo_config['name']}",
-            f"ontology: {repo_config['ontology']}",
+            f"ontology: {commits_ontology}",
             "---",
             ""
         ]
@@ -147,28 +159,53 @@ class CommitExtractor:
 
         return '\n'.join(doc)
 
-    def extract_repository(self, repo_config: Dict, limit: Optional[int] = None):
+    def extract_repository(self, repo_config: Dict, limit: Optional[int] = None, all_mode: bool = False, dry_run: bool = True):
         """
         Extract commits from a single repository.
 
         Args:
             repo_config: Repository configuration dict
-            limit: Optional limit on number of commits
+            limit: Optional limit on number of commits (windowed mode)
+            all_mode: If True, ignore limit and get all remaining commits
+            dry_run: If True, only preview what would be extracted (default: True)
         """
         if not repo_config.get("enabled", True):
             print(f"\nSkipping disabled repository: {repo_config['name']}")
             return
 
+        # Use separate ontology for commits (appends "-Commits" to base ontology)
+        commits_ontology = f"{repo_config['ontology']}-Commits"
+
+        mode_str = "[DRY RUN] " if dry_run else ""
         print(f"\n{'='*60}")
-        print(f"Repository: {repo_config['name']}")
-        print(f"Ontology: {repo_config['ontology']}")
+        print(f"{mode_str}Repository: {repo_config['name']}")
+        print(f"Ontology: {commits_ontology}")
         print(f"{'='*60}")
 
         # Get commits
-        commits = self.get_commits(repo_config, limit)
+        commits = self.get_commits(repo_config, limit, all_mode)
 
         if not commits:
             print("  No new commits to process")
+            return
+
+        if dry_run:
+            # Preview mode - just list what would be extracted
+            print(f"\n  Would extract {len(commits)} commits:")
+            # Show first 10 and last 5 if more than 15
+            if len(commits) > 15:
+                for commit in commits[:10]:
+                    subject = commit.message.split('\n')[0][:60]
+                    print(f"    {commit.hexsha[:7]}: {subject}...")
+                print(f"    ... ({len(commits) - 15} more) ...")
+                for commit in commits[-5:]:
+                    subject = commit.message.split('\n')[0][:60]
+                    print(f"    {commit.hexsha[:7]}: {subject}...")
+            else:
+                for commit in commits:
+                    subject = commit.message.split('\n')[0][:60]
+                    print(f"    {commit.hexsha[:7]}: {subject}...")
+            print(f"\n  Run with --confirm to actually extract")
             return
 
         # Create output directory
@@ -199,23 +236,28 @@ class CommitExtractor:
             repo_config["last_commit"] = commits[-1].hexsha
             print(f"  Updated pointer to: {commits[-1].hexsha[:8]}")
 
-    def extract_all(self, limit: Optional[int] = None):
+    def extract_all(self, limit: Optional[int] = None, all_mode: bool = False, dry_run: bool = True):
         """
         Extract commits from all enabled repositories.
 
         Args:
-            limit: Optional limit on number of commits per repository
+            limit: Optional limit on number of commits per repository (windowed mode)
+            all_mode: If True, ignore limit and get all remaining commits (YOLO mode)
+            dry_run: If True, only preview what would be extracted (default: True)
         """
         for repo_config in self.config["repositories"]:
             try:
-                self.extract_repository(repo_config, limit)
+                self.extract_repository(repo_config, limit, all_mode, dry_run)
             except Exception as e:
                 print(f"\n✗ Error processing {repo_config['name']}: {e}")
                 continue
 
-        # Save updated config with pointers
-        self.save_config()
-        print(f"\n✓ Config updated: {self.config_path}")
+        # Save updated config with pointers (only if not dry run)
+        if not dry_run:
+            self.save_config()
+            print(f"\n✓ Config updated: {self.config_path}")
+        else:
+            print(f"\n[DRY RUN] Config not updated")
 
 
 def main():
@@ -230,14 +272,26 @@ def main():
     parser.add_argument(
         "--limit",
         type=int,
-        help="Limit number of commits to extract per repository"
+        help="Limit number of commits per batch (windowed mode, default from config)"
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        dest="all_mode",
+        help="YOLO mode: extract ALL remaining commits, ignoring limit"
+    )
+    parser.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Actually extract commits (default is preview/what-if mode)"
     )
 
     args = parser.parse_args()
 
     # Extract commits
     extractor = CommitExtractor(config_path=args.config)
-    extractor.extract_all(limit=args.limit)
+    dry_run = not args.confirm
+    extractor.extract_all(limit=args.limit, all_mode=args.all_mode, dry_run=dry_run)
 
     print("\n" + "="*60)
     print("EXTRACTION COMPLETE")
@@ -245,7 +299,7 @@ def main():
     print(f"\nOutput directory: {extractor.output_dir}/commits/")
     print(f"\nNext steps:")
     print(f"  1. Review generated markdown files")
-    print(f"  2. Run: ./ingest.sh")
+    print(f"  2. Ingest: ./github.sh ingest")
     print(f"  3. Query: kg search query \"your search term\"")
 
 

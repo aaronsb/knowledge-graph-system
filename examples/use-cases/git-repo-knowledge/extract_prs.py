@@ -98,13 +98,16 @@ class PRExtractor:
         max_prs = limit if limit else self.config.get("pr_limit", 100)
 
         # Fetch PRs using gh CLI
-        # Get all PRs (open, closed, merged) sorted by creation date
+        # Get all PRs (open, closed, merged) sorted by creation date (oldest first)
+        # Note: Avoid 'commits' field - causes GraphQL node explosion
+        # Use --search "sort:created-asc" to get oldest PRs first
         cmd = [
             "gh", "pr", "list",
             "--repo", github_repo_name,
             "--state", "all",
+            "--search", "sort:created-asc",
             "--limit", str(max_prs * 2),  # Fetch extra to account for already-processed
-            "--json", "number,title,state,author,createdAt,updatedAt,mergedAt,mergedBy,body,url,labels,commits,additions,deletions,changedFiles"
+            "--json", "number,title,state,author,createdAt,updatedAt,mergedAt,mergedBy,body,url,labels,additions,deletions,changedFiles"
         ]
 
         try:
@@ -169,9 +172,11 @@ class PRExtractor:
         if merged_by:
             frontmatter.append(f"merged_by: {merged_by}")
 
+        # Use PRs-specific ontology
+        prs_ontology = f"{repo_config['ontology']}-PRs"
         frontmatter.extend([
             f"repository: {repo_config['name']}",
-            f"ontology: {repo_config['ontology']}",
+            f"ontology: {prs_ontology}",
             f"url: {url}",
             "---",
             ""
@@ -201,10 +206,8 @@ class PRExtractor:
                 doc.append(f"- `{label['name']}`")
             doc.append("")
 
-        # Add stats
+        # Add stats (note: 'commits' field omitted - causes GraphQL explosion)
         stats = []
-        if "commits" in pr:
-            stats.append(f"**Commits:** {pr.get('commits', 0)}")
         if "changedFiles" in pr:
             stats.append(f"**Files Changed:** {pr.get('changedFiles', 0)}")
         if "additions" in pr and "deletions" in pr:
@@ -216,13 +219,14 @@ class PRExtractor:
 
         return '\n'.join(doc)
 
-    def extract_repository(self, repo_config: Dict, limit: Optional[int] = None):
+    def extract_repository(self, repo_config: Dict, limit: Optional[int] = None, dry_run: bool = True):
         """
         Extract PRs from a single repository.
 
         Args:
             repo_config: Repository configuration dict
             limit: Optional limit on number of PRs
+            dry_run: If True, only preview what would be extracted (default: True)
         """
         if not repo_config.get("enabled", True):
             print(f"\nSkipping disabled repository: {repo_config['name']}")
@@ -232,10 +236,14 @@ class PRExtractor:
             print(f"\nSkipping repository without github_repo: {repo_config['name']}")
             return
 
+        # Use PRs-specific ontology
+        prs_ontology = f"{repo_config['ontology']}-PRs"
+
+        mode_str = "[DRY RUN] " if dry_run else ""
         print(f"\n{'='*60}")
-        print(f"Repository: {repo_config['name']}")
+        print(f"{mode_str}Repository: {repo_config['name']}")
         print(f"GitHub: {repo_config['github_repo']}")
-        print(f"Ontology: {repo_config['ontology']}")
+        print(f"Ontology: {prs_ontology}")
         print(f"{'='*60}")
 
         # Get PRs
@@ -243,6 +251,18 @@ class PRExtractor:
 
         if not prs:
             print("  No new PRs to process")
+            return
+
+        if dry_run:
+            # Preview mode - just list what would be extracted
+            print(f"\n  Would extract {len(prs)} PRs:")
+            for pr in prs:
+                state = pr["state"].upper()
+                # Only add merged indicator if state isn't already MERGED
+                if pr.get("mergedAt") and state != "MERGED":
+                    state = f"{state} [MERGED]"
+                print(f"    PR #{pr['number']}: {pr['title'][:60]}... ({state})")
+            print(f"\n  Run with --confirm to actually extract")
             return
 
         # Create output directory
@@ -272,25 +292,29 @@ class PRExtractor:
             repo_config["last_pr"] = prs[-1]["number"]
             print(f"  Updated pointer to: PR #{prs[-1]['number']}")
 
-    def extract_all(self, limit: Optional[int] = None):
+    def extract_all(self, limit: Optional[int] = None, dry_run: bool = True):
         """
         Extract PRs from all enabled repositories.
 
         Args:
             limit: Optional limit on number of PRs per repository
+            dry_run: If True, only preview what would be extracted (default: True)
         """
         for repo_config in self.config["repositories"]:
             try:
-                self.extract_repository(repo_config, limit)
+                self.extract_repository(repo_config, limit, dry_run)
             except Exception as e:
                 print(f"\n✗ Error processing {repo_config['name']}: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
 
-        # Save updated config with pointers
-        self.save_config()
-        print(f"\n✓ Config updated: {self.config_path}")
+        # Save updated config with pointers (only if not dry run)
+        if not dry_run:
+            self.save_config()
+            print(f"\n✓ Config updated: {self.config_path}")
+        else:
+            print(f"\n[DRY RUN] Config not updated")
 
 
 def main():
@@ -307,12 +331,18 @@ def main():
         type=int,
         help="Limit number of PRs to extract per repository"
     )
+    parser.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Actually extract PRs (default is preview/what-if mode)"
+    )
 
     args = parser.parse_args()
 
     # Extract PRs
     extractor = PRExtractor(config_path=args.config)
-    extractor.extract_all(limit=args.limit)
+    dry_run = not args.confirm
+    extractor.extract_all(limit=args.limit, dry_run=dry_run)
 
     print("\n" + "="*60)
     print("EXTRACTION COMPLETE")
@@ -320,7 +350,7 @@ def main():
     print(f"\nOutput directory: {extractor.output_dir}/prs/")
     print(f"\nNext steps:")
     print(f"  1. Review generated markdown files")
-    print(f"  2. Run: ./ingest.sh")
+    print(f"  2. Ingest: ./github.sh ingest")
     print(f"  3. Query: kg search query \"your search term\"")
 
 
