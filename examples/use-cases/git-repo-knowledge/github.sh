@@ -286,18 +286,27 @@ do_run() {
     do_ingest
     echo ""
 
+    # Clean up output directory after successful ingestion
+    # Files are either queued (being processed) or duplicates (already in system)
+    # Either way, we don't need the local copies anymore
+    if [ -d "output" ]; then
+        echo -e "${BLUE}Cleaning up output files...${NC}"
+        rm -rf output
+        echo -e "${GREEN}✓ Output cleaned${NC}"
+        echo ""
+    fi
+
     # Show results
     echo -e "${BLUE}Results:${NC}"
     kg database stats 2>/dev/null || echo "(kg CLI not available for stats)"
     echo ""
 
-    # Offer cleanup
+    # Done
     echo "======================================================================"
     echo -e "${GREEN}DONE!${NC}"
     echo "======================================================================"
     echo ""
     echo "Run again to process more items incrementally."
-    echo "Clean up: ./github.sh clean"
 }
 
 show_help() {
