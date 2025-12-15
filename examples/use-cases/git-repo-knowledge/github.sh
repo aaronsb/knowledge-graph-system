@@ -248,6 +248,11 @@ do_run() {
     echo "======================================================================"
     echo ""
 
+    # Clean output directory first to avoid mixing with old files
+    if [ -d "output" ]; then
+        rm -rf output
+    fi
+
     setup_venv
 
     # Extract commits
