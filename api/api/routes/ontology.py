@@ -322,7 +322,9 @@ async def delete_ontology(
 
             # 2. Delete source documents (ADR-081)
             try:
-                source_docs_deleted = garage_client.sources.delete_by_ontology(ontology_name)
+                from ..lib.garage import get_source_storage
+                source_storage = get_source_storage()
+                source_docs_deleted = source_storage.delete_by_ontology(ontology_name)
                 if source_docs_deleted:
                     logger.info(f"Deleted {len(source_docs_deleted)} source documents from Garage for ontology '{ontology_name}'")
             except Exception as e:
@@ -330,7 +332,7 @@ async def delete_ontology(
 
             # 3. Delete projections (ADR-079)
             try:
-                projections_deleted = garage_client.projections.delete_all(ontology_name)
+                projections_deleted = garage_client.delete_all_projections(ontology_name)
                 if projections_deleted > 0:
                     logger.info(f"Deleted {projections_deleted} projections from Garage for ontology '{ontology_name}'")
             except Exception as e:
@@ -366,8 +368,9 @@ async def delete_ontology(
 
         # Delete source_embeddings for the deleted sources
         if source_ids:
+            conn = None
             try:
-                conn = client.conn
+                conn = client.pool.getconn()
                 with conn.cursor() as cur:
                     # Use ANY to match source_ids in the list
                     cur.execute("""
@@ -380,6 +383,9 @@ async def delete_ontology(
                         logger.info(f"Deleted {embeddings_deleted} source embeddings for ontology '{ontology_name}'")
             except Exception as e:
                 logger.warning(f"Failed to delete source embeddings: {e}")
+            finally:
+                if conn:
+                    client.pool.putconn(conn)
 
         # ADR-051: Delete DocumentMeta nodes for this ontology
         # This ensures cascade deletion of provenance metadata
