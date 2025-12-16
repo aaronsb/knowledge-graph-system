@@ -99,7 +99,8 @@ const fragmentShader = `
     // Anti-aliased edge (crisp but smooth)
     float alpha = 1.0 - smoothstep(-0.02, 0.02, d);
 
-    if (alpha < 0.01) discard;
+    // Discard transparent fragments early for proper depth testing
+    if (alpha < 0.5) discard;
 
     // Add subtle edge highlight for depth
     float edge = smoothstep(-0.1, -0.02, d) - smoothstep(-0.02, 0.0, d);
@@ -255,10 +256,10 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      // Size based on grounding if available
+      // Size based on grounding if available (smaller dots for dense clouds)
       sizes[i] = point.grounding !== null
-        ? 8 + Math.abs(point.grounding) * 8
-        : 12;
+        ? 3 + Math.abs(point.grounding) * 3
+        : 5;
 
       // Shape based on item type
       shapes[i] = SHAPE_INDEX[point.itemType] ?? 0;
@@ -284,7 +285,8 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
       fragmentShader,
       vertexColors: true,
       transparent: true,
-      depthWrite: false,
+      depthWrite: true,  // Enable proper z-ordering (closer points occlude farther)
+      depthTest: true,
       blending: THREE.NormalBlending,
     });
 
