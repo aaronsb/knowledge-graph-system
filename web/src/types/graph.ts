@@ -13,6 +13,10 @@ export interface APIGraphNode {
   instance_count?: number;
   created_at?: string;
   grounding_strength?: number; // -1.0 to +1.0, measures truth convergence
+  // Two-dimensional epistemic model (grounding × confidence)
+  grounding_display?: string;    // Categorical label from 3×3 matrix (e.g., "Well-supported", "Unclear")
+  confidence_level?: string;     // "confident" | "tentative" | "insufficient"
+  confidence_score?: number;     // 0.0 to 1.0, nonlinear saturation of data richness
 }
 
 export interface APIGraphLink {

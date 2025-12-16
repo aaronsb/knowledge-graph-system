@@ -78,6 +78,11 @@ export interface ConceptSearchResult {
   similarity?: number;
   score?: number;          // Alias for similarity in some API responses
   evidence_count?: number; // Number of evidence instances
+  // Two-dimensional epistemic model (grounding × confidence)
+  grounding_strength?: number;   // -1.0 to +1.0, direction of evidence
+  grounding_display?: string;    // Categorical label from 3×3 matrix (e.g., "Well-supported", "Unclear")
+  confidence_level?: string;     // "confident" | "tentative" | "insufficient"
+  confidence_score?: number;     // 0.0 to 1.0, nonlinear saturation of data richness
 }
 
 export interface ConceptSearchResponse {

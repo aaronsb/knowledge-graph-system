@@ -7,7 +7,118 @@ import { useVocabularyStore } from '../../store/vocabularyStore';
 import { getCategoryColor } from '../../config/categoryColors';
 
 /**
- * Format grounding strength with emoji indicator (matches CLI format)
+ * Two-dimensional epistemic model result
+ */
+export interface GroundingDisplayResult {
+  emoji: string;
+  label: string;
+  confidenceScore: string;  // e.g., "[64% conf]"
+  color: string;
+}
+
+/**
+ * Format grounding with confidence (two-dimensional epistemic model)
+ *
+ * Uses grounding_display from API if available (3×3 matrix label),
+ * otherwise falls back to calculating from raw grounding value.
+ *
+ * @param grounding - Raw grounding strength (-1.0 to +1.0)
+ * @param groundingDisplay - Pre-computed display label from API (e.g., "Well-supported", "Unclear")
+ * @param confidenceScore - Numeric confidence (0.0 to 1.0) - data richness metric
+ */
+export function formatGroundingWithConfidence(
+  grounding: number | undefined | null,
+  groundingDisplay?: string | null,
+  confidenceScore?: number | null
+): GroundingDisplayResult | null {
+  // If we have grounding_display from API, use it
+  if (groundingDisplay) {
+    const confStr = confidenceScore !== undefined && confidenceScore !== null
+      ? `[${(confidenceScore * 100).toFixed(0)}% conf]`
+      : '';
+
+    // Map display labels to emoji and color
+    const { emoji, color } = getDisplayStyle(groundingDisplay, grounding);
+
+    return {
+      emoji,
+      label: groundingDisplay,
+      confidenceScore: confStr,
+      color,
+    };
+  }
+
+  // Fallback: compute from raw grounding (legacy behavior)
+  if (grounding === undefined || grounding === null) return null;
+
+  const fallback = formatGrounding(grounding);
+  if (!fallback) return null;
+
+  const confStr = confidenceScore !== undefined && confidenceScore !== null
+    ? `[${(confidenceScore * 100).toFixed(0)}% conf]`
+    : '';
+
+  return {
+    emoji: fallback.emoji,
+    label: fallback.label,
+    confidenceScore: confStr,
+    color: fallback.color,
+  };
+}
+
+/**
+ * Get emoji and color for a grounding display label
+ */
+function getDisplayStyle(displayLabel: string, grounding?: number | null): { emoji: string; color: string } {
+  const label = displayLabel.toLowerCase();
+
+  // Positive grounding labels
+  if (label.includes('well-supported')) {
+    return { emoji: '✓', color: '#22c55e' }; // green
+  }
+  if (label.includes('some support')) {
+    return { emoji: '⚡', color: '#84cc16' }; // lime
+  }
+  if (label.includes('possibly supported')) {
+    return { emoji: '◐', color: '#eab308' }; // yellow
+  }
+
+  // Neutral/unclear labels
+  if (label.includes('balanced')) {
+    return { emoji: '⚖', color: '#6b7280' }; // gray
+  }
+  if (label.includes('unclear')) {
+    return { emoji: '◯', color: '#9ca3af' }; // light gray
+  }
+  if (label.includes('unexplored')) {
+    return { emoji: '?', color: '#d1d5db' }; // lighter gray
+  }
+
+  // Negative grounding labels
+  if (label.includes('contested')) {
+    return { emoji: '⚠', color: '#f97316' }; // orange
+  }
+  if (label.includes('possibly contested')) {
+    return { emoji: '◑', color: '#f59e0b' }; // amber
+  }
+  if (label.includes('unknown')) {
+    return { emoji: '?', color: '#d1d5db' }; // lighter gray
+  }
+
+  // Fallback: derive from raw grounding if available
+  if (grounding !== undefined && grounding !== null) {
+    if (grounding >= 0.4) return { emoji: '⚡', color: '#84cc16' };
+    if (grounding >= 0.0) return { emoji: '◯', color: '#f97316' };
+    if (grounding >= -0.4) return { emoji: '⚠', color: '#ef4444' };
+    return { emoji: '✗', color: '#dc2626' };
+  }
+
+  return { emoji: '◯', color: '#9ca3af' }; // default gray
+}
+
+/**
+ * Format grounding strength with emoji indicator (legacy format)
+ * @deprecated Use formatGroundingWithConfidence for two-dimensional display
  */
 export function formatGrounding(grounding: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
   if (grounding === undefined || grounding === null) return null;
@@ -37,15 +148,15 @@ export function formatGrounding(grounding: number | undefined | null): { emoji: 
   }
 
   if (grounding >= 0.8) {
-    return { emoji: '✓', label: 'Strong', percentage: `${percentage}%`, color };
+    return { emoji: '✓', label: 'Strong', percentage, color };
   } else if (grounding >= 0.4) {
-    return { emoji: '⚡', label: 'Moderate', percentage: `${percentage}%`, color };
+    return { emoji: '⚡', label: 'Moderate', percentage, color };
   } else if (grounding >= 0.0) {
-    return { emoji: '◯', label: 'Weak', percentage: `${percentage}%`, color };
+    return { emoji: '◯', label: 'Weak', percentage, color };
   } else if (grounding >= -0.4) {
-    return { emoji: '◯', label: 'Contested', percentage: `${percentage}%`, color };
+    return { emoji: '◯', label: 'Contested', percentage, color };
   } else {
-    return { emoji: '✗', label: 'Contradicted', percentage: `${percentage}%`, color };
+    return { emoji: '✗', label: 'Contradicted', percentage, color };
   }
 }
 

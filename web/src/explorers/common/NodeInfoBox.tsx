@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../api/client';
-import { formatGrounding, formatDiversity, formatAuthenticatedDiversity, getRelationshipTextColor } from './utils';
+import { formatGrounding, formatGroundingWithConfidence, formatDiversity, formatAuthenticatedDiversity, getRelationshipTextColor } from './utils';
 import { getZIndexValue } from '../../config/zIndex';
 
 /**
@@ -200,13 +200,17 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
                       {detailedData?.relationships?.length ?? info.degree}
                     </span>
                   </div>
-                  {detailedData?.grounding_strength !== undefined && detailedData?.grounding_strength !== null && (() => {
-                    const grounding = formatGrounding(detailedData.grounding_strength);
+                  {(detailedData?.grounding_strength !== undefined || detailedData?.grounding_display) && (() => {
+                    const grounding = formatGroundingWithConfidence(
+                      detailedData.grounding_strength,
+                      detailedData.grounding_display,
+                      detailedData.confidence_score
+                    );
                     return grounding && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Grounding:</span>
                         <span className="font-medium" style={{ color: grounding.color }}>
-                          {grounding.emoji} {grounding.label} ({grounding.percentage})
+                          {grounding.emoji} {grounding.label} {grounding.confidenceScore}
                         </span>
                       </div>
                     );
