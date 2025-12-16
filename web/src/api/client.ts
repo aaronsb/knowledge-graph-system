@@ -87,10 +87,11 @@ class APIClient {
       ...relatedConcepts.map((rc: any) => rc.concept_id)
     ];
 
-    // Step 3: Fetch details for all concepts in parallel (with grounding)
+    // Step 3: Fetch details for all concepts in parallel (NO grounding - too expensive)
+    // Grounding is fetched on-demand when user clicks a node for details
     const conceptDetailsPromises = allConceptIds.map(id =>
       this.client.get(`/query/concept/${id}`, {
-        params: { include_grounding: true }
+        params: { include_grounding: false }
       }).then(r => r.data).catch(() => null)
     );
 
