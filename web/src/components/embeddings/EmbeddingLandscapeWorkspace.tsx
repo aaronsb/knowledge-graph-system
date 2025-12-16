@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, Wand2 } from 'lucide-react';
-import type { ProjectionData, EmbeddingPoint, OntologySelection, ColorScheme, EmbeddingSource, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp } from './types';
+import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp } from './types';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
 import { NodeInfoBox } from '../../explorers/common/NodeInfoBox';
 
@@ -41,25 +41,6 @@ const COLOR_SCHEME_INFO: Record<ColorScheme, { label: string; description: strin
   },
 };
 
-// Embedding source descriptions
-const EMBEDDING_SOURCE_INFO: Record<EmbeddingSource, { label: string; description: string }> = {
-  concepts: {
-    label: 'Concepts',
-    description: 'Concept label embeddings (default)',
-  },
-  sources: {
-    label: 'Sources',
-    description: 'Evidence chunk embeddings',
-  },
-  vocabulary: {
-    label: 'Vocabulary',
-    description: 'Relationship type embeddings',
-  },
-  combined: {
-    label: 'Combined',
-    description: 'All embedding types together',
-  },
-};
 
 /**
  * Color ramp definitions for grounding visualization.
@@ -245,22 +226,18 @@ function positionToColor(
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-// Helper to create compound cache key for projections
-// Vocabulary is global (same across all ontologies), so use special key
-const getProjectionKey = (ontology: string, source: EmbeddingSource): string => {
-  if (source === 'vocabulary') {
-    return '_global:vocabulary';  // Vocabulary is shared across all ontologies
-  }
-  return `${ontology}:${source}`;
-};
-
 export function EmbeddingLandscapeWorkspace() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [ontologies, setOntologies] = useState<OntologySelection[]>([]);
-  // Projections keyed by "ontology:source" (e.g., "MyOntology:concepts")
-  const [projections, setProjections] = useState<Map<string, ProjectionData>>(new Map());
+
+  // Global projection data (all concepts from all ontologies)
+  const [globalProjection, setGlobalProjection] = useState<ProjectionData | null>(null);
+
+  // Ontology visibility toggles (derived from projection data)
+  const [ontologyVisibility, setOntologyVisibility] = useState<Map<string, boolean>>(new Map());
+  const [ontologyColors, setOntologyColors] = useState<Map<string, string>>(new Map());
+
   const [selectedConcept, setSelectedConcept] = useState<EmbeddingPoint | null>(null);
   const [selectedScreenPos, setSelectedScreenPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -272,7 +249,6 @@ export function EmbeddingLandscapeWorkspace() {
   } | null>(null);
 
   // t-SNE perplexity control (5-100, default 30)
-  // Lower values = more local structure, higher = more global patterns
   const [perplexity, setPerplexity] = useState(30);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -291,189 +267,96 @@ export function EmbeddingLandscapeWorkspace() {
   // Color ramp for grounding visualization
   const [groundingRamp, setGroundingRamp] = useState<GroundingColorRamp>('pink-gray-cyan');
 
-  // Load available ontologies on mount
+  // Load global projection on mount
   useEffect(() => {
-    loadOntologies();
+    loadGlobalProjection();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadOntologies = async () => {
+  // Extract unique ontologies and assign colors when projection loads
+  useEffect(() => {
+    if (!globalProjection) return;
+
+    // Get unique ontologies from the projection data
+    const uniqueOntologies = new Set<string>();
+    globalProjection.concepts.forEach(c => {
+      if (c.ontology) uniqueOntologies.add(c.ontology);
+    });
+
+    // Initialize visibility (all visible) and colors
+    const visibility = new Map<string, boolean>();
+    const colors = new Map<string, string>();
+    let colorIndex = 0;
+
+    uniqueOntologies.forEach(ont => {
+      visibility.set(ont, true);
+      colors.set(ont, ONTOLOGY_COLORS[colorIndex % ONTOLOGY_COLORS.length]);
+      colorIndex++;
+    });
+
+    setOntologyVisibility(visibility);
+    setOntologyColors(colors);
+  }, [globalProjection]);
+
+  const loadGlobalProjection = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.listOntologies();
 
-      // Initialize ontology selections with colors and default sources enabled
-      const selections: OntologySelection[] = response.ontologies.map((ont, index) => ({
-        ontology: ont.ontology,
-        enabled: true, // All enabled by default
-        color: ONTOLOGY_COLORS[index % ONTOLOGY_COLORS.length],
-        conceptCount: ont.concept_count,
-        enabledSources: {
-          concepts: true,   // Concepts enabled by default
-          sources: false,   // Sources off by default
-          vocabulary: false, // Vocabulary off by default
-        },
-      }));
-
-      setOntologies(selections);
-
-      // Load projections for all ontologies
-      await loadAllProjections(selections);
+      // Load the global projection (all ontologies combined)
+      const projection = await apiClient.getProjection('__all__', 'concepts');
+      setGlobalProjection(projection);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }; message?: string };
-      setError(error.response?.data?.detail || error.message || 'Failed to load ontologies');
+      const error = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+      if (error.response?.status === 404) {
+        // No global projection yet - prompt user to generate
+        setError('No global projection found. Click "Regenerate" to compute.');
+      } else {
+        setError(error.response?.data?.detail || error.message || 'Failed to load projection');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const loadAllProjections = useCallback(async (ontologyList: OntologySelection[]) => {
-    // Load projections for all enabled sources and merge with existing
-    const loadedProjections = new Map<string, ProjectionData>();
-
-    // Build list of all ontology+source pairs to load
-    const toLoad: Array<{ ontology: string; source: EmbeddingSource }> = [];
-    ontologyList.forEach(ont => {
-      if (ont.enabledSources.concepts) {
-        toLoad.push({ ontology: ont.ontology, source: 'concepts' });
-      }
-      if (ont.enabledSources.sources) {
-        toLoad.push({ ontology: ont.ontology, source: 'sources' });
-      }
-      if (ont.enabledSources.vocabulary) {
-        toLoad.push({ ontology: ont.ontology, source: 'vocabulary' });
-      }
-    });
-
-    await Promise.all(
-      toLoad.map(async ({ ontology, source }) => {
-        const key = getProjectionKey(ontology, source);
-        // Skip if already loaded (vocabulary is shared)
-        if (loadedProjections.has(key)) return;
-        try {
-          const projection = await apiClient.getProjection(ontology, source);
-          loadedProjections.set(key, projection);
-        } catch (err: unknown) {
-          // Projection might not exist yet - that's okay
-          const error = err as { message?: string };
-          console.warn(`No projection for ${key}:`, error.message);
-        }
-      })
-    );
-
-    // Merge with existing projections (keep cached ones)
-    setProjections(prev => {
-      const merged = new Map(prev);
-      loadedProjections.forEach((proj, key) => merged.set(key, proj));
-      return merged;
-    });
-  }, []);
-
-  // Regenerate a specific ontology+source projection
-  const regenerateProjection = useCallback(async (ontologyName: string, source: EmbeddingSource) => {
-    const key = getProjectionKey(ontologyName, source);
-
+  // Regenerate the global projection
+  const regenerateGlobalProjection = async () => {
     try {
       setLoading(true);
       setError(null);
-      await apiClient.regenerateProjection(ontologyName, {
+
+      // Regenerate global projection (all ontologies together with global centering)
+      await apiClient.regenerateProjection('__all__', {
         force: true,
         perplexity,
         metric,
         refresh_grounding: refreshGrounding,
-        embedding_source: source,
+        embedding_source: 'concepts',
       });
-      // Reload the projection with compound key
-      const projection = await apiClient.getProjection(ontologyName, source);
-      setProjections(prev => new Map(prev).set(key, projection));
+
+      // Reload the projection
+      await loadGlobalProjection();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } }; message?: string };
       setError(error.response?.data?.detail || error.message || 'Failed to regenerate projection');
     } finally {
       setLoading(false);
     }
-  }, [perplexity, metric, refreshGrounding]);
-
-  // Regenerate all enabled ontology+source combinations
-  const regenerateAll = useCallback(async () => {
-    const enabledOntologies = ontologies.filter(o => o.enabled);
-    if (enabledOntologies.length === 0) return;
-
-    // Build list of all ontology+source pairs to regenerate
-    const toRegenerate: Array<{ ontology: string; source: EmbeddingSource }> = [];
-    enabledOntologies.forEach(ont => {
-      if (ont.enabledSources.concepts) {
-        toRegenerate.push({ ontology: ont.ontology, source: 'concepts' });
-      }
-      if (ont.enabledSources.sources) {
-        toRegenerate.push({ ontology: ont.ontology, source: 'sources' });
-      }
-      if (ont.enabledSources.vocabulary) {
-        // Vocabulary is global - only add once
-        if (!toRegenerate.some(t => t.source === 'vocabulary')) {
-          toRegenerate.push({ ontology: ont.ontology, source: 'vocabulary' });
-        }
-      }
-    });
-
-    if (toRegenerate.length === 0) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Regenerate all in parallel
-      await Promise.all(
-        toRegenerate.map(({ ontology, source }) =>
-          apiClient.regenerateProjection(ontology, {
-            force: true,
-            perplexity,
-            metric,
-            refresh_grounding: refreshGrounding,
-            embedding_source: source,
-          })
-        )
-      );
-
-      // Reload all projections
-      await loadAllProjections(enabledOntologies);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } }; message?: string };
-      setError(error.response?.data?.detail || error.message || 'Failed to regenerate projections');
-    } finally {
-      setLoading(false);
-    }
-  }, [ontologies, perplexity, metric, refreshGrounding, loadAllProjections]);
+  };
 
   const toggleOntology = (ontology: string) => {
-    setOntologies(prev =>
-      prev.map(o =>
-        o.ontology === ontology ? { ...o, enabled: !o.enabled } : o
-      )
-    );
+    setOntologyVisibility(prev => {
+      const next = new Map(prev);
+      next.set(ontology, !prev.get(ontology));
+      return next;
+    });
   };
 
-  // Toggle an embedding source for an ontology
-  const toggleEmbeddingSource = (ontologyName: string, source: 'concepts' | 'sources' | 'vocabulary') => {
-    setOntologies(prev =>
-      prev.map(o =>
-        o.ontology === ontologyName
-          ? {
-              ...o,
-              enabledSources: {
-                ...o.enabledSources,
-                [source]: !o.enabledSources[source],
-              },
-            }
-          : o
-      )
-    );
-  };
-
-  // Transform projections into visualization points with color scheme
+  // Transform global projection into visualization points with color scheme
   const points: EmbeddingPoint[] = useMemo(() => {
-    // First pass: collect all points and compute bounds for position coloring
+    if (!globalProjection) return [];
+
+    // Filter by visible ontologies and collect points
     const rawPoints: Array<{
       id: string;
       label: string;
@@ -486,37 +369,22 @@ export function EmbeddingLandscapeWorkspace() {
       itemType: ProjectionItemType;
     }> = [];
 
-    // Process each enabled source for each ontology
-    const sourcesToProcess: Array<{ source: 'concepts' | 'sources' | 'vocabulary'; itemType: ProjectionItemType }> = [
-      { source: 'concepts', itemType: 'concept' },
-      { source: 'sources', itemType: 'source' },
-      { source: 'vocabulary', itemType: 'vocabulary' },
-    ];
+    globalProjection.concepts.forEach(concept => {
+      const ontology = concept.ontology || 'Unknown';
 
-    ontologies.forEach(ont => {
-      if (!ont.enabled) return;
+      // Skip if ontology is hidden
+      if (!ontologyVisibility.get(ontology)) return;
 
-      sourcesToProcess.forEach(({ source, itemType }) => {
-        if (!ont.enabledSources[source]) return;
-
-        const key = getProjectionKey(ont.ontology, source);
-        const projection = projections.get(key);
-        if (!projection) return;
-
-        projection.concepts.forEach(concept => {
-          rawPoints.push({
-            id: concept.concept_id,
-            label: concept.label,
-            x: concept.x,
-            y: concept.y,
-            z: concept.z,
-            ontology: ont.ontology,
-            grounding: concept.grounding_strength,
-            ontologyColor: ont.color,
-            // Use item_type from backend if available, otherwise use the source's item type
-            itemType: (concept.item_type as ProjectionItemType) || itemType,
-          });
-        });
+      rawPoints.push({
+        id: concept.concept_id,
+        label: concept.label,
+        x: concept.x,
+        y: concept.y,
+        z: concept.z,
+        ontology,
+        grounding: concept.grounding_strength,
+        ontologyColor: ontologyColors.get(ontology) || '#888888',
+        itemType: (concept.item_type as ProjectionItemType) || 'concept',
       });
     });
 
@@ -532,7 +400,7 @@ export function EmbeddingLandscapeWorkspace() {
       maxZ: Math.max(...rawPoints.map(p => p.z)),
     };
 
-    // Second pass: apply color scheme
+    // Apply color scheme
     return rawPoints.map(p => {
       let color: string;
 
@@ -561,21 +429,28 @@ export function EmbeddingLandscapeWorkspace() {
         itemType: p.itemType,
       };
     });
-  }, [ontologies, projections, colorScheme, groundingScale, groundingRamp]);
+  }, [globalProjection, ontologyVisibility, ontologyColors, colorScheme, groundingScale, groundingRamp]);
+
+  // Get list of ontologies for UI
+  const ontologyList = useMemo(() => {
+    return Array.from(ontologyVisibility.keys()).map(ont => ({
+      ontology: ont,
+      enabled: ontologyVisibility.get(ont) ?? true,
+      color: ontologyColors.get(ont) || '#888888',
+      count: globalProjection?.concepts.filter(c => c.ontology === ont).length || 0,
+    }));
+  }, [ontologyVisibility, ontologyColors, globalProjection]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const enabledOntologies = ontologies.filter(o => o.enabled);
-    const totalConcepts = points.length;
-    const ontologiesWithProjections = enabledOntologies.filter(o => projections.has(o.ontology)).length;
-
+    const enabledCount = ontologyList.filter(o => o.enabled).length;
     return {
-      enabledOntologies: enabledOntologies.length,
-      totalOntologies: ontologies.length,
-      totalConcepts,
-      ontologiesWithProjections,
+      enabledOntologies: enabledCount,
+      totalOntologies: ontologyList.length,
+      totalConcepts: points.length,
+      totalInProjection: globalProjection?.concepts.length || 0,
     };
-  }, [ontologies, projections, points]);
+  }, [ontologyList, points, globalProjection]);
 
   // Context menu handlers
   const handleContextMenu = useCallback((point: EmbeddingPoint, screenPos: { x: number; y: number }) => {
@@ -757,8 +632,8 @@ export function EmbeddingLandscapeWorkspace() {
 
               {/* Apply button */}
               <button
-                onClick={regenerateAll}
-                disabled={loading || ontologies.filter(o => o.enabled).length === 0}
+                onClick={regenerateGlobalProjection}
+                disabled={loading}
                 className="w-full py-2 px-3 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -769,7 +644,7 @@ export function EmbeddingLandscapeWorkspace() {
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4" />
-                    Regenerate All
+                    Regenerate
                   </>
                 )}
               </button>
@@ -777,24 +652,24 @@ export function EmbeddingLandscapeWorkspace() {
           </div>
         )}
 
-        {/* Ontology list */}
+        {/* Ontology list (for visibility filtering) */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-foreground">Ontologies</span>
             <div className="flex items-center gap-1">
               <button
-                onClick={regenerateAll}
-                disabled={loading || ontologies.filter(o => o.enabled).length === 0}
+                onClick={regenerateGlobalProjection}
+                disabled={loading}
                 className="p-1 text-muted-foreground hover:text-primary rounded disabled:opacity-50"
-                title="Generate all projections"
+                title="Regenerate global projection"
               >
                 <Wand2 className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
               </button>
               <button
-                onClick={loadOntologies}
+                onClick={loadGlobalProjection}
                 disabled={loading}
                 className="p-1 text-muted-foreground hover:text-foreground rounded"
-                title="Refresh ontology list"
+                title="Reload projection"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
@@ -807,96 +682,49 @@ export function EmbeddingLandscapeWorkspace() {
             </div>
           )}
 
+          {ontologyList.length === 0 && !loading && !error && (
+            <div className="text-sm text-muted-foreground text-center py-4">
+              No projection data. Click the wand to generate.
+            </div>
+          )}
+
           <div className="space-y-2">
-            {ontologies.map(ont => {
-              return (
-                <div
-                  key={ont.ontology}
-                  className={`p-3 rounded-lg border ${
-                    ont.enabled
-                      ? 'border-border bg-muted'
-                      : 'border-border bg-card opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleOntology(ont.ontology)}
-                      className="p-1 hover:bg-accent rounded"
-                    >
-                      {ont.enabled ? (
-                        <Eye className="w-4 h-4 text-foreground" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </button>
+            {ontologyList.map(ont => (
+              <div
+                key={ont.ontology}
+                className={`p-3 rounded-lg border ${
+                  ont.enabled
+                    ? 'border-border bg-muted'
+                    : 'border-border bg-card opacity-60'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleOntology(ont.ontology)}
+                    className="p-1 hover:bg-accent rounded"
+                  >
+                    {ont.enabled ? (
+                      <Eye className="w-4 h-4 text-foreground" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
 
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: ont.color }}
-                    />
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: ont.color }}
+                  />
 
-                    <span className="text-sm text-foreground truncate flex-1">
-                      {ont.ontology}
-                    </span>
-                  </div>
+                  <span className="text-sm text-foreground truncate flex-1">
+                    {ont.ontology}
+                  </span>
 
-                  {/* Compact embedding source toggles */}
-                  <div className="mt-2 flex gap-1">
-                    {(['concepts', 'sources', 'vocabulary'] as const).map(source => {
-                      const sourceKey = getProjectionKey(ont.ontology, source);
-                      const hasSourceProjection = projections.has(sourceKey);
-                      const isEnabled = ont.enabledSources[source];
-
-                      return (
-                        <button
-                          key={source}
-                          onClick={() => toggleEmbeddingSource(ont.ontology, source)}
-                          className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
-                            isEnabled
-                              ? 'bg-primary/20 text-primary border border-primary/30'
-                              : 'bg-accent/30 text-muted-foreground hover:bg-accent/50 border border-transparent'
-                          }`}
-                          title={`${EMBEDDING_SOURCE_INFO[source].description}${hasSourceProjection ? '' : ' (needs generation)'}`}
-                        >
-                          {source === 'concepts' ? '●' : source === 'sources' ? '◆' : '▲'}
-                          <span className="ml-1">{EMBEDDING_SOURCE_INFO[source].label.slice(0, 3)}</span>
-                          {isEnabled && !hasSourceProjection && (
-                            <span className="ml-0.5 text-amber-500">!</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Stats for enabled sources */}
-                  <div className="mt-2 text-xs space-y-1">
-                    {(['concepts', 'sources', 'vocabulary'] as const).map(source => {
-                      if (!ont.enabledSources[source]) return null;
-                      const sourceKey = getProjectionKey(ont.ontology, source);
-                      const sourceProj = projections.get(sourceKey);
-
-                      return (
-                        <div key={source} className="flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            {source === 'concepts' ? '●' : source === 'sources' ? '◆' : '▲'}{' '}
-                            {sourceProj
-                              ? `${sourceProj.statistics.concept_count} pts`
-                              : 'No data'}
-                          </span>
-                          <button
-                            onClick={() => regenerateProjection(ont.ontology, source)}
-                            disabled={loading}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            {sourceProj ? 'Refresh' : 'Generate'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {ont.count}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -954,7 +782,7 @@ export function EmbeddingLandscapeWorkspace() {
             </div>
             {colorScheme === 'ontology' && (
               <div className="space-y-1">
-                {ontologies.filter(o => o.enabled).map(ont => (
+                {ontologyList.filter(o => o.enabled).map(ont => (
                   <div key={ont.ontology} className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"

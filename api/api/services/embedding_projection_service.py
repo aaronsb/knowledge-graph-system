@@ -62,6 +62,86 @@ class EmbeddingProjectionService:
             algorithms.append("umap")
         return algorithms
 
+    def get_all_ontology_embeddings(
+        self,
+        include_grounding: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Fetch all concept embeddings across ALL ontologies.
+
+        Each concept is tagged with its source ontology for visualization coloring.
+        Used for cross-ontology projection where centering is computed globally.
+
+        Args:
+            include_grounding: Include grounding_strength for each concept
+
+        Returns:
+            List of concept dicts with ontology field included
+        """
+        # Query ALL concepts with their ontology (document) association
+        query = """
+            SELECT * FROM ag_catalog.cypher('knowledge_graph', $$
+                MATCH (c:Concept)-[:APPEARS]->(s:Source)
+                WHERE c.embedding IS NOT NULL
+                RETURN DISTINCT
+                    c.concept_id as concept_id,
+                    c.label as label,
+                    c.embedding as embedding,
+                    c.grounding_strength as grounding_strength,
+                    s.document as ontology
+            $$) AS (concept_id agtype, label agtype, embedding agtype, grounding_strength agtype, ontology agtype)
+        """
+
+        concepts = []
+        seen_ids = set()  # Dedupe concepts that appear in multiple ontologies
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+
+                for row in rows:
+                    concept_id = str(row[0]).strip('"')
+
+                    # Skip duplicates (concept may appear in multiple sources)
+                    if concept_id in seen_ids:
+                        continue
+                    seen_ids.add(concept_id)
+
+                    label = str(row[1]).strip('"')
+                    ontology = str(row[4]).strip('"') if row[4] else "Unknown"
+
+                    # Parse embedding from agtype
+                    embedding_str = str(row[2])
+                    try:
+                        embedding = np.array(json.loads(embedding_str), dtype=np.float32)
+                    except (json.JSONDecodeError, ValueError) as e:
+                        logger.warning(f"Failed to parse embedding for {concept_id}: {e}")
+                        continue
+
+                    # Parse grounding
+                    grounding = None
+                    if include_grounding and row[3] is not None:
+                        try:
+                            grounding = float(str(row[3]))
+                        except (ValueError, TypeError):
+                            pass
+
+                    concepts.append({
+                        "concept_id": concept_id,
+                        "label": label,
+                        "embedding": embedding,
+                        "grounding_strength": grounding,
+                        "ontology": ontology
+                    })
+
+            logger.info(f"Fetched {len(concepts)} concepts with embeddings across all ontologies")
+
+        finally:
+            self.client.pool.putconn(conn)
+
+        return concepts
+
     def get_ontology_embeddings(
         self,
         ontology: str,
@@ -511,6 +591,7 @@ class EmbeddingProjectionService:
         spread: float = 1.0,
         metric: Literal["cosine", "euclidean"] = "cosine",
         normalize_l2: bool = True,
+        center: bool = True,
         random_state: int = 42
     ) -> np.ndarray:
         """
@@ -528,6 +609,9 @@ class EmbeddingProjectionService:
                     or "euclidean" (L2 distance, spatial relationships)
             normalize_l2: Whether to L2-normalize embeddings before projection
                           (recommended for semantic embeddings)
+            center: Whether to center embeddings (subtract mean) before normalization.
+                    Removes the "common component" that causes anisotropy artifacts
+                    (nested meatball/concentric shell problem). Recommended True.
             random_state: Random seed for reproducibility
 
         Returns:
@@ -537,6 +621,15 @@ class EmbeddingProjectionService:
 
         if n_samples < 2:
             raise ValueError(f"Need at least 2 samples, got {n_samples}")
+
+        # Center embeddings by subtracting mean (removes common component/anisotropy)
+        # This breaks apart the "nested meatball" artifact where all embeddings
+        # cluster by their deviation from the average rather than by semantic content.
+        # Must be done BEFORE L2 normalization.
+        if center:
+            mean_vector = np.mean(embeddings, axis=0)
+            embeddings = embeddings - mean_vector
+            logger.debug(f"Embeddings centered (mean norm: {np.linalg.norm(mean_vector):.4f})")
 
         # L2-normalize embeddings if requested (best practice for semantic vectors)
         # This makes cosine distance equivalent to Euclidean on the unit sphere
@@ -603,6 +696,7 @@ class EmbeddingProjectionService:
         spread: float = 1.0,
         metric: Literal["cosine", "euclidean"] = "cosine",
         normalize_l2: bool = True,
+        center: bool = True,
         include_grounding: bool = True,
         refresh_grounding: bool = False,
         include_diversity: bool = False,  # Off by default for performance
@@ -623,6 +717,8 @@ class EmbeddingProjectionService:
             spread: UMAP spread (embedding scale, higher=more separation)
             metric: Distance metric - "cosine" (angular) or "euclidean" (L2)
             normalize_l2: L2-normalize embeddings before projection (recommended)
+            center: Center embeddings (subtract mean) before normalization.
+                    Fixes "nested meatball" anisotropy artifact. Recommended True.
             include_grounding: Include grounding strength
             refresh_grounding: Compute fresh grounding (vs using stored values)
             include_diversity: Include diversity scores (slower)
@@ -641,7 +737,15 @@ class EmbeddingProjectionService:
         items = []
         item_type = "concept"  # For result field naming
 
-        if embedding_source == "concepts":
+        # Cross-ontology mode: project ALL concepts together
+        if ontology == "__all__":
+            items = self.get_all_ontology_embeddings(
+                include_grounding=include_grounding
+            )
+            item_type = "concept"
+            # Note: diversity not supported in cross-ontology mode (too slow)
+
+        elif embedding_source == "concepts":
             items = self.get_ontology_embeddings(
                 ontology,
                 include_grounding=include_grounding,
@@ -706,7 +810,8 @@ class EmbeddingProjectionService:
             min_dist=min_dist,
             spread=spread,
             metric=metric,
-            normalize_l2=normalize_l2
+            normalize_l2=normalize_l2,
+            center=center
         )
 
         # Batch compute fresh grounding if requested (only for concepts)
@@ -747,6 +852,10 @@ class EmbeddingProjectionService:
             # Add item type for combined mode
             if "item_type" in item:
                 entry["item_type"] = item["item_type"]
+
+            # Add ontology for cross-ontology mode
+            if "ontology" in item:
+                entry["ontology"] = item["ontology"]
 
             if include_grounding:
                 entry["grounding_strength"] = item.get("grounding_strength")
@@ -798,7 +907,8 @@ class EmbeddingProjectionService:
                 "min_dist": min_dist if algorithm == "umap" else None,
                 "spread": spread if algorithm == "umap" else None,
                 "metric": metric,
-                "normalize_l2": normalize_l2
+                "normalize_l2": normalize_l2,
+                "center": center
             },
             "computed_at": datetime.utcnow().isoformat() + "Z",
             "concepts": result_items,  # Keep "concepts" key for backward compatibility

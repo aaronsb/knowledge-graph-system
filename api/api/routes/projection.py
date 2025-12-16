@@ -37,6 +37,8 @@ class ProjectionConceptResponse(BaseModel):
     grounding_strength: Optional[float] = None
     diversity_score: Optional[float] = None
     diversity_related_count: Optional[int] = None
+    ontology: Optional[str] = None  # Source ontology (for cross-ontology mode)
+    item_type: Optional[str] = None  # Item type (for combined mode)
 
 
 class ProjectionParametersResponse(BaseModel):
@@ -48,6 +50,7 @@ class ProjectionParametersResponse(BaseModel):
     spread: Optional[float] = None  # UMAP spread (cluster separation)
     metric: Optional[str] = None  # "cosine" or "euclidean"
     normalize_l2: Optional[bool] = None  # L2 normalization applied
+    center: Optional[bool] = None  # Mean-centering applied (fixes anisotropy)
 
 
 class ProjectionStatisticsResponse(BaseModel):
@@ -117,6 +120,10 @@ class RegenerateRequest(BaseModel):
     normalize_l2: bool = Field(
         default=True,
         description="L2-normalize embeddings before projection (recommended for semantic vectors)"
+    )
+    center: bool = Field(
+        default=True,
+        description="Center embeddings (subtract mean) before normalization. Fixes 'nested meatball' anisotropy artifact where clusters form concentric shells instead of distinct islands."
     )
     include_grounding: bool = Field(
         default=True,
@@ -231,11 +238,17 @@ async def regenerate_projection(
     client = AGEClient()
     service = EmbeddingProjectionService(client)
 
-    concepts = service.get_ontology_embeddings(
-        ontology,
-        include_grounding=False,
-        include_diversity=False
-    )
+    # Cross-ontology mode: fetch ALL concepts across all ontologies
+    if ontology == "__all__":
+        concepts = service.get_all_ontology_embeddings(
+            include_grounding=False
+        )
+    else:
+        concepts = service.get_ontology_embeddings(
+            ontology,
+            include_grounding=False,
+            include_diversity=False
+        )
 
     if not concepts:
         raise HTTPException(
@@ -260,6 +273,7 @@ async def regenerate_projection(
             spread=body.spread,
             metric=body.metric,
             normalize_l2=body.normalize_l2,
+            center=body.center,
             include_grounding=body.include_grounding,
             refresh_grounding=body.refresh_grounding,
             include_diversity=body.include_diversity,
@@ -291,6 +305,7 @@ async def regenerate_projection(
             "spread": body.spread,
             "metric": body.metric,
             "normalize_l2": body.normalize_l2,
+            "center": body.center,
             "include_grounding": body.include_grounding,
             "refresh_grounding": body.refresh_grounding,
             "include_diversity": body.include_diversity,

@@ -1,7 +1,7 @@
 """Pydantic models for job queue API"""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from datetime import datetime
 
 
@@ -55,8 +55,8 @@ class JobStatus(BaseModel):
     status: str = Field(..., description="Job status: pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled")
     user_id: Optional[int] = Field(None, description="User ID who submitted the job (from kg_auth.users)")
     username: Optional[str] = Field(None, description="Username who submitted the job")
-    progress: Optional[JobProgress] = Field(None, description="Progress information")
-    result: Optional[JobResult] = Field(None, description="Result data (if completed)")
+    progress: Optional[Any] = Field(None, description="Progress information (string message or JobProgress object)")
+    result: Optional[Any] = Field(None, description="Result data (if completed, format depends on job type)")
     error: Optional[str] = Field(None, description="Error message (if failed)")
     created_at: str = Field(..., description="Job creation timestamp")
     started_at: Optional[str] = Field(None, description="Job start timestamp")

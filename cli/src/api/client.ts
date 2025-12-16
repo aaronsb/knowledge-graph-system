@@ -1440,6 +1440,7 @@ export class KnowledgeGraphClient {
     force?: boolean;
     algorithm?: 'tsne' | 'umap';
     perplexity?: number;
+    center?: boolean;
     include_grounding?: boolean;
     include_diversity?: boolean;
   }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string }> {

@@ -74,6 +74,7 @@ def run_projection_worker(
         spread = job_data.get("spread", 1.0)
         metric = job_data.get("metric", "cosine")
         normalize_l2 = job_data.get("normalize_l2", True)
+        center = job_data.get("center", True)
         include_grounding = job_data.get("include_grounding", True)
         refresh_grounding = job_data.get("refresh_grounding", False)
         include_diversity = job_data.get("include_diversity", False)
@@ -82,8 +83,8 @@ def run_projection_worker(
         logger.info(
             f"Projection params: ontology={ontology}, algorithm={algorithm}, "
             f"n_components={n_components}, perplexity={perplexity}, metric={metric}, "
-            f"spread={spread}, normalize_l2={normalize_l2}, refresh_grounding={refresh_grounding}, "
-            f"embedding_source={embedding_source}"
+            f"spread={spread}, normalize_l2={normalize_l2}, center={center}, "
+            f"refresh_grounding={refresh_grounding}, embedding_source={embedding_source}"
         )
 
         # Initialize service
@@ -111,6 +112,7 @@ def run_projection_worker(
             spread=spread,
             metric=metric,
             normalize_l2=normalize_l2,
+            center=center,
             include_grounding=include_grounding,
             refresh_grounding=refresh_grounding,
             include_diversity=include_diversity,
