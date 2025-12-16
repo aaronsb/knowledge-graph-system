@@ -138,40 +138,50 @@ export const projectionCommand = setCommandHelp(
   .addCommand(
     new Command('regenerate')
       .description('Compute or recompute projection for an ontology')
-      .argument('<ontology>', 'Ontology name (or "all" for all ontologies)')
+      .argument('<ontology>', 'Ontology name, "all" (each separately), or "global" (all together)')
       .option('-f, --force', 'Force recomputation even if cached')
       .option('-a, --algorithm <algo>', 'Algorithm: tsne or umap', 'tsne')
       .option('-p, --perplexity <n>', 't-SNE perplexity (5-100)', '30')
+      .option('--center', 'Center embeddings before projection (fixes meatball artifact, default: true)')
+      .option('--no-center', 'Disable embedding centering')
       .option('--grounding', 'Include grounding strength')
       .option('--diversity', 'Include diversity scores (slower)')
       .action(async (ontology: string, options) => {
         try {
           const client = createClientFromEnv();
 
-          const regenerateOne = async (ont: string) => {
+          const regenerateOne = async (ont: string, displayName?: string) => {
             const result = await client.regenerateProjection(ont, {
               force: options.force || false,
               algorithm: options.algorithm,
               perplexity: parseInt(options.perplexity),
+              center: options.center !== false, // default true
               include_grounding: options.grounding || true,
               include_diversity: options.diversity || false
             });
 
+            const name = displayName || ont;
             if (result.status === 'computed') {
-              console.log(colors.status.success(`${ont}: ${result.message}`));
+              console.log(colors.status.success(`${name}: ${result.message}`));
             } else if (result.status === 'queued') {
-              console.log(colors.status.info(`${ont}: ${result.message} (job: ${result.job_id})`));
+              console.log(colors.status.info(`${name}: ${result.message} (job: ${result.job_id})`));
             } else if (result.status === 'skipped') {
-              console.log(colors.status.dim(`${ont}: ${result.message}`));
+              console.log(colors.status.dim(`${name}: ${result.message}`));
             }
           };
 
           if (ontology.toLowerCase() === 'all') {
-            console.log(colors.ui.title('Regenerating all projections...'));
+            // Regenerate each ontology separately
+            console.log(colors.ui.title('Regenerating all projections (each separately)...'));
             const ontologies = await client.listOntologies();
             for (const ont of ontologies.ontologies) {
               await regenerateOne(ont.ontology);
             }
+          } else if (ontology.toLowerCase() === 'global') {
+            // Cross-ontology projection: all concepts together with global centering
+            console.log(colors.ui.title('Computing global projection (all ontologies together)...'));
+            console.log(colors.status.dim('  This centers all embeddings globally for proper semantic separation'));
+            await regenerateOne('__all__', 'global');
           } else {
             await regenerateOne(ontology);
           }

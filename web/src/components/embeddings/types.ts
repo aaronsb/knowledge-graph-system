@@ -30,6 +30,7 @@ export interface ProjectionConcept {
   grounding_strength: number | null;
   diversity_score: number | null;
   diversity_related_count: number | null;
+  ontology?: string;  // Source ontology (for cross-ontology mode)
   item_type?: ProjectionItemType;  // For distinguishing in combined view
 }
 
