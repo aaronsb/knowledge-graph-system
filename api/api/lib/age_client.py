@@ -58,8 +58,8 @@ class AGEClient:
 
         try:
             # Create connection pool for better performance
-            # ThreadedConnectionPool for thread-safe access (parallel graph queries, ADR-071)
-            self.pool = psycopg2.pool.ThreadedConnectionPool(
+            # Increased for parallel graph queries (ADR-071)
+            self.pool = psycopg2.pool.SimpleConnectionPool(
                 1,  # minconn
                 20,  # maxconn (supports up to 16 parallel workers + buffer)
                 host=self.host,
