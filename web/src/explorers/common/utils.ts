@@ -197,6 +197,9 @@ export function formatDiversity(diversity: number | undefined | null, relatedCou
 
 /**
  * Format authenticated diversity for display (ADR-044 + ADR-063)
+ *
+ * Uses saturation-weighted grounding × diversity calculation.
+ * Near-zero values (|authDiv| < 0.05) are "unclear" - grounding too weak to authenticate.
  */
 export function formatAuthenticatedDiversity(authDiv: number | undefined | null): { emoji: string; label: string; percentage: string; color: string } | null {
   if (authDiv === undefined || authDiv === null) return null;
@@ -207,7 +210,12 @@ export function formatAuthenticatedDiversity(authDiv: number | undefined | null)
   let emoji: string;
   let label: string;
 
-  if (authDiv > 0.3) {
+  // Near-zero values are "unclear" - grounding too weak to authenticate
+  if (Math.abs(authDiv) < 0.05) {
+    color = '#9ca3af'; // gray
+    emoji = '◯';
+    label = 'Unclear';
+  } else if (authDiv > 0.3) {
     color = '#22c55e'; // green
     emoji = '✅';
     label = 'Diverse Support';
@@ -216,7 +224,7 @@ export function formatAuthenticatedDiversity(authDiv: number | undefined | null)
     emoji = '✓';
     label = 'Some Support';
   } else if (authDiv > -0.3) {
-    color = '#eab308'; // yellow
+    color = '#f59e0b'; // amber (less alarming than yellow)
     emoji = '⚠';
     label = 'Weak Contradiction';
   } else {

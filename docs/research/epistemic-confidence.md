@@ -162,7 +162,34 @@ Semantic diversity isn't just counting sources—it measures how *different* tho
 
 ### Authenticated Diversity
 
-The authenticated diversity calculation: `sign(grounding) × diversity`
+Authenticated diversity combines grounding direction with semantic diversity to distinguish "diverse support" from "diverse contradiction."
+
+**The Problem with Binary Sign**
+
+A naive implementation uses `sign(grounding) × diversity`, but this treats -0.017 the same as -0.9. A concept with grounding of -0.017 (essentially zero/unclear) would show "diverse contradiction" if it has good diversity—a false signal.
+
+**Signed Saturation Solution**
+
+We apply Michaelis-Menten saturation to grounding before multiplying by diversity:
+
+```
+saturated_grounding = grounding / (|grounding| + k)
+authenticated_diversity = saturated_grounding × diversity
+```
+
+With k = 0.3:
+- High grounding (±0.9) → ±0.75 weight
+- Medium grounding (±0.3) → ±0.50 weight
+- Low grounding (±0.1) → ±0.25 weight
+- Near-zero (±0.02) → ±0.06 weight (minimal contribution)
+
+**Example: "Cloud Storage Bucket"**
+- Grounding: -0.017 (essentially unclear)
+- Diversity: 46%
+- Old binary sign: `-1 × 0.46 = -0.46` → "diverse contradiction ❌"
+- New saturation: `-0.017/(0.017+0.3) × 0.46 = -0.025` → minimal (honest)
+
+The saturation function works symmetrically on both sides of zero, preventing false contradiction signals from floating-point noise while still properly weighting strong positive or negative grounding.
 
 For single-source content:
 - Grounding ≈ 0 (can't determine direction)

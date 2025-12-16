@@ -101,7 +101,9 @@ export function formatSearchResults(result: SearchResponse): string {
     if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
       const authDiv = concept.authenticated_diversity;
       const sign = authDiv >= 0 ? '+' : '';
-      const status = authDiv > 0.3 ? 'diverse support ✅' :
+      // Near-zero values (|authDiv| < 0.05) are "unclear" - grounding too weak to authenticate
+      const status = Math.abs(authDiv) < 0.05 ? 'unclear ◯' :
+                     authDiv > 0.3 ? 'diverse support ✅' :
                      authDiv > 0 ? 'some support ✓' :
                      authDiv > -0.3 ? 'weak contradiction ⚠' :
                      'diverse contradiction ❌';
@@ -157,7 +159,9 @@ export function formatConceptDetails(concept: ConceptDetailsResponse, truncateEv
   if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
     const authDiv = concept.authenticated_diversity;
     const sign = authDiv >= 0 ? '+' : '';
-    const status = authDiv > 0.3 ? 'diverse support ✅' :
+    // Near-zero values (|authDiv| < 0.05) are "unclear" - grounding too weak to authenticate
+    const status = Math.abs(authDiv) < 0.05 ? 'unclear ◯' :
+                   authDiv > 0.3 ? 'diverse support ✅' :
                    authDiv > 0 ? 'some support ✓' :
                    authDiv > -0.3 ? 'weak contradiction ⚠' :
                    'diverse contradiction ❌';
@@ -263,7 +267,9 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
       if (node.authenticated_diversity !== undefined && node.authenticated_diversity !== null) {
         const authDiv = node.authenticated_diversity;
         const sign = authDiv >= 0 ? '+' : '';
-        const status = authDiv > 0.3 ? 'diverse support ✅' :
+        // Near-zero values (|authDiv| < 0.05) are "unclear" - grounding too weak to authenticate
+        const status = Math.abs(authDiv) < 0.05 ? 'unclear ◯' :
+                       authDiv > 0.3 ? 'diverse support ✅' :
                        authDiv > 0 ? 'some support ✓' :
                        authDiv > -0.3 ? 'weak contradiction ⚠' :
                        'diverse contradiction ❌';
