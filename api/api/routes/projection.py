@@ -6,7 +6,7 @@ Endpoints for embedding landscape visualization:
 - POST /projection/{ontology}/regenerate - Trigger projection recomputation
 """
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, List, Dict, Any
 import logging
@@ -206,6 +206,7 @@ async def get_projection(
 @router.post("/{ontology}/regenerate", response_model=RegenerateResponse)
 async def regenerate_projection(
     ontology: str,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     body: RegenerateRequest = RegenerateRequest()
 ):
@@ -306,6 +307,9 @@ async def regenerate_projection(
         "approved_at": datetime.utcnow().isoformat(),
         "approved_by": current_user.username
     })
+
+    # Start the job in the background (serial execution)
+    background_tasks.add_task(queue.queue_serial_job, job_id)
 
     return RegenerateResponse(
         status="queued",
