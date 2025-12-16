@@ -48,6 +48,7 @@ from ..models.queries import (
 )
 from ..services.query_service import QueryService
 from ..services.diversity_analyzer import DiversityAnalyzer
+from ..services.confidence_analyzer import ConfidenceAnalyzer
 
 
 def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstance]:
@@ -415,9 +416,18 @@ async def search_concepts(
 
                 # Calculate grounding strength if requested (default: true)
                 grounding_strength = None
+                confidence_level = None
+                grounding_display = None
+                confidence_score = None
                 if request.include_grounding:
                     try:
                         grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        # Calculate epistemic confidence (grounding × confidence two-dimensional model)
+                        conf_analyzer = ConfidenceAnalyzer(client)
+                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
+                        confidence_level = conf_result.get('level')
+                        confidence_score = conf_result.get('confidence_score')
+                        grounding_display = conf_result.get('grounding_display')
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
@@ -479,6 +489,9 @@ async def search_concepts(
                     documents=documents,
                     evidence_count=evidence_count,
                     grounding_strength=grounding_strength,
+                    confidence_level=confidence_level,
+                    confidence_score=confidence_score,
+                    grounding_display=grounding_display,
                     diversity_score=diversity_score,
                     diversity_related_count=diversity_related_count,
                     authenticated_diversity=authenticated_diversity,
@@ -528,9 +541,16 @@ async def search_concepts(
 
                     # Calculate grounding for top match if requested
                     top_grounding = None
+                    top_confidence_level = None
+                    top_grounding_display = None
                     if request.include_grounding:
                         try:
                             top_grounding = client.calculate_grounding_strength_semantic(top_concept_id)
+                            # Calculate epistemic confidence
+                            conf_analyzer = ConfidenceAnalyzer(client)
+                            conf_result = conf_analyzer.calculate_confidence(top_concept_id, top_grounding)
+                            top_confidence_level = conf_result.get('level')
+                            top_grounding_display = conf_result.get('grounding_display')
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
 
@@ -592,6 +612,8 @@ async def search_concepts(
                         documents=top_documents,
                         evidence_count=top_evidence_count,
                         grounding_strength=top_grounding,
+                        confidence_level=top_confidence_level,
+                        grounding_display=top_grounding_display,
                         diversity_score=top_diversity_score,
                         diversity_related_count=top_diversity_related_count,
                         authenticated_diversity=top_authenticated_diversity,
@@ -903,9 +925,18 @@ async def get_concept_details(
 
         # Calculate grounding strength if requested (ADR-044)
         grounding_strength = None
+        confidence_level = None
+        confidence_score = None
+        grounding_display = None
         if include_grounding:
             try:
                 grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                # Calculate epistemic confidence (grounding × confidence two-dimensional model)
+                conf_analyzer = ConfidenceAnalyzer(client)
+                conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
+                confidence_level = conf_result.get('level')
+                confidence_score = conf_result.get('confidence_score')
+                grounding_display = conf_result.get('grounding_display')
             except Exception as e:
                 logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
@@ -983,6 +1014,9 @@ async def get_concept_details(
             instances=instances,
             relationships=relationships,
             grounding_strength=grounding_strength,
+            confidence_level=confidence_level,
+            confidence_score=confidence_score,
+            grounding_display=grounding_display,
             diversity_score=diversity_score,  # ADR-063
             diversity_related_count=diversity_related_count,  # ADR-063
             authenticated_diversity=authenticated_diversity,  # ADR-044 + ADR-063
@@ -1168,9 +1202,18 @@ async def find_connection(
 
                 # Calculate grounding strength if requested (default: true)
                 grounding_strength = None
+                confidence_level = None
+                confidence_score = None
+                grounding_display = None
                 if request.include_grounding and concept_id:
                     try:
                         grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        # Calculate epistemic confidence
+                        conf_analyzer = ConfidenceAnalyzer(client)
+                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
+                        confidence_level = conf_result.get('level')
+                        confidence_score = conf_result.get('confidence_score')
+                        grounding_display = conf_result.get('grounding_display')
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
@@ -1205,6 +1248,9 @@ async def find_connection(
                     label=label,
                     description=description,
                     grounding_strength=grounding_strength,
+                    confidence_level=confidence_level,
+                    confidence_score=confidence_score,
+                    grounding_display=grounding_display,
                     sample_evidence=sample_evidence
                 ))
 
@@ -1376,9 +1422,18 @@ async def find_connection_by_search(
 
                 # Calculate grounding strength if requested (default: true)
                 grounding_strength = None
+                confidence_level = None
+                confidence_score = None
+                grounding_display = None
                 if request.include_grounding and concept_id:
                     try:
                         grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                        # Calculate epistemic confidence
+                        conf_analyzer = ConfidenceAnalyzer(client)
+                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
+                        confidence_level = conf_result.get('level')
+                        confidence_score = conf_result.get('confidence_score')
+                        grounding_display = conf_result.get('grounding_display')
                     except Exception as e:
                         logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
@@ -1413,6 +1468,9 @@ async def find_connection_by_search(
                     label=label,
                     description=description,
                     grounding_strength=grounding_strength,
+                    confidence_level=confidence_level,
+                    confidence_score=confidence_score,
+                    grounding_display=grounding_display,
                     sample_evidence=sample_evidence
                 ))
 

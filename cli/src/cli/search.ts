@@ -19,6 +19,7 @@ import * as nodePath from 'path';
 
 /**
  * Format grounding strength for display (ADR-044)
+ * This is the fallback when grounding_display is not available.
  */
 function formatGroundingStrength(grounding: number): string {
   const groundingValue = grounding.toFixed(3);
@@ -40,6 +41,65 @@ function formatGroundingStrength(grounding: number): string {
   } else {
     return colors.status.error(`✗ Contradicted (${groundingValue}, ${groundingPercent}%)`);
   }
+}
+
+/**
+ * Format grounding with confidence-awareness (grounding × confidence two-dimensional model)
+ *
+ * Uses grounding_display when available (categorical label from API).
+ * Includes numeric confidence_score alongside the label for quantitative insight.
+ * Falls back to raw grounding score display for backwards compatibility.
+ *
+ * The grounding_display labels come from a 3×3 matrix:
+ * | Grounding × Confidence | Display |
+ * |------------------------|---------|
+ * | Positive + Confident   | "Well-supported" |
+ * | Positive + Tentative   | "Some support (limited data)" |
+ * | Positive + Insufficient| "Possibly supported (needs exploration)" |
+ * | Neutral + Confident    | "Balanced perspectives" |
+ * | Neutral + Tentative    | "Unclear" |
+ * | Neutral + Insufficient | "Unexplored" |
+ * | Negative + Confident   | "Contested" |
+ * | Negative + Tentative   | "Possibly contested" |
+ * | Negative + Insufficient| "Unknown (needs exploration)" |
+ */
+function formatGroundingWithConfidence(
+  grounding: number | undefined | null,
+  groundingDisplay: string | undefined | null,
+  confidenceLevel: string | undefined | null,
+  confidenceScore: number | undefined | null = null
+): string {
+  // Format confidence score as percentage if available
+  const confScoreStr = confidenceScore !== undefined && confidenceScore !== null
+    ? ` [${(confidenceScore * 100).toFixed(0)}% conf]`
+    : '';
+
+  // If we have a grounding_display label from the API, use it with appropriate styling
+  if (groundingDisplay) {
+    // Style based on the label content
+    if (groundingDisplay.includes('Well-supported')) {
+      return colors.status.success(`✓ ${groundingDisplay}`) + colors.status.dim(confScoreStr);
+    } else if (groundingDisplay.includes('Contested')) {
+      return colors.status.error(`✗ ${groundingDisplay}`) + colors.status.dim(confScoreStr);
+    } else if (groundingDisplay.includes('Unexplored') || groundingDisplay.includes('Unknown')) {
+      return colors.status.dim(`◯ ${groundingDisplay}${confScoreStr}`);
+    } else if (groundingDisplay.includes('limited data') || groundingDisplay.includes('needs exploration')) {
+      return colors.status.warning(`⚡ ${groundingDisplay}`) + colors.status.dim(confScoreStr);
+    } else if (groundingDisplay.includes('Balanced')) {
+      return colors.status.dim(`◐ ${groundingDisplay}${confScoreStr}`);
+    } else {
+      // Default styling for other labels
+      return colors.status.dim(`◯ ${groundingDisplay}${confScoreStr}`);
+    }
+  }
+
+  // Fall back to raw grounding score display if available
+  if (grounding !== undefined && grounding !== null) {
+    return formatGroundingStrength(grounding);
+  }
+
+  // No grounding information available
+  return colors.status.dim('◯ Unexplored');
 }
 
 /**
@@ -138,9 +198,9 @@ const queryCommand = setCommandHelp(
             console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
             console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.evidence_count))} instances`);
 
-            // Display grounding strength if available (ADR-044)
-            if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
-              console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingStrength(concept.grounding_strength)}`);
+            // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+            if (concept.grounding_strength !== undefined || concept.grounding_display) {
+              console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
             }
 
             // Display diversity if available (ADR-063)
@@ -257,9 +317,9 @@ const detailsCommand = setCommandHelp(
           console.log(`${colors.ui.key('Search Terms:')} ${colors.concept.searchTerms(concept.search_terms.join(', '))}`);
           console.log(`${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
 
-          // Display grounding strength if available (ADR-044)
-          if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
-            console.log(`${colors.ui.key('Grounding:')} ${formatGroundingStrength(concept.grounding_strength)}`);
+          // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+          if (concept.grounding_strength !== undefined || concept.grounding_display) {
+            console.log(`${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
           }
 
           console.log('\n' + colors.ui.header(`Evidence (${concept.instances.length} instances)`));
@@ -462,9 +522,9 @@ Notes:
                   console.log(`     ${colors.status.dim(node.description)}`);
                 }
 
-                // Display grounding strength if available (ADR-044)
-                if (includeGrounding && node.grounding_strength !== undefined && node.grounding_strength !== null) {
-                  console.log(`     ${colors.ui.key('Grounding:')} ${formatGroundingStrength(node.grounding_strength)}`);
+                // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+                if (includeGrounding && (node.grounding_strength !== undefined || node.grounding_display)) {
+                  console.log(`     ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(node.grounding_strength, node.grounding_display, node.confidence_level, node.confidence_score)}`);
                 }
 
                 // Display sample evidence if requested

@@ -43,6 +43,10 @@ class ConceptSearchResult(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    # Epistemic confidence (grounding × confidence two-dimensional model)
+    confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient' - determines grounding reliability")
+    confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0) - nonlinear saturation function reflecting evidence richness")
+    grounding_display: Optional[str] = Field(None, description="Combined grounding × confidence label: 'Well-supported', 'Unexplored', 'Contested', etc.")
     diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) if requested (ADR-063)")
     diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity")
     authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-044 + ADR-063)")
@@ -160,6 +164,10 @@ class ConceptDetailsResponse(BaseModel):
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
+    # Epistemic confidence (grounding × confidence two-dimensional model)
+    confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient' - determines grounding reliability")
+    confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0) - nonlinear saturation function reflecting evidence richness")
+    grounding_display: Optional[str] = Field(None, description="Combined grounding × confidence label: 'Well-supported', 'Unexplored', 'Contested', etc.")
     # ADR-063: Semantic diversity
     diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) based on related concept embeddings (ADR-063)")
     diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity calculation")
@@ -225,6 +233,10 @@ class PathNode(BaseModel):
     label: str = Field(..., description="Concept label")
     description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    # Epistemic confidence (grounding × confidence two-dimensional model)
+    confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient'")
+    confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0)")
+    grounding_display: Optional[str] = Field(None, description="Combined grounding × confidence label")
     sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances when include_evidence=true")
 
 
