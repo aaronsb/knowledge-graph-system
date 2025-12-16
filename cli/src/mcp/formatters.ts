@@ -16,6 +16,7 @@ import type {
 
 /**
  * Format grounding strength as text (token-efficient)
+ * This is the fallback when grounding_display is not available.
  */
 function formatGroundingStrength(grounding: number): string {
   const groundingValue = grounding.toFixed(3);
@@ -34,6 +35,37 @@ function formatGroundingStrength(grounding: number): string {
   else level = 'Contradicted';
 
   return `${level} (${groundingValue}, ${groundingPercent}%)`;
+}
+
+/**
+ * Format grounding with confidence-awareness (grounding × confidence two-dimensional model)
+ *
+ * Uses grounding_display when available (categorical label from API).
+ * Includes numeric confidence_score alongside the label for quantitative insight.
+ * Falls back to raw grounding score display for backwards compatibility.
+ */
+function formatGroundingWithConfidence(
+  grounding: number | undefined | null,
+  groundingDisplay: string | undefined | null,
+  confidenceScore: number | undefined | null = null
+): string {
+  // Format confidence score as percentage if available
+  const confScoreStr = confidenceScore !== undefined && confidenceScore !== null
+    ? ` [${(confidenceScore * 100).toFixed(0)}% conf]`
+    : '';
+
+  // If we have a grounding_display label from the API, use it directly
+  if (groundingDisplay) {
+    return `${groundingDisplay}${confScoreStr}`;
+  }
+
+  // Fall back to raw grounding score display if available
+  if (grounding !== undefined && grounding !== null) {
+    return formatGroundingStrength(grounding);
+  }
+
+  // No grounding information available
+  return 'Unexplored';
 }
 
 /**
@@ -58,8 +90,8 @@ export function formatSearchResults(result: SearchResponse): string {
     output += `Documents: ${concept.documents.join(', ')}\n`;
     output += `Evidence: ${concept.evidence_count} instances\n`;
 
-    if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
-      output += `Grounding: ${formatGroundingStrength(concept.grounding_strength)}\n`;
+    if (concept.grounding_strength !== undefined || concept.grounding_display) {
+      output += `Grounding: ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_score)}\n`;
     }
 
     if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
@@ -114,8 +146,8 @@ export function formatConceptDetails(concept: ConceptDetailsResponse, truncateEv
   output += `Search Terms: ${concept.search_terms.join(', ')}\n`;
   output += `Documents: ${concept.documents.join(', ')}\n`;
 
-  if (concept.grounding_strength !== undefined && concept.grounding_strength !== null) {
-    output += `Grounding: ${formatGroundingStrength(concept.grounding_strength)}\n`;
+  if (concept.grounding_strength !== undefined || concept.grounding_display) {
+    output += `Grounding: ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_score)}\n`;
   }
 
   if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
@@ -217,9 +249,9 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
         output += `**Description:** ${node.description}\n`;
       }
 
-      // Grounding strength
-      if (node.grounding_strength !== undefined && node.grounding_strength !== null) {
-        output += `**Grounding:** ${formatGroundingStrength(node.grounding_strength)}\n`;
+      // Grounding strength with confidence-awareness
+      if (node.grounding_strength !== undefined || node.grounding_display) {
+        output += `**Grounding:** ${formatGroundingWithConfidence(node.grounding_strength, node.grounding_display, node.confidence_score)}\n`;
       }
 
       // Diversity metrics if available

@@ -150,6 +150,10 @@ export interface ConceptSearchResult {
   documents: string[];
   evidence_count: number;
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  // Epistemic confidence (grounding × confidence two-dimensional model)
+  confidence_level?: string; // 'confident', 'tentative', 'insufficient'
+  confidence_score?: number; // Numeric confidence (0.0 to 1.0) - nonlinear saturation reflecting evidence richness
+  grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
   diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
   diversity_related_count?: number; // Number of related concepts analyzed for diversity
   authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
@@ -238,6 +242,10 @@ export interface ConceptDetailsResponse {
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  // Epistemic confidence (grounding × confidence two-dimensional model)
+  confidence_level?: string; // 'confident', 'tentative', 'insufficient'
+  confidence_score?: number; // Numeric confidence (0.0 to 1.0) - nonlinear saturation reflecting evidence richness
+  grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
   diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
   diversity_related_count?: number; // Number of related concepts analyzed for diversity
   authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
@@ -282,6 +290,10 @@ export interface PathNode {
   label: string;
   description?: string; // Factual 1-2 sentence definition
   grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  // Epistemic confidence (grounding × confidence two-dimensional model)
+  confidence_level?: string; // 'confident', 'tentative', 'insufficient'
+  confidence_score?: number; // Numeric confidence (0.0 to 1.0)
+  grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
   diversity_score?: number; // ADR-063: Diversity score (0.0 to 1.0)
   diversity_related_count?: number; // ADR-063: Number of related concepts
   authenticated_diversity?: number; // ADR-063: Authenticated diversity
