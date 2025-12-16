@@ -122,8 +122,8 @@ const DeltaIndicator: React.FC<{
   previous?: number;
   precision?: number;
 }> = ({ current, previous, precision = 3 }) => {
-  if (current === undefined) return <span className="text-muted-foreground">-</span>;
-  if (previous === undefined) return <span className="font-mono">{current.toFixed(precision)}</span>;
+  if (current === undefined || current === null) return <span className="text-muted-foreground">-</span>;
+  if (previous === undefined || previous === null) return <span className="font-mono">{current.toFixed(precision)}</span>;
 
   const delta = current - previous;
   const threshold = Math.pow(10, -(precision + 1)); // Small threshold to avoid float comparison issues
