@@ -137,13 +137,28 @@ class DiversityAnalyzer:
             diversity_score = 1.0 - avg_similarity
 
             # Calculate authenticated diversity if grounding provided
-            # Formula: sign(grounding) × diversity
-            # Positive: diverse evidence supports concept
-            # Negative: diverse evidence contradicts concept
+            # Formula: saturated_grounding × diversity
+            #
+            # Uses signed Michaelis-Menten saturation to handle both positive and
+            # negative grounding values. This ensures near-zero grounding contributes
+            # minimally to authenticated diversity (avoiding false contradiction signals
+            # from floating-point noise like -0.017).
+            #
+            # Saturation formula: grounding / (|grounding| + k)
+            # - Maintains sign of grounding
+            # - High grounding (±0.9) → ±0.75 weight
+            # - Low grounding (±0.1) → ±0.25 weight
+            # - Near-zero (±0.02) → ±0.06 weight (minimal contribution)
+            #
+            # Example: "Cloud Storage Bucket" with grounding -0.017, diversity 0.46
+            # - Old binary sign: -1 × 0.46 = -0.46 (false "diverse contradiction")
+            # - Saturation: -0.017/(0.017+0.3) × 0.46 = -0.025 (minimal, honest)
             authenticated_diversity = None
             if grounding_strength is not None:
-                sign = 1.0 if grounding_strength >= 0 else -1.0
-                authenticated_diversity = float(sign * diversity_score)
+                k = 0.3  # Half-saturation constant (grounding of ±0.3 gives 50% weight)
+                abs_grounding = abs(grounding_strength)
+                saturated_grounding = grounding_strength / (abs_grounding + k)
+                authenticated_diversity = float(saturated_grounding * diversity_score)
 
             calculation_time_ms = int((time.time() - start_time) * 1000)
 
