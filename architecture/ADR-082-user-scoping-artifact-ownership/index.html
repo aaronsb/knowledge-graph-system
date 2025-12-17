@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../../04-security-and-access/04-PASSWORD_RECOVERY/">
+        <link rel="prev" href="../ADR-081-source-document-lifecycle/">
       
       
-        <link rel="next" href="../02-DATABASE_MIGRATIONS/">
+        <link rel="next" href="../ADR-083-artifact-persistence-pattern/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>Backup and Restore Guide - Knowledge Graph System</title>
+        <title>ADR-082: User Scoping and Artifact Ownership Model - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#backup-and-restore-guide" class="md-skip">
+        <a href="#adr-082-user-scoping-and-artifact-ownership-model" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Backup and Restore Guide
+              ADR-082: User Scoping and Artifact Ownership Model
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -386,20 +386,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -420,7 +418,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -438,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../manual/" class="md-nav__link">
         
   
   
@@ -513,7 +511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -596,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -624,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -707,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -735,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -763,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -791,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -819,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -847,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -930,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -958,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1041,7 +1039,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1069,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1097,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1125,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1158,20 +1156,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
         
           
           <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
@@ -1192,7 +1188,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1207,37 +1203,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Backup and Restore Guide
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1253,364 +1222,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-problem-torn-ontological-fabric" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem: Torn Ontological Fabric
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Problem: Torn Ontological Fabric">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#scenario-1-cross-ontology-relationships" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scenario 1: Cross-Ontology Relationships
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scenario-2-shared-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scenario 2: Shared Concepts
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scenario-3-incomplete-dependency-chain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scenario 3: Incomplete Dependency Chain
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integrity-checking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integrity Checking
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Integrity Checking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-backup-assessment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before Backup: Assessment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#after-restore-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        After Restore: Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standalone-integrity-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Standalone Integrity Check
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#restore-strategies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Restore Strategies
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Restore Strategies">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategy-1-full-database-backuprestore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Strategy 1: Full Database Backup/Restore
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategy-2-ontology-groups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Strategy 2: Ontology Groups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategy-3-accept-torn-fabric-repair" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Strategy 3: Accept Torn Fabric + Repair
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#backup-file-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backup File Format
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Protection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-backup-before-major-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Backup Before Major Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-check-integrity-after-restore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Check Integrity After Restore
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-document-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Document Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-test-restore-in-staging" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Test Restore in Staging
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-version-control-backup-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Version Control Backup Files
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#issue-x-relationships-to-external-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "X relationships to external concepts"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-orphaned-concepts-after-restore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Orphaned concepts after restore"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-concepts-missing-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Concepts missing embeddings"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-backup-file-too-large" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Backup file too large"
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1623,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1706,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1734,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1762,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1790,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1818,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1846,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1874,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1902,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1930,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1958,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1986,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2076,7 +1687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -2151,7 +1762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -2226,7 +1837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -2254,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -2282,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -2310,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -2338,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -2366,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2394,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2422,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2450,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2478,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2506,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2534,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2617,7 +2228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/media/" class="md-nav__link">
+      <a href="../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2708,7 +2319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/" class="md-nav__link">
+      <a href="../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2783,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2866,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2894,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2922,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2950,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2978,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -3006,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -3034,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -3062,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -3090,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -3235,7 +2846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3263,7 +2874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -3303,18 +2914,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -3335,7 +2948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3353,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -3381,7 +2994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -3409,7 +3022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+      <a href="../ADR-076B-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -3437,7 +3050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -3465,7 +3078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -3493,7 +3106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -3521,7 +3134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -3546,10 +3159,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../architecture/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3565,6 +3205,303 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-satisficing-specialist-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Satisficing Specialist Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-as-accountability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication as Accountability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-freshness-via-graph-epoch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact Freshness via Graph Epoch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-groups-as-first-class-citizens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Groups as First-Class Citizens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-id-ranges-unix-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. ID Ranges (Unix-style)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-resource-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Resource Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-grant-based-access-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Grant-Based Access Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-artifact-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Artifact Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Schema Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-adr-does-not-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This ADR Does NOT Cover
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-schema-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Schema Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-ontology-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Ontology Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-artifact-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Artifact Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-ui-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: UI Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3577,7 +3514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -3605,7 +3542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3633,7 +3570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3661,7 +3598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3689,7 +3626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3764,7 +3701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3792,7 +3729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3820,7 +3757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3848,7 +3785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3876,7 +3813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -3904,7 +3841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -3932,7 +3869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -4015,7 +3952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -4043,7 +3980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -4071,7 +4008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -4099,7 +4036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -4127,7 +4064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -4155,7 +4092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -4183,7 +4120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -4211,7 +4148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -4239,7 +4176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -4267,7 +4204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -4295,7 +4232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -4323,7 +4260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -4398,7 +4335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -4489,7 +4426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -4517,7 +4454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4545,7 +4482,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4573,7 +4510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4601,7 +4538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4629,7 +4566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4657,7 +4594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4685,7 +4622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4713,7 +4650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4796,7 +4733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4824,7 +4761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4852,7 +4789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -4880,7 +4817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -4963,7 +4900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -4991,7 +4928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -5019,7 +4956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -5047,7 +4984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -5075,7 +5012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -5103,7 +5040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -5131,7 +5068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -5159,7 +5096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -5242,7 +5179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -5270,7 +5207,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -5298,7 +5235,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -5326,7 +5263,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -5354,7 +5291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -5382,7 +5319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -5410,7 +5347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -5438,7 +5375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -5466,7 +5403,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5549,7 +5486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5577,7 +5514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5605,7 +5542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5633,7 +5570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5661,7 +5598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5744,7 +5681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5772,7 +5709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5800,7 +5737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5828,7 +5765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5856,7 +5793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -5884,7 +5821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -5912,7 +5849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -5940,7 +5877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -5968,7 +5905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -5996,7 +5933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -6079,7 +6016,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -6162,7 +6099,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -6190,7 +6127,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -6218,7 +6155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -6246,7 +6183,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -6274,7 +6211,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -6302,7 +6239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -6330,7 +6267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6358,7 +6295,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -6386,7 +6323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -6414,7 +6351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6442,7 +6379,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6470,7 +6407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6560,7 +6497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6588,7 +6525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6616,7 +6553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6644,7 +6581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6672,7 +6609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6700,7 +6637,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6728,7 +6665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -6810,7 +6747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6838,7 +6775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -6866,7 +6803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -6894,7 +6831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -6922,7 +6859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -6950,7 +6887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -6978,7 +6915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -7033,44 +6970,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-problem-torn-ontological-fabric" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem: Torn Ontological Fabric
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="The Problem: Torn Ontological Fabric">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#scenario-1-cross-ontology-relationships" class="md-nav__link">
+  <a href="#the-satisficing-specialist-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scenario 1: Cross-Ontology Relationships
+        The Satisficing Specialist Model
       
     </span>
   </a>
@@ -7078,10 +6993,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#scenario-2-shared-concepts" class="md-nav__link">
+  <a href="#authentication-as-accountability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scenario 2: Shared Concepts
+        Authentication as Accountability
       
     </span>
   </a>
@@ -7089,10 +7004,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#scenario-3-incomplete-dependency-chain" class="md-nav__link">
+  <a href="#artifact-freshness-via-graph-epoch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scenario 3: Incomplete Dependency Chain
+        Artifact Freshness via Graph Epoch
       
     </span>
   </a>
@@ -7105,22 +7020,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integrity-checking" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integrity Checking
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Integrity Checking">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#before-backup-assessment" class="md-nav__link">
+  <a href="#1-groups-as-first-class-citizens" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Before Backup: Assessment
+        1. Groups as First-Class Citizens
       
     </span>
   </a>
@@ -7128,10 +7043,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#after-restore-validation" class="md-nav__link">
+  <a href="#2-id-ranges-unix-style" class="md-nav__link">
     <span class="md-ellipsis">
       
-        After Restore: Validation
+        2. ID Ranges (Unix-style)
       
     </span>
   </a>
@@ -7139,10 +7054,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#standalone-integrity-check" class="md-nav__link">
+  <a href="#3-resource-ownership" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standalone Integrity Check
+        3. Resource Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-grant-based-access-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Grant-Based Access Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-artifact-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Artifact Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Schema Changes
       
     </span>
   </a>
@@ -7155,22 +7103,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#restore-strategies" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Restore Strategies
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Restore Strategies">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#strategy-1-full-database-backuprestore" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strategy 1: Full Database Backup/Restore
+        Positive
       
     </span>
   </a>
@@ -7178,10 +7126,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#strategy-2-ontology-groups" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strategy 2: Ontology Groups
+        Negative
       
     </span>
   </a>
@@ -7189,10 +7137,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#strategy-3-accept-torn-fabric-repair" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strategy 3: Accept Torn Fabric + Repair
+        Neutral
       
     </span>
   </a>
@@ -7205,10 +7153,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#backup-file-format" class="md-nav__link">
+  <a href="#what-this-adr-does-not-cover" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup File Format
+        What This ADR Does NOT Cover
       
     </span>
   </a>
@@ -7216,33 +7164,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cost-protection" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cost Protection
+        Implementation Plan
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
+    <nav class="md-nav" aria-label="Implementation Plan">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-backup-before-major-changes" class="md-nav__link">
+  <a href="#phase-1-schema-foundation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Backup Before Major Changes
+        Phase 1: Schema Foundation
       
     </span>
   </a>
@@ -7250,10 +7187,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-check-integrity-after-restore" class="md-nav__link">
+  <a href="#phase-2-ontology-ownership" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Check Integrity After Restore
+        Phase 2: Ontology Ownership
       
     </span>
   </a>
@@ -7261,10 +7198,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-document-dependencies" class="md-nav__link">
+  <a href="#phase-3-artifact-ownership" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Document Dependencies
+        Phase 3: Artifact Ownership
       
     </span>
   </a>
@@ -7272,21 +7209,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-test-restore-in-staging" class="md-nav__link">
+  <a href="#phase-4-ui-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Test Restore in Staging
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-version-control-backup-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Version Control Backup Files
+        Phase 4: UI Integration
       
     </span>
   </a>
@@ -7299,71 +7225,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#migration-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Migration Notes
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#issue-x-relationships-to-external-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "X relationships to external concepts"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-orphaned-concepts-after-restore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Orphaned concepts after restore"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-concepts-missing-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Concepts missing embeddings"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#issue-backup-file-too-large" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Issue: "Backup file too large"
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        References
       
     </span>
   </a>
@@ -7390,363 +7266,275 @@
   
 
 
-<h1 id="backup-and-restore-guide">Backup and Restore Guide</h1>
-<h2 id="overview">Overview</h2>
-<p>The Knowledge Graph System provides comprehensive backup and restore functionality with <strong>integrity checking</strong> to protect against <strong>torn ontological fabric</strong> - the phenomenon where partial backups/restores create dangling references and orphaned concepts.</p>
-<h2 id="quick-start">Quick Start</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Full database backup</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./scripts/backup.sh
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Ontology-specific backup</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Restore from backup</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./scripts/restore.sh
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Check database integrity</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity
+<h1 id="adr-082-user-scoping-and-artifact-ownership-model">ADR-082: User Scoping and Artifact Ownership Model</h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2025-12-17
+<strong>Deciders:</strong> @aaronsb, @claude
+<strong>Related ADRs:</strong> ADR-028 (Dynamic RBAC), ADR-079 (Projection Storage)</p>
+<h2 id="context">Context</h2>
+<p>The knowledge graph system currently has user authentication (ADR-028) but lacks:
+1. <strong>Ownership semantics</strong> - Who is responsible for an ontology or artifact?
+2. <strong>Group membership</strong> - Users can have roles, but not collaborative groups
+3. <strong>Resource-level permissions</strong> - RBAC is role-based, not resource-specific
+4. <strong>Artifact tracking</strong> - Computed reports (projections, polarity analyses) have no ownership</p>
+<h3 id="the-satisficing-specialist-model">The Satisficing Specialist Model</h3>
+<p>Consider a research group with multiple specialists:
+- Specialists have <strong>responsibility</strong> for domains, not exclusive ownership
+- Information flows freely between specialists (no strict isolation)
+- Outside parties can interact with all specialists to form their own views
+- Only in unusual scenarios (cognitohazard) would strict isolation apply</p>
+<p>This system follows the same philosophy:
+- <strong>Sufficient controls</strong> for coordination and accountability
+- <strong>Not security boundaries</strong> - authenticated users are trusted collaborators
+- <strong>Responsibility over ownership</strong> - "I maintain ontology X" not "I exclusively control X"</p>
+<h3 id="authentication-as-accountability">Authentication as Accountability</h3>
+<p>Authentication serves:
+1. <strong>Accountability</strong> - Who requested expensive operations?
+2. <strong>Resource allocation</strong> - Per-user quotas, rate limiting
+3. <strong>Quality control</strong> - Traceable modifications
+4. <strong>Coordination</strong> - Knowing who maintains what</p>
+<p>Anonymous access (if enabled) becomes a deployment decision at account creation, not a permission model concern.</p>
+<h3 id="artifact-freshness-via-graph-epoch">Artifact Freshness via Graph Epoch</h3>
+<p>The system tracks graph changes via <code>graph_change_counter</code> (Migration 033). This enables:
+- Reports from a month ago are still valid if graph unchanged
+- No redundant regeneration when data hasn't changed
+- AI agents can recall stored artifacts without recomputation
+- Temporal comparison: "What changed since this report?"</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-groups-as-first-class-citizens">1. Groups as First-Class Citizens</h3>
+<p>Create a groups system parallel to roles:</p>
+<p><strong>Groups vs Roles:</strong>
+| Aspect | Roles | Groups |
+|--------|-------|--------|
+| Purpose | Permission bundles | Collaboration membership |
+| Grants | Actions on resource types | Access to specific resources |
+| Example | "curator can write vocabulary" | "research-team can access Ontology-X" |</p>
+<p><strong>Special Groups:</strong>
+- <code>public</code> (ID 1) - All authenticated users are implicit members
+- <code>admins</code> (ID 2) - Platform administrators</p>
+<h3 id="2-id-ranges-unix-style">2. ID Ranges (Unix-style)</h3>
+<p>Reserve low IDs for system entities:</p>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-999</td>
+<td>System users and groups</td>
+</tr>
+<tr>
+<td>1000+</td>
+<td>Regular users and groups</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reserved Entities:</strong></p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>User</th>
+<th>Group</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>system</code></td>
+<td><code>public</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>-</td>
+<td><code>admins</code></td>
+</tr>
+<tr>
+<td>1000</td>
+<td>First admin user</td>
+<td>First user group</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-resource-ownership">3. Resource Ownership</h3>
+<p>Resources have an owner and optional grants:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Resource:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  owner_id: INTEGER      # User responsible (can transfer)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  grants: [              # Explicit access beyond owner
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    {principal_type, principal_id, permission}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ]
 </code></pre></div>
-<h2 id="the-problem-torn-ontological-fabric">The Problem: Torn Ontological Fabric</h2>
-<p>When backing up or restoring <strong>partial ontologies</strong>, you risk creating integrity issues:</p>
-<h3 id="scenario-1-cross-ontology-relationships">Scenario 1: Cross-Ontology Relationships</h3>
-<p><strong>Setup:</strong>
-- Ontology A has Concept X
-- Ontology B has Concept Y
-- Concept X has relationship <code>IMPLIES</code> to Concept Y</p>
-<p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Backup only Ontology A</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Delete entire database</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>./scripts/reset.sh
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Restore Ontology A</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_a.json
-</code></pre></div></p>
-<p><strong>Result:</strong> Concept X now has a dangling <code>IMPLIES</code> relationship pointing to non-existent Concept Y.</p>
-<h3 id="scenario-2-shared-concepts">Scenario 2: Shared Concepts</h3>
-<p><strong>Setup:</strong>
-- Concept X appears in BOTH Ontology A and Ontology B
-- Concept X has different instances/evidence in each ontology</p>
-<p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Backup Ontology A</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Delete Ontology A</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python<span class="w"> </span>cli.py<span class="w"> </span>--yes<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Restore Ontology A</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_a.json
-</code></pre></div></p>
-<p><strong>Result:</strong> Concept X loses all connections to Ontology B sources. The concept's evidence from Ontology B is severed.</p>
-<h3 id="scenario-3-incomplete-dependency-chain">Scenario 3: Incomplete Dependency Chain</h3>
-<p><strong>Setup:</strong>
-- Concept A <code>IMPLIES</code> Concept B
-- Concept B <code>IMPLIES</code> Concept C
-- Concept A is in Ontology 1
-- Concepts B and C are in Ontology 2</p>
-<p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Backup Ontology 1 only</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology 1&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Restore into clean database</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Concept A is restored, but its IMPLIES relationship to B is dangling</span>
-</code></pre></div></p>
-<p><strong>Result:</strong> Logical implication chain is broken. Queries traversing relationships will fail.</p>
-<h2 id="integrity-checking">Integrity Checking</h2>
-<h3 id="before-backup-assessment">Before Backup: Assessment</h3>
-<p>When backing up an ontology, the system <strong>analyzes cross-ontology dependencies</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span>
+<p><strong>Owned Resources:</strong>
+- Ontologies
+- Reports (polarity, projections, etc.)
+- Future: Saved queries, workspaces</p>
+<h3 id="4-grant-based-access-model">4. Grant-Based Access Model</h3>
+<p>All access resolved through grants:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">can_access</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># Owner has full access</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># Check explicit user grant</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="c1"># Check group grants (including &#39;public&#39;)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">for</span> <span class="n">group_id</span> <span class="ow">in</span> <span class="n">get_user_groups</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="c1"># Public group - all authenticated users are members</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">PUBLIC_GROUP_ID</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
-<p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Backup Assessment
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>═════════════════
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Backup Type: ontology_backup
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Ontology: Ontology A
+<p><strong>Permission Levels:</strong>
+- <code>read</code> - View resource
+- <code>write</code> - Modify resource (add to ontology, regenerate report)
+- <code>admin</code> - Transfer ownership, manage grants</p>
+<h3 id="5-artifact-metadata">5. Artifact Metadata</h3>
+<p>All computed artifacts include:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;owner_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-12-17T10:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;graph_epoch&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15847</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;visibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grants&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Freshness Check:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_fresh</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">current_epoch</span> <span class="o">=</span> <span class="n">get_graph_change_counter</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">return</span> <span class="n">artifact</span><span class="o">.</span><span class="n">graph_epoch</span> <span class="o">==</span> <span class="n">current_epoch</span>
+</code></pre></div></p>
+<h3 id="6-schema-changes">6. Schema Changes</h3>
+<p><strong>New Tables:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Groups</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">group_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="n">display_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">is_system</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">);</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1">-- Group Membership</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">user_groups</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">group_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="n">added_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="n">added_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span><span class="n">group_id</span><span class="p">)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">);</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1">-- Resource Grants (for owned resources)</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">    </span><span class="n">resource_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;ontology&#39;, &#39;report&#39;, &#39;projection&#39;</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">    </span><span class="n">resource_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">    </span><span class="n">principal_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">principal_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;group&#39;</span><span class="p">)),</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">    </span><span class="n">principal_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="n">permission</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">permission</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">)),</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">    </span><span class="n">granted_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">    </span><span class="n">granted_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">    </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">,</span><span class="w"> </span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">,</span><span class="w"> </span><span class="n">permission</span><span class="p">)</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="p">);</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_resource</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">);</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_principal</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Modifications:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Add owner_id to ontologies (new table or graph property)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">-- Add system user</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">password_hash</span><span class="p">,</span><span class="w"> </span><span class="n">primary_role</span><span class="p">,</span><span class="w"> </span><span class="n">disabled</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SYSTEM_NO_LOGIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Contents:
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  Concepts: 22
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  Sources: 4
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  Instances: 25
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  Relationships: 14
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- Add system groups</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">group_name</span><span class="p">,</span><span class="w"> </span><span class="n">display_name</span><span class="p">,</span><span class="w"> </span><span class="n">is_system</span><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">VALUES</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;All Users&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">),</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admins&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Administrators&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>Relationship Integrity:
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>  Internal: 10/14
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  External: 4/14
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>  External %: 28.6%
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>Warnings:
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>  • 4/14 (28.6%) relationships point to external concepts
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>  • Found relationships pointing to 3 external concepts not included in this backup
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>External Dependencies:
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>  • 3 external concepts referenced
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>⚠ Restoring this backup may create dangling references!
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>  Consider one of these strategies:
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    1. Restore into database that already has these dependencies
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    2. Use --prune-external to skip external relationships
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    3. Backup dependent ontologies together
-</code></pre></div></p>
-<h3 id="after-restore-validation">After Restore: Validation</h3>
-<p>After restoring, the system <strong>validates integrity</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_a.json
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">-- Reset sequences to start at 1000</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
 </code></pre></div>
-<p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Restore Complete
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>═══════════════
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>✓ Data restored successfully
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  Concepts: 22
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  Sources: 4
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  Instances: 25
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  Relationships: 14
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>Validating database integrity...
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>Database Integrity Check
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>════════════════════════
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>Ontology: Ontology A
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>✗ Critical Issues:
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>  • 0 orphaned concepts (no APPEARS_IN relationship)
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>⚠ Warnings:
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>  • 4 relationships to concepts in other ontologies
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>  Cross-ontology relationships by type:
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    - IMPLIES
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>    - SUPPORTS
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>💡 Recommendations:
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>  • Cross-ontology relationships are normal, but be aware when deleting ontologies
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>  • Deleting ontologies may orphan concepts referenced by other ontologies
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>⚠ Integrity issues detected after restore
-<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>Attempt automatic repair? [Y/n]:
-</code></pre></div></p>
-<h3 id="standalone-integrity-check">Standalone Integrity Check</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Check entire database</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Check specific ontology</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Auto-repair orphaned concepts</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--repair
-</code></pre></div>
-<h2 id="restore-strategies">Restore Strategies</h2>
-<h3 id="strategy-1-full-database-backuprestore">Strategy 1: Full Database Backup/Restore</h3>
-<p><strong>Safest approach</strong> - no torn fabric:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Backup entire database</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--auto-full
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Restore entire database</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/full_backup_20251006.json
-</code></pre></div>
-<p><strong>Pros:</strong>
-- No dangling references
-- All relationships preserved
-- Complete ontological fabric</p>
-<p><strong>Cons:</strong>
-- Large backup files (includes all ontologies)
-- All-or-nothing restore</p>
-<h3 id="strategy-2-ontology-groups">Strategy 2: Ontology Groups</h3>
-<p>Backup <strong>related ontologies together</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Backup Ontology A</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Backup Ontology B (which A references)</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology B&quot;</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Restore both</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_a.json
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_b.json
-</code></pre></div>
-<p><strong>Pros:</strong>
-- Smaller backups than full database
-- Preserves cross-ontology relationships
-- Mix-and-match restore</p>
-<p><strong>Cons:</strong>
-- Must manually track dependencies
-- Order matters (restore dependencies first)</p>
-<h3 id="strategy-3-accept-torn-fabric-repair">Strategy 3: Accept Torn Fabric + Repair</h3>
-<p>Restore ontology, accept warnings, and repair:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Restore (may have dangling refs)</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/ontology_a.json
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># System offers repair:</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># &quot;Attempt automatic repair? [Y/n]: y&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Or manually repair later:</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span><span class="w"> </span>--repair
-</code></pre></div>
-<p><strong>What gets repaired:</strong>
-- Orphaned concepts → APPEARS_IN relationships recreated
-- Missing concept-source links → Derived from instances</p>
-<p><strong>What doesn't get repaired:</strong>
-- External relationship targets (concepts in other ontologies)
-- Cross-ontology dependencies</p>
-<p><strong>Pros:</strong>
-- Flexible partial restore
-- Automatic repair of common issues</p>
-<p><strong>Cons:</strong>
-- External relationships remain dangling
-- Manual verification needed</p>
-<h2 id="backup-file-format">Backup File Format</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ontology_backup&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-06T14:30:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">&quot;statistics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">22</span><span class="p">,</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="nt">&quot;instances&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">      </span><span class="p">{</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">        </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept_001&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">        </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Agile Adoption&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">        </span><span class="nt">&quot;search_terms&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;agile&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;adoption&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;transformation&quot;</span><span class="p">],</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">        </span><span class="nt">&quot;embedding&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.013</span><span class="p">,</span><span class="w"> </span><span class="mf">0.048</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">]</span><span class="w"> </span><span class="c1">// Full 1536-dim array</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">    </span><span class="p">],</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">    </span><span class="nt">&quot;instances&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">    </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="w">      </span><span class="p">{</span>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">        </span><span class="nt">&quot;from&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept_001&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">        </span><span class="nt">&quot;to&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept_002&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// May be external!</span>
-<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">}</span>
-<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Key Points:</strong>
-- Embeddings are preserved as full arrays (1536 dimensions)
-- Relationships may reference external concepts
-- Full text preserved in sources
-- Portable JSON format</p>
-<h2 id="cost-protection">Cost Protection</h2>
-<p>Ingesting large documents can cost <strong>$50-100 in LLM tokens</strong>. Backups protect this investment:</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ol>
-<li>
-<p><strong>Ingest once, restore many times</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Expensive: Process 400KB document</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>./scripts/ingest.sh<span class="w"> </span>large_document.txt<span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;Expensive Ontology&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Cost: $75 in tokens</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Cheap: Backup immediately</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Expensive Ontology&quot;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># Cost: $0</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># Cheap: Restore anytime</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/expensive_ontology.json
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Cost: $0</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Share ontologies between team members</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Team member A ingests</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./scripts/ingest.sh<span class="w"> </span>document.txt<span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;Shared Knowledge&quot;</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Shared Knowledge&quot;</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># Send backup file to team member B</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>scp<span class="w"> </span>backups/ontology_shared_knowledge.json<span class="w"> </span>teammate@remote:/path/
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1"># Team member B restores (no re-ingestion needed)</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>ontology_shared_knowledge.json
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Experiment safely</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Backup before experiments</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Production Data&quot;</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Run risky experiments</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>python<span class="w"> </span>cli.py<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;Production Data&quot;</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Try different ingestion parameters</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Restore if experiment fails</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/production_data.json
-</code></pre></div></p>
-</li>
+<li><strong>Clear ownership</strong> - Know who maintains what</li>
+<li><strong>Flexible sharing</strong> - Private, team, or public resources</li>
+<li><strong>Artifact reuse</strong> - Stored reports available for recall</li>
+<li><strong>AI agent support</strong> - Agents can retrieve cached analyses</li>
+<li><strong>Freshness awareness</strong> - Know if reports are current via graph epoch</li>
+<li><strong>Consistent model</strong> - Same grant mechanism for all resource types</li>
+<li><strong>Unix-familiar</strong> - ID ranges follow established conventions</li>
 </ol>
-<h2 id="best-practices">Best Practices</h2>
-<h3 id="1-backup-before-major-changes">1. Backup Before Major Changes</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Before deleting ontologies</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--auto-full
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Before schema migrations</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--auto-full
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Before experiments</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.backup<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology Name&quot;</span>
-</code></pre></div>
-<h3 id="2-check-integrity-after-restore">2. Check Integrity After Restore</h3>
-<p><strong>Always</strong> validate after partial restore:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Restored Ontology&quot;</span>
-</code></pre></div>
-<h3 id="3-document-dependencies">3. Document Dependencies</h3>
-<p>Create a dependency map for your ontologies:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>ontologies.txt:
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>  - &quot;Ontology A&quot; (standalone)
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  - &quot;Ontology B&quot; → depends on &quot;Ontology A&quot;
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>  - &quot;Ontology C&quot; → depends on &quot;Ontology A&quot;, &quot;Ontology B&quot;
-</code></pre></div>
-<p>When backing up "Ontology C", also backup A and B.</p>
-<h3 id="4-test-restore-in-staging">4. Test Restore in Staging</h3>
-<p>Before restoring to production:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Restore to test database first</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nv">NEO4J_URI</span><span class="o">=</span>bolt://localhost:7688<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span>--file<span class="w"> </span>backups/production.json
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># Verify integrity</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="nv">NEO4J_URI</span><span class="o">=</span>bolt://localhost:7688<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1"># If ok, restore to production</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.restore<span class="w"> </span>--file<span class="w"> </span>backups/production.json
-</code></pre></div>
-<h3 id="5-version-control-backup-files">5. Version Control Backup Files</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Add to git (if small enough)</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>git<span class="w"> </span>add<span class="w"> </span>backups/critical_ontology_*.json
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Or use git-lfs for large files</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>git<span class="w"> </span>lfs<span class="w"> </span>track<span class="w"> </span><span class="s2">&quot;backups/*.json&quot;</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>git<span class="w"> </span>add<span class="w"> </span>.gitattributes<span class="w"> </span>backups/
-</code></pre></div>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="issue-x-relationships-to-external-concepts">Issue: "X relationships to external concepts"</h3>
-<p><strong>Cause:</strong> Ontology has relationships pointing to concepts in other ontologies.</p>
-<p><strong>Solutions:</strong>
-1. Restore the other ontologies too
-2. Accept dangling refs (queries will skip them)
-3. Remove external relationships before backup</p>
-<h3 id="issue-orphaned-concepts-after-restore">Issue: "Orphaned concepts after restore"</h3>
-<p><strong>Cause:</strong> APPEARS_IN relationships weren't created during restore.</p>
-<p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>--repair
-</code></pre></div></p>
-<h3 id="issue-concepts-missing-embeddings">Issue: "Concepts missing embeddings"</h3>
-<p><strong>Cause:</strong> Backup file corrupted or created before embeddings were added.</p>
-<p><strong>Solution:</strong>
-- Re-ingest from source documents
-- Or regenerate embeddings using OpenAI API</p>
-<h3 id="issue-backup-file-too-large">Issue: "Backup file too large"</h3>
-<p><strong>Cause:</strong> Embeddings are 1536 floats per concept.</p>
-<p><strong>Solutions:</strong>
-1. Compress backup files: <code>gzip backups/*.json</code>
-2. Split into ontology-specific backups
-3. Use database-level backup (Neo4j native tools)</p>
-<h2 id="see-also">See Also</h2>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Schema migration</strong> - Existing systems need migration</li>
+<li><strong>Query complexity</strong> - Access checks add overhead</li>
+<li><strong>Admin burden</strong> - Someone must manage grants (mitigated by sensible defaults)</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>No strict security</strong> - This is coordination, not isolation</li>
+<li><strong>Public = authenticated</strong> - No anonymous access at permission level</li>
+<li><strong>Ownership transferable</strong> - Resources can change hands</li>
+</ol>
+<h2 id="what-this-adr-does-not-cover">What This ADR Does NOT Cover</h2>
+<ol>
+<li><strong>Anonymous access</strong> - Deployment concern, not permission model</li>
+<li><strong>Fine-grained permissions</strong> - Read/write/admin is sufficient</li>
+<li><strong>Specific artifact storage</strong> - See ADR-083 for polarity reports</li>
+<li><strong>Group hierarchies</strong> - Flat groups for now, can extend later</li>
+</ol>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-schema-foundation">Phase 1: Schema Foundation</h3>
+<ol>
+<li>Create migration for groups, user_groups, resource_grants tables</li>
+<li>Add system user (ID 1) and system groups (ID 1, 2)</li>
+<li>Alter sequences for 1000+ IDs</li>
+<li>Update admin creation to use new sequence</li>
+</ol>
+<h3 id="phase-2-ontology-ownership">Phase 2: Ontology Ownership</h3>
+<ol>
+<li>Add owner_id tracking for ontologies (metadata in kg_api or graph property)</li>
+<li>Default owner = user who created first ingestion</li>
+<li>Add grant checking to ontology operations</li>
+</ol>
+<h3 id="phase-3-artifact-ownership">Phase 3: Artifact Ownership</h3>
+<ol>
+<li>Add ownership metadata to Garage storage schema</li>
+<li>Update projection storage (ADR-079) to include owner</li>
+<li>API endpoints for listing "my artifacts" vs "public artifacts"</li>
+</ol>
+<h3 id="phase-4-ui-integration">Phase 4: UI Integration</h3>
+<ol>
+<li>Show ownership in web UI</li>
+<li>Grant management interface</li>
+<li>"My ontologies" vs "Public ontologies" views</li>
+</ol>
+<h2 id="migration-notes">Migration Notes</h2>
+<p><strong>Existing Ontologies:</strong>
+- Assign to <code>system</code> user (ID 1) by default
+- Grant <code>public</code> group read access
+- Admin can reassign ownership</p>
+<p><strong>Sequence Reset:</strong>
+- Migration must handle existing users (if any with ID &lt; 1000)
+- Safe approach: only reset if max(id) &lt; 1000</p>
+<h2 id="references">References</h2>
 <ul>
-<li><a href="../../../architecture/ARCHITECTURE_DECISIONS/#adr-011">ADR-011: Separation of CLI and Admin Tooling</a></li>
-<li><a href="../../../architecture/ARCHITECTURE_OVERVIEW/">Architecture Overview</a></li>
-<li><a href="../../../guides/QUICKSTART/">Quickstart Guide</a></li>
+<li>ADR-028: Dynamic RBAC (existing role system)</li>
+<li>ADR-079: Projection Artifact Storage (Garage pattern)</li>
+<li>Migration 033: Graph Change Triggers (epoch counter)</li>
 </ul>
 
 
@@ -7797,10 +7585,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>
