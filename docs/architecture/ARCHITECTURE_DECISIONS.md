@@ -93,6 +93,11 @@ All ADRs follow a consistent format:
 | [ADR-076](ADR-076-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Accepted | Bidirectional BFS in application code replaces exhaustive Cypher path enumeration - O(b^(d/2)) vs O(b^d) complexity. AGE lacks shortestPath() function; variable-length patterns cause exponential blowup. Includes incremental depth search, path caching, and documentation fixes |
 | [ADR-077](ADR-077-vocabulary-explorers.md) | Vocabulary Explorers | Proposed | Two visual exploration tools for edge vocabulary: Edge Explorer (system-wide chord/radial/matrix views) and Vocabulary Chord (query-specific analysis from 2D/3D explorer). Shows category flows, type distribution, vocabulary health, builtin vs custom types |
 | [ADR-078](visualization/ADR-078-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Proposed | 3D t-SNE/UMAP visualization of concept embeddings with epistemic overlays (grounding color, diversity size) - enables visual axis discovery by clicking two points to define polarity axis, bridging macro exploration with existing micro neighborhood exploration |
+| [ADR-079](ADR-079-projection-artifact-storage.md) | Projection Artifact Storage | Accepted | Store t-SNE/UMAP projections in Garage (S3) with changelist-based freshness validation - enables efficient caching, historical playback, and time-series analysis without polluting graph schema. Generalized by ADR-083 |
+| [ADR-080](ADR-080-garage-service-architecture.md) | Garage Service Architecture | Proposed | Refactor monolithic GarageClient (732 lines) into focused service modules (base, images, projections) following Single Responsibility Principle - establishes modular architecture for future storage features |
+| [ADR-081](ADR-081-source-document-lifecycle.md) | Source Document Lifecycle | Proposed | Pre-ingestion document storage in Garage with content hashing, character offsets in Source nodes, and regeneration capability - enables re-processing with improved extraction while maintaining deduplication |
+| [ADR-082](ADR-082-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership | Accepted | Groups-based ownership model with Unix-style ID ranges (1-999 system, 1000+ users), `public` meta-group for all authenticated users, and grant-based access control for ontologies and artifacts |
+| [ADR-083](ADR-083-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted | Multi-tier storage (DB metadata → Zustand pointers → LocalStorage cache → Garage blobs) for computed artifacts with lazy loading, graph epoch freshness tracking, and async job integration for expensive computations |
 
 ## How to Use This Index
 
@@ -166,6 +171,6 @@ Proposed capabilities:
 
 ---
 
-**Last Updated:** 2025-12-11
+**Last Updated:** 2025-12-17
 
 **Note:** When creating a new ADR file, remember to add it to this index table with its title, status, and a brief summary.
