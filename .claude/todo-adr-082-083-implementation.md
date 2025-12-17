@@ -40,11 +40,12 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 - [x] Add constraint for inline_result OR garage_key
 
 ### Garage Integration
-- [ ] Create `ArtifactStorageService` class
-- [ ] Implement `store_artifact()` method
-- [ ] Implement `get_artifact_payload()` method
-- [ ] Route small (<10KB) to inline, large to Garage
-- [ ] Key structure: `artifacts/{artifact_type}/{artifact_id}.json`
+- [x] Create `ArtifactStorageService` class
+- [x] Implement `store()` and `prepare_for_storage()` methods
+- [x] Implement `get()` and `get_by_id()` methods
+- [x] Route small (<10KB) to inline, large to Garage via `prepare_for_storage()`
+- [x] Key structure: `artifacts/{artifact_type}/{artifact_id}.json`
+- [x] Add factory function `get_artifact_storage()` and exports
 
 ## Phase 3: API Endpoints
 
