@@ -15,6 +15,7 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 - [x] Alter `kg_auth.users_id_seq` to restart at 1000
 - [x] Create `kg_auth.groups_id_seq` starting at 1000
 - [x] Update operator admin creation to use new sequence (no changes needed - uses sequence)
+- [x] Fix migration 020 to create system user (ID 1) and admin user (ID 1000)
 
 ### Permission Resolution
 - [x] Extend `has_access()` function to check:
@@ -23,6 +24,11 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
   - [x] Public group grants (implicit membership)
 - [x] Add indexes for grant lookups
 - [ ] Test permission resolution order
+
+### Default Group Memberships
+- [x] Add admin user (ID 1000) to admins group in migration 034
+- [x] Update operator `configure.py` to add new admins to admins group
+- [x] Update API `POST /users` to add admin-role users to admins group
 
 ## Phase 2: Artifact Schema (ADR-083)
 

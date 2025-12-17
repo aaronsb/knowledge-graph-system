@@ -478,10 +478,20 @@ async def create_user(
             """, (user.username, password_hash, user.role))
 
             row = cur.fetchone()
+            user_id = row[0]
+
+            # Add admin-role users to admins group (ADR-082)
+            if user.role in ('admin', 'platform_admin'):
+                cur.execute("""
+                    INSERT INTO kg_auth.user_groups (user_id, group_id, added_by)
+                    VALUES (%s, 2, %s)
+                    ON CONFLICT (user_id, group_id) DO NOTHING
+                """, (user_id, current_user.id))
+
             conn.commit()
 
             return UserRead(
-                id=row[0],
+                id=user_id,
                 username=row[1],
                 role=row[2],
                 created_at=row[3],

@@ -84,10 +84,21 @@ class OperatorConfig:
                 else:
                     cur.execute(
                         """INSERT INTO kg_auth.users (username, password_hash, primary_role, disabled)
-                           VALUES (%s, %s, 'admin', false)""",
+                           VALUES (%s, %s, 'admin', false)
+                           RETURNING id""",
                         (username, password_hash)
                     )
-                    print(f"✅ Created admin user: {username}")
+                    user_id = cur.fetchone()[0]
+                    print(f"✅ Created admin user: {username} (id={user_id})")
+
+                    # Add user to admins group (group_id=2, per ADR-082)
+                    cur.execute(
+                        """INSERT INTO kg_auth.user_groups (user_id, group_id, added_by)
+                           VALUES (%s, 2, 1)
+                           ON CONFLICT (user_id, group_id) DO NOTHING""",
+                        (user_id,)
+                    )
+                    print(f"   Added to admins group")
 
                 conn.commit()
                 return True

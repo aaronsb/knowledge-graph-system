@@ -83,11 +83,11 @@ COMMENT ON COLUMN kg_auth.resource_grants.principal_type IS 'Grant to user or gr
 COMMENT ON COLUMN kg_auth.resource_grants.permission IS 'read, write, or admin access';
 
 -- ============================================================================
--- System User (ID 1)
+-- System User (ID 1) - Already Created in Migration 020
 -- ============================================================================
 
--- Insert system user with explicit ID 1
--- This user owns system resources and cannot login
+-- System user was created in migration 020 (track_authenticated_users_in_jobs)
+-- This INSERT is here for idempotency in case migrations run out of order
 INSERT INTO kg_auth.users (id, username, password_hash, primary_role, disabled)
 VALUES (1, 'system', 'SYSTEM_NO_LOGIN', 'admin', true)
 ON CONFLICT (id) DO NOTHING;
@@ -105,6 +105,17 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO kg_auth.groups (id, group_name, display_name, description, is_system, created_by)
 VALUES (2, 'admins', 'Administrators', 'Platform administrators with elevated access', true, 1)
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- Default Group Memberships
+-- ============================================================================
+
+-- Add admin user (id=1000) to admins group
+-- Note: admin user is created in migration 020
+INSERT INTO kg_auth.user_groups (user_id, group_id, added_by)
+SELECT 1000, 2, 1  -- admin user -> admins group, added by system
+WHERE EXISTS (SELECT 1 FROM kg_auth.users WHERE id = 1000)
+ON CONFLICT (user_id, group_id) DO NOTHING;
 
 -- ============================================================================
 -- Sequence Reset for Regular Users/Groups (1000+)
