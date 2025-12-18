@@ -286,11 +286,12 @@ const queryCommand = setCommandHelp(
         }
       });
 
-const detailsCommand = setCommandHelp(
-  new Command('details'),
+const showCommand = setCommandHelp(
+  new Command('show'),
   'Get full details for a concept',
   'Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength'
 )
+      .alias('details')  // backwards compatibility
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
@@ -716,7 +717,7 @@ const sourcesCommand = setCommandHelp(
       });
 
 // Configure colored help for all search subcommands
-[queryCommand, detailsCommand, relatedCommand, connectCommand, sourcesCommand].forEach(configureColoredHelp);
+[queryCommand, showCommand, relatedCommand, connectCommand, sourcesCommand].forEach(configureColoredHelp);
 
 export const searchCommand = setCommandHelp(
   new Command('search'),
@@ -811,7 +812,7 @@ export const searchCommand = setCommandHelp(
     }
   })
   .addCommand(queryCommand)
-  .addCommand(detailsCommand)
+  .addCommand(showCommand)
   .addCommand(relatedCommand)
   .addCommand(connectCommand)
   .addCommand(sourcesCommand);
