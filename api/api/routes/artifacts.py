@@ -487,8 +487,16 @@ async def delete_artifact(
 
             # Delete from Garage if stored there
             if garage_key:
-                storage = get_artifact_storage()
-                storage.delete(garage_key)
+                try:
+                    storage = get_artifact_storage()
+                    storage.delete(garage_key)
+                except Exception as garage_err:
+                    # Log but continue - DB record deletion is primary concern
+                    # Orphaned Garage objects will be cleaned up by maintenance job
+                    logger.warning(
+                        f"Failed to delete Garage object {garage_key} for artifact {artifact_id}: {garage_err}. "
+                        "Orphaned object will be cleaned up by maintenance job."
+                    )
 
             # Delete database record
             cur.execute("DELETE FROM kg_api.artifacts WHERE id = %s", (artifact_id,))

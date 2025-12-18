@@ -61,6 +61,10 @@ class GroupMemberList(BaseModel):
     group_name: str
     members: List[GroupMember]
     total: int
+    implicit_membership: bool = Field(
+        False,
+        description="True if members shown are implicit (e.g., public group has all users as implicit members)"
+    )
 
 
 class AddMemberRequest(BaseModel):

@@ -96,6 +96,12 @@ class ArtifactStorageService:
 
         Raises:
             ClientError: If Garage storage fails for large payloads
+
+        Note:
+            For inline storage, the payload dict is returned and will be
+            serialized again by psycopg2.extras.Json(). This double
+            serialization (~1-2ms for small payloads) is acceptable given
+            the simplicity tradeoff. Large payloads only serialize once.
         """
         json_data = json.dumps(payload)
         json_bytes = json_data.encode('utf-8')

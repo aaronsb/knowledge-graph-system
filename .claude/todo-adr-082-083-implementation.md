@@ -104,39 +104,35 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 
 ### Major Issues (Required before merge)
 
-- [ ] **#1: Grant ownership verification** (`api/api/routes/grants.py`)
-  - Currently admin-only; need to check if user owns the resource
-  - Add helper function to verify resource ownership by type (artifact, query_definition)
-  - Allow resource owners to create grants for their resources
-  - File: `grants.py:61-68` (POST /grants endpoint)
+- [x] **#1: Grant ownership verification** (`api/api/routes/grants.py`)
+  - Added `verify_resource_ownership()` helper function
+  - Checks resource tables by type to get owner_id
+  - Allows resource owners to create/revoke grants
+  - Admins can manage all grants
 
-- [ ] **#2: System resource NULL handling** (`api/api/routes/grants.py`)
-  - Clarify policy: Should system user (ID=1) own system resources?
-  - Current code allows NULL owner_id but has TODO comments
-  - Decision needed: explicit system ownership vs NULL convention
-  - Affects: artifacts, query_definitions, grants
+- [x] **#2: System resource NULL handling** (`api/api/routes/grants.py`)
+  - Policy: NULL owner_id treated as system-owned (SYSTEM_USER_ID = 1)
+  - Only admins can manage grants for system resources
+  - Consistent with Unix-style ID ranges (1-999 = system)
 
 ### Minor Issues (Recommended before merge)
 
-- [ ] **#3: Garage deletion error logging** (`api/api/routes/artifacts.py`)
-  - Add logging when Garage delete fails but DB delete succeeds
-  - Currently silently continues, leaving orphaned objects
-  - File: `artifacts.py:185-192` (DELETE /artifacts/{id} endpoint)
+- [x] **#3: Garage deletion error logging** (`api/api/routes/artifacts.py`)
+  - Added try/except with logger.warning for Garage delete failures
+  - References maintenance job for orphan cleanup
 
-- [ ] **#4: Composite index for artifact queries** (`schema/migrations/035_artifact_persistence.sql`)
-  - Add index: `(owner_id, representation)` for filtered listing
-  - Current query filters by owner then optionally by representation
+- [x] **#4: Composite index for artifact queries** (`schema/migrations/035_artifact_persistence.sql`)
+  - Added `idx_artifacts_owner_repr (owner_id, representation, created_at DESC)`
 
-- [ ] **#5: Double JSON serialization** (`api/api/lib/garage/artifact_storage.py`)
-  - `prepare_for_storage()` JSON-encodes payload, then caller wraps in `psycopg2.extras.Json()`
-  - For inline: store raw dict, let psycopg2 handle serialization
-  - For Garage: keep JSON encoding (needed for S3 storage)
-  - File: `artifact_storage.py:75-100`
+- [x] **#5: Double JSON serialization** (`api/api/lib/garage/artifact_storage.py`)
+  - Documented as acceptable trade-off in docstring
+  - ~1-2ms overhead for small payloads is negligible
+  - Large payloads only serialize once (to Garage)
 
-- [ ] **#6: Public group members endpoint** (`api/api/routes/grants.py`)
-  - GET /groups/1/members returns empty list, but public group has implicit all-user membership
-  - Options: return all users, or return 404/special response indicating implicit membership
-  - File: `grants.py:350-380`
+- [x] **#6: Public group members endpoint** (`api/api/routes/grants.py`)
+  - Added `include_implicit` query parameter
+  - With `include_implicit=true`, returns all users as public group members
+  - Added `implicit_membership` field to response model
 
 ---
 

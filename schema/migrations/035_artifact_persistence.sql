@@ -118,9 +118,11 @@ CREATE INDEX IF NOT EXISTS idx_artifacts_query_def ON kg_api.artifacts(query_def
 CREATE INDEX IF NOT EXISTS idx_artifacts_expires ON kg_api.artifacts(expires_at)
     WHERE expires_at IS NOT NULL;
 
--- Composite index for listing user's artifacts by type
+-- Composite indexes for listing user's artifacts with common filters
 CREATE INDEX IF NOT EXISTS idx_artifacts_owner_type
     ON kg_api.artifacts(owner_id, artifact_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_artifacts_owner_repr
+    ON kg_api.artifacts(owner_id, representation, created_at DESC);
 
 COMMENT ON TABLE kg_api.artifacts IS 'Computed artifact metadata with Garage blob pointers (ADR-083)';
 COMMENT ON COLUMN kg_api.artifacts.artifact_type IS 'Type of computation: polarity_analysis, projection, etc.';
