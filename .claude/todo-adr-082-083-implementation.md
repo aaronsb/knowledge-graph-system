@@ -204,9 +204,9 @@ Pattern for metadata vs content retrieval:
 ## Phase 6: CLI Enhancements
 
 ### Save-as-Artifact Options
-- [ ] `kg polarity analyze --save-artifact` (done in Phase 4)
-- [ ] `kg projection create --save-artifact`
-- [ ] `kg search query --save-artifact` (for saving search results)
+- [x] `kg polarity analyze --save-artifact` (done in Phase 4)
+- [x] `kg projection regenerate --save-artifact`
+- [x] `kg search query --save-artifact` (for saving search results)
 
 ### Artifact Retrieval
 - [x] `kg artifact list` - List user's artifacts
