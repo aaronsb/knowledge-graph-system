@@ -153,6 +153,112 @@ def create_job_artifact(
         return None
 
 
+def create_artifact(
+    user_id: int,
+    artifact_type: str,
+    representation: str,
+    name: str,
+    parameters: Dict[str, Any],
+    payload: Dict[str, Any],
+    ontology: Optional[str] = None,
+    concept_ids: Optional[List[str]] = None,
+    query_definition_id: Optional[int] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    expires_at: Optional[str] = None
+) -> Optional[int]:
+    """
+    Create an artifact directly (without job linkage).
+
+    Used for synchronous operations that create artifacts without using
+    the job queue (e.g., fast projection computations).
+
+    Args:
+        user_id: Owner of the artifact
+        artifact_type: Type of artifact (projection, polarity_analysis, etc.)
+        representation: Source representation (embedding_landscape, cli, etc.)
+        name: Human-readable artifact name
+        parameters: Parameters used to generate this artifact
+        payload: The computed result data
+        ontology: Optional ontology name
+        concept_ids: Optional list of concept IDs involved
+        query_definition_id: Optional link to query definition
+        metadata: Optional additional metadata
+        expires_at: Optional expiration timestamp (ISO format)
+
+    Returns:
+        Artifact ID if created successfully, None if failed
+    """
+    try:
+        from api.api.lib.garage.artifact_storage import get_artifact_storage
+        from api.api.dependencies.auth import get_db_connection
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                # Get current graph epoch
+                cur.execute("""
+                    SELECT counter FROM public.graph_metrics
+                    WHERE metric_name = 'graph_change_counter'
+                """)
+                row = cur.fetchone()
+                current_epoch = row[0] if row else 0
+
+                # Get next artifact ID for storage key generation
+                cur.execute("SELECT nextval('kg_api.artifacts_id_seq')")
+                artifact_id = cur.fetchone()[0]
+
+                # Route payload to inline or Garage
+                storage = get_artifact_storage()
+                inline_result, garage_key = storage.prepare_for_storage(
+                    artifact_type,
+                    artifact_id,
+                    payload
+                )
+
+                # Insert artifact
+                cur.execute("""
+                    INSERT INTO kg_api.artifacts (
+                        id, artifact_type, representation, name, owner_id,
+                        graph_epoch, expires_at, parameters, metadata,
+                        ontology, concept_ids, query_definition_id,
+                        inline_result, garage_key
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                    RETURNING created_at
+                """, (
+                    artifact_id,
+                    artifact_type,
+                    representation,
+                    name,
+                    user_id,
+                    current_epoch,
+                    expires_at,
+                    psycopg2.extras.Json(parameters),
+                    psycopg2.extras.Json(metadata) if metadata else None,
+                    ontology,
+                    concept_ids,
+                    query_definition_id,
+                    psycopg2.extras.Json(inline_result) if inline_result else None,
+                    garage_key
+                ))
+
+                conn.commit()
+
+                logger.info(
+                    f"Created artifact {artifact_id} ({artifact_type}) for user {user_id}"
+                )
+
+                return artifact_id
+
+        finally:
+            conn.close()
+
+    except Exception as e:
+        logger.error(f"Failed to create artifact: {e}")
+        return None
+
+
 def get_job_user_id(job_id: str) -> Optional[int]:
     """
     Get the user_id for a job.

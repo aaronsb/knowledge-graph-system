@@ -22,11 +22,12 @@ kg search [query]
 | `-l, --limit <number>` | Maximum number of results to return | `"10"` |
 | `--min-similarity <number>` | Minimum similarity score (0.0-1.0) | `"0.7"` |
 | `--json` | Output raw JSON instead of formatted text | - |
+| `--save-artifact` | Save result as persistent artifact (ADR-083) | - |
 
 **Subcommands:**
 
 - `query` - Search for concepts using vector similarity (embeddings) - use specific phrases for best results
-- `details` - Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength
+- `show` (`details`) - Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength
 - `related` - Find concepts related through graph traversal (breadth-first search) - groups results by distance
 - `connect` - Find shortest path between two concepts using IDs or semantic phrase matching
 - `sources` - Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)
@@ -59,14 +60,15 @@ kg query <query>
 | `--diversity-hops <number>` | Maximum traversal depth for diversity (1-3, default 2) | `"2"` |
 | `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
+| `--save-artifact` | Save result as persistent artifact (ADR-083) | - |
 
-### details
+### show (details)
 
 Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength
 
 **Usage:**
 ```bash
-kg details <concept-id>
+kg show <concept-id>
 ```
 
 **Arguments:**

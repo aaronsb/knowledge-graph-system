@@ -75,12 +75,13 @@ if [ -d "dist" ]; then
     npm run clean
 fi
 
-# Build TypeScript
+# Build TypeScript (suppress verbose output, show on failure)
 echo -e "${BLUE}🔨 Building TypeScript client...${NC}"
-if ! npm run build; then
+BUILD_OUTPUT=$(npm run build 2>&1) || {
     echo -e "${RED}✗ Build failed${NC}"
+    echo "$BUILD_OUTPUT"
     exit 1
-fi
+}
 
 # Verify build artifacts exist
 if [ ! -f "dist/index.js" ] || [ ! -f "dist/mcp-server.js" ]; then

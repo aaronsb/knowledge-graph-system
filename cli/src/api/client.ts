@@ -1493,7 +1493,8 @@ export class KnowledgeGraphClient {
     center?: boolean;
     include_grounding?: boolean;
     include_diversity?: boolean;
-  }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string }> {
+    create_artifact?: boolean;
+  }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string; artifact_id?: number }> {
     const response = await this.client.post(
       `/projection/${encodeURIComponent(ontology)}/regenerate`,
       options || {}

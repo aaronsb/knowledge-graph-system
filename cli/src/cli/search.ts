@@ -154,6 +154,7 @@ const queryCommand = setCommandHelp(
       .option('--diversity-hops <number>', 'Maximum traversal depth for diversity (1-3, default 2)', '2')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
+      .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
@@ -278,6 +279,31 @@ const queryCommand = setCommandHelp(
             const thresholdPercent = (result.suggested_threshold * 100).toFixed(0);
             console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
             console.log(colors.status.dim(`   Try: kg search query "${query}" --min-similarity ${result.suggested_threshold}\n`));
+          }
+
+          // ADR-083: Save result as artifact if requested
+          if (options.saveArtifact && result.count > 0) {
+            try {
+              const artifactResult = await client.createArtifact({
+                artifact_type: 'search_result',
+                representation: 'cli',
+                name: `Search: "${query}" (${result.count} results)`,
+                parameters: {
+                  query,
+                  limit: parseInt(options.limit),
+                  min_similarity: parseFloat(options.minSimilarity),
+                  include_evidence: includeEvidence,
+                  include_grounding: includeGrounding,
+                  include_diversity: includeDiversity,
+                  diversity_max_hops: parseInt(options.diversityHops)
+                },
+                payload: result
+              });
+              console.log(colors.status.success(`✓ Artifact saved: ${artifactResult.id}`));
+              console.log(colors.status.dim(`  View: kg artifact show ${artifactResult.id}`));
+            } catch (artifactError: any) {
+              console.error(colors.status.error(`✗ Failed to save artifact: ${artifactError.message}`));
+            }
           }
         } catch (error: any) {
           console.error(colors.status.error('✗ Search failed'));
@@ -731,6 +757,7 @@ export const searchCommand = setCommandHelp(
   .option('-l, --limit <number>', 'Maximum number of results to return', '10')
   .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
   .option('--json', 'Output raw JSON instead of formatted text')
+  .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
   .action(async (query, options, command) => {
     // If no query provided and no subcommand matched, show help
     if (!query) {
@@ -804,6 +831,31 @@ export const searchCommand = setCommandHelp(
         const thresholdPercent = (result.suggested_threshold * 100).toFixed(0);
         console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
         console.log(colors.status.dim(`   Try: kg search "${query}" --min-similarity ${result.suggested_threshold}\n`));
+      }
+
+      // ADR-083: Save result as artifact if requested
+      if (options.saveArtifact && result.count > 0) {
+        try {
+          const artifactResult = await client.createArtifact({
+            artifact_type: 'search_result',
+            representation: 'cli',
+            name: `Search: "${query}" (${result.count} results)`,
+            parameters: {
+              query,
+              limit: parseInt(options.limit),
+              min_similarity: parseFloat(options.minSimilarity),
+              include_evidence: config.getSearchShowEvidence(),
+              include_grounding: true,
+              include_diversity: true,
+              diversity_max_hops: 2
+            },
+            payload: result
+          });
+          console.log(colors.status.success(`✓ Artifact saved: ${artifactResult.id}`));
+          console.log(colors.status.dim(`  View: kg artifact show ${artifactResult.id}`));
+        } catch (artifactError: any) {
+          console.error(colors.status.error(`✗ Failed to save artifact: ${artifactError.message}`));
+        }
       }
     } catch (error: any) {
       console.error(colors.status.error('✗ Search failed'));
