@@ -98,6 +98,48 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 - [x] `kg query-def create` - Create definition
 - [x] `kg query-def delete <id>` - Delete definition
 
+## Code Review Fixes (Post Phase 3)
+
+Issues identified in code review of commits ac658a3b..ebdd1b86.
+
+### Major Issues (Required before merge)
+
+- [ ] **#1: Grant ownership verification** (`api/api/routes/grants.py`)
+  - Currently admin-only; need to check if user owns the resource
+  - Add helper function to verify resource ownership by type (artifact, query_definition)
+  - Allow resource owners to create grants for their resources
+  - File: `grants.py:61-68` (POST /grants endpoint)
+
+- [ ] **#2: System resource NULL handling** (`api/api/routes/grants.py`)
+  - Clarify policy: Should system user (ID=1) own system resources?
+  - Current code allows NULL owner_id but has TODO comments
+  - Decision needed: explicit system ownership vs NULL convention
+  - Affects: artifacts, query_definitions, grants
+
+### Minor Issues (Recommended before merge)
+
+- [ ] **#3: Garage deletion error logging** (`api/api/routes/artifacts.py`)
+  - Add logging when Garage delete fails but DB delete succeeds
+  - Currently silently continues, leaving orphaned objects
+  - File: `artifacts.py:185-192` (DELETE /artifacts/{id} endpoint)
+
+- [ ] **#4: Composite index for artifact queries** (`schema/migrations/035_artifact_persistence.sql`)
+  - Add index: `(owner_id, representation)` for filtered listing
+  - Current query filters by owner then optionally by representation
+
+- [ ] **#5: Double JSON serialization** (`api/api/lib/garage/artifact_storage.py`)
+  - `prepare_for_storage()` JSON-encodes payload, then caller wraps in `psycopg2.extras.Json()`
+  - For inline: store raw dict, let psycopg2 handle serialization
+  - For Garage: keep JSON encoding (needed for S3 storage)
+  - File: `artifact_storage.py:75-100`
+
+- [ ] **#6: Public group members endpoint** (`api/api/routes/grants.py`)
+  - GET /groups/1/members returns empty list, but public group has implicit all-user membership
+  - Options: return all users, or return 404/special response indicating implicit membership
+  - File: `grants.py:350-380`
+
+---
+
 ## Phase 4: Async Job Integration (ADR-083)
 
 ### Job Worker
