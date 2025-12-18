@@ -85,11 +85,18 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 ## Phase 3c: Query Definitions API
 
 ### Query Definitions (ADR-083)
-- [ ] `GET /query-definitions` - List definitions
-- [ ] `POST /query-definitions` - Save definition
-- [ ] `PUT /query-definitions/{id}` - Update definition
-- [ ] `DELETE /query-definitions/{id}` - Delete definition
-- [ ] `POST /artifacts/{id}/regenerate` - Re-run computation from definition
+- [x] `GET /query-definitions` - List definitions
+- [x] `GET /query-definitions/{id}` - Get definition by ID
+- [x] `POST /query-definitions` - Save definition
+- [x] `PUT /query-definitions/{id}` - Update definition
+- [x] `DELETE /query-definitions/{id}` - Delete definition
+- [ ] `POST /artifacts/{id}/regenerate` - Re-run computation from definition (deferred to Phase 4)
+
+### CLI Commands (validation)
+- [x] `kg query-def list` - List query definitions
+- [x] `kg query-def show <id>` - Show definition details
+- [x] `kg query-def create` - Create definition
+- [x] `kg query-def delete <id>` - Delete definition
 
 ## Phase 4: Async Job Integration (ADR-083)
 

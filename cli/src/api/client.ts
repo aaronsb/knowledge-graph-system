@@ -1623,6 +1623,65 @@ export class KnowledgeGraphClient {
   async revokeGrant(grantId: number): Promise<void> {
     await this.client.delete(`/grants/${grantId}`);
   }
+
+  // ==========================================================================
+  // Query Definitions Methods (ADR-083)
+  // ==========================================================================
+
+  /**
+   * List query definitions
+   */
+  async listQueryDefinitions(params?: {
+    definition_type?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    definitions: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get('/query-definitions', { params });
+    return response.data;
+  }
+
+  /**
+   * Get a query definition by ID
+   */
+  async getQueryDefinition(definitionId: number): Promise<any> {
+    const response = await this.client.get(`/query-definitions/${definitionId}`);
+    return response.data;
+  }
+
+  /**
+   * Create a query definition
+   */
+  async createQueryDefinition(definition: {
+    name: string;
+    definition_type: string;
+    definition: Record<string, any>;
+  }): Promise<any> {
+    const response = await this.client.post('/query-definitions', definition);
+    return response.data;
+  }
+
+  /**
+   * Update a query definition
+   */
+  async updateQueryDefinition(definitionId: number, update: {
+    name?: string;
+    definition?: Record<string, any>;
+  }): Promise<any> {
+    const response = await this.client.put(`/query-definitions/${definitionId}`, update);
+    return response.data;
+  }
+
+  /**
+   * Delete a query definition
+   */
+  async deleteQueryDefinition(definitionId: number): Promise<void> {
+    await this.client.delete(`/query-definitions/${definitionId}`);
+  }
 }
 
 /**

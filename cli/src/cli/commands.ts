@@ -21,6 +21,7 @@ import { projectionCommand } from './projection';
 import { sourceCommand } from './source';
 import { artifactCommand } from './artifact';
 import { groupCommand } from './group';
+import { queryDefCommand } from './query-def';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -107,6 +108,7 @@ export async function registerCommands(program: Command) {
     projectionCommand,
     artifactCommand,
     groupCommand,
+    queryDefCommand,
   ];
 
   subcommands.forEach(cmd => {

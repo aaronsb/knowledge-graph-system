@@ -36,7 +36,7 @@ from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_
 from .workers.source_embedding_worker import run_source_embedding_worker
 from .workers.projection_worker import run_projection_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -342,6 +342,7 @@ app.include_router(extraction.admin_router)  # ADR-041: Admin extraction managem
 app.include_router(projection.router)  # ADR-078: Embedding landscape projections
 app.include_router(artifacts.router)  # ADR-083: Artifact persistence
 app.include_router(grants.router)  # ADR-082: Groups and resource grants
+app.include_router(query_definitions.router)  # ADR-083: Query definitions
 
 
 # Root endpoint
