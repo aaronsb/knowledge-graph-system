@@ -39,7 +39,7 @@ def run_artifact_cleanup_worker(
     """
     try:
         from api.api.dependencies.auth import get_db_connection
-        from api.api.lib.garage.artifact_storage import get_artifact_storage
+        from api.api.lib.garage import get_artifact_storage
 
         logger.info(f"🧹 Artifact cleanup worker started: {job_id}")
 

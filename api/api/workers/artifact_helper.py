@@ -79,7 +79,7 @@ def create_job_artifact(
         complete successfully without artifact persistence.
     """
     try:
-        from api.api.lib.garage.artifact_storage import get_artifact_storage
+        from api.api.lib.garage import get_artifact_storage
         from api.api.dependencies.auth import get_db_connection
 
         conn = get_db_connection()
@@ -189,7 +189,7 @@ def create_artifact(
         Artifact ID if created successfully, None if failed
     """
     try:
-        from api.api.lib.garage.artifact_storage import get_artifact_storage
+        from api.api.lib.garage import get_artifact_storage
         from api.api.dependencies.auth import get_db_connection
 
         conn = get_db_connection()
