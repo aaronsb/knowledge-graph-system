@@ -138,17 +138,26 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 
 ## Phase 4: Async Job Integration (ADR-083)
 
-### Job Worker
-- [ ] Create `artifact_worker.py`
-- [ ] Support polarity analysis job type
-- [ ] Support projection job type (migrate from existing)
-- [ ] Store result to artifact on completion
-- [ ] Update job with artifact_id reference
-
 ### Job Queue Changes
-- [ ] Add `artifact_id` column to jobs (for linking)
-- [ ] Add `owner_id` column to jobs (for ownership)
-- [ ] Update job creation to track owner
+- [x] Add `artifact_id` column to jobs (Migration 036)
+- [x] Update `job_queue.update_job()` to support artifact_id field
+- [x] Note: `user_id` column already exists (Migration 020)
+
+### Worker Artifact Helper
+- [x] Create `artifact_helper.py` module
+- [x] Implement `create_job_artifact()` function
+- [x] Implement `get_job_user_id()` helper
+
+### Projection Worker Integration
+- [x] Add `create_artifact` flag to job_data
+- [x] Create artifact on completion when flag is set
+- [x] Link artifact to job via artifact_id
+- [x] Include artifact_id in job result
+
+### Future Work (can be done incrementally)
+- [ ] Add polarity analysis async job type
+- [ ] Add artifact regeneration endpoint (`POST /artifacts/{id}/regenerate`)
+- [ ] Add scheduled artifact cleanup worker
 
 ## Phase 5: Web Client (ADR-083)
 
