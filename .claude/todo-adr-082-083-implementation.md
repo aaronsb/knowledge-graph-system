@@ -47,7 +47,23 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 - [x] Key structure: `artifacts/{artifact_type}/{artifact_id}.json`
 - [x] Add factory function `get_artifact_storage()` and exports
 
-## Phase 3: API Endpoints
+## Phase 3a: Core Artifact API + CLI Validation
+
+### Artifact API Endpoints (ADR-083)
+- [x] `GET /artifacts` - List artifacts (metadata only)
+- [x] `GET /artifacts/{id}` - Get artifact metadata
+- [x] `GET /artifacts/{id}/payload` - Get artifact payload (inline or Garage)
+- [x] `POST /artifacts` - Create artifact
+- [x] `DELETE /artifacts/{id}` - Delete artifact
+
+### CLI Commands (validation)
+- [x] `kg artifact list` - List user's artifacts
+- [x] `kg artifact show <id>` - Show artifact metadata
+- [x] `kg artifact payload <id>` - Get artifact payload
+- [x] `kg artifact create` - Create test artifact (for validation)
+- [x] `kg artifact delete <id>` - Delete artifact
+
+## Phase 3b: Grants & Groups API
 
 ### Grant Management (ADR-082)
 - [ ] `POST /grants` - Create grant
@@ -58,20 +74,14 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 - [ ] `POST /groups/{id}/members` - Add member
 - [ ] `DELETE /groups/{id}/members/{user_id}` - Remove member
 
-### Artifact CRUD (ADR-083)
-- [ ] `GET /artifacts` - List artifacts (metadata only)
-- [ ] `GET /artifacts/{id}` - Get artifact metadata
-- [ ] `GET /artifacts/{id}/payload` - Get artifact payload (inline or Garage)
-- [ ] `POST /artifacts` - Create artifact
-- [ ] `POST /artifacts/{id}/regenerate` - Re-run computation
-- [ ] `DELETE /artifacts/{id}` - Delete artifact
+## Phase 3c: Query Definitions API
 
 ### Query Definitions (ADR-083)
 - [ ] `GET /query-definitions` - List definitions
 - [ ] `POST /query-definitions` - Save definition
 - [ ] `PUT /query-definitions/{id}` - Update definition
 - [ ] `DELETE /query-definitions/{id}` - Delete definition
-- [ ] `POST /query-definitions/{id}/execute` - Execute and create artifact
+- [ ] `POST /artifacts/{id}/regenerate` - Re-run computation from definition
 
 ## Phase 4: Async Job Integration (ADR-083)
 

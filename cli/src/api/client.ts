@@ -1458,6 +1458,81 @@ export class KnowledgeGraphClient {
     const response = await this.client.delete(`/projection/${encodeURIComponent(ontology)}`);
     return response.data;
   }
+
+  // ============================================================================
+  // Artifact Methods (ADR-083)
+  // ============================================================================
+
+  /**
+   * List artifacts with optional filtering
+   */
+  async listArtifacts(params?: {
+    artifact_type?: string;
+    representation?: string;
+    ontology?: string;
+    owner_id?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    artifacts: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get('/artifacts', { params });
+    return response.data;
+  }
+
+  /**
+   * Get artifact metadata by ID
+   */
+  async getArtifact(artifactId: number): Promise<any> {
+    const response = await this.client.get(`/artifacts/${artifactId}`);
+    return response.data;
+  }
+
+  /**
+   * Get artifact with full payload
+   */
+  async getArtifactPayload(artifactId: number): Promise<any> {
+    const response = await this.client.get(`/artifacts/${artifactId}/payload`);
+    return response.data;
+  }
+
+  /**
+   * Create a new artifact
+   */
+  async createArtifact(artifact: {
+    artifact_type: string;
+    representation: string;
+    name?: string;
+    parameters: Record<string, any>;
+    payload: Record<string, any>;
+    metadata?: Record<string, any>;
+    ontology?: string;
+    concept_ids?: string[];
+    expires_at?: string;
+    query_definition_id?: number;
+  }): Promise<{
+    id: number;
+    artifact_type: string;
+    representation: string;
+    name?: string;
+    graph_epoch: number;
+    storage_location: string;
+    garage_key?: string;
+    created_at: string;
+  }> {
+    const response = await this.client.post('/artifacts', artifact);
+    return response.data;
+  }
+
+  /**
+   * Delete an artifact
+   */
+  async deleteArtifact(artifactId: number): Promise<void> {
+    await this.client.delete(`/artifacts/${artifactId}`);
+  }
 }
 
 /**
