@@ -56,6 +56,8 @@ export interface JobResult {
   checkpoint_created?: boolean;
   checkpoint_deleted?: boolean;
   temp_file_cleaned?: boolean;
+  // Artifact-producing jobs (ADR-083)
+  artifact_id?: number;
 }
 
 export interface JobStatus {

@@ -4,7 +4,8 @@ Artifact Routes (ADR-083)
 API endpoints for artifact persistence - storing and retrieving computed results.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, status
+from fastapi import APIRouter, HTTPException, Query, Depends, status, BackgroundTasks
+from pydantic import BaseModel
 from typing import Optional, List
 import logging
 import psycopg2.extras
@@ -503,6 +504,119 @@ async def delete_artifact(
             conn.commit()
 
             logger.info(f"Deleted artifact {artifact_id} by user {user_id}")
+
+    finally:
+        conn.close()
+
+
+class RegenerateResponse(BaseModel):
+    """Response for artifact regeneration."""
+    job_id: str
+    status: str
+    message: str
+
+
+@router.post(
+    "/{artifact_id}/regenerate",
+    response_model=RegenerateResponse,
+    summary="Regenerate artifact"
+)
+async def regenerate_artifact(
+    artifact_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: UserInDB = Depends(get_current_user)
+):
+    """
+    Regenerate an artifact using its stored parameters.
+
+    Submits a new job to recompute the artifact with the same parameters.
+    The new result will be stored as a new artifact (original preserved).
+
+    **Supported artifact types:**
+    - `polarity_analysis`: Re-runs polarity axis analysis
+    - `projection`: Re-runs embedding projection
+
+    **Authorization:**
+    - Users can regenerate their own artifacts
+    - Admins can regenerate any artifact
+    """
+    from api.api.services.job_queue import get_job_queue
+    from datetime import datetime
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Get artifact metadata
+            cur.execute("""
+                SELECT artifact_type, parameters, owner_id, ontology, query_definition_id
+                FROM kg_api.artifacts
+                WHERE id = %s
+            """, (artifact_id,))
+
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Artifact not found: {artifact_id}"
+                )
+
+            artifact_type, parameters, owner_id, ontology, query_def_id = row
+
+            # Check ownership
+            if owner_id is not None and owner_id != current_user.id:
+                if current_user.role not in ("admin", "platform_admin"):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Access denied to regenerate this artifact"
+                    )
+
+            # Determine job type based on artifact type
+            job_type_map = {
+                "polarity_analysis": "polarity",
+                "projection": "projection"
+            }
+
+            job_type = job_type_map.get(artifact_type)
+            if not job_type:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Artifact type '{artifact_type}' does not support regeneration"
+                )
+
+            # Build job data from artifact parameters
+            job_data = dict(parameters) if parameters else {}
+            job_data["create_artifact"] = True
+            job_data["user_id"] = current_user.id
+
+            if ontology:
+                job_data["ontology"] = ontology
+
+            job_data["description"] = f"Regenerate artifact {artifact_id} ({artifact_type})"
+
+            # Submit job
+            queue = get_job_queue()
+            job_id = queue.enqueue(
+                job_type=job_type,
+                job_data=job_data
+            )
+
+            # Auto-approve (no LLM costs)
+            queue.update_job(job_id, {
+                "status": "approved",
+                "approved_at": datetime.utcnow().isoformat(),
+                "approved_by": current_user.username
+            })
+
+            # Start job in background
+            background_tasks.add_task(queue.queue_serial_job, job_id)
+
+            logger.info(f"Artifact {artifact_id} regeneration job submitted: {job_id}")
+
+            return RegenerateResponse(
+                job_id=job_id,
+                status="queued",
+                message=f"Regeneration job queued for artifact {artifact_id}"
+            )
 
     finally:
         conn.close()

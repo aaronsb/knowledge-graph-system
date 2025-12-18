@@ -1413,6 +1413,26 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Submit async polarity analysis job with artifact creation (ADR-083)
+   */
+  async submitPolarityJob(request: {
+    positive_pole_id: string;
+    negative_pole_id: string;
+    candidate_ids?: string[];
+    auto_discover?: boolean;
+    max_candidates?: number;
+    max_hops?: number;
+    discovery_slot_pct?: number;
+    max_workers?: number;
+    chunk_size?: number;
+    timeout_seconds?: number;
+    create_artifact?: boolean;
+  }): Promise<{ job_id: string; status: string; message: string }> {
+    const response = await this.client.post('/query/polarity-axis/jobs', request);
+    return response.data;
+  }
+
   // ============================================================================
   // Projection Methods (ADR-078)
   // ============================================================================

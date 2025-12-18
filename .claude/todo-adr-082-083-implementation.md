@@ -154,10 +154,22 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 - [x] Link artifact to job via artifact_id
 - [x] Include artifact_id in job result
 
-### Future Work (can be done incrementally)
-- [ ] Add polarity analysis async job type
-- [ ] Add artifact regeneration endpoint (`POST /artifacts/{id}/regenerate`)
-- [ ] Add scheduled artifact cleanup worker
+### Polarity Analysis Async Job
+- [x] Create `polarity_worker.py` with artifact creation support
+- [x] Add `/polarity-axis/jobs` endpoint to queries.py
+- [x] Update CLI `kg polarity analyze --save-artifact` flag
+- [x] Register polarity worker in main.py
+
+### Artifact Regeneration
+- [x] Add `POST /artifacts/{id}/regenerate` endpoint
+- [x] Support regeneration for polarity_analysis and projection types
+- [x] Trigger async job with stored parameters
+
+### Artifact Cleanup Worker
+- [x] Create `artifact_cleanup_worker.py`
+- [x] Create `ArtifactCleanupLauncher` in launchers/
+- [x] Add scheduled job entry (daily at 2 AM)
+- [x] Register worker in main.py
 
 ## Phase 5: Web Client (ADR-083)
 
@@ -201,10 +213,10 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 ## Phase 7: Cleanup & Maintenance
 
 ### Scheduled Jobs
-- [ ] Create `artifact_cleanup_worker.py`
-- [ ] Delete expired artifacts (past `expires_at`)
-- [ ] Delete orphaned Garage objects
-- [ ] Schedule daily at 2 AM
+- [x] Create `artifact_cleanup_worker.py`
+- [x] Delete expired artifacts (past `expires_at`)
+- [ ] Delete orphaned Garage objects (future enhancement)
+- [x] Schedule daily at 2 AM
 
 ### Monitoring
 - [ ] Add metrics for artifact storage usage

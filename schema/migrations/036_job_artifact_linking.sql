@@ -44,6 +44,19 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION kg_api.link_job_to_artifact IS 'Link a job to its created artifact (ADR-083)';
 
 -- ============================================================================
+-- Artifact Cleanup Scheduled Job
+-- ============================================================================
+
+INSERT INTO kg_api.scheduled_jobs (name, launcher_class, schedule_cron, enabled)
+VALUES (
+    'artifact_cleanup',
+    'ArtifactCleanupLauncher',
+    '0 2 * * *',  -- Daily at 2 AM
+    TRUE
+)
+ON CONFLICT (name) DO NOTHING;
+
+-- ============================================================================
 -- Record Migration
 -- ============================================================================
 
