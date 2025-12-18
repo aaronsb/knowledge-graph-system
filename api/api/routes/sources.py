@@ -24,6 +24,112 @@ logger = logging.getLogger(__name__)
 
 
 @router.get(
+    "",
+    summary="List source nodes",
+)
+async def list_sources(
+    ontology: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    List source nodes with optional filtering by ontology.
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `sources:read` permission
+
+    **Query Parameters:**
+    - `ontology`: Filter by document/ontology name (case-insensitive partial match)
+    - `limit`: Maximum results (default 50, max 200)
+    - `offset`: Skip first N results for pagination
+
+    **Returns:**
+    ```json
+    {
+      "sources": [
+        {
+          "source_id": "sha256:abc123_chunk1",
+          "document": "Human-AI Collaboration",
+          "paragraph": 1,
+          "content_type": "text",
+          "has_garage_key": true
+        }
+      ],
+      "total": 42,
+      "limit": 50,
+      "offset": 0
+    }
+    ```
+    """
+    age_client = AGEClient()
+    limit = min(limit, 200)  # Cap at 200
+
+    try:
+        # Build query with optional ontology filter
+        if ontology:
+            query = """
+            MATCH (s:Source)
+            WHERE s.document =~ $ontology_pattern
+            RETURN s.source_id as source_id,
+                   s.document as document,
+                   s.paragraph as paragraph,
+                   s.content_type as content_type,
+                   s.garage_key IS NOT NULL as has_garage_key
+            ORDER BY s.document, s.paragraph
+            SKIP $offset LIMIT $limit
+            """
+            count_query = """
+            MATCH (s:Source)
+            WHERE s.document =~ $ontology_pattern
+            RETURN count(s) as total
+            """
+            params = {
+                "ontology_pattern": f"(?i).*{ontology}.*",
+                "offset": offset,
+                "limit": limit
+            }
+        else:
+            query = """
+            MATCH (s:Source)
+            RETURN s.source_id as source_id,
+                   s.document as document,
+                   s.paragraph as paragraph,
+                   s.content_type as content_type,
+                   s.garage_key IS NOT NULL as has_garage_key
+            ORDER BY s.document, s.paragraph
+            SKIP $offset LIMIT $limit
+            """
+            count_query = """
+            MATCH (s:Source)
+            RETURN count(s) as total
+            """
+            params = {"offset": offset, "limit": limit}
+
+        # Execute queries
+        sources = age_client._execute_cypher(query, params=params)
+        count_result = age_client._execute_cypher(
+            count_query,
+            params={"ontology_pattern": params.get("ontology_pattern")} if ontology else {},
+            fetch_one=True
+        )
+
+        return {
+            "sources": sources,
+            "total": count_result.get("total", 0) if count_result else 0,
+            "limit": limit,
+            "offset": offset
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to list sources: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list sources: {str(e)}"
+        )
+
+
+@router.get(
     "/{source_id}/image",
     summary="Retrieve image from source (ADR-057)",
     responses={

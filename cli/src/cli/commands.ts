@@ -26,6 +26,7 @@ import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
 import { createVerbRouter } from './verb-router';
+import { createHelpCommand } from './help';
 import { createClientFromEnv } from '../api/client';
 import { VERSION_INFO } from '../version';
 import { getConfig } from '../lib/config';
@@ -129,4 +130,9 @@ export async function registerCommands(program: Command) {
     configureColoredHelp(cmd);
     program.addCommand(cmd);
   });
+
+  // Register help command with commandmap subcommand
+  const helpCommand = createHelpCommand(program);
+  configureColoredHelp(helpCommand);
+  program.addCommand(helpCommand);
 }

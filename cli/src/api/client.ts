@@ -492,6 +492,36 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * List source nodes with optional filtering
+   * @param options - Filter and pagination options
+   * @returns List of sources with metadata
+   */
+  async listSources(options: {
+    ontology?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{
+    sources: Array<{
+      source_id: string;
+      document: string;
+      paragraph: number;
+      content_type?: string;
+      has_garage_key: boolean;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const params = new URLSearchParams();
+    if (options.ontology) params.append('ontology', options.ontology);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/sources?${params.toString()}`);
+    return response.data;
+  }
+
+  /**
    * Get original document for a source node (ADR-081)
    * @param sourceId - Source ID from search results or concept details
    * @returns Document content as Buffer (binary data)

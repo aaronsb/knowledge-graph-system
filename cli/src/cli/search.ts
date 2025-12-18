@@ -725,6 +725,91 @@ export const searchCommand = setCommandHelp(
 )
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
+  // Allow direct search: kg search <term> (shortcut for kg search query <term>)
+  .argument('[query]', 'Search query (shortcut for: kg search query <term>)')
+  .option('-l, --limit <number>', 'Maximum number of results to return', '10')
+  .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
+  .option('--json', 'Output raw JSON instead of formatted text')
+  .action(async (query, options, command) => {
+    // If no query provided and no subcommand matched, show help
+    if (!query) {
+      command.help();
+      return;
+    }
+
+    // Check if query matches a subcommand name - if so, Commander already handled it
+    const subcommandNames = ['query', 'details', 'related', 'connect', 'sources'];
+    if (subcommandNames.includes(query)) {
+      // This shouldn't happen as Commander routes subcommands, but safety check
+      return;
+    }
+
+    // Delegate to query action for direct search shortcut
+    try {
+      const client = createClientFromEnv();
+      const config = getConfig();
+
+      const result = await client.searchConcepts({
+        query,
+        limit: parseInt(options.limit),
+        min_similarity: parseFloat(options.minSimilarity),
+        include_evidence: config.getSearchShowEvidence(),
+        include_grounding: true,
+        include_diversity: true,
+        diversity_max_hops: 2
+      });
+
+      // JSON output mode
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      console.log('\n' + separator());
+      console.log(colors.ui.title(`🔍 Searching for: ${query}`));
+      console.log(separator());
+      console.log(colors.status.success(`\n✓ Found ${result.count} concepts:\n`));
+
+      for (const [i, concept] of result.results.entries()) {
+        console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
+        if (concept.description) {
+          console.log(`   ${colors.status.dim(concept.description)}`);
+        }
+        console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
+        console.log(`   ${colors.ui.key('Similarity:')} ${coloredPercentage(concept.score)}`);
+        console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
+        console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.evidence_count))} instances`);
+
+        // Display grounding with confidence-awareness
+        if (concept.grounding_strength !== undefined || concept.grounding_display) {
+          console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
+        }
+
+        // Display diversity if available
+        if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
+          console.log(`   ${colors.ui.key('Diversity:')} ${formatDiversity(concept.diversity_score, concept.diversity_related_count)}`);
+        }
+
+        // Display authenticated diversity if available
+        if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
+          console.log(`   ${colors.ui.key('Authenticated:')} ${formatAuthenticatedDiversity(concept.authenticated_diversity)}`);
+        }
+
+        console.log();
+      }
+
+      // Show hint if additional results available below threshold
+      if (result.below_threshold_count && result.below_threshold_count > 0 && result.suggested_threshold) {
+        const thresholdPercent = (result.suggested_threshold * 100).toFixed(0);
+        console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
+        console.log(colors.status.dim(`   Try: kg search "${query}" --min-similarity ${result.suggested_threshold}\n`));
+      }
+    } catch (error: any) {
+      console.error(colors.status.error('✗ Search failed'));
+      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  })
   .addCommand(queryCommand)
   .addCommand(detailsCommand)
   .addCommand(relatedCommand)

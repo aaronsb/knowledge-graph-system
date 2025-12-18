@@ -8,8 +8,20 @@ Search and explore the knowledge graph using vector similarity, graph traversal,
 
 **Usage:**
 ```bash
-kg search [options]
+kg search [query]
 ```
+
+**Arguments:**
+
+- `<query>` - Search query (shortcut for: kg search query <term>)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-l, --limit <number>` | Maximum number of results to return | `"10"` |
+| `--min-similarity <number>` | Minimum similarity score (0.0-1.0) | `"0.7"` |
+| `--json` | Output raw JSON instead of formatted text | - |
 
 **Subcommands:**
 

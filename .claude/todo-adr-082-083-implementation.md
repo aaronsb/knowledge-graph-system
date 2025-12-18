@@ -171,7 +171,61 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 - [x] Add scheduled job entry (daily at 2 AM)
 - [x] Register worker in main.py
 
-## Phase 5: Web Client (ADR-083)
+## Phase 5: CLI Consolidation
+
+Consolidate fragmented retrieval paths into consistent patterns.
+See `docs/architecture/STORAGE-ARCHITECTURE.md` for storage tier documentation.
+
+### Source Command Enhancements
+- [x] Add `kg source list` - List sources (by ontology or all)
+- [x] Add `/sources` API endpoint for listing
+- [x] Verify `kg source info` returns graph metadata
+- [x] Verify `kg source get` retrieves from Garage correctly
+
+### Unix Shortcuts as Aliases
+Unix shortcuts (`ls`, `cat`, `stat`, `rm`) should be aliases to primary commands:
+- [x] `kg ls artifact` → alias for `kg artifact list`
+- [x] `kg ls source` → alias for `kg source list`
+- [x] `kg cat artifact <id>` → alias for `kg artifact show`
+- [x] `kg cat source <id>` → alias for `kg source info`
+- [x] `kg rm artifact <id>` → alias for `kg artifact delete`
+
+### CLI UX Improvements
+- [x] Simplify `kg search query` → `kg search <term>` (direct shortcut)
+- [x] Add `kg help commandmap` - introspective command tree
+- [x] Align descriptions in commandmap output for readability
+
+### Consistent Patterns
+Pattern for metadata vs content retrieval:
+- [x] Metadata: `kg <resource> show <id>` or `kg cat <resource> <id>`
+- [x] Content: `kg <resource> get <id>` (for Garage-stored content)
+- [x] List: `kg <resource> list` or `kg ls <resource>`
+
+## Phase 6: CLI Enhancements
+
+### Save-as-Artifact Options
+- [ ] `kg polarity analyze --save-artifact` (done in Phase 4)
+- [ ] `kg projection create --save-artifact`
+- [ ] `kg search query --save-artifact` (for saving search results)
+
+### Artifact Retrieval
+- [x] `kg artifact list` - List user's artifacts
+- [x] `kg artifact show <id>` - Show artifact metadata
+- [x] `kg artifact payload <id>` - Get artifact payload
+- [x] `kg artifact delete <id>` - Delete artifact
+
+## Phase 7: MCP Tools
+
+### Artifact Integration
+- [ ] Add artifact listing to MCP
+- [ ] Add artifact recall to MCP
+- [ ] Enable AI agents to reuse stored analyses
+
+### Source Retrieval
+- [ ] Add source document retrieval to MCP
+- [ ] Verify MCP source tool handles text vs image correctly
+
+## Phase 8: Web Client (ADR-083)
 
 ### Zustand Store Refactor
 - [ ] Create `useArtifactStore` (metadata only)
@@ -196,21 +250,7 @@ Issues identified in code review of commits ac658a3b..ebdd1b86.
 - [ ] Migrate `reportStore` → artifacts
 - [ ] Provide migration utility for localStorage data
 
-## Phase 6: CLI/MCP (ADR-083)
-
-### CLI Commands
-- [ ] `kg artifact list` - List user's artifacts
-- [ ] `kg artifact show <id>` - Show artifact metadata
-- [ ] `kg artifact payload <id>` - Get artifact payload
-- [ ] `kg artifact delete <id>` - Delete artifact
-- [ ] Update existing commands to optionally save as artifact
-
-### MCP Tools
-- [ ] Add artifact listing to MCP
-- [ ] Add artifact recall to MCP
-- [ ] Enable AI agents to reuse stored analyses
-
-## Phase 7: Cleanup & Maintenance
+## Phase 9: Cleanup & Maintenance
 
 ### Scheduled Jobs
 - [x] Create `artifact_cleanup_worker.py`
@@ -232,11 +272,15 @@ Phase 1 (Schema) ─┬─► Phase 2 (Artifacts)
                   │
                   └─► Phase 3 (API) ─► Phase 4 (Jobs)
                                     │
-                                    └─► Phase 5 (Web)
+                                    └─► Phase 5 (CLI Consolidation)
                                     │
-                                    └─► Phase 6 (CLI/MCP)
+                                    └─► Phase 6 (CLI Enhancements)
+                                    │
+                                    └─► Phase 7 (MCP)
+                                    │
+                                    └─► Phase 8 (Web)
 
-Phase 7 (Cleanup) can start after Phase 4
+Phase 9 (Cleanup) can start after Phase 4
 ```
 
 ## Notes

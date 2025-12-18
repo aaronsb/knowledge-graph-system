@@ -27,6 +27,7 @@ export const artifactCommand = setCommandHelp(
       .option('-o, --ontology <name>', 'Filter by ontology')
       .option('-l, --limit <n>', 'Maximum artifacts to return', '20')
       .option('--offset <n>', 'Skip N artifacts (for pagination)', '0')
+      .option('-j, --json', 'Output raw JSON instead of formatted table')
       .action(async (options) => {
         try {
           const client = createClientFromEnv();
@@ -37,6 +38,11 @@ export const artifactCommand = setCommandHelp(
             limit: parseInt(options.limit),
             offset: parseInt(options.offset),
           });
+
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
+          }
 
           if (result.artifacts.length === 0) {
             console.log(colors.status.warning('\n⚠ No artifacts found'));
