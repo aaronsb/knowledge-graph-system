@@ -139,8 +139,8 @@ function countCommands(cmd: Command): number {
 export function createHelpCommand(program: Command): Command {
   const helpCommand = setCommandHelp(
     new Command('help'),
-    'Get help and explore CLI structure',
-    'Get help on commands and explore the full CLI command structure'
+    'Get help on any command (try: kg help help)',
+    'Get help on commands and explore the full CLI command structure. Use "kg help <command>" for specific help, or "kg help help" to see help utilities like commandmap.'
   )
     .showHelpAfterError();
 
