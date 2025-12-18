@@ -66,13 +66,21 @@ Combined implementation tracking for User Scoping (ADR-082) and Artifact Persist
 ## Phase 3b: Grants & Groups API
 
 ### Grant Management (ADR-082)
-- [ ] `POST /grants` - Create grant
-- [ ] `GET /resources/{type}/{id}/grants` - List grants for resource
-- [ ] `DELETE /grants/{id}` - Revoke grant
-- [ ] `POST /groups` - Create group
-- [ ] `GET /groups` - List groups
-- [ ] `POST /groups/{id}/members` - Add member
-- [ ] `DELETE /groups/{id}/members/{user_id}` - Remove member
+- [x] `POST /grants` - Create grant
+- [x] `GET /resources/{type}/{id}/grants` - List grants for resource
+- [x] `DELETE /grants/{id}` - Revoke grant
+- [x] `POST /groups` - Create group
+- [x] `GET /groups` - List groups
+- [x] `GET /groups/{id}/members` - List group members
+- [x] `POST /groups/{id}/members` - Add member
+- [x] `DELETE /groups/{id}/members/{user_id}` - Remove member
+
+### CLI Commands (validation)
+- [x] `kg group list` - List groups
+- [x] `kg group members <id>` - List group members
+- [x] `kg group create` - Create group
+- [x] `kg group add-member` - Add member to group
+- [x] `kg group remove-member` - Remove member from group
 
 ## Phase 3c: Query Definitions API
 

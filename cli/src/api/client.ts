@@ -1533,6 +1533,96 @@ export class KnowledgeGraphClient {
   async deleteArtifact(artifactId: number): Promise<void> {
     await this.client.delete(`/artifacts/${artifactId}`);
   }
+
+  // ==========================================================================
+  // Groups & Grants Methods (ADR-082)
+  // ==========================================================================
+
+  /**
+   * List groups
+   */
+  async listGroups(params?: {
+    include_system?: boolean;
+    include_member_count?: boolean;
+  }): Promise<{
+    groups: any[];
+    total: number;
+  }> {
+    const response = await this.client.get('/groups', { params });
+    return response.data;
+  }
+
+  /**
+   * Create a group
+   */
+  async createGroup(group: {
+    group_name: string;
+    display_name?: string;
+    description?: string;
+  }): Promise<any> {
+    const response = await this.client.post('/groups', group);
+    return response.data;
+  }
+
+  /**
+   * List group members
+   */
+  async listGroupMembers(groupId: number): Promise<{
+    group_id: number;
+    group_name: string;
+    members: any[];
+    total: number;
+  }> {
+    const response = await this.client.get(`/groups/${groupId}/members`);
+    return response.data;
+  }
+
+  /**
+   * Add member to group
+   */
+  async addGroupMember(groupId: number, userId: number): Promise<any> {
+    const response = await this.client.post(`/groups/${groupId}/members`, { user_id: userId });
+    return response.data;
+  }
+
+  /**
+   * Remove member from group
+   */
+  async removeGroupMember(groupId: number, userId: number): Promise<void> {
+    await this.client.delete(`/groups/${groupId}/members/${userId}`);
+  }
+
+  /**
+   * Create a resource grant
+   */
+  async createGrant(grant: {
+    resource_type: string;
+    resource_id: string;
+    principal_type: 'user' | 'group';
+    principal_id: number;
+    permission: 'read' | 'write' | 'admin';
+  }): Promise<any> {
+    const response = await this.client.post('/grants', grant);
+    return response.data;
+  }
+
+  /**
+   * List grants for a resource
+   */
+  async listResourceGrants(resourceType: string, resourceId: string): Promise<{
+    grants: any[];
+    total: number;
+  }> {
+    const response = await this.client.get(`/resources/${resourceType}/${resourceId}/grants`);
+    return response.data;
+  }
+
+  /**
+   * Revoke a grant
+   */
+  async revokeGrant(grantId: number): Promise<void> {
+    await this.client.delete(`/grants/${grantId}`);
+  }
 }
 
 /**

@@ -20,6 +20,7 @@ import { polarityCommand } from './polarity';
 import { projectionCommand } from './projection';
 import { sourceCommand } from './source';
 import { artifactCommand } from './artifact';
+import { groupCommand } from './group';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -105,6 +106,7 @@ export async function registerCommands(program: Command) {
     polarityCommand,
     projectionCommand,
     artifactCommand,
+    groupCommand,
   ];
 
   subcommands.forEach(cmd => {
