@@ -217,13 +217,13 @@ Pattern for metadata vs content retrieval:
 ## Phase 7: MCP Tools
 
 ### Artifact Integration
-- [ ] Add artifact listing to MCP
-- [ ] Add artifact recall to MCP
-- [ ] Enable AI agents to reuse stored analyses
+- [x] Add artifact listing to MCP (artifact tool with list action)
+- [x] Add artifact recall to MCP (artifact tool with show/payload actions)
+- [x] Enable AI agents to reuse stored analyses
 
 ### Source Retrieval
-- [ ] Add source document retrieval to MCP
-- [ ] Verify MCP source tool handles text vs image correctly
+- [x] Add source document retrieval to MCP
+- [x] Source tool now handles both text and image sources correctly
 
 ## Phase 8: Web Client (ADR-083)
 
