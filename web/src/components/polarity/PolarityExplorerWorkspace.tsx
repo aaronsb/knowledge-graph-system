@@ -17,12 +17,15 @@ import {
   ChevronUp,
   HelpCircle,
   FileSpreadsheet,
+  Save,
+  CheckCircle,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore } from '../../store/reportStore';
+import { useArtifactStore } from '../../store/artifactStore';
 import type { PolarityReportData } from '../../store/reportStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { PolarityHelpModal } from './PolarityHelpModal';
@@ -88,6 +91,7 @@ interface StoredAnalysis {
 export const PolarityExplorerWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const { addReport } = useReportStore();
+  const { persistArtifact } = useArtifactStore();
 
   // Get polarity state from Zustand store
   const {
@@ -133,6 +137,8 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     neutral: false,
     negative: false,
   });
+  const [isSavingArtifact, setIsSavingArtifact] = useState(false);
+  const [savedArtifactId, setSavedArtifactId] = useState<number | null>(null);
 
   // Computed: Get currently selected analysis
   const selectedAnalysis = selectedAnalysisId
@@ -277,6 +283,41 @@ export const PolarityExplorerWorkspace: React.FC = () => {
 
     navigate('/report');
   }, [selectedAnalysis, addReport, navigate]);
+
+  // Save analysis to artifacts (ADR-083)
+  const handleSaveAsArtifact = useCallback(async () => {
+    if (!selectedAnalysis) return;
+
+    setIsSavingArtifact(true);
+    setSavedArtifactId(null);
+
+    try {
+      const artifact = await persistArtifact({
+        artifact_type: 'polarity_analysis',
+        representation: 'polarity_explorer',
+        name: `${selectedAnalysis.positivePoleLabel} ↔ ${selectedAnalysis.negativePoleLabel}`,
+        parameters: {
+          positive_pole_id: selectedAnalysis.result.axis.positive_pole.concept_id,
+          negative_pole_id: selectedAnalysis.result.axis.negative_pole.concept_id,
+          max_candidates: maxCandidates,
+          max_hops: maxHops,
+          auto_discover: autoDiscover,
+        },
+        payload: selectedAnalysis.result as unknown as Record<string, unknown>,
+        concept_ids: selectedAnalysis.result.projections.map((p) => p.concept_id),
+      });
+
+      if (artifact) {
+        setSavedArtifactId(artifact.id);
+        // Clear after 3 seconds
+        setTimeout(() => setSavedArtifactId(null), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to save artifact:', err);
+    } finally {
+      setIsSavingArtifact(false);
+    }
+  }, [selectedAnalysis, persistArtifact, maxCandidates, maxHops, autoDiscover]);
 
   const getDirectionColor = (direction: string) => {
     switch (direction) {
@@ -616,13 +657,37 @@ export const PolarityExplorerWorkspace: React.FC = () => {
             <ChevronDown className="w-4 h-4 rotate-90" />
             <span>Back to Analysis List</span>
           </button>
-          <button
-            onClick={handleSendToReports}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Send to Reports
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSaveAsArtifact}
+              disabled={isSavingArtifact || savedArtifactId !== null}
+              className="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/10 disabled:opacity-50 transition-colors text-sm font-medium"
+            >
+              {savedArtifactId !== null ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Saved
+                </>
+              ) : isSavingArtifact ? (
+                <>
+                  <LoadingSpinner className="text-primary" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save as Artifact
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleSendToReports}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Send to Reports
+            </button>
+          </div>
         </div>
 
         {/* Axis Info */}

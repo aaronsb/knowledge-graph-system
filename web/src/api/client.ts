@@ -1363,6 +1363,121 @@ class APIClient {
     const response = await this.client.post(`/projection/${ontology}/regenerate`, options);
     return response.data;
   }
+
+  // ============================================================
+  // ARTIFACT MANAGEMENT (ADR-083)
+  // ============================================================
+
+  /**
+   * List artifacts with optional filtering
+   * Returns metadata only (not payloads) for efficiency
+   */
+  async listArtifacts(params?: {
+    artifact_type?: string;
+    representation?: string;
+    ontology?: string;
+    owner_id?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<import('../types/artifacts').ArtifactListResponse> {
+    const response = await this.client.get('/artifacts', { params });
+    return response.data;
+  }
+
+  /**
+   * Get artifact metadata by ID
+   */
+  async getArtifact(artifactId: number): Promise<import('../types/artifacts').ArtifactMetadata> {
+    const response = await this.client.get(`/artifacts/${artifactId}`);
+    return response.data;
+  }
+
+  /**
+   * Get artifact with full payload
+   * For large artifacts, fetches from Garage storage
+   */
+  async getArtifactPayload(artifactId: number): Promise<import('../types/artifacts').ArtifactWithPayload> {
+    const response = await this.client.get(`/artifacts/${artifactId}/payload`);
+    return response.data;
+  }
+
+  /**
+   * Create a new artifact
+   */
+  async createArtifact(
+    artifact: import('../types/artifacts').ArtifactCreateRequest
+  ): Promise<import('../types/artifacts').ArtifactCreateResponse> {
+    const response = await this.client.post('/artifacts', artifact);
+    return response.data;
+  }
+
+  /**
+   * Delete an artifact
+   */
+  async deleteArtifact(artifactId: number): Promise<void> {
+    await this.client.delete(`/artifacts/${artifactId}`);
+  }
+
+  /**
+   * Regenerate an artifact using its stored parameters
+   * Returns job ID for the regeneration job
+   */
+  async regenerateArtifact(artifactId: number): Promise<import('../types/artifacts').ArtifactRegenerateResponse> {
+    const response = await this.client.post(`/artifacts/${artifactId}/regenerate`);
+    return response.data;
+  }
+
+  // ============================================================
+  // QUERY DEFINITIONS (ADR-083)
+  // ============================================================
+
+  /**
+   * List query definitions
+   */
+  async listQueryDefinitions(params?: {
+    definition_type?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<import('../types/artifacts').QueryDefinitionListResponse> {
+    const response = await this.client.get('/query-definitions', { params });
+    return response.data;
+  }
+
+  /**
+   * Get query definition by ID
+   */
+  async getQueryDefinition(id: number): Promise<import('../types/artifacts').QueryDefinition> {
+    const response = await this.client.get(`/query-definitions/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Create a query definition
+   */
+  async createQueryDefinition(
+    definition: import('../types/artifacts').QueryDefinitionCreateRequest
+  ): Promise<import('../types/artifacts').QueryDefinition> {
+    const response = await this.client.post('/query-definitions', definition);
+    return response.data;
+  }
+
+  /**
+   * Update a query definition
+   */
+  async updateQueryDefinition(
+    id: number,
+    updates: Partial<import('../types/artifacts').QueryDefinitionCreateRequest>
+  ): Promise<import('../types/artifacts').QueryDefinition> {
+    const response = await this.client.put(`/query-definitions/${id}`, updates);
+    return response.data;
+  }
+
+  /**
+   * Delete a query definition
+   */
+  async deleteQueryDefinition(id: number): Promise<void> {
+    await this.client.delete(`/query-definitions/${id}`);
+  }
 }
 
 // Export singleton instance
