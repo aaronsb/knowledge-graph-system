@@ -248,7 +248,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   };
 
   // Send current polarity analysis to Reports
-  const handleSendToReports = useCallback(() => {
+  const handleSendToReports = useCallback(async () => {
     if (!selectedAnalysis) return;
 
     const reportData: PolarityReportData = {
@@ -274,7 +274,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       groundingCorrelation: selectedAnalysis.result.grounding_correlation.pearson_r,
     };
 
-    addReport({
+    await addReport({
       name: '', // Will auto-generate name based on content
       type: 'polarity',
       data: reportData,

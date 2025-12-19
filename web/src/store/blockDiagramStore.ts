@@ -1,17 +1,18 @@
 /**
- * Block Diagram Store - Persistence for visual block query diagrams
+ * Block Diagram Store - Persistence for visual block query diagrams (ADR-083)
  *
- * Currently uses localStorage, designed to be swappable with API calls
- * when account-based persistence is implemented.
+ * Uses query_definitions API for persistence with localStorage as cache/fallback.
+ * Designed for account-based persistence with offline support.
  */
 
 import { create } from 'zustand';
 import type { Node, Edge } from 'reactflow';
 import type { BlockData } from '../types/blocks';
+import { apiClient } from '../api/client';
 
 // Serializable diagram format
 export interface SavedDiagram {
-  id: string;
+  id: string;  // API uses number, but we store as string for compatibility
   name: string;
   description?: string;
   version: number;
@@ -19,6 +20,9 @@ export interface SavedDiagram {
   updatedAt: string;
   nodes: Node<BlockData>[];
   edges: Edge[];
+  // API-specific fields
+  queryDefinitionId?: number;
+  isSynced?: boolean;
 }
 
 // Metadata for listing (without full node/edge data)
@@ -30,6 +34,8 @@ export interface DiagramMetadata {
   updatedAt: string;
   nodeCount: number;
   edgeCount: number;
+  queryDefinitionId?: number;
+  isSynced?: boolean;
 }
 
 interface BlockDiagramStore {
@@ -42,42 +48,84 @@ interface BlockDiagramStore {
   workingNodes: Node<BlockData>[];
   workingEdges: Edge[];
 
+  // Diagrams cache
+  diagrams: DiagramMetadata[];
+  isLoading: boolean;
+  error: string | null;
+
   // Actions
   setCurrentDiagram: (id: string | null, name: string | null) => void;
   setHasUnsavedChanges: (hasChanges: boolean) => void;
   setWorkingCanvas: (nodes: Node<BlockData>[], edges: Edge[]) => void;
   clearWorkingCanvas: () => void;
 
-  // Persistence operations (localStorage for now, API in future)
-  saveDiagram: (name: string, nodes: Node<BlockData>[], edges: Edge[], description?: string, forceNew?: boolean) => string;
-  loadDiagram: (id: string) => SavedDiagram | null;
-  listDiagrams: () => DiagramMetadata[];
-  deleteDiagram: (id: string) => boolean;
-  renameDiagram: (id: string, newName: string) => boolean;
+  // Persistence operations (async, API-first with localStorage fallback)
+  saveDiagram: (name: string, nodes: Node<BlockData>[], edges: Edge[], description?: string, forceNew?: boolean) => Promise<string>;
+  loadDiagram: (id: string) => Promise<SavedDiagram | null>;
+  listDiagrams: () => Promise<DiagramMetadata[]>;
+  deleteDiagram: (id: string) => Promise<boolean>;
+  renameDiagram: (id: string, newName: string) => Promise<boolean>;
+
+  // Synchronous versions for backward compatibility (use cache)
+  listDiagramsSync: () => DiagramMetadata[];
 
   // File operations
   exportToFile: (nodes: Node<BlockData>[], edges: Edge[], name: string) => void;
   importFromFile: (file: File) => Promise<SavedDiagram | null>;
+
+  // Migration
+  migrateFromLocalStorage: () => Promise<number>;
 }
 
 const STORAGE_KEY_PREFIX = 'kg-block-diagram-';
 const DIAGRAMS_LIST_KEY = 'kg-block-diagrams-list';
 const CURRENT_VERSION = 1;
 
-// Helper to generate unique IDs
-const generateId = () => `diagram-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+// Helper to generate unique IDs (for local-only diagrams)
+const generateLocalId = () => `local-diagram-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // Helper to get diagrams list from localStorage
-const getDiagramsList = (): string[] => {
+const getLocalDiagramsList = (): string[] => {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(DIAGRAMS_LIST_KEY);
   return stored ? JSON.parse(stored) : [];
 };
 
-// Helper to update diagrams list
-const updateDiagramsList = (ids: string[]) => {
+// Helper to update diagrams list in localStorage
+const updateLocalDiagramsList = (ids: string[]) => {
   if (typeof window === 'undefined') return;
   localStorage.setItem(DIAGRAMS_LIST_KEY, JSON.stringify(ids));
+};
+
+// Helper to save diagram to localStorage
+const saveToLocalStorage = (diagram: SavedDiagram) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY_PREFIX + diagram.id, JSON.stringify(diagram));
+  const list = getLocalDiagramsList();
+  if (!list.includes(diagram.id)) {
+    list.unshift(diagram.id);
+    updateLocalDiagramsList(list);
+  }
+};
+
+// Helper to load diagram from localStorage
+const loadFromLocalStorage = (id: string): SavedDiagram | null => {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(STORAGE_KEY_PREFIX + id);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored) as SavedDiagram;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to delete from localStorage
+const deleteFromLocalStorage = (id: string) => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(STORAGE_KEY_PREFIX + id);
+  const list = getLocalDiagramsList().filter(diagId => diagId !== id);
+  updateLocalDiagramsList(list);
 };
 
 export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
@@ -86,6 +134,9 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
   hasUnsavedChanges: false,
   workingNodes: [],
   workingEdges: [],
+  diagrams: [],
+  isLoading: false,
+  error: null,
 
   setCurrentDiagram: (id, name) => {
     set({ currentDiagramId: id, currentDiagramName: name, hasUnsavedChanges: false });
@@ -109,105 +160,217 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
     });
   },
 
-  saveDiagram: (name, nodes, edges, description, forceNew = false) => {
-    if (typeof window === 'undefined') return '';
-
+  saveDiagram: async (name, nodes, edges, description, forceNew = false) => {
     const { currentDiagramId } = get();
     const now = new Date().toISOString();
 
-    // Check if we're updating existing or creating new
-    let id = forceNew ? null : currentDiagramId;
-    let createdAt = now;
-
-    if (id) {
-      // Load existing to preserve createdAt
-      const existing = localStorage.getItem(STORAGE_KEY_PREFIX + id);
-      if (existing) {
-        const parsed = JSON.parse(existing);
-        createdAt = parsed.createdAt;
-      }
-    } else {
-      id = generateId();
+    // Determine if updating or creating
+    let existingDiagram: SavedDiagram | null = null;
+    if (!forceNew && currentDiagramId) {
+      existingDiagram = await get().loadDiagram(currentDiagramId);
     }
-
-    const diagram: SavedDiagram = {
-      id,
-      name,
-      description,
-      version: CURRENT_VERSION,
-      createdAt,
-      updatedAt: now,
-      nodes,
-      edges,
-    };
-
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(diagram));
-
-    // Update diagrams list if new
-    const list = getDiagramsList();
-    if (!list.includes(id)) {
-      list.unshift(id); // Add to front (most recent first)
-      updateDiagramsList(list);
-    }
-
-    // Update current state
-    set({ currentDiagramId: id, currentDiagramName: name, hasUnsavedChanges: false });
-
-    return id;
-  },
-
-  loadDiagram: (id) => {
-    if (typeof window === 'undefined') return null;
-
-    const stored = localStorage.getItem(STORAGE_KEY_PREFIX + id);
-    if (!stored) return null;
 
     try {
-      const diagram = JSON.parse(stored) as SavedDiagram;
-      set({ currentDiagramId: id, currentDiagramName: diagram.name, hasUnsavedChanges: false });
-      return diagram;
-    } catch {
-      return null;
+      // Try API first
+      if (existingDiagram?.queryDefinitionId) {
+        // Update existing query definition
+        const updated = await apiClient.updateQueryDefinition(
+          existingDiagram.queryDefinitionId,
+          {
+            name,
+            definition: { nodes, edges, version: CURRENT_VERSION },
+            metadata: { description, nodeCount: nodes.length, edgeCount: edges.length },
+          }
+        );
+
+        const diagram: SavedDiagram = {
+          id: currentDiagramId!,
+          name: updated.name,
+          description,
+          version: CURRENT_VERSION,
+          createdAt: existingDiagram.createdAt,
+          updatedAt: updated.updated_at,
+          nodes,
+          edges,
+          queryDefinitionId: updated.id,
+          isSynced: true,
+        };
+
+        saveToLocalStorage(diagram);
+        set({ currentDiagramId: diagram.id, currentDiagramName: name, hasUnsavedChanges: false });
+        await get().listDiagrams(); // Refresh list
+        return diagram.id;
+      } else {
+        // Create new query definition
+        const created = await apiClient.createQueryDefinition({
+          name,
+          definition_type: 'block_diagram',
+          definition: { nodes, edges, version: CURRENT_VERSION },
+          metadata: { description, nodeCount: nodes.length, edgeCount: edges.length },
+        });
+
+        const diagram: SavedDiagram = {
+          id: `api-${created.id}`,
+          name: created.name,
+          description,
+          version: CURRENT_VERSION,
+          createdAt: created.created_at,
+          updatedAt: created.updated_at,
+          nodes,
+          edges,
+          queryDefinitionId: created.id,
+          isSynced: true,
+        };
+
+        saveToLocalStorage(diagram);
+        set({ currentDiagramId: diagram.id, currentDiagramName: name, hasUnsavedChanges: false });
+        await get().listDiagrams(); // Refresh list
+        return diagram.id;
+      }
+    } catch (err) {
+      console.warn('Failed to save to API, using localStorage:', err);
+
+      // Fallback to localStorage-only
+      const id = forceNew ? generateLocalId() : (currentDiagramId || generateLocalId());
+      const createdAt = existingDiagram?.createdAt || now;
+
+      const diagram: SavedDiagram = {
+        id,
+        name,
+        description,
+        version: CURRENT_VERSION,
+        createdAt,
+        updatedAt: now,
+        nodes,
+        edges,
+        isSynced: false,
+      };
+
+      saveToLocalStorage(diagram);
+      set({ currentDiagramId: id, currentDiagramName: name, hasUnsavedChanges: false });
+      await get().listDiagrams(); // Refresh list
+      return id;
     }
   },
 
-  listDiagrams: () => {
-    if (typeof window === 'undefined') return [];
+  loadDiagram: async (id) => {
+    // Check localStorage cache first
+    const cached = loadFromLocalStorage(id);
+    if (cached) {
+      set({ currentDiagramId: id, currentDiagramName: cached.name, hasUnsavedChanges: false });
+      return cached;
+    }
 
-    const ids = getDiagramsList();
-    const diagrams: DiagramMetadata[] = [];
+    // Try API if it looks like an API ID
+    if (id.startsWith('api-')) {
+      try {
+        const queryDefId = parseInt(id.replace('api-', ''));
+        const def = await apiClient.getQueryDefinition(queryDefId);
+        const definition = def.definition as { nodes: Node<BlockData>[]; edges: Edge[]; version?: number };
 
-    for (const id of ids) {
-      const stored = localStorage.getItem(STORAGE_KEY_PREFIX + id);
-      if (stored) {
-        try {
-          const diagram = JSON.parse(stored) as SavedDiagram;
-          diagrams.push({
-            id: diagram.id,
-            name: diagram.name,
-            description: diagram.description,
-            createdAt: diagram.createdAt,
-            updatedAt: diagram.updatedAt,
-            nodeCount: diagram.nodes.length,
-            edgeCount: diagram.edges.length,
-          });
-        } catch {
-          // Skip invalid entries
-        }
+        const diagram: SavedDiagram = {
+          id,
+          name: def.name,
+          description: (def.metadata as any)?.description,
+          version: definition.version || CURRENT_VERSION,
+          createdAt: def.created_at,
+          updatedAt: def.updated_at,
+          nodes: definition.nodes,
+          edges: definition.edges,
+          queryDefinitionId: def.id,
+          isSynced: true,
+        };
+
+        // Cache in localStorage
+        saveToLocalStorage(diagram);
+        set({ currentDiagramId: id, currentDiagramName: diagram.name, hasUnsavedChanges: false });
+        return diagram;
+      } catch (err) {
+        console.error('Failed to load diagram from API:', err);
+        return null;
       }
     }
 
+    return null;
+  },
+
+  listDiagrams: async () => {
+    set({ isLoading: true, error: null });
+
+    const diagrams: DiagramMetadata[] = [];
+
+    try {
+      // Get API diagrams
+      const response = await apiClient.listQueryDefinitions({
+        definition_type: 'block_diagram',
+        limit: 100,
+      });
+
+      for (const def of response.definitions) {
+        const meta = def.metadata as { description?: string; nodeCount?: number; edgeCount?: number } | null;
+        diagrams.push({
+          id: `api-${def.id}`,
+          name: def.name,
+          description: meta?.description,
+          createdAt: def.created_at,
+          updatedAt: def.updated_at,
+          nodeCount: meta?.nodeCount || 0,
+          edgeCount: meta?.edgeCount || 0,
+          queryDefinitionId: def.id,
+          isSynced: true,
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to fetch diagrams from API:', err);
+    }
+
+    // Also get local-only diagrams
+    const localIds = getLocalDiagramsList();
+    for (const id of localIds) {
+      // Skip if already in API list
+      if (diagrams.some(d => d.id === id)) continue;
+
+      const stored = loadFromLocalStorage(id);
+      if (stored && !stored.queryDefinitionId) {
+        diagrams.push({
+          id: stored.id,
+          name: stored.name,
+          description: stored.description,
+          createdAt: stored.createdAt,
+          updatedAt: stored.updatedAt,
+          nodeCount: stored.nodes.length,
+          edgeCount: stored.edges.length,
+          isSynced: false,
+        });
+      }
+    }
+
+    // Sort by updatedAt (most recent first)
+    diagrams.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    set({ diagrams, isLoading: false });
     return diagrams;
   },
 
-  deleteDiagram: (id) => {
-    if (typeof window === 'undefined') return false;
+  listDiagramsSync: () => {
+    return get().diagrams;
+  },
 
-    localStorage.removeItem(STORAGE_KEY_PREFIX + id);
+  deleteDiagram: async (id) => {
+    const diagram = await get().loadDiagram(id);
 
-    const list = getDiagramsList().filter(diagId => diagId !== id);
-    updateDiagramsList(list);
+    // Delete from API if synced
+    if (diagram?.queryDefinitionId) {
+      try {
+        await apiClient.deleteQueryDefinition(diagram.queryDefinitionId);
+      } catch (err) {
+        console.error('Failed to delete from API:', err);
+        return false;
+      }
+    }
+
+    // Delete from localStorage
+    deleteFromLocalStorage(id);
 
     // Clear current if we deleted the active diagram
     const { currentDiagramId } = get();
@@ -215,31 +378,37 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
       set({ currentDiagramId: null, currentDiagramName: null, hasUnsavedChanges: false });
     }
 
+    await get().listDiagrams(); // Refresh list
     return true;
   },
 
-  renameDiagram: (id, newName) => {
-    if (typeof window === 'undefined') return false;
+  renameDiagram: async (id, newName) => {
+    const diagram = await get().loadDiagram(id);
+    if (!diagram) return false;
 
-    const stored = localStorage.getItem(STORAGE_KEY_PREFIX + id);
-    if (!stored) return false;
-
-    try {
-      const diagram = JSON.parse(stored) as SavedDiagram;
-      diagram.name = newName;
-      diagram.updatedAt = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(diagram));
-
-      // Update current name if this is the active diagram
-      const { currentDiagramId } = get();
-      if (currentDiagramId === id) {
-        set({ currentDiagramName: newName });
+    // Update API if synced
+    if (diagram.queryDefinitionId) {
+      try {
+        await apiClient.updateQueryDefinition(diagram.queryDefinitionId, { name: newName });
+      } catch (err) {
+        console.error('Failed to rename in API:', err);
+        return false;
       }
-
-      return true;
-    } catch {
-      return false;
     }
+
+    // Update localStorage
+    diagram.name = newName;
+    diagram.updatedAt = new Date().toISOString();
+    saveToLocalStorage(diagram);
+
+    // Update current name if this is the active diagram
+    const { currentDiagramId } = get();
+    if (currentDiagramId === id) {
+      set({ currentDiagramName: newName });
+    }
+
+    await get().listDiagrams(); // Refresh list
+    return true;
   },
 
   exportToFile: (nodes, edges, name) => {
@@ -283,7 +452,7 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
 
           // Create a new diagram from imported data
           const diagram: SavedDiagram = {
-            id: generateId(),
+            id: generateLocalId(),
             name: imported.name || file.name.replace('.json', ''),
             description: imported.description,
             version: imported.version || CURRENT_VERSION,
@@ -291,6 +460,7 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
             updatedAt: new Date().toISOString(),
             nodes: imported.nodes,
             edges: imported.edges,
+            isSynced: false,
           };
 
           resolve(diagram);
@@ -307,5 +477,36 @@ export const useBlockDiagramStore = create<BlockDiagramStore>((set, get) => ({
 
       reader.readAsText(file);
     });
+  },
+
+  migrateFromLocalStorage: async () => {
+    const localIds = getLocalDiagramsList();
+    let migrated = 0;
+
+    for (const id of localIds) {
+      const diagram = loadFromLocalStorage(id);
+      if (diagram && !diagram.queryDefinitionId) {
+        try {
+          // Create in API
+          const created = await apiClient.createQueryDefinition({
+            name: diagram.name,
+            definition_type: 'block_diagram',
+            definition: { nodes: diagram.nodes, edges: diagram.edges, version: diagram.version },
+            metadata: { description: diagram.description, nodeCount: diagram.nodes.length, edgeCount: diagram.edges.length },
+          });
+
+          // Update local record with API ID
+          diagram.queryDefinitionId = created.id;
+          diagram.isSynced = true;
+          saveToLocalStorage(diagram);
+          migrated++;
+        } catch (err) {
+          console.error(`Failed to migrate diagram ${id}:`, err);
+        }
+      }
+    }
+
+    await get().listDiagrams(); // Refresh list
+    return migrated;
   },
 }));

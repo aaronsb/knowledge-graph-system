@@ -350,7 +350,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   }, []);
 
   // Send current graph to Reports
-  const handleSendToReports = useCallback(() => {
+  const handleSendToReports = useCallback(async () => {
     if (!rawGraphData || rawGraphData.nodes.length === 0) return;
 
     const reportData: GraphReportData = {
@@ -377,7 +377,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       },
     };
 
-    addReport({
+    await addReport({
       name: '', // Will auto-generate name based on content
       type: 'graph',
       data: reportData,

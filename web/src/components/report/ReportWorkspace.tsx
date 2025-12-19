@@ -446,10 +446,10 @@ export const ReportWorkspace: React.FC = () => {
     }
   }, [selectedReport, updateReportData]);
 
-  const handleDeleteReport = (id: string, e: React.MouseEvent) => {
+  const handleDeleteReport = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this report?')) {
-      deleteReport(id);
+      await deleteReport(id);
     }
   };
 
@@ -459,9 +459,9 @@ export const ReportWorkspace: React.FC = () => {
     setEditNameValue(report.name);
   };
 
-  const handleFinishRename = (id: string) => {
+  const handleFinishRename = async (id: string) => {
     if (editNameValue.trim()) {
-      renameReport(id, editNameValue.trim());
+      await renameReport(id, editNameValue.trim());
     }
     setEditingName(null);
   };
