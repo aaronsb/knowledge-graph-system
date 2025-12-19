@@ -525,13 +525,22 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
       },
       {
         name: 'source',
-        description: 'Retrieve original image for a source node (ADR-057). Use when evidence has image metadata. Enables visual verification and refinement loop.',
+        description: `Retrieve original source content (text or image) for a source node (ADR-057).
+
+For IMAGE sources: Returns the image for visual verification
+For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
+
+Use when you need to:
+- Verify extracted concepts against original source
+- Get the full context of a text passage
+- Retrieve images for visual analysis
+- Check character offsets for highlighting`,
         inputSchema: {
           type: 'object',
           properties: {
             source_id: {
               type: 'string',
-              description: 'Source ID from evidence (has_image=true)',
+              description: 'Source ID from evidence or search results',
             },
           },
           required: ['source_id'],
@@ -644,6 +653,60 @@ Use Cases:
             },
           },
           required: ['positive_pole_id', 'negative_pole_id'],
+        },
+      },
+      {
+        name: 'artifact',
+        description: `Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+
+Three actions available:
+- "list": List artifacts with optional filtering by type, representation, or ontology
+- "show": Get artifact metadata by ID (without payload)
+- "payload": Get artifact with full payload (for reusing stored analysis)
+
+Use artifacts to:
+- Recall previously computed analyses without re-running expensive queries
+- Share analysis results across sessions
+- Track analysis history with parameters and timestamps
+- Check freshness (is_fresh indicates if graph has changed since artifact creation)`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['list', 'show', 'payload'],
+              description: 'Operation: "list" (list artifacts), "show" (metadata only), "payload" (full result)',
+            },
+            // For show and payload
+            artifact_id: {
+              type: 'number',
+              description: 'Artifact ID (required for show, payload)',
+            },
+            // For list filtering
+            artifact_type: {
+              type: 'string',
+              description: 'Filter by type: search_result, projection, polarity_analysis, query_result, etc.',
+            },
+            representation: {
+              type: 'string',
+              description: 'Filter by source: cli, mcp_server, polarity_explorer, embedding_landscape, etc.',
+            },
+            ontology: {
+              type: 'string',
+              description: 'Filter by associated ontology name',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max artifacts to return for list (default: 20)',
+              default: 20,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number to skip for pagination (default: 0)',
+              default: 0,
+            },
+          },
+          required: ['action'],
         },
       },
     ],
@@ -1377,26 +1440,54 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         try {
-          const base64Image = await client.getSourceImageBase64(source_id);
+          // First get metadata to determine content type
+          const metadata = await client.getSourceMetadata(source_id);
 
-          return {
-            content: [
-              {
-                type: 'image',
-                data: base64Image,
-                mimeType: 'image/jpeg',
-              },
-              {
-                type: 'text',
-                text: `Retrieved image for source: ${source_id}\n\nThis image was extracted from the knowledge graph. You can now:\n1. Compare the image to the extracted concepts to verify accuracy\n2. Create a new description if you notice anything that was missed\n3. Use kg ingest text to create a refined description that will be associated with this image\n\nThis creates an emergent refinement loop: visual verification → new description → concept association → improved graph understanding.`,
-              },
-            ],
-          };
+          if (metadata.content_type === 'image') {
+            // Image source - return the image
+            const base64Image = await client.getSourceImageBase64(source_id);
+
+            return {
+              content: [
+                {
+                  type: 'image',
+                  data: base64Image,
+                  mimeType: 'image/jpeg',
+                },
+                {
+                  type: 'text',
+                  text: `Retrieved image for source: ${source_id}\n\nDocument: ${metadata.document}\nParagraph: ${metadata.paragraph}\n\nThis image was extracted from the knowledge graph. You can:\n1. Compare the image to extracted concepts to verify accuracy\n2. Create a new description if something was missed\n3. Use ingest action to add refined descriptions`,
+                },
+              ],
+            };
+          } else {
+            // Text source - return metadata with full_text
+            const lines = [
+              `📄 Source: ${source_id}`,
+              '',
+              `Document: ${metadata.document}`,
+              `Paragraph: ${metadata.paragraph}`,
+              `Content Type: ${metadata.content_type || 'text'}`,
+              '',
+            ];
+
+            if (metadata.char_offset_start !== undefined && metadata.char_offset_end !== undefined) {
+              lines.push(`Character Range: ${metadata.char_offset_start}-${metadata.char_offset_end}`);
+            }
+
+            if (metadata.file_path) {
+              lines.push(`File Path: ${metadata.file_path}`);
+            }
+
+            lines.push('', '--- Full Text ---', '', metadata.full_text || '(no text content)');
+
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
         } catch (error: any) {
           if (error.response?.status === 404) {
-            throw new Error(`Source ${source_id} not found or is not an image source. Only image sources have retrievable images.`);
-          } else if (error.response?.status === 400) {
-            throw new Error(`Source ${source_id} is not an image (content_type != 'image')`);
+            throw new Error(`Source ${source_id} not found`);
           }
           throw error;
         }
@@ -1468,6 +1559,110 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{ type: 'text', text: formattedText }],
         };
+      }
+
+      case 'artifact': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'list': {
+            const result = await client.listArtifacts({
+              artifact_type: toolArgs.artifact_type as string | undefined,
+              representation: toolArgs.representation as string | undefined,
+              ontology: toolArgs.ontology as string | undefined,
+              limit: (toolArgs.limit as number) || 20,
+              offset: (toolArgs.offset as number) || 0,
+            });
+
+            // Format artifact list for readability
+            const lines = [
+              `📦 Artifacts (${result.total} total, showing ${result.artifacts.length})`,
+              '',
+            ];
+
+            if (result.artifacts.length === 0) {
+              lines.push('No artifacts found.');
+            } else {
+              for (const artifact of result.artifacts) {
+                const freshness = artifact.is_fresh ? '✓ Fresh' : '⚠ Stale';
+                lines.push(`[${artifact.id}] ${artifact.artifact_type} - ${artifact.name || '(unnamed)'}`);
+                lines.push(`    Representation: ${artifact.representation}`);
+                lines.push(`    ${freshness} (epoch: ${artifact.graph_epoch})`);
+                if (artifact.ontology) {
+                  lines.push(`    Ontology: ${artifact.ontology}`);
+                }
+                lines.push(`    Created: ${artifact.created_at}`);
+                lines.push('');
+              }
+            }
+
+            if (result.total > result.offset + result.artifacts.length) {
+              lines.push(`Use offset=${result.offset + result.limit} to see more.`);
+            }
+
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          case 'show': {
+            const artifactId = toolArgs.artifact_id as number;
+            if (!artifactId) {
+              throw new Error('artifact_id is required for show action');
+            }
+
+            const result = await client.getArtifact(artifactId);
+
+            // Format artifact metadata
+            const lines = [
+              `📦 Artifact ${result.id}`,
+              '',
+              `Type: ${result.artifact_type}`,
+              `Representation: ${result.representation}`,
+              `Name: ${result.name || '(unnamed)'}`,
+              `Owner ID: ${result.owner_id}`,
+              '',
+              `Freshness: ${result.is_fresh ? '✓ Fresh' : '⚠ Stale (graph changed)'}`,
+              `Graph Epoch: ${result.graph_epoch}`,
+              '',
+              `Created: ${result.created_at}`,
+              result.expires_at ? `Expires: ${result.expires_at}` : '',
+              result.ontology ? `Ontology: ${result.ontology}` : '',
+              '',
+              'Parameters:',
+              JSON.stringify(result.parameters, null, 2),
+            ].filter(Boolean);
+
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          case 'payload': {
+            const artifactId = toolArgs.artifact_id as number;
+            if (!artifactId) {
+              throw new Error('artifact_id is required for payload action');
+            }
+
+            const result = await client.getArtifactPayload(artifactId);
+
+            // Return full artifact with payload
+            const lines = [
+              `📦 Artifact ${result.id} (${result.artifact_type})`,
+              `Freshness: ${result.is_fresh ? '✓ Fresh' : '⚠ Stale'}`,
+              '',
+              'Payload:',
+              JSON.stringify(result.payload, null, 2),
+            ];
+
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown artifact action: ${action}`);
+        }
       }
 
       default:

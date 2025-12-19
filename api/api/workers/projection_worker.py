@@ -1,17 +1,24 @@
 """
-Embedding Projection Worker (ADR-078, ADR-079).
+Embedding Projection Worker (ADR-078, ADR-079, ADR-083).
 
 Computes t-SNE/UMAP projections for ontology embeddings and stores results
 for the Embedding Landscape Explorer. Triggered by ProjectionLauncher when
 concept counts change significantly.
 
-Storage:
+Storage (ADR-079 - Legacy):
     Projections are stored in Garage (S3-compatible object storage) with both
     latest version and timestamped historical snapshots for tracking semantic
     landscape evolution over time.
 
     Key format: projections/{ontology}/{embedding_source}/latest.json
                 projections/{ontology}/{embedding_source}/{timestamp}.json
+
+Storage (ADR-083 - Artifact):
+    When `create_artifact=True` in job_data, also creates a persistent artifact
+    linked to the job. Artifacts provide:
+    - User ownership and access control
+    - Graph epoch freshness tracking
+    - Query definition linkage for regeneration
 """
 
 import logging
@@ -129,8 +136,45 @@ def run_projection_worker(
             "progress": f"Computed projection for {concept_count} {embedding_source}"
         })
 
-        # Store projection to Garage (ADR-079)
+        # Store projection to Garage (ADR-079 - legacy cache)
         storage_key = _store_projection(ontology, embedding_source, dataset)
+
+        # ADR-083: Optionally create artifact for persistence
+        artifact_id = None
+        create_artifact = job_data.get("create_artifact", False)
+
+        if create_artifact:
+            from api.api.workers.artifact_helper import create_job_artifact, get_job_user_id
+
+            user_id = get_job_user_id(job_id)
+            if user_id:
+                artifact_id = create_job_artifact(
+                    job_id=job_id,
+                    job_queue=job_queue,
+                    user_id=user_id,
+                    artifact_type="projection",
+                    representation="embedding_landscape",
+                    name=f"Projection: {ontology} ({algorithm}, {n_components}D)",
+                    parameters={
+                        "ontology": ontology,
+                        "algorithm": algorithm,
+                        "n_components": n_components,
+                        "perplexity": perplexity,
+                        "n_neighbors": n_neighbors,
+                        "min_dist": min_dist,
+                        "spread": spread,
+                        "metric": metric,
+                        "normalize_l2": normalize_l2,
+                        "center": center,
+                        "include_grounding": include_grounding,
+                        "include_diversity": include_diversity,
+                        "embedding_source": embedding_source
+                    },
+                    payload=dataset,
+                    ontology=ontology
+                )
+            else:
+                logger.warning(f"Could not create artifact - no user_id for job {job_id}")
 
         # Prepare result - include warning if storage failed (ADR-079 review feedback)
         result = {
@@ -142,13 +186,15 @@ def run_projection_worker(
             "changelist_id": dataset.get("changelist_id"),
             "computation_time_ms": dataset.get("statistics", {}).get("computation_time_ms"),
             "storage_key": storage_key,
-            "storage_warning": None if storage_key else "Projection computed but cache storage failed - will recompute on next request"
+            "storage_warning": None if storage_key else "Projection computed but cache storage failed - will recompute on next request",
+            "artifact_id": artifact_id
         }
 
         if storage_key:
             logger.info(
                 f"✅ Projection worker completed: {job_id} "
                 f"({concept_count} {embedding_source}, {algorithm})"
+                f"{f', artifact={artifact_id}' if artifact_id else ''}"
             )
         else:
             logger.warning(

@@ -492,6 +492,36 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * List source nodes with optional filtering
+   * @param options - Filter and pagination options
+   * @returns List of sources with metadata
+   */
+  async listSources(options: {
+    ontology?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{
+    sources: Array<{
+      source_id: string;
+      document: string;
+      paragraph: number;
+      content_type?: string;
+      has_garage_key: boolean;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const params = new URLSearchParams();
+    if (options.ontology) params.append('ontology', options.ontology);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/sources?${params.toString()}`);
+    return response.data;
+  }
+
+  /**
    * Get original document for a source node (ADR-081)
    * @param sourceId - Source ID from search results or concept details
    * @returns Document content as Buffer (binary data)
@@ -1413,6 +1443,26 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Submit async polarity analysis job with artifact creation (ADR-083)
+   */
+  async submitPolarityJob(request: {
+    positive_pole_id: string;
+    negative_pole_id: string;
+    candidate_ids?: string[];
+    auto_discover?: boolean;
+    max_candidates?: number;
+    max_hops?: number;
+    discovery_slot_pct?: number;
+    max_workers?: number;
+    chunk_size?: number;
+    timeout_seconds?: number;
+    create_artifact?: boolean;
+  }): Promise<{ job_id: string; status: string; message: string }> {
+    const response = await this.client.post('/query/polarity-axis/jobs', request);
+    return response.data;
+  }
+
   // ============================================================================
   // Projection Methods (ADR-078)
   // ============================================================================
@@ -1443,7 +1493,8 @@ export class KnowledgeGraphClient {
     center?: boolean;
     include_grounding?: boolean;
     include_diversity?: boolean;
-  }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string }> {
+    create_artifact?: boolean;
+  }): Promise<{ status: string; job_id?: string; message: string; changelist_id?: string; artifact_id?: number }> {
     const response = await this.client.post(
       `/projection/${encodeURIComponent(ontology)}/regenerate`,
       options || {}
@@ -1457,6 +1508,230 @@ export class KnowledgeGraphClient {
   async invalidateProjection(ontology: string): Promise<{ message: string }> {
     const response = await this.client.delete(`/projection/${encodeURIComponent(ontology)}`);
     return response.data;
+  }
+
+  // ============================================================================
+  // Artifact Methods (ADR-083)
+  // ============================================================================
+
+  /**
+   * List artifacts with optional filtering
+   */
+  async listArtifacts(params?: {
+    artifact_type?: string;
+    representation?: string;
+    ontology?: string;
+    owner_id?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    artifacts: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get('/artifacts', { params });
+    return response.data;
+  }
+
+  /**
+   * Get artifact metadata by ID
+   */
+  async getArtifact(artifactId: number): Promise<any> {
+    const response = await this.client.get(`/artifacts/${artifactId}`);
+    return response.data;
+  }
+
+  /**
+   * Get artifact with full payload
+   */
+  async getArtifactPayload(artifactId: number): Promise<any> {
+    const response = await this.client.get(`/artifacts/${artifactId}/payload`);
+    return response.data;
+  }
+
+  /**
+   * Create a new artifact
+   */
+  async createArtifact(artifact: {
+    artifact_type: string;
+    representation: string;
+    name?: string;
+    parameters: Record<string, any>;
+    payload: Record<string, any>;
+    metadata?: Record<string, any>;
+    ontology?: string;
+    concept_ids?: string[];
+    expires_at?: string;
+    query_definition_id?: number;
+  }): Promise<{
+    id: number;
+    artifact_type: string;
+    representation: string;
+    name?: string;
+    graph_epoch: number;
+    storage_location: string;
+    garage_key?: string;
+    created_at: string;
+  }> {
+    const response = await this.client.post('/artifacts', artifact);
+    return response.data;
+  }
+
+  /**
+   * Delete an artifact
+   */
+  async deleteArtifact(artifactId: number): Promise<void> {
+    await this.client.delete(`/artifacts/${artifactId}`);
+  }
+
+  // ==========================================================================
+  // Groups & Grants Methods (ADR-082)
+  // ==========================================================================
+
+  /**
+   * List groups
+   */
+  async listGroups(params?: {
+    include_system?: boolean;
+    include_member_count?: boolean;
+  }): Promise<{
+    groups: any[];
+    total: number;
+  }> {
+    const response = await this.client.get('/groups', { params });
+    return response.data;
+  }
+
+  /**
+   * Create a group
+   */
+  async createGroup(group: {
+    group_name: string;
+    display_name?: string;
+    description?: string;
+  }): Promise<any> {
+    const response = await this.client.post('/groups', group);
+    return response.data;
+  }
+
+  /**
+   * List group members
+   */
+  async listGroupMembers(groupId: number): Promise<{
+    group_id: number;
+    group_name: string;
+    members: any[];
+    total: number;
+  }> {
+    const response = await this.client.get(`/groups/${groupId}/members`);
+    return response.data;
+  }
+
+  /**
+   * Add member to group
+   */
+  async addGroupMember(groupId: number, userId: number): Promise<any> {
+    const response = await this.client.post(`/groups/${groupId}/members`, { user_id: userId });
+    return response.data;
+  }
+
+  /**
+   * Remove member from group
+   */
+  async removeGroupMember(groupId: number, userId: number): Promise<void> {
+    await this.client.delete(`/groups/${groupId}/members/${userId}`);
+  }
+
+  /**
+   * Create a resource grant
+   */
+  async createGrant(grant: {
+    resource_type: string;
+    resource_id: string;
+    principal_type: 'user' | 'group';
+    principal_id: number;
+    permission: 'read' | 'write' | 'admin';
+  }): Promise<any> {
+    const response = await this.client.post('/grants', grant);
+    return response.data;
+  }
+
+  /**
+   * List grants for a resource
+   */
+  async listResourceGrants(resourceType: string, resourceId: string): Promise<{
+    grants: any[];
+    total: number;
+  }> {
+    const response = await this.client.get(`/resources/${resourceType}/${resourceId}/grants`);
+    return response.data;
+  }
+
+  /**
+   * Revoke a grant
+   */
+  async revokeGrant(grantId: number): Promise<void> {
+    await this.client.delete(`/grants/${grantId}`);
+  }
+
+  // ==========================================================================
+  // Query Definitions Methods (ADR-083)
+  // ==========================================================================
+
+  /**
+   * List query definitions
+   */
+  async listQueryDefinitions(params?: {
+    definition_type?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    definitions: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get('/query-definitions', { params });
+    return response.data;
+  }
+
+  /**
+   * Get a query definition by ID
+   */
+  async getQueryDefinition(definitionId: number): Promise<any> {
+    const response = await this.client.get(`/query-definitions/${definitionId}`);
+    return response.data;
+  }
+
+  /**
+   * Create a query definition
+   */
+  async createQueryDefinition(definition: {
+    name: string;
+    definition_type: string;
+    definition: Record<string, any>;
+  }): Promise<any> {
+    const response = await this.client.post('/query-definitions', definition);
+    return response.data;
+  }
+
+  /**
+   * Update a query definition
+   */
+  async updateQueryDefinition(definitionId: number, update: {
+    name?: string;
+    definition?: Record<string, any>;
+  }): Promise<any> {
+    const response = await this.client.put(`/query-definitions/${definitionId}`, update);
+    return response.data;
+  }
+
+  /**
+   * Delete a query definition
+   */
+  async deleteQueryDefinition(definitionId: number): Promise<void> {
+    await this.client.delete(`/query-definitions/${definitionId}`);
   }
 }
 

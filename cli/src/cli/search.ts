@@ -154,6 +154,7 @@ const queryCommand = setCommandHelp(
       .option('--diversity-hops <number>', 'Maximum traversal depth for diversity (1-3, default 2)', '2')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
+      .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
       .action(async (query, options) => {
         try {
           const client = createClientFromEnv();
@@ -279,6 +280,31 @@ const queryCommand = setCommandHelp(
             console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
             console.log(colors.status.dim(`   Try: kg search query "${query}" --min-similarity ${result.suggested_threshold}\n`));
           }
+
+          // ADR-083: Save result as artifact if requested
+          if (options.saveArtifact && result.count > 0) {
+            try {
+              const artifactResult = await client.createArtifact({
+                artifact_type: 'search_result',
+                representation: 'cli',
+                name: `Search: "${query}" (${result.count} results)`,
+                parameters: {
+                  query,
+                  limit: parseInt(options.limit),
+                  min_similarity: parseFloat(options.minSimilarity),
+                  include_evidence: includeEvidence,
+                  include_grounding: includeGrounding,
+                  include_diversity: includeDiversity,
+                  diversity_max_hops: parseInt(options.diversityHops)
+                },
+                payload: result
+              });
+              console.log(colors.status.success(`✓ Artifact saved: ${artifactResult.id}`));
+              console.log(colors.status.dim(`  View: kg artifact show ${artifactResult.id}`));
+            } catch (artifactError: any) {
+              console.error(colors.status.error(`✗ Failed to save artifact: ${artifactError.message}`));
+            }
+          }
         } catch (error: any) {
           console.error(colors.status.error('✗ Search failed'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
@@ -286,11 +312,12 @@ const queryCommand = setCommandHelp(
         }
       });
 
-const detailsCommand = setCommandHelp(
-  new Command('details'),
+const showCommand = setCommandHelp(
+  new Command('show'),
   'Get full details for a concept',
   'Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength'
 )
+      .alias('details')  // backwards compatibility
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
@@ -716,7 +743,7 @@ const sourcesCommand = setCommandHelp(
       });
 
 // Configure colored help for all search subcommands
-[queryCommand, detailsCommand, relatedCommand, connectCommand, sourcesCommand].forEach(configureColoredHelp);
+[queryCommand, showCommand, relatedCommand, connectCommand, sourcesCommand].forEach(configureColoredHelp);
 
 export const searchCommand = setCommandHelp(
   new Command('search'),
@@ -725,8 +752,119 @@ export const searchCommand = setCommandHelp(
 )
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError()
+  // Allow direct search: kg search <term> (shortcut for kg search query <term>)
+  .argument('[query]', 'Search query (shortcut for: kg search query <term>)')
+  .option('-l, --limit <number>', 'Maximum number of results to return', '10')
+  .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
+  .option('--json', 'Output raw JSON instead of formatted text')
+  .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
+  .action(async (query, options, command) => {
+    // If no query provided and no subcommand matched, show help
+    if (!query) {
+      command.help();
+      return;
+    }
+
+    // Check if query matches a subcommand name - if so, Commander already handled it
+    const subcommandNames = ['query', 'details', 'related', 'connect', 'sources'];
+    if (subcommandNames.includes(query)) {
+      // This shouldn't happen as Commander routes subcommands, but safety check
+      return;
+    }
+
+    // Delegate to query action for direct search shortcut
+    try {
+      const client = createClientFromEnv();
+      const config = getConfig();
+
+      const result = await client.searchConcepts({
+        query,
+        limit: parseInt(options.limit),
+        min_similarity: parseFloat(options.minSimilarity),
+        include_evidence: config.getSearchShowEvidence(),
+        include_grounding: true,
+        include_diversity: true,
+        diversity_max_hops: 2
+      });
+
+      // JSON output mode
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      console.log('\n' + separator());
+      console.log(colors.ui.title(`🔍 Searching for: ${query}`));
+      console.log(separator());
+      console.log(colors.status.success(`\n✓ Found ${result.count} concepts:\n`));
+
+      for (const [i, concept] of result.results.entries()) {
+        console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
+        if (concept.description) {
+          console.log(`   ${colors.status.dim(concept.description)}`);
+        }
+        console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
+        console.log(`   ${colors.ui.key('Similarity:')} ${coloredPercentage(concept.score)}`);
+        console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
+        console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.evidence_count))} instances`);
+
+        // Display grounding with confidence-awareness
+        if (concept.grounding_strength !== undefined || concept.grounding_display) {
+          console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
+        }
+
+        // Display diversity if available
+        if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
+          console.log(`   ${colors.ui.key('Diversity:')} ${formatDiversity(concept.diversity_score, concept.diversity_related_count)}`);
+        }
+
+        // Display authenticated diversity if available
+        if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
+          console.log(`   ${colors.ui.key('Authenticated:')} ${formatAuthenticatedDiversity(concept.authenticated_diversity)}`);
+        }
+
+        console.log();
+      }
+
+      // Show hint if additional results available below threshold
+      if (result.below_threshold_count && result.below_threshold_count > 0 && result.suggested_threshold) {
+        const thresholdPercent = (result.suggested_threshold * 100).toFixed(0);
+        console.log(colors.status.warning(`💡 ${result.below_threshold_count} additional concept${result.below_threshold_count > 1 ? 's' : ''} available at ${thresholdPercent}% threshold`));
+        console.log(colors.status.dim(`   Try: kg search "${query}" --min-similarity ${result.suggested_threshold}\n`));
+      }
+
+      // ADR-083: Save result as artifact if requested
+      if (options.saveArtifact && result.count > 0) {
+        try {
+          const artifactResult = await client.createArtifact({
+            artifact_type: 'search_result',
+            representation: 'cli',
+            name: `Search: "${query}" (${result.count} results)`,
+            parameters: {
+              query,
+              limit: parseInt(options.limit),
+              min_similarity: parseFloat(options.minSimilarity),
+              include_evidence: config.getSearchShowEvidence(),
+              include_grounding: true,
+              include_diversity: true,
+              diversity_max_hops: 2
+            },
+            payload: result
+          });
+          console.log(colors.status.success(`✓ Artifact saved: ${artifactResult.id}`));
+          console.log(colors.status.dim(`  View: kg artifact show ${artifactResult.id}`));
+        } catch (artifactError: any) {
+          console.error(colors.status.error(`✗ Failed to save artifact: ${artifactError.message}`));
+        }
+      }
+    } catch (error: any) {
+      console.error(colors.status.error('✗ Search failed'));
+      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  })
   .addCommand(queryCommand)
-  .addCommand(detailsCommand)
+  .addCommand(showCommand)
   .addCommand(relatedCommand)
   .addCommand(connectCommand)
   .addCommand(sourcesCommand);

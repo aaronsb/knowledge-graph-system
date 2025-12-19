@@ -35,8 +35,10 @@ from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
 from .workers.source_embedding_worker import run_source_embedding_worker
 from .workers.projection_worker import run_projection_worker
+from .workers.polarity_worker import run_polarity_worker
+from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -154,8 +156,9 @@ async def startup_event():
     queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
     queue.register_worker("source_embedding", run_source_embedding_worker)  # ADR-068 Phase 1
     queue.register_worker("projection", run_projection_worker)  # ADR-078: Embedding landscape
-    # Note: polarity_axis_analysis uses direct query pattern (ADR-070), not job queue
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection")
+    queue.register_worker("polarity", run_polarity_worker)  # ADR-070+083: Polarity with artifact support
+    queue.register_worker("artifact_cleanup", run_artifact_cleanup_worker)  # ADR-083: Cleanup expired artifacts
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection, polarity, artifact_cleanup")
 
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
@@ -340,6 +343,9 @@ app.include_router(embedding.admin_router)  # ADR-039: Admin embedding managemen
 app.include_router(extraction.public_router)  # ADR-041: Public extraction config
 app.include_router(extraction.admin_router)  # ADR-041: Admin extraction management
 app.include_router(projection.router)  # ADR-078: Embedding landscape projections
+app.include_router(artifacts.router)  # ADR-083: Artifact persistence
+app.include_router(grants.router)  # ADR-082: Groups and resource grants
+app.include_router(query_definitions.router)  # ADR-083: Query definitions
 
 
 # Root endpoint

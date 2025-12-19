@@ -146,6 +146,7 @@ export const projectionCommand = setCommandHelp(
       .option('--no-center', 'Disable embedding centering')
       .option('--grounding', 'Include grounding strength')
       .option('--diversity', 'Include diversity scores (slower)')
+      .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
       .action(async (ontology: string, options) => {
         try {
           const client = createClientFromEnv();
@@ -157,14 +158,22 @@ export const projectionCommand = setCommandHelp(
               perplexity: parseInt(options.perplexity),
               center: options.center !== false, // default true
               include_grounding: options.grounding || true,
-              include_diversity: options.diversity || false
+              include_diversity: options.diversity || false,
+              create_artifact: options.saveArtifact || false
             });
 
             const name = displayName || ont;
             if (result.status === 'computed') {
               console.log(colors.status.success(`${name}: ${result.message}`));
+              if (result.artifact_id) {
+                console.log(colors.status.success(`  Artifact saved: ${result.artifact_id}`));
+                console.log(colors.status.dim(`    View: kg artifact show ${result.artifact_id}`));
+              }
             } else if (result.status === 'queued') {
               console.log(colors.status.info(`${name}: ${result.message} (job: ${result.job_id})`));
+              if (options.saveArtifact) {
+                console.log(colors.status.dim(`  Artifact will be created when job completes`));
+              }
             } else if (result.status === 'skipped') {
               console.log(colors.status.dim(`${name}: ${result.message}`));
             }

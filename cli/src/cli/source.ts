@@ -8,6 +8,7 @@ import * as path from 'path';
 import { createClientFromEnv } from '../api/client';
 import { setCommandHelp } from './help-formatter';
 import * as colors from './colors';
+import { Table } from '../lib/table';
 
 export const sourceCommand = setCommandHelp(
   new Command('source'),
@@ -15,6 +16,71 @@ export const sourceCommand = setCommandHelp(
   'Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-081).'
 )
   .showHelpAfterError();
+
+// kg source list
+const listCommand = setCommandHelp(
+  new Command('list'),
+  'List source nodes',
+  'List source nodes (chunks) in the graph. Sources are chunks of ingested documents. Filter by ontology name to see sources from specific documents.'
+)
+  .option('-o, --ontology <name>', 'Filter by ontology/document name (partial match)')
+  .option('-l, --limit <n>', 'Maximum sources to return', '50')
+  .option('--offset <n>', 'Skip N sources (pagination)', '0')
+  .option('-j, --json', 'Output raw JSON')
+  .showHelpAfterError()
+  .action(async (options: { ontology?: string; limit: string; offset: string; json?: boolean }) => {
+    try {
+      const client = createClientFromEnv();
+      const result = await client.listSources({
+        ontology: options.ontology,
+        limit: parseInt(options.limit),
+        offset: parseInt(options.offset),
+      });
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      if (result.sources.length === 0) {
+        console.log(colors.status.warning('\n⚠ No sources found'));
+        if (options.ontology) {
+          console.log(colors.status.dim(`  Try a different ontology filter or remove -o`));
+        }
+        return;
+      }
+
+      console.log('\n' + colors.ui.title('📄 Sources'));
+      console.log(colors.status.dim(`  Showing ${result.sources.length} of ${result.total} sources\n`));
+
+      const table = new Table({
+        columns: [
+          { header: 'Source ID', field: 'source_id', type: 'concept_id', width: 24 },
+          { header: 'Document', field: 'document', type: 'heading', width: 'flex' },
+          { header: 'Para', field: 'paragraph', type: 'count', width: 6, align: 'right' },
+          { header: 'Type', field: 'content_type', type: 'text', width: 8 },
+          { header: 'Garage', field: 'has_garage_key', type: 'text', width: 8,
+            customFormat: (val: boolean) => val ? colors.status.success('✓') : colors.status.dim('—') },
+        ]
+      });
+
+      const displayData = result.sources.map(s => ({
+        ...s,
+        source_id: s.source_id.length > 22 ? s.source_id.substring(0, 22) + '…' : s.source_id,
+        content_type: s.content_type || 'text',
+      }));
+
+      table.print(displayData);
+
+      if (result.total > result.sources.length) {
+        console.log(colors.status.dim(`\n  Use --offset ${result.offset + result.sources.length} to see more`));
+      }
+    } catch (error: any) {
+      console.error(colors.status.error('✗ Failed to list sources'));
+      console.error(colors.status.error(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
 
 // kg source get <source-id>
 const getCommand = setCommandHelp(
@@ -122,5 +188,6 @@ const infoCommand = setCommandHelp(
     }
   });
 
+sourceCommand.addCommand(listCommand);
 sourceCommand.addCommand(getCommand);
 sourceCommand.addCommand(infoCommand);

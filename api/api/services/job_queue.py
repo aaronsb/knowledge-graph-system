@@ -306,6 +306,10 @@ class PostgreSQLJobQueue(JobQueue):
                         # String fields
                         set_clauses.append(f"{key} = %s")
                         params.append(value)
+                    elif key == 'artifact_id':
+                        # ADR-083: Link job to created artifact
+                        set_clauses.append("artifact_id = %s")
+                        params.append(value)
 
                 # Auto-update timestamps based on status changes
                 if updates.get("status") == "running":

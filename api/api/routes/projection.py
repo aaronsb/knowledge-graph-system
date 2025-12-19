@@ -141,6 +141,10 @@ class RegenerateRequest(BaseModel):
         default="concepts",
         description="Which embeddings to project: concepts (default), sources, vocabulary, or combined"
     )
+    create_artifact: bool = Field(
+        default=False,
+        description="Save result as persistent artifact (ADR-083)"
+    )
 
 
 class RegenerateResponse(BaseModel):
@@ -149,6 +153,7 @@ class RegenerateResponse(BaseModel):
     job_id: Optional[str] = None
     message: str
     changelist_id: Optional[str] = None
+    artifact_id: Optional[int] = None
 
 
 class AlgorithmInfoResponse(BaseModel):
@@ -284,10 +289,39 @@ async def regenerate_projection(
         from api.api.workers.projection_worker import _store_projection
         _store_projection(ontology, body.embedding_source, dataset)
 
+        # ADR-083: Optionally create artifact for persistence
+        artifact_id = None
+        if body.create_artifact:
+            from api.api.workers.artifact_helper import create_artifact
+            artifact_id = create_artifact(
+                user_id=current_user.id,
+                artifact_type="projection",
+                representation="cli",  # CLI-initiated sync computation
+                name=f"Projection: {ontology} ({body.algorithm}, {body.n_components}D)",
+                parameters={
+                    "ontology": ontology,
+                    "algorithm": body.algorithm,
+                    "n_components": body.n_components,
+                    "perplexity": body.perplexity,
+                    "n_neighbors": body.n_neighbors,
+                    "min_dist": body.min_dist,
+                    "spread": body.spread,
+                    "metric": body.metric,
+                    "normalize_l2": body.normalize_l2,
+                    "center": body.center,
+                    "include_grounding": body.include_grounding,
+                    "include_diversity": body.include_diversity,
+                    "embedding_source": body.embedding_source
+                },
+                payload=dataset,
+                ontology=ontology
+            )
+
         return RegenerateResponse(
             status="computed",
             message=f"Projection computed for {concept_count} {body.embedding_source}",
-            changelist_id=dataset.get("changelist_id")
+            changelist_id=dataset.get("changelist_id"),
+            artifact_id=artifact_id
         )
 
     # For larger ontologies, queue background job
@@ -310,6 +344,7 @@ async def regenerate_projection(
             "refresh_grounding": body.refresh_grounding,
             "include_diversity": body.include_diversity,
             "embedding_source": body.embedding_source,
+            "create_artifact": body.create_artifact,
             "description": f"Regenerate {body.embedding_source} projection for '{ontology}'",
             "user_id": current_user.id
         }

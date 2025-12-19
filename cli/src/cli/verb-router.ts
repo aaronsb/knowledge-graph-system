@@ -69,6 +69,14 @@ const RESOURCE_ROUTES = {
   // Concepts (via search)
   concept: ['search'],
   concepts: ['search'],
+
+  // Artifacts (ADR-083)
+  artifact: ['artifact'],
+  artifacts: ['artifact'],
+
+  // Sources (ADR-081)
+  source: ['source'],
+  sources: ['source'],
 };
 
 /**
@@ -143,15 +151,16 @@ function applyAliases(cmd: Command, commandName: string): void {
 function createLsCommand(rootCommand: Command): Command {
   const cmd = new Command('ls')
     .description('List resources (Unix-style shortcut)')
-    .argument('<resource>', 'Resource type: job, ontology, backup, config, role, permission, resource, user')
+    .argument('<resource>', 'Resource type: job, ontology, backup, config, role, permission, resource, user, artifact, source')
     .option('--json', 'Output as JSON')
+    .option('-o, --ontology <name>', 'Filter by ontology (for sources)')
     .action(async (resource: string, options) => {
       const route = getResourceRoute(resource);
 
       if (!route) {
         console.error(colors.status.error(`✗ Unknown resource: ${resource}`));
         console.log(colors.status.dim('\nAvailable resources:'));
-        console.log(colors.status.dim('  job, ontology, backup, config, role, permission, resource, user'));
+        console.log(colors.status.dim('  job, ontology, backup, config, role, permission, resource, user, artifact, source'));
         console.log(colors.status.dim('\nExample: kg ls job'));
         process.exit(1);
       }
@@ -166,8 +175,14 @@ function createLsCommand(rootCommand: Command): Command {
       if (resource === 'backup' || resource === 'backups') {
         executeCommand(rootCommand, [...route, 'list-backups'], []);
       } else if (resource === 'concept' || resource === 'concepts') {
-        console.error(colors.status.error('✗ Use "kg search query <text>" to search concepts'));
+        console.error(colors.status.error('✗ Use "kg search <text>" to search concepts'));
         process.exit(1);
+      } else if (resource === 'source' || resource === 'sources') {
+        // Sources support ontology filter
+        if (options.ontology) {
+          listArgs.push('--ontology', options.ontology);
+        }
+        executeCommand(rootCommand, route, listArgs);
       } else {
         executeCommand(rootCommand, route, listArgs);
       }
@@ -236,7 +251,7 @@ function createStatCommand(rootCommand: Command): Command {
 function createRmCommand(rootCommand: Command): Command {
   const cmd = new Command('rm')
     .description('Remove or delete resources (Unix-style shortcut)')
-    .argument('<resource>', 'Resource type: job, ontology, role, permission, user')
+    .argument('<resource>', 'Resource type: job, ontology, role, permission, user, artifact')
     .argument('<id>', 'Resource identifier')
     .option('-f, --force', 'Skip confirmation')
     .option('--json', 'Output as JSON')
@@ -245,7 +260,7 @@ function createRmCommand(rootCommand: Command): Command {
 
       if (!route) {
         console.error(colors.status.error(`✗ Unknown resource: ${resource}`));
-        console.log(colors.status.dim('\nAvailable resources: job, ontology, role, user'));
+        console.log(colors.status.dim('\nAvailable resources: job, ontology, role, user, artifact'));
         console.log(colors.status.dim('\nExample: kg rm job abc-123'));
         process.exit(1);
       }
@@ -264,6 +279,8 @@ function createRmCommand(rootCommand: Command): Command {
       } else if (resource === 'user' || resource === 'users') {
         args.push('delete', id);
         if (options.force) args.push('--force');
+      } else if (resource === 'artifact' || resource === 'artifacts') {
+        args.push('delete', id);
       } else {
         console.error(colors.status.error(`✗ rm not supported for ${resource}`));
         process.exit(1);
@@ -290,9 +307,10 @@ function createRmCommand(rootCommand: Command): Command {
 function createCatCommand(rootCommand: Command): Command {
   const cmd = new Command('cat')
     .description('Display resource details (Unix-style shortcut)')
-    .argument('<resource>', 'Resource type: concept, config, job, role, ontology')
+    .argument('<resource>', 'Resource type: concept, artifact, source, config, job, role, ontology')
     .argument('[id]', 'Resource identifier or key (optional for config and job)')
     .option('--json', 'Output as JSON')
+    .option('--payload', 'Show full payload (for artifacts)')
     .action(async (resource: string, id: string | undefined, options) => {
       const args: string[] = [];
 
@@ -308,6 +326,27 @@ function createCatCommand(rootCommand: Command): Command {
           process.exit(1);
         }
         executeCommand(rootCommand, ['search', 'details'], [id, ...args]);
+      } else if (resource === 'artifact' || resource === 'artifacts') {
+        if (!id) {
+          console.error(colors.status.error('✗ Artifact ID required'));
+          console.log(colors.status.dim('Example: kg cat artifact 123'));
+          process.exit(1);
+        }
+        if (options.payload) {
+          // Show artifact with payload
+          executeCommand(rootCommand, ['artifact', 'payload'], [id, ...args]);
+        } else {
+          // Show artifact metadata
+          executeCommand(rootCommand, ['artifact', 'show'], [id, ...args]);
+        }
+      } else if (resource === 'source' || resource === 'sources') {
+        if (!id) {
+          console.error(colors.status.error('✗ Source ID required'));
+          console.log(colors.status.dim('Example: kg cat source sha256:abc123_chunk1'));
+          process.exit(1);
+        }
+        // Show source metadata
+        executeCommand(rootCommand, ['source', 'info'], [id, ...args]);
       } else if (resource === 'config' || resource === 'cfg') {
         if (id) {
           // Show specific config key
@@ -340,7 +379,7 @@ function createCatCommand(rootCommand: Command): Command {
         executeCommand(rootCommand, ['ontology', 'info'], [id, ...args]);
       } else {
         console.error(colors.status.error(`✗ Unknown resource: ${resource}`));
-        console.log(colors.status.dim('\nAvailable resources: concept, config, job, role, ontology'));
+        console.log(colors.status.dim('\nAvailable resources: concept, artifact, source, config, job, role, ontology'));
         console.log(colors.status.dim('\nExample: kg cat concept abc-123'));
         process.exit(1);
       }

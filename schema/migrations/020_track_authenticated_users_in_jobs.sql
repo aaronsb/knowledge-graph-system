@@ -5,11 +5,11 @@
 -- - Previously jobs used client_id TEXT with placeholder value "anonymous"
 -- - Now jobs should track the authenticated user from JWT tokens
 -- - Leverages existing kg_auth.users table (id SERIAL PRIMARY KEY)
--- - Admin user is id=1 for simplicity (no UUIDs needed)
+-- - Admin user is id=1000 (IDs 1-999 reserved for system users/groups per ADR-082)
 --
 -- Changes:
--- 1. Ensure admin user exists with id=1
--- 2. Convert client_id TEXT → INTEGER (map "anonymous" → 1)
+-- 1. Create system user (id=1) and admin user (id=1000)
+-- 2. Convert client_id TEXT → INTEGER (map "anonymous" → 1000)
 -- 3. Add foreign key to kg_auth.users
 -- 4. Rename client_id → user_id for clarity
 --
@@ -17,11 +17,27 @@
 
 BEGIN;
 
--- Step 1: Ensure admin user exists with predictable id=1
--- (Safe with ON CONFLICT - won't override if already exists)
-INSERT INTO kg_auth.users (id, username, password_hash, primary_role, created_at)
+-- Step 1: Create system user (id=1) and admin user (id=1000)
+-- Note: IDs 1-999 are reserved for system users/groups per ADR-082
+-- System user owns system resources and cannot login (like Unix root)
+-- Admin user is the default operator account
+
+-- Insert system user (id=1)
+INSERT INTO kg_auth.users (id, username, password_hash, primary_role, disabled, created_at)
 VALUES (
     1,
+    'system',
+    'SYSTEM_NO_LOGIN',  -- Cannot login - system account only
+    'admin',
+    true,
+    NOW()
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert admin user (id=1000)
+INSERT INTO kg_auth.users (id, username, password_hash, primary_role, created_at)
+VALUES (
+    1000,
     'admin',
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5oCDxDO1b5tZK',  -- password: 'admin' (CHANGE IN PRODUCTION!)
     'admin',
@@ -29,18 +45,18 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Reset sequence to ensure next user gets id > 1
-SELECT setval('kg_auth.users_id_seq', (SELECT COALESCE(MAX(id), 1) FROM kg_auth.users));
+-- Reset sequence to ensure next user gets id > 1000
+SELECT setval('kg_auth.users_id_seq', (SELECT COALESCE(MAX(id), 1000) FROM kg_auth.users));
 
 -- Step 2: Add temporary column for integer user IDs
 ALTER TABLE kg_api.jobs
     ADD COLUMN user_id INTEGER;
 
 -- Step 3: Migrate existing data
--- Map all "anonymous" entries to admin user (id=1)
+-- Map all "anonymous" entries to admin user (id=1000)
 -- Any other values also map to admin (cleanup weird data)
 UPDATE kg_api.jobs
-SET user_id = 1;
+SET user_id = 1000;
 
 -- Step 4: Make user_id NOT NULL and add foreign key
 ALTER TABLE kg_api.jobs

@@ -8,7 +8,8 @@ Provides REST API access to:
 - Path finding between concepts
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from pydantic import BaseModel
 from typing import Optional, List, Dict
 import logging
 import numpy as np
@@ -1719,3 +1720,88 @@ async def analyze_polarity_axis_endpoint(
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
     finally:
         client.close()
+
+
+class PolarityJobRequest(BaseModel):
+    """Request for async polarity analysis with artifact creation (ADR-083)."""
+    positive_pole_id: str
+    negative_pole_id: str
+    candidate_ids: Optional[List[str]] = None
+    auto_discover: bool = True
+    max_candidates: int = 20
+    max_hops: int = 1
+    discovery_slot_pct: float = 0.2
+    max_workers: int = 8
+    chunk_size: int = 20
+    timeout_seconds: float = 120.0
+    create_artifact: bool = True
+
+
+class PolarityJobResponse(BaseModel):
+    """Response for polarity job submission."""
+    job_id: str
+    status: str
+    message: str
+
+
+@router.post("/polarity-axis/jobs", response_model=PolarityJobResponse)
+async def submit_polarity_job(
+    current_user: CurrentUser,
+    request: PolarityJobRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Submit async polarity axis analysis job with artifact persistence (ADR-083).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Unlike the synchronous `/polarity-axis` endpoint, this version:
+    - Runs analysis as a background job
+    - Persists result as an artifact (when create_artifact=True)
+    - Links artifact to job for tracking
+
+    **Returns:**
+    - job_id: Use `GET /jobs/{job_id}` to check status
+    - artifact_id will be in job result when complete
+    """
+    from api.api.services.job_queue import get_job_queue
+    from datetime import datetime
+
+    logger.info(f"Polarity job submitted: {request.positive_pole_id} ↔ {request.negative_pole_id}")
+
+    queue = get_job_queue()
+    job_id = queue.enqueue(
+        job_type="polarity",
+        job_data={
+            "positive_pole_id": request.positive_pole_id,
+            "negative_pole_id": request.negative_pole_id,
+            "candidate_ids": request.candidate_ids,
+            "auto_discover": request.auto_discover,
+            "max_candidates": request.max_candidates,
+            "max_hops": request.max_hops,
+            "discovery_slot_pct": request.discovery_slot_pct,
+            "max_workers": request.max_workers,
+            "chunk_size": request.chunk_size,
+            "timeout_seconds": request.timeout_seconds,
+            "create_artifact": request.create_artifact,
+            "description": f"Polarity analysis: {request.positive_pole_id} ↔ {request.negative_pole_id}",
+            "user_id": current_user.id
+        }
+    )
+
+    # Auto-approve polarity jobs (no LLM costs, user-initiated)
+    queue.update_job(job_id, {
+        "status": "approved",
+        "approved_at": datetime.utcnow().isoformat(),
+        "approved_by": current_user.username
+    })
+
+    # Start the job in the background
+    background_tasks.add_task(queue.queue_serial_job, job_id)
+
+    return PolarityJobResponse(
+        job_id=job_id,
+        status="queued",
+        message=f"Polarity analysis job queued"
+    )

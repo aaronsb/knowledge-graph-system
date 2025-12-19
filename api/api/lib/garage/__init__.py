@@ -8,17 +8,21 @@ Principle. Each service handles one domain:
 - ImageStorageService: Image upload/download for multimodal ingestion (ADR-057)
 - ProjectionStorageService: Embedding landscape projections (ADR-079)
 - SourceDocumentService: Original document preservation (ADR-081)
+- ArtifactStorageService: Computed artifact persistence (ADR-083)
 - RetentionPolicyManager: Storage lifecycle and cleanup
 
 Usage:
     # Preferred: Use service factory functions
-    from api.api.lib.garage import get_image_storage, get_projection_storage
+    from api.api.lib.garage import get_image_storage, get_projection_storage, get_artifact_storage
 
     images = get_image_storage()
     images.upload(ontology, source_id, image_bytes, filename)
 
     projections = get_projection_storage()
     data = projections.get(ontology)
+
+    artifacts = get_artifact_storage()
+    inline, garage_key = artifacts.prepare_for_storage('polarity_analysis', 123, payload)
 
     # Direct access (for testing or custom configuration)
     from api.api.lib.garage import GarageBaseClient, ImageStorageService
@@ -37,6 +41,7 @@ from .base import GarageBaseClient, sanitize_path_component
 from .image_storage import ImageStorageService
 from .projection_storage import ProjectionStorageService
 from .source_storage import SourceDocumentService, DocumentIdentity, SourceMetadata, normalize_content_hash
+from .artifact_storage import ArtifactStorageService, INLINE_THRESHOLD_BYTES
 from .retention import RetentionPolicyManager, CleanupResult, StorageStats
 
 
@@ -45,6 +50,7 @@ _base_client: Optional[GarageBaseClient] = None
 _image_service: Optional[ImageStorageService] = None
 _projection_service: Optional[ProjectionStorageService] = None
 _source_service: Optional[SourceDocumentService] = None
+_artifact_service: Optional[ArtifactStorageService] = None
 _retention_manager: Optional[RetentionPolicyManager] = None
 
 
@@ -99,6 +105,19 @@ def get_source_storage() -> SourceDocumentService:
     if _source_service is None:
         _source_service = SourceDocumentService(get_base_client())
     return _source_service
+
+
+def get_artifact_storage() -> ArtifactStorageService:
+    """
+    Get or create the artifact storage service singleton.
+
+    Returns:
+        ArtifactStorageService instance
+    """
+    global _artifact_service
+    if _artifact_service is None:
+        _artifact_service = ArtifactStorageService(get_base_client())
+    return _artifact_service
 
 
 def get_retention_manager() -> RetentionPolicyManager:
@@ -243,7 +262,11 @@ __all__ = [
     'ImageStorageService',
     'ProjectionStorageService',
     'SourceDocumentService',
+    'ArtifactStorageService',
     'RetentionPolicyManager',
+
+    # Constants
+    'INLINE_THRESHOLD_BYTES',
 
     # Data classes
     'DocumentIdentity',
@@ -256,6 +279,7 @@ __all__ = [
     'get_image_storage',
     'get_projection_storage',
     'get_source_storage',
+    'get_artifact_storage',
     'get_retention_manager',
 
     # Backward compatibility
