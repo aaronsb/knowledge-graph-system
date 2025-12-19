@@ -37,7 +37,7 @@ from .workers.source_embedding_worker import run_source_embedding_worker
 from .workers.projection_worker import run_projection_worker
 from .workers.polarity_worker import run_polarity_worker
 from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
-from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
@@ -288,7 +288,8 @@ async def startup_event():
         'CategoryRefreshLauncher': CategoryRefreshLauncher,
         'VocabConsolidationLauncher': VocabConsolidationLauncher,
         'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
-        'ProjectionLauncher': ProjectionLauncher  # ADR-078: Embedding projections
+        'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
+        'ArtifactCleanupLauncher': ArtifactCleanupLauncher  # ADR-083: Artifact cleanup
     }
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()

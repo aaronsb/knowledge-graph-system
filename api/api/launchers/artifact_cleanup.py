@@ -58,6 +58,10 @@ class ArtifactCleanupLauncher(JobLauncher):
             "description": f"Scheduled artifact cleanup ({datetime.utcnow().isoformat()})"
         }
 
+    def get_job_type(self) -> str:
+        """Return job type for worker registry lookup."""
+        return "artifact_cleanup"
+
     def launch(self) -> Optional[str]:
         """
         Check conditions and enqueue cleanup job if needed.
