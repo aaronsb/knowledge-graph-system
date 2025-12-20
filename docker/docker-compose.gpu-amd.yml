@@ -1,0 +1,48 @@
+# ============================================================================
+# Knowledge Graph System - AMD GPU Override (ROCm)
+# ============================================================================
+# This override enables AMD GPU acceleration for local embedding models using
+# ROCm (Radeon Open Compute).
+#
+# Requirements:
+#   - AMD GPU with ROCm support (RX 5000/6000/7000 series, or Instinct)
+#   - ROCm drivers installed on host (https://rocm.docs.amd.com/)
+#   - /dev/kfd and /dev/dri accessible
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.gpu-amd.yml up -d
+#
+# The API will automatically use ROCm for:
+#   - Local text embeddings (sentence-transformers)
+#   - Local visual embeddings (vision transformers)
+#
+# Note: ROCm PyTorch uses the same torch.cuda API - device_selector.py
+# detects ROCm GPUs via torch.cuda.is_available() automatically.
+#
+# Performance:
+#   - ROCm (AMD GPU): ~2-5ms per embedding (varies by GPU)
+#   - CPU fallback: ~5-10ms per embedding
+#
+# ROCm Version:
+#   - Default: rocm60 (ROCm 6.0)
+#   - Override with ROCM_VERSION env var (rocm60 or rocm61)
+#
+# See ADR-043 for resource management details.
+# ============================================================================
+
+services:
+  api:
+    # Build with ROCm PyTorch wheels (adds to main compose build config)
+    build:
+      args:
+        PYTORCH_VARIANT: ${ROCM_VERSION:-rocm60}
+    # Enable AMD GPU access via ROCm
+    # Requires host to have ROCm drivers installed
+    # Note: 'render' group may not exist on all systems - add manually if needed
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    # Note: HSA_OVERRIDE_GFX_VERSION and ROCR_VISIBLE_DEVICES can be set in .env
+    # if needed, but empty values break ROCm initialization

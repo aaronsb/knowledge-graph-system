@@ -127,7 +127,7 @@ The system uses the **operator architecture (ADR-061)** where all configuration 
 
 # The init wizard will:
 # 1. Generate infrastructure secrets (.env)
-# 2. Detect your GPU (NVIDIA/Mac/CPU)
+# 2. Select your GPU platform (NVIDIA/AMD/Mac/CPU)
 # 3. Start all containers
 # 4. Prompt for admin password
 # 5. Prompt for AI provider configuration
@@ -481,11 +481,11 @@ docker exec kg-operator python /workspace/operator/configure.py embedding 2
 ```
 
 **Resource Management (ADR-043):**
-When using local inference with Ollama + local embeddings on single-GPU systems, the system automatically manages VRAM contention:
-- **Sufficient VRAM (>500MB free):** Embeddings run on GPU (~1-2ms per concept)
-- **VRAM contention (<500MB free):** Embeddings fall back to CPU (~5-10ms per concept)
-- **Performance impact:** ~100ms per chunk (negligible in 2-3 minute extraction jobs)
-- **User notification:** Clear warning logs when CPU fallback activated
+When using local embeddings on GPU systems, the system automatically manages VRAM:
+- **NVIDIA (CUDA):** Uses nvidia-smi for VRAM monitoring
+- **AMD (ROCm):** Requires ROCm drivers on host, uses HIP for GPU compute
+- **Mac (MPS):** Uses Metal Performance Shaders for Apple Silicon
+- **Fallback:** Auto-falls back to CPU when GPU unavailable or VRAM low
 
 ## Query Safety & GraphQueryFacade
 

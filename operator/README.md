@@ -105,7 +105,7 @@ operator-help all                # Show everything
 ./operator.sh init
 # Guided wizard:
 # 1. Generates .env with secrets
-# 2. Detects GPU (nvidia/mac/cpu)
+# 2. Detects GPU (nvidia/amd/mac/cpu)
 # 3. Asks for dev mode preference
 # 4. Starts all containers
 # 5. Prompts for admin password

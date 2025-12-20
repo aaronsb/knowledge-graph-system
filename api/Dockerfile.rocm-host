@@ -1,0 +1,53 @@
+# Knowledge Graph API Server - ROCm Official Image
+#
+# Uses AMD's official ROCm PyTorch image which has all ROCm libraries
+# properly configured. This avoids library compatibility issues.
+#
+# Base image includes:
+#   - ROCm 7.1
+#   - Python 3.13
+#   - PyTorch 2.9.1 with ROCm support
+#
+# Usage: GPU_MODE=amd-host ./operator.sh start
+
+FROM rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1
+
+# Build metadata
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.title="Knowledge Graph API (ROCm)"
+LABEL org.opencontainers.image.description="FastAPI server with ROCm GPU support"
+
+WORKDIR /app
+
+# Install system dependencies (curl for healthcheck, libpq for postgres)
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    libpq-dev \
+    curl \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install (torch already in base image)
+COPY requirements.txt .
+RUN grep -v "^torch" requirements.txt | grep -v "^torchvision" > requirements-no-torch.txt && \
+    pip install --no-cache-dir -r requirements-no-torch.txt
+
+# Copy application code
+COPY api/ /app/api/
+COPY schema/ /app/schema/
+
+# Set Python path for imports
+ENV PYTHONPATH=/app
+
+# Run as the user inherited from runtime (matches host UID for volume permissions)
+# The docker-compose can specify user: "${UID}:${GID}" if needed
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "api.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
