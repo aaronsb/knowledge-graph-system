@@ -408,7 +408,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
   }, [workingNodes, workingEdges]);
 
   // Clear all blocks
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback(async () => {
     if (!window.confirm('Clear all blocks from canvas?')) {
       return;
     }
@@ -418,7 +418,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
       if (choice) {
         // User wants to save first
         if (currentDiagramName) {
-          saveDiagram(currentDiagramName, nodes, edges);
+          await saveDiagram(currentDiagramName, nodes, edges);
         } else {
           // Need to show save dialog - set flag and return
           setSaveName('');
@@ -437,11 +437,11 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
   }, [setNodes, setEdges, hasUnsavedChanges, currentDiagramName, nodes, edges, saveDiagram, clearWorkingCanvas, recordHistory]);
 
   // Save diagram
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (currentDiagramName) {
       // Confirm before updating existing diagram
       if (window.confirm(`Update "${currentDiagramName}"?`)) {
-        saveDiagram(currentDiagramName, nodes, edges);
+        await saveDiagram(currentDiagramName, nodes, edges);
       }
     } else {
       // Open save dialog for new diagram
@@ -461,22 +461,23 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
   }, []);
 
   // Confirm save from dialog
-  const handleConfirmSave = useCallback(() => {
+  const handleConfirmSave = useCallback(async () => {
     if (!saveName.trim()) return;
-    saveDiagram(saveName.trim(), nodes, edges, saveDescription.trim() || undefined, isSaveAsNew);
+    await saveDiagram(saveName.trim(), nodes, edges, saveDescription.trim() || undefined, isSaveAsNew);
     setShowSaveDialog(false);
     setIsSaveAsNew(false);
   }, [saveName, saveDescription, nodes, edges, saveDiagram, isSaveAsNew]);
 
   // Open load dialog
-  const handleOpenLoadDialog = useCallback(() => {
-    setSavedDiagrams(listDiagrams());
+  const handleOpenLoadDialog = useCallback(async () => {
+    const diagrams = await listDiagrams();
+    setSavedDiagrams(diagrams);
     setShowLoadDialog(true);
   }, [listDiagrams]);
 
   // Load a diagram
-  const handleLoadDiagram = useCallback((id: string) => {
-    const diagram = loadDiagram(id);
+  const handleLoadDiagram = useCallback(async (id: string) => {
+    const diagram = await loadDiagram(id);
     if (diagram) {
       setNodes(diagram.nodes);
       setEdges(diagram.edges);
@@ -486,11 +487,12 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
   }, [loadDiagram, setNodes, setEdges]);
 
   // Delete a saved diagram
-  const handleDeleteDiagram = useCallback((id: string, e: React.MouseEvent) => {
+  const handleDeleteDiagram = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this diagram?')) {
-      deleteDiagram(id);
-      setSavedDiagrams(listDiagrams());
+      await deleteDiagram(id);
+      const diagrams = await listDiagrams();
+      setSavedDiagrams(diagrams);
     }
   }, [deleteDiagram, listDiagrams]);
 

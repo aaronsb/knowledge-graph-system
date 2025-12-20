@@ -36,6 +36,7 @@ export const BlockEditorWorkspace: React.FC = () => {
     currentDiagramName,
     hasUnsavedChanges,
     listDiagrams,
+    listDiagramsSync,
     loadDiagram,
     deleteDiagram,
     clearWorkingCanvas,
@@ -44,9 +45,9 @@ export const BlockEditorWorkspace: React.FC = () => {
     saveDiagram,
     workingNodes,
     workingEdges,
+    diagrams,
   } = useBlockDiagramStore();
 
-  const [diagrams, setDiagrams] = useState<DiagramMetadata[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('palette');
 
@@ -58,19 +59,20 @@ export const BlockEditorWorkspace: React.FC = () => {
     blockBuilderRef.current?.addBlock(type);
   };
 
-  // Load diagrams list - refresh when diagram changes or after save
+  // Load diagrams list on mount and when diagram changes
   useEffect(() => {
-    setDiagrams(listDiagrams());
-  }, [currentDiagramId, hasUnsavedChanges, listDiagrams]);
+    listDiagrams();
+  }, [currentDiagramId, hasUnsavedChanges]);
 
   // Load diagram from URL param
   useEffect(() => {
     if (diagramId && diagramId !== currentDiagramId) {
-      const diagram = loadDiagram(diagramId);
-      if (diagram) {
-        setWorkingCanvas(diagram.nodes, diagram.edges);
-        setSelectedId(diagramId);
-      }
+      loadDiagram(diagramId).then((diagram) => {
+        if (diagram) {
+          setWorkingCanvas(diagram.nodes, diagram.edges);
+          setSelectedId(diagramId);
+        }
+      });
     }
   }, [diagramId]);
 
@@ -85,19 +87,18 @@ export const BlockEditorWorkspace: React.FC = () => {
     navigate('/blocks');
   };
 
-  const handleSelectDiagram = (id: string) => {
-    const diagram = loadDiagram(id);
+  const handleSelectDiagram = async (id: string) => {
+    const diagram = await loadDiagram(id);
     if (diagram) {
       setWorkingCanvas(diagram.nodes, diagram.edges);
       navigate(`/blocks/${id}`);
     }
   };
 
-  const handleDeleteDiagram = (id: string, e: React.MouseEvent) => {
+  const handleDeleteDiagram = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this diagram?')) {
-      deleteDiagram(id);
-      setDiagrams(listDiagrams());
+      await deleteDiagram(id);
       if (currentDiagramId === id) {
         clearWorkingCanvas();
         navigate('/blocks');
@@ -115,9 +116,8 @@ export const BlockEditorWorkspace: React.FC = () => {
         const diagram = await importFromFile(file);
         if (diagram) {
           // Save imported diagram
-          const id = saveDiagram(diagram.name, diagram.nodes, diagram.edges, diagram.description);
+          const id = await saveDiagram(diagram.name, diagram.nodes, diagram.edges, diagram.description);
           setWorkingCanvas(diagram.nodes, diagram.edges);
-          setDiagrams(listDiagrams());
           navigate(`/blocks/${id}`);
         }
       }

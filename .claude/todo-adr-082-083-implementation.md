@@ -228,27 +228,44 @@ Pattern for metadata vs content retrieval:
 ## Phase 8: Web Client (ADR-083)
 
 ### Zustand Store Refactor
-- [ ] Create `useArtifactStore` (metadata only)
-- [ ] Create `useQueryDefinitionStore`
-- [ ] Implement `loadArtifacts()` action
-- [ ] Implement `persistArtifact()` action
+- [x] Create `useArtifactStore` (metadata only)
+- [x] Create `useQueryDefinitionStore`
+- [x] Implement `loadArtifacts()` action
+- [x] Implement `persistArtifact()` action
+- [x] Add artifact API methods to web client
 
 ### LocalStorage Caching
-- [ ] Implement `fetchArtifactPayload()` with cache
-- [ ] Implement LRU eviction (50MB limit)
-- [ ] Validate cache against `graph_epoch`
+- [x] Implement `fetchArtifactPayload()` with cache
+- [x] Implement LRU eviction (50MB limit)
+- [x] Validate cache against `graph_epoch`
 
 ### Component Updates
-- [ ] Update `PolarityExplorerWorkspace` to use artifacts
-- [ ] Update `BlockEditorWorkspace` to use query_definitions
-- [ ] Update `ReportWorkspace` to use artifacts
-- [ ] Add stale/missing artifact UI states
+- [x] Update `PolarityExplorerWorkspace` to use artifacts
+  - Added "Save as Artifact" button to analysis report view
+  - Persists analysis with parameters for regeneration
+- [x] Update `BlockEditorWorkspace` to use query_definitions
+  - Updated async handlers for save/load/delete operations
+- [x] Update `ReportWorkspace` to use artifacts
+  - Updated async handlers for delete/rename operations
+- [x] Add stale/missing artifact UI states
+  - Created `ArtifactStatusBadge` component with badge/inline/full variants
+  - Created `StaleIndicator` for compact displays
 
 ### Migrate Existing Stores
-- [ ] Migrate `polarityState` → artifacts
-- [ ] Migrate `blockDiagramStore` → query_definitions
-- [ ] Migrate `reportStore` → artifacts
-- [ ] Provide migration utility for localStorage data
+- [x] Migrate `polarityState` → artifacts
+  - "Save as Artifact" button persists analyses with parameters
+  - Local history retained for session continuity
+- [x] Migrate `blockDiagramStore` → query_definitions
+  - Rewrote store to use API with localStorage cache/fallback
+  - Added `migrateFromLocalStorage()` method
+  - Auto-syncs to API when available
+- [x] Migrate `reportStore` → artifacts
+  - Rewrote store to use artifacts API with localStorage cache/fallback
+  - Added `migrateFromLocalStorage()` and `loadReports()` methods
+  - Reports persist as artifacts with graph_epoch tracking
+- [x] Provide migration utility for localStorage data
+  - `blockDiagramStore.migrateFromLocalStorage()` - migrates diagrams
+  - `reportStore.migrateFromLocalStorage()` - migrates reports
 
 ## Phase 9: Cleanup & Maintenance
 
