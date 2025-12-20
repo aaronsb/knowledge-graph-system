@@ -39,6 +39,16 @@ get_compose_cmd() {
                 cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml"
             fi
             ;;
+        amd)
+            if [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ]; then
+                cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml"
+            fi
+            ;;
+        amd-host)
+            if [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ]; then
+                cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml"
+            fi
+            ;;
         mac)
             if [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ]; then
                 cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml"

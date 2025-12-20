@@ -142,6 +142,12 @@ case "$GPU_MODE" in
     nvidia)
         echo -e "${BLUE}→ Using NVIDIA GPU configuration (CUDA acceleration)${NC}"
         ;;
+    amd)
+        echo -e "${BLUE}→ Using AMD GPU configuration (ROCm wheels)${NC}"
+        ;;
+    amd-host)
+        echo -e "${BLUE}→ Using AMD GPU configuration (host ROCm libraries)${NC}"
+        ;;
     cpu|*)
         echo -e "${BLUE}→ Using CPU-only mode (no GPU acceleration)${NC}"
         ;;

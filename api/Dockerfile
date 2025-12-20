@@ -28,7 +28,11 @@
 # application configuration from the database (configured by operator).
 
 # Stage 1: Build stage with development dependencies
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
+
+# GPU variant: cpu (default), rocm60, rocm61
+# For AMD GPUs, set PYTORCH_VARIANT=rocm60 or rocm61
+ARG PYTORCH_VARIANT=cpu
 
 WORKDIR /build
 
@@ -44,13 +48,22 @@ COPY requirements.txt .
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
 # Use BuildKit mount cache for faster rebuilds while keeping images small
+# For ROCm variants, install PyTorch from ROCm wheel index first
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \
+    if [ "$PYTORCH_VARIANT" = "rocm60" ]; then \
+        echo "Installing PyTorch with ROCm 6.0 support..." && \
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.0; \
+    elif [ "$PYTORCH_VARIANT" = "rocm61" ]; then \
+        echo "Installing PyTorch with ROCm 6.1 support..." && \
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.1; \
+    fi && \
     pip install -r requirements.txt
 
 # Stage 2: Production runtime
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Build metadata (git commit, build time)
 ARG GIT_COMMIT=unknown

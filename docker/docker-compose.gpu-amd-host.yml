@@ -1,0 +1,42 @@
+# ============================================================================
+# Knowledge Graph System - AMD GPU Override (ROCm Official Image)
+# ============================================================================
+# Uses AMD's official ROCm PyTorch Docker image which includes all
+# ROCm libraries properly configured.
+#
+# Base image: rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1
+#   - ROCm 7.1 (compatible with host ROCm 7.x)
+#   - Python 3.13
+#   - PyTorch 2.9.1 with full ROCm support
+#
+# Requirements:
+#   - AMD GPU with ROCm support (RX 5000/6000/7000 series, or Instinct)
+#   - ROCm kernel driver on host
+#   - /dev/kfd and /dev/dri accessible
+#
+# Usage:
+#   GPU_MODE=amd-host ./operator.sh start
+#
+# ============================================================================
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile.rocm-host
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    # Enable AMD GPU access
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - "989"  # render group GID on host (for /dev/kfd, /dev/dri/renderD*)
+    # Required for ROCm HSA initialization
+    privileged: true
+    # Shared memory for GPU operations
+    ipc: host
+    # Note: HSA_OVERRIDE_GFX_VERSION and ROCR_VISIBLE_DEVICES can be set in .env
+    # if needed, but empty values break ROCm initialization
