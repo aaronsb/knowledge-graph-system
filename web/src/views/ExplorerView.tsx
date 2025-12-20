@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, History, Settings, Trash2 } from 'lucide-react';
+import { History, Settings, Trash2 } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
 import { useGraphStore } from '../store/graphStore';
@@ -54,7 +54,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const savedQueries = savedQueryIds.map(id => savedQueriesMap[id]).filter(Boolean);
 
   // UI state for IconRailPanel
-  const [activeTab, setActiveTab] = useState('search');
+  const [activeTab, setActiveTab] = useState('history');
 
   // Track if we're initializing from URL to prevent loops
   const initializingFromUrl = React.useRef(false);
@@ -426,13 +426,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     await deleteSavedQuery(id);
   }, [deleteSavedQuery]);
 
-  // Search panel content
-  const searchPanelContent = (
-    <div className="p-3">
-      <SearchBar />
-    </div>
-  );
-
   // Saved queries panel content
   const savedQueriesPanelContent = (
     <div className="p-3">
@@ -503,12 +496,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Tab definitions for IconRailPanel
   const tabs = [
     {
-      id: 'search',
-      label: 'Search',
-      icon: Search,
-      content: searchPanelContent,
-    },
-    {
       id: 'history',
       label: 'Saved Queries',
       icon: History,
@@ -529,11 +516,21 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        defaultExpanded={true}
+        defaultExpanded={false}
       />
 
       {/* Main visualization area */}
       <div className="flex-1 flex flex-col">
+        {/* Search Bar at top */}
+        <div
+          className="border-b border-border bg-card"
+          style={{ zIndex: getZIndexValue('searchBar') }}
+        >
+          <div className="p-4">
+            <SearchBar />
+          </div>
+        </div>
+
         {/* Visualization Area */}
         <div
           className={`flex-1 relative ${!graphData && !isLoading ? 'pointer-events-none' : ''}`}
@@ -562,14 +559,14 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
               <div className="text-center max-w-md">
                 <h3 className="text-xl font-semibold mb-2">Welcome to Knowledge Graph Visualization</h3>
                 <p className="text-muted-foreground mb-4">
-                  Use the search panel to find concepts and start exploring
+                  Search for a concept above to start exploring the graph
                 </p>
                 <div className="text-sm text-muted-foreground">
                   <p>Tips:</p>
                   <ul className="mt-2 space-y-1 text-left">
-                    <li>• Use the search panel (left) to find concepts</li>
+                    <li>• Use the search bar above to find concepts</li>
                     <li>• Click nodes to explore connections</li>
-                    <li>• Adjust settings in the settings panel</li>
+                    <li>• Use the sidebar for saved queries and settings</li>
                     <li>• Drag nodes to reposition them</li>
                   </ul>
                 </div>
