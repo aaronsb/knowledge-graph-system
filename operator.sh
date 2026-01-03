@@ -12,7 +12,7 @@
 #   ./operator.sh status             Show platform status
 #   ./operator.sh restart <service>  Restart a service
 #   ./operator.sh rebuild <service>  Rebuild and restart a service
-#   ./operator.sh logs [service]     Tail logs
+#   ./operator.sh logs [service] [-f] Show logs (last 100 lines, -f to follow)
 #   ./operator.sh shell              Open shell in operator container
 #   ./operator.sh teardown           Remove containers and optionally data
 #
@@ -287,22 +287,52 @@ cmd_config() {
 }
 
 cmd_logs() {
-    local service="${1:-api}"
+    local follow=""
+    local lines="100"
+    local service=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -f|--follow)
+                follow="-f"
+                shift
+                ;;
+            -n|--lines)
+                lines="$2"
+                shift 2
+                ;;
+            -*)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: ./operator.sh logs [service] [-f|--follow] [-n|--lines N]"
+                exit 1
+                ;;
+            *)
+                service="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Default to api if no service specified
+    service="${service:-api}"
+
+    local container=""
     case "$service" in
         api)
-            docker logs -f kg-api-dev 2>/dev/null || docker logs -f knowledge-graph-api
+            container="kg-api-dev"
             ;;
         web)
-            docker logs -f kg-web-dev 2>/dev/null || docker logs -f knowledge-graph-web
+            container="kg-web-dev"
             ;;
         postgres)
-            docker logs -f knowledge-graph-postgres
+            container="knowledge-graph-postgres"
             ;;
         garage)
-            docker logs -f knowledge-graph-garage
+            container="knowledge-graph-garage"
             ;;
         operator)
-            docker logs -f kg-operator
+            container="kg-operator"
             ;;
         *)
             echo -e "${RED}Unknown service: $service${NC}"
@@ -310,6 +340,14 @@ cmd_logs() {
             exit 1
             ;;
     esac
+
+    # Check if container exists
+    if ! docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+        echo -e "${RED}Container '$container' not found${NC}"
+        exit 1
+    fi
+
+    docker logs --tail "$lines" $follow "$container"
 }
 
 cmd_query() {
@@ -365,7 +403,7 @@ show_help_overview() {
     echo -e "${BOLD}Management Commands:${NC}"
     echo "  status             Show platform and container status"
     echo "  config [options]   Update platform configuration"
-    echo "  logs [service]     Tail logs (default: api)"
+    echo "  logs [service] [-f] Show logs (default: api, -f to follow)"
     echo "  shell              Open shell in operator container"
     echo "  query 'SQL'        Run SQL query against database (alias: pg)"
     echo ""
@@ -452,14 +490,21 @@ show_help_services() {
     echo "  - Dockerfile changes"
     echo "  - Schema changes requiring rebuild"
     echo ""
-    echo -e "${BLUE}logs [service]${NC}"
-    echo "  Tail logs from a service (default: api)."
-    echo "  Press Ctrl+C to stop."
+    echo -e "${BLUE}logs [service] [-f|--follow] [-n|--lines N]${NC}"
+    echo "  Show logs from a service (default: api)."
+    echo "  By default shows last 100 lines and exits."
+    echo "  Use -f to follow (like tail -f), Ctrl+C to stop."
+    echo ""
+    echo "  Options:"
+    echo "    -f, --follow     Follow log output (stream continuously)"
+    echo "    -n, --lines N    Show last N lines (default: 100)"
     echo ""
     echo "  Examples:"
-    echo "    $0 logs              # API logs (default)"
-    echo "    $0 logs web          # Web server logs"
-    echo "    $0 logs postgres     # Database logs"
+    echo "    $0 logs              # Last 100 API logs"
+    echo "    $0 logs -f           # Follow API logs"
+    echo "    $0 logs web          # Last 100 web server logs"
+    echo "    $0 logs postgres -n 50  # Last 50 database logs"
+    echo "    $0 logs api -f       # Follow API logs"
     echo ""
 }
 
