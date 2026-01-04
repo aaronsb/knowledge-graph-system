@@ -57,8 +57,9 @@ export class JobProgressStream {
     this.eventSource.addEventListener('completed', (event: any) => {
       try {
         const result = JSON.parse(event.data);
-        this.callbacks.onCompleted?.(result);
+        // Close connection BEFORE callback to prevent error events during callback
         this.close();
+        this.callbacks.onCompleted?.(result);
       } catch (error) {
         console.error('Failed to parse completed event:', error);
       }
@@ -68,8 +69,8 @@ export class JobProgressStream {
     this.eventSource.addEventListener('failed', (event: any) => {
       try {
         const data = JSON.parse(event.data);
-        this.callbacks.onFailed?.(data.error);
         this.close();
+        this.callbacks.onFailed?.(data.error);
       } catch (error) {
         console.error('Failed to parse failed event:', error);
       }
@@ -79,8 +80,8 @@ export class JobProgressStream {
     this.eventSource.addEventListener('cancelled', (event: any) => {
       try {
         const data = JSON.parse(event.data);
-        this.callbacks.onCancelled?.(data.message);
         this.close();
+        this.callbacks.onCancelled?.(data.message);
       } catch (error) {
         console.error('Failed to parse cancelled event:', error);
       }

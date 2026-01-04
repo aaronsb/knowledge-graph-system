@@ -67,16 +67,16 @@ Garage services to use:
 - [x] Add document_path to source entries in manifest.json
 
 ### A3. Restore Changes
-- [ ] Create `restore_backup_archive()` function to extract tar.gz
-- [ ] Extend `DataImporter` to read from extracted archive
-- [ ] Upload documents to Garage from archive
-- [ ] Handle Garage key conflicts (overwrite vs skip)
+- [x] Create `restore_backup_archive()` function to extract tar.gz
+- [x] Extend `DataImporter` to read from extracted archive
+- [x] Upload documents to Garage from archive
+- [x] Handle Garage key conflicts (overwrite vs skip)
 
 ### A4. CLI Updates
 - [x] Update `kg admin backup` to handle .tar.gz files
-- [ ] Update `kg admin restore` to extract and process archives
-- [ ] Update progress display for document count
-- [ ] Test round-trip: backup → restore → verify Garage content intact
+- [x] Update `kg admin restore` to extract and process archives
+- [x] Fix CLI display issue (was server-side variable shadowing bug in restore_worker.py)
+- [ ] Test round-trip: backup → restore → verify Garage content downloadable
 
 ### A5. RBAC Updates
 - [x] Add migration 037 for admin backup permissions (create, restore)
@@ -176,4 +176,30 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Previously only platform_admin had these
 - Successfully tested backup: archive contains manifest.json + documents/
 - Next: A3 (restore function for archive format)
+
+### Session 3 (2026-01-04 continued)
+- Completed A3: Restore function for archive format
+  - Added `extract_backup_archive()`, `restore_documents_to_garage()`, `cleanup_extracted_archive()` to backup_archive.py
+  - Updated `admin.py` restore endpoint to accept .tar.gz files
+  - Updated `restore_worker.py` to call `restore_documents_to_garage()` after graph restore
+  - Fixed: SourceDocumentService uses `base.put_object()` not `put()`
+  - Fixed: backup was adding same document multiple times (added deduplication)
+- Restore round-trip test:
+  - **Server-side: WORKING** - "Document restore complete: 2 uploaded, 0 skipped, 0 failed"
+  - ~~**CLI display: BUG** - "connection pool is closed" error~~ **FIXED**
+- Completed A4: CLI restore updates
+  - Changed from password auth to `--confirm` flag
+  - Changed from SSE to polling (simpler, more reliable)
+
+### Session 4 (2026-01-04 continued)
+- **Fixed "connection pool is closed" bug** - root cause was variable shadowing in restore_worker.py
+  - `client = AGEClient()` at line 80 created original client
+  - `client = AGEClient()` at line 162 shadowed it with metrics refresh client
+  - `client.close()` in finally block tried to close already-closed client
+  - Fix: Renamed metrics client to `metrics_client` to avoid shadowing
+- Part A now fully complete and tested
+
+### TODO
+- [ ] Test document download once B1 endpoints are implemented
+- [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
 

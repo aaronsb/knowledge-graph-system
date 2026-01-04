@@ -10,7 +10,7 @@ import { createClientFromEnv } from '../../api/client';
 import { getConfig } from '../../lib/config';
 import * as colors from '../colors';
 import { separator, coloredCount } from '../colors';
-import { prompt, promptPassword, trackJobWithSSE } from './utils';
+import { prompt, promptPassword, trackJobWithPolling } from './utils';
 
 export function createBackupCommand(): Command {
   return new Command('backup')
@@ -190,11 +190,12 @@ export function createListBackupsCommand(): Command {
 
 export function createRestoreCommand(): Command {
   return new Command('restore')
-    .description('Restore a database backup (requires authentication)')
+    .description('Restore a database backup (uses OAuth authentication)')
     .option('--file <name>', 'Backup filename (from configured directory)')
     .option('--path <path>', 'Custom backup file path (overrides configured directory)')
     .option('--merge', 'Merge into existing ontology if it exists (default: error if ontology exists)', false)
     .option('--deps <action>', 'How to handle external dependencies: prune, stitch, defer', 'prune')
+    .option('--confirm', 'Confirm restore operation (required for non-interactive use)', false)
     .action(async (options) => {
       try {
         const client = createClientFromEnv();
@@ -203,7 +204,7 @@ export function createRestoreCommand(): Command {
 
         console.log('\n' + separator());
         console.log(colors.ui.title('📥 Database Restore'));
-        console.log(colors.status.warning('⚠️  Potentially destructive operation - authentication required'));
+        console.log(colors.status.warning('⚠️  Potentially destructive operation'));
         console.log(separator());
 
         // Determine backup file path
@@ -275,21 +276,14 @@ export function createRestoreCommand(): Command {
         const fileStats = fs.statSync(backupFilePath);
         console.log(colors.status.dim(`Size: ${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`));
 
-        // Get authentication
-        console.log('\n' + colors.status.warning('Authentication required:'));
-
-        const username = config.get('username') || config.getClientId();
-        if (!username) {
-          console.error(colors.status.error('✗ Username not configured. Run: kg config set username <your-username>'));
-          process.exit(1);
-        }
-
-        console.log(colors.status.dim(`Using username: ${username}`));
-        const password = await promptPassword('Password: ');
-
-        if (!password) {
-          console.error(colors.status.error('✗ Password required'));
-          process.exit(1);
+        // Confirm restore operation
+        if (!options.confirm) {
+          console.log('\n' + colors.status.warning('This will restore the database from backup.'));
+          const confirmation = await prompt('Type "restore" to confirm: ');
+          if (confirmation.toLowerCase() !== 'restore') {
+            console.log(colors.status.dim('\nRestore cancelled.'));
+            process.exit(0);
+          }
         }
 
         // Upload backup with progress tracking
@@ -299,8 +293,6 @@ export function createRestoreCommand(): Command {
         try {
           const uploadResult = await client.restoreBackup(
             backupFilePath,
-            username,
-            password,
             !options.merge,
             options.deps,
             (uploaded: number, total: number, percent: number) => {
@@ -320,11 +312,12 @@ export function createRestoreCommand(): Command {
             console.log(colors.status.warning(`⚠️  Backup has ${uploadResult.integrity_warnings} validation warnings`));
           }
 
-          // Track restore job progress with SSE
+          // Track restore job progress with polling
+          // (SSE has timing issues with EventSource library on fast-completing jobs)
           spinner = ora('Preparing restore...').start();
           const jobId = uploadResult.job_id;
 
-          const finalJob = await trackJobWithSSE(client, jobId, spinner);
+          const finalJob = await trackJobWithPolling(client, jobId, spinner);
 
           if (finalJob.status === 'completed') {
             spinner.succeed('Restore completed successfully!');

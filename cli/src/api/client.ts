@@ -756,10 +756,9 @@ export class KnowledgeGraphClient {
    *
    * Uploads backup file as multipart/form-data and queues restore job.
    * Server validates backup, creates checkpoint, then executes restore with progress tracking.
+   * Uses OAuth authentication (token from login).
    *
-   * @param backupFilePath Path to backup JSON file
-   * @param username Username for authentication
-   * @param password Password for authentication
+   * @param backupFilePath Path to backup file (.tar.gz archive or .json)
    * @param overwrite Whether to overwrite existing data
    * @param handleExternalDeps How to handle external dependencies ('prune', 'stitch', 'defer')
    * @param onUploadProgress Optional callback for upload progress (bytes uploaded, total bytes, percent)
@@ -767,16 +766,12 @@ export class KnowledgeGraphClient {
    */
   async restoreBackup(
     backupFilePath: string,
-    username: string,
-    password: string,
     overwrite: boolean = false,
     handleExternalDeps: string = 'prune',
     onUploadProgress?: (uploaded: number, total: number, percent: number) => void
   ): Promise<{ job_id: string; status: string; message: string; backup_stats: any; integrity_warnings: number }> {
     const form = new FormData();
     form.append('file', fs.createReadStream(backupFilePath));
-    form.append('username', username);
-    form.append('password', password);
     form.append('overwrite', String(overwrite));
     form.append('handle_external_deps', handleExternalDeps);
 
