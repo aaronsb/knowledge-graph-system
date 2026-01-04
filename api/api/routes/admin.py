@@ -36,6 +36,7 @@ from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
 from ..lib.backup_streaming import create_backup_stream
+from ..lib.backup_archive import stream_backup_archive
 from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
@@ -110,11 +111,17 @@ async def create_backup(
     - **full**: Backup entire database (all ontologies)
     - **ontology**: Backup specific ontology (requires ontology_name)
 
-    Supports two formats:
-    - **json**: Native format (default) - includes all data, restorable
+    Supports three formats:
+    - **archive** (default): tar.gz with manifest.json + original documents from Garage
+    - **json**: Graph data only (legacy format) - no source documents
     - **gexf**: Gephi visualization format - graph structure only, NOT restorable
 
-    JSON backup includes:
+    Archive backup includes:
+    - manifest.json with all graph data (concepts, sources, instances, relationships)
+    - documents/ directory with original files from Garage storage
+    - Full embeddings (1536-dim vectors)
+
+    JSON backup includes (legacy, no documents):
     - All concepts, sources, and instances
     - Full embeddings (1536-dim vectors)
     - All relationships
@@ -130,7 +137,15 @@ async def create_backup(
 
     **Authorization:** Requires `backups:create` permission
 
-    Example (JSON):
+    Example (Archive with documents - default):
+    ```json
+    {
+        "backup_type": "ontology",
+        "ontology_name": "Research Papers"
+    }
+    ```
+
+    Example (JSON legacy):
     ```json
     {
         "backup_type": "full",
@@ -151,16 +166,24 @@ async def create_backup(
         # Get AGE client
         client = AGEClient()
 
-        # Create streaming backup
-        stream, filename = await create_backup_stream(
-            client=client,
-            backup_type=request.backup_type,
-            ontology_name=request.ontology_name,
-            format=request.format
-        )
-
-        # Determine media type based on format
-        media_type = "application/gexf+xml" if request.format == "gexf" else "application/json"
+        # Handle different formats
+        if request.format == "archive":
+            # Create tar.gz archive with documents (default)
+            stream, filename = await stream_backup_archive(
+                client=client,
+                backup_type=request.backup_type,
+                ontology_name=request.ontology_name
+            )
+            media_type = "application/gzip"
+        else:
+            # Legacy JSON or GEXF format (graph data only)
+            stream, filename = await create_backup_stream(
+                client=client,
+                backup_type=request.backup_type,
+                ontology_name=request.ontology_name,
+                format=request.format
+            )
+            media_type = "application/gexf+xml" if request.format == "gexf" else "application/json"
 
         # Return streaming response
         return StreamingResponse(
