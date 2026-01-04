@@ -14,32 +14,27 @@ Two related work streams:
 
 ## Part A: Backup Extension (ADR-015)
 
-Extend existing ontology backup to include Garage-stored original documents.
+Update backup/restore to include Garage-stored source documents. Garage is now the canonical storage for original documents (ADR-081), so backups should include this data by default.
 
 ### A1. Research & Design
 - [ ] Review current backup format in `api/api/lib/serialization.py`
 - [ ] Review Garage client for document retrieval patterns
-- [ ] Design extended backup format (embed base64? separate archive?)
-- [ ] Decide: single JSON with embedded content vs tarball with JSON + files
+- [ ] Design backup format extension (embed base64 in `sources` section)
+- [ ] Handle image + prose file pairing
 
 ### A2. API Changes
-- [ ] Add `include_garage: bool` parameter to backup request model
-- [ ] Extend `DataExporter` to fetch Garage documents per ontology
-- [ ] Handle image + prose file pairing in export
+- [ ] Extend `DataExporter` to fetch Garage content for each source
+- [ ] Add `garage_content` field to source entries in backup
 - [ ] Update backup streaming for larger payloads
-- [ ] Add `garage_documents` section to backup format
 
 ### A3. Restore Changes
 - [ ] Extend `DataImporter` to restore Garage documents
+- [ ] Upload content to Garage during restore
 - [ ] Handle Garage key conflicts (overwrite vs skip)
-- [ ] Update restore worker for Garage upload
-- [ ] Add progress tracking for Garage restore phase
 
-### A4. CLI Updates
-- [ ] Add `--include-garage` flag to `kg admin backup`
-- [ ] Add `--include-garage` handling to `kg admin restore`
+### A4. CLI & Testing
 - [ ] Update progress display for Garage content
-- [ ] Test round-trip: backup with Garage → restore → verify
+- [ ] Test round-trip: backup → restore → verify Garage content intact
 
 **Note:** Backup/restore is CLI-only (admin operation). Not exposed via MCP.
 
