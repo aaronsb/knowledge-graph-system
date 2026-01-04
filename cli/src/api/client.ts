@@ -708,7 +708,10 @@ export class KnowledgeGraphClient {
     // Extract filename from Content-Disposition header
     const contentDisposition = response.headers['content-disposition'];
     const filenameMatch = contentDisposition?.match(/filename=(.+)/);
-    const filename = filenameMatch ? filenameMatch[1] : 'backup.json';
+    // Default based on content type (archive is now default)
+    const contentType = response.headers['content-type'] || '';
+    const defaultFilename = contentType.includes('gzip') ? 'backup.tar.gz' : 'backup.json';
+    const filename = filenameMatch ? filenameMatch[1] : defaultFilename;
 
     // Get content length if available
     const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
@@ -735,7 +738,8 @@ export class KnowledgeGraphClient {
     });
 
     // Rename file to use server-provided filename if different
-    const finalPath = savePath.replace(/[^/]+\.json$/, filename);
+    // Handle all backup formats: .json, .gexf, .tar.gz
+    const finalPath = savePath.replace(/[^/]+(\.json|\.gexf|\.tar\.gz)$/, filename);
     if (finalPath !== savePath && fs.existsSync(savePath)) {
       fs.renameSync(savePath, finalPath);
     }

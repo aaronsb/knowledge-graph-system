@@ -484,7 +484,7 @@ export interface BackupRequest {
   backup_type: 'full' | 'ontology';
   ontology_name?: string;
   output_filename?: string;
-  format?: 'json' | 'gexf';  // Export format: json (native, restorable) or gexf (Gephi visualization)
+  format?: 'archive' | 'json' | 'gexf';  // Export format: archive (tar.gz with documents, default), json (graph only), or gexf (Gephi visualization)
 }
 
 export interface BackupIntegrityAssessment {

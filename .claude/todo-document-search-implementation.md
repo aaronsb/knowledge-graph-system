@@ -73,10 +73,13 @@ Garage services to use:
 - [ ] Handle Garage key conflicts (overwrite vs skip)
 
 ### A4. CLI Updates
-- [ ] Update `kg admin backup` to handle .tar.gz files
+- [x] Update `kg admin backup` to handle .tar.gz files
 - [ ] Update `kg admin restore` to extract and process archives
 - [ ] Update progress display for document count
 - [ ] Test round-trip: backup → restore → verify Garage content intact
+
+### A5. RBAC Updates
+- [x] Add migration 037 for admin backup permissions (create, restore)
 
 **Note:** Backup/restore is CLI-only (admin operation). Not exposed via MCP.
 
@@ -161,5 +164,16 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Extended `DataExporter.export_sources` with Garage fields
   - Created `api/api/lib/backup_archive.py` for tar.gz streaming
   - Updated backup endpoint - "archive" is now default format
-- Next: A3 (restore) and A4 (CLI updates)
+
+### Session 2 (2026-01-04)
+- Completed A4: CLI Updates for backup
+  - Updated `cli/src/cli/admin/backup.ts` - archive format as default
+  - Updated `cli/src/api/client.ts` - handle .tar.gz filenames
+  - Updated `cli/src/types/index.ts` - BackupRequest format type
+  - Updated `list-backups` and `restore` to recognize .tar.gz files
+- Created migration 037 for admin backup permissions
+  - Admin role now has backups:create and backups:restore
+  - Previously only platform_admin had these
+- Successfully tested backup: archive contains manifest.json + documents/
+- Next: A3 (restore function for archive format)
 

@@ -18,7 +18,7 @@ export function createBackupCommand(): Command {
     .option('--type <type>', 'Backup type: "full" (entire graph) or "ontology" (single namespace)')
     .option('--ontology <name>', 'Ontology name (required if --type ontology)')
     .option('--output <filename>', 'Custom output filename (auto-generated if not specified)')
-    .option('--format <format>', 'Export format: "json" (native, restorable) or "gexf" (Gephi visualization - not restorable)', 'json')
+    .option('--format <format>', 'Export format: "archive" (tar.gz with documents, default), "json" (graph only), or "gexf" (Gephi visualization)', 'archive')
     .action(async (options) => {
       try {
         const client = createClientFromEnv();
@@ -29,11 +29,11 @@ export function createBackupCommand(): Command {
 
         let backupType: 'full' | 'ontology' = 'full';
         let ontologyName: string | undefined;
-        let format: 'json' | 'gexf' = options.format || 'json';
+        let format: 'archive' | 'json' | 'gexf' = options.format || 'archive';
 
         // Validate format
-        if (format !== 'json' && format !== 'gexf') {
-          console.error(colors.status.error('✗ Invalid format. Must be "json" or "gexf"'));
+        if (format !== 'archive' && format !== 'json' && format !== 'gexf') {
+          console.error(colors.status.error('✗ Invalid format. Must be "archive", "json", or "gexf"'));
           process.exit(1);
         }
 
@@ -72,10 +72,10 @@ export function createBackupCommand(): Command {
 
         // Determine output path
         let savePath: string;
-        const fileExtension = format === 'gexf' ? '.gexf' : '.json';
+        const fileExtension = format === 'archive' ? '.tar.gz' : (format === 'gexf' ? '.gexf' : '.json');
 
         if (options.output) {
-          const hasExtension = options.output.endsWith('.json') || options.output.endsWith('.gexf');
+          const hasExtension = options.output.endsWith('.json') || options.output.endsWith('.gexf') || options.output.endsWith('.tar.gz');
           savePath = path.join(backupDir, hasExtension ? options.output : `${options.output}${fileExtension}`);
         } else {
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
@@ -145,9 +145,9 @@ export function createListBackupsCommand(): Command {
           return;
         }
 
-        // Read backup files
+        // Read backup files (archive, json, gexf formats)
         const files = fs.readdirSync(backupDir)
-          .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+          .filter(f => f.endsWith('.tar.gz') || f.endsWith('.json') || f.endsWith('.jsonl') || f.endsWith('.gexf'))
           .map(filename => {
             const filepath = path.join(backupDir, filename);
             const stats = fs.statSync(filepath);
@@ -225,7 +225,7 @@ export function createRestoreCommand(): Command {
           }
 
           const backups = fs.readdirSync(backupDir)
-            .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+            .filter(f => f.endsWith('.tar.gz') || f.endsWith('.json') || f.endsWith('.jsonl'))
             .map(filename => {
               const filepath = path.join(backupDir, filename);
               const stats = fs.statSync(filepath);
