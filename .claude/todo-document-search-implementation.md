@@ -87,24 +87,24 @@ Garage services to use:
 
 ## Part B: Document Search (ADR-084)
 
-### B1. API Endpoints - Phase 1
-- [ ] Create `api/api/routes/documents.py` route file
-- [ ] Implement `POST /query/documents/search`
-  - [ ] Reuse `source_embeddings` search
-  - [ ] Aggregate chunks to DocumentMeta level
-  - [ ] Rank by max chunk similarity
-  - [ ] Include concept_ids per document
-  - [ ] Add ontology filter parameter
-- [ ] Implement `GET /documents/{document_id}/content`
-  - [ ] Fetch from Garage (document or image+prose)
-  - [ ] Include chunks from Source nodes
-  - [ ] Return appropriate content type
-- [ ] Implement `GET /ontology/{name}/documents`
-  - [ ] List all DocumentMeta in ontology
-  - [ ] Optional limit parameter
-- [ ] Add Pydantic models in `api/api/models/documents.py`
-- [ ] Register routes in `api/api/main.py`
-- [ ] Test endpoints with curl/httpie
+### B1. API Endpoints - Phase 1 ✅
+- [x] Create `api/api/routes/documents.py` route file
+- [x] Implement `POST /query/documents/search`
+  - [x] Reuse `source_embeddings` search
+  - [x] Aggregate chunks to DocumentMeta level
+  - [x] Rank by max chunk similarity
+  - [x] Include concept_ids per document
+  - [x] Add ontology filter parameter
+- [x] Implement `GET /documents/{document_id}/content`
+  - [x] Fetch from Garage (document or image+prose)
+  - [x] Include chunks from Source nodes
+  - [x] Return appropriate content type
+- [x] Implement `GET /documents` (list all with optional ontology filter)
+  - [x] List all DocumentMeta
+  - [x] Optional limit/offset pagination
+- [x] Pydantic models included in routes/documents.py
+- [x] Register routes in `api/api/main.py`
+- [x] Test endpoints with curl/httpie
 
 ### B2. CLI - Phase 2
 - [ ] Create `cli/src/cli/document.ts` command file
@@ -199,7 +199,24 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Fix: Renamed metrics client to `metrics_client` to avoid shadowing
 - Part A now fully complete and tested
 
+### Session 5 (2026-01-04 continued)
+- Completed B1: Document Search API Endpoints
+  - Created `api/api/routes/documents.py` with Pydantic models
+  - `POST /query/documents/search` - semantic search with document aggregation
+  - `GET /documents` - list documents with metadata and counts
+  - `GET /documents/{id}/content` - retrieve full content from Garage
+- **Fixed HAS_SOURCE relationship bug in ingestion_worker.py**
+  - Worker was using `{filename}_chunk{n}` pattern
+  - Source nodes use `{document_id[:12]}_chunk{n}` pattern
+  - Fix: Use document_id pattern to match actual Source IDs
+- **Fixed APPEARS relationship in concept query**
+  - Was using `APPEARS_IN`, actual relationship is `APPEARS`
+- All endpoints tested and working
+
 ### TODO
-- [ ] Test document download once B1 endpoints are implemented
+- [x] Test document download once B1 endpoints are implemented
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
+- [ ] B2: CLI commands for document search
+- [ ] B3: MCP tool extension
+- [ ] B4: Web explorer integration
 
