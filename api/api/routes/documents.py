@@ -101,6 +101,22 @@ class DocumentListResponse(BaseModel):
     offset: int
 
 
+class DocumentConceptItem(BaseModel):
+    """Concept extracted from a document."""
+    concept_id: str
+    name: str
+    source_id: str = Field(..., description="Source chunk where concept appears")
+    instance_count: int = Field(default=1, description="Number of instances in document")
+
+
+class DocumentConceptsResponse(BaseModel):
+    """Response with concepts for a document."""
+    document_id: str
+    filename: str
+    concepts: List[DocumentConceptItem] = Field(default_factory=list)
+    total: int
+
+
 # ============================================================================
 # Helper Functions
 # ============================================================================
@@ -681,5 +697,91 @@ async def list_documents(
     except Exception as e:
         logger.error(f"Failed to list documents: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.get("/{document_id}/concepts", response_model=DocumentConceptsResponse)
+async def get_document_concepts(
+    document_id: str,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Get all concepts extracted from a document (ADR-084).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Returns concepts linked to the document via Source nodes,
+    including concept names and the source chunks where they appear.
+
+    **Response:**
+    ```json
+    {
+      "document_id": "sha256:abc...",
+      "filename": "notes.md",
+      "concepts": [
+        {
+          "concept_id": "sha256:abc_chunk1_def",
+          "name": "Machine Learning",
+          "source_id": "sha256:abc_chunk1",
+          "instance_count": 3
+        }
+      ],
+      "total": 15
+    }
+    ```
+    """
+    client = AGEClient()
+
+    try:
+        # 1. Get document metadata
+        doc_query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})
+        RETURN d.filename as filename
+        """
+        doc_result = client._execute_cypher(doc_query, params={"doc_id": document_id}, fetch_one=True)
+
+        if not doc_result:
+            raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
+
+        filename = doc_result.get('filename') or 'unknown'
+
+        # 2. Get concepts via DocumentMeta -> HAS_SOURCE -> Source <- APPEARS - Concept
+        concepts_query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})-[:HAS_SOURCE]->(s:Source)<-[:APPEARS]-(c:Concept)
+        OPTIONAL MATCH (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s)
+        WITH c, s, count(i) as instance_count
+        RETURN c.concept_id as concept_id,
+               c.label as name,
+               s.source_id as source_id,
+               instance_count
+        ORDER BY instance_count DESC, c.label
+        """
+
+        results = client._execute_cypher(concepts_query, params={"doc_id": document_id})
+
+        concepts = [
+            DocumentConceptItem(
+                concept_id=r['concept_id'],
+                name=r.get('name') or r['concept_id'],
+                source_id=r['source_id'],
+                instance_count=r.get('instance_count') or 1
+            )
+            for r in results
+        ]
+
+        return DocumentConceptsResponse(
+            document_id=document_id,
+            filename=filename,
+            concepts=concepts,
+            total=len(concepts)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document concepts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get concepts: {str(e)}")
     finally:
         client.close()

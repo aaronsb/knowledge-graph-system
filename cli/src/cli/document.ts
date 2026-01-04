@@ -228,6 +228,68 @@ const showCommand = setCommandHelp(
     }
   });
 
+// kg document concepts <document-id>
+const conceptsCommand = setCommandHelp(
+  new Command('concepts'),
+  'List concepts from a document',
+  'Show all concepts extracted from a specific document. Displays concept names, IDs, and the source chunks where they appear.'
+)
+  .argument('<document-id>', 'Document ID (e.g., sha256:abc123...)')
+  .option('-j, --json', 'Output raw JSON')
+  .showHelpAfterError()
+  .action(async (documentId: string, options: { json?: boolean }) => {
+    try {
+      const client = createClientFromEnv();
+      const result = await client.getDocumentConcepts(documentId);
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      console.log();
+      console.log(colors.ui.header(`Concepts: ${result.filename}`));
+      console.log(colors.separator());
+      console.log(`${colors.ui.key('Document:')} ${colors.status.dim(documentId.substring(0, 50) + '...')}`);
+      console.log(`${colors.ui.key('Total:')} ${colors.ui.value(String(result.total))} concept(s)`);
+      console.log();
+
+      if (result.concepts.length === 0) {
+        console.log(colors.status.warning('⚠ No concepts found for this document'));
+        console.log(colors.status.dim('  The document may not have HAS_SOURCE relationships (ingested before fix)'));
+        return;
+      }
+
+      const table = new Table({
+        columns: [
+          { header: 'Concept', field: 'name', type: 'heading', width: 'flex' },
+          { header: 'Concept ID', field: 'concept_id', type: 'concept_id', width: 28 },
+          { header: 'Source', field: 'source_id', type: 'text', width: 22 },
+          { header: 'Instances', field: 'instance_count', type: 'count', width: 10, align: 'right' },
+        ]
+      });
+
+      const displayData = result.concepts.map(c => ({
+        ...c,
+        concept_id: c.concept_id.length > 26 ? c.concept_id.substring(0, 26) + '…' : c.concept_id,
+        source_id: c.source_id.length > 20 ? c.source_id.substring(0, 20) + '…' : c.source_id,
+      }));
+
+      table.print(displayData);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.error(colors.status.error(`✗ Document not found: ${documentId}`));
+      } else {
+        console.error(colors.status.error(`✗ Failed to get concepts: ${error.message}`));
+        if (error.response?.data?.detail) {
+          console.error(colors.status.error(error.response.data.detail));
+        }
+      }
+      process.exit(1);
+    }
+  });
+
 documentCommand.addCommand(searchCommand);
 documentCommand.addCommand(listCommand);
 documentCommand.addCommand(showCommand);
+documentCommand.addCommand(conceptsCommand);

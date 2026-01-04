@@ -641,6 +641,24 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Get concepts extracted from a document
+   */
+  async getDocumentConcepts(documentId: string): Promise<{
+    document_id: string;
+    filename: string;
+    concepts: Array<{
+      concept_id: string;
+      name: string;
+      source_id: string;
+      instance_count: number;
+    }>;
+    total: number;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
   // ========== Database Methods ==========
 
   /**
