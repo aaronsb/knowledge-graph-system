@@ -19,6 +19,7 @@ import { mcpConfigCommand } from './mcp-config';
 import { polarityCommand } from './polarity';
 import { projectionCommand } from './projection';
 import { sourceCommand } from './source';
+import { documentCommand } from './document';
 import { artifactCommand } from './artifact';
 import { groupCommand } from './group';
 import { queryDefCommand } from './query-def';
@@ -100,6 +101,7 @@ export async function registerCommands(program: Command) {
     ingestCommand,
     jobsCommand,
     searchCommand,
+    documentCommand,  // ADR-084: Document search
     databaseCommand,
     ontologyCommand,
     sourceCommand,

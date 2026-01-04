@@ -558,6 +558,89 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  // ========== Document Methods (ADR-084) ==========
+
+  /**
+   * Search documents using semantic similarity
+   * Aggregates chunk-level matches to document level
+   */
+  async searchDocuments(request: {
+    query: string;
+    min_similarity?: number;
+    limit?: number;
+    ontology?: string;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      best_similarity: number;
+      source_count: number;
+      resources: Array<{ type: string; garage_key: string }>;
+      concept_ids: string[];
+    }>;
+    returned: number;
+    total_matches: number;
+  }> {
+    const response = await this.client.post('/query/documents/search', request);
+    return response.data;
+  }
+
+  /**
+   * List documents with optional ontology filter
+   */
+  async listDocuments(options: {
+    ontology?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      source_count: number;
+      concept_count: number;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const params = new URLSearchParams();
+    if (options.ontology) params.append('ontology', options.ontology);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/documents?${params.toString()}`);
+    return response.data;
+  }
+
+  /**
+   * Get document content from Garage
+   */
+  async getDocumentContent(documentId: string): Promise<{
+    document_id: string;
+    content_type: string;
+    content: {
+      document?: string;
+      image?: string;
+      prose?: string;
+      encoding: string;
+      error?: string;
+    };
+    chunks: Array<{
+      source_id: string;
+      paragraph: number;
+      full_text: string;
+      char_offset_start?: number;
+      char_offset_end?: number;
+    }>;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/content`);
+    return response.data;
+  }
+
   // ========== Database Methods ==========
 
   /**
