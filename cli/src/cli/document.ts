@@ -6,7 +6,34 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../api/client';
 import { setCommandHelp } from './help-formatter';
 import * as colors from './colors';
+import { coloredPercentage, separator, getRelationshipColor } from './colors';
 import { Table } from '../lib/table';
+
+/**
+ * Format grounding strength for display (matches search.ts)
+ */
+function formatGrounding(grounding: number | undefined | null): string {
+  if (grounding === undefined || grounding === null) {
+    return colors.status.dim('◯ Unexplored');
+  }
+  const groundingValue = grounding.toFixed(3);
+  const percentValue = grounding * 100;
+  const groundingPercent = (Math.abs(percentValue) < 0.1 && percentValue !== 0)
+    ? `≈${percentValue >= 0 ? '0' : '-0'}`
+    : percentValue.toFixed(0);
+
+  if (grounding >= 0.7) {
+    return colors.status.success(`✓ Strong (${groundingValue}, ${groundingPercent}%)`);
+  } else if (grounding >= 0.3) {
+    return colors.status.warning(`⚡ Moderate (${groundingValue}, ${groundingPercent}%)`);
+  } else if (grounding >= 0) {
+    return colors.status.dim(`◯ Weak (${groundingValue}, ${groundingPercent}%)`);
+  } else if (grounding >= -0.3) {
+    return colors.status.warning(`⚠ Negative (${groundingValue}, ${groundingPercent}%)`);
+  } else {
+    return colors.status.error(`✗ Contradicted (${groundingValue}, ${groundingPercent}%)`);
+  }
+}
 
 export const documentCommand = setCommandHelp(
   new Command('document'),
@@ -232,12 +259,13 @@ const showCommand = setCommandHelp(
 const conceptsCommand = setCommandHelp(
   new Command('concepts'),
   'List concepts from a document',
-  'Show all concepts extracted from a specific document. Displays concept names, IDs, and the source chunks where they appear.'
+  'Show all concepts extracted from a specific document. Displays concept names, IDs, and the source chunks where they appear. Use --details for full concept information including evidence and relationships.'
 )
   .argument('<document-id>', 'Document ID (e.g., sha256:abc123...)')
+  .option('-d, --details', 'Show full concept details (evidence, relationships, grounding)')
   .option('-j, --json', 'Output raw JSON')
   .showHelpAfterError()
-  .action(async (documentId: string, options: { json?: boolean }) => {
+  .action(async (documentId: string, options: { details?: boolean; json?: boolean }) => {
     try {
       const client = createClientFromEnv();
       const result = await client.getDocumentConcepts(documentId);
@@ -260,22 +288,83 @@ const conceptsCommand = setCommandHelp(
         return;
       }
 
-      const table = new Table({
-        columns: [
-          { header: 'Concept', field: 'name', type: 'heading', width: 'flex' },
-          { header: 'Concept ID', field: 'concept_id', type: 'concept_id', width: 28 },
-          { header: 'Source', field: 'source_id', type: 'text', width: 22 },
-          { header: 'Instances', field: 'instance_count', type: 'count', width: 10, align: 'right' },
-        ]
-      });
+      if (options.details) {
+        // Detailed view: fetch full details for each concept
+        const uniqueConceptIds = [...new Set(result.concepts.map(c => c.concept_id))];
+        console.log(colors.status.dim(`Fetching details for ${uniqueConceptIds.length} unique concepts...\n`));
 
-      const displayData = result.concepts.map(c => ({
-        ...c,
-        concept_id: c.concept_id.length > 26 ? c.concept_id.substring(0, 26) + '…' : c.concept_id,
-        source_id: c.source_id.length > 20 ? c.source_id.substring(0, 20) + '…' : c.source_id,
-      }));
+        for (const [i, conceptId] of uniqueConceptIds.entries()) {
+          try {
+            const concept = await client.getConceptDetails(conceptId, true);
 
-      table.print(displayData);
+            console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
+            if (concept.description) {
+              console.log(`   ${colors.status.dim(concept.description)}`);
+            }
+            console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
+            console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
+            console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.instances.length))} instances`);
+
+            // Display grounding
+            if (concept.grounding_strength !== undefined) {
+              console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength)}`);
+            }
+
+            // Display sample evidence (max 2)
+            if (concept.instances.length > 0) {
+              console.log(`   ${colors.ui.key('Sample Evidence:')}`);
+              for (const inst of concept.instances.slice(0, 2)) {
+                const truncatedQuote = inst.quote.length > 100
+                  ? inst.quote.substring(0, 100) + '...'
+                  : inst.quote;
+                console.log(`      ${colors.ui.bullet('•')} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
+                console.log(`         ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
+              }
+              if (concept.instances.length > 2) {
+                console.log(`      ${colors.status.dim(`... and ${concept.instances.length - 2} more`)}`);
+              }
+            }
+
+            // Display relationships (max 5)
+            if (concept.relationships.length > 0) {
+              console.log(`   ${colors.ui.key('Relationships:')} ${colors.status.dim(`(${concept.relationships.length})`)}`);
+              for (const rel of concept.relationships.slice(0, 5)) {
+                const relColor = getRelationshipColor(rel.rel_type);
+                const confidence = rel.confidence ? ` ${colors.status.dim(`[${(rel.confidence * 100).toFixed(0)}%]`)}` : '';
+                console.log(`      ${colors.path.arrow('→')} ${relColor(rel.rel_type)} ${colors.path.arrow('→')} ${colors.concept.label(rel.to_label)}${confidence}`);
+              }
+              if (concept.relationships.length > 5) {
+                console.log(`      ${colors.status.dim(`... and ${concept.relationships.length - 5} more`)}`);
+              }
+            }
+
+            console.log();
+          } catch (err: any) {
+            console.log(colors.ui.bullet('●') + ' ' + colors.status.error(`${i + 1}. Failed to load: ${conceptId}`));
+            console.log(`   ${colors.status.dim(err.message)}`);
+            console.log();
+          }
+        }
+      } else {
+        // Table view (default)
+        const table = new Table({
+          columns: [
+            { header: 'Concept', field: 'name', type: 'heading', width: 'flex' },
+            { header: 'Concept ID', field: 'concept_id', type: 'concept_id', width: 28 },
+            { header: 'Source', field: 'source_id', type: 'text', width: 22 },
+            { header: 'Instances', field: 'instance_count', type: 'count', width: 10, align: 'right' },
+          ]
+        });
+
+        const displayData = result.concepts.map(c => ({
+          ...c,
+          concept_id: c.concept_id.length > 26 ? c.concept_id.substring(0, 26) + '…' : c.concept_id,
+          source_id: c.source_id.length > 20 ? c.source_id.substring(0, 20) + '…' : c.source_id,
+        }));
+
+        table.print(displayData);
+        console.log(colors.status.dim(`\nTip: Use --details for full concept information`));
+      }
     } catch (error: any) {
       if (error.response?.status === 404) {
         console.error(colors.status.error(`✗ Document not found: ${documentId}`));
