@@ -38,7 +38,7 @@ from .workers.projection_worker import run_projection_worker
 from .workers.polarity_worker import run_polarity_worker
 from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -347,6 +347,8 @@ app.include_router(projection.router)  # ADR-078: Embedding landscape projection
 app.include_router(artifacts.router)  # ADR-083: Artifact persistence
 app.include_router(grants.router)  # ADR-082: Groups and resource grants
 app.include_router(query_definitions.router)  # ADR-083: Query definitions
+app.include_router(documents.router)  # ADR-084: Document content retrieval
+app.include_router(documents.query_router)  # ADR-084: Document search
 
 
 # Root endpoint

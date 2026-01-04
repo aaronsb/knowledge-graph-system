@@ -373,9 +373,11 @@ def run_ingestion_worker(
         # This makes the graph the source of truth for deduplication,
         # preventing job deletion from breaking duplicate detection
         try:
-            # Reconstruct source_ids (deterministic pattern from process_chunk)
+            # Reconstruct source_ids using document_id pattern (ADR-051)
+            # Must match pattern in ingestion.py: {document_id[:12]}_chunk{n}
+            document_id = job_data["content_hash"]
             source_ids = [
-                f"{filename.replace(' ', '_').lower()}_chunk{i}"
+                f"{document_id[:12]}_chunk{i}"
                 for i in range(1, len(chunks) + 1)
             ]
 
