@@ -17,30 +17,48 @@ Two related work streams:
 Update backup/restore to include Garage-stored source documents. Garage is now the canonical storage for original documents (ADR-081), so backups should include this data by default.
 
 ### A1. Research & Design
-- [ ] Review current backup format in `api/api/lib/serialization.py`
-- [ ] Review Garage client for document retrieval patterns
-- [ ] Design backup archive structure:
-  ```
-  backup_<ontology>_<date>/
-  ├── manifest.json        # graph data + relative document paths
-  └── documents/
-      ├── <hash>.md
-      ├── <hash>.txt
-      └── images/
-          ├── <hash>.jpg
-          └── <hash>_prose.md
-  ```
-  manifest.json sources reference files via relative paths:
-  ```json
-  {
-    "sources": [{
-      "source_id": "sha256:abc123",
-      "document_path": "documents/abc123.md",
-      "garage_key": "original/garage/key"
-    }]
-  }
-  ```
-- [ ] Decide archive format: directory, .tar.gz, or .zip
+- [x] Review current backup format in `api/lib/serialization.py`
+- [x] Review Garage client for document retrieval patterns
+- [x] Design backup archive structure
+- [x] Decide archive format: `.tar.gz`
+
+**Design Decisions:**
+
+Archive structure mirrors Garage layout:
+```
+backup_<ontology>_<date>.tar.gz
+└── backup_<ontology>_<date>/
+    ├── manifest.json
+    └── documents/
+        ├── sources/
+        │   └── <ontology>/
+        │       ├── abc123.txt
+        │       └── def456.md
+        └── images/
+            └── <ontology>/
+                ├── img789.jpg
+                └── img789_prose.md
+```
+
+Extended source entries in manifest.json:
+```json
+{
+  "sources": [{
+    "source_id": "sha256:abc123",
+    "document": "My Ontology",
+    "paragraph": 0,
+    "full_text": "...",
+    "garage_key": "sources/my_ontology/abc123.txt",
+    "document_path": "documents/sources/my_ontology/abc123.txt",
+    "content_type": "document"
+  }]
+}
+```
+
+Garage services to use:
+- `SourceDocumentService.list(ontology)` → list source docs
+- `SourceDocumentService.get(garage_key)` → download content
+- `ImageStorageService` → similar for images
 
 ### A2. API Changes
 - [ ] Extend `DataExporter` to stream Garage documents alongside JSON
