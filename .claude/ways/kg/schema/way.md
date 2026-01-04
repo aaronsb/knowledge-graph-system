@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: schema/|migration|\.sql$|Cypher|openCypher|AGE
+pattern: \bschema\b|migration|\.sql|Cypher|openCypher|AGE|database.*table
 files: schema/
 ---
 # Schema Way

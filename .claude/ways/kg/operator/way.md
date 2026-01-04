@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: operator\.sh|docker.*kg|container
+pattern: \boperator\b|docker.*kg|container|\.sh.*restart
 commands: operator\.sh|docker\s
 ---
 # Operator Way

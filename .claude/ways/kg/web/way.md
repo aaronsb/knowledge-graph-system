@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: web/src/|Zustand|React.*component|useStore
+pattern: \bweb\b|frontend|Zustand|React.*component|Next\.js
 files: web/src/
 ---
 # Web Way

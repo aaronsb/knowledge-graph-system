@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: ADR-\d|architecture.*decision|docs/architecture/ADR
+pattern: \badr\b|ADR-\d|architecture.*decision|docs/architecture/ADR
 files: docs/architecture/ADR
 ---
 # KG ADR Supplement

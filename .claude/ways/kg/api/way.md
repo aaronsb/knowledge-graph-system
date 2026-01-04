@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: api/api/|AGEClient|routes/.*\.py|FastAPI
+pattern: \bapi\b|AGEClient|routes/|FastAPI|endpoint|backend
 files: api/api/
 ---
 # API Way
