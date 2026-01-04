@@ -106,19 +106,22 @@ Garage services to use:
 - [x] Register routes in `api/api/main.py`
 - [x] Test endpoints with curl/httpie
 
-### B2. CLI - Phase 2
-- [ ] Create `cli/src/cli/document.ts` command file
-- [ ] Implement `kg document search "query"`
-  - [ ] Table output: filename, ontology, similarity, concepts
-  - [ ] `--ontology` filter flag
-  - [ ] `--json` structured output
-  - [ ] `--limit` parameter
-- [ ] Implement `kg document show <id>`
-  - [ ] Fetch and display content
-  - [ ] Handle image (show path or open?)
-- [ ] Implement `kg document list --ontology <name>`
-- [ ] Add to CLI index, build, install
-- [ ] Test all commands
+### B2. CLI - Phase 2 ✅
+- [x] Create `cli/src/cli/document.ts` command file
+- [x] Implement `kg document search "query"`
+  - [x] Detailed output: filename, ontology, similarity, concepts
+  - [x] `--ontology` filter flag
+  - [x] `--json` structured output
+  - [x] `--limit` parameter
+- [x] Implement `kg document show <id>`
+  - [x] Fetch and display content
+  - [x] `--chunks` flag to show source chunks
+- [x] Implement `kg document list`
+  - [x] `--ontology` filter
+  - [x] Pagination with `--limit` and `--offset`
+- [x] Add to CLI index, build
+- [x] Test all commands
+- [x] Added `kg doc` alias
 
 ### B3. MCP Tool - Phase 3 (Search Only)
 - [ ] Extend `search` tool with `type: "documents"` parameter
@@ -213,10 +216,18 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Was using `APPEARS_IN`, actual relationship is `APPEARS`
 - All endpoints tested and working
 
+### Session 5 continued
+- Completed B2: CLI Commands
+  - Created `cli/src/cli/document.ts` with search, list, show commands
+  - Added document API methods to `cli/src/api/client.ts`
+  - Registered in `cli/src/cli/commands.ts`
+  - Added `kg doc` alias for convenience
+  - All commands tested and working
+
 ### TODO
 - [x] Test document download once B1 endpoints are implemented
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
-- [ ] B2: CLI commands for document search
+- [x] B2: CLI commands for document search
 - [ ] B3: MCP tool extension
 - [ ] B4: Web explorer integration
 
