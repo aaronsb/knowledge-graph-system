@@ -22,13 +22,23 @@ Update backup/restore to include Garage-stored source documents. Garage is now t
 - [ ] Design backup archive structure:
   ```
   backup_<ontology>_<date>/
-  ├── manifest.json        # graph data + document references
+  ├── manifest.json        # graph data + relative document paths
   └── documents/
       ├── <hash>.md
       ├── <hash>.txt
       └── images/
           ├── <hash>.jpg
           └── <hash>_prose.md
+  ```
+  manifest.json sources reference files via relative paths:
+  ```json
+  {
+    "sources": [{
+      "source_id": "sha256:abc123",
+      "document_path": "documents/abc123.md",
+      "garage_key": "original/garage/key"
+    }]
+  }
   ```
 - [ ] Decide archive format: directory, .tar.gz, or .zip
 
