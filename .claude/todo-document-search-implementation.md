@@ -19,21 +19,33 @@ Update backup/restore to include Garage-stored source documents. Garage is now t
 ### A1. Research & Design
 - [ ] Review current backup format in `api/api/lib/serialization.py`
 - [ ] Review Garage client for document retrieval patterns
-- [ ] Design backup format extension (embed base64 in `sources` section)
-- [ ] Handle image + prose file pairing
+- [ ] Design backup archive structure:
+  ```
+  backup_<ontology>_<date>/
+  ├── manifest.json        # graph data + document references
+  └── documents/
+      ├── <hash>.md
+      ├── <hash>.txt
+      └── images/
+          ├── <hash>.jpg
+          └── <hash>_prose.md
+  ```
+- [ ] Decide archive format: directory, .tar.gz, or .zip
 
 ### A2. API Changes
-- [ ] Extend `DataExporter` to fetch Garage content for each source
-- [ ] Add `garage_content` field to source entries in backup
-- [ ] Update backup streaming for larger payloads
+- [ ] Extend `DataExporter` to stream Garage documents alongside JSON
+- [ ] Add document reference paths to source entries (not embedded base64)
+- [ ] Create archive streaming endpoint or multi-part response
 
 ### A3. Restore Changes
-- [ ] Extend `DataImporter` to restore Garage documents
-- [ ] Upload content to Garage during restore
+- [ ] Extend `DataImporter` to read from archive structure
+- [ ] Upload documents to Garage from archive
 - [ ] Handle Garage key conflicts (overwrite vs skip)
 
-### A4. CLI & Testing
-- [ ] Update progress display for Garage content
+### A4. CLI Updates
+- [ ] Update `kg admin backup` to save directory/archive structure
+- [ ] Update `kg admin restore` to read from directory/archive
+- [ ] Update progress display for document count
 - [ ] Test round-trip: backup → restore → verify Garage content intact
 
 **Note:** Backup/restore is CLI-only (admin operation). Not exposed via MCP.
