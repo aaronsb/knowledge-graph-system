@@ -49,18 +49,20 @@ documentCommand.alias('doc');
 const searchCommand = setCommandHelp(
   new Command('search'),
   'Search documents by semantic similarity',
-  'Find documents that match a query using semantic search. Results show documents ranked by their best matching chunk similarity, with concept IDs extracted from each document.'
+  'Find documents that match a query using semantic search. Results show documents ranked by their best matching chunk similarity. Use --details to show full concept information for the top result.'
 )
   .argument('<query>', 'Search query (natural language)')
   .option('-o, --ontology <name>', 'Filter by ontology name')
   .option('-s, --min-similarity <n>', 'Minimum similarity threshold (0-1)', '0.5')
   .option('-l, --limit <n>', 'Maximum results', '20')
+  .option('-d, --details', 'Show full concept details for top result')
   .option('-j, --json', 'Output raw JSON')
   .showHelpAfterError()
   .action(async (query: string, options: {
     ontology?: string;
     minSimilarity: string;
     limit: string;
+    details?: boolean;
     json?: boolean;
   }) => {
     try {
@@ -115,6 +117,76 @@ const searchCommand = setCommandHelp(
       if (result.returned < result.total_matches) {
         console.log(colors.status.dim(`  Showing ${result.returned} of ${result.total_matches} matches`));
         console.log(colors.status.dim(`  Use --limit to see more`));
+      }
+
+      // --details: Show full concept details for the top result
+      if (options.details && result.documents.length > 0) {
+        const topDoc = result.documents[0];
+        console.log(separator());
+        console.log(colors.ui.header(`Concepts: ${topDoc.filename}`));
+        console.log(separator());
+
+        // Fetch concepts for this document
+        const conceptsResult = await client.getDocumentConcepts(topDoc.document_id);
+
+        if (conceptsResult.concepts.length === 0) {
+          console.log(colors.status.warning('\n⚠ No concepts found for this document'));
+        } else {
+          const uniqueConceptIds = [...new Set(conceptsResult.concepts.map(c => c.concept_id))];
+          console.log(colors.status.dim(`\nFetching details for ${uniqueConceptIds.length} unique concepts...\n`));
+
+          for (const [i, conceptId] of uniqueConceptIds.entries()) {
+            try {
+              const concept = await client.getConceptDetails(conceptId, true);
+
+              console.log(colors.ui.bullet('●') + ' ' + colors.concept.label(`${i + 1}. ${concept.label}`));
+              if (concept.description) {
+                console.log(`   ${colors.status.dim(concept.description)}`);
+              }
+              console.log(`   ${colors.ui.key('ID:')} ${colors.concept.id(concept.concept_id)}`);
+              console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.instances.length))} instances`);
+
+              // Display grounding
+              if (concept.grounding_strength !== undefined) {
+                console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength)}`);
+              }
+
+              // Display sample evidence (max 2)
+              if (concept.instances.length > 0) {
+                console.log(`   ${colors.ui.key('Sample Evidence:')}`);
+                for (const inst of concept.instances.slice(0, 2)) {
+                  const truncatedQuote = inst.quote.length > 100
+                    ? inst.quote.substring(0, 100) + '...'
+                    : inst.quote;
+                  console.log(`      ${colors.ui.bullet('•')} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
+                  console.log(`         ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
+                }
+                if (concept.instances.length > 2) {
+                  console.log(`      ${colors.status.dim(`... and ${concept.instances.length - 2} more`)}`);
+                }
+              }
+
+              // Display relationships (max 3)
+              if (concept.relationships.length > 0) {
+                console.log(`   ${colors.ui.key('Relationships:')} ${colors.status.dim(`(${concept.relationships.length})`)}`);
+                for (const rel of concept.relationships.slice(0, 3)) {
+                  const relColor = getRelationshipColor(rel.rel_type);
+                  const confidence = rel.confidence ? ` ${colors.status.dim(`[${(rel.confidence * 100).toFixed(0)}%]`)}` : '';
+                  console.log(`      ${colors.path.arrow('→')} ${relColor(rel.rel_type)} ${colors.path.arrow('→')} ${colors.concept.label(rel.to_label)}${confidence}`);
+                }
+                if (concept.relationships.length > 3) {
+                  console.log(`      ${colors.status.dim(`... and ${concept.relationships.length - 3} more`)}`);
+                }
+              }
+
+              console.log();
+            } catch (err: any) {
+              console.log(colors.ui.bullet('●') + ' ' + colors.status.error(`${i + 1}. Failed to load: ${conceptId}`));
+              console.log(`   ${colors.status.dim(err.message)}`);
+              console.log();
+            }
+          }
+        }
       }
     } catch (error: any) {
       console.error(colors.status.error('✗ Document search failed'));
