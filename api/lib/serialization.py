@@ -165,14 +165,14 @@ class DataExporter:
     @staticmethod
     def export_sources(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
         """
-        Export source nodes with full text
+        Export source nodes with full text and Garage references
 
         Args:
             client: AGEClient instance
             ontology: Optional ontology filter
 
         Returns:
-            List of source dictionaries
+            List of source dictionaries including garage_key and content_type
         """
         if ontology:
             query = """
@@ -181,7 +181,10 @@ class DataExporter:
                        s.document as document,
                        s.file_path as file_path,
                        s.paragraph as paragraph,
-                       s.full_text as full_text
+                       s.full_text as full_text,
+                       s.garage_key as garage_key,
+                       s.content_type as content_type,
+                       s.storage_key as storage_key
                 ORDER BY s.paragraph
             """
             result = client._execute_cypher(query, params={"ontology": ontology})
@@ -192,7 +195,10 @@ class DataExporter:
                        s.document as document,
                        s.file_path as file_path,
                        s.paragraph as paragraph,
-                       s.full_text as full_text
+                       s.full_text as full_text,
+                       s.garage_key as garage_key,
+                       s.content_type as content_type,
+                       s.storage_key as storage_key
                 ORDER BY s.document, s.paragraph
             """
             result = client._execute_cypher(query)
@@ -200,13 +206,27 @@ class DataExporter:
         sources = []
         for record in result:
             # Parse agtype values
-            sources.append({
+            garage_key = str(record.get("garage_key", "")).strip('"')
+            content_type = str(record.get("content_type", "")).strip('"')
+            storage_key = str(record.get("storage_key", "")).strip('"')
+
+            source = {
                 "source_id": str(record.get("source_id", "")).strip('"'),
                 "document": str(record.get("document", "")).strip('"'),
                 "file_path": str(record.get("file_path", "")).strip('"'),
                 "paragraph": int(str(record.get("paragraph", 0))),
-                "full_text": str(record.get("full_text", "")).strip('"')
-            })
+                "full_text": str(record.get("full_text", "")).strip('"'),
+            }
+
+            # Add Garage fields if present (sources may predate ADR-081)
+            if garage_key and garage_key != "None":
+                source["garage_key"] = garage_key
+            if content_type and content_type != "None":
+                source["content_type"] = content_type
+            if storage_key and storage_key != "None":
+                source["storage_key"] = storage_key  # For images
+
+            sources.append(source)
 
         return sources
 
@@ -760,6 +780,7 @@ class DataImporter:
                 progress_callback("sources", current, total_sources, percent)
 
             # AGE: MERGE + SET (works for both create and update)
+            # Include garage_key, content_type, storage_key if present (ADR-081)
             merge_query = """
                 MERGE (s:Source {source_id: $source_id})
                 SET s.document = $document,
@@ -767,6 +788,14 @@ class DataImporter:
                     s.paragraph = $paragraph,
                     s.full_text = $full_text
             """
+
+            # Add optional Garage fields to SET clause if present
+            if source.get("garage_key"):
+                merge_query = merge_query.rstrip() + ",\n                    s.garage_key = $garage_key"
+            if source.get("content_type"):
+                merge_query = merge_query.rstrip() + ",\n                    s.content_type = $content_type"
+            if source.get("storage_key"):
+                merge_query = merge_query.rstrip() + ",\n                    s.storage_key = $storage_key"
 
             client._execute_cypher(merge_query, params=source)
             stats["sources_created"] += 1
