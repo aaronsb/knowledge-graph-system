@@ -37,8 +37,11 @@ Extend existing ontology backup to include Garage-stored original documents.
 
 ### A4. CLI Updates
 - [ ] Add `--include-garage` flag to `kg admin backup`
+- [ ] Add `--include-garage` handling to `kg admin restore`
 - [ ] Update progress display for Garage content
 - [ ] Test round-trip: backup with Garage → restore → verify
+
+**Note:** Backup/restore is CLI-only (admin operation). Not exposed via MCP.
 
 ---
 
@@ -77,11 +80,13 @@ Extend existing ontology backup to include Garage-stored original documents.
 - [ ] Add to CLI index, build, install
 - [ ] Test all commands
 
-### B3. MCP Tool - Phase 3
-- [ ] Extend search tool with `type: "documents"`
-- [ ] Add document retrieval tool
+### B3. MCP Tool - Phase 3 (Search Only)
+- [ ] Extend `search` tool with `type: "documents"` parameter
+- [ ] Add `document` tool for content retrieval
 - [ ] Test with Claude Desktop
 - [ ] Update MCP tool documentation
+
+**Note:** MCP exposes document search/retrieval only. Backup/restore excluded (admin ops).
 
 ### B4. Web Explorer - Phase 4
 - [ ] Design document search UI component
