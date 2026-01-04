@@ -40,6 +40,10 @@ import {
   formatEpistemicStatusMeasurement,
   formatSourceSearchResults,
   formatPolarityAxisResults,
+  formatDocumentSearchResults,
+  formatDocumentList,
+  formatDocumentContent,
+  formatDocumentConcepts,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -238,7 +242,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'search',
-        description: `Search for concepts or source passages using semantic similarity. Your ENTRY POINT to the graph.
+        description: `Search for concepts, source passages, or documents using semantic similarity. Your ENTRY POINT to the graph.
 
 CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarity:
 - Grounding strength (-1.0 to 1.0): Reliability/contradiction score
@@ -254,6 +258,12 @@ SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
 - Shows concepts extracted from those passages
 - Useful for RAG workflows and finding original context
 
+DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
+- Searches at document level (aggregates source chunks)
+- Returns documents ranked by best matching chunk similarity
+- Shows concepts extracted from each document
+- Use with document tool for content retrieval
+
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
 Use 2-3 word phrases (e.g., "linear thinking patterns").`,
@@ -266,8 +276,8 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").`,
             },
             type: {
               type: 'string',
-              enum: ['concepts', 'sources'],
-              description: 'Search type: "concepts" (default - semantic concept search) or "sources" (source passage search, ADR-068)',
+              enum: ['concepts', 'sources', 'documents'],
+              description: 'Search type: "concepts" (default), "sources" (passage search), or "documents" (document-level search)',
               default: 'concepts',
             },
             limit: {
@@ -709,6 +719,49 @@ Use artifacts to:
           required: ['action'],
         },
       },
+      {
+        name: 'document',
+        description: `Work with documents: list all, show content, or get concepts (ADR-084).
+
+Three actions available:
+- "list": List all documents with optional ontology filter
+- "show": Retrieve document content from Garage storage
+- "concepts": Get all concepts extracted from a document
+
+Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
+Use search tool with type="documents" to find documents semantically.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['list', 'show', 'concepts'],
+              description: 'Operation: "list" (all documents), "show" (content), "concepts" (extracted concepts)',
+            },
+            // For show and concepts
+            document_id: {
+              type: 'string',
+              description: 'Document ID (required for show, concepts). Format: sha256:...',
+            },
+            // For list
+            ontology: {
+              type: 'string',
+              description: 'Filter by ontology name (for list)',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max documents to return for list (default: 50)',
+              default: 50,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number to skip for pagination (default: 0)',
+              default: 0,
+            },
+          },
+          required: ['action'],
+        },
+      },
     ],
   };
 });
@@ -927,6 +980,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           });
 
           const formattedText = formatSourceSearchResults(result);
+
+          return {
+            content: [{ type: 'text', text: formattedText }],
+          };
+        } else if (searchType === 'documents') {
+          // ADR-084: Document search
+          const result = await client.searchDocuments({
+            query,
+            limit,
+            min_similarity,
+            ontology,
+          });
+
+          // Add query to result for formatting
+          const resultWithQuery = { ...result, query };
+          const formattedText = formatDocumentSearchResults(resultWithQuery);
 
           return {
             content: [{ type: 'text', text: formattedText }],
@@ -1662,6 +1731,54 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           default:
             throw new Error(`Unknown artifact action: ${action}`);
+        }
+      }
+
+      case 'document': {
+        const action = toolArgs.action as string;
+
+        switch (action) {
+          case 'list': {
+            const result = await client.listDocuments({
+              ontology: toolArgs.ontology as string | undefined,
+              limit: (toolArgs.limit as number) || 50,
+              offset: (toolArgs.offset as number) || 0,
+            });
+
+            const formattedText = formatDocumentList(result);
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          case 'show': {
+            const documentId = toolArgs.document_id as string;
+            if (!documentId) {
+              throw new Error('document_id is required for show action');
+            }
+
+            const result = await client.getDocumentContent(documentId);
+            const formattedText = formatDocumentContent(result);
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          case 'concepts': {
+            const documentId = toolArgs.document_id as string;
+            if (!documentId) {
+              throw new Error('document_id is required for concepts action');
+            }
+
+            const result = await client.getDocumentConcepts(documentId);
+            const formattedText = formatDocumentConcepts(result);
+            return {
+              content: [{ type: 'text', text: formattedText }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown document action: ${action}`);
         }
       }
 
