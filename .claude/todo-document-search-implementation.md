@@ -128,10 +128,11 @@ Garage services to use:
 - [x] Test all commands
 - [x] Added `kg doc` alias
 
-### B3. MCP Tool - Phase 3 (Search Only)
-- [ ] Extend `search` tool with `type: "documents"` parameter
-- [ ] Add `document` tool for content retrieval
-- [ ] Test with Claude Desktop
+### B3. MCP Tool - Phase 3 ✅
+- [x] Extend `search` tool with `type: "documents"` parameter
+- [x] Add `document` tool with actions: list, show, concepts
+- [x] Add formatters for document results
+- [ ] Test with Claude Desktop (requires restart)
 - [ ] Update MCP tool documentation
 
 **Note:** MCP exposes document search/retrieval only. Backup/restore excluded (admin ops).
@@ -241,8 +242,16 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Single-command workflow: search → see concepts without copying hashes
 - Noted existing shortcuts: `kg cat concept <id>`, `kg search show <id>`
 
+### Session 7 (2026-01-04 continued)
+- Completed B3: MCP Tool Extension
+  - Extended `search` tool with `type: "documents"` parameter
+  - Added `document` tool with actions: list, show, concepts
+  - Added formatters: formatDocumentSearchResults, formatDocumentList, formatDocumentContent, formatDocumentConcepts
+  - MCP changes require Claude Desktop restart to take effect
+
 ### TODO
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
-- [ ] B3: MCP tool extension
+- [x] B3: MCP tool extension
 - [ ] B4: Web explorer integration
+- [ ] Test MCP tools with Claude Desktop
 
