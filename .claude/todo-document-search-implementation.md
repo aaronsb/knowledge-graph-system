@@ -61,18 +61,20 @@ Garage services to use:
 - `ImageStorageService` → similar for images
 
 ### A2. API Changes
-- [ ] Extend `DataExporter` to stream Garage documents alongside JSON
-- [ ] Add document reference paths to source entries (not embedded base64)
-- [ ] Create archive streaming endpoint or multi-part response
+- [x] Extend `DataExporter.export_sources` with garage_key, content_type, storage_key
+- [x] Create `backup_archive.py` module for tar.gz streaming
+- [x] Update backup endpoint to support "archive" format (now default)
+- [x] Add document_path to source entries in manifest.json
 
 ### A3. Restore Changes
-- [ ] Extend `DataImporter` to read from archive structure
+- [ ] Create `restore_backup_archive()` function to extract tar.gz
+- [ ] Extend `DataImporter` to read from extracted archive
 - [ ] Upload documents to Garage from archive
 - [ ] Handle Garage key conflicts (overwrite vs skip)
 
 ### A4. CLI Updates
-- [ ] Update `kg admin backup` to save directory/archive structure
-- [ ] Update `kg admin restore` to read from directory/archive
+- [ ] Update `kg admin backup` to handle .tar.gz files
+- [ ] Update `kg admin restore` to extract and process archives
 - [ ] Update progress display for document count
 - [ ] Test round-trip: backup → restore → verify Garage content intact
 
@@ -152,4 +154,12 @@ _Add implementation notes, decisions, and blockers here as work progresses._
 - Researched backup system - already supports ontology scoping
 - Decided: extend backup for Garage content, don't duplicate in ADR-084
 - Branch created and pushed
+
+### Session 1 continued
+- Completed A1: Research & Design (backup format, Garage client)
+- Completed A2: API Changes
+  - Extended `DataExporter.export_sources` with Garage fields
+  - Created `api/api/lib/backup_archive.py` for tar.gz streaming
+  - Updated backup endpoint - "archive" is now default format
+- Next: A3 (restore) and A4 (CLI updates)
 
