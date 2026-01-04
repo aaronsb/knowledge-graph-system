@@ -122,6 +122,8 @@ Garage services to use:
 - [x] Implement `kg document concepts <id>`
   - [x] Show concepts extracted from document
   - [x] Display name, ID, source, instance count
+  - [x] `--details` flag for full concept info (evidence, relationships, grounding)
+- [x] `--details` flag for `kg document search` (show concepts for top result)
 - [x] Add to CLI index, build
 - [x] Test all commands
 - [x] Added `kg doc` alias
@@ -227,10 +229,20 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Added `kg doc` alias for convenience
   - All commands tested and working
 
+### Session 6 (2026-01-04 continued)
+- Added `kg document concepts <id>` command
+  - Lists all concepts extracted from a document
+  - Fixed query to use `c.label` instead of `c.name` for concept names
+- Added `--details` flag to `kg document concepts`
+  - Fetches full concept details for each unique concept
+  - Shows evidence, relationships, grounding strength
+- Added `--details` flag to `kg document search`
+  - Shows full concept details for top search result
+  - Single-command workflow: search → see concepts without copying hashes
+- Noted existing shortcuts: `kg cat concept <id>`, `kg search show <id>`
+
 ### TODO
-- [x] Test document download once B1 endpoints are implemented
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
-- [x] B2: CLI commands for document search
 - [ ] B3: MCP tool extension
 - [ ] B4: Web explorer integration
 
