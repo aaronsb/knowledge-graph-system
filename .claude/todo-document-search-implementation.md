@@ -119,6 +119,9 @@ Garage services to use:
 - [x] Implement `kg document list`
   - [x] `--ontology` filter
   - [x] Pagination with `--limit` and `--offset`
+- [x] Implement `kg document concepts <id>`
+  - [x] Show concepts extracted from document
+  - [x] Display name, ID, source, instance count
 - [x] Add to CLI index, build
 - [x] Test all commands
 - [x] Added `kg doc` alias
