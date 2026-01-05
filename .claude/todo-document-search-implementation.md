@@ -131,8 +131,9 @@ Garage services to use:
 ### B3. MCP Tool - Phase 3 ✅
 - [x] Extend `search` tool with `type: "documents"` parameter
 - [x] Add `document` tool with actions: list, show, concepts
+- [x] Add `include_details` parameter to concepts action (symmetric with CLI --details)
 - [x] Add formatters for document results
-- [ ] Test with Claude Desktop (requires restart)
+- [x] Tested with Claude Code - all tools working
 - [ ] Update MCP tool documentation
 
 **Note:** MCP exposes document search/retrieval only. Backup/restore excluded (admin ops).
@@ -247,11 +248,19 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Extended `search` tool with `type: "documents"` parameter
   - Added `document` tool with actions: list, show, concepts
   - Added formatters: formatDocumentSearchResults, formatDocumentList, formatDocumentContent, formatDocumentConcepts
-  - MCP changes require Claude Desktop restart to take effect
+  - Added `include_details` parameter to document concepts action
+    - Symmetric with CLI `--details` flag
+    - Fetches full concept info (evidence, relationships, grounding) in one call
+  - Tested all tools with Claude Code
+- Aligned grounding display across all interfaces
+  - CLI now uses `grounding_display` from API (same as MCP and Web)
+  - Shows confidence score: `◯ Unclear [47% conf]`
+  - Consistent labeling across CLI, MCP, and Web GUI
+- Pushed branch to origin
 
 ### TODO
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
-- [x] B3: MCP tool extension
-- [ ] B4: Web explorer integration
-- [ ] Test MCP tools with Claude Desktop
+- [ ] Update MCP tool documentation (docs/reference/mcp/)
+- [ ] B4: Web explorer integration (optional - lower priority)
+- [ ] Create PR when ready to merge
 
