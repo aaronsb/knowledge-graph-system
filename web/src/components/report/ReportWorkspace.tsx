@@ -25,6 +25,8 @@ import {
   Search,
   FileSearch,
   Save,
+  Eye,
+  X,
 } from 'lucide-react';
 import * as d3 from 'd3';
 import { IconRailPanel } from '../shared/IconRailPanel';
@@ -375,6 +377,18 @@ export const ReportWorkspace: React.FC = () => {
   const [isSearchingDocs, setIsSearchingDocs] = useState(false);
   const [docSearchError, setDocSearchError] = useState<string | null>(null);
 
+  // Document viewer state
+  const [viewingDocument, setViewingDocument] = useState<{
+    document_id: string;
+    filename: string;
+    content_type: string;
+  } | null>(null);
+  const [documentContent, setDocumentContent] = useState<{
+    content: any;
+    chunks: Array<{ source_id: string; paragraph: number; full_text: string }>;
+  } | null>(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+
   // Load available ontologies on mount
   useEffect(() => {
     const loadOntologies = async () => {
@@ -517,6 +531,57 @@ export const ReportWorkspace: React.FC = () => {
     // Switch to reports tab to see the saved report
     setActiveTab('reports');
   }, [docResults, docQuery, docMinSimilarity, docOntologies]);
+
+  // View document content
+  const handleViewDocument = useCallback(async (doc: {
+    document_id: string;
+    filename: string;
+    content_type: string;
+  }) => {
+    setViewingDocument(doc);
+    setIsLoadingContent(true);
+    setDocumentContent(null);
+
+    try {
+      const response = await apiClient.getDocumentContent(doc.document_id);
+      setDocumentContent({
+        content: response.content,
+        chunks: response.chunks || [],
+      });
+    } catch (err) {
+      console.error('Failed to load document content:', err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  }, []);
+
+  // Download document content
+  const handleDownloadDocument = useCallback(() => {
+    if (!viewingDocument || !documentContent) return;
+
+    let content: string;
+    let mimeType: string;
+    let extension: string;
+
+    if (viewingDocument.content_type === 'application/json' || typeof documentContent.content === 'object') {
+      content = JSON.stringify(documentContent.content, null, 2);
+      mimeType = 'application/json';
+      extension = '.json';
+    } else {
+      // For text content, concatenate chunks
+      content = documentContent.chunks.map(c => c.full_text).join('\n\n');
+      mimeType = 'text/plain';
+      extension = '.txt';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = viewingDocument.filename.replace(/\.[^.]+$/, '') + extension;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [viewingDocument, documentContent]);
 
   // Sort handler - toggles through: null -> asc -> desc -> null
   const handleSort = (setter: React.Dispatch<React.SetStateAction<SortState>>) => (field: string) => {
@@ -1174,6 +1239,7 @@ export const ReportWorkspace: React.FC = () => {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
+                    <th className="px-3 py-2 w-10"></th>
                     <SortableHeader field="filename" label="Filename" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
                     <SortableHeader field="ontology" label="Ontology" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
                     <SortableHeader field="content_type" label="Type" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
@@ -1185,6 +1251,15 @@ export const ReportWorkspace: React.FC = () => {
                 <tbody className="divide-y divide-border">
                   {sortedDocuments.map((doc) => (
                     <tr key={doc.document_id} className="hover:bg-muted/30">
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={() => handleViewDocument(doc)}
+                          className="p-1 rounded hover:bg-accent"
+                          title="View document"
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </td>
                       <td className="px-3 py-2 font-medium max-w-xs truncate" title={doc.filename}>
                         {doc.filename}
                       </td>
@@ -1367,6 +1442,87 @@ export const ReportWorkspace: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col m-4">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <h3 className="font-semibold">{viewingDocument.filename}</h3>
+                  <p className="text-xs text-muted-foreground">{viewingDocument.content_type}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadDocument}
+                  disabled={!documentContent}
+                  className="p-2 rounded hover:bg-accent disabled:opacity-50"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setViewingDocument(null);
+                    setDocumentContent(null);
+                  }}
+                  className="p-2 rounded hover:bg-accent"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto p-4">
+              {isLoadingContent ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : documentContent ? (
+                <div className="space-y-4">
+                  {documentContent.chunks.length > 0 ? (
+                    documentContent.chunks.map((chunk, idx) => (
+                      <div key={chunk.source_id} className="border rounded-lg p-4">
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Paragraph {chunk.paragraph + 1}
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap">
+                          {chunk.full_text}
+                        </div>
+                      </div>
+                    ))
+                  ) : typeof documentContent.content === 'object' ? (
+                    <pre className="text-xs bg-muted p-4 rounded-lg overflow-auto">
+                      {JSON.stringify(documentContent.content, null, 2)}
+                    </pre>
+                  ) : (
+                    <div className="text-sm whitespace-pre-wrap">
+                      {String(documentContent.content)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  Failed to load document content
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {documentContent && documentContent.chunks.length > 0 && (
+              <div className="px-4 py-2 border-t text-xs text-muted-foreground">
+                {documentContent.chunks.length} chunk{documentContent.chunks.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
