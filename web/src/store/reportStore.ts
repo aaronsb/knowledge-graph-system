@@ -9,9 +9,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiClient } from '../api/client';
+import type { Representation } from '../types/artifacts';
 
 // Report types
-export type ReportType = 'graph' | 'polarity';
+export type ReportType = 'graph' | 'polarity' | 'document';
 
 // Graph report data (from 2D/3D explorers)
 export interface GraphReportData {
@@ -63,7 +64,26 @@ export interface PolarityReportData {
   groundingCorrelation?: number;
 }
 
-export type ReportData = GraphReportData | PolarityReportData;
+// Document report data (from Document Explorer or direct query)
+export interface DocumentReportData {
+  type: 'document';
+  documents: Array<{
+    document_id: string;
+    filename: string;
+    ontology: string;
+    content_type: string;
+    best_similarity?: number;
+    source_count: number;
+    concept_count: number;
+  }>;
+  searchParams?: {
+    query?: string;
+    min_similarity?: number;
+    ontologies?: string[];
+  };
+}
+
+export type ReportData = GraphReportData | PolarityReportData | DocumentReportData;
 
 // Previous values for delta comparison (keyed by concept_id)
 export interface PreviousValues {
@@ -81,7 +101,7 @@ export interface Report {
   type: ReportType;
   data: ReportData;
   createdAt: string;
-  sourceExplorer: '2d' | '3d' | 'polarity';
+  sourceExplorer: '2d' | '3d' | 'polarity' | 'document';
   // Recalculation tracking
   lastCalculatedAt?: string;
   previousValues?: PreviousValues;
@@ -147,9 +167,14 @@ const generateDefaultName = (type: ReportType, data: ReportData): string => {
     const nodeCount = graphData.nodes.length;
     const mode = graphData.searchParams?.mode || 'graph';
     return `${mode} (${nodeCount} nodes) - ${timestamp}`;
-  } else {
+  } else if (type === 'polarity') {
     const polarityData = data as PolarityReportData;
     return `${polarityData.positivePole.label} ↔ ${polarityData.negativePole.label} - ${timestamp}`;
+  } else {
+    const docData = data as DocumentReportData;
+    const docCount = docData.documents.length;
+    const query = docData.searchParams?.query || 'all';
+    return `docs: "${query}" (${docCount}) - ${timestamp}`;
   }
 };
 
@@ -157,18 +182,21 @@ const generateDefaultName = (type: ReportType, data: ReportData): string => {
 const getConceptIds = (data: ReportData): string[] => {
   if (data.type === 'graph') {
     return (data as GraphReportData).nodes.map(n => n.id);
-  } else {
+  } else if (data.type === 'polarity') {
     return (data as PolarityReportData).concepts.map(c => c.concept_id);
+  } else {
+    // Document reports don't have concept IDs at the report level
+    return [];
   }
 };
 
 // Map source explorer to representation
-type ArtifactRepresentation = 'force_graph_2d' | 'force_graph_3d' | 'polarity_explorer' | 'report_workspace';
-const getRepresentation = (source: '2d' | '3d' | 'polarity'): ArtifactRepresentation => {
+const getRepresentation = (source: '2d' | '3d' | 'polarity' | 'document'): Representation => {
   switch (source) {
     case '2d': return 'force_graph_2d';
     case '3d': return 'force_graph_3d';
     case 'polarity': return 'polarity_explorer';
+    case 'document': return 'document_explorer';
     default: return 'report_workspace';
   }
 };

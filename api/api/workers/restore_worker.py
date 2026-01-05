@@ -17,6 +17,7 @@ from datetime import datetime
 
 from ..lib.age_client import AGEClient
 from ..lib.backup_streaming import create_backup_stream
+from ..lib.backup_archive import restore_documents_to_garage, cleanup_extracted_archive
 from ...lib.serialization import DataImporter
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,8 @@ def run_restore_worker(
     overwrite = job_data.get("overwrite", True)  # Default: create new concepts (full restore)
     handle_external_deps = job_data.get("handle_external_deps", "prune")
     backup_stats = job_data.get("backup_stats", {})
+    archive_temp_dir = job_data.get("archive_temp_dir")  # For archive restores
+    is_archive = job_data.get("is_archive", False)
 
     checkpoint_path = None
     client = None
@@ -119,7 +122,30 @@ def run_restore_worker(
             job_queue=job_queue
         )
 
-        # Stage 4: Integrity check (future enhancement)
+        # Stage 4: Restore documents to Garage (for archive backups)
+        doc_stats = {"uploaded": 0, "skipped": 0, "failed": 0}
+        if is_archive and archive_temp_dir:
+            logger.info(f"[{job_id}] Restoring documents to Garage from archive")
+            job_queue.update_job(job_id, {
+                "progress": {
+                    "stage": "restoring_documents",
+                    "percent": 95,
+                    "message": "Restoring documents to Garage storage"
+                }
+            })
+
+            doc_stats = restore_documents_to_garage(
+                temp_dir=archive_temp_dir,
+                manifest_data=backup_data,
+                overwrite=overwrite
+            )
+
+            logger.info(
+                f"[{job_id}] Document restore: {doc_stats['uploaded']} uploaded, "
+                f"{doc_stats['skipped']} skipped, {doc_stats['failed']} failed"
+            )
+
+        # Stage 5: Integrity check (future enhancement)
         # TODO: Add database integrity check after restore
         logger.info(f"[{job_id}] Restore completed successfully")
         job_queue.update_job(job_id, {
@@ -133,16 +159,16 @@ def run_restore_worker(
         # Refresh graph metrics after restore (ADR-079: cache invalidation)
         # This is critical after restore since the entire graph may have changed
         try:
-            client = AGEClient()
-            conn = client.pool.getconn()
+            metrics_client = AGEClient()
+            conn = metrics_client.pool.getconn()
             try:
                 with conn.cursor() as cur:
                     cur.execute("SELECT refresh_graph_metrics()")
                 conn.commit()
                 logger.info(f"[{job_id}] Refreshed graph metrics after restore")
             finally:
-                client.pool.putconn(conn)
-                client.close()
+                metrics_client.pool.putconn(conn)
+                metrics_client.close()
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
 
@@ -157,6 +183,7 @@ def run_restore_worker(
         return {
             "status": "completed",
             "restore_stats": restore_stats,
+            "document_stats": doc_stats if is_archive else None,
             "checkpoint_created": True,
             "checkpoint_deleted": checkpoint_deleted,
             "temp_file_cleaned": False  # Will be cleaned in finally block
@@ -200,6 +227,11 @@ def run_restore_worker(
                 temp_file.unlink()
             except Exception as e:
                 logger.warning(f"[{job_id}] Failed to delete temp file: {e}")
+
+        # Cleanup: Always delete extracted archive directory
+        if archive_temp_dir:
+            logger.info(f"[{job_id}] Cleaning up archive temp directory {archive_temp_dir}")
+            cleanup_extracted_archive(archive_temp_dir)
 
         # Close database connection
         if client:

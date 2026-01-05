@@ -558,6 +558,107 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  // ========== Document Methods (ADR-084) ==========
+
+  /**
+   * Search documents using semantic similarity
+   * Aggregates chunk-level matches to document level
+   */
+  async searchDocuments(request: {
+    query: string;
+    min_similarity?: number;
+    limit?: number;
+    ontology?: string;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      best_similarity: number;
+      source_count: number;
+      resources: Array<{ type: string; garage_key: string }>;
+      concept_ids: string[];
+    }>;
+    returned: number;
+    total_matches: number;
+  }> {
+    const response = await this.client.post('/query/documents/search', request);
+    return response.data;
+  }
+
+  /**
+   * List documents with optional ontology filter
+   */
+  async listDocuments(options: {
+    ontology?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      source_count: number;
+      concept_count: number;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const params = new URLSearchParams();
+    if (options.ontology) params.append('ontology', options.ontology);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/documents?${params.toString()}`);
+    return response.data;
+  }
+
+  /**
+   * Get document content from Garage
+   */
+  async getDocumentContent(documentId: string): Promise<{
+    document_id: string;
+    content_type: string;
+    content: {
+      document?: string;
+      image?: string;
+      prose?: string;
+      encoding: string;
+      error?: string;
+    };
+    chunks: Array<{
+      source_id: string;
+      paragraph: number;
+      full_text: string;
+      char_offset_start?: number;
+      char_offset_end?: number;
+    }>;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/content`);
+    return response.data;
+  }
+
+  /**
+   * Get concepts extracted from a document
+   */
+  async getDocumentConcepts(documentId: string): Promise<{
+    document_id: string;
+    filename: string;
+    concepts: Array<{
+      concept_id: string;
+      name: string;
+      source_id: string;
+      instance_count: number;
+    }>;
+    total: number;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
   // ========== Database Methods ==========
 
   /**
@@ -708,7 +809,10 @@ export class KnowledgeGraphClient {
     // Extract filename from Content-Disposition header
     const contentDisposition = response.headers['content-disposition'];
     const filenameMatch = contentDisposition?.match(/filename=(.+)/);
-    const filename = filenameMatch ? filenameMatch[1] : 'backup.json';
+    // Default based on content type (archive is now default)
+    const contentType = response.headers['content-type'] || '';
+    const defaultFilename = contentType.includes('gzip') ? 'backup.tar.gz' : 'backup.json';
+    const filename = filenameMatch ? filenameMatch[1] : defaultFilename;
 
     // Get content length if available
     const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
@@ -735,7 +839,8 @@ export class KnowledgeGraphClient {
     });
 
     // Rename file to use server-provided filename if different
-    const finalPath = savePath.replace(/[^/]+\.json$/, filename);
+    // Handle all backup formats: .json, .gexf, .tar.gz
+    const finalPath = savePath.replace(/[^/]+(\.json|\.gexf|\.tar\.gz)$/, filename);
     if (finalPath !== savePath && fs.existsSync(savePath)) {
       fs.renameSync(savePath, finalPath);
     }
@@ -752,10 +857,9 @@ export class KnowledgeGraphClient {
    *
    * Uploads backup file as multipart/form-data and queues restore job.
    * Server validates backup, creates checkpoint, then executes restore with progress tracking.
+   * Uses OAuth authentication (token from login).
    *
-   * @param backupFilePath Path to backup JSON file
-   * @param username Username for authentication
-   * @param password Password for authentication
+   * @param backupFilePath Path to backup file (.tar.gz archive or .json)
    * @param overwrite Whether to overwrite existing data
    * @param handleExternalDeps How to handle external dependencies ('prune', 'stitch', 'defer')
    * @param onUploadProgress Optional callback for upload progress (bytes uploaded, total bytes, percent)
@@ -763,16 +867,12 @@ export class KnowledgeGraphClient {
    */
   async restoreBackup(
     backupFilePath: string,
-    username: string,
-    password: string,
     overwrite: boolean = false,
     handleExternalDeps: string = 'prune',
     onUploadProgress?: (uploaded: number, total: number, percent: number) => void
   ): Promise<{ job_id: string; status: string; message: string; backup_stats: any; integrity_warnings: number }> {
     const form = new FormData();
     form.append('file', fs.createReadStream(backupFilePath));
-    form.append('username', username);
-    form.append('password', password);
     form.append('overwrite', String(overwrite));
     form.append('handle_external_deps', handleExternalDeps);
 

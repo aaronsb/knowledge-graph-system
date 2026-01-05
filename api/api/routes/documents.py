@@ -1,0 +1,787 @@
+"""
+Document search and retrieval API routes (ADR-084).
+
+Provides endpoints for:
+- Document-level semantic search (aggregates chunk matches)
+- Document content retrieval from Garage
+- Ontology document listing
+"""
+
+import base64
+import logging
+import os
+from typing import List, Optional, Dict, Any
+import numpy as np
+import psycopg2
+
+from fastapi import APIRouter, HTTPException, Depends, Query
+from pydantic import BaseModel, Field
+
+from ..lib.age_client import AGEClient
+from ..lib.garage import get_source_storage, get_image_storage
+from ..lib.similarity_calculator import cosine_similarity
+from ..dependencies.auth import get_current_active_user
+from ..models.auth import UserInDB
+
+router = APIRouter(prefix="/documents", tags=["documents"])
+query_router = APIRouter(prefix="/query/documents", tags=["documents"])
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Pydantic Models
+# ============================================================================
+
+class DocumentResource(BaseModel):
+    """Resource reference for a document (garage key)."""
+    type: str = Field(..., description="Resource type: 'document' or 'image'")
+    garage_key: str = Field(..., description="Garage storage key")
+
+
+class DocumentSearchResult(BaseModel):
+    """Single document in search results."""
+    document_id: str = Field(..., description="Document ID (content hash)")
+    filename: str = Field(..., description="Original filename")
+    ontology: str = Field(..., description="Ontology/document name")
+    content_type: str = Field(..., description="Content type: 'document' or 'image'")
+    best_similarity: float = Field(..., description="Highest chunk similarity score")
+    source_count: int = Field(..., description="Number of source chunks")
+    resources: List[DocumentResource] = Field(default_factory=list, description="Garage resource references")
+    concept_ids: List[str] = Field(default_factory=list, description="Concept IDs extracted from this document")
+
+
+class DocumentSearchRequest(BaseModel):
+    """Request body for document search."""
+    query: str = Field(..., min_length=1, description="Search query text")
+    min_similarity: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum similarity threshold")
+    limit: int = Field(default=20, ge=1, le=100, description="Maximum results")
+    ontology: Optional[str] = Field(default=None, description="Filter by ontology name")
+
+
+class DocumentSearchResponse(BaseModel):
+    """Response from document search."""
+    documents: List[DocumentSearchResult] = Field(default_factory=list)
+    returned: int = Field(..., description="Number of results returned")
+    total_matches: int = Field(..., description="Total documents matching threshold")
+
+
+class DocumentChunk(BaseModel):
+    """A source chunk from a document."""
+    source_id: str
+    paragraph: int
+    full_text: str
+    char_offset_start: Optional[int] = None
+    char_offset_end: Optional[int] = None
+
+
+class DocumentContentResponse(BaseModel):
+    """Response with full document content."""
+    document_id: str
+    content_type: str = Field(default="document", description="'document' or 'image'")
+    content: Dict[str, Any] = Field(..., description="Document content (text or image+prose)")
+    chunks: List[DocumentChunk] = Field(default_factory=list, description="Source chunks from ingestion")
+
+
+class DocumentListItem(BaseModel):
+    """Document metadata for listing."""
+    document_id: str
+    filename: str
+    ontology: str
+    content_type: str = Field(default="document")
+    source_count: int
+    concept_count: int
+
+
+class DocumentListResponse(BaseModel):
+    """Response from document listing."""
+    documents: List[DocumentListItem] = Field(default_factory=list)
+    total: int
+    limit: int
+    offset: int
+
+
+class DocumentConceptItem(BaseModel):
+    """Concept extracted from a document."""
+    concept_id: str
+    name: str
+    source_id: str = Field(..., description="Source chunk where concept appears")
+    instance_count: int = Field(default=1, description="Number of instances in document")
+
+
+class DocumentConceptsResponse(BaseModel):
+    """Response with concepts for a document."""
+    document_id: str
+    filename: str
+    concepts: List[DocumentConceptItem] = Field(default_factory=list)
+    total: int
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def _generate_query_embedding(query: str) -> np.ndarray:
+    """Generate embedding for search query."""
+    from ..lib.ai_providers import get_provider
+
+    provider = get_provider()
+    embedding_result = provider.generate_embedding(query)
+
+    # Extract embedding vector
+    if isinstance(embedding_result, dict):
+        embedding = embedding_result['embedding']
+    else:
+        embedding = embedding_result
+
+    # Validate embedding is non-empty
+    if not embedding or len(embedding) == 0:
+        logger.error("Generated embedding is empty")
+        raise HTTPException(
+            status_code=500,
+            detail="Generated embedding is empty. Check embedding provider configuration."
+        )
+
+    return np.array(embedding, dtype=np.float32)
+
+
+def _search_documents_by_similarity(
+    query_embedding: np.ndarray,
+    min_similarity: float,
+    limit: int,
+    ontology_filter: Optional[str] = None
+) -> Dict[str, Dict]:
+    """
+    Search source embeddings and aggregate to source level.
+
+    Returns dict mapping source_id to:
+    {
+        "best_similarity": float,
+        "chunk_count": int
+    }
+
+    Source nodes link to DocumentMeta via the graph.
+    """
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=int(os.getenv("POSTGRES_PORT", 5432)),
+        database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+        user=os.getenv("POSTGRES_USER", "admin"),
+        password=os.getenv("POSTGRES_PASSWORD")
+    )
+
+    try:
+        with conn.cursor() as cursor:
+            # Fetch all source embeddings
+            cursor.execute("""
+                SELECT
+                    se.source_id,
+                    se.embedding
+                FROM kg_api.source_embeddings se
+                WHERE se.chunk_strategy = 'sentence'
+            """)
+
+            # Calculate similarities and group by source_id
+            source_aggregates = {}
+            for row in cursor.fetchall():
+                source_id, embedding_bytes = row
+
+                chunk_embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
+                similarity = cosine_similarity(query_embedding, chunk_embedding)
+
+                if similarity >= min_similarity:
+                    if source_id not in source_aggregates:
+                        source_aggregates[source_id] = {
+                            'best_similarity': similarity,
+                            'chunk_count': 1
+                        }
+                    else:
+                        source_aggregates[source_id]['chunk_count'] += 1
+                        if similarity > source_aggregates[source_id]['best_similarity']:
+                            source_aggregates[source_id]['best_similarity'] = similarity
+
+            return source_aggregates
+
+    finally:
+        conn.close()
+
+
+def _get_document_metadata_for_sources(
+    client: AGEClient,
+    source_ids: List[str],
+    ontology_filter: Optional[str] = None
+) -> Dict[str, Dict]:
+    """
+    Fetch DocumentMeta nodes for given source IDs via graph traversal.
+
+    Returns dict mapping source_id to document metadata.
+    """
+    if not source_ids:
+        return {}
+
+    # Build query: Source <- HAS_SOURCE - DocumentMeta
+    where_clause = "s.source_id IN $source_ids"
+    params = {"source_ids": source_ids}
+
+    if ontology_filter:
+        where_clause += " AND d.ontology =~ $ontology_pattern"
+        params["ontology_pattern"] = f"(?i).*{ontology_filter}.*"
+
+    query = f"""
+    MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)
+    WHERE {where_clause}
+    RETURN s.source_id as source_id,
+           d.document_id as document_id,
+           d.filename as filename,
+           d.ontology as ontology,
+           d.content_type as content_type,
+           d.garage_key as garage_key,
+           d.storage_key as storage_key
+    """
+
+    results = client._execute_cypher(query, params=params)
+
+    docs_by_source = {}
+    for row in results:
+        source_id = row.get('source_id')
+        if source_id:
+            docs_by_source[source_id] = row
+
+    return docs_by_source
+
+
+def _get_concepts_for_documents(client: AGEClient, document_ids: List[str]) -> Dict[str, List[str]]:
+    """
+    Get concept IDs for each document via Source nodes.
+
+    Returns dict mapping document_id to list of concept_ids.
+    """
+    if not document_ids:
+        return {}
+
+    # Query: DocumentMeta -[:HAS_SOURCE]-> Source <-[:APPEARS]- Concept
+    query = """
+    MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)<-[:APPEARS]-(c:Concept)
+    WHERE d.document_id IN $doc_ids
+    RETURN d.document_id as document_id, collect(DISTINCT c.concept_id) as concept_ids
+    """
+
+    results = client._execute_cypher(query, params={"doc_ids": document_ids})
+
+    concepts_by_doc = {}
+    for row in results:
+        doc_id = row.get('document_id')
+        concept_ids = row.get('concept_ids', [])
+        if doc_id:
+            concepts_by_doc[doc_id] = concept_ids
+
+    return concepts_by_doc
+
+
+# ============================================================================
+# Query Routes
+# ============================================================================
+
+@query_router.post("/search", response_model=DocumentSearchResponse)
+async def search_documents(
+    request: DocumentSearchRequest,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Search documents using semantic similarity (ADR-084).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Searches source embeddings and aggregates results to document level.
+    Documents are ranked by their best matching chunk's similarity score.
+
+    **Request Body:**
+    ```json
+    {
+      "query": "recursive depth patterns",
+      "min_similarity": 0.7,
+      "limit": 20,
+      "ontology": "optional-filter"
+    }
+    ```
+
+    **Response:**
+    ```json
+    {
+      "documents": [
+        {
+          "document_id": "sha256:abc123...",
+          "filename": "algorithms.md",
+          "ontology": "CS Research",
+          "content_type": "document",
+          "best_similarity": 0.92,
+          "source_count": 5,
+          "resources": [{"type": "document", "garage_key": "..."}],
+          "concept_ids": ["c-123", "c-456"]
+        }
+      ],
+      "returned": 20,
+      "total_matches": 42
+    }
+    ```
+    """
+    try:
+        # 1. Generate query embedding
+        query_embedding = _generate_query_embedding(request.query)
+
+        # 2. Search and aggregate to source level
+        source_aggregates = _search_documents_by_similarity(
+            query_embedding=query_embedding,
+            min_similarity=request.min_similarity,
+            limit=request.limit,
+            ontology_filter=request.ontology
+        )
+
+        if not source_aggregates:
+            return DocumentSearchResponse(
+                documents=[],
+                returned=0,
+                total_matches=0
+            )
+
+        # 3. Look up DocumentMeta for each source_id via graph
+        client = AGEClient()
+        try:
+            source_ids = list(source_aggregates.keys())
+            docs_by_source = _get_document_metadata_for_sources(client, source_ids, request.ontology)
+
+            # 4. Aggregate to document level
+            # Multiple sources may belong to same document
+            doc_aggregates: Dict[str, Dict] = {}
+            for source_id, source_data in source_aggregates.items():
+                doc_meta = docs_by_source.get(source_id)
+                if not doc_meta:
+                    # Source not linked to DocumentMeta (legacy data)
+                    continue
+
+                doc_id = doc_meta.get('document_id')
+                if not doc_id:
+                    continue
+
+                if doc_id not in doc_aggregates:
+                    doc_aggregates[doc_id] = {
+                        'meta': doc_meta,
+                        'best_similarity': source_data['best_similarity'],
+                        'source_count': 1,
+                        'source_ids': [source_id]
+                    }
+                else:
+                    doc_aggregates[doc_id]['source_count'] += 1
+                    doc_aggregates[doc_id]['source_ids'].append(source_id)
+                    if source_data['best_similarity'] > doc_aggregates[doc_id]['best_similarity']:
+                        doc_aggregates[doc_id]['best_similarity'] = source_data['best_similarity']
+
+            total_matches = len(doc_aggregates)
+
+            if not doc_aggregates:
+                return DocumentSearchResponse(
+                    documents=[],
+                    returned=0,
+                    total_matches=0
+                )
+
+            # 5. Sort by best_similarity, limit results
+            sorted_doc_ids = sorted(
+                doc_aggregates.keys(),
+                key=lambda d: doc_aggregates[d]['best_similarity'],
+                reverse=True
+            )[:request.limit]
+
+            # 6. Fetch concepts for documents
+            concepts_by_doc = _get_concepts_for_documents(client, sorted_doc_ids)
+
+            # 7. Build results
+            results = []
+            for doc_id in sorted_doc_ids:
+                agg = doc_aggregates[doc_id]
+                meta = agg['meta']
+
+                # Build resources list
+                resources = []
+                if meta.get('garage_key'):
+                    resources.append(DocumentResource(
+                        type="document",
+                        garage_key=meta['garage_key']
+                    ))
+                if meta.get('storage_key'):
+                    resources.append(DocumentResource(
+                        type="image",
+                        garage_key=meta['storage_key']
+                    ))
+
+                results.append(DocumentSearchResult(
+                    document_id=doc_id,
+                    filename=meta.get('filename') or 'unknown',
+                    ontology=meta.get('ontology') or 'unknown',
+                    content_type=meta.get('content_type') or 'document',
+                    best_similarity=round(agg['best_similarity'], 4),
+                    source_count=agg['source_count'],
+                    resources=resources,
+                    concept_ids=concepts_by_doc.get(doc_id, [])
+                ))
+
+            return DocumentSearchResponse(
+                documents=results,
+                returned=len(results),
+                total_matches=total_matches
+            )
+
+        finally:
+            client.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Document search failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+# ============================================================================
+# Document Routes
+# ============================================================================
+
+@router.get("/{document_id}/content", response_model=DocumentContentResponse)
+async def get_document_content(
+    document_id: str,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Retrieve full document content from Garage (ADR-084).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `sources:read` permission
+
+    Returns the original document plus all source chunks created during ingestion.
+
+    **Response for text document:**
+    ```json
+    {
+      "document_id": "sha256:abc123...",
+      "content_type": "document",
+      "content": {
+        "document": "# Full markdown content...",
+        "encoding": "utf-8"
+      },
+      "chunks": [
+        {"source_id": "...", "paragraph": 0, "full_text": "..."}
+      ]
+    }
+    ```
+
+    **Response for image:**
+    ```json
+    {
+      "document_id": "sha256:img456...",
+      "content_type": "image",
+      "content": {
+        "image": "base64-encoded...",
+        "prose": "Description of the image...",
+        "encoding": "base64"
+      },
+      "chunks": [...]
+    }
+    ```
+    """
+    client = AGEClient()
+
+    try:
+        # 1. Get DocumentMeta node
+        query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})
+        RETURN d.document_id as document_id,
+               d.content_type as content_type,
+               d.garage_key as garage_key,
+               d.storage_key as storage_key,
+               d.prose_key as prose_key
+        """
+
+        result = client._execute_cypher(
+            query,
+            params={"doc_id": document_id},
+            fetch_one=True
+        )
+
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Document not found: {document_id}"
+            )
+
+        content_type = result.get('content_type') or 'document'
+        garage_key = result.get('garage_key')
+        storage_key = result.get('storage_key')
+        prose_key = result.get('prose_key')
+
+        # 2. Fetch content based on type
+        content = {}
+
+        if content_type == 'image':
+            # Fetch image + prose
+            image_storage = get_image_storage()
+
+            if storage_key:
+                try:
+                    image_bytes = image_storage.base.get_object(storage_key)
+                    if image_bytes:
+                        content['image'] = base64.b64encode(image_bytes).decode('utf-8')
+                        content['encoding'] = 'base64'
+                except Exception as e:
+                    logger.warning(f"Failed to fetch image {storage_key}: {e}")
+
+            if prose_key:
+                try:
+                    prose_bytes = image_storage.base.get_object(prose_key)
+                    if prose_bytes:
+                        content['prose'] = prose_bytes.decode('utf-8')
+                except Exception as e:
+                    logger.warning(f"Failed to fetch prose {prose_key}: {e}")
+
+        else:
+            # Fetch text document
+            if garage_key:
+                source_storage = get_source_storage()
+                try:
+                    doc_bytes = source_storage.get(garage_key)
+                    if doc_bytes:
+                        content['document'] = doc_bytes.decode('utf-8')
+                        content['encoding'] = 'utf-8'
+                except Exception as e:
+                    logger.warning(f"Failed to fetch document {garage_key}: {e}")
+                    content['document'] = None
+                    content['error'] = str(e)
+
+        # 3. Fetch source chunks
+        chunks_query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})-[:HAS_SOURCE]->(s:Source)
+        RETURN s.source_id as source_id,
+               s.paragraph as paragraph,
+               s.full_text as full_text,
+               s.char_offset_start as char_offset_start,
+               s.char_offset_end as char_offset_end
+        ORDER BY s.paragraph
+        """
+
+        chunks_result = client._execute_cypher(chunks_query, params={"doc_id": document_id})
+
+        chunks = [
+            DocumentChunk(
+                source_id=c['source_id'],
+                paragraph=c.get('paragraph', 0),
+                full_text=c.get('full_text', ''),
+                char_offset_start=c.get('char_offset_start'),
+                char_offset_end=c.get('char_offset_end')
+            )
+            for c in chunks_result
+        ]
+
+        return DocumentContentResponse(
+            document_id=document_id,
+            content_type=content_type,
+            content=content,
+            chunks=chunks
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document content: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve document: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.get("", response_model=DocumentListResponse)
+async def list_documents(
+    ontology: Optional[str] = Query(None, description="Filter by ontology name"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum results"),
+    offset: int = Query(0, ge=0, description="Skip first N results"),
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    List documents with optional ontology filter (ADR-084).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `sources:read` permission
+
+    **Query Parameters:**
+    - `ontology`: Filter by ontology name (case-insensitive partial match)
+    - `limit`: Maximum results (default 50, max 200)
+    - `offset`: Skip first N results for pagination
+
+    **Response:**
+    ```json
+    {
+      "documents": [
+        {
+          "document_id": "sha256:abc...",
+          "filename": "notes.md",
+          "ontology": "Research",
+          "content_type": "document",
+          "source_count": 5,
+          "concept_count": 12
+        }
+      ],
+      "total": 42,
+      "limit": 50,
+      "offset": 0
+    }
+    ```
+    """
+    client = AGEClient()
+
+    try:
+        # Build query with optional filter
+        where_clause = ""
+        params = {"limit": limit, "offset": offset}
+
+        if ontology:
+            where_clause = "WHERE d.ontology =~ $ontology_pattern"
+            params["ontology_pattern"] = f"(?i).*{ontology}.*"
+
+        # Main query with counts
+        query = f"""
+        MATCH (d:DocumentMeta)
+        {where_clause}
+        OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
+        OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
+        WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
+        RETURN d.document_id as document_id,
+               d.filename as filename,
+               d.ontology as ontology,
+               d.content_type as content_type,
+               source_count,
+               concept_count
+        ORDER BY d.ontology, d.filename
+        SKIP $offset LIMIT $limit
+        """
+
+        # Count query
+        count_query = f"""
+        MATCH (d:DocumentMeta)
+        {where_clause}
+        RETURN count(d) as total
+        """
+
+        results = client._execute_cypher(query, params=params)
+        count_result = client._execute_cypher(
+            count_query,
+            params={"ontology_pattern": params.get("ontology_pattern")} if ontology else {},
+            fetch_one=True
+        )
+
+        documents = [
+            DocumentListItem(
+                document_id=r['document_id'],
+                filename=r.get('filename') or 'unknown',
+                ontology=r.get('ontology') or 'unknown',
+                content_type=r.get('content_type') or 'document',
+                source_count=r.get('source_count') or 0,
+                concept_count=r.get('concept_count') or 0
+            )
+            for r in results
+        ]
+
+        return DocumentListResponse(
+            documents=documents,
+            total=count_result.get('total', 0) if count_result else 0,
+            limit=limit,
+            offset=offset
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to list documents: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.get("/{document_id}/concepts", response_model=DocumentConceptsResponse)
+async def get_document_concepts(
+    document_id: str,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Get all concepts extracted from a document (ADR-084).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Returns concepts linked to the document via Source nodes,
+    including concept names and the source chunks where they appear.
+
+    **Response:**
+    ```json
+    {
+      "document_id": "sha256:abc...",
+      "filename": "notes.md",
+      "concepts": [
+        {
+          "concept_id": "sha256:abc_chunk1_def",
+          "name": "Machine Learning",
+          "source_id": "sha256:abc_chunk1",
+          "instance_count": 3
+        }
+      ],
+      "total": 15
+    }
+    ```
+    """
+    client = AGEClient()
+
+    try:
+        # 1. Get document metadata
+        doc_query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})
+        RETURN d.filename as filename
+        """
+        doc_result = client._execute_cypher(doc_query, params={"doc_id": document_id}, fetch_one=True)
+
+        if not doc_result:
+            raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
+
+        filename = doc_result.get('filename') or 'unknown'
+
+        # 2. Get concepts via DocumentMeta -> HAS_SOURCE -> Source <- APPEARS - Concept
+        concepts_query = """
+        MATCH (d:DocumentMeta {document_id: $doc_id})-[:HAS_SOURCE]->(s:Source)<-[:APPEARS]-(c:Concept)
+        OPTIONAL MATCH (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s)
+        WITH c, s, count(i) as instance_count
+        RETURN c.concept_id as concept_id,
+               c.label as name,
+               s.source_id as source_id,
+               instance_count
+        ORDER BY instance_count DESC, c.label
+        """
+
+        results = client._execute_cypher(concepts_query, params={"doc_id": document_id})
+
+        concepts = [
+            DocumentConceptItem(
+                concept_id=r['concept_id'],
+                name=r.get('name') or r['concept_id'],
+                source_id=r['source_id'],
+                instance_count=r.get('instance_count') or 1
+            )
+            for r in results
+        ]
+
+        return DocumentConceptsResponse(
+            document_id=document_id,
+            filename=filename,
+            concepts=concepts,
+            total=len(concepts)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document concepts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get concepts: {str(e)}")
+    finally:
+        client.close()

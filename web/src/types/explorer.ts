@@ -10,6 +10,7 @@ import type { ComponentType } from 'react';
 export type VisualizationType =
   | 'force-2d'
   | 'force-3d'
+  | 'document'
   | 'hierarchy'
   | 'sankey'
   | 'matrix'

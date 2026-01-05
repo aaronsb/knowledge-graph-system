@@ -300,6 +300,23 @@ function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
 }
 
 /**
+ * Track job progress with polling (simpler alternative to SSE)
+ *
+ * Used for restore operations where SSE has timing issues with EventSource library.
+ */
+export async function trackJobWithPolling(
+  client: ReturnType<typeof createClientFromEnv>,
+  jobId: string,
+  spinner: any
+): Promise<JobStatus> {
+  return client.pollJob(jobId, (job) => {
+    if (job.progress) {
+      spinner = updateSpinnerForProgress(spinner, job.progress);
+    }
+  });
+}
+
+/**
  * Track job progress with SSE streaming (ADR-018 Phase 1)
  */
 export async function trackJobWithSSE(
@@ -307,85 +324,118 @@ export async function trackJobWithSSE(
   jobId: string,
   spinner: any
 ): Promise<JobStatus> {
-  return new Promise(async (resolve, reject) => {
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+  let settled = false; // Track if promise is already resolved/rejected
+  let stream: ReturnType<typeof trackJobProgress> extends Promise<infer T> ? T : never = null;
 
-    const stream = await trackJobProgress(baseUrl, jobId, {
+  return new Promise((resolve, reject) => {
+    const safeResolve = (job: JobStatus) => {
+      if (settled) return;
+      settled = true;
+      // Close stream before resolving to prevent late errors
+      if (stream) {
+        try { stream.close(); } catch { /* ignore */ }
+      }
+      resolve(job);
+    };
+
+    const safeReject = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      if (stream) {
+        try { stream.close(); } catch { /* ignore */ }
+      }
+      reject(error);
+    };
+
+    trackJobProgress(baseUrl, jobId, {
       onProgress: (progress: JobProgress) => {
+        if (settled) return;
         spinner = updateSpinnerForProgress(spinner, progress);
       },
-      onCompleted: async (result) => {
-        const logUpdate = require('log-update').default || require('log-update');
-        const state: MultiProgressState = (spinner as any).__multiProgress;
-
-        if (state) {
-          state.orderedStages.forEach(stageName => {
-            const stageData = state.stages.get(stageName)!;
-            if (stageData.status === 'active') {
-              stageData.status = 'completed';
-              if (stageData.total === 0 && stageData.current > 0) {
-                stageData.total = stageData.current;
-              }
-            }
-          });
-
-          const lines: string[] = [];
-          state.orderedStages.forEach(stageName => {
-            const stageData = state.stages.get(stageName)!;
-            if (stageData.total > 0) {
-              const progressBar = createProgressBar(stageData.total, stageData.total);
-              lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
-            } else if (stageData.status === 'completed') {
-              lines.push(colors.status.success('✓') + ` ${stageData.name}`);
-            }
-          });
-
-          logUpdate(lines.join('\n'));
-          logUpdate.done();
-        }
+      onCompleted: (result) => {
+        if (settled) return;
 
         try {
-          const finalJob = await client.getJobStatus(jobId);
-          resolve(finalJob);
-        } catch (error) {
-          reject(error);
-        }
+          const logUpdate = require('log-update').default || require('log-update');
+          const state: MultiProgressState = (spinner as any).__multiProgress;
+
+          if (state) {
+            state.orderedStages.forEach(stageName => {
+              const stageData = state.stages.get(stageName)!;
+              if (stageData.status === 'active') {
+                stageData.status = 'completed';
+                if (stageData.total === 0 && stageData.current > 0) {
+                  stageData.total = stageData.current;
+                }
+              }
+            });
+
+            const lines: string[] = [];
+            state.orderedStages.forEach(stageName => {
+              const stageData = state.stages.get(stageName)!;
+              if (stageData.total > 0) {
+                const progressBar = createProgressBar(stageData.total, stageData.total);
+                lines.push(colors.status.success('✓') + ` ${stageData.name} ${progressBar} ${stageData.total}/${stageData.total}`);
+              } else if (stageData.status === 'completed') {
+                lines.push(colors.status.success('✓') + ` ${stageData.name}`);
+              }
+            });
+
+            logUpdate(lines.join('\n'));
+            logUpdate.done();
+          }
+        } catch { /* ignore UI errors */ }
+
+        // SSE already provides the result - construct JobStatus from it
+        const jobStatus: JobStatus = {
+          job_id: jobId,
+          job_type: 'restore',
+          status: 'completed',
+          result: result,
+          created_at: new Date().toISOString()
+        };
+        safeResolve(jobStatus);
       },
       onFailed: (error) => {
         spinner.fail('Restore failed');
-        reject(new Error(error));
+        safeReject(new Error(error));
       },
       onCancelled: (message) => {
         spinner.fail('Restore cancelled');
-        reject(new Error(message));
+        safeReject(new Error(message));
       },
-      onError: async (error) => {
-        console.log(colors.status.dim('\nSSE unavailable, using polling...'));
-        try {
-          const finalJob = await client.pollJob(jobId, (job) => {
-            if (job.progress) {
-              spinner = updateSpinnerForProgress(spinner, job.progress);
-            }
-          });
-          resolve(finalJob);
-        } catch (pollError) {
-          reject(pollError);
+      onError: (error) => {
+        if (settled) {
+          // Silently ignore errors after job completed - this is normal when SSE closes
+          return;
         }
-      }
-    }, true);
-
-    if (!stream) {
-      console.log(colors.status.dim('Using polling for progress updates...'));
-      try {
-        const finalJob = await client.pollJob(jobId, (job) => {
+        // Fall back to polling
+        client.pollJob(jobId, (job) => {
           if (job.progress) {
             spinner = updateSpinnerForProgress(spinner, job.progress);
           }
-        });
-        resolve(finalJob);
-      } catch (pollError) {
-        reject(pollError);
+        }).then(safeResolve).catch(safeReject);
       }
-    }
+    }, true).then(s => {
+      stream = s;
+      if (!stream && !settled) {
+        // SSE unavailable, use polling
+        client.pollJob(jobId, (job) => {
+          if (job.progress) {
+            spinner = updateSpinnerForProgress(spinner, job.progress);
+          }
+        }).then(safeResolve).catch(safeReject);
+      }
+    }).catch(err => {
+      // SSE setup failed, fall back to polling
+      if (!settled) {
+        client.pollJob(jobId, (job) => {
+          if (job.progress) {
+            spinner = updateSpinnerForProgress(spinner, job.progress);
+          }
+        }).then(safeResolve).catch(safeReject);
+      }
+    });
   });
 }

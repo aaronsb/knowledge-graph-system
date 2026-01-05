@@ -73,7 +73,7 @@ class BackupRequest(BaseModel):
     backup_type: str = Field(..., description="'full' or 'ontology'")
     ontology_name: Optional[str] = Field(None, description="Required if backup_type is 'ontology'")
     output_filename: Optional[str] = Field(None, description="Custom output filename")
-    format: str = Field("json", description="Export format: 'json' (native, restorable) or 'gexf' (Gephi visualization)")
+    format: str = Field("archive", description="Export format: 'archive' (tar.gz with documents, default), 'json' (graph only), or 'gexf' (Gephi visualization)")
 
 
 class BackupIntegrityAssessment(BaseModel):

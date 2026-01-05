@@ -84,8 +84,9 @@ async function extractToolsFromSource() {
   const sourcePath = path.join(__dirname, '../src/mcp-server.ts');
   const source = fs.readFileSync(sourcePath, 'utf-8');
 
-  // Find the tools array
-  const toolsArrayMatch = source.match(/tools:\s*\[([\s\S]*?)\n\s*\],?\s*\}/m);
+  // Find the tools array - look for the specific closing pattern of ListToolsRequestSchema
+  // The tools array ends with `],\n  };\n});` (closing the return object and handler)
+  const toolsArrayMatch = source.match(/tools:\s*\[([\s\S]*?)\n\s{4}\],\n\s{2}\};\n\}\);/m);
 
   if (!toolsArrayMatch) {
     throw new Error('Could not find tools array in mcp-server.ts');

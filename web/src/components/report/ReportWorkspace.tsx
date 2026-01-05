@@ -22,6 +22,11 @@ import {
   CheckCircle2,
   RefreshCw,
   Loader2,
+  Search,
+  FileSearch,
+  Save,
+  Eye,
+  X,
 } from 'lucide-react';
 import * as d3 from 'd3';
 import { IconRailPanel } from '../shared/IconRailPanel';
@@ -32,6 +37,7 @@ import {
   type Report,
   type GraphReportData,
   type PolarityReportData,
+  type DocumentReportData,
   type PreviousValues,
 } from '../../store/reportStore';
 
@@ -231,6 +237,37 @@ const polarityToCSV = (data: PolarityReportData): string => {
   return lines.join('\n');
 };
 
+// Convert document report to CSV
+const documentToCSV = (data: DocumentReportData): string => {
+  const lines: string[] = [];
+
+  if (data.searchParams?.query) {
+    lines.push(`# Query: ${data.searchParams.query}`);
+    if (data.searchParams.min_similarity) {
+      lines.push(`# Min Similarity: ${data.searchParams.min_similarity}`);
+    }
+    if (data.searchParams.ontologies?.length) {
+      lines.push(`# Ontologies: ${data.searchParams.ontologies.join(', ')}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('Filename,Ontology,Content Type,Similarity,Sources,Concepts,Document ID');
+  data.documents.forEach(d => {
+    lines.push([
+      `"${d.filename.replace(/"/g, '""')}"`,
+      d.ontology,
+      d.content_type,
+      d.best_similarity?.toFixed(3) || '',
+      d.source_count,
+      d.concept_count,
+      d.document_id,
+    ].join(','));
+  });
+
+  return lines.join('\n');
+};
+
 // Convert to Markdown
 const toMarkdown = (report: Report): string => {
   const lines: string[] = [];
@@ -260,7 +297,7 @@ const toMarkdown = (report: Report): string => {
     if (data.links.length > 50) {
       lines.push(`*... and ${data.links.length - 50} more relationships*`);
     }
-  } else {
+  } else if (report.type === 'polarity') {
     const data = report.data as PolarityReportData;
 
     lines.push('## Polarity Axis');
@@ -280,6 +317,27 @@ const toMarkdown = (report: Report): string => {
     lines.push('|-------|----------|-----------|');
     data.concepts.forEach(c => {
       lines.push(`| ${c.label} | ${c.position.toFixed(3)} | ${c.grounding_strength?.toFixed(2) || '-'} |`);
+    });
+  } else {
+    const data = report.data as DocumentReportData;
+
+    if (data.searchParams?.query) {
+      lines.push('## Query Parameters');
+      lines.push(`- **Search:** ${data.searchParams.query}`);
+      if (data.searchParams.min_similarity) {
+        lines.push(`- **Min Similarity:** ${data.searchParams.min_similarity}`);
+      }
+      if (data.searchParams.ontologies?.length) {
+        lines.push(`- **Ontologies:** ${data.searchParams.ontologies.join(', ')}`);
+      }
+      lines.push('');
+    }
+
+    lines.push('## Documents');
+    lines.push('| Filename | Ontology | Similarity | Sources | Concepts |');
+    lines.push('|----------|----------|------------|---------|----------|');
+    data.documents.forEach(d => {
+      lines.push(`| ${d.filename} | ${d.ontology} | ${d.best_similarity?.toFixed(2) || '-'} | ${d.source_count} | ${d.concept_count} |`);
     });
   }
 
@@ -308,6 +366,41 @@ export const ReportWorkspace: React.FC = () => {
   const [conceptSort, setConceptSort] = useState<SortState>({ field: null, direction: null });
   const [relationshipSort, setRelationshipSort] = useState<SortState>({ field: null, direction: null });
   const [polaritySort, setPolaritySort] = useState<SortState>({ field: null, direction: null });
+  const [documentSort, setDocumentSort] = useState<SortState>({ field: null, direction: null });
+
+  // Document query state
+  const [docQuery, setDocQuery] = useState('');
+  const [docMinSimilarity, setDocMinSimilarity] = useState(0.5);
+  const [docOntologies, setDocOntologies] = useState<string[]>([]);
+  const [availableOntologies, setAvailableOntologies] = useState<string[]>([]);
+  const [docResults, setDocResults] = useState<DocumentReportData['documents']>([]);
+  const [isSearchingDocs, setIsSearchingDocs] = useState(false);
+  const [docSearchError, setDocSearchError] = useState<string | null>(null);
+
+  // Document viewer state
+  const [viewingDocument, setViewingDocument] = useState<{
+    document_id: string;
+    filename: string;
+    content_type: string;
+  } | null>(null);
+  const [documentContent, setDocumentContent] = useState<{
+    content: any;
+    chunks: Array<{ source_id: string; paragraph: number; full_text: string }>;
+  } | null>(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+
+  // Load available ontologies on mount
+  useEffect(() => {
+    const loadOntologies = async () => {
+      try {
+        const response = await apiClient.listOntologies();
+        setAvailableOntologies(response.ontologies.map((o) => o.ontology));
+      } catch (err) {
+        console.error('Failed to load ontologies:', err);
+      }
+    };
+    loadOntologies();
+  }, []);
 
   // Derive selected report from reactive state (not getSelectedReport which isn't reactive)
   const selectedReport = useMemo(
@@ -354,6 +447,141 @@ export const ReportWorkspace: React.FC = () => {
     const data = selectedReport.data as PolarityReportData;
     return sortData(data.concepts, polaritySort.field || '', polaritySort.direction);
   }, [selectedReport, polaritySort.field, polaritySort.direction]);
+
+  const sortedDocuments = useMemo(() => {
+    if (!selectedReport || selectedReport.type !== 'document') return [];
+    const data = selectedReport.data as DocumentReportData;
+    return sortData(data.documents, documentSort.field || '', documentSort.direction);
+  }, [selectedReport, documentSort.field, documentSort.direction]);
+
+  // Document search handler
+  const handleDocumentSearch = useCallback(async () => {
+    if (!docQuery.trim()) {
+      setDocSearchError('Enter a search query');
+      return;
+    }
+
+    setIsSearchingDocs(true);
+    setDocSearchError(null);
+
+    try {
+      // If specific ontologies selected, search each one; otherwise search all
+      const ontologiesToSearch = docOntologies.length > 0 ? docOntologies : [undefined];
+      const allDocs: DocumentReportData['documents'] = [];
+
+      for (const ontology of ontologiesToSearch) {
+        const response = await apiClient.searchDocuments({
+          query: docQuery,
+          min_similarity: docMinSimilarity,
+          limit: 100,
+          ontology,
+        });
+
+        // Add documents with concept_count derived from concept_ids
+        response.documents.forEach((doc) => {
+          // Avoid duplicates if same doc appears in multiple ontology searches
+          if (!allDocs.find((d) => d.document_id === doc.document_id)) {
+            allDocs.push({
+              document_id: doc.document_id,
+              filename: doc.filename,
+              ontology: doc.ontology,
+              content_type: doc.content_type,
+              best_similarity: doc.best_similarity,
+              source_count: doc.source_count,
+              concept_count: doc.concept_ids?.length || 0,
+            });
+          }
+        });
+      }
+
+      // Sort by similarity descending
+      allDocs.sort((a, b) => (b.best_similarity || 0) - (a.best_similarity || 0));
+      setDocResults(allDocs);
+    } catch (err) {
+      console.error('Document search failed:', err);
+      setDocSearchError('Search failed. Please try again.');
+    } finally {
+      setIsSearchingDocs(false);
+    }
+  }, [docQuery, docMinSimilarity, docOntologies]);
+
+  // Save document results as a report
+  const handleSaveDocumentReport = useCallback(async () => {
+    if (docResults.length === 0) return;
+
+    const { addReport } = useReportStore.getState();
+    const data: DocumentReportData = {
+      type: 'document',
+      documents: docResults,
+      searchParams: {
+        query: docQuery,
+        min_similarity: docMinSimilarity,
+        ontologies: docOntologies.length > 0 ? docOntologies : undefined,
+      },
+    };
+
+    const name = `docs: "${docQuery}" (${docResults.length})`;
+    await addReport({
+      name,
+      type: 'document',
+      data,
+      sourceExplorer: 'document',
+    });
+
+    // Switch to reports tab to see the saved report
+    setActiveTab('reports');
+  }, [docResults, docQuery, docMinSimilarity, docOntologies]);
+
+  // View document content
+  const handleViewDocument = useCallback(async (doc: {
+    document_id: string;
+    filename: string;
+    content_type: string;
+  }) => {
+    setViewingDocument(doc);
+    setIsLoadingContent(true);
+    setDocumentContent(null);
+
+    try {
+      const response = await apiClient.getDocumentContent(doc.document_id);
+      setDocumentContent({
+        content: response.content,
+        chunks: response.chunks || [],
+      });
+    } catch (err) {
+      console.error('Failed to load document content:', err);
+    } finally {
+      setIsLoadingContent(false);
+    }
+  }, []);
+
+  // Download document content
+  const handleDownloadDocument = useCallback(() => {
+    if (!viewingDocument || !documentContent) return;
+
+    let content: string;
+    let mimeType: string;
+    let extension: string;
+
+    if (viewingDocument.content_type === 'application/json' || typeof documentContent.content === 'object') {
+      content = JSON.stringify(documentContent.content, null, 2);
+      mimeType = 'application/json';
+      extension = '.json';
+    } else {
+      // For text content, concatenate chunks
+      content = documentContent.chunks.map(c => c.full_text).join('\n\n');
+      mimeType = 'text/plain';
+      extension = '.txt';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = viewingDocument.filename.replace(/\.[^.]+$/, '') + extension;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [viewingDocument, documentContent]);
 
   // Sort handler - toggles through: null -> asc -> desc -> null
   const handleSort = (setter: React.Dispatch<React.SetStateAction<SortState>>) => (field: string) => {
@@ -468,6 +696,7 @@ export const ReportWorkspace: React.FC = () => {
 
   const getReportIcon = (report: Report) => {
     if (report.type === 'polarity') return Compass;
+    if (report.type === 'document') return FileText;
     return GitBranch;
   };
 
@@ -493,7 +722,9 @@ export const ReportWorkspace: React.FC = () => {
             const isSelected = selectedReportId === report.id;
             const nodeCount = report.type === 'graph'
               ? (report.data as GraphReportData).nodes.length
-              : (report.data as PolarityReportData).concepts.length;
+              : report.type === 'polarity'
+              ? (report.data as PolarityReportData).concepts.length
+              : (report.data as DocumentReportData).documents.length;
 
             return (
               <div
@@ -571,8 +802,149 @@ export const ReportWorkspace: React.FC = () => {
     </div>
   );
 
+  // Documents query tab content
+  const documentsContent = (
+    <div className="p-3 space-y-4">
+      <div className="text-xs font-medium text-muted-foreground mb-2">
+        Document Query
+      </div>
+
+      {/* Search input */}
+      <div>
+        <label className="text-xs text-muted-foreground mb-1 block">Search phrase</label>
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <input
+            type="text"
+            value={docQuery}
+            onChange={(e) => setDocQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleDocumentSearch()}
+            placeholder="e.g., machine learning"
+            className="w-full pl-7 pr-2 py-1.5 text-sm bg-background border rounded focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+      </div>
+
+      {/* Similarity threshold */}
+      <div>
+        <label className="text-xs text-muted-foreground mb-1 block">
+          Min similarity: {(docMinSimilarity * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          min="0.3"
+          max="0.95"
+          step="0.05"
+          value={docMinSimilarity}
+          onChange={(e) => setDocMinSimilarity(parseFloat(e.target.value))}
+          className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+
+      {/* Ontology filter */}
+      <div>
+        <label className="text-xs text-muted-foreground mb-1 block">
+          Ontologies {docOntologies.length > 0 && `(${docOntologies.length})`}
+        </label>
+        <div className="max-h-24 overflow-y-auto border rounded p-1 space-y-0.5">
+          {availableOntologies.length === 0 ? (
+            <div className="text-xs text-muted-foreground py-1 px-2">Loading...</div>
+          ) : (
+            availableOntologies.map((ont) => (
+              <label key={ont} className="flex items-center gap-2 text-xs py-0.5 px-1 hover:bg-accent rounded cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={docOntologies.includes(ont)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setDocOntologies([...docOntologies, ont]);
+                    } else {
+                      setDocOntologies(docOntologies.filter((o) => o !== ont));
+                    }
+                  }}
+                  className="w-3 h-3"
+                />
+                <span className="truncate">{ont}</span>
+              </label>
+            ))
+          )}
+        </div>
+        {docOntologies.length > 0 && (
+          <button
+            onClick={() => setDocOntologies([])}
+            className="text-xs text-muted-foreground hover:text-foreground mt-1"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {/* Search button */}
+      <button
+        onClick={handleDocumentSearch}
+        disabled={isSearchingDocs || !docQuery.trim()}
+        className="w-full py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {isSearchingDocs ? (
+          <>
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Searching...
+          </>
+        ) : (
+          <>
+            <FileSearch className="w-3 h-3" />
+            Search Documents
+          </>
+        )}
+      </button>
+
+      {docSearchError && (
+        <p className="text-xs text-destructive">{docSearchError}</p>
+      )}
+
+      {/* Results summary */}
+      {docResults.length > 0 && (
+        <div className="pt-2 border-t">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground">
+              {docResults.length} documents found
+            </span>
+            <button
+              onClick={handleSaveDocumentReport}
+              className="text-xs flex items-center gap-1 text-primary hover:underline"
+              title="Save as report"
+            >
+              <Save className="w-3 h-3" />
+              Save
+            </button>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {docResults.slice(0, 10).map((doc) => (
+              <div
+                key={doc.document_id}
+                className="text-xs p-1.5 bg-muted/50 rounded truncate"
+                title={doc.filename}
+              >
+                <span className="font-medium">{doc.filename}</span>
+                <span className="text-muted-foreground ml-1">
+                  ({(doc.best_similarity || 0) * 100 | 0}%)
+                </span>
+              </div>
+            ))}
+            {docResults.length > 10 && (
+              <div className="text-xs text-muted-foreground text-center">
+                +{docResults.length - 10} more
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const panelTabs = [
     { id: 'reports', icon: FolderOpen, label: 'Reports', content: reportsContent },
+    { id: 'documents', icon: FileSearch, label: 'Documents', content: documentsContent },
     { id: 'settings', icon: Settings2, label: 'Settings', content: settingsContent },
   ];
 
@@ -823,6 +1195,118 @@ export const ReportWorkspace: React.FC = () => {
     );
   };
 
+  // Render table for document report
+  const renderDocumentTable = (data: DocumentReportData) => {
+    // Get all unique ontologies for color calculation
+    const allOntologies = [...new Set(data.documents.map(d => d.ontology).filter(Boolean))];
+
+    return (
+      <div className="space-y-6">
+        {/* Query Info */}
+        {data.searchParams && (
+          <div className="p-3 bg-muted/30 rounded-lg border text-sm">
+            <div className="flex items-center gap-4 flex-wrap">
+              {data.searchParams.query && (
+                <>
+                  <span className="text-muted-foreground">Query:</span>
+                  <span className="font-medium">"{data.searchParams.query}"</span>
+                </>
+              )}
+              {data.searchParams.min_similarity && (
+                <>
+                  <span className="text-muted-foreground">Min Similarity:</span>
+                  <span className="font-medium">{(data.searchParams.min_similarity * 100).toFixed(0)}%</span>
+                </>
+              )}
+              {data.searchParams.ontologies && data.searchParams.ontologies.length > 0 && (
+                <>
+                  <span className="text-muted-foreground">Ontologies:</span>
+                  <span className="font-medium">{data.searchParams.ontologies.join(', ')}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Documents Table */}
+        <div>
+          <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+            <Table2 className="w-4 h-4" />
+            Documents ({data.documents.length})
+          </h3>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-3 py-2 w-10"></th>
+                    <SortableHeader field="filename" label="Filename" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
+                    <SortableHeader field="ontology" label="Ontology" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
+                    <SortableHeader field="content_type" label="Type" sortState={documentSort} onSort={handleSort(setDocumentSort)} />
+                    <SortableHeader field="best_similarity" label="Similarity" sortState={documentSort} onSort={handleSort(setDocumentSort)} align="right" />
+                    <SortableHeader field="source_count" label="Sources" sortState={documentSort} onSort={handleSort(setDocumentSort)} align="right" />
+                    <SortableHeader field="concept_count" label="Concepts" sortState={documentSort} onSort={handleSort(setDocumentSort)} align="right" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {sortedDocuments.map((doc) => (
+                    <tr key={doc.document_id} className="hover:bg-muted/30">
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={() => handleViewDocument(doc)}
+                          className="p-1 rounded hover:bg-accent"
+                          title="View document"
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 font-medium max-w-xs truncate" title={doc.filename}>
+                        {doc.filename}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span
+                          className="px-1.5 py-0.5 text-xs rounded"
+                          style={{
+                            backgroundColor: `${getOntologyColor(doc.ontology, allOntologies)}40`,
+                            color: getOntologyColor(doc.ontology, allOntologies),
+                          }}
+                        >
+                          {doc.ontology}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground text-xs">
+                        {doc.content_type}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {doc.best_similarity != null ? (
+                          <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
+                            doc.best_similarity >= 0.8
+                              ? 'bg-green-500/20 text-green-600'
+                              : doc.best_similarity >= 0.6
+                              ? 'bg-yellow-500/20 text-yellow-600'
+                              : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {(doc.best_similarity * 100).toFixed(0)}%
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-xs">
+                        {doc.source_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-xs">
+                        {doc.concept_count}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="h-full flex">
       {/* Left Panel - Icon Rail with Reports list */}
@@ -895,7 +1379,9 @@ export const ReportWorkspace: React.FC = () => {
                 onClick={() => {
                   const csv = selectedReport.type === 'graph'
                     ? graphToCSV(selectedReport.data as GraphReportData)
-                    : polarityToCSV(selectedReport.data as PolarityReportData);
+                    : selectedReport.type === 'polarity'
+                    ? polarityToCSV(selectedReport.data as PolarityReportData)
+                    : documentToCSV(selectedReport.data as DocumentReportData);
                   copyToClipboard(csv, 'csv', setCopiedFormat);
                 }}
                 className="px-2 py-1 text-xs rounded hover:bg-accent flex items-center gap-1"
@@ -939,21 +1425,104 @@ export const ReportWorkspace: React.FC = () => {
           {selectedReport ? (
             selectedReport.type === 'graph'
               ? renderGraphTable(selectedReport.data as GraphReportData, selectedReport)
-              : renderPolarityTable(selectedReport.data as PolarityReportData)
+              : selectedReport.type === 'polarity'
+              ? renderPolarityTable(selectedReport.data as PolarityReportData)
+              : renderDocumentTable(selectedReport.data as DocumentReportData)
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
                 <h3 className="text-lg font-medium mb-2">No Report Selected</h3>
                 <p className="text-sm max-w-sm mx-auto">
-                  Use "Send to Reports" from the 2D, 3D, or Polarity Explorer
-                  to create a tabular view of your graph data.
+                  Use the Documents tab to query documents, or use "Send to Reports"
+                  from an explorer to create a tabular view of your data.
                 </p>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col m-4">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <h3 className="font-semibold">{viewingDocument.filename}</h3>
+                  <p className="text-xs text-muted-foreground">{viewingDocument.content_type}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadDocument}
+                  disabled={!documentContent}
+                  className="p-2 rounded hover:bg-accent disabled:opacity-50"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setViewingDocument(null);
+                    setDocumentContent(null);
+                  }}
+                  className="p-2 rounded hover:bg-accent"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto p-4">
+              {isLoadingContent ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : documentContent ? (
+                <div className="space-y-4">
+                  {documentContent.chunks.length > 0 ? (
+                    documentContent.chunks.map((chunk, idx) => (
+                      <div key={chunk.source_id} className="border rounded-lg p-4">
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Paragraph {chunk.paragraph + 1}
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap">
+                          {chunk.full_text}
+                        </div>
+                      </div>
+                    ))
+                  ) : typeof documentContent.content === 'object' ? (
+                    <pre className="text-xs bg-muted p-4 rounded-lg overflow-auto">
+                      {JSON.stringify(documentContent.content, null, 2)}
+                    </pre>
+                  ) : (
+                    <div className="text-sm whitespace-pre-wrap">
+                      {String(documentContent.content)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  Failed to load document content
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {documentContent && documentContent.chunks.length > 0 && (
+              <div className="px-4 py-2 border-t text-xs text-muted-foreground">
+                {documentContent.chunks.length} chunk{documentContent.chunks.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

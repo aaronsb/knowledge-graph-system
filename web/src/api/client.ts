@@ -1478,6 +1478,94 @@ class APIClient {
   async deleteQueryDefinition(id: number): Promise<void> {
     await this.client.delete(`/query-definitions/${id}`);
   }
+
+  // ============================================================
+  // DOCUMENT METHODS (ADR-084)
+  // ============================================================
+
+  /**
+   * Search documents using semantic similarity
+   */
+  async searchDocuments(params: {
+    query: string;
+    min_similarity?: number;
+    limit?: number;
+    ontology?: string;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      best_similarity: number;
+      source_count: number;
+      concept_ids: string[];
+    }>;
+    returned: number;
+    total_matches: number;
+  }> {
+    const response = await this.client.post('/query/documents/search', params);
+    return response.data;
+  }
+
+  /**
+   * List all documents with optional ontology filter
+   */
+  async listDocuments(params?: {
+    ontology?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      source_count: number;
+      concept_count: number;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const response = await this.client.get('/documents', { params });
+    return response.data;
+  }
+
+  /**
+   * Get concepts extracted from a document
+   */
+  async getDocumentConcepts(documentId: string): Promise<{
+    document_id: string;
+    filename: string;
+    concepts: Array<{
+      concept_id: string;
+      name: string;
+      source_id: string;
+      instance_count: number;
+    }>;
+    total: number;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
+  /**
+   * Get document content from Garage
+   */
+  async getDocumentContent(documentId: string): Promise<{
+    document_id: string;
+    content_type: string;
+    content: any;
+    chunks: Array<{
+      source_id: string;
+      paragraph: number;
+      full_text: string;
+    }>;
+  }> {
+    const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/content`);
+    return response.data;
+  }
 }
 
 // Export singleton instance

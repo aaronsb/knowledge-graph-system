@@ -36,6 +36,7 @@ from ..services.admin_service import AdminService
 from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
 from ..lib.backup_streaming import create_backup_stream
+from ..lib.backup_archive import stream_backup_archive, extract_backup_archive, cleanup_extracted_archive
 from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
@@ -110,11 +111,17 @@ async def create_backup(
     - **full**: Backup entire database (all ontologies)
     - **ontology**: Backup specific ontology (requires ontology_name)
 
-    Supports two formats:
-    - **json**: Native format (default) - includes all data, restorable
+    Supports three formats:
+    - **archive** (default): tar.gz with manifest.json + original documents from Garage
+    - **json**: Graph data only (legacy format) - no source documents
     - **gexf**: Gephi visualization format - graph structure only, NOT restorable
 
-    JSON backup includes:
+    Archive backup includes:
+    - manifest.json with all graph data (concepts, sources, instances, relationships)
+    - documents/ directory with original files from Garage storage
+    - Full embeddings (1536-dim vectors)
+
+    JSON backup includes (legacy, no documents):
     - All concepts, sources, and instances
     - Full embeddings (1536-dim vectors)
     - All relationships
@@ -130,7 +137,15 @@ async def create_backup(
 
     **Authorization:** Requires `backups:create` permission
 
-    Example (JSON):
+    Example (Archive with documents - default):
+    ```json
+    {
+        "backup_type": "ontology",
+        "ontology_name": "Research Papers"
+    }
+    ```
+
+    Example (JSON legacy):
     ```json
     {
         "backup_type": "full",
@@ -151,16 +166,24 @@ async def create_backup(
         # Get AGE client
         client = AGEClient()
 
-        # Create streaming backup
-        stream, filename = await create_backup_stream(
-            client=client,
-            backup_type=request.backup_type,
-            ontology_name=request.ontology_name,
-            format=request.format
-        )
-
-        # Determine media type based on format
-        media_type = "application/gexf+xml" if request.format == "gexf" else "application/json"
+        # Handle different formats
+        if request.format == "archive":
+            # Create tar.gz archive with documents (default)
+            stream, filename = await stream_backup_archive(
+                client=client,
+                backup_type=request.backup_type,
+                ontology_name=request.ontology_name
+            )
+            media_type = "application/gzip"
+        else:
+            # Legacy JSON or GEXF format (graph data only)
+            stream, filename = await create_backup_stream(
+                client=client,
+                backup_type=request.backup_type,
+                ontology_name=request.ontology_name,
+                format=request.format
+            )
+            media_type = "application/gexf+xml" if request.format == "gexf" else "application/json"
 
         # Return streaming response
         return StreamingResponse(
@@ -191,7 +214,7 @@ async def restore_backup(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     _: None = Depends(require_permission("backups", "restore")),
-    file: UploadFile = File(..., description="Backup JSON file to restore"),
+    file: UploadFile = File(..., description="Backup file (.tar.gz archive or .json)"),
     overwrite: bool = Form(False, description="Overwrite existing data"),
     handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
 ):
@@ -203,6 +226,10 @@ async def restore_backup(
     **Multipart Upload**: Client streams backup file to server.
     Server validates, then queues restore job for background processing.
 
+    Supports two formats:
+    - **.tar.gz** (archive): Contains manifest.json + original documents from Garage
+    - **.json** (legacy): Graph data only, no source documents
+
     Restore options:
     - **overwrite**: Whether to overwrite existing data (default: false)
     - **handle_external_deps**: How to handle external dependencies
@@ -212,9 +239,11 @@ async def restore_backup(
 
     The restore process includes:
     1. Save uploaded file to temp location
-    2. Run integrity checks (format, references, statistics)
-    3. Queue restore worker with job ID
-    4. Return job ID for progress tracking
+    2. For archives: extract and locate manifest.json
+    3. Run integrity checks (format, references, statistics)
+    4. Queue restore worker with job ID
+    5. For archives: restore documents to Garage after graph restore
+    6. Return job ID for progress tracking
 
     Returns job_id for polling restore progress via /jobs/{job_id}
 
@@ -222,28 +251,53 @@ async def restore_backup(
 
     Example (multipart/form-data):
     ```
-    file: <backup_file.json>
+    file: <backup_file.tar.gz>
     overwrite: false
     handle_external_deps: prune
     ```
     """
 
     # Validate file type
-    if not file.filename.endswith('.json'):
+    is_archive = file.filename.endswith('.tar.gz')
+    is_json = file.filename.endswith('.json')
+
+    if not is_archive and not is_json:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Backup file must be JSON format (.json extension)"
+            detail="Backup file must be .tar.gz archive or .json format"
         )
 
     # Generate temp file path
     temp_file_id = uuid.uuid4()
+    archive_temp_dir = None  # Track extracted archive directory for cleanup
+
+    if is_archive:
+        # Save archive to temp, then extract
+        archive_path = Path(tempfile.gettempdir()) / f"restore_{temp_file_id}.tar.gz"
+    else:
+        archive_path = None
+
     temp_path = Path(tempfile.gettempdir()) / f"restore_{temp_file_id}.json"
 
     try:
-        # Save uploaded file to temp location
-        logger.info(f"Saving uploaded backup to {temp_path}")
-        with open(temp_path, "wb") as temp_file:
-            shutil.copyfileobj(file.file, temp_file)
+        if is_archive:
+            # Save archive file
+            logger.info(f"Saving uploaded archive to {archive_path}")
+            with open(archive_path, "wb") as temp_file:
+                shutil.copyfileobj(file.file, temp_file)
+
+            # Extract archive
+            logger.info(f"Extracting archive {archive_path}")
+            archive_temp_dir, manifest_path = extract_backup_archive(str(archive_path))
+            temp_path = Path(manifest_path)
+
+            # Clean up archive file (keep extracted dir for document restore)
+            archive_path.unlink()
+        else:
+            # Save JSON file directly
+            logger.info(f"Saving uploaded backup to {temp_path}")
+            with open(temp_path, "wb") as temp_file:
+                shutil.copyfileobj(file.file, temp_file)
 
         # Run integrity checks
         logger.info(f"Running integrity checks on {temp_path}")
@@ -330,7 +384,9 @@ async def restore_backup(
                 "overwrite": overwrite,
                 "handle_external_deps": handle_external_deps,
                 "backup_stats": stats,
-                "integrity_warnings": len(integrity.warnings)
+                "integrity_warnings": len(integrity.warnings),
+                "archive_temp_dir": archive_temp_dir,  # For document restore (None if JSON)
+                "is_archive": is_archive
             }
         )
 
@@ -349,12 +405,17 @@ async def restore_backup(
         }
 
     except HTTPException:
+        # Cleanup on HTTP exception
+        if archive_temp_dir:
+            cleanup_extracted_archive(archive_temp_dir)
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        # Cleanup temp file on error
+        # Cleanup temp file and archive dir on error
         if temp_path.exists():
             temp_path.unlink()
+        if archive_temp_dir:
+            cleanup_extracted_archive(archive_temp_dir)
 
         logger.error(f"Restore upload failed: {str(e)}")
         raise HTTPException(
