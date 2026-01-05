@@ -69,6 +69,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path === '/') return 'Home';
     if (path.startsWith('/explore/2d')) return '2D Force Graph';
     if (path.startsWith('/explore/3d')) return '3D Force Graph';
+    if (path.startsWith('/explore/documents')) return 'Document Explorer';
     if (path.startsWith('/blocks')) return 'Block Editor';
     if (path.startsWith('/ingest')) return 'Ingest';
     if (path.startsWith('/jobs')) return 'Jobs';
@@ -131,6 +132,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               description="Immersive 3D exploration"
               isActive={isActive('/explore/3d')}
               onClick={() => navigate('/explore/3d')}
+            />
+            <SidebarItem
+              icon={FileText}
+              label="Document Explorer"
+              description="Radial document→concept view"
+              isActive={isActive('/explore/documents')}
+              onClick={() => navigate('/explore/documents')}
             />
             <SidebarItem
               icon={GitBranch}

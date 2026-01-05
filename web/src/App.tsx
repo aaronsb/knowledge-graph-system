@@ -32,6 +32,7 @@ import { HomeWorkspace } from './components/home/HomeWorkspace';
 import { EdgeExplorerWorkspace } from './components/vocabulary/EdgeExplorerWorkspace';
 import { VocabularyChordWorkspace } from './components/vocabulary/VocabularyChordWorkspace';
 import { EmbeddingLandscapeWorkspace } from './components/embeddings';
+import { DocumentExplorerWorkspace } from './components/documents/DocumentExplorerWorkspace';
 
 import './explorers'; // Import to register explorers
 
@@ -126,6 +127,7 @@ const AppContent: React.FC = () => {
         {/* Explorers */}
         <Route path="/explore/2d" element={<ExplorerView explorerType="force-2d" />} />
         <Route path="/explore/3d" element={<ExplorerView explorerType="force-3d" />} />
+        <Route path="/explore/documents" element={<DocumentExplorerWorkspace />} />
 
         {/* Block Editor */}
         <Route path="/blocks" element={<BlockEditorWorkspace />} />
