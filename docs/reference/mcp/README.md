@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2025-11-30
+> Last updated: 2026-01-05
 
 ---
 
@@ -16,7 +16,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 
 ## Available Tools
 
-- [`search`](#search) - Search for concepts or source passages using semantic similarity. Your ENTRY POINT to the graph.
+- [`search`](#search) - Search for concepts, source passages, or documents using semantic similarity. Your ENTRY POINT to the graph.
 
 CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarity:
 - Grounding strength (-1.0 to 1.0): Reliability/contradiction score
@@ -31,6 +31,12 @@ SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
 - Returns matched text chunks with character offsets for highlighting
 - Shows concepts extracted from those passages
 - Useful for RAG workflows and finding original context
+
+DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
+- Searches at document level (aggregates source chunks)
+- Returns documents ranked by best matching chunk similarity
+- Shows concepts extracted from each document
+- Use with document tool for content retrieval
 
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
@@ -40,12 +46,76 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").
 PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 - [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
+- [`ingest`](#ingest) - Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
+- [`source`](#source) - Retrieve original source content (text or image) for a source node (ADR-057).
+
+For IMAGE sources: Returns the image for visual verification
+For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
+
+Use when you need to:
+- Verify extracted concepts against original source
+- Get the full context of a text passage
+- Retrieve images for visual analysis
+- Check character offsets for highlighting
+- [`epistemic_status`](#epistemic-status) - Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
+
+Three actions available:
+- "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
+- "show": Get detailed status for a specific relationship type
+- "measure": Run measurement to calculate epistemic status for all types (admin operation)
+
+EPISTEMIC STATUS CLASSIFICATIONS:
+- AFFIRMATIVE: High avg grounding >0.8 (well-established knowledge)
+- CONTESTED: Mixed grounding 0.2-0.8 (debated/mixed validation)
+- CONTRADICTORY: Low grounding <-0.5 (contradicted knowledge)
+- HISTORICAL: Temporal vocabulary (detected by name)
+- INSUFFICIENT_DATA: <3 successful measurements
+- UNCLASSIFIED: Doesn't fit known patterns
+
+Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
+- [`analyze_polarity_axis`](#analyze-polarity-axis) - Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+
+Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
+- Axis quality and magnitude (semantic distinctness)
+- Concept positions along the axis (-1 to +1)
+- Direction distribution (positive/neutral/negative)
+- Grounding correlation patterns
+- Statistical analysis of projections
+
+PERFORMANCE: Direct query pattern, ~2-3 seconds execution time.
+
+Use Cases:
+- Explore conceptual spectrums and gradients
+- Identify position-grounding correlation patterns
+- Discover concepts balanced between opposing ideas
+- Map semantic dimensions in the knowledge graph
+- [`artifact`](#artifact) - Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+
+Three actions available:
+- "list": List artifacts with optional filtering by type, representation, or ontology
+- "show": Get artifact metadata by ID (without payload)
+- "payload": Get artifact with full payload (for reusing stored analysis)
+
+Use artifacts to:
+- Recall previously computed analyses without re-running expensive queries
+- Share analysis results across sessions
+- Track analysis history with parameters and timestamps
+- Check freshness (is_fresh indicates if graph has changed since artifact creation)
+- [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-084).
+
+Three actions available:
+- "list": List all documents with optional ontology filter
+- "show": Retrieve document content from Garage storage
+- "concepts": Get all concepts extracted from a document
+
+Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
+Use search tool with type="documents" to find documents semantically.
 
 ---
 
 ### search
 
-Search for concepts or source passages using semantic similarity. Your ENTRY POINT to the graph.
+Search for concepts, source passages, or documents using semantic similarity. Your ENTRY POINT to the graph.
 
 CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarity:
 - Grounding strength (-1.0 to 1.0): Reliability/contradiction score
@@ -61,6 +131,12 @@ SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
 - Shows concepts extracted from those passages
 - Useful for RAG workflows and finding original context
 
+DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
+- Searches at document level (aggregates source chunks)
+- Returns documents ranked by best matching chunk similarity
+- Shows concepts extracted from each document
+- Use with document tool for content retrieval
+
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
 Use 2-3 word phrases (e.g., "linear thinking patterns").
@@ -68,8 +144,8 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").
 **Parameters:**
 
 - `query` (`string`) **(required)** - Search query text (2-3 word phrases work best, e.g., "linear thinking patterns")
-- `type` (`string`) - Search type: "concepts" (default - semantic concept search) or "sources" (source passage search, ADR-068)
-  - Allowed values: `concepts`, `sources`
+- `type` (`string`) - Search type: "concepts" (default), "sources" (passage search), or "documents" (document-level search)
+  - Allowed values: `concepts`, `sources`, `documents`
   - Default: `"concepts"`
 - `limit` (`number`) - Maximum number of results to return (default: 10, max: 100)
   - Default: `10`
@@ -145,5 +221,180 @@ Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action par
 - `status` (`string`) - Filter by status for list (pending, awaiting_approval, running, completed, failed)
 - `limit` (`number`) - Max jobs to return for list (default: 50)
   - Default: `50`
+
+---
+
+### ingest
+
+Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
+
+**Parameters:**
+
+- `action` (`string`) **(required)** - Operation: "text" (raw text), "inspect-file" (validate), "file" (ingest files), "directory" (ingest directory)
+  - Allowed values: `text`, `inspect-file`, `file`, `directory`
+- `text` (`string`) - Text content to ingest (required for text action)
+- `ontology` (`string`) - Ontology name (required for text/file/directory, optional for directory - defaults to dir name)
+- `filename` (`string`) - Optional filename for source tracking (text action)
+- `processing_mode` (`string`) - Processing mode (text action, default: serial)
+  - Allowed values: `serial`, `parallel`
+  - Default: `"serial"`
+- `target_words` (`number`) - Words per chunk (text action, default: 1000)
+  - Default: `1000`
+- `overlap_words` (`number`) - Overlap between chunks (text action, default: 200)
+  - Default: `200`
+- `path` (`any`) - File/directory path (required for inspect-file/file/directory). For file action: single path string OR array for batch
+- `auto_approve` (`boolean`) - Auto-approve processing (file/directory actions, default: true)
+  - Default: `true`
+- `force` (`boolean`) - Force re-ingestion (file/directory actions, default: false)
+  - Default: `false`
+- `recursive` (`boolean`) - Process subdirectories recursively (directory action, default: false)
+  - Default: `false`
+- `limit` (`number`) - Number of files to show per page (directory action, default: 10)
+  - Default: `10`
+- `offset` (`number`) - Number of files to skip for pagination (directory action, default: 0)
+  - Default: `0`
+
+---
+
+### source
+
+Retrieve original source content (text or image) for a source node (ADR-057).
+
+For IMAGE sources: Returns the image for visual verification
+For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
+
+Use when you need to:
+- Verify extracted concepts against original source
+- Get the full context of a text passage
+- Retrieve images for visual analysis
+- Check character offsets for highlighting
+
+**Parameters:**
+
+- `source_id` (`string`) **(required)** - Source ID from evidence or search results
+
+---
+
+### epistemic_status
+
+Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
+
+Three actions available:
+- "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
+- "show": Get detailed status for a specific relationship type
+- "measure": Run measurement to calculate epistemic status for all types (admin operation)
+
+EPISTEMIC STATUS CLASSIFICATIONS:
+- AFFIRMATIVE: High avg grounding >0.8 (well-established knowledge)
+- CONTESTED: Mixed grounding 0.2-0.8 (debated/mixed validation)
+- CONTRADICTORY: Low grounding <-0.5 (contradicted knowledge)
+- HISTORICAL: Temporal vocabulary (detected by name)
+- INSUFFICIENT_DATA: <3 successful measurements
+- UNCLASSIFIED: Doesn't fit known patterns
+
+Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
+
+**Parameters:**
+
+- `action` (`string`) **(required)** - Operation: "list" (all types), "show" (specific type), "measure" (run measurement)
+  - Allowed values: `list`, `show`, `measure`
+- `status_filter` (`string`) - Filter by status for list action: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED
+- `relationship_type` (`string`) - Relationship type to show (required for show action, e.g., "IMPLIES", "SUPPORTS")
+- `sample_size` (`number`) - Edges to sample per type for measure action (default: 100)
+  - Default: `100`
+- `store` (`boolean`) - Store results to database for measure action (default: true)
+  - Default: `true`
+- `verbose` (`boolean`) - Include detailed statistics for measure action (default: false)
+  - Default: `false`
+
+---
+
+### analyze_polarity_axis
+
+Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+
+Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
+- Axis quality and magnitude (semantic distinctness)
+- Concept positions along the axis (-1 to +1)
+- Direction distribution (positive/neutral/negative)
+- Grounding correlation patterns
+- Statistical analysis of projections
+
+PERFORMANCE: Direct query pattern, ~2-3 seconds execution time.
+
+Use Cases:
+- Explore conceptual spectrums and gradients
+- Identify position-grounding correlation patterns
+- Discover concepts balanced between opposing ideas
+- Map semantic dimensions in the knowledge graph
+
+**Parameters:**
+
+- `positive_pole_id` (`string`) **(required)** - Concept ID for positive pole (e.g., ID for "Modern")
+- `negative_pole_id` (`string`) **(required)** - Concept ID for negative pole (e.g., ID for "Traditional")
+- `candidate_ids` (`array`) - Specific concept IDs to project onto axis (optional)
+- `auto_discover` (`boolean`) - Auto-discover related concepts if candidate_ids not provided (default: true)
+  - Default: `true`
+- `max_candidates` (`number`) - Maximum candidates for auto-discovery (default: 20, max: 100)
+  - Default: `20`
+- `max_hops` (`number`) - Maximum graph hops for auto-discovery (1-3, default: 1)
+  - Default: `1`
+
+---
+
+### artifact
+
+Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+
+Three actions available:
+- "list": List artifacts with optional filtering by type, representation, or ontology
+- "show": Get artifact metadata by ID (without payload)
+- "payload": Get artifact with full payload (for reusing stored analysis)
+
+Use artifacts to:
+- Recall previously computed analyses without re-running expensive queries
+- Share analysis results across sessions
+- Track analysis history with parameters and timestamps
+- Check freshness (is_fresh indicates if graph has changed since artifact creation)
+
+**Parameters:**
+
+- `action` (`string`) **(required)** - Operation: "list" (list artifacts), "show" (metadata only), "payload" (full result)
+  - Allowed values: `list`, `show`, `payload`
+- `artifact_id` (`number`) - Artifact ID (required for show, payload)
+- `artifact_type` (`string`) - Filter by type: search_result, projection, polarity_analysis, query_result, etc.
+- `representation` (`string`) - Filter by source: cli, mcp_server, polarity_explorer, embedding_landscape, etc.
+- `ontology` (`string`) - Filter by associated ontology name
+- `limit` (`number`) - Max artifacts to return for list (default: 20)
+  - Default: `20`
+- `offset` (`number`) - Number to skip for pagination (default: 0)
+  - Default: `0`
+
+---
+
+### document
+
+Work with documents: list all, show content, or get concepts (ADR-084).
+
+Three actions available:
+- "list": List all documents with optional ontology filter
+- "show": Retrieve document content from Garage storage
+- "concepts": Get all concepts extracted from a document
+
+Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
+Use search tool with type="documents" to find documents semantically.
+
+**Parameters:**
+
+- `action` (`string`) **(required)** - Operation: "list" (all documents), "show" (content), "concepts" (extracted concepts)
+  - Allowed values: `list`, `show`, `concepts`
+- `document_id` (`string`) - Document ID (required for show, concepts). Format: sha256:...
+- `include_details` (`boolean`) - Include full concept details (evidence, relationships, grounding) in one call. Default: false for lightweight list.
+  - Default: `false`
+- `ontology` (`string`) - Filter by ontology name (for list)
+- `limit` (`number`) - Max documents to return for list (default: 50)
+  - Default: `50`
+- `offset` (`number`) - Number to skip for pagination (default: 0)
+  - Default: `0`
 
 ---
