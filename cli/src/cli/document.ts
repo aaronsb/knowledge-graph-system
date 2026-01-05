@@ -10,9 +10,36 @@ import { coloredPercentage, separator, getRelationshipColor } from './colors';
 import { Table } from '../lib/table';
 
 /**
- * Format grounding strength for display (matches search.ts)
+ * Format grounding for display - prefers API's grounding_display when available
+ * Falls back to local computation from grounding_strength
  */
-function formatGrounding(grounding: number | undefined | null): string {
+function formatGrounding(
+  grounding: number | undefined | null,
+  groundingDisplay?: string | null,
+  confidenceScore?: number | null
+): string {
+  // Prefer API's categorical label when available
+  if (groundingDisplay) {
+    const confStr = confidenceScore !== undefined && confidenceScore !== null
+      ? ` [${(confidenceScore * 100).toFixed(0)}% conf]`
+      : '';
+
+    // Apply color based on the display label
+    const label = groundingDisplay.toLowerCase();
+    if (label.includes('well-supported') || label.includes('strong')) {
+      return colors.status.success(`✓ ${groundingDisplay}${confStr}`);
+    } else if (label.includes('some support') || label.includes('moderate')) {
+      return colors.status.warning(`⚡ ${groundingDisplay}${confStr}`);
+    } else if (label.includes('contested') || label.includes('contradicted')) {
+      return colors.status.error(`⚠ ${groundingDisplay}${confStr}`);
+    } else if (label.includes('unclear') || label.includes('unexplored')) {
+      return colors.status.dim(`◯ ${groundingDisplay}${confStr}`);
+    } else {
+      return colors.status.dim(`${groundingDisplay}${confStr}`);
+    }
+  }
+
+  // Fallback: compute from raw grounding value
   if (grounding === undefined || grounding === null) {
     return colors.status.dim('◯ Unexplored');
   }
@@ -148,7 +175,7 @@ const searchCommand = setCommandHelp(
 
               // Display grounding
               if (concept.grounding_strength !== undefined) {
-                console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength)}`);
+                console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength, concept.grounding_display, concept.confidence_score)}`);
               }
 
               // Display sample evidence (max 2)
@@ -379,7 +406,7 @@ const conceptsCommand = setCommandHelp(
 
             // Display grounding
             if (concept.grounding_strength !== undefined) {
-              console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength)}`);
+              console.log(`   ${colors.ui.key('Grounding:')} ${formatGrounding(concept.grounding_strength, concept.grounding_display, concept.confidence_score)}`);
             }
 
             // Display sample evidence (max 2)
