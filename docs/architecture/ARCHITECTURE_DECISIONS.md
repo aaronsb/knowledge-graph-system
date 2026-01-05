@@ -99,6 +99,7 @@ All ADRs follow a consistent format:
 | [ADR-082](ADR-082-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership | Accepted | Groups-based ownership model with Unix-style ID ranges (1-999 system, 1000+ users), `public` meta-group for all authenticated users, and grant-based access control for ontologies and artifacts |
 | [ADR-083](ADR-083-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted | Multi-tier storage (DB metadata → Zustand pointers → LocalStorage cache → Garage blobs) for computed artifacts with lazy loading, graph epoch freshness tracking, and async job integration for expensive computations |
 | [ADR-084](ADR-084-document-search.md) | Document-Level Search | Proposed | Search for original documents by phrase/keyword with semantic similarity, aggregating chunk matches to document level and including related concepts |
+| [ADR-085](ADR-085-document-explorer.md) | Document Explorer | Proposed | Radial visualization of document→concept relationships with distance-based opacity decay - documents as "light sources" emitting concepts, intensity decreasing over hops |
 
 ## How to Use This Index
 

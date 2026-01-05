@@ -258,9 +258,19 @@ _Add implementation notes, decisions, and blockers here as work progresses._
   - Consistent labeling across CLI, MCP, and Web GUI
 - Pushed branch to origin
 
+### Session 8 (2026-01-04 continued)
+- Created ADR-085: Document Explorer with Radial Concept Visualization
+  - Researched SA-RAG paper (arXiv:2512.15922) - spreading activation with vector-weighted edges
+  - Validated existing implementation has SA-RAG-like foundations
+  - Designed radial layout with document as origin node, intensity decay per hop
+  - Condensed analysis tables to prose paragraphs (avoid ephemeral detail)
+- Key insight: spreading activation visualization layer on existing computational infrastructure
+- Renamed from "epistemic ray tracing" → proper term "spreading activation" (Collins & Loftus, 1975)
+
 ### TODO
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
 - [x] Update MCP tool documentation (docs/reference/mcp/) - fixed generator regex, added all 10 tools
-- [ ] B4: Web explorer integration (optional - lower priority)
+- [x] ADR-085 design complete (docs/architecture/ADR-085-document-explorer.md)
+- [ ] B4: Web explorer implementation (Phase 1-4 per ADR-085)
 - [ ] Create PR when ready to merge
 
