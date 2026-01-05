@@ -1505,6 +1505,76 @@ export function formatDocumentConcepts(result: any): string {
   output += '## Next Steps\n\n';
   output += '- Use `concept` tool with action "details" for full concept information\n';
   output += '- Use `concept` tool with action "connect" to find relationships between concepts\n';
+  output += '- Or use `include_details: true` to get full details in one call\n';
+
+  return output;
+}
+
+/**
+ * Format document concepts with full details (ADR-084)
+ * Used when include_details=true - fetches all concept info in one call
+ */
+export function formatDocumentConceptsDetailed(docResult: any, conceptDetails: any[]): string {
+  let output = `# Concepts: ${docResult.filename}\n\n`;
+  output += `Document: ${docResult.document_id}\n`;
+  output += `Total: ${conceptDetails.length} unique concept(s)\n\n`;
+
+  if (conceptDetails.length === 0) {
+    output += 'No concepts found for this document.\n';
+    return output;
+  }
+
+  conceptDetails.forEach((concept: any, i: number) => {
+    if (concept.error) {
+      output += `## ${i + 1}. ${concept.label}\n\n`;
+      output += `ID: ${concept.concept_id}\n`;
+      output += `Status: Failed to load\n\n`;
+      return;
+    }
+
+    output += `## ${i + 1}. ${concept.label}\n\n`;
+
+    if (concept.description) {
+      output += `${concept.description}\n\n`;
+    }
+
+    output += `ID: ${concept.concept_id}\n`;
+    output += `Documents: ${concept.documents?.join(', ') || 'Unknown'}\n`;
+    output += `Evidence: ${concept.instances?.length || 0} instances\n`;
+
+    // Grounding with confidence
+    if (concept.grounding_strength !== undefined || concept.grounding_display) {
+      const grounding = concept.grounding_display || formatGroundingStrength(concept.grounding_strength);
+      output += `Grounding: ${grounding}\n`;
+    }
+
+    // Sample evidence (max 2)
+    if (concept.instances && concept.instances.length > 0) {
+      output += `\n### Evidence Samples\n\n`;
+      concept.instances.slice(0, 2).forEach((inst: any, idx: number) => {
+        const truncated = inst.quote.length > 120 ? inst.quote.substring(0, 120) + '...' : inst.quote;
+        output += `${idx + 1}. ${inst.document} (para ${inst.paragraph}):\n`;
+        output += `   "${truncated}"\n`;
+      });
+      if (concept.instances.length > 2) {
+        output += `   ... and ${concept.instances.length - 2} more\n`;
+      }
+    }
+
+    // Relationships (max 5)
+    if (concept.relationships && concept.relationships.length > 0) {
+      output += `\n### Relationships (${concept.relationships.length})\n\n`;
+      concept.relationships.slice(0, 5).forEach((rel: any) => {
+        const confidence = rel.confidence ? ` (${(rel.confidence * 100).toFixed(0)}%)` : '';
+        output += `${rel.rel_type} -> ${rel.to_label}${confidence}\n`;
+      });
+      if (concept.relationships.length > 5) {
+        output += `... and ${concept.relationships.length - 5} more\n`;
+      }
+    }
+
+    output += '\n---\n\n';
+  });
 
   return output;
 }

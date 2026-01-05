@@ -44,6 +44,7 @@ import {
   formatDocumentList,
   formatDocumentContent,
   formatDocumentConcepts,
+  formatDocumentConceptsDetailed,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -742,6 +743,12 @@ Use search tool with type="documents" to find documents semantically.`,
             document_id: {
               type: 'string',
               description: 'Document ID (required for show, concepts). Format: sha256:...',
+            },
+            // For concepts action
+            include_details: {
+              type: 'boolean',
+              description: 'Include full concept details (evidence, relationships, grounding) in one call. Default: false for lightweight list.',
+              default: false,
             },
             // For list
             ontology: {
@@ -1770,11 +1777,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               throw new Error('document_id is required for concepts action');
             }
 
+            const includeDetails = toolArgs.include_details === true;
             const result = await client.getDocumentConcepts(documentId);
-            const formattedText = formatDocumentConcepts(result);
-            return {
-              content: [{ type: 'text', text: formattedText }],
-            };
+
+            if (includeDetails) {
+              // Fetch full details for each unique concept
+              const uniqueConceptIds = [...new Set(result.concepts.map((c: any) => c.concept_id))];
+              const conceptDetails: any[] = [];
+
+              for (const conceptId of uniqueConceptIds) {
+                try {
+                  const details = await client.getConceptDetails(conceptId, true);
+                  conceptDetails.push(details);
+                } catch (err: any) {
+                  conceptDetails.push({
+                    concept_id: conceptId,
+                    label: `(failed to load: ${err.message})`,
+                    error: true,
+                  });
+                }
+              }
+
+              const formattedText = formatDocumentConceptsDetailed(result, conceptDetails);
+              return {
+                content: [{ type: 'text', text: formattedText }],
+              };
+            } else {
+              const formattedText = formatDocumentConcepts(result);
+              return {
+                content: [{ type: 'text', text: formattedText }],
+              };
+            }
           }
 
           default:
