@@ -89,14 +89,14 @@ export const DocumentExplorerWorkspace: React.FC = () => {
           ontology: doc.ontology,
           conceptCount: response.concepts.length,
         },
-        concepts: response.concepts.map((c, i) => ({
+        concepts: response.concepts.map((c) => ({
           id: c.concept_id,
           type: 'concept' as const,
-          label: c.label,
-          ontology: c.ontology,
+          label: c.name || c.concept_id,
+          ontology: doc.ontology, // Use document's ontology
           hop: 0, // All direct concepts are hop 0
-          grounding_strength: c.grounding_strength ?? 0.5,
-          grounding_display: c.grounding_display,
+          grounding_strength: 0.5, // TODO: fetch grounding from concept details
+          grounding_display: undefined,
           instanceCount: c.instance_count,
         })),
         links: response.concepts.map(c => ({

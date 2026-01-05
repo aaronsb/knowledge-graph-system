@@ -1537,13 +1537,12 @@ class APIClient {
    */
   async getDocumentConcepts(documentId: string): Promise<{
     document_id: string;
+    filename: string;
     concepts: Array<{
       concept_id: string;
-      label: string;
-      ontology: string;
+      name: string;
+      source_id: string;
       instance_count: number;
-      grounding_strength?: number;
-      grounding_display?: string;
     }>;
     total: number;
   }> {

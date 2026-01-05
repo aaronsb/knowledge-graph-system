@@ -260,7 +260,10 @@ export const DocumentExplorer: React.FC<
     // Concept labels
     if (settings.visual.showLabels) {
       conceptNodes.append('text')
-        .text(d => d.label.length > 20 ? d.label.slice(0, 20) + '...' : d.label)
+        .text(d => {
+          const label = d.label || 'Unknown';
+          return label.length > 20 ? label.slice(0, 20) + '...' : label;
+        })
         .attr('dy', d => {
           const intensity = nodeIntensities.get(d.id) || 0.5;
           return (8 + 12 * intensity) * settings.visual.nodeSize + 12;
@@ -306,9 +309,10 @@ export const DocumentExplorer: React.FC<
 
     // Document label
     docGroup.append('text')
-      .text(positionedData.document.label.length > 25
-        ? positionedData.document.label.slice(0, 25) + '...'
-        : positionedData.document.label)
+      .text(() => {
+        const label = positionedData.document?.label || 'Document';
+        return label.length > 25 ? label.slice(0, 25) + '...' : label;
+      })
       .attr('y', settings.layout.centerSize + 16)
       .attr('text-anchor', 'middle')
       .attr('font-family', LABEL_FONTS.family)
@@ -361,8 +365,8 @@ export const DocumentExplorer: React.FC<
         <NodeInfoBox
           info={{
             nodeId: selectedNode!,
-            label: selectedNodeData.label,
-            group: selectedNodeData.ontology,
+            label: selectedNodeData.label || 'Unknown',
+            group: selectedNodeData.ontology || 'unknown',
             degree: selectedNodeData.instanceCount || 1,
             x: (selectedNodeData.fx || 0) * zoomTransform.k + zoomTransform.x + dimensions.width / 2,
             y: (selectedNodeData.fy || 0) * zoomTransform.k + zoomTransform.y + dimensions.height / 2,
