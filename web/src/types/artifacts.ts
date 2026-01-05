@@ -27,6 +27,7 @@ export type Representation =
   | 'vocabulary_chord'
   | 'force_graph_2d'
   | 'force_graph_3d'
+  | 'document_explorer'
   | 'report_workspace'
   | 'cli'
   | 'mcp_server'

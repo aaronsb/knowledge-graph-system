@@ -5,8 +5,8 @@
  * spreading activation decay.
  */
 
-import React, { useState, useCallback } from 'react';
-import { Search, FileText, Loader2 } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Search, FileText, Loader2, Layers } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
@@ -34,6 +34,9 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<DocumentSearchResult | null>(null);
   const [explorerData, setExplorerData] = useState<DocumentExplorerData | null>(null);
   const [isLoadingConcepts, setIsLoadingConcepts] = useState(false);
+
+  // Hop expansion control
+  const [maxHops, setMaxHops] = useState<0 | 1 | 2>(0);
 
   // Explorer settings
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
@@ -72,38 +75,92 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     handleSearch();
   }, [handleSearch]);
 
-  // Load document concepts
-  const handleSelectDocument = useCallback(async (doc: DocumentSearchResult) => {
-    setSelectedDocument(doc);
+  // Load document concepts with hop expansion
+  const loadDocumentData = useCallback(async (doc: DocumentSearchResult, hops: number) => {
     setIsLoadingConcepts(true);
 
     try {
       const response = await apiClient.getDocumentConcepts(doc.document_id);
 
-      // Transform to explorer data format
+      // Base concepts (hop 0)
+      const hop0Concepts = response.concepts.map((c) => ({
+        id: c.concept_id,
+        type: 'concept' as const,
+        label: c.name || c.concept_id,
+        ontology: doc.ontology,
+        hop: 0,
+        grounding_strength: 0.5,
+        grounding_display: undefined,
+        instanceCount: c.instance_count,
+      }));
+
+      const allConcepts = [...hop0Concepts];
+      const allLinks = response.concepts.map(c => ({
+        source: doc.document_id,
+        target: c.concept_id,
+        type: 'EXTRACTED_FROM',
+      }));
+
+      // Fetch related concepts for hop 1-2 if requested
+      if (hops > 0 && hop0Concepts.length > 0) {
+        const seenIds = new Set(hop0Concepts.map(c => c.id));
+        seenIds.add(doc.document_id);
+
+        // Fetch related for each hop-0 concept (limit to first 10 to avoid overload)
+        const conceptsToExpand = hop0Concepts.slice(0, 10);
+
+        for (const concept of conceptsToExpand) {
+          try {
+            const related = await apiClient.getRelatedConcepts({
+              concept_id: concept.id,
+              max_depth: hops,
+            });
+
+            // Add hop-1 concepts
+            if (related.nodes) {
+              for (const node of related.nodes) {
+                if (!seenIds.has(node.concept_id)) {
+                  seenIds.add(node.concept_id);
+                  allConcepts.push({
+                    id: node.concept_id,
+                    type: 'concept' as const,
+                    label: node.label || node.concept_id,
+                    ontology: node.ontology || doc.ontology,
+                    hop: 1,
+                    grounding_strength: node.grounding_strength ?? 0.5,
+                    grounding_display: node.grounding_display,
+                    instanceCount: 1,
+                  });
+                }
+              }
+            }
+
+            // Add links
+            if (related.links) {
+              for (const link of related.links) {
+                allLinks.push({
+                  source: link.from_id || link.source,
+                  target: link.to_id || link.target,
+                  type: link.relationship_type || link.type || 'RELATED',
+                });
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to get related for ${concept.id}:`, e);
+          }
+        }
+      }
+
       const data: DocumentExplorerData = {
         document: {
           id: doc.document_id,
           type: 'document',
           label: doc.filename,
           ontology: doc.ontology,
-          conceptCount: response.concepts.length,
+          conceptCount: allConcepts.length,
         },
-        concepts: response.concepts.map((c) => ({
-          id: c.concept_id,
-          type: 'concept' as const,
-          label: c.name || c.concept_id,
-          ontology: doc.ontology, // Use document's ontology
-          hop: 0, // All direct concepts are hop 0
-          grounding_strength: 0.5, // TODO: fetch grounding from concept details
-          grounding_display: undefined,
-          instanceCount: c.instance_count,
-        })),
-        links: response.concepts.map(c => ({
-          source: doc.document_id,
-          target: c.concept_id,
-          type: 'EXTRACTED_FROM',
-        })),
+        concepts: allConcepts,
+        links: allLinks,
       };
 
       setExplorerData(data);
@@ -114,6 +171,19 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       setIsLoadingConcepts(false);
     }
   }, []);
+
+  // Handle document selection
+  const handleSelectDocument = useCallback(async (doc: DocumentSearchResult) => {
+    setSelectedDocument(doc);
+    await loadDocumentData(doc, maxHops);
+  }, [loadDocumentData, maxHops]);
+
+  // Reload when maxHops changes
+  useEffect(() => {
+    if (selectedDocument) {
+      loadDocumentData(selectedDocument, maxHops);
+    }
+  }, [maxHops, selectedDocument, loadDocumentData]);
 
   return (
     <div className="flex h-full">
@@ -134,6 +204,34 @@ export const DocumentExplorerWorkspace: React.FC = () => {
           {searchError && (
             <p className="mt-2 text-xs text-destructive">{searchError}</p>
           )}
+        </div>
+
+        {/* Hop expansion control */}
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Expansion Depth</span>
+          </div>
+          <div className="flex gap-1">
+            {[0, 1, 2].map((hop) => (
+              <button
+                key={hop}
+                onClick={() => setMaxHops(hop as 0 | 1 | 2)}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  maxHops === hop
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                }`}
+              >
+                {hop === 0 ? 'Direct' : `+${hop} hop${hop > 1 ? 's' : ''}`}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {maxHops === 0
+              ? 'Show only concepts from document'
+              : `Expand ${maxHops} level${maxHops > 1 ? 's' : ''} of related concepts`}
+          </p>
         </div>
 
         {/* Search results */}
