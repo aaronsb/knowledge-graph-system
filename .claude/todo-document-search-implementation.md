@@ -260,7 +260,7 @@ _Add implementation notes, decisions, and blockers here as work progresses._
 
 ### TODO
 - [ ] Verify round-trip: backup → delete ontologies → restore → verify Garage content retrievable
-- [ ] Update MCP tool documentation (docs/reference/mcp/)
+- [x] Update MCP tool documentation (docs/reference/mcp/) - fixed generator regex, added all 10 tools
 - [ ] B4: Web explorer integration (optional - lower priority)
 - [ ] Create PR when ready to merge
 
