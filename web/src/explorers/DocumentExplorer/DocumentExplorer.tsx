@@ -68,13 +68,21 @@ function calculateRadialPositions(
     byHop.set(c.hop, list);
   });
 
-  // Position each hop ring
+  // Position each hop ring (hop 0 = ring 1, hop 1 = ring 2, etc.)
   const positionedConcepts: ConceptNode[] = [];
+  const MIN_NODE_SPACING = 40; // Minimum arc length per node in pixels
+
   byHop.forEach((nodesInHop, hop) => {
     const count = nodesInHop.length;
+
+    // Calculate minimum radius to fit all nodes with spacing
+    // Circumference = 2 * PI * r, so r = (count * spacing) / (2 * PI)
+    const minRadiusForSpacing = (count * MIN_NODE_SPACING) / (2 * Math.PI);
+    const baseRadius = (hop + 1) * ringRadius;
+    const radius = Math.max(baseRadius, minRadiusForSpacing);
+
     nodesInHop.forEach((node, i) => {
       const angle = (i / count) * 2 * Math.PI - Math.PI / 2; // Start at top
-      const radius = hop * ringRadius;
       positionedConcepts.push({
         ...node,
         fx: Math.cos(angle) * radius,
@@ -368,8 +376,8 @@ export const DocumentExplorer: React.FC<
             label: selectedNodeData.label || 'Unknown',
             group: selectedNodeData.ontology || 'unknown',
             degree: selectedNodeData.instanceCount || 1,
-            x: (selectedNodeData.fx || 0) * zoomTransform.k + zoomTransform.x + dimensions.width / 2,
-            y: (selectedNodeData.fy || 0) * zoomTransform.k + zoomTransform.y + dimensions.height / 2,
+            x: (selectedNodeData.fx || 0) * zoomTransform.k + zoomTransform.x,
+            y: (selectedNodeData.fy || 0) * zoomTransform.k + zoomTransform.y,
           }}
           onDismiss={() => setSelectedNode(null)}
         />
