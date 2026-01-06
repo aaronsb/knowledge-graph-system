@@ -606,37 +606,55 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return "\n".join(lines)
 
     def _format_concept(self, data: dict) -> str:
-        """Format concept data as markdown."""
+        """Format concept data as markdown with YAML frontmatter."""
         lines = []
+
+        # YAML frontmatter
+        lines.append("---")
+        lines.append(f"id: {data.get('concept_id', 'unknown')}")
+        lines.append(f"label: {data.get('label', 'Unknown')}")
+
+        # Grounding
+        grounding = data.get("grounding_strength")
+        if grounding is not None:
+            lines.append(f"grounding: {grounding:.2f}")
+            if data.get("grounding_display"):
+                lines.append(f"grounding_display: {data.get('grounding_display')}")
+
+        # Diversity
+        diversity = data.get("diversity_score")
+        if diversity is not None:
+            lines.append(f"diversity: {diversity:.2f}")
+
+        # Documents
+        documents = data.get("documents", [])
+        if documents:
+            lines.append("documents:")
+            for doc in documents:
+                lines.append(f"  - {doc}")
+
+        # Relationships in frontmatter
+        relationships = data.get("relationships", [])
+        if relationships:
+            lines.append("relationships:")
+            for rel in relationships:
+                rel_type = rel.get("rel_type", "RELATED_TO")
+                target_label = rel.get("to_label", rel.get("to_id", "unknown"))
+                target_id = rel.get("to_id", "unknown")
+                lines.append(f"  - type: {rel_type}")
+                lines.append(f"    target: {target_label}")
+                lines.append(f"    target_id: {target_id}")
+
+        lines.append("---")
+        lines.append("")
 
         # Header
         name = data.get("label", "Unknown Concept")
         lines.append(f"# {name}\n")
 
-        # Metadata
-        concept_id = data.get("concept_id", "unknown")
-        lines.append(f"**ID:** `{concept_id}`\n")
-
-        grounding = data.get("grounding_strength")
-        grounding_display = data.get("grounding_display")
-        if grounding is not None:
-            display = grounding_display or ("Strong" if grounding > 0.5 else "Moderate" if grounding > 0 else "Weak")
-            lines.append(f"**Grounding:** {grounding:.2f} ({display})\n")
-
-        diversity = data.get("diversity_score")
-        if diversity is not None:
-            lines.append(f"**Diversity:** {diversity:.0%}\n")
-
-        documents = data.get("documents", [])
-        if documents:
-            lines.append(f"**Documents:** {', '.join(documents)}\n")
-
-        lines.append("")
-
         # Description
         description = data.get("description", "")
         if description:
-            lines.append("## Description\n")
             lines.append(description)
             lines.append("")
 
@@ -645,21 +663,19 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if instances:
             lines.append("## Evidence\n")
             for i, inst in enumerate(instances, 1):
-                source = inst.get("source_id", "Unknown source")
                 text = inst.get("full_text", inst.get("text", ""))
                 para = inst.get("paragraph_number", "?")
                 lines.append(f"### Instance {i} (para {para})\n")
                 lines.append(f"> {text[:500]}{'...' if len(text) > 500 else ''}\n")
                 lines.append("")
 
-        # Relationships
-        relationships = data.get("relationships", [])
+        # Relationships as readable list
         if relationships:
             lines.append("## Relationships\n")
             for rel in relationships:
-                rel_type = rel.get("relationship_type", "RELATED_TO")
-                target = rel.get("target_label", rel.get("target_id", "unknown"))
-                lines.append(f"- {rel_type} → {target}")
+                rel_type = rel.get("rel_type", "RELATED_TO")
+                target = rel.get("to_label", rel.get("to_id", "unknown"))
+                lines.append(f"- **{rel_type}** → {target}")
             lines.append("")
 
         return "\n".join(lines)
