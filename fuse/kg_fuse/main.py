@@ -16,7 +16,7 @@ import sys
 import pyfuse3
 import trio
 
-from .config import load_config, get_config_path
+from .config import load_config, get_config_path, TagsConfig
 from .filesystem import KnowledgeGraphFS
 
 log = logging.getLogger(__name__)
@@ -97,11 +97,15 @@ def main() -> None:
         log.error(f"Config file location: {config_path}")
         sys.exit(1)
 
+    # Get tags config (or use defaults)
+    tags_config = config.tags if config else TagsConfig()
+
     # Create filesystem
     fs = KnowledgeGraphFS(
         api_url=api_url,
         client_id=client_id,
         client_secret=client_secret,
+        tags_config=tags_config,
     )
 
     # FUSE options

@@ -38,6 +38,7 @@ import pyfuse3
 import httpx
 
 from .query_store import QueryStore
+from .config import TagsConfig
 
 log = logging.getLogger(__name__)
 
@@ -76,11 +77,12 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     ROOT_INODE = pyfuse3.ROOT_INODE  # 1
     ONTOLOGY_ROOT_INODE = 2  # Fixed inode for /ontology/
 
-    def __init__(self, api_url: str, client_id: str, client_secret: str):
+    def __init__(self, api_url: str, client_id: str, client_secret: str, tags_config: TagsConfig = None):
         super().__init__()
         self.api_url = api_url.rstrip("/")
         self.client_id = client_id
         self.client_secret = client_secret
+        self.tags_config = tags_config or TagsConfig()
 
         # HTTP client (will be initialized async)
         self._client: Optional[httpx.AsyncClient] = None
@@ -1034,8 +1036,18 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not entry.document_id:
             return "# No document ID\n"
 
-        data = await self._api_get(f"/documents/{entry.document_id}")
-        return self._format_document(data)
+        data = await self._api_get(f"/documents/{entry.document_id}/content")
+
+        # Fetch concepts if tags are enabled
+        concepts = []
+        if self.tags_config.enabled:
+            try:
+                concepts_data = await self._api_get(f"/documents/{entry.document_id}/concepts")
+                concepts = concepts_data.get("concepts", [])
+            except Exception as e:
+                log.debug(f"Could not fetch concepts for document: {e}")
+
+        return self._format_document(data, concepts)
 
     async def _read_concept(self, entry: InodeEntry) -> str:
         """Read and format a concept file."""
@@ -1045,9 +1057,33 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         data = await self._api_get(f"/query/concept/{entry.concept_id}")
         return self._format_concept(data)
 
-    def _format_document(self, data: dict) -> str:
-        """Format document data as markdown."""
+    def _format_document(self, data: dict, concepts: list = None) -> str:
+        """Format document data as markdown with optional YAML frontmatter."""
+        concepts = concepts or []
         lines = []
+
+        # Add YAML frontmatter if tags are enabled and we have concepts
+        if self.tags_config.enabled and concepts:
+            lines.append("---")
+            lines.append(f"document_id: {data.get('document_id', 'unknown')}")
+            lines.append(f"ontology: {data.get('ontology', 'unknown')}")
+
+            # Add concept tags
+            tags = []
+            for concept in concepts:
+                name = concept.get("name", "")
+                if name:
+                    # Sanitize name for tag
+                    tag = name.replace(" ", "-").replace("/", "-")
+                    tags.append(f"concept/{tag}")
+            if tags:
+                lines.append("tags:")
+                for tag in sorted(set(tags)):
+                    lines.append(f"  - {tag}")
+
+            lines.append("---")
+            lines.append("")
+
         lines.append(f"# {data.get('filename', 'Document')}\n")
         lines.append(f"**Ontology:** {data.get('ontology', 'unknown')}\n")
         lines.append(f"**Document ID:** {data.get('document_id', 'unknown')}\n")
@@ -1115,6 +1151,25 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 lines.append(f"  - type: {rel_type}")
                 lines.append(f"    target: {target_label}")
                 lines.append(f"    target_id: {target_id}")
+
+        # Tags for tool integration (Obsidian, Logseq, etc.)
+        if self.tags_config.enabled:
+            tags = []
+            # Add related concepts as tags
+            for rel in relationships:
+                target_label = rel.get("to_label", "")
+                if target_label:
+                    # Sanitize label for tag: replace spaces with hyphens, remove special chars
+                    tag = target_label.replace(" ", "-").replace("/", "-")
+                    tags.append(f"concept/{tag}")
+            # Add ontology/document sources as tags
+            for doc in documents:
+                tag = doc.replace(" ", "-").replace("/", "-")
+                tags.append(f"ontology/{tag}")
+            if tags:
+                lines.append("tags:")
+                for tag in sorted(set(tags)):
+                    lines.append(f"  - {tag}")
 
         lines.append("---")
         lines.append("")
