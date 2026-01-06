@@ -30,8 +30,8 @@
 - [x] `.meta` control plane (virtual directories)
   - [x] `.meta/limit` - result count
   - [x] `.meta/threshold` - similarity filter
-  - [x] `.meta/exclude` - semantic NOT (storage only, filtering TBD)
-  - [x] `.meta/union` - semantic OR (storage only, filtering TBD)
+  - [x] `.meta/exclude` - semantic NOT (fully implemented)
+  - [x] `.meta/union` - semantic OR (fully implemented)
   - [x] `.meta/query.toml` - debug view (read-only)
 - [x] Nested query resolution (AND intersection)
 
