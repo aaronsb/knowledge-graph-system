@@ -104,6 +104,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._cache_time: dict[int, float] = {}
         self._cache_ttl = 30.0  # seconds
 
+        # Write support: pending ontologies and ingestion buffers
+        self._pending_ontologies: set[str] = set()  # Ontologies created but no documents yet
+        self._write_buffers: dict[int, bytes] = {}  # inode -> content being written
+        self._write_info: dict[int, dict] = {}  # inode -> {ontology, filename}
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
         if self._client is None:
@@ -191,9 +196,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             attr.st_gid = os.getgid()
             return attr
 
-        # Writable directories: root (global queries), ontology (scoped queries), query (nested)
-        # Not writable: ontology_root (fixed), documents_dir (read-only), meta_dir (fixed structure)
-        writable = entry.entry_type in ("root", "ontology", "query")
+        # Writable directories: root (global queries), ontology_root (create ontologies),
+        # ontology (scoped queries + ingestion), query (nested)
+        # Not writable: documents_dir (read-only), meta_dir (fixed structure)
+        writable = entry.entry_type in ("root", "ontology_root", "ontology", "query")
 
         # Meta files need special handling for size and permissions
         if entry.entry_type == "meta_file":
@@ -215,6 +221,20 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 attr.st_uid = os.getuid()
                 attr.st_gid = os.getgid()
                 return attr
+
+        # Ingestion files are writable temporary files
+        if entry.entry_type == "ingestion_file":
+            attr = pyfuse3.EntryAttributes()
+            attr.st_ino = inode
+            attr.st_mode = stat.S_IFREG | 0o644  # Read-write for owner
+            attr.st_nlink = 1
+            attr.st_size = entry.size
+            attr.st_atime_ns = int(time.time() * 1e9)
+            attr.st_mtime_ns = int(time.time() * 1e9)
+            attr.st_ctime_ns = int(time.time() * 1e9)
+            attr.st_uid = os.getuid()
+            attr.st_gid = os.getgid()
+            return attr
 
         return self._make_attr(inode, is_dir=is_dir, size=size, writable=writable)
 
@@ -328,23 +348,47 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             # Global query at root level (searches all ontologies)
             ontology = None
             query_path = name_str
+            # Create query in store
+            self.query_store.add_query(ontology, query_path)
+            # Create inode for the new directory
+            inode = self._get_or_create_query_inode(ontology, query_path, parent_inode)
+
+        elif parent_entry.entry_type == "ontology_root":
+            # Creating a new ontology - track as pending until files are ingested
+            ontology_name = name_str
+            self._pending_ontologies.add(ontology_name)
+            log.info(f"Created pending ontology: {ontology_name}")
+            # Create inode for the new ontology directory
+            inode = self._next_inode
+            self._next_inode += 1
+            self._inodes[inode] = InodeEntry(
+                name=ontology_name,
+                entry_type="ontology",
+                parent=parent_inode,
+                ontology=ontology_name,
+            )
+
         elif parent_entry.entry_type == "ontology":
             # Query scoped to this ontology
             ontology = parent_entry.ontology
             query_path = name_str
+            # Create query in store
+            self.query_store.add_query(ontology, query_path)
+            # Create inode for the new directory
+            inode = self._get_or_create_query_inode(ontology, query_path, parent_inode)
+
         elif parent_entry.entry_type == "query":
             # Nested query (inherits ontology scope from parent)
             ontology = parent_entry.ontology  # Can be None for global queries
             query_path = f"{parent_entry.query_path}/{name_str}"
+            # Create query in store
+            self.query_store.add_query(ontology, query_path)
+            # Create inode for the new directory
+            inode = self._get_or_create_query_inode(ontology, query_path, parent_inode)
+
         else:
-            # Can't mkdir under ontology_root, documents_dir, etc.
+            # Can't mkdir under documents_dir, etc.
             raise pyfuse3.FUSEError(errno.EPERM)
-
-        # Create query in store
-        self.query_store.add_query(ontology, query_path)
-
-        # Create inode for the new directory
-        inode = self._get_or_create_query_inode(ontology, query_path, parent_inode)
 
         # Invalidate parent cache
         self._invalidate_cache(parent_inode)
@@ -471,11 +515,19 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             ontologies = data.get("ontologies", [])
 
             entries = []
+            seen_names = set()
             for ont in ontologies:
                 name = ont.get("ontology", "unknown")
+                seen_names.add(name)
                 # Allocate inode for this ontology
                 inode = self._get_or_create_ontology_inode(name)
                 entries.append((inode, name))
+
+            # Add pending ontologies (created with mkdir but no documents yet)
+            for pending_name in self._pending_ontologies:
+                if pending_name not in seen_names:
+                    inode = self._get_or_create_ontology_inode(pending_name)
+                    entries.append((inode, pending_name))
 
             # Cache result
             self._dir_cache[cache_key] = entries
@@ -943,7 +995,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
 
         entry = self._inodes[inode]
-        if entry.entry_type not in ("document", "concept", "meta_file"):
+        if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file"):
             raise pyfuse3.FUSEError(errno.EISDIR)
 
         # Check write permissions for meta files
@@ -1105,10 +1157,27 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return "\n".join(lines)
 
     async def write(self, fh: int, off: int, buf: bytes) -> int:
-        """Write to a file (only meta files are writable)."""
+        """Write to a file (meta files and ingestion files are writable)."""
         entry = self._inodes.get(fh)
         if not entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
+
+        # Handle ingestion file writes - buffer content
+        if entry.entry_type == "ingestion_file":
+            if fh not in self._write_buffers:
+                self._write_buffers[fh] = b""
+            # Append to buffer at offset (usually sequential)
+            current = self._write_buffers[fh]
+            if off == len(current):
+                self._write_buffers[fh] = current + buf
+            else:
+                # Handle sparse writes by padding if needed
+                if off > len(current):
+                    current = current + b"\x00" * (off - len(current))
+                self._write_buffers[fh] = current[:off] + buf + current[off + len(buf):]
+            # Update size
+            entry.size = len(self._write_buffers[fh])
+            return len(buf)
 
         if entry.entry_type != "meta_file":
             raise pyfuse3.FUSEError(errno.EACCES)
@@ -1324,3 +1393,104 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             symlink_target=target,
         )
         return inode
+
+    async def create(self, parent_inode: int, name: bytes, mode: int, flags: int, ctx: pyfuse3.RequestContext) -> tuple[pyfuse3.FileInfo, pyfuse3.EntryAttributes]:
+        """Create a file for ingestion (black hole - file gets ingested on release)."""
+        name_str = name.decode("utf-8")
+        log.info(f"create: parent={parent_inode}, name={name_str}")
+
+        parent_entry = self._inodes.get(parent_inode)
+        if not parent_entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        # Only allow creating files directly in ontology directories (for ingestion)
+        if parent_entry.entry_type != "ontology":
+            log.warning(f"create rejected: can only create files in ontology dirs, got {parent_entry.entry_type}")
+            raise pyfuse3.FUSEError(errno.EPERM)
+
+        ontology = parent_entry.ontology
+
+        # Create a temporary inode for the file being written
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name=name_str,
+            entry_type="ingestion_file",  # Special type for files being ingested
+            parent=parent_inode,
+            ontology=ontology,
+            size=0,
+        )
+
+        # Initialize write buffer and info
+        self._write_buffers[inode] = b""
+        self._write_info[inode] = {
+            "ontology": ontology,
+            "filename": name_str,
+        }
+
+        log.info(f"Created ingestion file: {name_str} in ontology {ontology}, inode={inode}")
+
+        # Return file handle and attributes
+        fi = pyfuse3.FileInfo(fh=inode)
+        attr = await self.getattr(inode, ctx)
+        return (fi, attr)
+
+    async def release(self, fh: int) -> None:
+        """Release (close) a file - triggers ingestion for ingestion files."""
+        entry = self._inodes.get(fh)
+        if not entry:
+            return
+
+        # If this is an ingestion file with buffered content, trigger ingestion
+        if entry.entry_type == "ingestion_file" and fh in self._write_buffers:
+            content = self._write_buffers.pop(fh)
+            info = self._write_info.pop(fh, {})
+
+            if content:
+                ontology = info.get("ontology", entry.ontology)
+                filename = info.get("filename", entry.name)
+
+                log.info(f"Triggering ingestion: {filename} ({len(content)} bytes) into {ontology}")
+
+                try:
+                    await self._ingest_document(ontology, filename, content)
+                    log.info(f"Ingestion submitted successfully: {filename}")
+
+                    # Remove from pending ontologies if this was the first document
+                    if ontology in self._pending_ontologies:
+                        self._pending_ontologies.discard(ontology)
+                        log.info(f"Ontology {ontology} is no longer pending")
+
+                except Exception as e:
+                    log.error(f"Ingestion failed for {filename}: {e}")
+
+            # Clean up the temporary inode (file disappears after ingestion)
+            if fh in self._inodes:
+                parent_inode = self._inodes[fh].parent
+                del self._inodes[fh]
+                # Invalidate parent cache so new documents show up
+                if parent_inode:
+                    self._invalidate_cache(parent_inode)
+
+    async def _ingest_document(self, ontology: str, filename: str, content: bytes) -> dict:
+        """Submit document to ingestion API."""
+        token = await self._get_token()
+        client = await self._get_client()
+
+        # Use multipart form upload
+        files = {"file": (filename, content)}
+        data = {
+            "ontology": ontology,
+            "auto_approve": "true",  # Auto-approve for FUSE ingestions
+        }
+
+        response = await client.post(
+            "/ingest",
+            files=files,
+            data=data,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        response.raise_for_status()
+        result = response.json()
+        log.info(f"Ingestion response: {result}")
+        return result
