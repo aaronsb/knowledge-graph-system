@@ -1,0 +1,543 @@
+# FUSE Driver Implementation Specifics
+
+**Status:** Implementation Plan
+**Date:** 2025-01-06
+**Related:** ADR-069 (Semantic FUSE Filesystem)
+
+## Overview
+
+This document captures specific implementation details for the kg-fuse driver, building on the conceptual design in ADR-069.
+
+## Core Philosophy
+
+- **"Everything is a file"** - Unix philosophy applied to knowledge graphs
+- **"Everything is a query"** - Directories represent queries, files represent results
+- **"Hologram & Black Hole"** - Read path shows graph projections, write path ingests into graph
+
+## Filesystem Structure
+
+### Hierarchy
+
+```
+/mnt/kg/
+└── ontology/                              # Fixed root (always present)
+    ├── Strategy-As-Code/                  # Ontology (from graph)
+    │   ├── operating-model.md             # Document (from graph)
+    │   ├── leadership/                    # User-created query directory
+    │   │   ├── concept-a.concept          # Query results
+    │   │   ├── concept-b.concept
+    │   │   └── communication/             # Nested query (refines parent)
+    │   │       └── concept-c.concept      # Results for "communication" ∩ "leadership"
+    │   └── strategy-for-executives/       # Another user query
+    │       └── ...
+    └── test-concepts/                     # Another ontology
+```
+
+### Path Pattern
+
+```
+/ontology/{ontology}/{query}*/{result}/{query}*/{result}/...
+```
+
+The pattern is recursive:
+- Ontology directories come from the graph
+- User can create subdirectories at any level → becomes a query
+- Query is scoped to parent context (ontology or parent query results)
+- Files are always results (read-only hologram)
+
+### Node Types
+
+| Path Pattern | Type | Source | Writable |
+|--------------|------|--------|----------|
+| `/ontology/` | dir | Fixed | No |
+| `/ontology/{name}/` | dir | Graph (ontologies) | No |
+| `/ontology/{name}/{doc}.md` | file | Graph (documents) | No |
+| `/ontology/{name}/{query}/` | dir | Client-side | Yes (mkdir/rmdir) |
+| `/ontology/{name}/{query}/{concept}.concept` | file | Graph (query results) | No |
+
+## Query System
+
+### How Queries Work
+
+1. User runs `mkdir /mnt/kg/ontology/Strategy-As-Code/leadership`
+2. FUSE driver stores query definition client-side
+3. Directory name becomes the search term ("leadership")
+4. When user runs `ls`, driver executes semantic search scoped to ontology
+5. Results appear as `.concept` files
+
+### Nested Query Resolution
+
+Each level refines the previous results:
+
+```python
+def resolve_query(ontology: str, path: str) -> SearchParams:
+    """
+    Build search params by walking the path hierarchy.
+    Each level adds a filter that refines previous results.
+    """
+    parts = path.split('/') if path else []
+
+    # Start with ontology scope
+    params = SearchParams(ontology=ontology, filters=[])
+
+    # Each path component adds a semantic filter
+    current_path = ""
+    for part in parts:
+        current_path = f"{current_path}/{part}".lstrip('/')
+
+        query = query_store.get_query(ontology, current_path)
+        if query:
+            params.filters.append(SemanticFilter(
+                text=query.query_text,
+                threshold=query.threshold
+            ))
+
+    return params
+```
+
+Example:
+- `ls /ontology/Strategy-As-Code/` → all documents in ontology
+- `ls /ontology/Strategy-As-Code/leadership/` → concepts matching "leadership" in that ontology
+- `ls /ontology/Strategy-As-Code/leadership/communication/` → concepts matching "communication" AND "leadership"
+
+### Query Override
+
+Users can customize query text by creating a `.query` file:
+
+```bash
+# Default: directory name is the query
+mkdir leadership/
+ls leadership/  # searches for "leadership"
+
+# Override: custom query text
+echo "executive leadership strategy" > leadership/.query
+ls leadership/  # now searches for "executive leadership strategy"
+```
+
+## Client-Side Storage
+
+### Query Persistence
+
+Location: `~/.local/share/kg-fuse/queries.toml`
+
+```toml
+# Query definitions (user-created directories)
+
+[queries."Strategy-As-Code"."leadership"]
+query_text = "leadership"
+threshold = 0.7
+created_at = "2025-01-06T04:00:00Z"
+
+[queries."Strategy-As-Code"."leadership/communication"]
+query_text = "communication"
+threshold = 0.7
+created_at = "2025-01-06T04:01:00Z"
+
+[queries."Strategy-As-Code"."strategy-for-executives"]
+query_text = "strategy for executives"
+threshold = 0.7
+created_at = "2025-01-06T04:02:00Z"
+```
+
+### Query Store Implementation
+
+```python
+from pathlib import Path
+import tomllib
+import tomli_w
+from typing import Optional
+from dataclasses import dataclass
+
+@dataclass
+class Query:
+    query_text: str
+    threshold: float = 0.7
+    created_at: str = ""
+
+class QueryStore:
+    """Manages user-created query directories"""
+
+    def __init__(self):
+        self.path = self._get_data_path() / "queries.toml"
+        self.queries: dict[str, Query] = {}
+        self._load()
+
+    def _get_data_path(self) -> Path:
+        xdg_data = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
+        data_dir = Path(xdg_data) / "kg-fuse"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        return data_dir
+
+    def _load(self):
+        if self.path.exists():
+            with open(self.path, "rb") as f:
+                data = tomllib.load(f)
+            for key, value in data.get("queries", {}).items():
+                self.queries[key] = Query(**value)
+
+    def _save(self):
+        data = {"queries": {k: vars(v) for k, v in self.queries.items()}}
+        with open(self.path, "wb") as f:
+            tomli_w.dump(data, f)
+
+    def add_query(self, ontology: str, path: str, query_text: Optional[str] = None):
+        """Add a query (called on mkdir)"""
+        key = f"{ontology}/{path}"
+        # Default query text is the last path component
+        if query_text is None:
+            query_text = path.split('/')[-1]
+        self.queries[key] = Query(
+            query_text=query_text,
+            threshold=0.7,
+            created_at=datetime.now().isoformat()
+        )
+        self._save()
+
+    def remove_query(self, ontology: str, path: str):
+        """Remove a query and all children (called on rmdir)"""
+        prefix = f"{ontology}/{path}"
+        self.queries = {k: v for k, v in self.queries.items()
+                        if not k.startswith(prefix)}
+        self._save()
+
+    def get_query(self, ontology: str, path: str) -> Optional[Query]:
+        """Get query definition"""
+        return self.queries.get(f"{ontology}/{path}")
+
+    def is_query_dir(self, ontology: str, path: str) -> bool:
+        """Check if path is a user-created query directory"""
+        return f"{ontology}/{path}" in self.queries
+
+    def list_queries_under(self, ontology: str, path: str) -> list[str]:
+        """List immediate child queries under a path"""
+        prefix = f"{ontology}/{path}/" if path else f"{ontology}/"
+        children = []
+        for key in self.queries:
+            if key.startswith(prefix):
+                remainder = key[len(prefix):]
+                if '/' not in remainder:  # Immediate child only
+                    children.append(remainder)
+        return children
+```
+
+## Caching Architecture
+
+### Two-Tier Caching
+
+1. **Kernel cache** (FUSE options) - Fastest, automatic
+2. **Userspace cache** (our code) - Reduces API calls
+
+### Kernel Cache Settings
+
+```python
+fuse_options.add("entry_timeout=30")   # Cache dir entries 30s
+fuse_options.add("attr_timeout=30")    # Cache file attrs 30s
+fuse_options.add("negative_timeout=5") # Cache "not found" 5s
+```
+
+### Userspace Cache Implementation
+
+```python
+import time
+from typing import Any, Optional
+
+class Cache:
+    """LRU cache with TTL for API responses"""
+
+    def __init__(self, ttl: float = 30.0, max_size: int = 1000):
+        self.ttl = ttl
+        self.max_size = max_size
+        self._cache: dict[str, tuple[float, Any]] = {}
+
+    def get(self, key: str) -> Optional[Any]:
+        if key in self._cache:
+            timestamp, value = self._cache[key]
+            if time.time() - timestamp < self.ttl:
+                return value
+            del self._cache[key]
+        return None
+
+    def set(self, key: str, value: Any):
+        # LRU eviction if needed
+        if len(self._cache) >= self.max_size:
+            oldest = min(self._cache, key=lambda k: self._cache[k][0])
+            del self._cache[oldest]
+        self._cache[key] = (time.time(), value)
+
+    def invalidate(self, prefix: str = ""):
+        """Invalidate all keys starting with prefix (or all if empty)"""
+        if prefix:
+            self._cache = {k: v for k, v in self._cache.items()
+                           if not k.startswith(prefix)}
+        else:
+            self._cache.clear()
+```
+
+### Cache Key Schema
+
+```python
+# Ontology list
+"ontologies"
+
+# Documents in ontology
+"ontology:{name}:docs"
+
+# Query results (includes full path for uniqueness)
+"query:{ontology}:{path}"
+
+# File content (by document ID)
+"file:{document_id}"
+
+# Concept details
+"concept:{concept_id}"
+```
+
+### What Gets Cached
+
+| Data | Cache Key | TTL | Invalidation |
+|------|-----------|-----|--------------|
+| Ontology list | `ontologies` | 30s | Manual refresh |
+| Documents in ontology | `ontology:X:docs` | 30s | On write to ontology |
+| Query results | `query:X:path` | 30s | On mkdir/rmdir in path |
+| File content | `file:doc_id` | 30s | Rarely changes |
+| Concept details | `concept:id` | 30s | Rarely changes |
+
+### Invalidation Strategy
+
+```python
+def mkdir(self, ontology: str, path: str):
+    """Handle mkdir - create query"""
+    self.query_store.add_query(ontology, path)
+    # Invalidate parent listing so new dir appears
+    parent = '/'.join(path.split('/')[:-1])
+    self.cache.invalidate(f"query:{ontology}:{parent}")
+
+def rmdir(self, ontology: str, path: str):
+    """Handle rmdir - remove query"""
+    self.query_store.remove_query(ontology, path)
+    # Invalidate parent listing
+    parent = '/'.join(path.split('/')[:-1])
+    self.cache.invalidate(f"query:{ontology}:{parent}")
+```
+
+## FUSE Operations Mapping
+
+### Read Operations
+
+| FUSE Op | Path | Action |
+|---------|------|--------|
+| `readdir /ontology/` | Root | List ontologies from API |
+| `readdir /ontology/X/` | Ontology | List docs + user queries |
+| `readdir /ontology/X/q/` | Query | Execute query, list results |
+| `read /ontology/X/doc.md` | Document | Fetch document content |
+| `read /ontology/X/q/c.concept` | Concept | Fetch concept details |
+| `getattr` | Any | Return cached attrs or fetch |
+
+### Write Operations
+
+| FUSE Op | Path | Action |
+|---------|------|--------|
+| `mkdir /ontology/X/q/` | Query | Store query in QueryStore |
+| `rmdir /ontology/X/q/` | Query | Remove from QueryStore |
+| `write /ontology/X/doc.md` | Document | Trigger ingestion (future) |
+| `unlink` | Any | Not supported (read-only hologram) |
+
+### Operation Implementation Sketch
+
+```python
+async def readdir(self, fh: int, start_id: int, token) -> None:
+    path_info = self._parse_path(fh)
+
+    if path_info.is_root:
+        # Fixed: just "ontology"
+        entries = [("ontology", DIR)]
+
+    elif path_info.is_ontology_root:
+        # List all ontologies from API
+        entries = await self._list_ontologies()
+
+    elif path_info.is_ontology:
+        # List documents + user query dirs
+        docs = await self._list_documents(path_info.ontology)
+        queries = self.query_store.list_queries_under(path_info.ontology, "")
+        entries = docs + [(q, DIR) for q in queries]
+
+    elif path_info.is_query:
+        # Execute query, list results + child queries
+        results = await self._execute_query(path_info.ontology, path_info.query_path)
+        child_queries = self.query_store.list_queries_under(
+            path_info.ontology, path_info.query_path)
+        entries = results + [(q, DIR) for q in child_queries]
+
+    # Emit entries...
+```
+
+## File Formats
+
+### Document Files (`.md`)
+
+Documents from the graph rendered as markdown:
+
+```markdown
+# Document Title
+
+**Ontology:** Strategy-As-Code
+**Document ID:** sha256:abc123
+**Chunks:** 8
+
+## Content
+
+[Full document text from chunks...]
+```
+
+### Concept Files (`.concept`)
+
+Concept details rendered as markdown:
+
+```markdown
+# Concept Name
+
+**ID:** sha256:concept123
+**Grounding:** 0.75 (Strong)
+**Diversity:** 42%
+
+## Description
+
+[Concept description...]
+
+## Evidence
+
+### Source 1: document.md (para 3)
+> Quoted evidence text...
+
+### Source 2: other-doc.md (para 7)
+> More evidence...
+
+## Relationships
+
+- SUPPORTS → other-concept
+- CONTRADICTS → another-concept
+- IMPLIES → yet-another
+```
+
+## Authentication
+
+### OAuth Client Flow
+
+The FUSE driver is an OAuth client, same as CLI and MCP:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    API Server                        │
+└─────────────────────────────────────────────────────┘
+        ▲           ▲           ▲           ▲
+     OAuth       OAuth       OAuth       OAuth
+        │           │           │           │
+   ┌────┴───┐  ┌────┴───┐  ┌────┴───┐  ┌────┴───┐
+   │  CLI   │  │  MCP   │  │  Web   │  │  FUSE  │
+   └────────┘  └────────┘  └────────┘  └────────┘
+```
+
+### Setup Flow
+
+```bash
+# Create OAuth client for FUSE (one-time)
+kg oauth create --for fuse
+
+# This writes to ~/.config/kg-fuse/config.toml:
+# [auth]
+# client_id = "kg-fuse-admin-abc123"
+# client_secret = "secret..."
+#
+# [api]
+# url = "http://localhost:8000"
+
+# Mount (reads config automatically)
+kg-fuse /mnt/kg
+```
+
+### Config File Location
+
+- Credentials: `~/.config/kg-fuse/config.toml` (XDG config)
+- Query data: `~/.local/share/kg-fuse/queries.toml` (XDG data)
+
+## API Endpoints Used
+
+| Operation | Endpoint | Notes |
+|-----------|----------|-------|
+| Auth | `POST /auth/oauth/token` | Client credentials grant |
+| List ontologies | `GET /ontology/` | Returns ontology names |
+| List documents | `GET /documents/?ontology=X` | Documents in ontology |
+| Get document | `GET /documents/{id}` | Document content |
+| Search concepts | `POST /query/search` | Semantic search |
+| Get concept | `GET /concepts/{id}` | Concept details |
+
+## Future Extensions
+
+### Write Support (Ingestion)
+
+```bash
+# Copy file to ontology → triggers ingestion
+cp report.pdf /mnt/kg/ontology/Strategy-As-Code/
+
+# File "disappears" into ingestion pipeline
+# After processing, concepts appear in query results
+```
+
+Implementation:
+- `write()` buffers to temp file
+- `release()` triggers POST to `/ingest/file`
+- Optional: create `.processing` ghost file with job ID
+
+### Query Parameters in Path
+
+Could support threshold in directory name:
+
+```bash
+mkdir "leadership@0.8"    # 80% threshold
+mkdir "leadership@0.5"    # 50% threshold (broader)
+```
+
+### Symlinks as Relationships
+
+```bash
+# Create relationship between concepts
+ln -s ../other-concept.concept relationships/SUPPORTS/
+```
+
+### Watch for Changes
+
+```bash
+# inotify-based monitoring
+inotifywait -m /mnt/kg/ontology/Strategy-As-Code/ -e create |
+while read dir action file; do
+    echo "New concept: $file"
+done
+```
+
+## Implementation Status
+
+### Completed
+- [x] Basic FUSE mount/unmount
+- [x] OAuth authentication from config file
+- [x] List ontologies at root
+- [x] `kg oauth create --for fuse` setup command
+
+### In Progress
+- [ ] Query directory system (mkdir/rmdir)
+- [ ] Client-side query persistence (TOML)
+- [ ] Userspace caching layer
+
+### Planned
+- [ ] Document content reading
+- [ ] Concept file rendering
+- [ ] Nested query resolution
+- [ ] Write support (ingestion)
+- [ ] FUSE kernel cache options
+
+## References
+
+- ADR-069: Semantic FUSE Filesystem (conceptual design)
+- ADR-054: OAuth 2.0 Authentication
+- pyfuse3 documentation: https://pyfuse3.readthedocs.io/
+- XDG Base Directory Spec: https://specifications.freedesktop.org/basedir-spec/
