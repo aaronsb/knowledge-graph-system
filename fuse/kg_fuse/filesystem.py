@@ -2,11 +2,28 @@
 Knowledge Graph FUSE Filesystem Operations
 
 Hierarchy:
-- /ontology/                     - Fixed root
+- /                              - Mount root (ontology/ + user global queries)
+- /ontology/                     - Fixed, system-managed ontology listing
 - /ontology/{name}/              - Ontology directories (from graph)
-- /ontology/{name}/{doc}.md      - Documents (from graph)
-- /ontology/{name}/{query}/      - User-created query directories
-- /ontology/{name}/{query}/*.concept.md  - Concept search results
+- /ontology/{name}/documents/    - Source documents (read-only)
+- /ontology/{name}/documents/{doc}.md  - Document content
+- /ontology/{name}/{query}/      - User query scoped to ontology
+- /{user-query}/                 - User global query (all ontologies)
+- /{path}/*.concept.md           - Concept search results
+- /{query}/.meta/                - Query control plane (virtual)
+
+Query Control Plane (.meta):
+- .meta/limit      - Max results (default: 50)
+- .meta/threshold  - Min similarity 0.0-1.0 (default: 0.7)
+- .meta/exclude    - Terms to exclude (NOT)
+- .meta/union      - Terms to broaden (OR)
+- .meta/query.toml - Full query state (read-only)
+
+Filtering Model:
+- Hierarchy = AND (nesting narrows results)
+- Symlinks = OR (add sources)
+- .meta/exclude = NOT (removes matches)
+- .meta/union = OR (adds matches)
 """
 
 import errno
@@ -27,14 +44,29 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class InodeEntry:
-    """Metadata for an inode."""
+    """Metadata for an inode.
+
+    Entry types:
+    - root: Mount root (shows ontology/ + global user queries)
+    - ontology_root: The /ontology/ directory (lists ontologies)
+    - ontology: Individual ontology directory
+    - documents_dir: The documents/ directory inside an ontology
+    - document: Source document file
+    - query: User-created query directory
+    - concept: Concept result file
+    - symlink: Symlink to ontology (for multi-ontology queries)
+    - meta_dir: The .meta/ control plane directory inside a query
+    - meta_file: Virtual file inside .meta/ (limit, threshold, exclude, union, query.toml)
+    """
     name: str
-    entry_type: str  # "root", "ontology", "document", "query", "concept"
+    entry_type: str
     parent: Optional[int]
     ontology: Optional[str] = None  # Which ontology this belongs to
-    query_path: Optional[str] = None  # For query dirs: path under ontology
+    query_path: Optional[str] = None  # For query dirs and meta: path under ontology
     document_id: Optional[str] = None  # For documents
     concept_id: Optional[str] = None  # For concepts
+    symlink_target: Optional[str] = None  # For symlinks
+    meta_key: Optional[str] = None  # For meta_file: which setting (limit, threshold, etc.)
     size: int = 0
 
 
@@ -42,6 +74,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     """FUSE filesystem backed by Knowledge Graph API."""
 
     ROOT_INODE = pyfuse3.ROOT_INODE  # 1
+    ONTOLOGY_ROOT_INODE = 2  # Fixed inode for /ontology/
 
     def __init__(self, api_url: str, client_id: str, client_secret: str):
         super().__init__()
@@ -57,9 +90,12 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # Query store for user-created directories
         self.query_store = QueryStore()
 
-        # Inode management
+        # Inode management - root and ontology_root are fixed
         self._inodes: dict[int, InodeEntry] = {
             self.ROOT_INODE: InodeEntry(name="", entry_type="root", parent=None),
+            self.ONTOLOGY_ROOT_INODE: InodeEntry(
+                name="ontology", entry_type="ontology_root", parent=self.ROOT_INODE
+            ),
         }
         self._next_inode = 100  # Dynamic inodes start here
 
@@ -130,7 +166,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     def _is_dir_type(self, entry_type: str) -> bool:
         """Check if entry type is a directory."""
-        return entry_type in ("root", "ontology", "query")
+        return entry_type in ("root", "ontology_root", "ontology", "documents_dir", "query", "meta_dir")
 
     async def getattr(self, inode: int, ctx: pyfuse3.RequestContext) -> pyfuse3.EntryAttributes:
         """Get file/directory attributes."""
@@ -141,8 +177,30 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         is_dir = self._is_dir_type(entry.entry_type)
         size = entry.size
 
-        # Ontology and query directories are writable (for mkdir)
-        writable = entry.entry_type in ("ontology", "query")
+        # Writable directories: root (global queries), ontology (scoped queries), query (nested)
+        # Not writable: ontology_root (fixed), documents_dir (read-only), meta_dir (fixed structure)
+        writable = entry.entry_type in ("root", "ontology", "query")
+
+        # Meta files need special handling for size and permissions
+        if entry.entry_type == "meta_file":
+            content = self._render_meta_file(entry)
+            size = len(content.encode("utf-8"))
+            # query.toml is read-only, others are read-write
+            if entry.meta_key == "query.toml":
+                return self._make_attr(inode, is_dir=False, size=size, writable=False)
+            else:
+                # Writable meta file - use special mode
+                attr = pyfuse3.EntryAttributes()
+                attr.st_ino = inode
+                attr.st_mode = stat.S_IFREG | 0o644  # Read-write for owner
+                attr.st_nlink = 1
+                attr.st_size = size
+                attr.st_atime_ns = int(time.time() * 1e9)
+                attr.st_mtime_ns = int(time.time() * 1e9)
+                attr.st_ctime_ns = int(time.time() * 1e9)
+                attr.st_uid = os.getuid()
+                attr.st_gid = os.getgid()
+                return attr
 
         return self._make_attr(inode, is_dir=is_dir, size=size, writable=writable)
 
@@ -151,7 +209,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         name_str = name.decode("utf-8")
         log.debug(f"lookup: parent={parent_inode}, name={name_str}")
 
-        # Check existing inodes
+        # Check existing inodes first
         for inode, entry in self._inodes.items():
             if entry.parent == parent_inode and entry.name == name_str:
                 return await self.getattr(inode, ctx)
@@ -160,34 +218,55 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not parent_entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
 
-        # Handle lookup at root level - check if it's an ontology
+        # Root level: "ontology" (fixed) + global user queries
         if parent_entry.entry_type == "root":
-            # Fetch ontologies if not cached and check if name is one
+            if name_str == "ontology":
+                return await self.getattr(self.ONTOLOGY_ROOT_INODE, ctx)
+
+            # Check if it's a global user query
+            if self.query_store.is_query_dir(None, name_str):
+                inode = self._get_or_create_query_inode(None, name_str, parent_inode)
+                return await self.getattr(inode, ctx)
+
+        # ontology_root: list actual ontologies
+        elif parent_entry.entry_type == "ontology_root":
             entries = await self._list_ontologies()
             for inode, ont_name in entries:
                 if ont_name == name_str:
                     return await self.getattr(inode, ctx)
 
-        # Handle lookup under ontology
+        # Inside ontology: "documents" (fixed) + user queries
         elif parent_entry.entry_type == "ontology":
             ontology = parent_entry.ontology
+
+            if name_str == "documents":
+                inode = self._get_or_create_documents_dir_inode(ontology, parent_inode)
+                return await self.getattr(inode, ctx)
 
             # Check if it's a query directory
             if self.query_store.is_query_dir(ontology, name_str):
                 inode = self._get_or_create_query_inode(ontology, name_str, parent_inode)
                 return await self.getattr(inode, ctx)
 
-            # Check if it's a document (fetch from API if needed)
-            entries = await self._list_ontology_contents(parent_inode, ontology)
+        # documents_dir: list actual document files
+        elif parent_entry.entry_type == "documents_dir":
+            ontology = parent_entry.ontology
+            entries = await self._list_documents(parent_inode, ontology)
             for inode, doc_name in entries:
                 if doc_name == name_str:
                     return await self.getattr(inode, ctx)
 
-        # Handle lookup under query directory
+        # Query directory: .meta + concepts + nested queries
         elif parent_entry.entry_type == "query":
-            ontology = parent_entry.ontology
+            ontology = parent_entry.ontology  # Can be None for global queries
             parent_path = parent_entry.query_path
-            nested_path = f"{parent_path}/{name_str}"
+
+            # Check for .meta directory
+            if name_str == ".meta":
+                inode = self._get_or_create_meta_dir_inode(ontology, parent_path, parent_inode)
+                return await self.getattr(inode, ctx)
+
+            nested_path = f"{parent_path}/{name_str}" if parent_path else name_str
 
             # Check if it's a nested query directory
             if self.query_store.is_query_dir(ontology, nested_path):
@@ -199,6 +278,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             for inode, file_name in entries:
                 if file_name == name_str:
                     return await self.getattr(inode, ctx)
+
+        # .meta directory: list virtual config files
+        elif parent_entry.entry_type == "meta_dir":
+            ontology = parent_entry.ontology
+            query_path = parent_entry.query_path
+
+            if name_str in self.META_FILES:
+                inode = self._get_or_create_meta_file_inode(name_str, ontology, query_path, parent_inode)
+                return await self.getattr(inode, ctx)
 
         # Not found
         raise pyfuse3.FUSEError(errno.ENOENT)
@@ -221,14 +309,21 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not parent_entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
 
-        # Can only mkdir under ontology or query directories
-        if parent_entry.entry_type == "ontology":
+        # Determine ontology scope and query path based on parent type
+        if parent_entry.entry_type == "root":
+            # Global query at root level (searches all ontologies)
+            ontology = None
+            query_path = name_str
+        elif parent_entry.entry_type == "ontology":
+            # Query scoped to this ontology
             ontology = parent_entry.ontology
             query_path = name_str
         elif parent_entry.entry_type == "query":
-            ontology = parent_entry.ontology
+            # Nested query (inherits ontology scope from parent)
+            ontology = parent_entry.ontology  # Can be None for global queries
             query_path = f"{parent_entry.query_path}/{name_str}"
         else:
+            # Can't mkdir under ontology_root, documents_dir, etc.
             raise pyfuse3.FUSEError(errno.EPERM)
 
         # Create query in store
@@ -251,14 +346,21 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not parent_entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
 
-        # Determine the query path
-        if parent_entry.entry_type == "ontology":
+        # Determine ontology scope and query path based on parent type
+        if parent_entry.entry_type == "root":
+            # Global query at root level
+            ontology = None
+            query_path = name_str
+        elif parent_entry.entry_type == "ontology":
+            # Query scoped to this ontology
             ontology = parent_entry.ontology
             query_path = name_str
         elif parent_entry.entry_type == "query":
-            ontology = parent_entry.ontology
+            # Nested query
+            ontology = parent_entry.ontology  # Can be None for global queries
             query_path = f"{parent_entry.query_path}/{name_str}"
         else:
+            # Can't rmdir from ontology_root, documents_dir, etc.
             raise pyfuse3.FUSEError(errno.EPERM)
 
         # Check it exists
@@ -268,7 +370,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # Remove from store (also removes children)
         self.query_store.remove_query(ontology, query_path)
 
-        # Remove inode
+        # Remove inode and any child inodes
         for inode, entry in list(self._inodes.items()):
             if entry.entry_type == "query" and entry.ontology == ontology:
                 if entry.query_path == query_path or entry.query_path.startswith(query_path + "/"):
@@ -289,16 +391,35 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         entries = []
 
         if entry.entry_type == "root":
-            # Root directory: list ontologies
+            # Root: "ontology" (fixed) + global user queries
+            entries = await self._list_root_contents(fh)
+
+        elif entry.entry_type == "ontology_root":
+            # ontology/: list actual ontologies from graph
             entries = await self._list_ontologies()
 
         elif entry.entry_type == "ontology":
-            # Ontology directory: list documents + query dirs
+            # Ontology: "documents" (fixed) + user queries
             entries = await self._list_ontology_contents(fh, entry.ontology)
 
+        elif entry.entry_type == "documents_dir":
+            # documents/: list source document files
+            entries = await self._list_documents(fh, entry.ontology)
+
         elif entry.entry_type == "query":
-            # Query directory: execute search + list child queries
-            entries = await self._list_query_results(fh, entry.ontology, entry.query_path)
+            # Query: .meta + execute search + list child queries
+            # Add .meta directory first
+            meta_inode = self._get_or_create_meta_dir_inode(entry.ontology, entry.query_path, fh)
+            entries.append((meta_inode, ".meta"))
+            # Add query results and child queries
+            results = await self._list_query_results(fh, entry.ontology, entry.query_path)
+            entries.extend(results)
+
+        elif entry.entry_type == "meta_dir":
+            # .meta/: list virtual config files
+            for meta_key in self.META_FILES:
+                inode = self._get_or_create_meta_file_inode(meta_key, entry.ontology, entry.query_path, fh)
+                entries.append((inode, meta_key))
 
         # Emit entries starting from start_id
         for idx, (inode, name) in enumerate(entries):
@@ -308,10 +429,25 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if not pyfuse3.readdir_reply(token, name.encode("utf-8"), attr, idx + 1):
                 break
 
+    async def _list_root_contents(self, parent_inode: int) -> list[tuple[int, str]]:
+        """List root directory contents: ontology/ + global user queries."""
+        entries = []
+
+        # Fixed: the "ontology" directory
+        entries.append((self.ONTOLOGY_ROOT_INODE, "ontology"))
+
+        # Global user queries (ontology=None)
+        global_queries = self.query_store.list_queries_under(None, "")
+        for query_name in global_queries:
+            inode = self._get_or_create_query_inode(None, query_name, parent_inode)
+            entries.append((inode, query_name))
+
+        return entries
+
     async def _list_ontologies(self) -> list[tuple[int, str]]:
-        """List ontologies as directories at root."""
+        """List ontologies as directories under /ontology/."""
         # Check cache
-        cache_key = self.ROOT_INODE
+        cache_key = self.ONTOLOGY_ROOT_INODE
         if cache_key in self._dir_cache:
             if time.time() - self._cache_time.get(cache_key, 0) < self._cache_ttl:
                 return self._dir_cache[cache_key]
@@ -338,7 +474,32 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             return []
 
     async def _list_ontology_contents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
-        """List documents and query directories in an ontology."""
+        """List contents of an ontology directory: documents/ + user queries."""
+        # Check cache
+        if parent_inode in self._dir_cache:
+            if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
+                return self._dir_cache[parent_inode]
+
+        entries = []
+
+        # Fixed: the "documents" directory
+        docs_inode = self._get_or_create_documents_dir_inode(ontology, parent_inode)
+        entries.append((docs_inode, "documents"))
+
+        # Add user-created query directories
+        query_dirs = self.query_store.list_queries_under(ontology, "")
+        for query_name in query_dirs:
+            inode = self._get_or_create_query_inode(ontology, query_name, parent_inode)
+            entries.append((inode, query_name))
+
+        # Cache result
+        self._dir_cache[parent_inode] = entries
+        self._cache_time[parent_inode] = time.time()
+
+        return entries
+
+    async def _list_documents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
+        """List document files inside an ontology's documents/ directory."""
         # Check cache
         if parent_inode in self._dir_cache:
             if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
@@ -362,19 +523,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         except Exception as e:
             log.error(f"Failed to list documents for {ontology}: {e}")
 
-        # Add user-created query directories
-        query_dirs = self.query_store.list_queries_under(ontology, "")
-        for query_name in query_dirs:
-            inode = self._get_or_create_query_inode(ontology, query_name, parent_inode)
-            entries.append((inode, query_name))
-
         # Cache result
         self._dir_cache[parent_inode] = entries
         self._cache_time[parent_inode] = time.time()
 
         return entries
 
-    async def _list_query_results(self, parent_inode: int, ontology: str, query_path: str) -> list[tuple[int, str]]:
+    async def _list_query_results(self, parent_inode: int, ontology: Optional[str], query_path: str) -> list[tuple[int, str]]:
         """Execute semantic search and list results + child queries."""
         # Check cache
         if parent_inode in self._dir_cache:
@@ -424,20 +579,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         return entries
 
-    async def _execute_search(self, ontology: str, query_text: str, threshold: float) -> list[dict]:
+    async def _execute_search(self, ontology: Optional[str], query_text: str, threshold: float) -> list[dict]:
         """Execute semantic search via API."""
         try:
             token = await self._get_token()
             client = await self._get_client()
 
+            # Build request body - omit ontology for global queries
+            body = {
+                "query": query_text,
+                "min_similarity": threshold,
+                "limit": 50,
+            }
+            if ontology is not None:
+                body["ontology"] = ontology
+
             response = await client.post(
                 "/query/search",
-                json={
-                    "query": query_text,
-                    "ontology": ontology,
-                    "min_similarity": threshold,
-                    "limit": 50,
-                },
+                json=body,
                 headers={"Authorization": f"Bearer {token}"},
             )
             response.raise_for_status()
@@ -470,8 +629,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="ontology",
-            parent=self.ROOT_INODE,
+            parent=self.ONTOLOGY_ROOT_INODE,  # Parent is /ontology/, not root
             ontology=name,
+        )
+        return inode
+
+    def _get_or_create_documents_dir_inode(self, ontology: str, parent: int) -> int:
+        """Get or create inode for the documents/ directory inside an ontology."""
+        for inode, entry in self._inodes.items():
+            if entry.entry_type == "documents_dir" and entry.ontology == ontology:
+                return inode
+
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name="documents",
+            entry_type="documents_dir",
+            parent=parent,
+            ontology=ontology,
         )
         return inode
 
@@ -514,7 +689,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         )
         return inode
 
-    def _get_or_create_concept_inode(self, name: str, parent: int, ontology: str, query_path: str, concept_id: str) -> int:
+    def _get_or_create_concept_inode(self, name: str, parent: int, ontology: Optional[str], query_path: str, concept_id: str) -> int:
         """Get or create inode for a concept file."""
         for inode, entry in self._inodes.items():
             if entry.entry_type == "concept" and entry.concept_id == concept_id and entry.parent == parent:
@@ -533,6 +708,92 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         )
         return inode
 
+    def _get_or_create_meta_dir_inode(self, ontology: Optional[str], query_path: str, parent: int) -> int:
+        """Get or create inode for the .meta directory inside a query."""
+        for inode, entry in self._inodes.items():
+            if (entry.entry_type == "meta_dir" and
+                entry.ontology == ontology and
+                entry.query_path == query_path):
+                return inode
+
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name=".meta",
+            entry_type="meta_dir",
+            parent=parent,
+            ontology=ontology,
+            query_path=query_path,
+        )
+        return inode
+
+    def _get_or_create_meta_file_inode(self, meta_key: str, ontology: Optional[str], query_path: str, parent: int) -> int:
+        """Get or create inode for a virtual file inside .meta."""
+        for inode, entry in self._inodes.items():
+            if (entry.entry_type == "meta_file" and
+                entry.meta_key == meta_key and
+                entry.ontology == ontology and
+                entry.query_path == query_path):
+                return inode
+
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name=meta_key,
+            entry_type="meta_file",
+            parent=parent,
+            ontology=ontology,
+            query_path=query_path,
+            meta_key=meta_key,
+        )
+        return inode
+
+    # The virtual files available in .meta directories
+    META_FILES = ["limit", "threshold", "exclude", "union", "query.toml"]
+
+    def _render_meta_file(self, entry: InodeEntry) -> str:
+        """Render content for a .meta virtual file."""
+        query = self.query_store.get_query(entry.ontology, entry.query_path)
+        if not query:
+            return "# Query not found\n"
+
+        if entry.meta_key == "limit":
+            return f"# Maximum number of concepts to return. Default is 50.\n{query.limit}\n"
+
+        elif entry.meta_key == "threshold":
+            return f"# Minimum similarity score (0.0-1.0). Default is 0.7.\n{query.threshold}\n"
+
+        elif entry.meta_key == "exclude":
+            content = "# Terms to exclude from results (one per line, semantic NOT).\n"
+            for term in query.exclude:
+                content += f"{term}\n"
+            return content
+
+        elif entry.meta_key == "union":
+            content = "# Additional terms to include (one per line, semantic OR).\n"
+            for term in query.union:
+                content += f"{term}\n"
+            return content
+
+        elif entry.meta_key == "query.toml":
+            # Read-only debug view of the full query
+            lines = ["# Full query state (read-only)", ""]
+            lines.append(f'query_text = "{query.query_text}"')
+            lines.append(f"threshold = {query.threshold}")
+            lines.append(f"limit = {query.limit}")
+            exclude_str = ", ".join(f'"{e}"' for e in query.exclude)
+            lines.append(f"exclude = [{exclude_str}]")
+            union_str = ", ".join(f'"{u}"' for u in query.union)
+            lines.append(f"union = [{union_str}]")
+            lines.append(f'created_at = "{query.created_at}"')
+            if entry.ontology:
+                lines.append(f'ontology = "{entry.ontology}"')
+            else:
+                lines.append("ontology = null  # Global query")
+            return "\n".join(lines) + "\n"
+
+        return "# Unknown meta file\n"
+
     def _invalidate_cache(self, inode: int):
         """Invalidate cache for an inode."""
         self._dir_cache.pop(inode, None)
@@ -544,8 +805,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
 
         entry = self._inodes[inode]
-        if entry.entry_type not in ("document", "concept"):
+        if entry.entry_type not in ("document", "concept", "meta_file"):
             raise pyfuse3.FUSEError(errno.EISDIR)
+
+        # Check write permissions for meta files
+        if entry.entry_type == "meta_file":
+            # query.toml is read-only
+            if entry.meta_key == "query.toml" and (flags & os.O_WRONLY or flags & os.O_RDWR):
+                raise pyfuse3.FUSEError(errno.EACCES)
 
         return pyfuse3.FileInfo(fh=inode)
 
@@ -560,6 +827,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 content = await self._read_document(entry)
             elif entry.entry_type == "concept":
                 content = await self._read_concept(entry)
+            elif entry.entry_type == "meta_file":
+                content = self._render_meta_file(entry)
             else:
                 content = "# Unknown file type\n"
 
@@ -696,3 +965,103 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             lines.append("")
 
         return "\n".join(lines)
+
+    async def write(self, fh: int, off: int, buf: bytes) -> int:
+        """Write to a file (only meta files are writable)."""
+        entry = self._inodes.get(fh)
+        if not entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        if entry.entry_type != "meta_file":
+            raise pyfuse3.FUSEError(errno.EACCES)
+
+        if entry.meta_key == "query.toml":
+            raise pyfuse3.FUSEError(errno.EACCES)  # Read-only
+
+        try:
+            # Decode the written content
+            content = buf.decode("utf-8").strip()
+            if not content:
+                return len(buf)
+
+            # Parse and apply the value based on meta_key
+            if entry.meta_key == "limit":
+                # Extract the number (skip comment lines)
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        try:
+                            limit = int(line)
+                            self.query_store.update_limit(entry.ontology, entry.query_path, limit)
+                            # Invalidate query cache so results refresh
+                            self._invalidate_query_cache(entry.ontology, entry.query_path)
+                        except ValueError:
+                            pass  # Ignore invalid numbers
+                        break
+
+            elif entry.meta_key == "threshold":
+                # Extract the float (skip comment lines)
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        try:
+                            threshold = float(line)
+                            self.query_store.update_threshold(entry.ontology, entry.query_path, threshold)
+                            self._invalidate_query_cache(entry.ontology, entry.query_path)
+                        except ValueError:
+                            pass
+                        break
+
+            elif entry.meta_key == "exclude":
+                # Add each non-comment line as an exclude term
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        self.query_store.add_exclude(entry.ontology, entry.query_path, line)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+
+            elif entry.meta_key == "union":
+                # Add each non-comment line as a union term
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        self.query_store.add_union(entry.ontology, entry.query_path, line)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+
+            return len(buf)
+
+        except Exception as e:
+            log.error(f"Failed to write meta file: {e}")
+            raise pyfuse3.FUSEError(errno.EIO)
+
+    async def setattr(self, inode: int, attr: pyfuse3.EntryAttributes, fields: pyfuse3.SetattrFields, fh: int, ctx: pyfuse3.RequestContext) -> pyfuse3.EntryAttributes:
+        """Set file attributes (needed for truncate on write)."""
+        entry = self._inodes.get(inode)
+        if not entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        # For meta files, truncate clears the value
+        if entry.entry_type == "meta_file" and fields.update_size and attr.st_size == 0:
+            if entry.meta_key == "query.toml":
+                raise pyfuse3.FUSEError(errno.EACCES)
+
+            # Clear the appropriate field
+            if entry.meta_key == "exclude":
+                self.query_store.clear_exclude(entry.ontology, entry.query_path)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+            elif entry.meta_key == "union":
+                self.query_store.clear_union(entry.ontology, entry.query_path)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+            # limit and threshold don't have clear - they just keep their value
+
+        return await self.getattr(inode, ctx)
+
+    def _invalidate_query_cache(self, ontology: Optional[str], query_path: str):
+        """Invalidate cache for a query directory when its parameters change."""
+        # Find the query inode and invalidate its cache
+        for inode, entry in self._inodes.items():
+            if (entry.entry_type == "query" and
+                entry.ontology == ontology and
+                entry.query_path == query_path):
+                self._invalidate_cache(inode)
+                break

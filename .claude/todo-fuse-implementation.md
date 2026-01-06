@@ -23,11 +23,16 @@
 - [x] YAML frontmatter with relationships and source documents
 - [x] Source document filename from DocumentMeta (Apache AGE workaround)
 
-## Phase 4: Advanced Structure (Planned)
-- [ ] Move documents to `/ontology/{name}/documents/`
-- [ ] Root-level user directories (global queries)
+## Phase 4: Advanced Structure (In Progress)
+- [x] Move documents to `/ontology/{name}/documents/`
+- [x] Root-level user directories (global queries)
 - [ ] Symlink support for multi-ontology queries
-- [ ] Boolean operators (`_!`, `_|`, `_>`, `_#`, `_@`, `_$`)
+- [x] `.meta` control plane (virtual directories)
+  - [x] `.meta/limit` - result count
+  - [x] `.meta/threshold` - similarity filter
+  - [x] `.meta/exclude` - semantic NOT
+  - [x] `.meta/union` - semantic OR
+  - [x] `.meta/query.toml` - debug view (read-only)
 - [ ] Nested query resolution (AND intersection)
 
 ## Phase 5: Caching (Planned)
@@ -42,20 +47,25 @@
 
 ## Design Notes
 
-### Boolean Query Model
+### `.meta` Control Plane (sysfs-style)
 
-The filesystem structure acts as a visual query builder:
+Instead of DSL operators in directory names, queries are configured via virtual `.meta/` directories:
 
-| Mechanism | Operator | Effect |
-|-----------|----------|--------|
-| Nesting directories | implicit AND | Narrows results |
-| Symlinks to ontologies | implicit OR | Widens sources |
-| `_!term` | NOT | Excludes matches |
-| `_\|a,b` | OR | Union of terms |
-| `_>N` | threshold | Min similarity |
-| `_#N` | limit | Max results |
-| `_@name` | scope | Explicit ontology |
-| `_$name` | reference | Saved query |
+| Mechanism | Effect |
+|-----------|--------|
+| Nesting directories | Implicit AND (narrows results) |
+| Symlinks to ontologies | Implicit OR (widens sources) |
+| `.meta/exclude` | Semantic NOT (removes matches) |
+| `.meta/union` | Semantic OR (adds matches) |
+| `.meta/threshold` | Minimum similarity filter |
+| `.meta/limit` | Maximum result count |
+| `.meta/query.toml` | Debug view (read-only) |
+
+Each `.meta/` file contains a comment line explaining the setting, followed by the value:
+```
+# Maximum number of concepts to return. Default is 50.
+50
+```
 
 ### Key Files
 - `fuse/kg_fuse/filesystem.py` - Core FUSE operations

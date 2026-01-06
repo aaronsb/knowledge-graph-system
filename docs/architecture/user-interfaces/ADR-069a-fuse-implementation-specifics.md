@@ -34,24 +34,30 @@ This document captures specific implementation details for the kg-fuse driver, b
 │   │   ├── documents/                     # Source documents (read-only)
 │   │   │   └── whitepaper.md              # Document content from graph
 │   │   └── leadership/                    # User query scoped to ontology
+│   │       ├── .meta/                     # Query control plane
+│   │       │   ├── limit                  # "50"
+│   │       │   ├── threshold              # "0.7"
+│   │       │   ├── exclude                # (empty)
+│   │       │   └── union                  # (empty)
 │   │       ├── Concept-A.concept.md       # Results matching "leadership"
 │   │       └── governance/                # Nested: "leadership" AND "governance"
+│   │           ├── .meta/
 │   │           └── Concept-B.concept.md
 │   └── test-concepts/
 │       └── documents/
 │           └── notes.md
 │
 ├── my-research/                           # User workspace (global query)
-│   ├── Strategy-As-Code -> ../ontology/Strategy-As-Code    # Include
-│   ├── test-concepts -> ../ontology/test-concepts          # Include
-│   ├── _!old-archive -> ../ontology/old-archive            # Exclude
+│   ├── .meta/                             # Global query control plane
+│   ├── Strategy-As-Code -> ../ontology/Strategy-As-Code    # Include source
+│   ├── test-concepts -> ../ontology/test-concepts          # Include source
 │   └── agents/                            # Query across linked ontologies
-│       ├── _|governance,compliance/       # OR: governance OR compliance
-│       │   └── Result.concept.md
-│       └── _!deprecated/                  # NOT: exclude deprecated
-│           └── Result.concept.md
+│       ├── .meta/
+│       │   └── exclude                    # "deprecated\nlegacy"
+│       └── Result.concept.md
 │
 └── quick-search/                          # Simple global query
+    ├── .meta/
     └── Concept.concept.md                 # Results from all ontologies
 ```
 
@@ -77,53 +83,96 @@ This document captures specific implementation details for the kg-fuse driver, b
 | `/{user-query}/` | dir | Client-side | Yes (mkdir/rmdir) |
 | `/{path}/{concept}.concept.md` | file | Graph (query results) | No |
 | `/{path}/{ontology-symlink}` | symlink | Client-side | Yes (ln -s/rm) |
+| `/{query}/.meta/` | dir | Virtual | No (auto-created) |
+| `/{query}/.meta/limit` | file | Virtual | Yes (read/write) |
+| `/{query}/.meta/threshold` | file | Virtual | Yes (read/write) |
+| `/{query}/.meta/exclude` | file | Virtual | Yes (read/append) |
+| `/{query}/.meta/union` | file | Virtual | Yes (read/append) |
+| `/{query}/.meta/query.toml` | file | Virtual | No (read-only) |
 
-## Boolean Query Logic
+## Query Control Plane (`.meta` directories)
+
+Instead of encoding operators in directory names, we use a sysfs-style control plane. Every query directory contains a hidden `.meta/` directory with virtual files for configuration.
+
+### The `.meta` Interface
+
+When you `mkdir` a query, a `.meta/` directory is automatically available:
+
+```
+/ontology/Strategy-As-Code/leadership/
+├── .meta/                    # Control plane (virtual, hidden)
+│   ├── limit                 # Max results (default: 50)
+│   ├── threshold             # Min similarity 0.0-1.0 (default: 0.7)
+│   ├── exclude               # Terms to exclude (NOT)
+│   ├── union                 # Terms to broaden (OR)
+│   └── query.toml            # Read-only: full query state
+├── communication/            # Nested query (implicit AND)
+└── Strategic-Leadership.concept.md
+```
+
+### Virtual File Format
+
+Each config file contains two lines:
+1. A comment explaining the setting
+2. The current value
+
+```bash
+$ cat .meta/limit
+# Maximum number of concepts to return. Default is 50.
+50
+
+$ cat .meta/threshold
+# Minimum similarity score (0.0-1.0). Default is 0.7.
+0.7
+
+$ cat .meta/exclude
+# Terms to exclude from results (one per line, semantic NOT).
+
+$ cat .meta/union
+# Additional terms to include (one per line, semantic OR).
+
+```
+
+### Configuration Operations
+
+| Virtual File | Type | Read | Write | Effect |
+|--------------|------|------|-------|--------|
+| `.meta/limit` | Integer | Current limit | Set new limit | Updates result count |
+| `.meta/threshold` | Float (0.0-1.0) | Current threshold | Set new threshold | Updates similarity filter |
+| `.meta/exclude` | Text (lines) | Current exclusions | Append term | Adds semantic NOT |
+| `.meta/union` | Text (lines) | Current unions | Append term | Adds semantic OR |
+| `.meta/query.toml` | TOML | Full query state | — | Debug view (read-only) |
+
+### Example Workflow
+
+```bash
+# Create a query
+mkdir "Machine Learning"
+cd "Machine Learning"
+
+# Configure it via .meta
+echo 0.85 > .meta/threshold     # High precision
+echo 20 > .meta/limit           # Fewer results
+echo "LLMs" >> .meta/exclude    # Exclude LLM-related concepts
+echo "Deep Learning" >> .meta/union  # Also include deep learning
+
+# Results update on next `ls`
+ls   # Shows ML + Deep Learning concepts, excluding LLMs
+
+# Debug: see the full query
+cat .meta/query.toml
+```
 
 ### Filtering Model
 
-| Mechanism | Operator | Effect |
-|-----------|----------|--------|
-| Nesting directories | implicit AND | Narrows results (intersection) |
-| Symlinks to ontologies | implicit OR | Widens sources (union) |
-| `_!` prefix | NOT | Excludes matches |
-| `_\|a,b` prefix | OR | Union of terms at same level |
-
-### Query Operators (`_` prefix)
-
-The underscore prefix reserves a "control plane" namespace for query modifiers:
-
-| Operator | Meaning | Example |
-|----------|---------|---------|
-| `_!` | NOT / exclude | `_!deprecated/` |
-| `_\|` | OR terms | `_\|agents,operators/` |
-| `_>N` | Min similarity | `_>0.8/` |
-| `_#N` | Limit results | `_#10/` |
-| `_@name` | Scope to ontology | `_@Strategy-As-Code/` |
-| `_$name` | Saved query ref | `_$my-saved-query/` |
-
-### Example Query
-
-```
-/research/
-  Strategy-As-Code -> ../ontology/Strategy-As-Code    # Include
-  test-concepts -> ../ontology/test-concepts          # Include
-  _!old-archive -> ../ontology/old-archive            # Exclude
-  agents/                                             # AND "agents"
-    _|governance,compliance/                          # AND (governance OR compliance)
-      _>0.7/                                          # WHERE similarity > 0.7
-        _#20/                                         # LIMIT 20
-          Result.concept.md
-```
-
-Equivalent query:
-```
-(Strategy-As-Code OR test-concepts) NOT old-archive
-AND agents
-AND (governance OR compliance)
-WHERE similarity > 0.7
-LIMIT 20
-```
+| Mechanism | Effect |
+|-----------|--------|
+| Nesting directories | Implicit AND (narrows results) |
+| Symlinks to ontologies | Implicit OR (widens sources) |
+| `.meta/exclude` | Semantic NOT (removes matches) |
+| `.meta/union` | Semantic OR (adds matches) |
+| `.meta/threshold` | Minimum similarity filter |
+| `.meta/limit` | Maximum result count |
 
 ## Rules
 
@@ -133,9 +182,10 @@ LIMIT 20
 4. **Symlinks scope sources** - Only ontologies can be symlinked, only into user dirs
 5. **Ontologies cannot be symlinked into other ontologies** - Only user dirs can have symlinks
 6. **Depth = specificity** - Each nested level ANDs another constraint
-7. **Operators modify behavior** - Underscore prefix reserved for query control
-8. **Concepts are always leaves** - `.concept.md` files are read-only results
-9. **Simple queries need no operators** - Just `mkdir "my search term"` works
+7. **`.meta/` is virtual** - Auto-created for every query dir, hidden by default
+8. **`.meta/` files are self-documenting** - Each contains a comment line + value
+9. **Concepts are always leaves** - `.concept.md` files are read-only results
+10. **Simple queries need no config** - Just `mkdir "my search term"` works with defaults
 
 ## Query System
 
@@ -621,7 +671,12 @@ done
 - [ ] Move documents to `/ontology/{name}/documents/`
 - [ ] Root-level user directories (global queries)
 - [ ] Symlink support for multi-ontology queries
-- [ ] Boolean operators (`_!`, `_|`, `_>`, `_#`, `_@`, `_$`)
+- [ ] `.meta` control plane (virtual directories)
+  - [ ] `.meta/limit` - result count
+  - [ ] `.meta/threshold` - similarity filter
+  - [ ] `.meta/exclude` - semantic NOT
+  - [ ] `.meta/union` - semantic OR
+  - [ ] `.meta/query.toml` - debug view
 - [ ] Nested query resolution (AND intersection)
 
 ### Phase 5: Caching (Planned)

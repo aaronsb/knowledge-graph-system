@@ -21,10 +21,20 @@ except ImportError:
 
 @dataclass
 class Query:
-    """A user-created query directory definition."""
+    """A user-created query directory definition with .meta control plane settings."""
     query_text: str
-    threshold: float = 0.5  # Lower default for broader matches
+    threshold: float = 0.7  # Default similarity threshold
+    limit: int = 50  # Default max results
+    exclude: list[str] = None  # Terms to exclude (NOT)
+    union: list[str] = None  # Terms to add (OR)
     created_at: str = ""
+
+    def __post_init__(self):
+        # Initialize mutable defaults
+        if self.exclude is None:
+            self.exclude = []
+        if self.union is None:
+            self.union = []
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -32,6 +42,9 @@ class Query:
 
 class QueryStore:
     """Manages user-created query directories with TOML persistence."""
+
+    # Special key prefix for global queries (ontology=None)
+    GLOBAL_PREFIX = "_global_"
 
     def __init__(self, data_path: Optional[Path] = None):
         self.path = data_path or (self._get_data_path() / "queries.toml")
@@ -44,6 +57,22 @@ class QueryStore:
         data_dir = Path(xdg_data) / "kg-fuse"
         data_dir.mkdir(parents=True, exist_ok=True)
         return data_dir
+
+    def _make_key(self, ontology: Optional[str], path: str) -> str:
+        """Generate storage key for a query."""
+        if ontology is None:
+            return f"{self.GLOBAL_PREFIX}{path}"
+        return f"{ontology}/{path}"
+
+    def _make_prefix(self, ontology: Optional[str], path: str = "") -> str:
+        """Generate prefix for listing children."""
+        if ontology is None:
+            if path:
+                return f"{self.GLOBAL_PREFIX}{path}/"
+            return self.GLOBAL_PREFIX
+        if path:
+            return f"{ontology}/{path}/"
+        return f"{ontology}/"
 
     def _load(self):
         """Load queries from TOML file."""
@@ -82,25 +111,31 @@ class QueryStore:
             lines.append(f'[queries."{key}"]')
             lines.append(f'query_text = "{query.query_text}"')
             lines.append(f"threshold = {query.threshold}")
+            lines.append(f"limit = {query.limit}")
+            # Format lists as TOML arrays
+            exclude_str = ", ".join(f'"{e}"' for e in query.exclude)
+            lines.append(f"exclude = [{exclude_str}]")
+            union_str = ", ".join(f'"{u}"' for u in query.union)
+            lines.append(f"union = [{union_str}]")
             lines.append(f'created_at = "{query.created_at}"')
             lines.append("")
 
         with open(self.path, "w") as f:
             f.write("\n".join(lines))
 
-    def add_query(self, ontology: str, path: str, query_text: Optional[str] = None) -> Query:
+    def add_query(self, ontology: Optional[str], path: str, query_text: Optional[str] = None) -> Query:
         """
         Add a query (called on mkdir).
 
         Args:
-            ontology: The ontology name
-            path: Relative path under ontology (e.g., "leadership" or "leadership/communication")
+            ontology: The ontology name (None for global queries)
+            path: Relative path (e.g., "leadership" or "leadership/communication")
             query_text: Custom query text (defaults to last path component)
 
         Returns:
             The created Query
         """
-        key = f"{ontology}/{path}"
+        key = self._make_key(ontology, path)
 
         # Default query text is the last path component
         if query_text is None:
@@ -115,45 +150,42 @@ class QueryStore:
         self._save()
         return query
 
-    def remove_query(self, ontology: str, path: str):
+    def remove_query(self, ontology: Optional[str], path: str):
         """
         Remove a query and all children (called on rmdir).
 
         Args:
-            ontology: The ontology name
-            path: Relative path under ontology
+            ontology: The ontology name (None for global queries)
+            path: Relative path
         """
-        prefix = f"{ontology}/{path}"
+        key = self._make_key(ontology, path)
         # Remove exact match and all children
         self.queries = {
             k: v for k, v in self.queries.items()
-            if k != prefix and not k.startswith(prefix + "/")
+            if k != key and not k.startswith(key + "/")
         }
         self._save()
 
-    def get_query(self, ontology: str, path: str) -> Optional[Query]:
+    def get_query(self, ontology: Optional[str], path: str) -> Optional[Query]:
         """Get query definition by ontology and path."""
-        return self.queries.get(f"{ontology}/{path}")
+        return self.queries.get(self._make_key(ontology, path))
 
-    def is_query_dir(self, ontology: str, path: str) -> bool:
+    def is_query_dir(self, ontology: Optional[str], path: str) -> bool:
         """Check if path is a user-created query directory."""
-        return f"{ontology}/{path}" in self.queries
+        return self._make_key(ontology, path) in self.queries
 
-    def list_queries_under(self, ontology: str, path: str = "") -> list[str]:
+    def list_queries_under(self, ontology: Optional[str], path: str = "") -> list[str]:
         """
         List immediate child query directories under a path.
 
         Args:
-            ontology: The ontology name
-            path: Parent path (empty string for ontology root)
+            ontology: The ontology name (None for global queries)
+            path: Parent path (empty string for root)
 
         Returns:
             List of child directory names (not full paths)
         """
-        if path:
-            prefix = f"{ontology}/{path}/"
-        else:
-            prefix = f"{ontology}/"
+        prefix = self._make_prefix(ontology, path)
 
         children = []
         for key in self.queries:
@@ -165,12 +197,12 @@ class QueryStore:
 
         return children
 
-    def get_query_chain(self, ontology: str, path: str) -> list[Query]:
+    def get_query_chain(self, ontology: Optional[str], path: str) -> list[Query]:
         """
         Get all queries in the path hierarchy (for nested query resolution).
 
         Args:
-            ontology: The ontology name
+            ontology: The ontology name (None for global queries)
             path: Full path (e.g., "leadership/communication")
 
         Returns:
@@ -187,3 +219,61 @@ class QueryStore:
                 queries.append(query)
 
         return queries
+
+    def update_limit(self, ontology: Optional[str], path: str, limit: int) -> bool:
+        """Update the limit parameter for a query."""
+        query = self.get_query(ontology, path)
+        if query:
+            query.limit = max(1, min(limit, 1000))  # Clamp to reasonable range
+            self._save()
+            return True
+        return False
+
+    def update_threshold(self, ontology: Optional[str], path: str, threshold: float) -> bool:
+        """Update the threshold parameter for a query."""
+        query = self.get_query(ontology, path)
+        if query:
+            query.threshold = max(0.0, min(threshold, 1.0))  # Clamp to 0.0-1.0
+            self._save()
+            return True
+        return False
+
+    def add_exclude(self, ontology: Optional[str], path: str, term: str) -> bool:
+        """Add a term to the exclude list."""
+        query = self.get_query(ontology, path)
+        if query:
+            term = term.strip()
+            if term and term not in query.exclude:
+                query.exclude.append(term)
+                self._save()
+            return True
+        return False
+
+    def add_union(self, ontology: Optional[str], path: str, term: str) -> bool:
+        """Add a term to the union list."""
+        query = self.get_query(ontology, path)
+        if query:
+            term = term.strip()
+            if term and term not in query.union:
+                query.union.append(term)
+                self._save()
+            return True
+        return False
+
+    def clear_exclude(self, ontology: Optional[str], path: str) -> bool:
+        """Clear all exclude terms."""
+        query = self.get_query(ontology, path)
+        if query:
+            query.exclude = []
+            self._save()
+            return True
+        return False
+
+    def clear_union(self, ontology: Optional[str], path: str) -> bool:
+        """Clear all union terms."""
+        query = self.get_query(ontology, path)
+        if query:
+            query.union = []
+            self._save()
+            return True
+        return False
