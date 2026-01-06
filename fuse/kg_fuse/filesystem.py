@@ -574,7 +574,9 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 query_terms,  # Pass list for AND intersection
                 leaf_query.threshold,
                 leaf_query.limit,
-                symlinked_ontologies
+                symlinked_ontologies,
+                exclude_terms=leaf_query.exclude,
+                union_terms=leaf_query.union
             )
 
             for concept in results:
@@ -618,9 +620,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         query_terms: list[str],
         threshold: float,
         limit: int = 50,
-        symlinked_ontologies: list[str] = None
+        symlinked_ontologies: list[str] = None,
+        exclude_terms: list[str] = None,
+        union_terms: list[str] = None
     ) -> list[dict]:
-        """Execute semantic search via API with AND intersection for multiple terms.
+        """Execute semantic search via API with full filtering model.
 
         Args:
             ontology: Single ontology to search (None for global)
@@ -628,17 +632,22 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             threshold: Minimum similarity score
             limit: Maximum results
             symlinked_ontologies: For global queries, list of ontologies to search
+            exclude_terms: Terms to exclude from results (semantic NOT)
+            union_terms: Additional terms to include (semantic OR)
         """
+        exclude_terms = exclude_terms or []
+        union_terms = union_terms or []
+
         try:
             token = await self._get_token()
             client = await self._get_client()
 
-            async def search_single_term(term: str, ontologies: list[str] = None) -> list[dict]:
+            async def search_single_term(term: str, ontologies: list[str] = None, fetch_limit: int = None) -> list[dict]:
                 """Search for a single term, optionally across multiple ontologies."""
                 body = {
                     "query": term,
                     "min_similarity": threshold,
-                    "limit": limit * 2,  # Fetch more for intersection
+                    "limit": fetch_limit or limit * 2,  # Fetch more for intersection/filtering
                 }
 
                 if ontology is not None:
@@ -674,45 +683,59 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     response.raise_for_status()
                     return response.json().get("results", [])
 
-            # Single term: simple search
-            if len(query_terms) == 1:
-                results = await search_single_term(query_terms[0], symlinked_ontologies)
-                # Deduplicate and return
-                seen = set()
-                unique = []
-                for r in sorted(results, key=lambda x: x.get("similarity", 0), reverse=True):
-                    cid = r.get("concept_id")
-                    if cid not in seen:
-                        seen.add(cid)
-                        unique.append(r)
-                return unique[:limit]
-
-            # Multiple terms: AND intersection
-            # Search each term and find concepts that appear in ALL result sets
-            result_sets = []
+            # Step 1: Get base results from query terms (AND intersection)
             concept_data = {}  # concept_id -> full result dict
 
-            for term in query_terms:
-                results = await search_single_term(term, symlinked_ontologies)
-                concept_ids = set()
+            if len(query_terms) == 1:
+                # Single term: simple search
+                results = await search_single_term(query_terms[0], symlinked_ontologies)
                 for r in results:
                     cid = r.get("concept_id")
-                    concept_ids.add(cid)
-                    # Keep the result data, preferring higher similarity scores
                     if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
                         concept_data[cid] = r
-                result_sets.append(concept_ids)
+                base_ids = set(concept_data.keys())
+            else:
+                # Multiple terms: AND intersection
+                result_sets = []
+                for term in query_terms:
+                    results = await search_single_term(term, symlinked_ontologies)
+                    concept_ids = set()
+                    for r in results:
+                        cid = r.get("concept_id")
+                        concept_ids.add(cid)
+                        if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                            concept_data[cid] = r
+                    result_sets.append(concept_ids)
 
-            # Intersect all result sets
-            if not result_sets:
-                return []
+                if not result_sets:
+                    base_ids = set()
+                else:
+                    base_ids = result_sets[0]
+                    for rs in result_sets[1:]:
+                        base_ids = base_ids & rs
 
-            common_ids = result_sets[0]
-            for rs in result_sets[1:]:
-                common_ids = common_ids & rs
+            # Step 2: Add union terms (semantic OR - expand results)
+            if union_terms:
+                for term in union_terms:
+                    results = await search_single_term(term, symlinked_ontologies, fetch_limit=limit)
+                    for r in results:
+                        cid = r.get("concept_id")
+                        base_ids.add(cid)  # Add to result set
+                        if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                            concept_data[cid] = r
 
-            # Return concepts that match ALL terms, sorted by similarity
-            matched = [concept_data[cid] for cid in common_ids if cid in concept_data]
+            # Step 3: Apply exclude terms (semantic NOT - filter results)
+            if exclude_terms:
+                exclude_ids = set()
+                for term in exclude_terms:
+                    results = await search_single_term(term, symlinked_ontologies, fetch_limit=limit * 2)
+                    for r in results:
+                        exclude_ids.add(r.get("concept_id"))
+                # Remove excluded concepts
+                base_ids = base_ids - exclude_ids
+
+            # Step 4: Build final results, sorted by similarity
+            matched = [concept_data[cid] for cid in base_ids if cid in concept_data]
             matched.sort(key=lambda x: x.get("similarity", 0), reverse=True)
             return matched[:limit]
 
