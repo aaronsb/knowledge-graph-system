@@ -65,13 +65,21 @@ interface PositionedTreeNode extends ConceptTreeNode {
 }
 
 /**
+ * Convert polar coordinates to cartesian
+ * Matches the reference radial-tidy-tree.html implementation
+ */
+function radialPoint(x: number, y: number): [number, number] {
+  return [y * Math.cos(x - Math.PI / 2), y * Math.sin(x - Math.PI / 2)];
+}
+
+/**
  * Calculate radial tidy tree positions for all nodes
  * Uses D3's tree layout for proper subtree spacing
  */
 function calculateTreePositions(
   treeRoot: ConceptTreeNode,
   ringRadius: number
-): PositionedTreeNode[] {
+): { nodes: PositionedTreeNode[]; hierarchy: d3.HierarchyPointNode<ConceptTreeNode> } {
   // Build d3 hierarchy from our tree structure
   const root = d3.hierarchy<ConceptTreeNode>(treeRoot);
 
@@ -79,12 +87,12 @@ function calculateTreePositions(
   const maxDepth = Math.max(1, root.height);
   const totalRadius = (maxDepth + 1) * ringRadius;
 
-  // Create radial tree layout
+  // Create radial tree layout - matches reference implementation
   const treeLayout = d3.tree<ConceptTreeNode>()
     .size([2 * Math.PI, totalRadius])
     .separation((a, b) => {
-      // More space between different parents, less within same parent
-      return (a.parent === b.parent ? 1 : 1.5) / Math.max(1, a.depth);
+      // Reference: (a.parent == b.parent ? 1 : 2) / a.depth
+      return (a.parent === b.parent ? 1 : 2) / Math.max(1, a.depth);
     });
 
   // Apply layout
@@ -94,15 +102,14 @@ function calculateTreePositions(
   const positionedNodes: PositionedTreeNode[] = [];
 
   treeNodes.each((node) => {
-    const angle = node.x - Math.PI / 2; // Rotate so 0 is at top
-    const radius = node.y;
+    const [fx, fy] = radialPoint(node.x, node.y);
 
     const positioned: PositionedTreeNode = {
       ...node.data,
-      x: node.x,
-      y: node.y,
-      fx: radius * Math.cos(angle),
-      fy: radius * Math.sin(angle),
+      x: node.x,  // angle in radians
+      y: node.y,  // radius
+      fx,
+      fy,
       depth: node.depth,
       parent: node.parent as unknown as PositionedTreeNode | null,
     };
@@ -110,7 +117,7 @@ function calculateTreePositions(
     positionedNodes.push(positioned);
   });
 
-  return positionedNodes;
+  return { nodes: positionedNodes, hierarchy: treeNodes };
 }
 
 /**
@@ -164,17 +171,18 @@ export const DocumentExplorer: React.FC<
   const { appliedTheme: theme } = useThemeStore();
 
   // Calculate tree positions (or fallback to flat radial)
-  const positionedNodes = useMemo((): PositionedTreeNode[] => {
-    if (!data?.document) return [];
+  const { positionedNodes, treeHierarchy } = useMemo(() => {
+    if (!data?.document) return { positionedNodes: [], treeHierarchy: null };
 
     // Use tree layout if tree structure is available
     if (data.treeRoot) {
-      return calculateTreePositions(data.treeRoot, settings.layout.ringRadius);
+      const result = calculateTreePositions(data.treeRoot, settings.layout.ringRadius);
+      return { positionedNodes: result.nodes, treeHierarchy: result.hierarchy };
     }
 
     // Fallback: flat radial layout (converts ConceptNode to PositionedTreeNode-like)
     const flatPositioned = calculateFlatRadialPositions(data.concepts || [], settings.layout.ringRadius);
-    return flatPositioned.map(c => ({
+    const nodes = flatPositioned.map(c => ({
       ...c,
       x: 0,
       y: 0,
@@ -182,6 +190,7 @@ export const DocumentExplorer: React.FC<
       parent: null,
       children: [],
     })) as PositionedTreeNode[];
+    return { positionedNodes: nodes, treeHierarchy: null };
   }, [data, settings.layout.ringRadius]);
 
   // Separate document node (root) and concept nodes
@@ -220,33 +229,12 @@ export const DocumentExplorer: React.FC<
     return () => observer.disconnect();
   }, []);
 
-  // Build tree links from positioned nodes (for curved path rendering)
+  // Get tree links directly from hierarchy (matches reference implementation)
   const treeLinks = useMemo(() => {
-    if (!data.treeRoot) return [];
-
-    // Create lookup map for quick access
-    const nodeMap = new Map<string, PositionedTreeNode>();
-    positionedNodes.forEach(n => nodeMap.set(n.id, n));
-
-    // Build links by traversing tree structure
-    const links: Array<{ source: PositionedTreeNode; target: PositionedTreeNode }> = [];
-
-    const traverse = (node: ConceptTreeNode) => {
-      const sourcePos = nodeMap.get(node.id);
-      if (!sourcePos) return;
-
-      node.children?.forEach(child => {
-        const targetPos = nodeMap.get(child.id);
-        if (targetPos) {
-          links.push({ source: sourcePos, target: targetPos });
-        }
-        traverse(child);
-      });
-    };
-
-    traverse(data.treeRoot);
-    return links;
-  }, [data.treeRoot, positionedNodes]);
+    if (!treeHierarchy) return [];
+    // Use d3's built-in links() which returns proper source/target hierarchy nodes
+    return treeHierarchy.links();
+  }, [treeHierarchy]);
 
   // Main D3 rendering
   useEffect(() => {
@@ -294,36 +282,28 @@ export const DocumentExplorer: React.FC<
         .attr('opacity', 0.5);
     }
 
-    // Draw tree links as curved paths
+    // Draw tree links as curved paths (matches reference radial-tidy-tree.html)
     const linkGroup = g.append('g').attr('class', 'links');
 
     if (treeLinks.length > 0) {
-      // Use radial link generator for tree edges
+      // Create radial link generator - matches reference exactly
+      const linkGenerator = d3.linkRadial<d3.HierarchyPointLink<ConceptTreeNode>, d3.HierarchyPointNode<ConceptTreeNode>>()
+        .angle(d => d.x)
+        .radius(d => d.y);
+
       linkGroup.selectAll('path')
         .data(treeLinks)
         .join('path')
-        .attr('d', d => {
-          // Calculate radial curve from source to target
-          const sourceAngle = d.source.x - Math.PI / 2;
-          const targetAngle = d.target.x - Math.PI / 2;
-          const sourceRadius = d.source.y;
-          const targetRadius = d.target.y;
-
-          // Use d3.linkRadial for curved tree links
-          const link = d3.linkRadial<unknown, { x: number; y: number }>()
-            .angle(node => node.x - Math.PI / 2)
-            .radius(node => node.y);
-
-          return link({ source: d.source, target: d.target });
-        })
+        .attr('class', 'link')
+        .attr('d', linkGenerator)
         .attr('fill', 'none')
         .attr('stroke', d => {
-          // Fade links based on target hop (spreading activation)
-          const targetIntensity = nodeIntensities.get(d.target.id) || 0.5;
-          const alpha = 0.2 + 0.4 * targetIntensity;
+          // Fade links based on target depth (spreading activation)
+          const targetIntensity = nodeIntensities.get(d.target.data.id) || 0.5;
+          const alpha = 0.3 + 0.4 * targetIntensity;
           return theme === 'dark'
             ? `rgba(107, 114, 128, ${alpha})`
-            : `rgba(156, 163, 175, ${alpha})`;
+            : `rgba(85, 85, 85, ${alpha})`;
         })
         .attr('stroke-width', 1.5);
     } else if (data.links) {
@@ -384,25 +364,46 @@ export const DocumentExplorer: React.FC<
       .attr('stroke', d => d.id === hoveredNode || d.id === selectedNode ? '#fff' : 'none')
       .attr('stroke-width', 2);
 
-    // Concept labels
+    // Concept labels - radial rotation like reference radial-tidy-tree.html
     if (settings.visual.showLabels) {
       conceptNodeElements.append('text')
         .text(d => {
           const label = d.label || 'Unknown';
           return label.length > 20 ? label.slice(0, 20) + '...' : label;
         })
-        .attr('dy', d => {
+        .attr('dy', '0.31em')
+        // Position label outside the node, along radial direction
+        .attr('x', d => {
+          const isLeaf = !d.children || d.children.length === 0;
           const intensity = nodeIntensities.get(d.id) || 0.5;
-          return (8 + 12 * intensity) * settings.visual.nodeSize + 12;
+          const nodeRadius = (8 + 12 * intensity) * settings.visual.nodeSize;
+          // Leaves: label outside; internal: label inside
+          const offset = isLeaf ? nodeRadius + 6 : -(nodeRadius + 6);
+          // Flip offset for left side of tree
+          return d.x < Math.PI === isLeaf ? offset : -offset;
         })
-        .attr('text-anchor', 'middle')
+        .attr('text-anchor', d => {
+          const isLeaf = !d.children || d.children.length === 0;
+          // Right side: start anchor; Left side: end anchor (flipped for readability)
+          return d.x < Math.PI === isLeaf ? 'start' : 'end';
+        })
+        // Rotate text to follow radial direction, flip on left side
+        .attr('transform', d => {
+          const angleDeg = (d.x < Math.PI ? d.x - Math.PI / 2 : d.x + Math.PI / 2) * 180 / Math.PI;
+          return `rotate(${angleDeg})`;
+        })
         .attr('font-family', LABEL_FONTS.family)
-        .attr('font-size', '11px')
+        .attr('font-size', '10px')
         .attr('fill', theme === 'dark' ? '#e5e7eb' : '#374151')
         .attr('opacity', d => {
           const intensity = nodeIntensities.get(d.id) || 0.5;
           return settings.visual.minOpacity + (1 - settings.visual.minOpacity) * intensity;
-        });
+        })
+        // Text shadow for readability (like reference)
+        .style('text-shadow', theme === 'dark'
+          ? '0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000'
+          : '0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff'
+        );
     }
 
     // Draw document node (center) - position from tree layout
