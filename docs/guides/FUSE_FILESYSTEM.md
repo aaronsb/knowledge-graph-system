@@ -262,6 +262,49 @@ echo 100 > /mnt/kg/ontology/my-ont/broad-search/.meta/limit
 ls /mnt/kg/ontology/my-ont/broad-search/
 ```
 
+## Write Support (Ingestion)
+
+The FUSE driver supports document ingestion through standard file operations.
+
+### Create an Ontology
+
+```bash
+# Create a new ontology (directory under /ontology/)
+mkdir /mnt/kg/ontology/my-new-ontology
+```
+
+### Ingest Documents
+
+Copy files directly into an ontology directory to trigger ingestion:
+
+```bash
+# Copy a document to ingest it
+cp research-paper.md /mnt/kg/ontology/my-new-ontology/
+
+# The file "disappears" after ingestion (black hole semantics)
+# It will appear in documents/ once processing completes
+ls /mnt/kg/ontology/my-new-ontology/documents/
+```
+
+**How it works:**
+1. `cp` creates a temporary file and writes content
+2. On file close, content is POSTed to `/ingest` API
+3. Ingestion is auto-approved (no manual approval needed)
+4. File disappears from ontology root
+5. After processing, document appears in `documents/`
+
+### Batch Ingestion
+
+```bash
+# Ingest multiple documents
+for f in papers/*.md; do
+    cp "$f" /mnt/kg/ontology/research/
+done
+
+# Check job status
+kg job list
+```
+
 ## Troubleshooting
 
 ### Mount Fails
@@ -311,7 +354,8 @@ ls ../documents/
 
 ## Architecture Notes
 
-- **Read-only hologram**: Documents and concepts are read-only projections from the graph
+- **Hologram model**: Documents and concepts are read-only projections from the graph
+- **Write as ingestion**: Writing to ontology directories triggers document ingestion
 - **Client-side queries**: Query definitions stored in `~/.local/share/kg-fuse/queries.toml`
 - **Caching**: Results cached for 30 seconds to reduce API calls
 - **OAuth**: Uses standard OAuth 2.0 client credentials flow

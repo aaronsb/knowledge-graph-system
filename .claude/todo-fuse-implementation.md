@@ -40,10 +40,13 @@
 - [ ] Cache invalidation on mkdir/rmdir
 - [ ] FUSE kernel cache options (entry_timeout, attr_timeout)
 
-## Phase 6: Write Support (Future)
-- [ ] Write to ontology triggers ingestion
-- [ ] Buffer to temp file, POST on release
-- [ ] `.processing` ghost files for job tracking
+## Phase 6: Write Support (Complete)
+- [x] `mkdir /ontology/name` creates new ontology
+- [x] `cp file /ontology/name/` triggers ingestion
+  - Buffer to memory, POST on release
+  - Auto-approve for FUSE ingestions
+  - Black hole semantics (file disappears after ingestion)
+- [ ] `.processing` ghost files for job tracking (future)
 
 ## Design Notes
 
