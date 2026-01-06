@@ -852,6 +852,25 @@ async def get_concept_details(
             ORDER BY s.document, s.paragraph
         """)
 
+        # Build instances list first
+        instances_raw = instances_result or []
+
+        # Workaround for Apache AGE OPTIONAL MATCH bug (acts as cross-join, not outer join)
+        # See: https://www.mail-archive.com/dev@age.apache.org/msg05690.html
+        # The OPTIONAL MATCH in the instances query above returns null for d.filename
+        # even when DocumentMeta exists. Work around by fetching filenames separately.
+        # Collect unique ontology names and fetch their DocumentMeta filenames
+        ontology_names = list(set(r['document'] for r in instances_raw if r.get('document')))
+        ontology_filenames = {}
+        if ontology_names:
+            for ontology in ontology_names:
+                doc_result = client._execute_cypher(
+                    f"MATCH (d:DocumentMeta {{ontology: '{ontology}'}}) RETURN d.filename as filename",
+                    fetch_one=True
+                )
+                if doc_result and doc_result.get('filename'):
+                    ontology_filenames[ontology] = doc_result['filename']
+
         instances = [
             ConceptInstance(
                 quote=record['quote'],
@@ -864,13 +883,13 @@ async def get_concept_details(
                 has_image=record.get('content_type') == 'image' and record.get('storage_key') is not None,
                 image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('storage_key') else None,
                 storage_key=record.get('storage_key'),
-                # ADR-051: Source provenance from DocumentMeta
-                filename=record.get('filename'),
+                # ADR-051: Source provenance from DocumentMeta (with AGE OPTIONAL MATCH workaround)
+                filename=record.get('filename') or ontology_filenames.get(record.get('document')),
                 source_type=record.get('source_type'),
                 source_path=record.get('source_path'),
                 source_hostname=record.get('source_hostname')
             )
-            for record in (instances_result or [])
+            for record in instances_raw
         ]
 
         # Get relationships with ADR-051 edge provenance metadata and ADR-065 vocabulary epistemic status

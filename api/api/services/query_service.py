@@ -79,8 +79,8 @@ class QueryService:
                     s.document as document,
                     s.paragraph as paragraph,
                     s.source_id as source_id,
-                    s.file_path as filename,
-                    s.full_text as full_text
+                    s.full_text as full_text,
+                    s.file_path as file_path
                 ORDER BY s.document, s.paragraph
             """,
             "relationships": """
