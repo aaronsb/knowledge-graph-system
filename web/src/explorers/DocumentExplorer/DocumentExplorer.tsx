@@ -1,18 +1,23 @@
 /**
- * Document Explorer - Radial Visualization
+ * Document Explorer - Radial Tidy Tree Visualization
  *
- * Visualizes document→concept relationships as a radial graph with
+ * Visualizes document→concept relationships as a radial tidy tree with
  * spreading activation decay (ADR-085).
+ *
+ * Tree structure represents activation paths:
+ * - Root: Document
+ * - Hop 0: Concepts extracted from this document
+ * - Hop 1+: Related concepts (spreading activation)
  */
 
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import type { ExplorerProps } from '../../types/explorer';
 import type {
   DocumentExplorerSettings,
   DocumentExplorerData,
   ConceptNode,
-  DocumentNode,
+  ConceptTreeNode,
 } from './types';
 import { useThemeStore } from '../../store/themeStore';
 import {
@@ -49,17 +54,79 @@ function calculateIntensity(
   return hopDecay * Math.max(0, groundingStrength);
 }
 
+// Extended tree node type with D3 hierarchy computed properties
+interface PositionedTreeNode extends ConceptTreeNode {
+  x: number;  // angle in radians (from d3.tree)
+  y: number;  // radius (from d3.tree)
+  fx: number; // cartesian x
+  fy: number; // cartesian y
+  depth: number;
+  parent: PositionedTreeNode | null;
+}
+
 /**
- * Calculate fixed radial positions for all nodes
+ * Convert polar coordinates to cartesian
+ * Matches the reference radial-tidy-tree.html implementation
  */
-function calculateRadialPositions(
-  document: DocumentNode,
+function radialPoint(x: number, y: number): [number, number] {
+  return [y * Math.cos(x - Math.PI / 2), y * Math.sin(x - Math.PI / 2)];
+}
+
+/**
+ * Calculate radial tidy tree positions for all nodes
+ * Uses D3's tree layout for proper subtree spacing
+ */
+function calculateTreePositions(
+  treeRoot: ConceptTreeNode,
+  ringRadius: number
+): { nodes: PositionedTreeNode[]; hierarchy: d3.HierarchyPointNode<ConceptTreeNode> } {
+  // Build d3 hierarchy from our tree structure
+  const root = d3.hierarchy<ConceptTreeNode>(treeRoot);
+
+  // Calculate max depth for radius scaling
+  const maxDepth = Math.max(1, root.height);
+  const totalRadius = (maxDepth + 1) * ringRadius;
+
+  // Create radial tree layout - matches reference implementation
+  const treeLayout = d3.tree<ConceptTreeNode>()
+    .size([2 * Math.PI, totalRadius])
+    .separation((a, b) => {
+      // Reference: (a.parent == b.parent ? 1 : 2) / a.depth
+      return (a.parent === b.parent ? 1 : 2) / Math.max(1, a.depth);
+    });
+
+  // Apply layout
+  const treeNodes = treeLayout(root);
+
+  // Convert polar to cartesian and collect positioned nodes
+  const positionedNodes: PositionedTreeNode[] = [];
+
+  treeNodes.each((node) => {
+    const [fx, fy] = radialPoint(node.x, node.y);
+
+    const positioned: PositionedTreeNode = {
+      ...node.data,
+      x: node.x,  // angle in radians
+      y: node.y,  // radius
+      fx,
+      fy,
+      depth: node.depth,
+      parent: node.parent as unknown as PositionedTreeNode | null,
+    };
+
+    positionedNodes.push(positioned);
+  });
+
+  return { nodes: positionedNodes, hierarchy: treeNodes };
+}
+
+/**
+ * Fallback: Calculate uniform radial positions when no tree structure
+ */
+function calculateFlatRadialPositions(
   concepts: ConceptNode[],
   ringRadius: number
-): { document: DocumentNode; concepts: ConceptNode[] } {
-  // Document at center
-  const positionedDoc = { ...document, fx: 0, fy: 0 };
-
+): ConceptNode[] {
   // Group concepts by hop
   const byHop = new Map<number, ConceptNode[]>();
   concepts.forEach(c => {
@@ -68,21 +135,18 @@ function calculateRadialPositions(
     byHop.set(c.hop, list);
   });
 
-  // Position each hop ring (hop 0 = ring 1, hop 1 = ring 2, etc.)
+  // Position each hop ring
   const positionedConcepts: ConceptNode[] = [];
-  const MIN_NODE_SPACING = 40; // Minimum arc length per node in pixels
+  const MIN_NODE_SPACING = 40;
 
   byHop.forEach((nodesInHop, hop) => {
     const count = nodesInHop.length;
-
-    // Calculate minimum radius to fit all nodes with spacing
-    // Circumference = 2 * PI * r, so r = (count * spacing) / (2 * PI)
     const minRadiusForSpacing = (count * MIN_NODE_SPACING) / (2 * Math.PI);
     const baseRadius = (hop + 1) * ringRadius;
     const radius = Math.max(baseRadius, minRadiusForSpacing);
 
     nodesInHop.forEach((node, i) => {
-      const angle = (i / count) * 2 * Math.PI - Math.PI / 2; // Start at top
+      const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
       positionedConcepts.push({
         ...node,
         fx: Math.cos(angle) * radius,
@@ -91,7 +155,7 @@ function calculateRadialPositions(
     });
   });
 
-  return { document: positionedDoc, concepts: positionedConcepts };
+  return positionedConcepts;
 }
 
 export const DocumentExplorer: React.FC<
@@ -106,29 +170,47 @@ export const DocumentExplorer: React.FC<
 
   const { appliedTheme: theme } = useThemeStore();
 
-  // Calculate radial positions
-  const positionedData = useMemo(() => {
-    if (!data?.document || !data?.concepts) {
-      return { document: null, concepts: [] };
+  // Calculate tree positions (or fallback to flat radial)
+  const { positionedNodes, treeHierarchy } = useMemo(() => {
+    if (!data?.document) return { positionedNodes: [], treeHierarchy: null };
+
+    // Use tree layout if tree structure is available
+    if (data.treeRoot) {
+      const result = calculateTreePositions(data.treeRoot, settings.layout.ringRadius);
+      return { positionedNodes: result.nodes, treeHierarchy: result.hierarchy };
     }
-    return calculateRadialPositions(
-      data.document,
-      data.concepts,
-      settings.layout.ringRadius
-    );
+
+    // Fallback: flat radial layout (converts ConceptNode to PositionedTreeNode-like)
+    const flatPositioned = calculateFlatRadialPositions(data.concepts || [], settings.layout.ringRadius);
+    const nodes = flatPositioned.map(c => ({
+      ...c,
+      x: 0,
+      y: 0,
+      depth: c.hop + 1, // depth 0 is document, hop 0 -> depth 1
+      parent: null,
+      children: [],
+    })) as PositionedTreeNode[];
+    return { positionedNodes: nodes, treeHierarchy: null };
   }, [data, settings.layout.ringRadius]);
 
-  // Calculate node intensities
+  // Separate document node (root) and concept nodes
+  const { documentNode, conceptNodes } = useMemo(() => {
+    const docNode = positionedNodes.find(n => n.type === 'document') || null;
+    const concepts = positionedNodes.filter(n => n.type === 'concept');
+    return { documentNode: docNode, conceptNodes: concepts };
+  }, [positionedNodes]);
+
+  // Calculate node intensities based on hop (spreading activation decay)
   const nodeIntensities = useMemo(() => {
     const intensities = new Map<string, number>();
-    positionedData.concepts.forEach(c => {
+    conceptNodes.forEach(c => {
       intensities.set(
         c.id,
         calculateIntensity(c.hop, c.grounding_strength, settings.visual.decayFactor)
       );
     });
     return intensities;
-  }, [positionedData.concepts, settings.visual.decayFactor]);
+  }, [conceptNodes, settings.visual.decayFactor]);
 
   // Track container dimensions
   useEffect(() => {
@@ -147,9 +229,16 @@ export const DocumentExplorer: React.FC<
     return () => observer.disconnect();
   }, []);
 
+  // Get tree links directly from hierarchy (matches reference implementation)
+  const treeLinks = useMemo(() => {
+    if (!treeHierarchy) return [];
+    // Use d3's built-in links() which returns proper source/target hierarchy nodes
+    return treeHierarchy.links();
+  }, [treeHierarchy]);
+
   // Main D3 rendering
   useEffect(() => {
-    if (!svgRef.current || !positionedData.document) return;
+    if (!svgRef.current || !documentNode) return;
 
     const svg = d3.select(svgRef.current);
     const { width, height } = dimensions;
@@ -179,13 +268,13 @@ export const DocumentExplorer: React.FC<
     zoomBehaviorRef.current = zoom;
 
     // Draw hop rings (background guides)
-    const maxHop = Math.max(...positionedData.concepts.map(c => c.hop), 1);
+    const maxDepth = Math.max(...conceptNodes.map(c => c.depth), 1);
     const ringGroup = g.append('g').attr('class', 'rings');
-    for (let hop = 1; hop <= maxHop; hop++) {
+    for (let depth = 1; depth <= maxDepth; depth++) {
       ringGroup.append('circle')
         .attr('cx', 0)
         .attr('cy', 0)
-        .attr('r', hop * settings.layout.ringRadius)
+        .attr('r', depth * settings.layout.ringRadius)
         .attr('fill', 'none')
         .attr('stroke', theme === 'dark' ? '#374151' : '#e5e7eb')
         .attr('stroke-width', 1)
@@ -193,32 +282,42 @@ export const DocumentExplorer: React.FC<
         .attr('opacity', 0.5);
     }
 
-    // Draw links
+    // Draw tree links as curved paths (matches reference radial-tidy-tree.html)
     const linkGroup = g.append('g').attr('class', 'links');
-    if (data.links) {
+
+    if (treeLinks.length > 0) {
+      // Create radial link generator - matches reference exactly
+      const linkGenerator = d3.linkRadial<d3.HierarchyPointLink<ConceptTreeNode>, d3.HierarchyPointNode<ConceptTreeNode>>()
+        .angle(d => d.x)
+        .radius(d => d.y);
+
+      linkGroup.selectAll('path')
+        .data(treeLinks)
+        .join('path')
+        .attr('class', 'link')
+        .attr('d', linkGenerator)
+        .attr('fill', 'none')
+        .attr('stroke', d => {
+          // Fade links based on target depth (spreading activation)
+          const targetIntensity = nodeIntensities.get(d.target.data.id) || 0.5;
+          const alpha = 0.3 + 0.4 * targetIntensity;
+          return theme === 'dark'
+            ? `rgba(107, 114, 128, ${alpha})`
+            : `rgba(85, 85, 85, ${alpha})`;
+        })
+        .attr('stroke-width', 1.5);
+    } else if (data.links) {
+      // Fallback: straight lines for non-tree data
+      const nodeMap = new Map<string, PositionedTreeNode>();
+      positionedNodes.forEach(n => nodeMap.set(n.id, n));
+
       linkGroup.selectAll('line')
         .data(data.links)
         .join('line')
-        .attr('x1', d => {
-          if (d.source === positionedData.document?.id) return 0;
-          const node = positionedData.concepts.find(c => c.id === d.source);
-          return node?.fx || 0;
-        })
-        .attr('y1', d => {
-          if (d.source === positionedData.document?.id) return 0;
-          const node = positionedData.concepts.find(c => c.id === d.source);
-          return node?.fy || 0;
-        })
-        .attr('x2', d => {
-          if (d.target === positionedData.document?.id) return 0;
-          const node = positionedData.concepts.find(c => c.id === d.target);
-          return node?.fx || 0;
-        })
-        .attr('y2', d => {
-          if (d.target === positionedData.document?.id) return 0;
-          const node = positionedData.concepts.find(c => c.id === d.target);
-          return node?.fy || 0;
-        })
+        .attr('x1', d => nodeMap.get(d.source)?.fx || 0)
+        .attr('y1', d => nodeMap.get(d.source)?.fy || 0)
+        .attr('x2', d => nodeMap.get(d.target)?.fx || 0)
+        .attr('y2', d => nodeMap.get(d.target)?.fy || 0)
         .attr('stroke', theme === 'dark' ? '#6b7280' : '#9ca3af')
         .attr('stroke-width', 1)
         .attr('opacity', 0.4);
@@ -226,8 +325,8 @@ export const DocumentExplorer: React.FC<
 
     // Draw concept nodes
     const nodeGroup = g.append('g').attr('class', 'nodes');
-    const conceptNodes = nodeGroup.selectAll<SVGGElement, ConceptNode>('g.concept')
-      .data(positionedData.concepts)
+    const conceptNodeElements = nodeGroup.selectAll<SVGGElement, PositionedTreeNode>('g.concept')
+      .data(conceptNodes)
       .join('g')
       .attr('class', 'concept')
       .attr('transform', d => `translate(${d.fx},${d.fy})`)
@@ -244,11 +343,11 @@ export const DocumentExplorer: React.FC<
         onNodeClick?.(d.id);
       });
 
-    // Concept circles
-    conceptNodes.append('circle')
+    // Concept circles - smaller like reference (r=2.5 base)
+    conceptNodeElements.append('circle')
       .attr('r', d => {
         const intensity = nodeIntensities.get(d.id) || 0.5;
-        const baseSize = 8 + 12 * intensity;
+        const baseSize = 2.5 + 3 * intensity;
         return baseSize * settings.visual.nodeSize;
       })
       .attr('fill', d => {
@@ -262,32 +361,54 @@ export const DocumentExplorer: React.FC<
         const intensity = nodeIntensities.get(d.id) || 0.5;
         return settings.visual.minOpacity + (1 - settings.visual.minOpacity) * intensity;
       })
-      .attr('stroke', d => d.id === hoveredNode || d.id === selectedNode ? '#fff' : 'none')
+      .attr('stroke', 'none')  // Highlight handled by separate effect
       .attr('stroke-width', 2);
 
-    // Concept labels
+    // Concept labels - radial rotation like reference radial-tidy-tree.html
     if (settings.visual.showLabels) {
-      conceptNodes.append('text')
-        .text(d => {
-          const label = d.label || 'Unknown';
-          return label.length > 20 ? label.slice(0, 20) + '...' : label;
+      conceptNodeElements.append('text')
+        .text(d => d.label || 'Unknown')  // Full label, no truncation
+        .attr('dy', '0.31em')
+        // Position label outside the node, along radial direction
+        .attr('x', d => {
+          const isLeaf = !d.children || d.children.length === 0;
+          // Smaller offset to match smaller nodes
+          const offset = isLeaf ? 6 : -6;
+          // Flip offset for left side of tree
+          return d.x < Math.PI === isLeaf ? offset : -offset;
         })
-        .attr('dy', d => {
-          const intensity = nodeIntensities.get(d.id) || 0.5;
-          return (8 + 12 * intensity) * settings.visual.nodeSize + 12;
+        .attr('text-anchor', d => {
+          const isLeaf = !d.children || d.children.length === 0;
+          // Right side: start anchor; Left side: end anchor (flipped for readability)
+          return d.x < Math.PI === isLeaf ? 'start' : 'end';
         })
-        .attr('text-anchor', 'middle')
+        // Rotate text to follow radial direction, flip on left side
+        .attr('transform', d => {
+          const angleDeg = (d.x < Math.PI ? d.x - Math.PI / 2 : d.x + Math.PI / 2) * 180 / Math.PI;
+          return `rotate(${angleDeg})`;
+        })
         .attr('font-family', LABEL_FONTS.family)
-        .attr('font-size', '11px')
+        .attr('font-size', '10px')
         .attr('fill', theme === 'dark' ? '#e5e7eb' : '#374151')
         .attr('opacity', d => {
           const intensity = nodeIntensities.get(d.id) || 0.5;
           return settings.visual.minOpacity + (1 - settings.visual.minOpacity) * intensity;
-        });
+        })
+        // Text shadow for readability (like reference)
+        .style('text-shadow', theme === 'dark'
+          ? '0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000'
+          : '0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff'
+        );
     }
 
-    // Draw document node (center)
-    const docGroup = g.append('g').attr('class', 'document-node');
+    // Draw document node (center) - position from tree layout
+    const docGroup = g.append('g')
+      .attr('class', 'document-node')
+      .attr('transform', `translate(${documentNode.fx},${documentNode.fy})`)
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        onNodeClick?.(documentNode.id);
+      });
 
     // Pulsing ring effect
     docGroup.append('circle')
@@ -315,12 +436,9 @@ export const DocumentExplorer: React.FC<
       .attr('fill', '#fff')
       .attr('opacity', 0.9);
 
-    // Document label
+    // Document label - full name, no truncation
     docGroup.append('text')
-      .text(() => {
-        const label = positionedData.document?.label || 'Document';
-        return label.length > 25 ? label.slice(0, 25) + '...' : label;
-      })
+      .text(() => documentNode.label || 'Document')
       .attr('y', settings.layout.centerSize + 16)
       .attr('text-anchor', 'middle')
       .attr('font-family', LABEL_FONTS.family)
@@ -341,13 +459,23 @@ export const DocumentExplorer: React.FC<
       document.head.appendChild(style);
     }
 
-  }, [positionedData, dimensions, settings, theme, hoveredNode, selectedNode, nodeIntensities, data.links, onNodeClick]);
+  }, [documentNode, conceptNodes, treeLinks, positionedNodes, dimensions, settings, theme, nodeIntensities, data.links, onNodeClick]);
+
+  // Separate effect for hover/selection highlighting (doesn't reset zoom)
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Update node strokes based on hover/selection
+    svg.selectAll<SVGCircleElement, PositionedTreeNode>('g.concept circle')
+      .attr('stroke', d => d.id === hoveredNode || d.id === selectedNode ? '#fff' : 'none');
+  }, [hoveredNode, selectedNode]);
 
   // Get selected node data for info box
   const selectedNodeData = useMemo(() => {
     if (!selectedNode) return null;
-    return positionedData.concepts.find(c => c.id === selectedNode);
-  }, [selectedNode, positionedData.concepts]);
+    return conceptNodes.find(c => c.id === selectedNode);
+  }, [selectedNode, conceptNodes]);
 
   return (
     <div className={`relative w-full h-full overflow-hidden ${className || ''}`}>
@@ -363,8 +491,8 @@ export const DocumentExplorer: React.FC<
       {/* Right panel stack */}
       <PanelStack side="right">
         <StatsPanel
-          nodeCount={positionedData.concepts.length + 1}
-          edgeCount={data.links?.length || 0}
+          nodeCount={conceptNodes.length + 1}
+          edgeCount={treeLinks.length || data.links?.length || 0}
         />
       </PanelStack>
 

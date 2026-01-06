@@ -78,6 +78,26 @@ export interface ConceptNode {
   // Fixed positions for radial layout
   fx?: number;
   fy?: number;
+  // Parent concept ID (for tree structure)
+  parentId?: string;
+}
+
+// Tree node for hierarchical layout
+export interface ConceptTreeNode {
+  id: string;
+  type: 'concept' | 'document';
+  label: string;
+  ontology: string;
+  hop: number;
+  grounding_strength: number;
+  grounding_display?: string;
+  instanceCount?: number;
+  children: ConceptTreeNode[];
+  // Computed by d3.tree layout
+  x?: number;  // angle in radians
+  y?: number;  // radius
+  fx?: number; // cartesian x
+  fy?: number; // cartesian y
 }
 
 export interface ConceptLink {
@@ -91,4 +111,6 @@ export interface DocumentExplorerData {
   document: DocumentNode;
   concepts: ConceptNode[];
   links: ConceptLink[];
+  // Tree structure for radial tidy tree layout
+  treeRoot?: ConceptTreeNode;
 }

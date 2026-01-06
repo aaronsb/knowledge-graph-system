@@ -10,8 +10,9 @@ import { Search, FileText, Loader2, Layers } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
-import type { DocumentExplorerData, DocumentExplorerSettings } from '../../explorers/DocumentExplorer/types';
+import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { DocumentViewer } from '../shared/DocumentViewer';
 
 interface DocumentSearchResult {
   document_id: string;
@@ -37,6 +38,13 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
   // Hop expansion control
   const [maxHops, setMaxHops] = useState<0 | 1 | 2>(0);
+
+  // Document viewer state
+  const [viewingDocument, setViewingDocument] = useState<{
+    document_id: string;
+    filename: string;
+    content_type: string;
+  } | null>(null);
 
   // Explorer settings
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
@@ -82,8 +90,18 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     try {
       const response = await apiClient.getDocumentConcepts(doc.document_id);
 
-      // Base concepts (hop 0)
-      const hop0Concepts = response.concepts.map((c) => ({
+      // Base concepts (hop 0) - deduplicate by name (same concept from multiple chunks)
+      const conceptsByName = new Map<string, typeof response.concepts[0]>();
+      for (const c of response.concepts) {
+        const name = c.name || c.concept_id;
+        const existing = conceptsByName.get(name);
+        if (!existing || c.instance_count > existing.instance_count) {
+          // Keep the one with more instances (more significant)
+          conceptsByName.set(name, c);
+        }
+      }
+
+      const hop0Concepts = Array.from(conceptsByName.values()).map((c) => ({
         id: c.concept_id,
         type: 'concept' as const,
         label: c.name || c.concept_id,
@@ -92,6 +110,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         grounding_strength: 0.5,
         grounding_display: undefined,
         instanceCount: c.instance_count,
+        parentId: doc.document_id, // Parent is the document
       }));
 
       const allConcepts = [...hop0Concepts];
@@ -101,55 +120,97 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         type: 'EXTRACTED_FROM',
       }));
 
+      // Map to track children for each concept (for tree building)
+      const childrenMap = new Map<string, typeof allConcepts>();
+      hop0Concepts.forEach(c => childrenMap.set(c.id, []));
+
       // Fetch related concepts for hop 1-2 if requested
       if (hops > 0 && hop0Concepts.length > 0) {
         const seenIds = new Set(hop0Concepts.map(c => c.id));
         seenIds.add(doc.document_id);
 
-        // Fetch related for each hop-0 concept (limit to first 10 to avoid overload)
-        const conceptsToExpand = hop0Concepts.slice(0, 10);
+        // Fetch related for all hop-0 concepts in parallel for performance
+        const relatedResults = await Promise.all(
+          hop0Concepts.map(async (concept) => {
+            try {
+              const related = await apiClient.getRelatedConcepts({
+                concept_id: concept.id,
+                max_depth: hops,
+              });
+              return { concept, related };
+            } catch (e) {
+              console.warn(`Failed to get related for ${concept.id}:`, e);
+              return { concept, related: { nodes: [], links: [] } };
+            }
+          })
+        );
 
-        for (const concept of conceptsToExpand) {
-          try {
-            const related = await apiClient.getRelatedConcepts({
-              concept_id: concept.id,
-              max_depth: hops,
-            });
+        // Process results
+        for (const { concept, related } of relatedResults) {
+          // Add hop-1 concepts
+          if (related.nodes) {
+            for (const node of related.nodes) {
+              if (!seenIds.has(node.concept_id)) {
+                seenIds.add(node.concept_id);
+                const newConcept = {
+                  id: node.concept_id,
+                  type: 'concept' as const,
+                  label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
+                  ontology: node.ontology || doc.ontology,
+                  hop: 1,
+                  grounding_strength: node.grounding_strength ?? 0.5,
+                  grounding_display: node.grounding_display,
+                  instanceCount: 1,
+                  parentId: concept.id, // Parent is the hop-0 concept
+                };
+                allConcepts.push(newConcept);
 
-            // Add hop-1 concepts
-            if (related.nodes) {
-              for (const node of related.nodes) {
-                if (!seenIds.has(node.concept_id)) {
-                  seenIds.add(node.concept_id);
-                  allConcepts.push({
-                    id: node.concept_id,
-                    type: 'concept' as const,
-                    label: node.label || node.concept_id,
-                    ontology: node.ontology || doc.ontology,
-                    hop: 1,
-                    grounding_strength: node.grounding_strength ?? 0.5,
-                    grounding_display: node.grounding_display,
-                    instanceCount: 1,
-                  });
-                }
+                // Track as child of parent concept
+                const siblings = childrenMap.get(concept.id) || [];
+                siblings.push(newConcept);
+                childrenMap.set(concept.id, siblings);
               }
             }
+          }
 
-            // Add links
-            if (related.links) {
-              for (const link of related.links) {
-                allLinks.push({
-                  source: link.from_id || link.source,
-                  target: link.to_id || link.target,
-                  type: link.relationship_type || link.type || 'RELATED',
-                });
-              }
+          // Add links
+          if (related.links) {
+            for (const link of related.links) {
+              allLinks.push({
+                source: link.from_id || link.source,
+                target: link.to_id || link.target,
+                type: link.relationship_type || link.type || 'RELATED',
+              });
             }
-          } catch (e) {
-            console.warn(`Failed to get related for ${concept.id}:`, e);
           }
         }
       }
+
+      // Build tree structure for radial tidy tree layout
+      const buildTreeNode = (concept: typeof allConcepts[0]): ConceptTreeNode => {
+        const children = childrenMap.get(concept.id) || [];
+        return {
+          id: concept.id,
+          type: 'concept',
+          label: concept.label,
+          ontology: concept.ontology,
+          hop: concept.hop,
+          grounding_strength: concept.grounding_strength,
+          grounding_display: concept.grounding_display,
+          instanceCount: concept.instanceCount,
+          children: children.map(buildTreeNode),
+        };
+      };
+
+      const treeRoot: ConceptTreeNode = {
+        id: doc.document_id,
+        type: 'document',
+        label: doc.filename,
+        ontology: doc.ontology,
+        hop: -1, // Document is "before" hop 0
+        grounding_strength: 1.0,
+        children: hop0Concepts.map(buildTreeNode),
+      };
 
       const data: DocumentExplorerData = {
         document: {
@@ -161,6 +222,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         },
         concepts: allConcepts,
         links: allLinks,
+        treeRoot,
       };
 
       setExplorerData(data);
@@ -299,7 +361,16 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             settings={settings}
             onSettingsChange={setSettings}
             onNodeClick={(nodeId) => {
-              console.log('Clicked node:', nodeId);
+              // Check if clicked on document node
+              if (selectedDocument && nodeId === selectedDocument.document_id) {
+                setViewingDocument({
+                  document_id: selectedDocument.document_id,
+                  filename: selectedDocument.filename,
+                  content_type: selectedDocument.content_type,
+                });
+              } else {
+                console.log('Clicked concept:', nodeId);
+              }
             }}
           />
         ) : (
@@ -314,6 +385,12 @@ export const DocumentExplorerWorkspace: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      <DocumentViewer
+        document={viewingDocument}
+        onClose={() => setViewingDocument(null)}
+      />
     </div>
   );
 };
