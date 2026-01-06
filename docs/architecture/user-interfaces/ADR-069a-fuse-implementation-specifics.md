@@ -1,7 +1,7 @@
 # FUSE Driver Implementation Specifics
 
 **Status:** Implementation Plan
-**Date:** 2025-01-06
+**Date:** 2026-01-06
 **Related:** ADR-069 (Semantic FUSE Filesystem)
 
 ## Overview
@@ -13,6 +13,15 @@ This document captures specific implementation details for the kg-fuse driver, b
 - **"Everything is a file"** - Unix philosophy applied to knowledge graphs
 - **"Everything is a query"** - Directories represent queries, files represent results
 - **"Hologram & Black Hole"** - Read path shows graph projections, write path ingests into graph
+- **"Hierarchy is filtering"** - Each directory level narrows results (AND), symlinks widen sources (OR)
+
+## Root Resources
+
+| Resource | Description | Location |
+|----------|-------------|----------|
+| **Ontologies** | Knowledge domains/collections | `/ontology/{name}/` |
+| **Documents** | Source files in graph | `/ontology/{name}/documents/` |
+| **Concepts** | Query results | `*.concept.md` files |
 
 ## Filesystem Structure
 
@@ -20,30 +29,41 @@ This document captures specific implementation details for the kg-fuse driver, b
 
 ```
 /mnt/kg/
-└── ontology/                              # Fixed root (always present)
-    ├── Strategy-As-Code/                  # Ontology (from graph)
-    │   ├── operating-model.md             # Document (from graph)
-    │   ├── leadership/                    # User-created query directory
-    │   │   ├── concept-a.concept.md       # Query results (tool-friendly)
-    │   │   ├── concept-b.concept.md
-    │   │   └── communication/             # Nested query (refines parent)
-    │   │       └── concept-c.concept.md   # Results for "communication" ∩ "leadership"
-    │   └── strategy-for-executives/       # Another user query
-    │       └── ...
-    └── test-concepts/                     # Another ontology
+├── ontology/                              # System-managed (read-only structure)
+│   ├── Strategy-As-Code/                  # Ontology (from graph)
+│   │   ├── documents/                     # Source documents (read-only)
+│   │   │   └── whitepaper.md              # Document content from graph
+│   │   └── leadership/                    # User query scoped to ontology
+│   │       ├── Concept-A.concept.md       # Results matching "leadership"
+│   │       └── governance/                # Nested: "leadership" AND "governance"
+│   │           └── Concept-B.concept.md
+│   └── test-concepts/
+│       └── documents/
+│           └── notes.md
+│
+├── my-research/                           # User workspace (global query)
+│   ├── Strategy-As-Code -> ../ontology/Strategy-As-Code    # Include
+│   ├── test-concepts -> ../ontology/test-concepts          # Include
+│   ├── _!old-archive -> ../ontology/old-archive            # Exclude
+│   └── agents/                            # Query across linked ontologies
+│       ├── _|governance,compliance/       # OR: governance OR compliance
+│       │   └── Result.concept.md
+│       └── _!deprecated/                  # NOT: exclude deprecated
+│           └── Result.concept.md
+│
+└── quick-search/                          # Simple global query
+    └── Concept.concept.md                 # Results from all ontologies
 ```
 
-### Path Pattern
+### Path Semantics
 
 ```
-/ontology/{ontology}/{query}*/{result}/{query}*/{result}/...
+/ontology/{name}/documents/{file}    → Source document (read-only)
+/ontology/{name}/{query}/            → Query scoped to ontology
+/{user-dir}/                         → Global query (all ontologies)
+/{user-dir}/{ontology-symlink}/      → Explicit source inclusion
+/{user-dir}/{query}/                 → Query across linked ontologies
 ```
-
-The pattern is recursive:
-- Ontology directories come from the graph
-- User can create subdirectories at any level → becomes a query
-- Query is scoped to parent context (ontology or parent query results)
-- Files are always results (read-only hologram)
 
 ### Node Types
 
@@ -51,9 +71,71 @@ The pattern is recursive:
 |--------------|------|--------|----------|
 | `/ontology/` | dir | Fixed | No |
 | `/ontology/{name}/` | dir | Graph (ontologies) | No |
-| `/ontology/{name}/{doc}.md` | file | Graph (documents) | No |
+| `/ontology/{name}/documents/` | dir | Fixed | No |
+| `/ontology/{name}/documents/{doc}.md` | file | Graph (documents) | No |
 | `/ontology/{name}/{query}/` | dir | Client-side | Yes (mkdir/rmdir) |
-| `/ontology/{name}/{query}/{concept}.concept.md` | file | Graph (query results) | No |
+| `/{user-query}/` | dir | Client-side | Yes (mkdir/rmdir) |
+| `/{path}/{concept}.concept.md` | file | Graph (query results) | No |
+| `/{path}/{ontology-symlink}` | symlink | Client-side | Yes (ln -s/rm) |
+
+## Boolean Query Logic
+
+### Filtering Model
+
+| Mechanism | Operator | Effect |
+|-----------|----------|--------|
+| Nesting directories | implicit AND | Narrows results (intersection) |
+| Symlinks to ontologies | implicit OR | Widens sources (union) |
+| `_!` prefix | NOT | Excludes matches |
+| `_\|a,b` prefix | OR | Union of terms at same level |
+
+### Query Operators (`_` prefix)
+
+The underscore prefix reserves a "control plane" namespace for query modifiers:
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `_!` | NOT / exclude | `_!deprecated/` |
+| `_\|` | OR terms | `_\|agents,operators/` |
+| `_>N` | Min similarity | `_>0.8/` |
+| `_#N` | Limit results | `_#10/` |
+| `_@name` | Scope to ontology | `_@Strategy-As-Code/` |
+| `_$name` | Saved query ref | `_$my-saved-query/` |
+
+### Example Query
+
+```
+/research/
+  Strategy-As-Code -> ../ontology/Strategy-As-Code    # Include
+  test-concepts -> ../ontology/test-concepts          # Include
+  _!old-archive -> ../ontology/old-archive            # Exclude
+  agents/                                             # AND "agents"
+    _|governance,compliance/                          # AND (governance OR compliance)
+      _>0.7/                                          # WHERE similarity > 0.7
+        _#20/                                         # LIMIT 20
+          Result.concept.md
+```
+
+Equivalent query:
+```
+(Strategy-As-Code OR test-concepts) NOT old-archive
+AND agents
+AND (governance OR compliance)
+WHERE similarity > 0.7
+LIMIT 20
+```
+
+## Rules
+
+1. **`/ontology/` is reserved** - System-managed, lists ontologies from graph
+2. **`/ontology/{name}/documents/` is read-only** - Contains source files, no user dirs inside
+3. **Root-level dirs are user workspaces** - Search all ontologies by default
+4. **Symlinks scope sources** - Only ontologies can be symlinked, only into user dirs
+5. **Ontologies cannot be symlinked into other ontologies** - Only user dirs can have symlinks
+6. **Depth = specificity** - Each nested level ANDs another constraint
+7. **Operators modify behavior** - Underscore prefix reserved for query control
+8. **Concepts are always leaves** - `.concept.md` files are read-only results
+9. **Simple queries need no operators** - Just `mkdir "my search term"` works
 
 ## Query System
 
@@ -517,23 +599,40 @@ done
 
 ## Implementation Status
 
-### Completed
-- [x] Basic FUSE mount/unmount
+### Phase 1: Core Infrastructure (Complete)
+- [x] Basic FUSE mount/unmount with pyfuse3
 - [x] OAuth authentication from config file
-- [x] List ontologies at root
+- [x] List ontologies at `/ontology/` root
 - [x] `kg oauth create --for fuse` setup command
 
-### In Progress
-- [ ] Query directory system (mkdir/rmdir)
-- [ ] Client-side query persistence (TOML)
-- [ ] Userspace caching layer
+### Phase 2: Query System (Complete)
+- [x] QueryStore class with TOML persistence (`~/.local/share/kg-fuse/queries.toml`)
+- [x] `mkdir` creates query directory (stores in QueryStore)
+- [x] `rmdir` removes query directory (removes from QueryStore)
+- [x] `readdir` on query dir executes semantic search
+- [x] Results appear as `.concept.md` files
 
-### Planned
-- [ ] Document content reading
-- [ ] Concept file rendering
-- [ ] Nested query resolution
-- [ ] Write support (ingestion)
-- [ ] FUSE kernel cache options
+### Phase 3: Content Reading (Complete)
+- [x] Document content reading (`.md` files from graph)
+- [x] Concept file rendering with YAML frontmatter
+- [x] Source document filename in evidence (Apache AGE workaround)
+
+### Phase 4: Advanced Structure (Planned)
+- [ ] Move documents to `/ontology/{name}/documents/`
+- [ ] Root-level user directories (global queries)
+- [ ] Symlink support for multi-ontology queries
+- [ ] Boolean operators (`_!`, `_|`, `_>`, `_#`, `_@`, `_$`)
+- [ ] Nested query resolution (AND intersection)
+
+### Phase 5: Caching (Planned)
+- [ ] Userspace LRU cache with TTL
+- [ ] Cache invalidation on mkdir/rmdir
+- [ ] FUSE kernel cache options (entry_timeout, attr_timeout)
+
+### Phase 6: Write Support (Future)
+- [ ] Write to ontology triggers ingestion
+- [ ] Buffer to temp file, POST on release
+- [ ] `.processing` ghost files for job tracking
 
 ## References
 
