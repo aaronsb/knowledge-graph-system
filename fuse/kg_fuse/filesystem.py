@@ -633,12 +633,12 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             for doc in documents:
                 lines.append(f"  - {doc}")
 
-        # Source documents (actual document names from evidence)
+        # Source documents (actual filenames from evidence, fallback to ontology name)
         instances = data.get("instances", [])
         source_docs = sorted(set(
-            inst.get("document", "")
+            inst.get("filename") or inst.get("document", "")
             for inst in instances
-            if inst.get("document")
+            if inst.get("filename") or inst.get("document")
         ))
         if source_docs:
             lines.append("sources:")
@@ -676,8 +676,9 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             lines.append("## Evidence\n")
             for i, inst in enumerate(instances, 1):
                 text = inst.get("full_text", inst.get("text", ""))
-                para = inst.get("paragraph_number", "?")
-                doc = inst.get("document", "")
+                para = inst.get("paragraph_number", inst.get("paragraph", "?"))
+                # Prefer filename over document (ontology name)
+                doc = inst.get("filename") or inst.get("document", "")
                 if doc:
                     lines.append(f"### Instance {i} from {doc} (para {para})\n")
                 else:

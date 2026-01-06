@@ -20,6 +20,7 @@
 ## Phase 3: Content Reading (Complete)
 - [x] Document content reading (`.md` files from graph)
 - [x] Concept file rendering (`.concept.md` files with evidence/relationships)
+- [x] YAML frontmatter with relationships and source documents
 - [ ] Nested query resolution (intersection of parent queries)
 
 ## Phase 4: Caching
