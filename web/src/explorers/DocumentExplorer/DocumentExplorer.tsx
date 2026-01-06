@@ -343,11 +343,11 @@ export const DocumentExplorer: React.FC<
         onNodeClick?.(d.id);
       });
 
-    // Concept circles
+    // Concept circles - smaller like reference (r=2.5 base)
     conceptNodeElements.append('circle')
       .attr('r', d => {
         const intensity = nodeIntensities.get(d.id) || 0.5;
-        const baseSize = 8 + 12 * intensity;
+        const baseSize = 2.5 + 3 * intensity;
         return baseSize * settings.visual.nodeSize;
       })
       .attr('fill', d => {
@@ -367,18 +367,13 @@ export const DocumentExplorer: React.FC<
     // Concept labels - radial rotation like reference radial-tidy-tree.html
     if (settings.visual.showLabels) {
       conceptNodeElements.append('text')
-        .text(d => {
-          const label = d.label || 'Unknown';
-          return label.length > 20 ? label.slice(0, 20) + '...' : label;
-        })
+        .text(d => d.label || 'Unknown')  // Full label, no truncation
         .attr('dy', '0.31em')
         // Position label outside the node, along radial direction
         .attr('x', d => {
           const isLeaf = !d.children || d.children.length === 0;
-          const intensity = nodeIntensities.get(d.id) || 0.5;
-          const nodeRadius = (8 + 12 * intensity) * settings.visual.nodeSize;
-          // Leaves: label outside; internal: label inside
-          const offset = isLeaf ? nodeRadius + 6 : -(nodeRadius + 6);
+          // Smaller offset to match smaller nodes
+          const offset = isLeaf ? 6 : -6;
           // Flip offset for left side of tree
           return d.x < Math.PI === isLeaf ? offset : -offset;
         })
@@ -437,12 +432,9 @@ export const DocumentExplorer: React.FC<
       .attr('fill', '#fff')
       .attr('opacity', 0.9);
 
-    // Document label
+    // Document label - full name, no truncation
     docGroup.append('text')
-      .text(() => {
-        const label = documentNode.label || 'Document';
-        return label.length > 25 ? label.slice(0, 25) + '...' : label;
-      })
+      .text(() => documentNode.label || 'Document')
       .attr('y', settings.layout.centerSize + 16)
       .attr('text-anchor', 'middle')
       .attr('font-family', LABEL_FONTS.family)
