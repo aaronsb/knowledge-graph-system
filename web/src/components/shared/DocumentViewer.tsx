@@ -3,10 +3,12 @@
  *
  * Displays document content in a modal with download capability.
  * Used by ReportWorkspace, DocumentExplorer, and other views.
+ * Renders markdown files with proper formatting.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { FileText, Download, X, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { apiClient } from '../../api/client';
 
 export interface DocumentViewerProps {
@@ -109,6 +111,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   if (!document) return null;
 
+  // Detect if file is markdown
+  const isMarkdown = document.filename.endsWith('.md') ||
+                     document.content_type === 'text/markdown';
+
+  // Get full text content for markdown rendering
+  const getFullText = (): string => {
+    if (!content) return '';
+    if (content.chunks.length > 0) {
+      return content.chunks.map(c => c.full_text).join('\n\n');
+    }
+    return typeof content.content === 'string' ? content.content : '';
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -159,7 +174,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </div>
           ) : content ? (
             <div className="space-y-4">
-              {content.chunks.length > 0 ? (
+              {isMarkdown ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{getFullText()}</ReactMarkdown>
+                </div>
+              ) : content.chunks.length > 0 ? (
                 content.chunks.map((chunk) => (
                   <div key={chunk.source_id} className="border rounded-lg p-4">
                     <div className="text-xs text-muted-foreground mb-2">
@@ -188,7 +207,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </div>
 
         {/* Footer */}
-        {content && content.chunks.length > 0 && (
+        {content && content.chunks.length > 0 && !isMarkdown && (
           <div className="px-4 py-2 border-t text-xs text-muted-foreground">
             {content.chunks.length} chunk{content.chunks.length !== 1 ? 's' : ''}
           </div>
