@@ -177,6 +177,20 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         is_dir = self._is_dir_type(entry.entry_type)
         size = entry.size
 
+        # Symlinks need special handling
+        if entry.entry_type == "symlink":
+            attr = pyfuse3.EntryAttributes()
+            attr.st_ino = inode
+            attr.st_mode = stat.S_IFLNK | 0o777
+            attr.st_nlink = 1
+            attr.st_size = len(entry.symlink_target.encode("utf-8")) if entry.symlink_target else 0
+            attr.st_atime_ns = int(time.time() * 1e9)
+            attr.st_mtime_ns = int(time.time() * 1e9)
+            attr.st_ctime_ns = int(time.time() * 1e9)
+            attr.st_uid = os.getuid()
+            attr.st_gid = os.getgid()
+            return attr
+
         # Writable directories: root (global queries), ontology (scoped queries), query (nested)
         # Not writable: ontology_root (fixed), documents_dir (read-only), meta_dir (fixed structure)
         writable = entry.entry_type in ("root", "ontology", "query")
@@ -530,7 +544,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return entries
 
     async def _list_query_results(self, parent_inode: int, ontology: Optional[str], query_path: str) -> list[tuple[int, str]]:
-        """Execute semantic search and list results + child queries."""
+        """Execute semantic search and list results + child queries + symlinks."""
         # Check cache
         if parent_inode in self._dir_cache:
             if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
@@ -544,12 +558,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             log.warning(f"No query found for {ontology}/{query_path}")
             return entries
 
-        # Execute semantic search
+        leaf_query = queries[-1]
+
+        # Execute semantic search with AND intersection for nested queries
         try:
-            # For now, use the leaf query text
-            # TODO: Implement proper nested query intersection
-            leaf_query = queries[-1]
-            results = await self._execute_search(ontology, leaf_query.query_text, leaf_query.threshold)
+            # For global queries with symlinks, search those specific ontologies
+            # Otherwise search the scoped ontology (or all if global without symlinks)
+            symlinked_ontologies = leaf_query.symlinks if ontology is None else []
+
+            # Collect all query terms from hierarchy for AND intersection
+            query_terms = [q.query_text for q in queries]
+
+            results = await self._execute_search(
+                ontology,
+                query_terms,  # Pass list for AND intersection
+                leaf_query.threshold,
+                leaf_query.limit,
+                symlinked_ontologies
+            )
 
             for concept in results:
                 concept_id = concept.get("concept_id", "unknown")
@@ -573,35 +599,122 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             inode = self._get_or_create_query_inode(ontology, child_path, parent_inode)
             entries.append((inode, child_name))
 
+        # Add symlinks (for global queries only)
+        if ontology is None:
+            for linked_ont in leaf_query.symlinks:
+                target = f"../ontology/{linked_ont}"
+                inode = self._get_or_create_symlink_inode(linked_ont, linked_ont, query_path, target, parent_inode)
+                entries.append((inode, linked_ont))
+
         # Cache result
         self._dir_cache[parent_inode] = entries
         self._cache_time[parent_inode] = time.time()
 
         return entries
 
-    async def _execute_search(self, ontology: Optional[str], query_text: str, threshold: float) -> list[dict]:
-        """Execute semantic search via API."""
+    async def _execute_search(
+        self,
+        ontology: Optional[str],
+        query_terms: list[str],
+        threshold: float,
+        limit: int = 50,
+        symlinked_ontologies: list[str] = None
+    ) -> list[dict]:
+        """Execute semantic search via API with AND intersection for multiple terms.
+
+        Args:
+            ontology: Single ontology to search (None for global)
+            query_terms: List of search terms (AND intersection if multiple)
+            threshold: Minimum similarity score
+            limit: Maximum results
+            symlinked_ontologies: For global queries, list of ontologies to search
+        """
         try:
             token = await self._get_token()
             client = await self._get_client()
 
-            # Build request body - omit ontology for global queries
-            body = {
-                "query": query_text,
-                "min_similarity": threshold,
-                "limit": 50,
-            }
-            if ontology is not None:
-                body["ontology"] = ontology
+            async def search_single_term(term: str, ontologies: list[str] = None) -> list[dict]:
+                """Search for a single term, optionally across multiple ontologies."""
+                body = {
+                    "query": term,
+                    "min_similarity": threshold,
+                    "limit": limit * 2,  # Fetch more for intersection
+                }
 
-            response = await client.post(
-                "/query/search",
-                json=body,
-                headers={"Authorization": f"Bearer {token}"},
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data.get("results", [])
+                if ontology is not None:
+                    # Scoped query - search single ontology
+                    body["ontology"] = ontology
+                    response = await client.post(
+                        "/query/search",
+                        json=body,
+                        headers={"Authorization": f"Bearer {token}"},
+                    )
+                    response.raise_for_status()
+                    return response.json().get("results", [])
+                elif ontologies:
+                    # Global query with symlinks - search specific ontologies
+                    all_results = []
+                    for ont in ontologies:
+                        body["ontology"] = ont
+                        response = await client.post(
+                            "/query/search",
+                            json=body,
+                            headers={"Authorization": f"Bearer {token}"},
+                        )
+                        response.raise_for_status()
+                        all_results.extend(response.json().get("results", []))
+                    return all_results
+                else:
+                    # Global query without symlinks - search all
+                    response = await client.post(
+                        "/query/search",
+                        json=body,
+                        headers={"Authorization": f"Bearer {token}"},
+                    )
+                    response.raise_for_status()
+                    return response.json().get("results", [])
+
+            # Single term: simple search
+            if len(query_terms) == 1:
+                results = await search_single_term(query_terms[0], symlinked_ontologies)
+                # Deduplicate and return
+                seen = set()
+                unique = []
+                for r in sorted(results, key=lambda x: x.get("similarity", 0), reverse=True):
+                    cid = r.get("concept_id")
+                    if cid not in seen:
+                        seen.add(cid)
+                        unique.append(r)
+                return unique[:limit]
+
+            # Multiple terms: AND intersection
+            # Search each term and find concepts that appear in ALL result sets
+            result_sets = []
+            concept_data = {}  # concept_id -> full result dict
+
+            for term in query_terms:
+                results = await search_single_term(term, symlinked_ontologies)
+                concept_ids = set()
+                for r in results:
+                    cid = r.get("concept_id")
+                    concept_ids.add(cid)
+                    # Keep the result data, preferring higher similarity scores
+                    if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                        concept_data[cid] = r
+                result_sets.append(concept_ids)
+
+            # Intersect all result sets
+            if not result_sets:
+                return []
+
+            common_ids = result_sets[0]
+            for rs in result_sets[1:]:
+                common_ids = common_ids & rs
+
+            # Return concepts that match ALL terms, sorted by similarity
+            matched = [concept_data[cid] for cid in common_ids if cid in concept_data]
+            matched.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+            return matched[:limit]
 
         except Exception as e:
             log.error(f"Search failed: {e}")
@@ -785,6 +898,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             lines.append(f"exclude = [{exclude_str}]")
             union_str = ", ".join(f'"{u}"' for u in query.union)
             lines.append(f"union = [{union_str}]")
+            symlinks_str = ", ".join(f'"{s}"' for s in query.symlinks)
+            lines.append(f"symlinks = [{symlinks_str}]")
             lines.append(f'created_at = "{query.created_at}"')
             if entry.ontology:
                 lines.append(f'ontology = "{entry.ontology}"')
@@ -1065,3 +1180,124 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 entry.query_path == query_path):
                 self._invalidate_cache(inode)
                 break
+
+    async def symlink(self, parent_inode: int, name: bytes, target: bytes, ctx: pyfuse3.RequestContext) -> pyfuse3.EntryAttributes:
+        """Create a symbolic link (for linking ontologies into queries)."""
+        name_str = name.decode("utf-8")
+        target_str = target.decode("utf-8")
+        log.info(f"symlink: parent={parent_inode}, name={name_str}, target={target_str}")
+
+        parent_entry = self._inodes.get(parent_inode)
+        if not parent_entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        # Only allow symlinks in global query directories (not ontology-scoped)
+        if parent_entry.entry_type != "query" or parent_entry.ontology is not None:
+            log.warning(f"symlink rejected: only allowed in global query dirs")
+            raise pyfuse3.FUSEError(errno.EPERM)
+
+        # Validate target points to an ontology
+        # Expected format: ../ontology/OntologyName or ../../ontology/OntologyName
+        ontology_name = self._parse_ontology_symlink_target(target_str)
+        if not ontology_name:
+            log.warning(f"symlink rejected: target must be ../ontology/NAME")
+            raise pyfuse3.FUSEError(errno.EINVAL)
+
+        # Create inode for symlink
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name=name_str,
+            entry_type="symlink",
+            parent=parent_inode,
+            ontology=ontology_name,  # Store the linked ontology name
+            query_path=parent_entry.query_path,
+            symlink_target=target_str,
+        )
+
+        # Track symlink in query store
+        self.query_store.add_symlink(None, parent_entry.query_path, ontology_name)
+
+        # Invalidate parent cache
+        self._invalidate_cache(parent_inode)
+
+        return await self.getattr(inode, ctx)
+
+    def _parse_ontology_symlink_target(self, target: str) -> Optional[str]:
+        """Parse symlink target to extract ontology name.
+
+        Valid formats:
+        - ../ontology/OntologyName
+        - ../../ontology/OntologyName
+        - /mnt/kg/ontology/OntologyName (absolute)
+        """
+        import re
+        # Relative: ../ontology/Name or ../../ontology/Name
+        match = re.match(r'^(?:\.\./)+ontology/(.+)$', target)
+        if match:
+            return match.group(1)
+        # Could add absolute path support if needed
+        return None
+
+    async def readlink(self, inode: int, ctx: pyfuse3.RequestContext) -> bytes:
+        """Read the target of a symbolic link."""
+        entry = self._inodes.get(inode)
+        if not entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        if entry.entry_type != "symlink":
+            raise pyfuse3.FUSEError(errno.EINVAL)
+
+        return entry.symlink_target.encode("utf-8")
+
+    async def unlink(self, parent_inode: int, name: bytes, ctx: pyfuse3.RequestContext) -> None:
+        """Remove a file or symlink."""
+        name_str = name.decode("utf-8")
+        log.info(f"unlink: parent={parent_inode}, name={name_str}")
+
+        # Find the entry
+        target_inode = None
+        target_entry = None
+        for inode, entry in self._inodes.items():
+            if entry.parent == parent_inode and entry.name == name_str:
+                target_inode = inode
+                target_entry = entry
+                break
+
+        if not target_entry:
+            raise pyfuse3.FUSEError(errno.ENOENT)
+
+        # Only allow unlinking symlinks
+        if target_entry.entry_type != "symlink":
+            raise pyfuse3.FUSEError(errno.EPERM)
+
+        # Remove from query store
+        parent_entry = self._inodes.get(parent_inode)
+        if parent_entry and parent_entry.entry_type == "query":
+            self.query_store.remove_symlink(None, parent_entry.query_path, target_entry.ontology)
+
+        # Remove inode
+        del self._inodes[target_inode]
+
+        # Invalidate parent cache
+        self._invalidate_cache(parent_inode)
+
+    def _get_or_create_symlink_inode(self, name: str, ontology: str, query_path: str, target: str, parent: int) -> int:
+        """Get or create inode for a symlink."""
+        for inode, entry in self._inodes.items():
+            if (entry.entry_type == "symlink" and
+                entry.name == name and
+                entry.parent == parent):
+                return inode
+
+        inode = self._next_inode
+        self._next_inode += 1
+        self._inodes[inode] = InodeEntry(
+            name=name,
+            entry_type="symlink",
+            parent=parent,
+            ontology=ontology,
+            query_path=query_path,
+            symlink_target=target,
+        )
+        return inode

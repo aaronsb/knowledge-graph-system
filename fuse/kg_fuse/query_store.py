@@ -27,6 +27,7 @@ class Query:
     limit: int = 50  # Default max results
     exclude: list[str] = None  # Terms to exclude (NOT)
     union: list[str] = None  # Terms to add (OR)
+    symlinks: list[str] = None  # Linked ontology names (OR for sources)
     created_at: str = ""
 
     def __post_init__(self):
@@ -35,6 +36,8 @@ class Query:
             self.exclude = []
         if self.union is None:
             self.union = []
+        if self.symlinks is None:
+            self.symlinks = []
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -117,6 +120,8 @@ class QueryStore:
             lines.append(f"exclude = [{exclude_str}]")
             union_str = ", ".join(f'"{u}"' for u in query.union)
             lines.append(f"union = [{union_str}]")
+            symlinks_str = ", ".join(f'"{s}"' for s in query.symlinks)
+            lines.append(f"symlinks = [{symlinks_str}]")
             lines.append(f'created_at = "{query.created_at}"')
             lines.append("")
 
@@ -277,3 +282,30 @@ class QueryStore:
             self._save()
             return True
         return False
+
+    def add_symlink(self, ontology: Optional[str], path: str, linked_ontology: str) -> bool:
+        """Add a symlinked ontology to the query."""
+        query = self.get_query(ontology, path)
+        if query:
+            if linked_ontology not in query.symlinks:
+                query.symlinks.append(linked_ontology)
+                self._save()
+            return True
+        return False
+
+    def remove_symlink(self, ontology: Optional[str], path: str, linked_ontology: str) -> bool:
+        """Remove a symlinked ontology from the query."""
+        query = self.get_query(ontology, path)
+        if query:
+            if linked_ontology in query.symlinks:
+                query.symlinks.remove(linked_ontology)
+                self._save()
+            return True
+        return False
+
+    def get_symlinks(self, ontology: Optional[str], path: str) -> list[str]:
+        """Get list of symlinked ontologies for a query."""
+        query = self.get_query(ontology, path)
+        if query:
+            return query.symlinks.copy()
+        return []
