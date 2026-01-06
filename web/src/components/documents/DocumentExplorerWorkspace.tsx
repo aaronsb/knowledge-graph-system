@@ -10,7 +10,7 @@ import { Search, FileText, Loader2, Layers } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
-import type { DocumentExplorerData, DocumentExplorerSettings } from '../../explorers/DocumentExplorer/types';
+import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface DocumentSearchResult {
@@ -92,6 +92,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         grounding_strength: 0.5,
         grounding_display: undefined,
         instanceCount: c.instance_count,
+        parentId: doc.document_id, // Parent is the document
       }));
 
       const allConcepts = [...hop0Concepts];
@@ -100,6 +101,10 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         target: c.concept_id,
         type: 'EXTRACTED_FROM',
       }));
+
+      // Map to track children for each concept (for tree building)
+      const childrenMap = new Map<string, typeof allConcepts>();
+      hop0Concepts.forEach(c => childrenMap.set(c.id, []));
 
       // Fetch related concepts for hop 1-2 if requested
       if (hops > 0 && hop0Concepts.length > 0) {
@@ -121,7 +126,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
               for (const node of related.nodes) {
                 if (!seenIds.has(node.concept_id)) {
                   seenIds.add(node.concept_id);
-                  allConcepts.push({
+                  const newConcept = {
                     id: node.concept_id,
                     type: 'concept' as const,
                     label: node.label || node.concept_id,
@@ -130,7 +135,14 @@ export const DocumentExplorerWorkspace: React.FC = () => {
                     grounding_strength: node.grounding_strength ?? 0.5,
                     grounding_display: node.grounding_display,
                     instanceCount: 1,
-                  });
+                    parentId: concept.id, // Parent is the hop-0 concept
+                  };
+                  allConcepts.push(newConcept);
+
+                  // Track as child of parent concept
+                  const siblings = childrenMap.get(concept.id) || [];
+                  siblings.push(newConcept);
+                  childrenMap.set(concept.id, siblings);
                 }
               }
             }
@@ -151,6 +163,32 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         }
       }
 
+      // Build tree structure for radial tidy tree layout
+      const buildTreeNode = (concept: typeof allConcepts[0]): ConceptTreeNode => {
+        const children = childrenMap.get(concept.id) || [];
+        return {
+          id: concept.id,
+          type: 'concept',
+          label: concept.label,
+          ontology: concept.ontology,
+          hop: concept.hop,
+          grounding_strength: concept.grounding_strength,
+          grounding_display: concept.grounding_display,
+          instanceCount: concept.instanceCount,
+          children: children.map(buildTreeNode),
+        };
+      };
+
+      const treeRoot: ConceptTreeNode = {
+        id: doc.document_id,
+        type: 'document',
+        label: doc.filename,
+        ontology: doc.ontology,
+        hop: -1, // Document is "before" hop 0
+        grounding_strength: 1.0,
+        children: hop0Concepts.map(buildTreeNode),
+      };
+
       const data: DocumentExplorerData = {
         document: {
           id: doc.document_id,
@@ -161,6 +199,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         },
         concepts: allConcepts,
         links: allLinks,
+        treeRoot,
       };
 
       setExplorerData(data);
