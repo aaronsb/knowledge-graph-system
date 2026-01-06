@@ -404,7 +404,11 @@ export const DocumentExplorer: React.FC<
     // Draw document node (center) - position from tree layout
     const docGroup = g.append('g')
       .attr('class', 'document-node')
-      .attr('transform', `translate(${documentNode.fx},${documentNode.fy})`);
+      .attr('transform', `translate(${documentNode.fx},${documentNode.fy})`)
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        onNodeClick?.(documentNode.id);
+      });
 
     // Pulsing ring effect
     docGroup.append('circle')

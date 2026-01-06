@@ -12,6 +12,7 @@ import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplo
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
 import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { DocumentViewer } from '../shared/DocumentViewer';
 
 interface DocumentSearchResult {
   document_id: string;
@@ -37,6 +38,13 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
   // Hop expansion control
   const [maxHops, setMaxHops] = useState<0 | 1 | 2>(0);
+
+  // Document viewer state
+  const [viewingDocument, setViewingDocument] = useState<{
+    document_id: string;
+    filename: string;
+    content_type: string;
+  } | null>(null);
 
   // Explorer settings
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
@@ -105,8 +113,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         parentId: doc.document_id, // Parent is the document
       }));
 
-      console.log('[DocumentExplorer] Deduplicated:', response.concepts.length, '→', hop0Concepts.length, 'concepts');
-
       const allConcepts = [...hop0Concepts];
       const allLinks = response.concepts.map(c => ({
         source: doc.document_id,
@@ -119,9 +125,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       hop0Concepts.forEach(c => childrenMap.set(c.id, []));
 
       // Fetch related concepts for hop 1-2 if requested
-      console.log('[DocumentExplorer] hops requested:', hops, 'hop0Concepts:', hop0Concepts.length);
       if (hops > 0 && hop0Concepts.length > 0) {
-        console.log('[DocumentExplorer] Fetching related concepts...');
         const seenIds = new Set(hop0Concepts.map(c => c.id));
         seenIds.add(doc.document_id);
 
@@ -143,11 +147,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
         // Process results
         for (const { concept, related } of relatedResults) {
-          const nodeCount = related.nodes?.length || 0;
-          if (nodeCount > 0) {
-            console.log('[DocumentExplorer] Related for', concept.label, ':', nodeCount, 'nodes');
-          }
-
           // Add hop-1 concepts
           if (related.nodes) {
             for (const node of related.nodes) {
@@ -203,11 +202,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         };
       };
 
-      // Log childrenMap to see what's being tracked
-      console.log('[DocumentExplorer] childrenMap entries with children:',
-        [...childrenMap.entries()].filter(([_, children]) => children.length > 0).length
-      );
-
       const treeRoot: ConceptTreeNode = {
         id: doc.document_id,
         type: 'document',
@@ -217,8 +211,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         grounding_strength: 1.0,
         children: hop0Concepts.map(buildTreeNode),
       };
-
-      console.log('[DocumentExplorer] Tree built - total concepts:', allConcepts.length, 'tree children:', treeRoot.children.length);
 
       const data: DocumentExplorerData = {
         document: {
@@ -369,7 +361,16 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             settings={settings}
             onSettingsChange={setSettings}
             onNodeClick={(nodeId) => {
-              console.log('Clicked node:', nodeId);
+              // Check if clicked on document node
+              if (selectedDocument && nodeId === selectedDocument.document_id) {
+                setViewingDocument({
+                  document_id: selectedDocument.document_id,
+                  filename: selectedDocument.filename,
+                  content_type: selectedDocument.content_type,
+                });
+              } else {
+                console.log('Clicked concept:', nodeId);
+              }
             }}
           />
         ) : (
@@ -384,6 +385,12 @@ export const DocumentExplorerWorkspace: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      <DocumentViewer
+        document={viewingDocument}
+        onClose={() => setViewingDocument(null)}
+      />
     </div>
   );
 };
