@@ -82,8 +82,18 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     try {
       const response = await apiClient.getDocumentConcepts(doc.document_id);
 
-      // Base concepts (hop 0)
-      const hop0Concepts = response.concepts.map((c) => ({
+      // Base concepts (hop 0) - deduplicate by name (same concept from multiple chunks)
+      const conceptsByName = new Map<string, typeof response.concepts[0]>();
+      for (const c of response.concepts) {
+        const name = c.name || c.concept_id;
+        const existing = conceptsByName.get(name);
+        if (!existing || c.instance_count > existing.instance_count) {
+          // Keep the one with more instances (more significant)
+          conceptsByName.set(name, c);
+        }
+      }
+
+      const hop0Concepts = Array.from(conceptsByName.values()).map((c) => ({
         id: c.concept_id,
         type: 'concept' as const,
         label: c.name || c.concept_id,
@@ -94,6 +104,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         instanceCount: c.instance_count,
         parentId: doc.document_id, // Parent is the document
       }));
+
+      console.log('[DocumentExplorer] Deduplicated:', response.concepts.length, '→', hop0Concepts.length, 'concepts');
 
       const allConcepts = [...hop0Concepts];
       const allLinks = response.concepts.map(c => ({
@@ -107,58 +119,70 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       hop0Concepts.forEach(c => childrenMap.set(c.id, []));
 
       // Fetch related concepts for hop 1-2 if requested
+      console.log('[DocumentExplorer] hops requested:', hops, 'hop0Concepts:', hop0Concepts.length);
       if (hops > 0 && hop0Concepts.length > 0) {
+        console.log('[DocumentExplorer] Fetching related concepts...');
         const seenIds = new Set(hop0Concepts.map(c => c.id));
         seenIds.add(doc.document_id);
 
-        // Fetch related for each hop-0 concept (limit to first 10 to avoid overload)
-        const conceptsToExpand = hop0Concepts.slice(0, 10);
+        // Fetch related for all hop-0 concepts in parallel for performance
+        const relatedResults = await Promise.all(
+          hop0Concepts.map(async (concept) => {
+            try {
+              const related = await apiClient.getRelatedConcepts({
+                concept_id: concept.id,
+                max_depth: hops,
+              });
+              return { concept, related };
+            } catch (e) {
+              console.warn(`Failed to get related for ${concept.id}:`, e);
+              return { concept, related: { nodes: [], links: [] } };
+            }
+          })
+        );
 
-        for (const concept of conceptsToExpand) {
-          try {
-            const related = await apiClient.getRelatedConcepts({
-              concept_id: concept.id,
-              max_depth: hops,
-            });
+        // Process results
+        for (const { concept, related } of relatedResults) {
+          const nodeCount = related.nodes?.length || 0;
+          if (nodeCount > 0) {
+            console.log('[DocumentExplorer] Related for', concept.label, ':', nodeCount, 'nodes');
+          }
 
-            // Add hop-1 concepts
-            if (related.nodes) {
-              for (const node of related.nodes) {
-                if (!seenIds.has(node.concept_id)) {
-                  seenIds.add(node.concept_id);
-                  const newConcept = {
-                    id: node.concept_id,
-                    type: 'concept' as const,
-                    label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
-                    ontology: node.ontology || doc.ontology,
-                    hop: 1,
-                    grounding_strength: node.grounding_strength ?? 0.5,
-                    grounding_display: node.grounding_display,
-                    instanceCount: 1,
-                    parentId: concept.id, // Parent is the hop-0 concept
-                  };
-                  allConcepts.push(newConcept);
+          // Add hop-1 concepts
+          if (related.nodes) {
+            for (const node of related.nodes) {
+              if (!seenIds.has(node.concept_id)) {
+                seenIds.add(node.concept_id);
+                const newConcept = {
+                  id: node.concept_id,
+                  type: 'concept' as const,
+                  label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
+                  ontology: node.ontology || doc.ontology,
+                  hop: 1,
+                  grounding_strength: node.grounding_strength ?? 0.5,
+                  grounding_display: node.grounding_display,
+                  instanceCount: 1,
+                  parentId: concept.id, // Parent is the hop-0 concept
+                };
+                allConcepts.push(newConcept);
 
-                  // Track as child of parent concept
-                  const siblings = childrenMap.get(concept.id) || [];
-                  siblings.push(newConcept);
-                  childrenMap.set(concept.id, siblings);
-                }
+                // Track as child of parent concept
+                const siblings = childrenMap.get(concept.id) || [];
+                siblings.push(newConcept);
+                childrenMap.set(concept.id, siblings);
               }
             }
+          }
 
-            // Add links
-            if (related.links) {
-              for (const link of related.links) {
-                allLinks.push({
-                  source: link.from_id || link.source,
-                  target: link.to_id || link.target,
-                  type: link.relationship_type || link.type || 'RELATED',
-                });
-              }
+          // Add links
+          if (related.links) {
+            for (const link of related.links) {
+              allLinks.push({
+                source: link.from_id || link.source,
+                target: link.to_id || link.target,
+                type: link.relationship_type || link.type || 'RELATED',
+              });
             }
-          } catch (e) {
-            console.warn(`Failed to get related for ${concept.id}:`, e);
           }
         }
       }
@@ -179,6 +203,11 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         };
       };
 
+      // Log childrenMap to see what's being tracked
+      console.log('[DocumentExplorer] childrenMap entries with children:',
+        [...childrenMap.entries()].filter(([_, children]) => children.length > 0).length
+      );
+
       const treeRoot: ConceptTreeNode = {
         id: doc.document_id,
         type: 'document',
@@ -188,6 +217,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         grounding_strength: 1.0,
         children: hop0Concepts.map(buildTreeNode),
       };
+
+      console.log('[DocumentExplorer] Tree built - total concepts:', allConcepts.length, 'tree children:', treeRoot.children.length);
 
       const data: DocumentExplorerData = {
         document: {

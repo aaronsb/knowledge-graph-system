@@ -361,7 +361,7 @@ export const DocumentExplorer: React.FC<
         const intensity = nodeIntensities.get(d.id) || 0.5;
         return settings.visual.minOpacity + (1 - settings.visual.minOpacity) * intensity;
       })
-      .attr('stroke', d => d.id === hoveredNode || d.id === selectedNode ? '#fff' : 'none')
+      .attr('stroke', 'none')  // Highlight handled by separate effect
       .attr('stroke-width', 2);
 
     // Concept labels - radial rotation like reference radial-tidy-tree.html
@@ -455,7 +455,17 @@ export const DocumentExplorer: React.FC<
       document.head.appendChild(style);
     }
 
-  }, [documentNode, conceptNodes, treeLinks, positionedNodes, dimensions, settings, theme, hoveredNode, selectedNode, nodeIntensities, data.links, onNodeClick]);
+  }, [documentNode, conceptNodes, treeLinks, positionedNodes, dimensions, settings, theme, nodeIntensities, data.links, onNodeClick]);
+
+  // Separate effect for hover/selection highlighting (doesn't reset zoom)
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Update node strokes based on hover/selection
+    svg.selectAll<SVGCircleElement, PositionedTreeNode>('g.concept circle')
+      .attr('stroke', d => d.id === hoveredNode || d.id === selectedNode ? '#fff' : 'none');
+  }, [hoveredNode, selectedNode]);
 
   // Get selected node data for info box
   const selectedNodeData = useMemo(() => {
