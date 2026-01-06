@@ -626,12 +626,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if diversity is not None:
             lines.append(f"diversity: {diversity:.2f}")
 
-        # Documents
+        # Documents (ontologies this concept appears in)
         documents = data.get("documents", [])
         if documents:
             lines.append("documents:")
             for doc in documents:
                 lines.append(f"  - {doc}")
+
+        # Source documents (actual document names from evidence)
+        instances = data.get("instances", [])
+        source_docs = sorted(set(
+            inst.get("document", "")
+            for inst in instances
+            if inst.get("document")
+        ))
+        if source_docs:
+            lines.append("sources:")
+            for src in source_docs:
+                lines.append(f"  - {src}")
 
         # Relationships in frontmatter
         relationships = data.get("relationships", [])
@@ -665,7 +677,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             for i, inst in enumerate(instances, 1):
                 text = inst.get("full_text", inst.get("text", ""))
                 para = inst.get("paragraph_number", "?")
-                lines.append(f"### Instance {i} (para {para})\n")
+                doc = inst.get("document", "")
+                if doc:
+                    lines.append(f"### Instance {i} from {doc} (para {para})\n")
+                else:
+                    lines.append(f"### Instance {i} (para {para})\n")
                 lines.append(f"> {text[:500]}{'...' if len(text) > 500 else ''}\n")
                 lines.append("")
 
