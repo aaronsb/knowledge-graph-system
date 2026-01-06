@@ -129,7 +129,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
                   const newConcept = {
                     id: node.concept_id,
                     type: 'concept' as const,
-                    label: node.label || node.concept_id,
+                    label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
                     ontology: node.ontology || doc.ontology,
                     hop: 1,
                     grounding_strength: node.grounding_strength ?? 0.5,
