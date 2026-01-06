@@ -10,16 +10,16 @@
 - [x] List ontologies at `/ontology/` root
 - [x] `kg oauth create --for fuse` setup command
 
-## Phase 2: Query System (Current)
-- [ ] QueryStore class with TOML persistence (`~/.local/share/kg-fuse/queries.toml`)
-- [ ] `mkdir` creates query directory (stores in QueryStore)
-- [ ] `rmdir` removes query directory (removes from QueryStore)
-- [ ] `readdir` on query dir executes semantic search
-- [ ] Results appear as `.concept.md` files
+## Phase 2: Query System (Complete)
+- [x] QueryStore class with TOML persistence (`~/.local/share/kg-fuse/queries.toml`)
+- [x] `mkdir` creates query directory (stores in QueryStore)
+- [x] `rmdir` removes query directory (removes from QueryStore)
+- [x] `readdir` on query dir executes semantic search
+- [x] Results appear as `.concept.md` files
 
-## Phase 3: Content Reading
-- [ ] Document content reading (`.md` files from graph)
-- [ ] Concept file rendering (`.concept.md` files with evidence/relationships)
+## Phase 3: Content Reading (Complete)
+- [x] Document content reading (`.md` files from graph)
+- [x] Concept file rendering (`.concept.md` files with evidence/relationships)
 - [ ] Nested query resolution (intersection of parent queries)
 
 ## Phase 4: Caching

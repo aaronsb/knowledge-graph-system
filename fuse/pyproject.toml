@@ -7,6 +7,7 @@ dependencies = [
     "pyfuse3>=3.3.0",
     "httpx>=0.27.0",
     "trio>=0.25.0",
+    "tomli_w>=1.0.0",
 ]
 
 [project.scripts]
