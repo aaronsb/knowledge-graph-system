@@ -23,17 +23,17 @@
 - [x] YAML frontmatter with relationships and source documents
 - [x] Source document filename from DocumentMeta (Apache AGE workaround)
 
-## Phase 4: Advanced Structure (In Progress)
+## Phase 4: Advanced Structure (Complete)
 - [x] Move documents to `/ontology/{name}/documents/`
 - [x] Root-level user directories (global queries)
-- [ ] Symlink support for multi-ontology queries
+- [x] Symlink support for multi-ontology queries
 - [x] `.meta` control plane (virtual directories)
   - [x] `.meta/limit` - result count
   - [x] `.meta/threshold` - similarity filter
-  - [x] `.meta/exclude` - semantic NOT
-  - [x] `.meta/union` - semantic OR
+  - [x] `.meta/exclude` - semantic NOT (storage only, filtering TBD)
+  - [x] `.meta/union` - semantic OR (storage only, filtering TBD)
   - [x] `.meta/query.toml` - debug view (read-only)
-- [ ] Nested query resolution (AND intersection)
+- [x] Nested query resolution (AND intersection)
 
 ## Phase 5: Caching (Planned)
 - [ ] Userspace LRU cache with TTL
