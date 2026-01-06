@@ -24,10 +24,10 @@ This document captures specific implementation details for the kg-fuse driver, b
     ├── Strategy-As-Code/                  # Ontology (from graph)
     │   ├── operating-model.md             # Document (from graph)
     │   ├── leadership/                    # User-created query directory
-    │   │   ├── concept-a.concept          # Query results
-    │   │   ├── concept-b.concept
+    │   │   ├── concept-a.concept.md       # Query results (tool-friendly)
+    │   │   ├── concept-b.concept.md
     │   │   └── communication/             # Nested query (refines parent)
-    │   │       └── concept-c.concept      # Results for "communication" ∩ "leadership"
+    │   │       └── concept-c.concept.md   # Results for "communication" ∩ "leadership"
     │   └── strategy-for-executives/       # Another user query
     │       └── ...
     └── test-concepts/                     # Another ontology
@@ -53,7 +53,7 @@ The pattern is recursive:
 | `/ontology/{name}/` | dir | Graph (ontologies) | No |
 | `/ontology/{name}/{doc}.md` | file | Graph (documents) | No |
 | `/ontology/{name}/{query}/` | dir | Client-side | Yes (mkdir/rmdir) |
-| `/ontology/{name}/{query}/{concept}.concept` | file | Graph (query results) | No |
+| `/ontology/{name}/{query}/{concept}.concept.md` | file | Graph (query results) | No |
 
 ## Query System
 
@@ -63,7 +63,7 @@ The pattern is recursive:
 2. FUSE driver stores query definition client-side
 3. Directory name becomes the search term ("leadership")
 4. When user runs `ls`, driver executes semantic search scoped to ontology
-5. Results appear as `.concept` files
+5. Results appear as `.concept.md` files
 
 ### Nested Query Resolution
 
@@ -330,7 +330,7 @@ def rmdir(self, ontology: str, path: str):
 | `readdir /ontology/X/` | Ontology | List docs + user queries |
 | `readdir /ontology/X/q/` | Query | Execute query, list results |
 | `read /ontology/X/doc.md` | Document | Fetch document content |
-| `read /ontology/X/q/c.concept` | Concept | Fetch concept details |
+| `read /ontology/X/q/c.concept.md` | Concept | Fetch concept details |
 | `getattr` | Any | Return cached attrs or fetch |
 
 ### Write Operations
@@ -390,7 +390,7 @@ Documents from the graph rendered as markdown:
 [Full document text from chunks...]
 ```
 
-### Concept Files (`.concept`)
+### Concept Files (`.concept.md`)
 
 Concept details rendered as markdown:
 
@@ -502,7 +502,7 @@ mkdir "leadership@0.5"    # 50% threshold (broader)
 
 ```bash
 # Create relationship between concepts
-ln -s ../other-concept.concept relationships/SUPPORTS/
+ln -s ../other-concept.concept.md relationships/SUPPORTS/
 ```
 
 ### Watch for Changes

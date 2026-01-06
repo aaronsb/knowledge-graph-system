@@ -15,11 +15,11 @@
 - [ ] `mkdir` creates query directory (stores in QueryStore)
 - [ ] `rmdir` removes query directory (removes from QueryStore)
 - [ ] `readdir` on query dir executes semantic search
-- [ ] Results appear as `.concept` files
+- [ ] Results appear as `.concept.md` files
 
 ## Phase 3: Content Reading
 - [ ] Document content reading (`.md` files from graph)
-- [ ] Concept file rendering (`.concept` files with evidence/relationships)
+- [ ] Concept file rendering (`.concept.md` files with evidence/relationships)
 - [ ] Nested query resolution (intersection of parent queries)
 
 ## Phase 4: Caching
@@ -51,3 +51,4 @@
 - Two-tier caching (kernel + userspace)
 - Directory name = search term (no special syntax)
 - `.query` file can override search term
+- Concept files use `.concept.md` extension (tool-friendly, distinguishes from source docs)
