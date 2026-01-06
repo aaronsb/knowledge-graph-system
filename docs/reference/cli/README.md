@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2025-12-18
+> Last updated: 2026-01-06
 
 ---
 
@@ -284,7 +284,8 @@ kg oauth [options]
 **Subcommands:**
 
 - `clients` (`list`) - List your personal OAuth clients
-- `create-mcp` - Create OAuth client for MCP server and display config
+- `create` - Create OAuth client for external tools (MCP, FUSE, scripts)
+- `create-mcp` - Create OAuth client for MCP server (alias for: create --for mcp)
 - `revoke` - Revoke an OAuth client
 
 ---
@@ -298,9 +299,25 @@ List your personal OAuth clients
 kg clients [options]
 ```
 
+### create
+
+Create OAuth client for external tools (MCP, FUSE, scripts)
+
+**Usage:**
+```bash
+kg create [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--name <name>` | Custom client name | - |
+| `--for <target>` | Target: mcp, fuse, or generic (shows appropriate setup instructions) | - |
+
 ### create-mcp
 
-Create OAuth client for MCP server and display config
+Create OAuth client for MCP server (alias for: create --for mcp)
 
 **Usage:**
 ```bash

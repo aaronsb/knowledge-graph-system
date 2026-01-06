@@ -11,31 +11,45 @@ sudo apt install fuse3  # Debian/Ubuntu
 
 # Install kg-fuse
 cd fuse
-pip install -e .
+pipx install -e .
 ```
+
+## Setup
+
+Create OAuth credentials (one-time):
+
+```bash
+kg oauth create --for fuse
+```
+
+This writes credentials to `~/.config/kg-fuse/config.toml`.
 
 ## Usage
 
-First, create OAuth credentials for the FUSE client:
-
 ```bash
-kg auth client create --name fuse-client --scopes read write
+# Mount (reads credentials from config)
+kg-fuse /mnt/knowledge
+
+# Or run in foreground for debugging
+kg-fuse /mnt/knowledge -f
 ```
 
-Then mount:
-
-```bash
-kg-fuse /mnt/knowledge \
-  --api-url http://localhost:8000 \
-  --client-id fuse-client \
-  --client-secret YOUR_SECRET
-```
-
-Unmount with:
+Unmount:
 
 ```bash
 fusermount -u /mnt/knowledge
 # or just Ctrl+C if running in foreground
+```
+
+### Manual Credentials
+
+You can also pass credentials directly:
+
+```bash
+kg-fuse /mnt/knowledge \
+  --api-url http://localhost:8000 \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_SECRET
 ```
 
 ## Filesystem Structure

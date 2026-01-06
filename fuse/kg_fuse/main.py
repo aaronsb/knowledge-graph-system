@@ -5,7 +5,8 @@ Knowledge Graph FUSE Driver
 Mounts the knowledge graph as a filesystem.
 
 Usage:
-    kg-fuse /mnt/knowledge --api-url http://localhost:8000 --client-id fuse --client-secret secret
+    kg-fuse /mnt/knowledge                          # Uses config file
+    kg-fuse /mnt/knowledge --client-id X --client-secret Y  # Override config
 """
 
 import argparse
@@ -15,6 +16,7 @@ import sys
 import pyfuse3
 import trio
 
+from .config import load_config, get_config_path
 from .filesystem import KnowledgeGraphFS
 
 log = logging.getLogger(__name__)
@@ -22,7 +24,8 @@ log = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Mount knowledge graph as FUSE filesystem"
+        description="Mount knowledge graph as FUSE filesystem",
+        epilog=f"Config file: {get_config_path()}\nCreate with: kg oauth create --for fuse",
     )
     parser.add_argument(
         "mountpoint",
@@ -30,18 +33,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--api-url",
-        default="http://localhost:8000",
-        help="Knowledge graph API URL (default: http://localhost:8000)",
+        help="Knowledge graph API URL (default: from config or http://localhost:8000)",
     )
     parser.add_argument(
         "--client-id",
-        required=True,
-        help="OAuth client ID",
+        help="OAuth client ID (default: from config file)",
     )
     parser.add_argument(
         "--client-secret",
-        required=True,
-        help="OAuth client secret",
+        help="OAuth client secret (default: from config file)",
     )
     parser.add_argument(
         "--debug",
@@ -65,11 +65,43 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    # Load config from file, allow CLI overrides
+    config = load_config()
+
+    client_id = args.client_id
+    client_secret = args.client_secret
+    api_url = args.api_url
+
+    # Use config file values if not provided on CLI
+    if config:
+        if not client_id:
+            client_id = config.client_id
+        if not client_secret:
+            client_secret = config.client_secret
+        if not api_url:
+            api_url = config.api_url
+
+    # Default API URL
+    if not api_url:
+        api_url = "http://localhost:8000"
+
+    # Validate we have credentials
+    if not client_id or not client_secret:
+        config_path = get_config_path()
+        log.error(f"No OAuth credentials found.")
+        log.error(f"")
+        log.error(f"Either:")
+        log.error(f"  1. Create config: kg oauth create --for fuse")
+        log.error(f"  2. Pass on CLI: --client-id ID --client-secret SECRET")
+        log.error(f"")
+        log.error(f"Config file location: {config_path}")
+        sys.exit(1)
+
     # Create filesystem
     fs = KnowledgeGraphFS(
-        api_url=args.api_url,
-        client_id=args.client_id,
-        client_secret=args.client_secret,
+        api_url=api_url,
+        client_id=client_id,
+        client_secret=client_secret,
     )
 
     # FUSE options
@@ -79,7 +111,7 @@ def main() -> None:
         fuse_options.add("debug")
 
     log.info(f"Mounting knowledge graph at {args.mountpoint}")
-    log.info(f"API: {args.api_url}")
+    log.info(f"API: {api_url}")
 
     pyfuse3.init(fs, args.mountpoint, fuse_options)
 
