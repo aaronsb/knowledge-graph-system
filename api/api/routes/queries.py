@@ -865,7 +865,8 @@ async def get_concept_details(
         if ontology_names:
             for ontology in ontology_names:
                 doc_result = client._execute_cypher(
-                    f"MATCH (d:DocumentMeta {{ontology: '{ontology}'}}) RETURN d.filename as filename",
+                    "MATCH (d:DocumentMeta {ontology: $ontology}) RETURN d.filename as filename",
+                    params={"ontology": ontology},
                     fetch_one=True
                 )
                 if doc_result and doc_result.get('filename'):

@@ -29,46 +29,23 @@ Filtering Model:
 import errno
 import logging
 import os
+import re
 import stat
 import time
-from dataclasses import dataclass
 from typing import Optional
 
 import pyfuse3
-import httpx
 
-from .query_store import QueryStore
+from .api_client import KnowledgeGraphClient
 from .config import TagsConfig
+from .formatters import format_concept, format_document, render_meta_file
+from .models import InodeEntry, is_dir_type
+from .query_store import QueryStore
 
 log = logging.getLogger(__name__)
 
-
-@dataclass
-class InodeEntry:
-    """Metadata for an inode.
-
-    Entry types:
-    - root: Mount root (shows ontology/ + global user queries)
-    - ontology_root: The /ontology/ directory (lists ontologies)
-    - ontology: Individual ontology directory
-    - documents_dir: The documents/ directory inside an ontology
-    - document: Source document file
-    - query: User-created query directory
-    - concept: Concept result file
-    - symlink: Symlink to ontology (for multi-ontology queries)
-    - meta_dir: The .meta/ control plane directory inside a query
-    - meta_file: Virtual file inside .meta/ (limit, threshold, exclude, union, query.toml)
-    """
-    name: str
-    entry_type: str
-    parent: Optional[int]
-    ontology: Optional[str] = None  # Which ontology this belongs to
-    query_path: Optional[str] = None  # For query dirs and meta: path under ontology
-    document_id: Optional[str] = None  # For documents
-    concept_id: Optional[str] = None  # For concepts
-    symlink_target: Optional[str] = None  # For symlinks
-    meta_key: Optional[str] = None  # For meta_file: which setting (limit, threshold, etc.)
-    size: int = 0
+# Maximum file size for ingestion (50MB)
+MAX_INGESTION_SIZE = 50 * 1024 * 1024
 
 
 class KnowledgeGraphFS(pyfuse3.Operations):
@@ -79,15 +56,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     def __init__(self, api_url: str, client_id: str, client_secret: str, tags_config: TagsConfig = None):
         super().__init__()
-        self.api_url = api_url.rstrip("/")
-        self.client_id = client_id
-        self.client_secret = client_secret
         self.tags_config = tags_config or TagsConfig()
 
-        # HTTP client (will be initialized async)
-        self._client: Optional[httpx.AsyncClient] = None
-        self._token: Optional[str] = None
-        self._token_expires: float = 0
+        # API client for graph operations
+        self._api = KnowledgeGraphClient(api_url, client_id, client_secret)
 
         # Query store for user-created directories
         self.query_store = QueryStore()
@@ -100,6 +72,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             ),
         }
         self._next_inode = 100  # Dynamic inodes start here
+        self._free_inodes: list[int] = []  # Recycled inodes for reuse
 
         # Cache for directory listings and API responses
         self._dir_cache: dict[int, list[tuple[int, str]]] = {}
@@ -110,45 +83,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._pending_ontologies: set[str] = set()  # Ontologies created but no documents yet
         self._write_buffers: dict[int, bytes] = {}  # inode -> content being written
         self._write_info: dict[int, dict] = {}  # inode -> {ontology, filename}
-
-    async def _get_client(self) -> httpx.AsyncClient:
-        """Get or create HTTP client."""
-        if self._client is None:
-            self._client = httpx.AsyncClient(base_url=self.api_url, timeout=30.0)
-        return self._client
-
-    async def _get_token(self) -> str:
-        """Get OAuth token, refreshing if needed."""
-        if self._token and time.time() < self._token_expires:
-            return self._token
-
-        client = await self._get_client()
-        response = await client.post(
-            "/auth/oauth/token",
-            data={
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        self._token = data["access_token"]
-        self._token_expires = time.time() + data.get("expires_in", 3600) - 60
-        log.debug("Obtained OAuth token")
-        return self._token
-
-    async def _api_get(self, path: str, params: Optional[dict] = None) -> dict:
-        """Make authenticated GET request to API."""
-        token = await self._get_token()
-        client = await self._get_client()
-        response = await client.get(
-            path,
-            params=params,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        response.raise_for_status()
-        return response.json()
 
     def _make_attr(self, inode: int, is_dir: bool = False, size: int = 0, writable: bool = False) -> pyfuse3.EntryAttributes:
         """Create file attributes."""
@@ -173,7 +107,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     def _is_dir_type(self, entry_type: str) -> bool:
         """Check if entry type is a directory."""
-        return entry_type in ("root", "ontology_root", "ontology", "documents_dir", "query", "meta_dir")
+        return is_dir_type(entry_type)
 
     async def getattr(self, inode: int, ctx: pyfuse3.RequestContext) -> pyfuse3.EntryAttributes:
         """Get file/directory attributes."""
@@ -361,8 +295,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             self._pending_ontologies.add(ontology_name)
             log.info(f"Created pending ontology: {ontology_name}")
             # Create inode for the new ontology directory
-            inode = self._next_inode
-            self._next_inode += 1
+            inode = self._allocate_inode()
             self._inodes[inode] = InodeEntry(
                 name=ontology_name,
                 entry_type="ontology",
@@ -435,6 +368,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if entry.entry_type == "query" and entry.ontology == ontology:
                 if entry.query_path == query_path or entry.query_path.startswith(query_path + "/"):
                     del self._inodes[inode]
+                    self._free_inode(inode)
                     self._invalidate_cache(inode)
 
         # Invalidate parent cache
@@ -513,7 +447,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 return self._dir_cache[cache_key]
 
         try:
-            data = await self._api_get("/ontology/")
+            data = await self._api.get("/ontology/")
             ontologies = data.get("ontologies", [])
 
             entries = []
@@ -577,7 +511,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         # Get documents from API
         try:
-            data = await self._api_get("/documents", params={"ontology": ontology, "limit": 100})
+            data = await self._api.get("/documents", params={"ontology": ontology, "limit": 100})
             documents = data.get("documents", [])
 
             for doc in documents:
@@ -693,9 +627,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         union_terms = union_terms or []
 
         try:
-            token = await self._get_token()
-            client = await self._get_client()
-
             async def search_single_term(term: str, ontologies: list[str] = None, fetch_limit: int = None) -> list[dict]:
                 """Search for a single term, optionally across multiple ontologies."""
                 body = {
@@ -707,35 +638,20 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 if ontology is not None:
                     # Scoped query - search single ontology
                     body["ontology"] = ontology
-                    response = await client.post(
-                        "/query/search",
-                        json=body,
-                        headers={"Authorization": f"Bearer {token}"},
-                    )
-                    response.raise_for_status()
-                    return response.json().get("results", [])
+                    result = await self._api.post("/query/search", json=body)
+                    return result.get("results", [])
                 elif ontologies:
                     # Global query with symlinks - search specific ontologies
                     all_results = []
                     for ont in ontologies:
                         body["ontology"] = ont
-                        response = await client.post(
-                            "/query/search",
-                            json=body,
-                            headers={"Authorization": f"Bearer {token}"},
-                        )
-                        response.raise_for_status()
-                        all_results.extend(response.json().get("results", []))
+                        result = await self._api.post("/query/search", json=body)
+                        all_results.extend(result.get("results", []))
                     return all_results
                 else:
                     # Global query without symlinks - search all
-                    response = await client.post(
-                        "/query/search",
-                        json=body,
-                        headers={"Authorization": f"Bearer {token}"},
-                    )
-                    response.raise_for_status()
-                    return response.json().get("results", [])
+                    result = await self._api.post("/query/search", json=body)
+                    return result.get("results", [])
 
             # Step 1: Get base results from query terms (AND intersection)
             concept_data = {}  # concept_id -> full result dict
@@ -814,8 +730,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if entry.entry_type == "ontology" and entry.name == name:
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="ontology",
@@ -830,8 +745,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if entry.entry_type == "documents_dir" and entry.ontology == ontology:
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name="documents",
             entry_type="documents_dir",
@@ -846,8 +760,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if entry.entry_type == "document" and entry.name == name and entry.parent == parent:
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="document",
@@ -868,8 +781,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 entry.query_path == query_path):
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="query",
@@ -885,8 +797,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if entry.entry_type == "concept" and entry.concept_id == concept_id and entry.parent == parent:
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="concept",
@@ -906,8 +817,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 entry.query_path == query_path):
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=".meta",
             entry_type="meta_dir",
@@ -926,8 +836,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 entry.query_path == query_path):
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=meta_key,
             entry_type="meta_file",
@@ -944,47 +853,20 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     def _render_meta_file(self, entry: InodeEntry) -> str:
         """Render content for a .meta virtual file."""
         query = self.query_store.get_query(entry.ontology, entry.query_path)
-        if not query:
-            return "# Query not found\n"
+        return render_meta_file(entry.meta_key, query, entry.ontology)
 
-        if entry.meta_key == "limit":
-            return f"# Maximum number of concepts to return. Default is 50.\n{query.limit}\n"
+    def _allocate_inode(self) -> int:
+        """Allocate a new inode, reusing freed ones when available."""
+        if self._free_inodes:
+            return self._free_inodes.pop()
+        inode = self._next_inode
+        self._next_inode += 1
+        return inode
 
-        elif entry.meta_key == "threshold":
-            return f"# Minimum similarity score (0.0-1.0). Default is 0.7.\n{query.threshold}\n"
-
-        elif entry.meta_key == "exclude":
-            content = "# Terms to exclude from results (one per line, semantic NOT).\n"
-            for term in query.exclude:
-                content += f"{term}\n"
-            return content
-
-        elif entry.meta_key == "union":
-            content = "# Additional terms to include (one per line, semantic OR).\n"
-            for term in query.union:
-                content += f"{term}\n"
-            return content
-
-        elif entry.meta_key == "query.toml":
-            # Read-only debug view of the full query
-            lines = ["# Full query state (read-only)", ""]
-            lines.append(f'query_text = "{query.query_text}"')
-            lines.append(f"threshold = {query.threshold}")
-            lines.append(f"limit = {query.limit}")
-            exclude_str = ", ".join(f'"{e}"' for e in query.exclude)
-            lines.append(f"exclude = [{exclude_str}]")
-            union_str = ", ".join(f'"{u}"' for u in query.union)
-            lines.append(f"union = [{union_str}]")
-            symlinks_str = ", ".join(f'"{s}"' for s in query.symlinks)
-            lines.append(f"symlinks = [{symlinks_str}]")
-            lines.append(f'created_at = "{query.created_at}"')
-            if entry.ontology:
-                lines.append(f'ontology = "{entry.ontology}"')
-            else:
-                lines.append("ontology = null  # Global query")
-            return "\n".join(lines) + "\n"
-
-        return "# Unknown meta file\n"
+    def _free_inode(self, inode: int) -> None:
+        """Return an inode to the free list for reuse."""
+        if inode >= 100:  # Don't recycle reserved inodes
+            self._free_inodes.append(inode)
 
     def _invalidate_cache(self, inode: int):
         """Invalidate cache for an inode."""
@@ -1036,13 +918,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not entry.document_id:
             return "# No document ID\n"
 
-        data = await self._api_get(f"/documents/{entry.document_id}/content")
+        data = await self._api.get(f"/documents/{entry.document_id}/content")
 
         # Fetch concepts if tags are enabled
         concepts = []
         if self.tags_config.enabled:
             try:
-                concepts_data = await self._api_get(f"/documents/{entry.document_id}/concepts")
+                concepts_data = await self._api.get(f"/documents/{entry.document_id}/concepts")
                 concepts = concepts_data.get("concepts", [])
             except Exception as e:
                 log.debug(f"Could not fetch concepts for document: {e}")
@@ -1054,162 +936,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if not entry.concept_id:
             return "# No concept ID\n"
 
-        data = await self._api_get(f"/query/concept/{entry.concept_id}")
+        data = await self._api.get(f"/query/concept/{entry.concept_id}")
         return self._format_concept(data)
 
     def _format_document(self, data: dict, concepts: list = None) -> str:
         """Format document data as markdown with optional YAML frontmatter."""
-        concepts = concepts or []
-        lines = []
-
-        # Add YAML frontmatter if tags are enabled and we have concepts
-        if self.tags_config.enabled and concepts:
-            lines.append("---")
-            lines.append(f"document_id: {data.get('document_id', 'unknown')}")
-            lines.append(f"ontology: {data.get('ontology', 'unknown')}")
-
-            # Add concept tags
-            tags = []
-            for concept in concepts:
-                name = concept.get("name", "")
-                if name:
-                    # Sanitize name for tag
-                    tag = name.replace(" ", "-").replace("/", "-")
-                    tags.append(f"concept/{tag}")
-            if tags:
-                lines.append("tags:")
-                for tag in sorted(set(tags)):
-                    lines.append(f"  - {tag}")
-
-            lines.append("---")
-            lines.append("")
-
-        lines.append(f"# {data.get('filename', 'Document')}\n")
-        lines.append(f"**Ontology:** {data.get('ontology', 'unknown')}\n")
-        lines.append(f"**Document ID:** {data.get('document_id', 'unknown')}\n")
-        lines.append("")
-
-        # Include chunks if present
-        chunks = data.get("chunks", [])
-        if chunks:
-            lines.append("## Content\n")
-            for chunk in chunks:
-                text = chunk.get("full_text", "")
-                lines.append(text)
-                lines.append("")
-
-        return "\n".join(lines)
+        return format_document(data, concepts, self.tags_config)
 
     def _format_concept(self, data: dict) -> str:
         """Format concept data as markdown with YAML frontmatter."""
-        lines = []
-
-        # YAML frontmatter
-        lines.append("---")
-        lines.append(f"id: {data.get('concept_id', 'unknown')}")
-        lines.append(f"label: {data.get('label', 'Unknown')}")
-
-        # Grounding
-        grounding = data.get("grounding_strength")
-        if grounding is not None:
-            lines.append(f"grounding: {grounding:.2f}")
-            if data.get("grounding_display"):
-                lines.append(f"grounding_display: {data.get('grounding_display')}")
-
-        # Diversity
-        diversity = data.get("diversity_score")
-        if diversity is not None:
-            lines.append(f"diversity: {diversity:.2f}")
-
-        # Documents (ontologies this concept appears in)
-        documents = data.get("documents", [])
-        if documents:
-            lines.append("documents:")
-            for doc in documents:
-                lines.append(f"  - {doc}")
-
-        # Source documents (actual filenames from evidence, fallback to ontology name)
-        instances = data.get("instances", [])
-        source_docs = sorted(set(
-            inst.get("filename") or inst.get("document", "")
-            for inst in instances
-            if inst.get("filename") or inst.get("document")
-        ))
-        if source_docs:
-            lines.append("sources:")
-            for src in source_docs:
-                lines.append(f"  - {src}")
-
-        # Relationships in frontmatter
-        relationships = data.get("relationships", [])
-        if relationships:
-            lines.append("relationships:")
-            for rel in relationships:
-                rel_type = rel.get("rel_type", "RELATED_TO")
-                target_label = rel.get("to_label", rel.get("to_id", "unknown"))
-                target_id = rel.get("to_id", "unknown")
-                lines.append(f"  - type: {rel_type}")
-                lines.append(f"    target: {target_label}")
-                lines.append(f"    target_id: {target_id}")
-
-        # Tags for tool integration (Obsidian, Logseq, etc.)
-        if self.tags_config.enabled:
-            tags = []
-            # Add related concepts as tags
-            for rel in relationships:
-                target_label = rel.get("to_label", "")
-                if target_label:
-                    # Sanitize label for tag: replace spaces with hyphens, remove special chars
-                    tag = target_label.replace(" ", "-").replace("/", "-")
-                    tags.append(f"concept/{tag}")
-            # Add ontology/document sources as tags
-            for doc in documents:
-                tag = doc.replace(" ", "-").replace("/", "-")
-                tags.append(f"ontology/{tag}")
-            if tags:
-                lines.append("tags:")
-                for tag in sorted(set(tags)):
-                    lines.append(f"  - {tag}")
-
-        lines.append("---")
-        lines.append("")
-
-        # Header
-        name = data.get("label", "Unknown Concept")
-        lines.append(f"# {name}\n")
-
-        # Description
-        description = data.get("description", "")
-        if description:
-            lines.append(description)
-            lines.append("")
-
-        # Evidence (instances)
-        instances = data.get("instances", [])
-        if instances:
-            lines.append("## Evidence\n")
-            for i, inst in enumerate(instances, 1):
-                text = inst.get("full_text", inst.get("text", ""))
-                para = inst.get("paragraph_number", inst.get("paragraph", "?"))
-                # Prefer filename over document (ontology name)
-                doc = inst.get("filename") or inst.get("document", "")
-                if doc:
-                    lines.append(f"### Instance {i} from {doc} (para {para})\n")
-                else:
-                    lines.append(f"### Instance {i} (para {para})\n")
-                lines.append(f"> {text[:500]}{'...' if len(text) > 500 else ''}\n")
-                lines.append("")
-
-        # Relationships as readable list
-        if relationships:
-            lines.append("## Relationships\n")
-            for rel in relationships:
-                rel_type = rel.get("rel_type", "RELATED_TO")
-                target = rel.get("to_label", rel.get("to_id", "unknown"))
-                lines.append(f"- **{rel_type}** → {target}")
-            lines.append("")
-
-        return "\n".join(lines)
+        return format_concept(data, self.tags_config)
 
     async def write(self, fh: int, off: int, buf: bytes) -> int:
         """Write to a file (meta files and ingestion files are writable)."""
@@ -1221,6 +957,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if entry.entry_type == "ingestion_file":
             if fh not in self._write_buffers:
                 self._write_buffers[fh] = b""
+            # Check size limit before accepting more data
+            new_size = max(off + len(buf), len(self._write_buffers[fh]))
+            if new_size > MAX_INGESTION_SIZE:
+                log.error(f"File exceeds maximum ingestion size ({MAX_INGESTION_SIZE} bytes)")
+                raise pyfuse3.FUSEError(errno.EFBIG)
             # Append to buffer at offset (usually sequential)
             current = self._write_buffers[fh]
             if off == len(current):
@@ -1351,8 +1092,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.EINVAL)
 
         # Create inode for symlink
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name_str,
             entry_type="symlink",
@@ -1376,14 +1116,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         Valid formats:
         - ../ontology/OntologyName
         - ../../ontology/OntologyName
-        - /mnt/kg/ontology/OntologyName (absolute)
+
+        Ontology names must be alphanumeric with dashes/underscores only.
         """
-        import re
         # Relative: ../ontology/Name or ../../ontology/Name
-        match = re.match(r'^(?:\.\./)+ontology/(.+)$', target)
+        # Restrict ontology name to alphanumeric, dash, underscore for security
+        match = re.match(r'^(?:\.\./)+ontology/([A-Za-z0-9_-]+)$', target)
         if match:
             return match.group(1)
-        # Could add absolute path support if needed
         return None
 
     async def readlink(self, inode: int, ctx: pyfuse3.RequestContext) -> bytes:
@@ -1423,8 +1163,9 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if parent_entry and parent_entry.entry_type == "query":
             self.query_store.remove_symlink(None, parent_entry.query_path, target_entry.ontology)
 
-        # Remove inode
+        # Remove inode and recycle it
         del self._inodes[target_inode]
+        self._free_inode(target_inode)
 
         # Invalidate parent cache
         self._invalidate_cache(parent_inode)
@@ -1437,8 +1178,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 entry.parent == parent):
                 return inode
 
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name,
             entry_type="symlink",
@@ -1466,8 +1206,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         ontology = parent_entry.ontology
 
         # Create a temporary inode for the file being written
-        inode = self._next_inode
-        self._next_inode += 1
+        inode = self._allocate_inode()
         self._inodes[inode] = InodeEntry(
             name=name_str,
             entry_type="ingestion_file",  # Special type for files being ingested
@@ -1523,15 +1262,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if fh in self._inodes:
                 parent_inode = self._inodes[fh].parent
                 del self._inodes[fh]
+                self._free_inode(fh)
                 # Invalidate parent cache so new documents show up
                 if parent_inode:
                     self._invalidate_cache(parent_inode)
 
     async def _ingest_document(self, ontology: str, filename: str, content: bytes) -> dict:
         """Submit document to ingestion API."""
-        token = await self._get_token()
-        client = await self._get_client()
-
         # Use multipart form upload
         files = {"file": (filename, content)}
         data = {
@@ -1539,13 +1276,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             "auto_approve": "true",  # Auto-approve for FUSE ingestions
         }
 
-        response = await client.post(
-            "/ingest",
-            files=files,
-            data=data,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        response.raise_for_status()
-        result = response.json()
+        result = await self._api.post("/ingest", data=data, files=files)
         log.info(f"Ingestion response: {result}")
         return result
+
+    async def destroy(self) -> None:
+        """Clean up resources on unmount."""
+        log.info("Destroying filesystem, cleaning up resources")
+        await self._api.close()
+        # Clear caches and buffers
+        self._dir_cache.clear()
+        self._cache_time.clear()
+        self._write_buffers.clear()
+        self._write_info.clear()
