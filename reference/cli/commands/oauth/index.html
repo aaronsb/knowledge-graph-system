@@ -354,6 +354,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Filesystem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
@@ -2143,6 +2171,17 @@
     <span class="md-ellipsis">
       
         clients (list)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
       
     </span>
   </a>
@@ -5927,6 +5966,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/user-interfaces/ADR-069a-fuse-implementation-specifics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver Implementation Specifics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6966,6 +7033,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#create-mcp" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7024,7 +7102,8 @@
 <p><strong>Subcommands:</strong></p>
 <ul>
 <li><code>clients</code> (<code>list</code>) - List your personal OAuth clients</li>
-<li><code>create-mcp</code> - Create OAuth client for MCP server and display config</li>
+<li><code>create</code> - Create OAuth client for external tools (MCP, FUSE, scripts)</li>
+<li><code>create-mcp</code> - Create OAuth client for MCP server (alias for: create --for mcp)</li>
 <li><code>revoke</code> - Revoke an OAuth client</li>
 </ul>
 <hr />
@@ -7033,10 +7112,37 @@
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>clients<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
-<h3 id="create-mcp">create-mcp</h3>
-<p>Create OAuth client for MCP server and display config</p>
+<h3 id="create">create</h3>
+<p>Create OAuth client for external tools (MCP, FUSE, scripts)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>create-mcp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--name &lt;name&gt;</code></td>
+<td>Custom client name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--for &lt;target&gt;</code></td>
+<td>Target: mcp, fuse, or generic (shows appropriate setup instructions)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create-mcp">create-mcp</h3>
+<p>Create OAuth client for MCP server (alias for: create --for mcp)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>create-mcp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -7058,7 +7164,7 @@
 <h3 id="revoke">revoke</h3>
 <p>Revoke an OAuth client</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;client-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;client-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
