@@ -17,8 +17,19 @@ GRAY='\033[0;90m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Get script directory and project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+
+# Source common functions for container name resolution
+if [ -f "$PROJECT_ROOT/operator/lib/common.sh" ]; then
+    source "$PROJECT_ROOT/operator/lib/common.sh"
+    CONTAINER=$(get_container_name postgres)
+else
+    CONTAINER="knowledge-graph-postgres"
+fi
+
 # Configuration
-CONTAINER="knowledge-graph-postgres"
 DB_USER="admin"
 DB_NAME="knowledge_graph"
 MIGRATIONS_DIR="schema/migrations"

@@ -14,25 +14,103 @@ ENV_FILE="$PROJECT_ROOT/.env"
 load_operator_config() {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
-    else
-        # Defaults if no config file
-        DEV_MODE="${DEV_MODE:-false}"
-        GPU_MODE="${GPU_MODE:-cpu}"
     fi
+    # Defaults if no config file or missing values
+    DEV_MODE="${DEV_MODE:-false}"
+    GPU_MODE="${GPU_MODE:-cpu}"
+    CONTAINER_PREFIX="${CONTAINER_PREFIX:-knowledge-graph}"
+    CONTAINER_SUFFIX="${CONTAINER_SUFFIX:-}"
+    COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+    IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
+}
+
+# Get container name for a service
+# Usage: get_container_name <service>
+# Services: postgres, garage, api, web, operator
+#
+# Naming conventions:
+#   Development (knowledge-graph prefix):
+#     infra: knowledge-graph-postgres, knowledge-graph-garage
+#     apps:  kg-api-dev, kg-web-dev (with volume mounts, hot reload)
+#
+#   Production (kg prefix):
+#     all:   kg-postgres, kg-garage, kg-api, kg-web
+get_container_name() {
+    local service=$1
+    load_operator_config
+
+    # Determine if we're in "short prefix" mode (kg-* naming)
+    local short_prefix=false
+    if [[ "$CONTAINER_PREFIX" == "kg" ]]; then
+        short_prefix=true
+    fi
+
+    case "$service" in
+        postgres|garage)
+            # Infrastructure containers
+            echo "${CONTAINER_PREFIX}-${service}"
+            ;;
+        api|web)
+            # App containers - add -dev suffix unless using short prefix
+            if [ "$short_prefix" = true ]; then
+                echo "kg-${service}"
+            else
+                echo "kg-${service}-dev"
+            fi
+            ;;
+        operator)
+            echo "kg-operator"
+            ;;
+        *)
+            echo "unknown-$service"
+            ;;
+    esac
+}
+
+# Get regex pattern for container names (for use with grep)
+get_container_pattern() {
+    local service=$1
+    load_operator_config
+
+    # Use get_container_name for consistency
+    local name=$(get_container_name "$service")
+
+    case "$service" in
+        postgres|garage|api|web|operator)
+            echo "^${name}$"
+            ;;
+        all)
+            echo "^(kg-|${CONTAINER_PREFIX}-)"
+            ;;
+        *)
+            echo "^$service$"
+            ;;
+    esac
 }
 
 # Build docker-compose command with appropriate files based on config
 get_compose_cmd() {
     load_operator_config
 
-    local cmd="docker-compose -f $DOCKER_DIR/docker-compose.yml"
+    # Start with base compose file (default or configured)
+    local base_file="${COMPOSE_FILE:-docker-compose.yml}"
+    local cmd="docker-compose -f $DOCKER_DIR/$base_file"
 
+    # Add GHCR overlay if using registry images
+    if [ "$IMAGE_SOURCE" = "ghcr" ]; then
+        if [ -f "$DOCKER_DIR/docker-compose.ghcr.yml" ]; then
+            cmd="$cmd -f $DOCKER_DIR/docker-compose.ghcr.yml"
+        fi
+    fi
+
+    # Add dev overlay if in development mode
     if [ "$DEV_MODE" = "true" ]; then
         if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
             cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"
         fi
     fi
 
+    # Add GPU-specific overlay
     case "$GPU_MODE" in
         nvidia)
             if [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ]; then

@@ -55,6 +55,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Get container patterns from config
+API_PATTERN=$(get_container_pattern api)
+WEB_PATTERN=$(get_container_pattern web)
+POSTGRES_PATTERN=$(get_container_pattern postgres)
+GARAGE_PATTERN=$(get_container_pattern garage)
+
 cd "$DOCKER_DIR"
 
 # Stop application containers
@@ -63,8 +69,8 @@ if [ "$STOP_APP" = true ]; then
     echo ""
 
     # Check if containers are running
-    API_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-api-dev|knowledge-graph-api)$" || true)
-    WEB_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-viz-dev|kg-web-dev|knowledge-graph-web)$" || true)
+    API_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$API_PATTERN" || true)
+    WEB_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$WEB_PATTERN" || true)
 
     if [ -n "$API_RUNNING" ] || [ -n "$WEB_RUNNING" ]; then
         # Stop web first
@@ -94,8 +100,8 @@ if [ "$STOP_INFRA" = true ]; then
     echo ""
 
     # Check if containers are running
-    POSTGRES_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-postgres-dev|knowledge-graph-postgres)$" || true)
-    GARAGE_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-garage-dev|knowledge-graph-garage)$" || true)
+    POSTGRES_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$POSTGRES_PATTERN" || true)
+    GARAGE_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$GARAGE_PATTERN" || true)
 
     if [ -n "$POSTGRES_RUNNING" ] || [ -n "$GARAGE_RUNNING" ]; then
         # Stop garage

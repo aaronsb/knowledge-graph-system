@@ -16,11 +16,18 @@ YELLOW="\033[0;33m"
 RED="\033[0;31m"
 NC="\033[0m" # No Color
 
-# Project root (two levels up from scripts/database/)
+# Project root (two levels up from operator/database/)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# Source common functions for container name resolution
+if [ -f "$PROJECT_ROOT/operator/lib/common.sh" ]; then
+    source "$PROJECT_ROOT/operator/lib/common.sh"
+    CONTAINER=$(get_container_name postgres)
+else
+    CONTAINER="knowledge-graph-postgres"
+fi
+
 # Configuration
-CONTAINER="knowledge-graph-postgres"
 DB_NAME="${POSTGRES_DB:-knowledge_graph}"
 DB_USER="${POSTGRES_USER:-admin}"
 BACKUP_DIR="$PROJECT_ROOT/backups"

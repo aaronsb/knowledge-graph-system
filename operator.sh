@@ -38,15 +38,23 @@ ENV_FILE="$SCRIPT_DIR/.env"
 # Configuration Management
 # ============================================================================
 
+# Source common functions for container name resolution
+if [ -f "$SCRIPT_DIR/operator/lib/common.sh" ]; then
+    source "$SCRIPT_DIR/operator/lib/common.sh"
+fi
+
 # Load saved configuration
 load_config() {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
-    else
-        # Defaults
-        DEV_MODE=false
-        GPU_MODE=cpu
     fi
+    # Defaults if not set
+    DEV_MODE="${DEV_MODE:-false}"
+    GPU_MODE="${GPU_MODE:-cpu}"
+    CONTAINER_PREFIX="${CONTAINER_PREFIX:-knowledge-graph}"
+    CONTAINER_SUFFIX="${CONTAINER_SUFFIX:-}"
+    COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+    IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
 }
 
 # Save configuration
@@ -56,6 +64,10 @@ save_config() {
 # Edit with: ./operator.sh config --dev true --gpu nvidia
 DEV_MODE=$DEV_MODE
 GPU_MODE=$GPU_MODE
+CONTAINER_PREFIX=${CONTAINER_PREFIX:-knowledge-graph}
+CONTAINER_SUFFIX=${CONTAINER_SUFFIX:-}
+COMPOSE_FILE=${COMPOSE_FILE:-docker-compose.yml}
+IMAGE_SOURCE=${IMAGE_SOURCE:-local}
 INITIALIZED_AT=${INITIALIZED_AT:-$(date -Iseconds)}
 EOF
     echo -e "${GREEN}✓ Configuration saved to .operator.conf${NC}"
@@ -120,7 +132,9 @@ check_env() {
 }
 
 check_operator() {
-    if ! docker ps --format '{{.Names}}' | grep -q "^kg-operator$"; then
+    load_config
+    local operator_container=$(get_container_name operator)
+    if ! docker ps --format '{{.Names}}' | grep -q "^${operator_container}$"; then
         echo -e "${YELLOW}Operator container not running.${NC}"
         echo ""
         echo "Start infrastructure first:"
@@ -176,23 +190,14 @@ cmd_restart() {
         exit 1
     fi
 
+    load_config
+
     echo -e "${BLUE}→ Restarting $service...${NC}"
 
+    local container=""
     case "$service" in
-        api)
-            docker restart kg-api-dev 2>/dev/null || docker restart knowledge-graph-api
-            ;;
-        web)
-            docker restart kg-web-dev 2>/dev/null || docker restart knowledge-graph-web
-            ;;
-        postgres)
-            docker restart knowledge-graph-postgres
-            ;;
-        garage)
-            docker restart knowledge-graph-garage
-            ;;
-        operator)
-            docker restart kg-operator
+        api|web|postgres|garage|operator)
+            container=$(get_container_name "$service")
             ;;
         *)
             echo -e "${RED}Unknown service: $service${NC}"
@@ -200,7 +205,12 @@ cmd_restart() {
             ;;
     esac
 
-    echo -e "${GREEN}✓ $service restarted${NC}"
+    if docker restart "$container" 2>/dev/null; then
+        echo -e "${GREEN}✓ $service restarted (container: $container)${NC}"
+    else
+        echo -e "${RED}✗ Failed to restart $container${NC}"
+        exit 1
+    fi
 }
 
 cmd_rebuild() {
@@ -317,22 +327,12 @@ cmd_logs() {
     # Default to api if no service specified
     service="${service:-api}"
 
+    load_config
+
     local container=""
     case "$service" in
-        api)
-            container="kg-api-dev"
-            ;;
-        web)
-            container="kg-web-dev"
-            ;;
-        postgres)
-            container="knowledge-graph-postgres"
-            ;;
-        garage)
-            container="knowledge-graph-garage"
-            ;;
-        operator)
-            container="kg-operator"
+        api|web|postgres|garage|operator)
+            container=$(get_container_name "$service")
             ;;
         *)
             echo -e "${RED}Unknown service: $service${NC}"
@@ -355,6 +355,7 @@ cmd_query() {
 
     # Load credentials from .env
     source "$ENV_FILE"
+    load_config
 
     local query="$1"
 
@@ -374,8 +375,11 @@ cmd_query() {
         exit 1
     fi
 
+    # Get postgres container name
+    local postgres_container=$(get_container_name postgres)
+
     # Run query against postgres container
-    docker exec knowledge-graph-postgres \
+    docker exec "$postgres_container" \
         psql -U "${POSTGRES_USER:-admin}" \
              -d "${POSTGRES_DB:-knowledge_graph}" \
              -c "$query"
@@ -392,6 +396,8 @@ show_help_overview() {
     echo ""
     echo -e "${BOLD}Lifecycle Commands:${NC}"
     echo "  init               Guided first-time setup"
+    echo "  init --headless    Non-interactive setup (for automation)"
+    echo "  upgrade            Pull images, migrate, restart (no data loss)"
     echo "  start              Start the platform"
     echo "  stop               Stop the platform"
     echo "  teardown           Remove containers (keeps data by default)"
@@ -414,7 +420,9 @@ show_help_overview() {
     echo "  help config        Configuration options"
     echo ""
     echo -e "${BOLD}Quick Examples:${NC}"
-    echo "  $0 init                    # First-time setup"
+    echo "  $0 init                    # First-time setup (interactive)"
+    echo "  $0 init --headless --skip-ai-config  # Automated setup"
+    echo "  $0 upgrade --dry-run       # Preview upgrade"
     echo "  $0 start                   # Start with saved config"
     echo "  $0 stop --keep-infra       # Stop app, keep database"
     echo "  $0 shell                   # Enter operator shell for configuration"
@@ -433,6 +441,34 @@ show_help_lifecycle() {
     echo "  - Creates .operator.conf with your settings"
     echo "  - Starts all services"
     echo "  - Prompts for admin password and API keys"
+    echo ""
+    echo -e "${BLUE}init --headless [OPTIONS]${NC}"
+    echo "  Non-interactive setup for automation."
+    echo "  Options:"
+    echo "    --password-mode random|simple   Password generation (default: random)"
+    echo "    --container-mode regular|dev    Container naming (default: regular)"
+    echo "    --container-prefix STR          Name prefix (default: knowledge-graph)"
+    echo "    --gpu auto|nvidia|amd|mac|cpu   GPU mode (default: auto)"
+    echo "    --image-source local|ghcr       Image source (default: local)"
+    echo "    --ai-provider openai|anthropic  AI extraction provider"
+    echo "    --ai-model MODEL                Model name (e.g., gpt-4o)"
+    echo "    --ai-key KEY                    API key for provider"
+    echo "    --skip-ai-config                Skip AI configuration"
+    echo "    --skip-cli                      Skip CLI installation"
+    echo ""
+    echo "  Example:"
+    echo "    $0 init --headless --container-prefix=kg --image-source=ghcr --skip-ai-config"
+    echo ""
+    echo -e "${BLUE}upgrade [OPTIONS]${NC}"
+    echo "  Graceful upgrade without data loss."
+    echo "  - Pulls new images (GHCR) or rebuilds (local)"
+    echo "  - Creates pre-upgrade backup (optional)"
+    echo "  - Runs database migrations"
+    echo "  - Restarts with new images"
+    echo ""
+    echo "  Options:"
+    echo "    --dry-run       Show what would change"
+    echo "    --no-backup     Skip pre-upgrade backup"
     echo ""
     echo -e "${BLUE}start${NC}"
     echo "  Start the platform using saved configuration."
@@ -586,7 +622,16 @@ cmd_help() {
 case "${1:-help}" in
     init)
         shift
-        "$SCRIPT_DIR/operator/lib/guided-init.sh" "$@"
+        # Check if --headless flag is present
+        if [[ " $* " =~ " --headless " ]] || [[ "$1" == "--headless" ]]; then
+            "$SCRIPT_DIR/operator/lib/headless-init.sh" "$@"
+        else
+            "$SCRIPT_DIR/operator/lib/guided-init.sh" "$@"
+        fi
+        ;;
+    upgrade)
+        shift
+        "$SCRIPT_DIR/operator/lib/upgrade.sh" "$@"
         ;;
     start)
         shift
@@ -617,7 +662,8 @@ case "${1:-help}" in
         ;;
     shell)
         check_operator
-        docker exec -it kg-operator /bin/bash
+        load_config
+        docker exec -it $(get_container_name operator) /bin/bash
         ;;
     query|pg)
         shift

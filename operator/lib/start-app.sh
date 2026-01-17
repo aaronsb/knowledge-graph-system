@@ -75,11 +75,16 @@ else
     echo ""
 fi
 
+# Get container patterns from config
+POSTGRES_PATTERN=$(get_container_pattern postgres)
+GARAGE_PATTERN=$(get_container_pattern garage)
+API_PATTERN=$(get_container_pattern api)
+
 # Check if infrastructure is running
 echo -e "${BLUE}→ Checking infrastructure...${NC}"
 
-POSTGRES_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-postgres-dev|knowledge-graph-postgres)$" || true)
-GARAGE_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "^(kg-garage-dev|knowledge-graph-garage)$" || true)
+POSTGRES_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$POSTGRES_PATTERN" || true)
+GARAGE_RUNNING=$(docker ps --format '{{.Names}}' | grep -E "$GARAGE_PATTERN" || true)
 
 if [ -z "$POSTGRES_RUNNING" ]; then
     echo -e "${RED}✗ PostgreSQL not running${NC}"
@@ -163,18 +168,21 @@ export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 run_compose up -d --build api
 
+# Get API container name
+API_CONTAINER=$(get_container_name api)
+
 echo -e "${BLUE}→ Waiting for API to be healthy...${NC}"
 
 # Wait for API (up to 60 seconds)
 for i in {1..30}; do
-    if docker ps --format '{{.Names}} {{.Status}}' | grep -q "kg-api.*healthy\|knowledge-graph-api.*healthy"; then
+    if docker ps --format '{{.Names}} {{.Status}}' | grep -qE "$API_PATTERN.*healthy"; then
         echo -e "${GREEN}✓ API server is ready${NC}"
         break
     fi
     if [ $i -eq 30 ]; then
         echo -e "${YELLOW}⚠  API health check timeout (may still be starting)${NC}"
         echo ""
-        echo "Check logs with: docker logs kg-api-dev"
+        echo "Check logs with: docker logs $API_CONTAINER"
         break
     fi
     sleep 2

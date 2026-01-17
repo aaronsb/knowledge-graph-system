@@ -1,0 +1,149 @@
+# ============================================================================
+# Knowledge Graph System - Cube Production Deployment
+# ============================================================================
+# Pre-built GHCR images with macvlan networking for real LAN IP
+# DNS: kg.broccoli.house -> 192.168.1.82
+#
+# Usage:
+#   cd ~/Projects/ai/knowledge-graph-system
+#   docker compose -f docker/docker-compose.cube.yml up -d
+#
+# First-time setup:
+#   1. Copy .env.example to .env and configure secrets
+#   2. Run: ./operator.sh init (generates secrets)
+# ============================================================================
+
+services:
+  postgres:
+    image: apache/age
+    container_name: kg-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /srv/docker/data/knowledge-graph/postgres:/var/lib/postgresql/data
+      - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kg-internal
+    restart: unless-stopped
+
+  garage:
+    image: dxflrs/garage:v1.0.0
+    container_name: kg-garage
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+    command: ["/garage", "-c", "/etc/garage.toml", "server"]
+    volumes:
+      - /srv/docker/data/knowledge-graph/garage/data:/data
+      - /srv/docker/data/knowledge-graph/garage/meta:/meta
+      - ../config/garage.toml:/etc/garage.toml:ro
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kg-internal
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
+    container_name: kg-api
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+      INTERNAL_KEY_SERVICE_SECRET: ${INTERNAL_KEY_SERVICE_SECRET}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      GARAGE_S3_ENDPOINT: http://garage:3900
+    volumes:
+      - /srv/docker/data/knowledge-graph/hf_cache:/home/api/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 600s
+    networks:
+      - kg-internal
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest
+    container_name: kg-web
+    mac_address: "02:42:c0:a8:01:c5"
+    environment:
+      VITE_API_URL: http://kg.broccoli.house/api
+      VITE_OAUTH_CLIENT_ID: kg-web
+      VITE_OAUTH_REDIRECT_URI: http://kg.broccoli.house/callback
+      VITE_APP_NAME: Knowledge Graph
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      kg-internal:
+      lannet:
+        ipv4_address: 192.168.1.82
+    restart: unless-stopped
+
+  operator:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
+    container_name: kg-operator
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OAUTH_SIGNING_KEY: ${OAUTH_SIGNING_KEY}
+      INTERNAL_KEY_SERVICE_SECRET: ${INTERNAL_KEY_SERVICE_SECRET}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ..:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    networks:
+      - kg-internal
+    restart: unless-stopped
+
+networks:
+  kg-internal:
+    name: kg-internal
+    driver: bridge
+  lannet:
+    external: true
