@@ -40,6 +40,7 @@ nav:
   - Guides:
     - 5-Minute Cold Start: guides/COLD-START.md
     - Deployment Guide: guides/DEPLOYMENT.md
+    - FUSE Filesystem: guides/FUSE_FILESYSTEM.md
     - Vocabulary Categories: guides/VOCABULARY_CATEGORIES.md
   - Manual:
     - manual/README.md
