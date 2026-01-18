@@ -342,6 +342,14 @@ main() {
         fi
     fi
 
+    # Auto-select compose file based on container prefix and image source
+    # docker-compose.prod.yml uses kg-* names, docker-compose.yml uses knowledge-graph-*
+    if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
+        if [ "$CONTAINER_PREFIX" = "kg" ] || [ "$IMAGE_SOURCE" = "ghcr" ]; then
+            COMPOSE_FILE="docker-compose.prod.yml"
+        fi
+    fi
+
     echo -e "${BOLD}Configuration:${NC}"
     echo -e "  Password mode:     ${BLUE}$PASSWORD_MODE${NC}"
     echo -e "  Container mode:    ${BLUE}$CONTAINER_MODE${NC}"
