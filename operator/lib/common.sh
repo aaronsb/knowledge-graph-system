@@ -68,6 +68,7 @@ get_container_name() {
 }
 
 # Get regex pattern for container names (for use with grep)
+# Note: No trailing $ anchor - patterns used with "grep -E pattern.*healthy"
 get_container_pattern() {
     local service=$1
     load_operator_config
@@ -77,13 +78,13 @@ get_container_pattern() {
 
     case "$service" in
         postgres|garage|api|web|operator)
-            echo "^${name}$"
+            echo "^${name}"
             ;;
         all)
             echo "^(kg-|${CONTAINER_PREFIX}-)"
             ;;
         *)
-            echo "^$service$"
+            echo "^$service"
             ;;
     esac
 }
