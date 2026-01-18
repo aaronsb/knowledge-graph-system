@@ -100,6 +100,8 @@ All ADRs follow a consistent format:
 | [ADR-083](ADR-083-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted | Multi-tier storage (DB metadata → Zustand pointers → LocalStorage cache → Garage blobs) for computed artifacts with lazy loading, graph epoch freshness tracking, and async job integration for expensive computations |
 | [ADR-084](ADR-084-document-search.md) | Document-Level Search | Proposed | Search for original documents by phrase/keyword with semantic similarity, aggregating chunk matches to document level and including related concepts |
 | [ADR-085](ADR-085-document-explorer.md) | Document Explorer | Proposed | Radial visualization of document→concept relationships with distance-based opacity decay - documents as "light sources" emitting concepts, intensity decreasing over hops |
+| [ADR-086](ADR-086-deployment-topology.md) | Deployment Topology | Accepted | Multi-machine deployment with dev/stable split - north (development) and cube (production), GHCR images, headless init, and upgrade workflows |
+| [ADR-087](ADR-087-documentation-strategy.md) | Documentation Strategy | Proposed | Six-audience documentation framework (builder pair, operators, users, developers, AI agents, non-technical) with audience-organized structure and non-technical feature inventory |
 
 ## How to Use This Index
 
