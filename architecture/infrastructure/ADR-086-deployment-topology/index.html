@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../ADR-081-source-document-lifecycle/">
+        <link rel="prev" href="../ADR-083-artifact-persistence-pattern/">
       
       
-        <link rel="next" href="../ADR-083-artifact-persistence-pattern/">
+        <link rel="next" href="../ADR-088-semantic-election-protocol/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>ADR-082: User Scoping and Artifact Ownership Model - Knowledge Graph System</title>
+        <title>ADR-086: Deployment Topology (Dev/Stable Split) - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-082-user-scoping-and-artifact-ownership-model" class="md-skip">
+        <a href="#adr-086-deployment-topology-devstable-split" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-082: User Scoping and Artifact Ownership Model
+              ADR-086: Deployment Topology (Dev/Stable Split)
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -382,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -539,7 +539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -622,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -650,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -733,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -761,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -789,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -817,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -845,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -873,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -956,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -984,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1067,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1095,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1123,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1151,7 +1151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1234,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1262,7 +1262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1345,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1373,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1401,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1429,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1457,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1485,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1513,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1715,7 +1715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -1790,7 +1790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -1865,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -1893,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -1921,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -1949,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -1977,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -2005,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2033,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2061,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2089,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2117,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2145,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2173,7 +2173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2256,7 +2256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2347,7 +2347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2422,7 +2422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2505,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -2533,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -2561,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2589,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -2617,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -2645,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2673,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2701,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2729,7 +2729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2757,7 +2757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2785,7 +2785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2813,7 +2813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2841,7 +2841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -2986,7 +2986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3014,7 +3014,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3106,14 +3106,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-075: Postmodern Theme System
+    ADR-087: Documentation Strategy and Audience Framework
   
 
     
@@ -3134,14 +3134,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-076: Pathfinding Optimization for Apache AGE
+    Architecture Decision Records (ADRs)
   
 
     
@@ -3162,14 +3162,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-076B-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-076B: Pathfinding Performance Baseline
+    Knowledge Graph System Architecture
   
 
     
@@ -3190,14 +3190,1570 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-077: Vocabulary Explorers
+    Query Safety Baseline - Technical Debt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../STORAGE-ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    access-workflow
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    access-workflow
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001: Multi-Tier Agent Access Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002: Node Fitness Scoring System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003: Semantic Tool Hint Networks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004: Pure Graph Design (Library Metaphor)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005: Source Text Tracking and Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006: Staging and Migration Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-038: Official Project Apparel Design Specifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ai-embeddings
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ai-embeddings
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-041: AI Extraction Provider Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-042: Local LLM Inference for Concept Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-043: Single-Node Resource Management for Local Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Plan: ADR-045/046 Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-045: Unified Embedding Generation System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-049: Rate Limiting and Per-Provider Concurrency Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-058: Polarity Axis Triangulation for Grounding Calculation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-068 Source Text Embeddings - Implementation Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-068: Source Text Embeddings for Grounding Truth Retrieval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8_13" id="__nav_6_8_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    media-ADR-058
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_8_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    media-ADR-058
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polarity Axis Triangulation Visualizations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    authentication-security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    authentication-security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-027: User Management API with Lightweight JWT Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-028: Dynamic Role-Based Access Control (RBAC) System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-031: Encrypted API Key Storage with Container Secrets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-060: API Endpoint Security Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-062: MCP File Ingestion Security Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-074-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-074 Implementation Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-074: Platform Admin Role
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    database-schema
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    database-schema
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016: Apache AGE Migration (Neo4j Replacement)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-024: Multi-Schema PostgreSQL Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-040: Database Schema Migration Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-061: Operator Pattern for Platform Lifecycle Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012: API Server Architecture for Scalable Neo4j Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015: Backup/Restore Streaming Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-018: Server-Sent Events for Real-Time Progress Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-020: Admin Module Architecture Pattern
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-021: Live Man Switch - AI Safety for Critical Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-050: Scheduled Jobs System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-055: CDN and Serverless Deployment Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-056: Timezone-Aware Datetime Utilities
   
 
     
@@ -3274,14 +4830,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-081: Source Document Lifecycle
+    ADR-083: Artifact Persistence Pattern
   
 
     
@@ -3318,7 +4874,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-082: User Scoping and Artifact Ownership Model
+    ADR-086: Deployment Topology (Dev/Stable Split)
   
 
     
@@ -3336,7 +4892,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-082: User Scoping and Artifact Ownership Model
+    ADR-086: Deployment Topology (Dev/Stable Split)
   
 
     
@@ -3362,6 +4918,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3374,32 +4941,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-satisficing-specialist-model" class="md-nav__link">
+  <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Satisficing Specialist Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentication-as-accountability" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication as Accountability
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#artifact-freshness-via-graph-epoch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Artifact Freshness via Graph Epoch
+        Requirements
       
     </span>
   </a>
@@ -3424,10 +4969,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-groups-as-first-class-citizens" class="md-nav__link">
+  <a href="#branchenvironment-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Groups as First-Class Citizens
+        Branch/Environment Mapping
       
     </span>
   </a>
@@ -3435,10 +4980,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-id-ranges-unix-style" class="md-nav__link">
+  <a href="#deployment-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. ID Ranges (Unix-style)
+        Deployment Model
       
     </span>
   </a>
@@ -3446,10 +4991,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-resource-ownership" class="md-nav__link">
+  <a href="#cube-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Resource Ownership
+        cube Configuration
       
     </span>
   </a>
@@ -3457,10 +5002,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-grant-based-access-model" class="md-nav__link">
+  <a href="#initial-deployment-cube" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Grant-Based Access Model
+        Initial Deployment (cube)
       
     </span>
   </a>
@@ -3468,10 +5013,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-artifact-metadata" class="md-nav__link">
+  <a href="#update-procedure-cube" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Artifact Metadata
+        Update Procedure (cube)
       
     </span>
   </a>
@@ -3479,10 +5024,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-schema-changes" class="md-nav__link">
+  <a href="#rollback-procedure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Schema Changes
+        Rollback Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-compose-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Compose Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-ai-configuration-cube" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid AI Configuration (cube)
       
     </span>
   </a>
@@ -3529,10 +5096,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
+  <a href="#risks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Neutral
+        Risks
       
     </span>
   </a>
@@ -3545,10 +5112,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-this-adr-does-not-cover" class="md-nav__link">
+  <a href="#related-adrs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What This ADR Does NOT Cover
+        Related ADRs
       
     </span>
   </a>
@@ -3556,82 +5123,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
+  <a href="#implementation-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-schema-foundation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Schema Foundation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-ontology-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Ontology Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-artifact-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Artifact Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-ui-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: UI Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
+        Implementation Tasks
       
     </span>
   </a>
@@ -3654,509 +5149,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-083: Artifact Persistence Pattern
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-084-document-search/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-084: Document-Level Search
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-085-document-explorer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-085: Document Explorer with Radial Concept Visualization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-086: Deployment Topology (Dev/Stable Split)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-087-documentation-strategy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-087: Documentation Strategy and Audience Framework
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture Decision Records (ADRs)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Knowledge Graph System Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Query Safety Baseline - Technical Debt
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Recursive Upsert Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../STORAGE-ARCHITECTURE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Storage Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_19" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_19" id="__nav_6_19_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    access-workflow
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_19_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_19">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    access-workflow
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-001: Multi-Tier Agent Access Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-002: Node Fitness Scoring System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-003: Semantic Tool Hint Networks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-004: Pure Graph Design (Library Metaphor)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-005: Source Text Tracking and Retrieval
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-006: Staging and Migration Workflows
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-038: Official Project Apparel Design Specifications
+    ADR-088: Semantic Election Protocol for Distributed Concept Placement
   
 
     
@@ -4193,1237 +5193,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_20" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
         
           
-          <label class="md-nav__link" for="__nav_6_20" id="__nav_6_20_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ai-embeddings
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_20_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_20">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    ai-embeddings
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-041: AI Extraction Provider Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-042: Local LLM Inference for Concept Extraction
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-043: Single-Node Resource Management for Local Inference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-044: Probabilistic Truth Convergence Through Contradiction Resolution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migration Plan: ADR-045/046 Implementation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-045: Unified Embedding Generation System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-049: Rate Limiting and Per-Provider Concurrency Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-058: Polarity Axis Triangulation for Grounding Calculation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-068 Source Text Embeddings - Implementation Plan
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-068: Source Text Embeddings for Grounding Truth Retrieval
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_20_13" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_20_13" id="__nav_6_20_13_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    media-ADR-058
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_20_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_20_13">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    media-ADR-058
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Polarity Axis Triangulation Visualizations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_21" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_21" id="__nav_6_21_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    authentication-security
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_21_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_21">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    authentication-security
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-027: User Management API with Lightweight JWT Authentication
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-028: Dynamic Role-Based Access Control (RBAC) System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-031: Encrypted API Key Storage with Container Secrets
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-060: API Endpoint Security Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-062: MCP File Ingestion Security Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-074 Implementation Checklist
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-074: Platform Admin Role
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_22" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_22" id="__nav_6_22_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    database-schema
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_22_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_22">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    database-schema
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-016: Apache AGE Migration (Neo4j Replacement)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-024: Multi-Schema PostgreSQL Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-040: Database Schema Migration Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-061: Operator Pattern for Platform Lifecycle Management
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_23" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_23" id="__nav_6_23_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    infrastructure
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_23_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_23">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    infrastructure
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-012: API Server Architecture for Scalable Neo4j Access
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-015: Backup/Restore Streaming Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-018: Server-Sent Events for Real-Time Progress Streaming
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-020: Admin Module Architecture Pattern
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-021: Live Man Switch - AI Safety for Critical Operations
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-050: Scheduled Jobs System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-055: CDN and Serverless Deployment Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-056: Timezone-Aware Datetime Utilities
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_24" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_24" id="__nav_6_24_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
             
   
   
@@ -5441,8 +5214,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_24_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_24">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5459,7 +5232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -5487,7 +5260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -5515,7 +5288,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -5543,7 +5316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -5571,7 +5344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -5599,7 +5372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -5627,7 +5400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -5655,7 +5428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -5683,7 +5456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5691,6 +5464,34 @@
     
   
     ADR-072: Concept Matching Strategies and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-081: Source Document Lifecycle
   
 
     
@@ -5727,10 +5528,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_25" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_13" >
         
           
-          <label class="md-nav__link" for="__nav_6_25" id="__nav_6_25_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_13" id="__nav_6_13_label" tabindex="0">
             
   
   
@@ -5748,8 +5549,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_25_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_25">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5766,7 +5567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5794,7 +5595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5822,7 +5623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5850,7 +5651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5878,7 +5679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5886,6 +5687,90 @@
     
   
     ADR-071a: Parallel Graph Query Implementation Findings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-076: Pathfinding Optimization for Apache AGE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-076B: Pathfinding Performance Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-084: Document-Level Search
   
 
     
@@ -5922,10 +5807,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_26" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_14" >
         
           
-          <label class="md-nav__link" for="__nav_6_26" id="__nav_6_26_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_14" id="__nav_6_14_label" tabindex="0">
             
   
   
@@ -5943,8 +5828,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_26_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_26">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_14">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5961,7 +5846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5989,7 +5874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -6017,7 +5902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -6045,7 +5930,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -6073,7 +5958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -6101,7 +5986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -6129,7 +6014,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -6157,7 +6042,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -6185,7 +6070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -6213,7 +6098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -6241,7 +6126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-069a-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069a-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -6262,61 +6147,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_27" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_27" id="__nav_6_27_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    visualization
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_27_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_27">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    visualization
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -6324,14 +6154,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-078: Embedding Landscape Explorer
+    ADR-075: Postmodern Theme System
   
 
     
@@ -6368,10 +6198,121 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_28" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_15" >
         
           
-          <label class="md-nav__link" for="__nav_6_28" id="__nav_6_28_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_15" id="__nav_6_15_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    visualization
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_15">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    visualization
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-078: Embedding Landscape Explorer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-085: Document Explorer with Radial Concept Visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_16" id="__nav_6_16_label" tabindex="0">
             
   
   
@@ -6389,8 +6330,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_28_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_28">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_16">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -6407,7 +6348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -6435,7 +6376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -6463,7 +6404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -6491,7 +6432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -6519,7 +6460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -6547,7 +6488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -6575,7 +6516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6603,7 +6544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -6631,7 +6572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -6659,7 +6600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6687,7 +6628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6715,7 +6656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6723,6 +6664,34 @@
     
   
     ADR-065: Vocabulary-Based Provenance Relationships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-077: Vocabulary Explorers
   
 
     
@@ -6805,7 +6774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6833,7 +6802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6861,7 +6830,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6889,7 +6858,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6917,7 +6886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6945,7 +6914,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6973,7 +6942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -7055,7 +7024,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -7083,7 +7052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -7111,7 +7080,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -7139,7 +7108,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -7167,7 +7136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -7195,7 +7164,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -7223,7 +7192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -7278,6 +7247,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7290,32 +7270,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-satisficing-specialist-model" class="md-nav__link">
+  <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Satisficing Specialist Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentication-as-accountability" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication as Accountability
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#artifact-freshness-via-graph-epoch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Artifact Freshness via Graph Epoch
+        Requirements
       
     </span>
   </a>
@@ -7340,10 +7298,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-groups-as-first-class-citizens" class="md-nav__link">
+  <a href="#branchenvironment-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Groups as First-Class Citizens
+        Branch/Environment Mapping
       
     </span>
   </a>
@@ -7351,10 +7309,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-id-ranges-unix-style" class="md-nav__link">
+  <a href="#deployment-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. ID Ranges (Unix-style)
+        Deployment Model
       
     </span>
   </a>
@@ -7362,10 +7320,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-resource-ownership" class="md-nav__link">
+  <a href="#cube-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Resource Ownership
+        cube Configuration
       
     </span>
   </a>
@@ -7373,10 +7331,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-grant-based-access-model" class="md-nav__link">
+  <a href="#initial-deployment-cube" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Grant-Based Access Model
+        Initial Deployment (cube)
       
     </span>
   </a>
@@ -7384,10 +7342,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-artifact-metadata" class="md-nav__link">
+  <a href="#update-procedure-cube" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Artifact Metadata
+        Update Procedure (cube)
       
     </span>
   </a>
@@ -7395,10 +7353,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-schema-changes" class="md-nav__link">
+  <a href="#rollback-procedure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Schema Changes
+        Rollback Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-compose-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Compose Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-ai-configuration-cube" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid AI Configuration (cube)
       
     </span>
   </a>
@@ -7445,10 +7425,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
+  <a href="#risks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Neutral
+        Risks
       
     </span>
   </a>
@@ -7461,10 +7441,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-this-adr-does-not-cover" class="md-nav__link">
+  <a href="#related-adrs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What This ADR Does NOT Cover
+        Related ADRs
       
     </span>
   </a>
@@ -7472,82 +7452,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
+  <a href="#implementation-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-schema-foundation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Schema Foundation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-ontology-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Ontology Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-artifact-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Artifact Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-ui-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: UI Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
+        Implementation Tasks
       
     </span>
   </a>
@@ -7574,275 +7482,199 @@
   
 
 
-<h1 id="adr-082-user-scoping-and-artifact-ownership-model">ADR-082: User Scoping and Artifact Ownership Model</h1>
-<p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2025-12-17
-<strong>Deciders:</strong> @aaronsb, @claude
-<strong>Related ADRs:</strong> ADR-028 (Dynamic RBAC), ADR-079 (Projection Storage)</p>
+<h1 id="adr-086-deployment-topology-devstable-split">ADR-086: Deployment Topology (Dev/Stable Split)</h1>
+<h2 id="status">Status</h2>
+<p>Implemented</p>
 <h2 id="context">Context</h2>
-<p>The knowledge graph system currently has user authentication (ADR-028) but lacks:
-1. <strong>Ownership semantics</strong> - Who is responsible for an ontology or artifact?
-2. <strong>Group membership</strong> - Users can have roles, but not collaborative groups
-3. <strong>Resource-level permissions</strong> - RBAC is role-based, not resource-specific
-4. <strong>Artifact tracking</strong> - Computed reports (projections, polarity analyses) have no ownership</p>
-<h3 id="the-satisficing-specialist-model">The Satisficing Specialist Model</h3>
-<p>Consider a research group with multiple specialists:
-- Specialists have <strong>responsibility</strong> for domains, not exclusive ownership
-- Information flows freely between specialists (no strict isolation)
-- Outside parties can interact with all specialists to form their own views
-- Only in unusual scenarios (cognitohazard) would strict isolation apply</p>
-<p>This system follows the same philosophy:
-- <strong>Sufficient controls</strong> for coordination and accountability
-- <strong>Not security boundaries</strong> - authenticated users are trusted collaborators
-- <strong>Responsibility over ownership</strong> - "I maintain ontology X" not "I exclusively control X"</p>
-<h3 id="authentication-as-accountability">Authentication as Accountability</h3>
-<p>Authentication serves:
-1. <strong>Accountability</strong> - Who requested expensive operations?
-2. <strong>Resource allocation</strong> - Per-user quotas, rate limiting
-3. <strong>Quality control</strong> - Traceable modifications
-4. <strong>Coordination</strong> - Knowing who maintains what</p>
-<p>Anonymous access (if enabled) becomes a deployment decision at account creation, not a permission model concern.</p>
-<h3 id="artifact-freshness-via-graph-epoch">Artifact Freshness via Graph Epoch</h3>
-<p>The system tracks graph changes via <code>graph_change_counter</code> (Migration 033). This enables:
-- Reports from a month ago are still valid if graph unchanged
-- No redundant regeneration when data hasn't changed
-- AI agents can recall stored artifacts without recomputation
-- Temporal comparison: "What changed since this report?"</p>
+<p>The knowledge graph system needs a stable environment for long-term document storage and querying, separate from active development. Current infrastructure:</p>
+<ul>
+<li><strong>north</strong> - Development machine (active feature work)</li>
+<li><strong>cube</strong> - Stable machine on same subnet (long-term data, older Nvidia GPU)</li>
+<li>Both machines have Docker installed</li>
+<li><strong>release</strong> branch already builds images to GHCR</li>
+</ul>
+<p>The Nvidia GPU on cube could support local LLM inference (Ollama) for ingestion, reducing API costs for bulk document processing.</p>
+<h3 id="requirements">Requirements</h3>
+<ol>
+<li>Stable environment that survives frequent updates</li>
+<li>Data persistence across container updates</li>
+<li>Clear upgrade path with rollback capability</li>
+<li>Minimal operational overhead</li>
+</ol>
 <h2 id="decision">Decision</h2>
-<h3 id="1-groups-as-first-class-citizens">1. Groups as First-Class Citizens</h3>
-<p>Create a groups system parallel to roles:</p>
-<p><strong>Groups vs Roles:</strong>
-| Aspect | Roles | Groups |
-|--------|-------|--------|
-| Purpose | Permission bundles | Collaboration membership |
-| Grants | Actions on resource types | Access to specific resources |
-| Example | "curator can write vocabulary" | "research-team can access Ontology-X" |</p>
-<p><strong>Special Groups:</strong>
-- <code>public</code> (ID 1) - All authenticated users are implicit members
-- <code>admins</code> (ID 2) - Platform administrators</p>
-<h3 id="2-id-ranges-unix-style">2. ID Ranges (Unix-style)</h3>
-<p>Reserve low IDs for system entities:</p>
+<h3 id="branchenvironment-mapping">Branch/Environment Mapping</h3>
 <table>
 <thead>
 <tr>
-<th>Range</th>
+<th>Branch</th>
+<th>Environment</th>
+<th>Image Tag</th>
+<th>Update Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>north (dev)</td>
+<td><code>sha-*</code> or local build</td>
+<td>Continuous</td>
+</tr>
+<tr>
+<td><code>release</code></td>
+<td>cube (stable)</td>
+<td><code>latest</code></td>
+<td>Planned releases</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deployment-model">Deployment Model</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cube (stable)                         north (dev)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>┌─────────────────────────┐          ┌─────────────────────────┐
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│ GHCR images (:latest)   │◄─────────│ Local builds / main     │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│ docker-compose.prod.yml │  merge   │ docker-compose.yml      │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│ Named volumes (persist) │  to      │ Dev volumes             │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│ External backups        │  release │                         │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>└─────────────────────────┘          └─────────────────────────┘
+</code></pre></div>
+<h3 id="cube-configuration">cube Configuration</h3>
+<ol>
+<li><strong>Clone repo</strong> for docker-compose and operator scripts</li>
+<li><strong>Use GHCR images</strong> instead of local builds</li>
+<li><strong>Named volumes</strong> for data persistence:</li>
+<li><code>kg-postgres-data</code> - Graph database</li>
+<li><code>kg-garage-data</code> - Document storage (S3)</li>
+<li><strong>Backup strategy</strong> - Periodic pg_dump + garage sync</li>
+</ol>
+<h3 id="initial-deployment-cube">Initial Deployment (cube)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Clean headless deployment with GHCR images and NVIDIA GPU</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--ai-provider<span class="o">=</span>openai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--ai-model<span class="o">=</span>gpt-4o<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--ai-key<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$OPENAI_API_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--skip-cli
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># Or minimal deployment (configure AI later)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span>--skip-ai-config
+</code></pre></div>
+<h3 id="update-procedure-cube">Update Procedure (cube)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Graceful upgrade: pull images, run migrations, restart</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./operator.sh<span class="w"> </span>upgrade
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Or with dry-run to see what would change</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
+</code></pre></div>
+<h3 id="rollback-procedure">Rollback Procedure</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 1. Stop services</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./operator.sh<span class="w"> </span>stop
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 2. Restore from backup</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>./operator.sh<span class="w"> </span>restore<span class="w"> </span>&lt;backup-name&gt;
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 3. Pin to previous image version</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Edit docker-compose.prod.yml: image: ghcr.io/.../kg-api:sha-&lt;previous&gt;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># 4. Restart</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>./operator.sh<span class="w"> </span>start
+</code></pre></div>
+<h3 id="production-compose-files">Production Compose Files</h3>
+<p>The operator automatically selects the right compose files based on configuration:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1-999</td>
-<td>System users and groups</td>
+<td><code>docker-compose.yml</code></td>
+<td>Base config (dev, <code>knowledge-graph-*</code> containers)</td>
 </tr>
 <tr>
-<td>1000+</td>
-<td>Regular users and groups</td>
+<td><code>docker-compose.prod.yml</code></td>
+<td>Production config (<code>kg-*</code> containers, GHCR images)</td>
+</tr>
+<tr>
+<td><code>docker-compose.ghcr.yml</code></td>
+<td>GHCR image overlay (used with base compose)</td>
+</tr>
+<tr>
+<td><code>docker-compose.gpu-nvidia.yml</code></td>
+<td>NVIDIA GPU support</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Reserved Entities:</strong></p>
+<p>When <code>--container-prefix=kg</code> or <code>--image-source=ghcr</code> is set, the operator automatically uses <code>docker-compose.prod.yml</code>.</p>
+<h3 id="hybrid-ai-configuration-cube">Hybrid AI Configuration (cube)</h3>
+<p>Cube's Nvidia GPU enables a cost-effective hybrid approach:</p>
 <table>
 <thead>
 <tr>
-<th>ID</th>
-<th>User</th>
-<th>Group</th>
+<th>Task</th>
+<th>Provider</th>
+<th>Model</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td><code>system</code></td>
-<td><code>public</code></td>
+<td><strong>Embeddings</strong></td>
+<td>Ollama (local)</td>
+<td>nomic-embed-text or similar</td>
 </tr>
 <tr>
-<td>2</td>
-<td>-</td>
-<td><code>admins</code></td>
-</tr>
-<tr>
-<td>1000</td>
-<td>First admin user</td>
-<td>First user group</td>
+<td><strong>Concept extraction</strong></td>
+<td>API (OpenAI/Anthropic)</td>
+<td>GPT-4o / Claude Sonnet</td>
 </tr>
 </tbody>
 </table>
-<h3 id="3-resource-ownership">3. Resource Ownership</h3>
-<p>Resources have an owner and optional grants:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Resource:
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  owner_id: INTEGER      # User responsible (can transfer)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  grants: [              # Explicit access beyond owner
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    {principal_type, principal_id, permission}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ]
-</code></pre></div>
-<p><strong>Owned Resources:</strong>
-- Ontologies
-- Reports (polarity, projections, etc.)
-- Future: Saved queries, workspaces</p>
-<h3 id="4-grant-based-access-model">4. Grant-Based Access Model</h3>
-<p>All access resolved through grants:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">can_access</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># Owner has full access</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># Check explicit user grant</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="c1"># Check group grants (including &#39;public&#39;)</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">for</span> <span class="n">group_id</span> <span class="ow">in</span> <span class="n">get_user_groups</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="c1"># Public group - all authenticated users are members</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">PUBLIC_GROUP_ID</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="k">return</span> <span class="kc">False</span>
-</code></pre></div>
-<p><strong>Permission Levels:</strong>
-- <code>read</code> - View resource
-- <code>write</code> - Modify resource (add to ontology, regenerate report)
-- <code>admin</code> - Transfer ownership, manage grants</p>
-<h3 id="5-artifact-metadata">5. Artifact Metadata</h3>
-<p>All computed artifacts include:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;owner_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-12-17T10:30:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;graph_epoch&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15847</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;visibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grants&quot;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Freshness Check:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_fresh</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">current_epoch</span> <span class="o">=</span> <span class="n">get_graph_change_counter</span><span class="p">()</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">return</span> <span class="n">artifact</span><span class="o">.</span><span class="n">graph_epoch</span> <span class="o">==</span> <span class="n">current_epoch</span>
+<p>This keeps embedding costs zero (high volume, local GPU) while using API for reasoning tasks that benefit from frontier models.</p>
+<p>Configure in cube's operator:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>configure.py<span class="w"> </span>ai-provider<span class="w">      </span><span class="c1"># Set extraction LLM (API)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>configure.py<span class="w"> </span>embedding-model<span class="w">  </span><span class="c1"># Set embedding model (Ollama)</span>
 </code></pre></div></p>
-<h3 id="6-schema-changes">6. Schema Changes</h3>
-<p><strong>New Tables:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Groups</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">group_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="n">display_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">is_system</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">);</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1">-- Group Membership</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">user_groups</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">group_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="n">added_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="n">added_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span><span class="n">group_id</span><span class="p">)</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">);</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1">-- Resource Grants (for owned resources)</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">    </span><span class="n">resource_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;ontology&#39;, &#39;report&#39;, &#39;projection&#39;</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">    </span><span class="n">resource_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">    </span><span class="n">principal_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">principal_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;group&#39;</span><span class="p">)),</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">    </span><span class="n">principal_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="n">permission</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">permission</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">)),</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">    </span><span class="n">granted_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">    </span><span class="n">granted_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">    </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">,</span><span class="w"> </span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">,</span><span class="w"> </span><span class="n">permission</span><span class="p">)</span>
-<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="p">);</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_resource</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">);</span>
-<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_principal</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">);</span>
-</code></pre></div>
-<p><strong>Modifications:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Add owner_id to ontologies (new table or graph property)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">-- Add system user</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">password_hash</span><span class="p">,</span><span class="w"> </span><span class="n">primary_role</span><span class="p">,</span><span class="w"> </span><span class="n">disabled</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SYSTEM_NO_LOGIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- Add system groups</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">group_name</span><span class="p">,</span><span class="w"> </span><span class="n">display_name</span><span class="p">,</span><span class="w"> </span><span class="n">is_system</span><span class="p">)</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">VALUES</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;All Users&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">),</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admins&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Administrators&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">-- Reset sequences to start at 1000</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
-</code></pre></div>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
-<ol>
-<li><strong>Clear ownership</strong> - Know who maintains what</li>
-<li><strong>Flexible sharing</strong> - Private, team, or public resources</li>
-<li><strong>Artifact reuse</strong> - Stored reports available for recall</li>
-<li><strong>AI agent support</strong> - Agents can retrieve cached analyses</li>
-<li><strong>Freshness awareness</strong> - Know if reports are current via graph epoch</li>
-<li><strong>Consistent model</strong> - Same grant mechanism for all resource types</li>
-<li><strong>Unix-familiar</strong> - ID ranges follow established conventions</li>
-</ol>
-<h3 id="negative">Negative</h3>
-<ol>
-<li><strong>Schema migration</strong> - Existing systems need migration</li>
-<li><strong>Query complexity</strong> - Access checks add overhead</li>
-<li><strong>Admin burden</strong> - Someone must manage grants (mitigated by sensible defaults)</li>
-</ol>
-<h3 id="neutral">Neutral</h3>
-<ol>
-<li><strong>No strict security</strong> - This is coordination, not isolation</li>
-<li><strong>Public = authenticated</strong> - No anonymous access at permission level</li>
-<li><strong>Ownership transferable</strong> - Resources can change hands</li>
-</ol>
-<h2 id="what-this-adr-does-not-cover">What This ADR Does NOT Cover</h2>
-<ol>
-<li><strong>Anonymous access</strong> - Deployment concern, not permission model</li>
-<li><strong>Fine-grained permissions</strong> - Read/write/admin is sufficient</li>
-<li><strong>Specific artifact storage</strong> - See ADR-083 for polarity reports</li>
-<li><strong>Group hierarchies</strong> - Flat groups for now, can extend later</li>
-</ol>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-schema-foundation">Phase 1: Schema Foundation</h3>
-<ol>
-<li>Create migration for groups, user_groups, resource_grants tables</li>
-<li>Add system user (ID 1) and system groups (ID 1, 2)</li>
-<li>Alter sequences for 1000+ IDs</li>
-<li>Update admin creation to use new sequence</li>
-</ol>
-<h3 id="phase-2-ontology-ownership">Phase 2: Ontology Ownership</h3>
-<ol>
-<li>Add owner_id tracking for ontologies (metadata in kg_api or graph property)</li>
-<li>Default owner = user who created first ingestion</li>
-<li>Add grant checking to ontology operations</li>
-</ol>
-<h3 id="phase-3-artifact-ownership">Phase 3: Artifact Ownership</h3>
-<ol>
-<li>Add ownership metadata to Garage storage schema</li>
-<li>Update projection storage (ADR-079) to include owner</li>
-<li>API endpoints for listing "my artifacts" vs "public artifacts"</li>
-</ol>
-<h3 id="phase-4-ui-integration">Phase 4: UI Integration</h3>
-<ol>
-<li>Show ownership in web UI</li>
-<li>Grant management interface</li>
-<li>"My ontologies" vs "Public ontologies" views</li>
-</ol>
-<h2 id="migration-notes">Migration Notes</h2>
-<p><strong>Existing Ontologies:</strong>
-- Assign to <code>system</code> user (ID 1) by default
-- Grant <code>public</code> group read access
-- Admin can reassign ownership</p>
-<p><strong>Sequence Reset:</strong>
-- Migration must handle existing users (if any with ID &lt; 1000)
-- Safe approach: only reset if max(id) &lt; 1000</p>
-<h2 id="references">References</h2>
 <ul>
-<li>ADR-028: Dynamic RBAC (existing role system)</li>
-<li>ADR-079: Projection Artifact Storage (Garage pattern)</li>
-<li>Migration 033: Graph Change Triggers (epoch counter)</li>
+<li>Clear separation between dev churn and stable data</li>
+<li>Pre-built images = faster deployments on cube</li>
+<li>Explicit release process prevents accidental updates</li>
+<li>Data persists independently of container lifecycle</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li>Two environments to maintain</li>
+<li>Need to remember to merge to release</li>
+<li>Potential for environments to drift</li>
+</ul>
+<h3 id="risks">Risks</h3>
+<ul>
+<li>Schema migrations could break stable environment</li>
+<li>Need monitoring to detect issues post-update</li>
+</ul>
+<h2 id="related-adrs">Related ADRs</h2>
+<ul>
+<li>ADR-061: Operator Architecture</li>
+<li>ADR-069: FUSE Filesystem (may run on cube for document access)</li>
+</ul>
+<h2 id="implementation-tasks">Implementation Tasks</h2>
+<ul>
+<li>[x] Create <code>docker-compose.prod.yml</code> override</li>
+<li>[x] Add headless init to operator.sh (<code>--headless</code> flag)</li>
+<li>[x] Add upgrade command to operator.sh</li>
+<li>[x] Container name configuration via <code>.operator.conf</code></li>
+<li>[x] Auto-select compose file based on container prefix</li>
+<li>[x] Test clean cold start deployment on cube</li>
+<li>[ ] Add backup/restore commands to operator.sh</li>
+<li>[ ] Test upgrade/rollback cycle</li>
 </ul>
 
 
@@ -7893,10 +7725,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

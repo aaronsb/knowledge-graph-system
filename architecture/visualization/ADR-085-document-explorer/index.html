@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../ADR-076-pathfinding-optimization/">
+        <link rel="prev" href="../ADR-078-embedding-landscape-explorer/">
       
       
-        <link rel="next" href="../ADR-077-vocabulary-explorers/">
+        <link rel="next" href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>ADR-076B: Pathfinding Performance Baseline - Knowledge Graph System</title>
+        <title>ADR-085: Document Explorer with Radial Concept Visualization - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-076b-pathfinding-performance-baseline" class="md-skip">
+        <a href="#adr-085-document-explorer-with-radial-concept-visualization" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-076B: Pathfinding Performance Baseline
+              ADR-085: Document Explorer with Radial Concept Visualization
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/COLD-START.md" class="md-nav__link">
+      <a href="../../../guides/COLD-START.md" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -382,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_CATEGORIES/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -539,7 +539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -622,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -650,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -733,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -761,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -789,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -817,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -845,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -873,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -956,7 +956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -984,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1067,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1095,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1123,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1151,7 +1151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -1234,7 +1234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -1262,7 +1262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -1345,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -1373,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -1401,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -1429,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -1457,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -1485,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -1513,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -1715,7 +1715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -1790,7 +1790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -1865,7 +1865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -1893,7 +1893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -1921,7 +1921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -1949,7 +1949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -1977,7 +1977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -2005,7 +2005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -2033,7 +2033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -2061,7 +2061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -2089,7 +2089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -2117,7 +2117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -2145,7 +2145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -2173,7 +2173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -2256,7 +2256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -2347,7 +2347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -2422,7 +2422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -2505,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -2533,7 +2533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -2561,7 +2561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -2589,7 +2589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -2617,7 +2617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -2645,7 +2645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -2673,7 +2673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -2701,7 +2701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -2729,7 +2729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -2757,7 +2757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -2785,7 +2785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -2813,7 +2813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -2841,7 +2841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -2986,7 +2986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3014,7 +3014,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3106,573 +3106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-075-postmodern-theme/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-075: Postmodern Theme System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-076: Pathfinding Optimization for Apache AGE
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-076B: Pathfinding Performance Baseline
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-076B: Pathfinding Performance Baseline
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#purpose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test Environment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Test Environment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#graph-characteristics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graph Characteristics
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#baseline-measurements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Baseline Measurements
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Baseline Measurements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test-case-1-connected-path-buddhism-nirvana" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test Case 1: Connected Path (Buddhism → Nirvana)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test-case-2-cross-ontology-conscious-ego-illusion-of-self" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test-case-3-new-bridge-path-borrowed-ego-illusion-of-self" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#path-structure-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Path Structure Analysis
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Path Structure Analysis">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#buddhism-nirvana-5-paths-found" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Buddhism → Nirvana (5 paths found)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#extrapolated-performance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Extrapolated Performance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#comparison-with-age-issue-195" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comparison with AGE Issue #195
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conclusions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#post-optimization-targets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Post-Optimization Targets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test Commands
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-077-vocabulary-explorers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-077: Vocabulary Explorers
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-079: Projection Artifact Storage in Garage
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-080: Garage Service Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-081-source-document-lifecycle/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-081: Source Document Lifecycle
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-082: User Scoping and Artifact Ownership Model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-083: Artifact Persistence Pattern
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-084-document-search/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-084: Document-Level Search
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-085-document-explorer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-085: Document Explorer with Radial Concept Visualization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-086: Deployment Topology (Dev/Stable Split)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -3700,7 +3134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ARCHITECTURE_DECISIONS/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_DECISIONS/" class="md-nav__link">
         
   
   
@@ -3728,7 +3162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3756,7 +3190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3784,7 +3218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3812,7 +3246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3848,10 +3282,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_19" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_19" id="__nav_6_19_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
             
   
   
@@ -3869,8 +3303,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_19_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_19">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3887,7 +3321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -3915,7 +3349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -3943,7 +3377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -3971,7 +3405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -3999,7 +3433,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -4027,7 +3461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -4055,7 +3489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -4099,10 +3533,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_20" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
         
           
-          <label class="md-nav__link" for="__nav_6_20" id="__nav_6_20_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
             
   
   
@@ -4120,8 +3554,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_20_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_20">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4138,7 +3572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -4166,7 +3600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -4194,7 +3628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -4222,7 +3656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -4250,7 +3684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -4278,7 +3712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-046-MIGRATION-PLAN/" class="md-nav__link">
         
   
   
@@ -4306,7 +3740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -4334,7 +3768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -4362,7 +3796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -4390,7 +3824,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -4418,7 +3852,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -4446,7 +3880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -4482,10 +3916,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_20_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8_13" >
         
           
-          <label class="md-nav__link" for="__nav_6_20_13" id="__nav_6_20_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_8_13" id="__nav_6_8_13_label" tabindex="0">
             
   
   
@@ -4503,8 +3937,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_20_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_20_13">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_8_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4521,7 +3955,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -4573,10 +4007,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_21" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_9" >
         
           
-          <label class="md-nav__link" for="__nav_6_21" id="__nav_6_21_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="0">
             
   
   
@@ -4594,8 +4028,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_21_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_21">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4612,7 +4046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -4640,7 +4074,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -4668,7 +4102,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -4696,7 +4130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -4724,7 +4158,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -4752,7 +4186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -4780,7 +4214,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -4808,7 +4242,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-074-implementation/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-implementation/" class="md-nav__link">
         
   
   
@@ -4836,7 +4270,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -4844,6 +4278,34 @@
     
   
     ADR-074: Platform Admin Role
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-082: User Scoping and Artifact Ownership Model
   
 
     
@@ -4880,10 +4342,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_22" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_10" >
         
           
-          <label class="md-nav__link" for="__nav_6_22" id="__nav_6_22_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="0">
             
   
   
@@ -4901,8 +4363,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_22_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_22">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4919,7 +4381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -4947,7 +4409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -4975,7 +4437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -5003,7 +4465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -5047,10 +4509,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_23" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_11" >
         
           
-          <label class="md-nav__link" for="__nav_6_23" id="__nav_6_23_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="0">
             
   
   
@@ -5068,8 +4530,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_23_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_23">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5086,7 +4548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -5114,7 +4576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -5142,7 +4604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -5170,7 +4632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -5198,7 +4660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -5226,7 +4688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -5254,7 +4716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -5282,7 +4744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -5290,6 +4752,146 @@
     
   
     ADR-056: Timezone-Aware Datetime Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-079: Projection Artifact Storage in Garage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-080: Garage Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-083: Artifact Persistence Pattern
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-086: Deployment Topology (Dev/Stable Split)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-088: Semantic Election Protocol for Distributed Concept Placement
   
 
     
@@ -5326,10 +4928,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_24" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_12" >
         
           
-          <label class="md-nav__link" for="__nav_6_24" id="__nav_6_24_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="0">
             
   
   
@@ -5347,8 +4949,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_24_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_24">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5365,7 +4967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -5393,7 +4995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -5421,7 +5023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -5449,7 +5051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -5477,7 +5079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051a-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -5505,7 +5107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051b-API-CHANGES/" class="md-nav__link">
         
   
   
@@ -5533,7 +5135,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057a-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -5561,7 +5163,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057b-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -5589,7 +5191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -5597,6 +5199,34 @@
     
   
     ADR-072: Concept Matching Strategies and Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-081: Source Document Lifecycle
   
 
     
@@ -5633,10 +5263,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_25" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_13" >
         
           
-          <label class="md-nav__link" for="__nav_6_25" id="__nav_6_25_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_13" id="__nav_6_13_label" tabindex="0">
             
   
   
@@ -5654,8 +5284,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_25_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_25">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5672,7 +5302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -5700,7 +5330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -5728,7 +5358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -5756,7 +5386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -5784,7 +5414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071a-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -5792,6 +5422,90 @@
     
   
     ADR-071a: Parallel Graph Query Implementation Findings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-076: Pathfinding Optimization for Apache AGE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-076B-pathfinding-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-076B: Pathfinding Performance Baseline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-084: Document-Level Search
   
 
     
@@ -5828,10 +5542,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_26" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_14" >
         
           
-          <label class="md-nav__link" for="__nav_6_26" id="__nav_6_26_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_14" id="__nav_6_14_label" tabindex="0">
             
   
   
@@ -5849,8 +5563,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_26_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_26">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_14">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5867,7 +5581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -5895,7 +5609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -5923,7 +5637,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -5951,7 +5665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -5979,7 +5693,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -6007,7 +5721,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -6035,7 +5749,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -6063,7 +5777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -6091,7 +5805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -6119,7 +5833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -6147,7 +5861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-interfaces/ADR-069a-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069a-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -6168,61 +5882,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_27" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_27" id="__nav_6_27_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    visualization
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_27_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_27">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    visualization
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -6230,14 +5889,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-078: Embedding Landscape Explorer
+    ADR-075: Postmodern Theme System
   
 
     
@@ -6263,6 +5922,443 @@
                 
   
   
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_15" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_15" id="__nav_6_15_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    visualization
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_15_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_15">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    visualization
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-078: Embedding Landscape Explorer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-085: Document Explorer with Radial Concept Visualization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-085: Document Explorer with Radial Concept Visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prior-art-spreading-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prior Art: Spreading Activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recent-research-sa-rag-december-2025" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recent Research: SA-RAG (December 2025)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#existing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-radial-layout-with-distance-based-opacity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Radial Layout with Distance-Based Opacity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-fixed-radial-positioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Fixed Radial Positioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-intensity-calculation-presentation-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Intensity Calculation (Presentation Layer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-component-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Component Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-visual-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Visual Encoding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-re-centering-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Re-centering Interaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-settings-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Settings Panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-dedicated-spreading-activation-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Build Dedicated Spreading Activation Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-use-existing-forcegraph2d-without-radial-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Use Existing ForceGraph2D Without Radial Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-3d-visualization-with-depth-as-z-axis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 3D Visualization with Depth as Z-Axis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     
@@ -6274,10 +6370,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_28" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_16" >
         
           
-          <label class="md-nav__link" for="__nav_6_28" id="__nav_6_28_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_16" id="__nav_6_16_label" tabindex="0">
             
   
   
@@ -6295,8 +6391,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_28_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_28">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_16">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -6313,7 +6409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -6341,7 +6437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -6369,7 +6465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -6397,7 +6493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032a-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -6425,7 +6521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032b-IMPLEMENTATION-NOTES/" class="md-nav__link">
         
   
   
@@ -6453,7 +6549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -6481,7 +6577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6509,7 +6605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -6537,7 +6633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -6565,7 +6661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -6593,7 +6689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -6621,7 +6717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -6629,6 +6725,34 @@
     
   
     ADR-065: Vocabulary-Based Provenance Relationships
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-077: Vocabulary Explorers
   
 
     
@@ -6711,7 +6835,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
+      <a href="../../../development/AUTO-DOCUMENTATION-STRATEGY/" class="md-nav__link">
         
   
   
@@ -6739,7 +6863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_chunked_ingestion/" class="md-nav__link">
         
   
   
@@ -6767,7 +6891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
+      <a href="../../../development/DEV_JOURNAL_minio_integration_and_emergent_visual_relationships/" class="md-nav__link">
         
   
   
@@ -6795,7 +6919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
+      <a href="../../../development/LEARNED_KNOWLEDGE_MCP/" class="md-nav__link">
         
   
   
@@ -6823,7 +6947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/pattern-repetition-notes/" class="md-nav__link">
+      <a href="../../../development/pattern-repetition-notes/" class="md-nav__link">
         
   
   
@@ -6851,7 +6975,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/relationship-semantics-comparison/" class="md-nav__link">
+      <a href="../../../development/relationship-semantics-comparison/" class="md-nav__link">
         
   
   
@@ -6879,7 +7003,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/vocabulary-direction-analysis/" class="md-nav__link">
+      <a href="../../../development/vocabulary-direction-analysis/" class="md-nav__link">
         
   
   
@@ -6961,7 +7085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -6989,7 +7113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -7017,7 +7141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -7045,7 +7169,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -7073,7 +7197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -7101,7 +7225,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -7129,7 +7253,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -7184,33 +7308,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#purpose" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Purpose
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prior-art-spreading-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prior Art: Spreading Activation
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#test-environment" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#recent-research-sa-rag-december-2025" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test Environment
+        Recent Research: SA-RAG (December 2025)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Test Environment">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#graph-characteristics" class="md-nav__link">
+  <a href="#existing-implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Graph Characteristics
+        Existing Implementation
       
     </span>
   </a>
@@ -7223,22 +7358,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#baseline-measurements" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Baseline Measurements
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Baseline Measurements">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#test-case-1-connected-path-buddhism-nirvana" class="md-nav__link">
+  <a href="#1-radial-layout-with-distance-based-opacity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test Case 1: Connected Path (Buddhism → Nirvana)
+        1. Radial Layout with Distance-Based Opacity
       
     </span>
   </a>
@@ -7246,10 +7381,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-case-2-cross-ontology-conscious-ego-illusion-of-self" class="md-nav__link">
+  <a href="#2-fixed-radial-positioning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)
+        2. Fixed Radial Positioning
       
     </span>
   </a>
@@ -7257,10 +7392,65 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-case-3-new-bridge-path-borrowed-ego-illusion-of-self" class="md-nav__link">
+  <a href="#3-intensity-calculation-presentation-layer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)
+        3. Intensity Calculation (Presentation Layer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-component-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Component Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-visual-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Visual Encoding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-re-centering-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Re-centering Interaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-settings-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Settings Panel
       
     </span>
   </a>
@@ -7273,22 +7463,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#path-structure-analysis" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Path Structure Analysis
+        Consequences
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Path Structure Analysis">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#buddhism-nirvana-5-paths-found" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Buddhism → Nirvana (5 paths found)
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Enhancements
       
     </span>
   </a>
@@ -7301,54 +7513,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#extrapolated-performance" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Extrapolated Performance
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-build-dedicated-spreading-activation-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Build Dedicated Spreading Activation Service
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#comparison-with-age-issue-195" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-use-existing-forcegraph2d-without-radial-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison with AGE Issue #195
+        2. Use Existing ForceGraph2D Without Radial Layout
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#conclusions" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-3d-visualization-with-depth-as-z-axis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Conclusions
+        3. 3D Visualization with Depth as Z-Axis
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#post-optimization-targets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Post-Optimization Targets
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#test-commands" class="md-nav__link">
+  <a href="#implementation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Test Commands
+        Implementation Plan
       
     </span>
   </a>
@@ -7386,309 +7604,262 @@
   
 
 
-<h1 id="adr-076b-pathfinding-performance-baseline">ADR-076B: Pathfinding Performance Baseline</h1>
-<p><strong>Status:</strong> Reference Data
-<strong>Date:</strong> 2025-12-10
-<strong>Related:</strong> ADR-076 (Pathfinding Optimization)</p>
-<h2 id="purpose">Purpose</h2>
-<p>This document records baseline performance measurements for the current exhaustive pathfinding implementation. These measurements establish the "before" state against which the Bidirectional BFS optimization (ADR-076) will be compared.</p>
-<h2 id="test-environment">Test Environment</h2>
+<h1 id="adr-085-document-explorer-with-radial-concept-visualization">ADR-085: Document Explorer with Radial Concept Visualization</h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2026-01-04
+<strong>Deciders:</strong> @aaronsb, @claude
+<strong>Related:</strong> ADR-084 (Document Search), ADR-044 (Probabilistic Truth Convergence), ADR-034 (Explorer Plugin Interface)</p>
+<h2 id="context">Context</h2>
+<p>ADR-084 introduced document-level search APIs. The next step is visualizing document→concept relationships in the web UI. Users need to understand:</p>
+<ol>
+<li>What concepts were extracted from a document</li>
+<li>How those concepts relate to other concepts in the graph</li>
+<li>The "epistemic reach" of a document - how far its concepts influence the knowledge graph</li>
+</ol>
+<h3 id="prior-art-spreading-activation">Prior Art: Spreading Activation</h3>
+<p>A design discussion proposed visualizing documents as origin nodes with activation spreading outward, intensity decaying over graph distance. This draws from:</p>
 <ul>
-<li><strong>Graph Size:</strong> 833 concepts, 4856 relationships</li>
-<li><strong>Database:</strong> Apache AGE on PostgreSQL 16</li>
-<li><strong>Hardware:</strong> Development workstation (specifics vary)</li>
-<li><strong>Date:</strong> December 10, 2025</li>
-<li><strong>Ontologies:</strong> AI_Semantics, Watts-Zen, Watts-Tao</li>
+<li><strong>Spreading Activation</strong> (Cognitive Science) - energy propagates through semantic networks with decay</li>
+<li><strong>TrustRank</strong> (Google/Yahoo) - trust flows from seed nodes, decays with hops</li>
+<li><strong>ADR-044</strong> - bounded locality with depth=1 default, max 3 hops</li>
 </ul>
-<h3 id="graph-characteristics">Graph Characteristics</h3>
+<h3 id="recent-research-sa-rag-december-2025">Recent Research: SA-RAG (December 2025)</h3>
+<p>The paper <a href="https://arxiv.org/abs/2512.15922">"Leveraging Spreading Activation for Improved Document Retrieval in Knowledge-Graph-Based RAG Systems"</a> (arXiv:2512.15922) provides empirical validation:</p>
+<ul>
+<li><strong>Vector-weighted edges</strong>: Edge weights = cosine similarity between query embedding and link embedding</li>
+<li><strong>Rescaling factor</strong>: <code>w' = (w - c) / (1 - c)</code> where c=0.4 prevents overactivation</li>
+<li><strong>k-hop traversal</strong>: k=3-10 hops depending on task complexity</li>
+<li><strong>Activation threshold</strong>: τₐ=0.5 determines which nodes to retrieve</li>
+<li><strong>Results</strong>: 25-39% improvement in answer correctness vs naive RAG</li>
+</ul>
+<p>This validates our approach and suggests enhancements for Phase 2+.</p>
+<h3 id="existing-implementation">Existing Implementation</h3>
+<p>Our system already implements the computational foundations for spreading activation: <code>grounding_strength</code> uses cosine similarity against prototype embeddings (ADR-044/045), k-hop traversal exists via <code>concept related --max-depth N</code>, all vocabulary types have embeddings for edge weighting, and similarity thresholds filter weak connections. Spreading activation—propagating weights from a source node with decay over graph distance—describes what the system already does computationally. This ADR adds the <strong>visualization layer</strong> to make that latent structure visible.</p>
+<p>No dedicated spreading activation service exists; EpistemicStatusService handles vocabulary classification, and PathfindingFacade provides pure BFS pathfinding. However, the visual effect can be achieved entirely in the presentation layer using existing API data.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-radial-layout-with-distance-based-opacity">1. Radial Layout with Distance-Based Opacity</h3>
+<p>Visualize document→concept relationships as a radial graph:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                    ┌─────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                    │   Hop 2 Nodes   │  ← Dim (opacity ~0.3)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                    │  (gray, small)  │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                    └────────┬────────┘
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                             │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                    ┌────────┴────────┐
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                    │   Hop 1 Nodes   │  ← Medium (opacity ~0.6)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                    │ (colored, med)  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                    └────────┬────────┘
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                             │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                    ┌────────┴────────┐
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                    │   Hop 0 Nodes   │  ← Bright (opacity ~0.9)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                    │(colored, large) │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                    └────────┬────────┘
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                             │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                    ┌────────┴────────┐
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                    │    DOCUMENT     │  ← Center (gold, pulsing)
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                    │ (origin node)   │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                    └─────────────────┘
+</code></pre></div>
+<h3 id="2-fixed-radial-positioning">2. Fixed Radial Positioning</h3>
+<p>Use deterministic fixed coordinates instead of force simulation to prevent wobble:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Pre-calculate fixed positions on graph load</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">RING_RADIUS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100</span><span class="p">;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nx">nodes</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">node</span><span class="p">,</span><span class="w"> </span><span class="nx">i</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="kr">type</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;document&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nx">node</span><span class="p">.</span><span class="nx">fx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w">  </span><span class="c1">// Document at origin</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nx">node</span><span class="p">.</span><span class="nx">fy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">nodesInRing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">nodes</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">n</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">n</span><span class="p">.</span><span class="nx">hop</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">hop</span><span class="p">).</span><span class="nx">length</span><span class="p">;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">angleIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">nodes</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">n</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">n</span><span class="p">.</span><span class="nx">hop</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">hop</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">n</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">).</span><span class="nx">length</span><span class="p">;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">angleIndex</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nx">nodesInRing</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nx">node</span><span class="p">.</span><span class="nx">fx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">cos</span><span class="p">(</span><span class="nx">angle</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">hop</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">RING_RADIUS</span><span class="p">);</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nx">node</span><span class="p">.</span><span class="nx">fy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">sin</span><span class="p">(</span><span class="nx">angle</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">hop</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">RING_RADIUS</span><span class="p">);</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="p">});</span>
+</code></pre></div>
+<p>This creates stable "orbits" rather than physics-driven jitter.</p>
+<h3 id="3-intensity-calculation-presentation-layer">3. Intensity Calculation (Presentation Layer)</h3>
+<p>Calculate intensity client-side from existing API data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ConceptNode</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">hop</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">                    </span><span class="c1">// 0, 1, or 2</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nx">grounding_strength</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">     </span><span class="c1">// 0.0-1.0 from API</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nx">edge_confidence</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">        </span><span class="c1">// confidence of incoming edge</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="kd">function</span><span class="w"> </span><span class="nx">calculateIntensity</span><span class="p">(</span><span class="nx">node</span><span class="o">:</span><span class="w"> </span><span class="kt">ConceptNode</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">decayFactor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.7</span><span class="p">;</span><span class="w">  </span><span class="c1">// 30% decay per hop</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hopDecay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">decayFactor</span><span class="p">,</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">hop</span><span class="p">);</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">hopDecay</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">grounding_strength</span><span class="p">;</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1">// Visual mapping</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nx">node</span><span class="p">.</span><span class="nx">opacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">0.8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">calculateIntensity</span><span class="p">(</span><span class="nx">node</span><span class="p">));</span><span class="w">  </span><span class="c1">// 0.2-1.0 range</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="nx">node</span><span class="p">.</span><span class="nx">radius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">12</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">calculateIntensity</span><span class="p">(</span><span class="nx">node</span><span class="p">));</span><span class="w">      </span><span class="c1">// 8-20px range</span>
+</code></pre></div>
+<h3 id="4-data-flow">4. Data Flow</h3>
+<p>Use existing APIs - no new endpoints needed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. User selects document
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>   └── GET /documents/{id}  →  document metadata
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>2. Fetch direct concepts (Hop 0)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>   └── GET /documents/{id}/concepts  →  concept list with grounding
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>3. Fetch related concepts (Hop 1-2)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>   └── POST /query/concepts/related  →  neighbors with depth=2
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>4. Transform to D3 graph format
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>   └── Client-side: nodes[], links[], calculate intensities
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>5. Render with ForceGraph2D (radial mode)
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>   └── Reuse existing explorer components
+</code></pre></div>
+<h3 id="5-component-structure">5. Component Structure</h3>
+<p>Follow ADR-034 Explorer Plugin Interface:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>web/src/explorers/DocumentExplorer/
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── DocumentExplorer.tsx        # Main component
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── types.ts                    # DocumentExplorerData, DocumentExplorerSettings
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>├── RadialLayout.ts             # Custom D3 force for radial positioning
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>└── IntensityCalculator.ts      # Decay/opacity calculations
+</code></pre></div>
+<p>Reuse from <code>explorers/common/</code>:
+- <code>NodeInfoBox</code> - concept details on click
+- <code>Legend</code> - grounding status colors
+- <code>PanelStack</code> - layout management
+- <code>GraphSettingsPanel</code> - hop depth, decay factor controls</p>
+<h3 id="6-visual-encoding">6. Visual Encoding</h3>
 <table>
 <thead>
 <tr>
-<th>Metric</th>
-<th>Value</th>
+<th>Property</th>
+<th>Encodes</th>
+<th>Range</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Concepts</td>
-<td>833</td>
+<td><strong>Opacity</strong></td>
+<td>Intensity (hop decay × grounding)</td>
+<td>0.2 - 1.0</td>
 </tr>
 <tr>
-<td>Relationships</td>
-<td>4,856</td>
+<td><strong>Size</strong></td>
+<td>Evidence count</td>
+<td>8 - 20px</td>
 </tr>
 <tr>
-<td>Sources</td>
-<td>221</td>
+<td><strong>Color</strong></td>
+<td>Grounding status</td>
+<td>Green/Yellow/Gray/Red</td>
 </tr>
 <tr>
-<td>Instances</td>
-<td>1,163</td>
+<td><strong>Ring</strong></td>
+<td>Hop distance</td>
+<td>Center=doc, rings=0,1,2</td>
 </tr>
 <tr>
-<td>Avg relationships/concept</td>
-<td>~5.8</td>
+<td><strong>Edge thickness</strong></td>
+<td>Relationship confidence</td>
+<td>1 - 4px</td>
+</tr>
+<tr>
+<td><strong>Edge style</strong></td>
+<td>Relationship type</td>
+<td>Solid/dashed by category</td>
 </tr>
 </tbody>
 </table>
-<h2 id="baseline-measurements">Baseline Measurements</h2>
-<h3 id="test-case-1-connected-path-buddhism-nirvana">Test Case 1: Connected Path (Buddhism → Nirvana)</h3>
-<p>Query: <code>kg search connect "buddhism meditation" "nirvana" --min-similarity 0.8</code></p>
-<p>Semantic matches:
-- From: "Meditation in Buddhism" (87.1% match)
-- To: "Nirvana" (84.8% match)
-- Shortest path exists: 2 hops</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Time (s)</th>
-<th>Paths Found</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>4</td>
-<td>1.54</td>
-<td>5</td>
-<td>Acceptable</td>
-</tr>
-<tr>
-<td>5</td>
-<td>1.86</td>
-<td>5</td>
-<td>Acceptable</td>
-</tr>
-<tr>
-<td>6</td>
-<td>4.68</td>
-<td>5</td>
-<td>Noticeable delay</td>
-</tr>
-<tr>
-<td>7</td>
-<td>33.35</td>
-<td>5</td>
-<td>Significant slowdown</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Growth pattern:</strong> ~2.5x per hop increase (exponential)</p>
-<h3 id="test-case-2-cross-ontology-conscious-ego-illusion-of-self">Test Case 2: Cross-Ontology (Conscious Ego → Illusion of Self)</h3>
-<p>Query: <code>kg search connect "conscious ego" "illusion of self" --max-hops 6 --min-similarity 0.75</code></p>
-<p>Semantic matches:
-- From: "Conscious Ego" (matched)
-- To: "Illusion of Self" (matched)
-- No direct path exists</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Time (s)</th>
-<th>Paths Found</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>6</td>
-<td>14.33</td>
-<td>0</td>
-<td>Full exhaustive search</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Observation:</strong> Even failed searches take significant time because the algorithm must enumerate all possible paths before determining no connection exists.</p>
-<h3 id="test-case-3-new-bridge-path-borrowed-ego-illusion-of-self">Test Case 3: New Bridge Path (Borrowed Ego → Illusion of Self)</h3>
-<p>After ingesting reflective content that created an explicit bridge:</p>
-<p>Query: Direct concept ID connection test</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Time (s)</th>
-<th>Paths Found</th>
-<th>Path</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>5</td>
-<td>&lt;2</td>
-<td>1</td>
-<td>Borrowed Ego → Human ego → Spotlight Consciousness → Illusion of Self</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Path details:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Borrowed Ego
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    ↓ REQUIRES
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Human ego
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    ↓ DEFINED_AS
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Spotlight and Floodlight Consciousness
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓ CONTRASTS_WITH
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Spotlight Consciousness
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓ ENABLES
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Illusion of Self
-</code></pre></div></p>
-<h2 id="path-structure-analysis">Path Structure Analysis</h2>
-<h3 id="buddhism-nirvana-5-paths-found">Buddhism → Nirvana (5 paths found)</h3>
-<p><strong>Path 1 (2 hops):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → RESULTS_FROM → Nirvana
-</code></pre></div></p>
-<p><strong>Path 2 (3 hops):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Meditation in Buddhism → DEFINED_AS → Meditation in Buddhism → UTILIZES → Zen Buddhism → RESULTS_FROM → Nirvana
-</code></pre></div></p>
-<p><strong>Path 3 (3 hops):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → SUPPORTS → Middle Way → ENABLES → Nirvana
-</code></pre></div></p>
-<p><strong>Path 4 (4 hops):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → ASSOCIATED_WITH → Karlfried Graf Dürckheim → PRACTITIONER_OF → Zen Buddhism → RESULTS_FROM → Nirvana
-</code></pre></div></p>
-<p><strong>Path 5 (4 hops):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Meditation in Buddhism → UTILIZES → Zen Buddhism → PRACTITIONER_OF → Karlfried Graf Dürckheim → ASSOCIATED_WITH → Zen Buddhism → RESULTS_FROM → Nirvana
-</code></pre></div></p>
-<p><strong>Observation:</strong> Paths 4 and 5 are essentially the same path traversed in different directions through the Dürckheim node. The exhaustive search finds both.</p>
-<h2 id="extrapolated-performance">Extrapolated Performance</h2>
-<p>Based on observed exponential growth (~2.5-7x per hop):</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Estimated Time</th>
-<th>Usability</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>4</td>
-<td>~1.5s</td>
-<td>Good</td>
-</tr>
-<tr>
-<td>5</td>
-<td>~2s</td>
-<td>Good</td>
-</tr>
-<tr>
-<td>6</td>
-<td>~5s</td>
-<td>Marginal</td>
-</tr>
-<tr>
-<td>7</td>
-<td>~33s</td>
-<td>Poor</td>
-</tr>
-<tr>
-<td>8</td>
-<td>~2-4 min</td>
-<td>Unusable</td>
-</tr>
-<tr>
-<td>10</td>
-<td>Hours</td>
-<td>Timeout</td>
-</tr>
-</tbody>
-</table>
-<h2 id="comparison-with-age-issue-195">Comparison with AGE Issue #195</h2>
-<p>From GitHub Issue #195 (1.5M nodes, 1.2M edges):</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Issue #195 Time</th>
-<th>Our Time</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>4</td>
-<td>7s</td>
-<td>1.5s</td>
-</tr>
-<tr>
-<td>5</td>
-<td>3.5 min</td>
-<td>1.9s</td>
-</tr>
-<tr>
-<td>6</td>
-<td>~7 min</td>
-<td>4.7s</td>
-</tr>
-<tr>
-<td>7</td>
-<td>-</td>
-<td>33s</td>
-</tr>
-</tbody>
-</table>
-<p>Our graph is much smaller (~800 vs 1.5M nodes) which explains faster times, but the exponential growth pattern is consistent.</p>
-<h2 id="conclusions">Conclusions</h2>
+<h3 id="7-re-centering-interaction">7. Re-centering Interaction</h3>
+<p>Clicking a concept re-centers the visualization on that concept:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">function</span><span class="w"> </span><span class="nx">handleNodeClick</span><span class="p">(</span><span class="nx">node</span><span class="o">:</span><span class="w"> </span><span class="kt">ConceptNode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="kr">type</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;concept&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="c1">// Animate transition: current view → node at center</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="c1">// Fetch documents that ground this concept</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="c1">// Rebuild graph with concept as origin</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nx">setOriginNode</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="nx">fetchGroundingDocuments</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">}</span>
+</code></pre></div>
+<p>This enables traversal: Document → Concept → Other Documents → deeper exploration.</p>
+<h3 id="8-settings-panel">8. Settings Panel</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">DocumentExplorerSettings</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nx">visual</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nx">maxHops</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mf">3</span><span class="p">;</span><span class="w">           </span><span class="c1">// Default: 2</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nx">decayFactor</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">          </span><span class="c1">// Default: 0.7 (0.5-0.9 slider)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nx">minOpacity</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">           </span><span class="c1">// Default: 0.2</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nx">showLabels</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span><span class="w">          </span><span class="c1">// Default: true</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="nx">colorBy</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;grounding&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;ontology&#39;</span><span class="p">;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="nx">layout</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nx">radialSpacing</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">        </span><span class="c1">// Distance between rings</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="nx">nodeSpacing</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">          </span><span class="c1">// Angular spread within ring</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li><strong>No new backend services</strong> - uses existing APIs</li>
+<li><strong>Familiar patterns</strong> - follows ADR-034 explorer interface</li>
+<li><strong>Reuses components</strong> - NodeInfoBox, Legend, PanelStack</li>
+<li><strong>Intuitive metaphor</strong> - "closer = more directly related"</li>
+<li><strong>Adjustable</strong> - decay factor slider for user control</li>
+<li><strong>Performance</strong> - client-side intensity calculation is O(n)</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li><strong>Limited depth</strong> - max 2-3 hops before visualization becomes cluttered</li>
+<li><strong>Simplified decay</strong> - geometric decay per hop, not vector-similarity weighted per edge</li>
+<li><strong>Approximation</strong> - intensity doesn't account for path quality, just distance</li>
+</ul>
+<h3 id="future-enhancements">Future Enhancements</h3>
 <ol>
 <li>
-<p><strong>Exponential degradation confirmed:</strong> Each additional hop multiplies query time by 2.5-7x</p>
+<p><strong>Vector-weighted decay (SA-RAG style)</strong> - Replace fixed decay with cosine similarity:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// Current: fixed decay</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">decay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.7</span><span class="p">;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1">// Future: vector-weighted (per arXiv:2512.15922)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">edgeSimilarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">cosineSimilarity</span><span class="p">(</span><span class="nx">documentEmbedding</span><span class="p">,</span><span class="w"> </span><span class="nx">edgeEmbedding</span><span class="p">);</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="kd">const</span><span class="w"> </span><span class="nx">rescaled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">edgeSimilarity</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.4</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.4</span><span class="p">);</span><span class="w">  </span><span class="c1">// c=0.4 prevents overactivation</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="kd">const</span><span class="w"> </span><span class="nx">decay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">rescaled</span><span class="p">);</span>
+</code></pre></div></p>
 </li>
 <li>
-<p><strong>Practical limit:</strong> Max 5-6 hops before UX degrades significantly</p>
+<p><strong>Activation threshold</strong> - Prune nodes below τₐ=0.5 to prevent noise</p>
 </li>
 <li>
-<p><strong>Failed searches are expensive:</strong> Full exhaustive enumeration even when no path exists</p>
+<p><strong>Contradiction highlighting</strong> - Show "shadows" where CONTRADICTS edges exist (negative activation)</p>
 </li>
 <li>
-<p><strong>Current implementation scales poorly:</strong> With graph growth to 10K+ concepts, even 4-hop queries will become problematic</p>
+<p><strong>Multi-document comparison</strong> - Overlay multiple documents as activation sources, see where influence overlaps</p>
 </li>
 <li>
-<p><strong>Bidirectional BFS justified:</strong> The O(b^d) → O(b^(d/2)) improvement from ADR-076 is necessary for production use</p>
+<p><strong>Animated traversal</strong> - Show activation spreading as BFS animation on load</p>
 </li>
 </ol>
-<h2 id="post-optimization-targets">Post-Optimization Targets</h2>
-<p>After implementing Bidirectional BFS, target performance:</p>
-<table>
-<thead>
-<tr>
-<th>Max Hops</th>
-<th>Target Time</th>
-<th>Improvement</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>6</td>
-<td>&lt;1s</td>
-<td>5x</td>
-</tr>
-<tr>
-<td>7</td>
-<td>&lt;2s</td>
-<td>15x</td>
-</tr>
-<tr>
-<td>10</td>
-<td>&lt;5s</td>
-<td>Orders of magnitude</td>
-</tr>
-</tbody>
-</table>
-<h2 id="test-commands">Test Commands</h2>
-<p>To reproduce these measurements:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Basic timing test</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Full JSON output for analysis</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.&#39;</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Cross-ontology test</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;conscious ego&quot;</span><span class="w"> </span><span class="s2">&quot;illusion of self&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">6</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.75<span class="w"> </span>--no-evidence
-</code></pre></div>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="1-build-dedicated-spreading-activation-service">1. Build Dedicated Spreading Activation Service</h3>
+<p><strong>Rejected:</strong> Over-engineering for MVP. The visual effect can be achieved with presentation-layer calculations. Can add backend optimization later if performance requires.</p>
+<h3 id="2-use-existing-forcegraph2d-without-radial-layout">2. Use Existing ForceGraph2D Without Radial Layout</h3>
+<p><strong>Considered for v1:</strong> Simpler implementation, but loses the "document at center" metaphor. May use as fallback if radial layout proves complex.</p>
+<h3 id="3-3d-visualization-with-depth-as-z-axis">3. 3D Visualization with Depth as Z-Axis</h3>
+<p><strong>Deferred:</strong> ForceGraph3D exists but adds complexity. Radial 2D is more intuitive for showing distance relationships.</p>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<ol>
+<li><strong>Phase 1:</strong> Basic DocumentExplorer with hop-0 concepts only</li>
+<li><strong>Phase 2:</strong> Add hop-1 expansion with decay visualization</li>
+<li><strong>Phase 3:</strong> Add hop-2 and settings panel</li>
+<li><strong>Phase 4:</strong> Polish (animations, multi-document support)</li>
+</ol>
 <h2 id="references">References</h2>
 <ul>
-<li>ADR-076: Pathfinding Optimization for Apache AGE</li>
-<li><a href="https://github.com/apache/age/issues/195">GitHub Issue #195</a> - Variable-length path performance</li>
-<li>Graph state captured during Watts + AI_Semantics ingestion session</li>
+<li><strong>SA-RAG Paper:</strong> Kovač, M. et al. (2025). "Leveraging Spreading Activation for Improved Document Retrieval in Knowledge-Graph-Based RAG Systems." arXiv:2512.15922. https://arxiv.org/abs/2512.15922</li>
+<li><strong>GraphRAG Survey:</strong> Pan, S. et al. (2024). "Retrieval-Augmented Generation with Graphs." arXiv:2501.00309. https://arxiv.org/abs/2501.00309</li>
+<li><strong>Spreading Activation (Original):</strong> Collins, A. M., &amp; Loftus, E. F. (1975). "A spreading-activation theory of semantic processing." Psychological Review.</li>
+<li><strong>ADR-044:</strong> Probabilistic Truth Convergence - bounded locality, satisficing, grounding calculation</li>
+<li><strong>ADR-084:</strong> Document-Level Search - APIs for document discovery</li>
 </ul>
 
 
@@ -7739,10 +7910,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
