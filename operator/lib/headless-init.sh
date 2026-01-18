@@ -483,11 +483,14 @@ EOF
     local REDIRECT_URI="http://${WEB_HOSTNAME}/callback"
     echo -e "${BLUE}  Registering OAuth client (kg-web)...${NC}"
     docker exec "$POSTGRES_CONTAINER" psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -c \
-        "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types)
+        "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types, scopes)
          VALUES ('kg-web', 'Knowledge Graph Web', 'public',
                  ARRAY['${REDIRECT_URI}', 'http://localhost:3000/callback'],
-                 ARRAY['authorization_code', 'refresh_token'])
-         ON CONFLICT (client_id) DO UPDATE SET redirect_uris = EXCLUDED.redirect_uris;" >/dev/null 2>&1
+                 ARRAY['authorization_code', 'refresh_token'],
+                 ARRAY['*'])
+         ON CONFLICT (client_id) DO UPDATE SET
+             redirect_uris = EXCLUDED.redirect_uris,
+             scopes = EXCLUDED.scopes;" >/dev/null 2>&1
     echo -e "${GREEN}✓ OAuth client registered (redirect: ${REDIRECT_URI})${NC}"
     echo ""
 

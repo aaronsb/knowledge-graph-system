@@ -285,6 +285,11 @@ def validate_scopes(requested_scopes: list[str], allowed_scopes: list[str]) -> T
     if not requested_scopes:
         requested_scopes = ["read:*"]
 
+    # If allowed_scopes is None or empty, treat as wildcard (allow all)
+    # This handles clients registered without explicit scopes
+    if not allowed_scopes:
+        return True, requested_scopes
+
     # If client has wildcard, grant all requested scopes
     if "*" in allowed_scopes or "read:*" in allowed_scopes and "write:*" in allowed_scopes:
         return True, requested_scopes
