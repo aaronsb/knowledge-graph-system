@@ -1,324 +1,168 @@
 # Knowledge Graph System
 
-A concept-level knowledge graph that extracts semantic units from documents and stores them in a queryable graph database.
+A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
 
-## The Idea
+## Why External AI Memory Matters
 
-Meta's Large Concept Models (December 2024) showed that language models can operate on sentence-level semantic representations rather than tokens - predicting the next *concept* autoregressively in embedding space.
+Today's LLMs are static. They learn during training, then freeze. You can fine-tune or retrain, but the model itself doesn't accumulate knowledge from conversations. Every session starts fresh.
 
-This system takes a similar approach but stores concepts in a deterministic structure rather than a neural model:
+This is changing. Google's Titans architecture introduces neural long-term memory that updates during inference—"surprise-driven memorization" that prioritizes unexpected information, scaling to 2+ million tokens. Mixture-of-experts models route queries to specialized subnetworks. The boundary between model and memory is blurring.
 
-- **Meta's LCM**: Concepts exist in embedding space; the model predicts the next concept
-- **This system**: Concepts exist as graph nodes; relationships are explicit edges; openCypher handles traversal; query facades compute embedding-derived properties (grounding, diversity, similarity) at query time
+But these are internal mechanisms. You don't control what they remember. You can't audit their confidence. You can't see where their sources disagree.
 
-Both operate above the token level. Meta's is generative; this is a queryable knowledge store backed by PostgreSQL with Apache AGE (a graph extension providing native openCypher support).
+**External memory systems**—knowledge you manage outside the model—remain essential:
+- You control what's stored
+- You can trace provenance
+- You can measure confidence
+- You can preserve contradictions
 
-## What It Does
+Many external memory systems exist. Paid services like Mem0, Zep, and Pinecone offer managed infrastructure. Open source options like LlamaIndex, LangChain, and GraphRAG provide frameworks. They vary widely in features, production-readiness, cost, and what they optimize for.
 
-When you ingest a document, the system:
+This system optimizes for **epistemic rigor**—knowing how well-supported your knowledge is, not just retrieving it.
 
-1. **Extracts concepts** - Named entities, processes, tools, ideas mentioned in the text
-2. **Extracts relationships** - How concepts connect (ENABLES, SUPPORTS, CONTAINS, etc.)
-3. **Preserves evidence** - The actual source text that generated each extraction
-4. **Stores embeddings** - Vector representations at three levels: concepts, relationships, and evidence
+## The Evolution of External AI Memory
 
-When you query, the system:
+**Stage 1: Context Window** — Paste documents into the prompt. Works until you hit token limits. No persistence. Re-paste everything next conversation.
 
-1. **Finds concepts by meaning** - Semantic search, not keyword matching
-2. **Traverses relationships** - Shows how concepts connect across documents
-3. **Computes grounding scores** - Confidence based on supporting vs. contradicting evidence
-4. **Links to sources** - Every concept traces back to original text (or images)
+**Stage 2: Vector Database** — Embed documents as vectors. Search by similarity. "Find chunks related to this query." But: no relationships between chunks. No way to know if sources agree or disagree. Every chunk is equally trusted.
 
-The graph accumulates knowledge across documents. Later ingestions match existing concepts by semantic similarity (≥85% threshold) rather than string matching, so "User Authentication" and "Auth System" become the same node if they share semantic space.
+**Stage 3: RAG (Retrieval-Augmented Generation)** — Vector search feeds context to an LLM. Better answers grounded in your documents. But still: chunks are isolated. No accumulated understanding. The LLM sees fragments, not structure.
 
-## How It Differs from Standard RAG
+**Stage 4: Knowledge Graph** — Extract entities and relationships. Build structure. "Person X works at Company Y." Now you have connections. But: most graphs assume everything is true. No confidence. No contradiction handling. Microsoft's GraphRAG lives here—impressive comprehensiveness, but conflicts require LLM judgment at query time.
 
-Standard RAG retrieves text chunks by vector similarity and passes them to an LLM. This works, but:
+**Stage 5: Epistemic Knowledge Graph** — This system. Concepts have grounding scores computed from evidence. Contradictions are preserved, not hidden. Semantic diversity detects fabrication. You know *what* and *how sure*.
 
-- **No relationships**: RAG finds similar chunks but doesn't know how they connect
-- **No accumulation**: Each query starts fresh; the system doesn't build domain knowledge
-- **No confidence signals**: All retrieved chunks are treated as equally valid
+The progression: retrieval → structure → **confidence**.
 
-This system builds a persistent graph where relationships are explicit, evidence accumulates across documents, and confidence scores reflect the weight of evidence.
+## The Problem with Most AI Memory
 
-## How It Differs from GraphRAG
+Most AI memory systems store facts and retrieve them by similarity. They can't tell you:
+- **How confident** should I be in this?
+- **Do sources disagree** about this?
+- **Where did this come from** originally?
 
-Microsoft's GraphRAG also builds knowledge graphs from text, but with different design choices:
+Vector databases find similar content. They don't know if it's contested, well-supported, or fabricated.
 
-| Aspect | GraphRAG | This System |
-|--------|----------|-------------|
-| Updates | Batch community detection | Immediate recursive upsert |
-| Summaries | Generated at build time | Computed at query time |
-| Truth model | Assumed true | Probabilistic (support/contradiction) |
-| Identity | String matching | Semantic similarity (85% threshold) |
+## What This System Does Differently
 
-## Architecture
+### Grounding: Measuring Confidence Mathematically
 
-### Graph Database
+Every concept has a **grounding score** (-1.0 to +1.0) computed from supporting vs. contradicting evidence. Not a label someone assigned—a calculation from the actual evidence graph.
 
-The system uses PostgreSQL with [Apache AGE](https://age.apache.org/), an extension that adds native graph capabilities with openCypher query support. This means:
+A concept with 47 supporting edges and 12 contradicting edges gets grounding ≈ 0.77. You know exactly how contested it is.
 
-- Graph traversals execute as database queries, not application code
-- Concepts and relationships are first-class graph entities (vertices and edges)
-- Complex path queries (find all paths between X and Y within 3 hops) run in the database
+*No other system we researched computes grounding this way.* GraphRAG stores conflicting nodes but relies on LLMs to resolve them at query time. We measure it.
 
-### Query Facades
+### Diversity: Detecting Fabrication
 
-On top of openCypher traversal, query facades compute embedding-derived properties:
+Authentic information connects to many independent domains. Fabricated claims create echo chambers—circular reasoning with low conceptual diversity.
 
-- **Similarity** - Vector distance between concept embeddings for semantic search
-- **Grounding** - Polarity axis projection across evidence embeddings
-- **Diversity** - Entropy calculation over neighbor embedding vectors
-- **Evidence retrieval** - Fetching and ranking source text by relevance
+We tested this: Apollo 11 mission data showed **37.7% semantic diversity** across 33 related concepts. Moon landing conspiracy theories showed **23.2% diversity** across 3 concepts.
 
-The API workers orchestrate this: openCypher returns graph structure, facades compute vector properties, MCP exposes the unified result to agents.
+*This metric is unique to this system.*
 
-### Three Embedding Layers
+### Contradiction Preservation
 
-The system stores embeddings at three levels, enabling semantic operations throughout:
+When sources disagree, the system doesn't pick a winner. It preserves both perspectives with evidence attribution, letting you (or an AI agent) reason about the disagreement.
 
-**Concept nodes** contain:
-- Concept name and description
-- Embedding vector for semantic matching
-- Links to evidence sources
+### Emergent Spatial Mapping
 
-**Relationship edges** contain:
-- Relationship type (from an evolving vocabulary)
-- Embedding of the relationship type
-- Confidence score per instance
+Feed the system street view images or photos of a physical place. The relationships extracted ("next to", "across from", "visible from") naturally encode physical topology.
 
-**Evidence sources** contain:
-- Original extracted text
-- Embedding for semantic grounding
-- Document reference (file, paragraph, page)
-- Original image when extracted from visual content
+The graph becomes a spatial map—without GPS coordinates. "The pharmacy is between the bank and the cafe" emerges from visual evidence alone.
 
-### Grounding Score Calculation
+## How It Compares
 
-Rather than classifying relationships as binary "supports" or "contradicts," the system computes continuous grounding scores.
+| Capability | This System | GraphRAG | Zep/Graphiti | Vector DBs |
+|------------|-------------|----------|--------------|------------|
+| Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No |
+| Grounding scores | Continuous 0-1 | Source citations only | No | Similarity only |
+| Semantic diversity | Yes (authenticity signal) | No | No | No |
+| Epistemic status | Per-relationship | No | No | No |
+| FUSE filesystem | Yes | No | No | No |
+| Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Some local |
+| Dynamic vocabulary | Emergent + consolidation | Fixed schema | Fixed schema | N/A |
 
-The challenge: SUPPORTS and CONTRADICTS are 81% similar in embedding space, so classification fails. Instead:
-
-1. Define opposing concept pairs (SUPPORTS/CONTRADICTS, ENABLES/PREVENTS)
-2. Compute a "polarity axis" from their difference vectors
-3. Project each relationship embedding onto this axis
-
-The result is a score from -1.0 (contradicted) to +1.0 (well-supported). A concept with 47 supporting edges and 12 contradicting edges gets grounding ≈ 0.77, reflecting the actual evidence distribution.
-
-### Vocabulary Expansion
-
-The system starts with ~30 seed relationship types. During extraction, the LLM creates new types as needed - FACILITATES, UNDERPINS, CONSTRAINS, whatever the domain requires.
-
-New vocabulary gets:
-- **Category** from embedding similarity to seeds (FACILITATES → similar to ENABLES → "causation")
-- **Direction** from LLM reasoning (outward: "from acts on to"; inward: "from receives from to")
-
-After ingestion, consolidation merges semantically similar types and prunes unused ones.
-
-### Semantic Diversity
-
-The system measures conceptual diversity by calculating entropy across a concept's neighbor embeddings:
-
-- **High diversity**: Concept connects to physics, geology, engineering, optics
-- **Low diversity**: Concept connects only to closely related terms
-
-This metric helps distinguish well-grounded concepts from echo chambers - authentic knowledge tends to connect to diverse independent domains.
-
-## What It Looks Like
-
-### Concept Search
-
-```
-$ kg search query "quarterly planning"
-
-Found 6 concepts (threshold: 70%)
-
-## 1. PI/Quarterly Planning
-A planning process that occurs every quarter, often involving 
-Program Increments in agile frameworks.
-
-Documents: EPOM-Model, Contoso-TBM
-Evidence: 4 instances
-Grounding: Weak (0.000, 0%)
-Diversity: 43.9% (33 related concepts)
-```
-
-### Concept Details
-
-```
-$ kg concept details sha256:bfc80_chunk1_814fee0b
-
-## Evidence (4 instances)
-
-1. EPOM-Model (para 1): "Orange arrow: 'PI/Quarterly Planning'"
-   [IMAGE AVAILABLE]
-
-2. Contoso-TBM (para 2): "PI is a planning increment. It used
-   to be a programming increment, but they changed the terminology."
-
-3. Contoso-TBM (para 3): "PI planning, which is a two-day
-   ceremony that is pivotal."
-
-## Relationships (3)
-
-ENABLES -> Agile Release Train (90%)
-CONTAINS -> Inspect and Adapt Event (90%)
-INFLUENCES -> Calendar Management (80%)
-```
-
-### Related Concepts
-
-```
-$ kg concept related sha256:390f3_chunk1_71a51abb
-
-From: TBM Platform
-Found: 71 concepts
-
-## Distance 1
-- Cost Transparency Module (PROVIDES)
-- Enterprise Agile Planning (CONTAINS)
-- Extendable Data Model (ENABLES)
-- Strategic Portfolio Management (SUPPORTS -> INTEGRATES)
-
-## Distance 2
-- Atlassian Jira (CONNECTED_TO -> CONNECTED_TO)
-- ServiceNow CMDB (PROVIDES -> PROVIDES)
-- Lean Portfolio Management (CONTAINS -> IMPLEMENTED_BY)
-...
-```
-
-### Image Evidence
-
-The system extracts concepts from images and preserves the original for verification:
-
-```
-$ kg source image sha256:bfc80_chunk1
-```
-
-Returns the original slide/diagram that generated the concept, enabling a verification loop: visual inspection → refined description → improved graph.
+**Closest competitor:** Zep/Graphiti has sophisticated temporal tracking (bi-temporal model). We have better epistemic metrics; they have better time-travel queries.
 
 ## Quick Start
 
-### Automated Setup
-
 ```bash
-./quickstart.sh
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+./operator.sh init    # Interactive setup
+./operator.sh start   # Start containers
 ```
 
-Interactive script that generates secrets, starts containers, configures defaults, installs the CLI, and prompts for your OpenAI API key.
+Access points:
+- **Web UI**: http://localhost:3000
+- **API**: http://localhost:8000/docs
+- **CLI**: `kg search "your query"`
 
-### Manual Setup
+See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
-**Prerequisites:** Docker or Podman with Compose
+## What You Can Do
 
-```bash
-# 1. Generate secrets
-./operator/lib/init-secrets.sh --dev
+**Ingest documents** — PDFs, markdown, images, text. The system extracts concepts, relationships, and evidence automatically.
 
-# 2. Start infrastructure
-./operator/lib/start-infra.sh
+**Search by meaning** — "economic downturn" finds content about recessions, crashes, and crises even if those exact words aren't used.
 
-# 3. Configure
-docker exec -it kg-operator python /workspace/operator/configure.py admin
-docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
-docker exec kg-operator python /workspace/operator/configure.py embedding 2
-docker exec -it kg-operator python /workspace/operator/configure.py api-key openai
+**Explore connections** — Find paths between concepts. See how ideas relate across documents.
 
-# 4. Start application
-./operator/lib/start-app.sh
+**Check confidence** — Every result includes grounding scores. Know what's well-supported vs. contested.
 
-# 5. Install CLI
-cd client && ./install.sh && cd ..
+**Trace sources** — Every concept links back to the original text or image that generated it.
 
-# 6. Ingest and query
-kg ingest file document.pdf --ontology "Research"
-kg search query "your topic"
-```
+**Query via AI** — MCP server integration lets Claude and other assistants use the graph as persistent memory.
 
-**Access points:**
-- API: http://localhost:8000/docs
-- Web UI: http://localhost:3000
-- CLI: `kg` commands
-- MCP Server: Claude Desktop/Code integration
+**Navigate via filesystem** — Mount the graph as a FUSE filesystem. Use `ls`, `grep`, `find` on semantic space.
 
 ## Use Cases
 
-**Agent memory** - Store observations and decisions as queryable concepts. Build institutional knowledge that persists across conversations.
+**Research synthesis** — Ingest papers, find connections across them, see where authors disagree. Grounding scores tell you which claims have broad support.
 
-**Research synthesis** - Navigate documents by concept relationships. Discover connections across papers. The system merges semantically similar concepts from different sources automatically.
+**Technical documentation** — Extract architecture concepts from diagrams, meeting notes, design docs. Query how components relate.
 
-**Technical documentation** - Extract architecture concepts from diagrams, meeting transcripts, design docs. Query how components relate.
+**Agent memory** — Give AI assistants persistent, grounded memory. They can check confidence before making claims.
 
-**Business analysis** - Track entities and relationships from financial records, meeting notes, customer feedback. The graph accumulates context over time.
+**Spatial understanding** — Ingest place photos. The graph learns physical relationships without coordinates.
 
-## Components
+**Compliance/audit** — Full provenance chain. Every concept traces to source evidence.
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Database | PostgreSQL 16 + Apache AGE | Graph storage with native openCypher queries |
-| API | FastAPI (Python) | Extraction pipeline, openCypher query execution |
-| CLI | TypeScript/Node.js | Command-line interface |
-| MCP Server | TypeScript | Claude Desktop/Code integration |
-| Web UI | React + Vite | Interactive visualization |
-| Visualization | D3.js, react-force-graph | Graph rendering |
+## Architecture
 
-## Project Structure
-
-```
-knowledge-graph-system/
-├── src/api/              # FastAPI server + extraction
-├── client/               # CLI + MCP server
-├── viz-app/              # React visualization
-├── operator/             # Configuration management
-├── schema/               # Database migrations
-└── docs/                 # Documentation (67 ADRs)
-```
-
-## Key Design Decisions
-
-The [docs/architecture/](docs/architecture/) directory contains 67 Architecture Decision Records. Notable ones:
-
-- **ADR-044**: Probabilistic truth from contradiction resolution
-- **ADR-052**: Vocabulary expansion-consolidation cycle
-- **ADR-058**: Polarity axis projection for grounding scores
-- **ADR-063**: Semantic diversity as authenticity signal
+- **PostgreSQL + Apache AGE** — Graph database with native openCypher queries
+- **FastAPI** — Extraction pipeline and REST API
+- **React + D3** — Interactive visualization
+- **TypeScript CLI** — Command-line and MCP server
+- **Ollama** — Optional local inference (air-gapped operation)
 
 ## Documentation
 
-**📖 [Complete Documentation](https://aaronsb.github.io/knowledge-graph-system/)** - Comprehensive guides, architecture decisions, and API references
+| Audience | Start Here |
+|----------|------------|
+| Understanding the concepts | [docs/concepts/](docs/concepts/) |
+| Deploying and operating | [docs/operating/](docs/operating/) |
+| Using the system | [docs/using/](docs/using/) |
+| Architecture decisions | [docs/architecture/](docs/architecture/) |
 
-- [Quick Start Guide](docs/guides/QUICKSTART.md)
-- [Architecture Overview](docs/architecture/ARCHITECTURE_OVERVIEW.md)
-- [MCP Setup](docs/manual/03-integration/01-MCP_SETUP.md)
-- [AI Providers](docs/manual/02-configuration/01-AI_PROVIDERS.md)
-- [Concepts & Terminology](docs/manual/06-reference/04-CONCEPTS_AND_TERMINOLOGY.md)
+88 Architecture Decision Records document the design evolution.
 
-## Related Research
+## Why Try It
 
-This system was built independently, then found to align with several research directions. These references explain *why* the design choices work, not where they came from:
+If you need:
+- **Epistemic reliability** — knowing *how sure* you should be, not just *what* the answer is
+- **Contradiction awareness** — preserving disagreement rather than hiding it
+- **Full provenance** — tracing every claim to source evidence
+- **Local operation** — running without cloud API dependencies
+- **Unix integration** — using standard tools on semantic data
 
-**Concept-level modeling** - Meta's Large Concept Models (Barrault et al., 2024) formalized operating above token-level: predicting sentences as semantic units in embedding space. This system stores those units in a graph rather than predicting them, but the abstraction level is similar.
-
-**Knowledge graph embeddings** - TransE (Bordes et al., 2013) and RotatE (Sun et al., 2019) established that relationships can be modeled as geometric operations in embedding space. The polarity axis projection for grounding scores follows this pattern - relationships as vectors, truth as geometry.
-
-**Probabilistic knowledge** - Knowledge Vault (Dong et al., 2014) showed that calibrated confidence scores outperform binary truth labels at scale. The grounding score calculation reflects accumulated evidence rather than asserting facts.
-
-**Semantic uncertainty** - Semantic entropy for hallucination detection (Farquhar et al., 2024) demonstrated that authentic knowledge exhibits different statistical signatures than fabrication. The diversity metric measures something similar - well-grounded concepts connect to diverse domains.
-
-**Evolutionary epistemology** - The vocabulary expansion/consolidation cycle (generate broadly during extraction, prune during consolidation) mirrors BVSR (blind variation, selective retention) from Campbell (1960). This wasn't intentional; it's just what worked.
-
-Full citations are in the [architecture decisions](docs/architecture/).
+This system was built for those requirements. Most alternatives optimize for retrieval accuracy or comprehensiveness. We optimize for *knowing what you know and how well you know it*.
 
 ## License
 
-**Elastic License 2.0**
-
-- ✓ Free for individuals and companies (internal use)
-- ✓ Free for product integration
-- ✗ Not permitted: offering as a managed service
-
-See [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) for commercial licensing.
+**Elastic License 2.0** — Free for internal use and product integration. Not permitted as a managed service.
 
 ## Acknowledgments
 
-Built with [Apache AGE](https://age.apache.org/), [Model Context Protocol](https://modelcontextprotocol.io/), [FastAPI](https://fastapi.tiangolo.com/), [OpenAI](https://openai.com/), and [Anthropic](https://anthropic.com/).
+Built with [Apache AGE](https://age.apache.org/), [Model Context Protocol](https://modelcontextprotocol.io/), [FastAPI](https://fastapi.tiangolo.com/), and local inference via [Ollama](https://ollama.ai/).
