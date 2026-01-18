@@ -67,4 +67,4 @@ See [Querying](querying.md) for full MCP tool documentation.
 
 ---
 
-*Detailed guides coming soon. See [concepts](../concepts/README.md) for the conceptual foundation.*
+See [Concepts](../concepts/README.md) for the conceptual foundation behind the system.
