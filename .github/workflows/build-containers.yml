@@ -46,7 +46,11 @@ jobs:
 
   build-api:
     needs: [create-tag]
-    if: always() && (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped')
+    # Only build API on manual dispatch or version tags (not release branch push)
+    if: |
+      always() &&
+      (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped') &&
+      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
     name: Build API Container
     runs-on: ubuntu-latest
     permissions:
@@ -96,7 +100,11 @@ jobs:
 
   build-web:
     needs: [create-tag]
-    if: always() && (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped')
+    # Only build Web on manual dispatch or version tags (not release branch push)
+    if: |
+      always() &&
+      (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped') &&
+      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
     name: Build Web Container
     runs-on: ubuntu-latest
     permissions:
