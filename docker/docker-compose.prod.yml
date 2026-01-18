@@ -96,12 +96,13 @@ services:
     container_name: kg-web
     mac_address: "02:42:c0:a8:01:c5"
     environment:
-      VITE_API_URL: http://${WEB_HOSTNAME:-localhost}/api
+      VITE_API_URL: https://${WEB_HOSTNAME:-localhost}/api
       VITE_OAUTH_CLIENT_ID: kg-web
-      VITE_OAUTH_REDIRECT_URI: http://${WEB_HOSTNAME:-localhost}/callback
+      VITE_OAUTH_REDIRECT_URI: https://${WEB_HOSTNAME:-localhost}/callback
       VITE_APP_NAME: Knowledge Graph
     volumes:
       - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /srv/docker/data/knowledge-graph/certs:/etc/nginx/certs:ro
     depends_on:
       api:
         condition: service_healthy
