@@ -6,6 +6,13 @@ set -e
 
 echo "Generating runtime configuration from environment variables..."
 
+# Compute redirectUri value (quoted string if set, null if unset)
+if [ -n "${VITE_OAUTH_REDIRECT_URI}" ]; then
+  OAUTH_REDIRECT_URI_VALUE="\"${VITE_OAUTH_REDIRECT_URI}\""
+else
+  OAUTH_REDIRECT_URI_VALUE="null"
+fi
+
 # Create config.js from environment variables
 cat > /usr/share/nginx/html/config.js <<EOF
 // Runtime Configuration - Generated from Docker environment variables
@@ -16,7 +23,7 @@ window.APP_CONFIG = {
 
   oauth: {
     clientId: '${VITE_OAUTH_CLIENT_ID:-kg-viz}',
-    redirectUri: ${VITE_OAUTH_REDIRECT_URI:+\"${VITE_OAUTH_REDIRECT_URI}\"}${VITE_OAUTH_REDIRECT_URI:-null},
+    redirectUri: ${OAUTH_REDIRECT_URI_VALUE},
   },
 
   app: {
