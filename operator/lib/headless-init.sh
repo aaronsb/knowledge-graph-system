@@ -36,6 +36,7 @@ IMAGE_SOURCE="local"
 AI_PROVIDER=""
 AI_MODEL=""
 AI_KEY=""
+WEB_HOSTNAME=""
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -80,6 +81,11 @@ ${BOLD}Infrastructure Options:${NC}
                           • ghcr: Pull from GitHub Container Registry
   --compose-file FILE     Base compose file (default: docker-compose.yml)
 
+${BOLD}Web Configuration:${NC}
+  --web-hostname HOST     Public hostname for web access (e.g., kg.example.com)
+                          Used for OAuth redirect URIs and API URL
+                          Default: localhost (for local dev) or localhost:3000
+
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
   --ai-model MODEL        Model name (e.g., gpt-4o, claude-sonnet-4)
@@ -92,20 +98,21 @@ ${BOLD}Other Options:${NC}
 
 ${BOLD}Examples:${NC}
 
-  # Cube deployment with Anthropic
+  # Production deployment with DNS hostname
   ./operator.sh init --headless \\
-    --password-mode=random \\
     --container-prefix=kg \\
     --image-source=ghcr \\
     --gpu=nvidia \\
-    --ai-provider=anthropic \\
-    --ai-model=claude-sonnet-4 \\
-    --ai-key="\$ANTHROPIC_API_KEY"
+    --web-hostname=kg.example.com \\
+    --ai-provider=openai \\
+    --ai-model=gpt-4o \\
+    --ai-key="\$OPENAI_API_KEY"
 
   # Minimal deployment (configure AI later)
   ./operator.sh init --headless \\
     --container-prefix=kg \\
     --image-source=ghcr \\
+    --web-hostname=192.168.1.82 \\
     --skip-ai-config
 
   # Local development with simple passwords
@@ -218,6 +225,14 @@ parse_args() {
             --skip-cli)
                 SKIP_CLI=true
                 shift
+                ;;
+            --web-hostname=*)
+                WEB_HOSTNAME="${1#*=}"
+                shift
+                ;;
+            --web-hostname)
+                WEB_HOSTNAME="$2"
+                shift 2
                 ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
@@ -358,6 +373,9 @@ main() {
     echo -e "  GPU mode:          ${BLUE}$GPU_MODE${NC}"
     echo -e "  Image source:      ${BLUE}$IMAGE_SOURCE${NC}"
     echo -e "  Compose file:      ${BLUE}$COMPOSE_FILE${NC}"
+    if [ -n "$WEB_HOSTNAME" ]; then
+        echo -e "  Web hostname:      ${BLUE}$WEB_HOSTNAME${NC}"
+    fi
     if [ "$SKIP_AI_CONFIG" = true ]; then
         echo -e "  AI config:         ${YELLOW}skipped${NC}"
     elif [ -n "$AI_PROVIDER" ]; then
@@ -400,7 +418,26 @@ main() {
         "$PROJECT_ROOT/operator/lib/init-secrets.sh" --dev -y
     fi
 
+    # Set default WEB_HOSTNAME if not specified
+    if [ -z "$WEB_HOSTNAME" ]; then
+        if [ "$CONTAINER_PREFIX" = "kg" ]; then
+            WEB_HOSTNAME="localhost"
+        else
+            WEB_HOSTNAME="localhost:3000"
+        fi
+    fi
+
+    # Add WEB_HOSTNAME to .env
+    if ! grep -q '^WEB_HOSTNAME=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+        echo "" >> "$PROJECT_ROOT/.env"
+        echo "# Web hostname for OAuth and API URLs" >> "$PROJECT_ROOT/.env"
+        echo "WEB_HOSTNAME=$WEB_HOSTNAME" >> "$PROJECT_ROOT/.env"
+    else
+        sed -i "s|^WEB_HOSTNAME=.*|WEB_HOSTNAME=$WEB_HOSTNAME|" "$PROJECT_ROOT/.env"
+    fi
+
     echo -e "${GREEN}✓ Secrets generated${NC}"
+    echo -e "${GREEN}✓ Web hostname: $WEB_HOSTNAME${NC}"
     echo ""
 
     # -------------------------------------------------------------------------
@@ -435,11 +472,23 @@ EOF
     local GARAGE_CONTAINER=$(get_container_name garage)
 
     # -------------------------------------------------------------------------
-    # Step 5: Create admin user
+    # Step 5: Create admin user and register OAuth client
     # -------------------------------------------------------------------------
     echo -e "${BLUE}→ Step 5: Creating admin user...${NC}"
     docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
     echo -e "${GREEN}✓ Admin user created${NC}"
+
+    # Register OAuth client for web app with configured hostname
+    local POSTGRES_CONTAINER=$(get_container_name postgres)
+    local REDIRECT_URI="http://${WEB_HOSTNAME}/callback"
+    echo -e "${BLUE}  Registering OAuth client (kg-web)...${NC}"
+    docker exec "$POSTGRES_CONTAINER" psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -c \
+        "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types)
+         VALUES ('kg-web', 'Knowledge Graph Web', 'public',
+                 ARRAY['${REDIRECT_URI}', 'http://localhost:3000/callback'],
+                 ARRAY['authorization_code', 'refresh_token'])
+         ON CONFLICT (client_id) DO UPDATE SET redirect_uris = EXCLUDED.redirect_uris;" >/dev/null 2>&1
+    echo -e "${GREEN}✓ OAuth client registered (redirect: ${REDIRECT_URI})${NC}"
     echo ""
 
     # -------------------------------------------------------------------------
