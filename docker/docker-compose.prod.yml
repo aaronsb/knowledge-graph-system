@@ -1,12 +1,11 @@
 # ============================================================================
-# Knowledge Graph System - Cube Production Deployment
+# Knowledge Graph System - Production Deployment
 # ============================================================================
-# Pre-built GHCR images with macvlan networking for real LAN IP
-# DNS: kg.broccoli.house -> 192.168.1.82
+# Pre-built GHCR images with optional macvlan networking
 #
 # Usage:
 #   cd ~/Projects/ai/knowledge-graph-system
-#   docker compose -f docker/docker-compose.cube.yml up -d
+#   docker compose -f docker/docker-compose.prod.yml up -d
 #
 # First-time setup:
 #   1. Copy .env.example to .env and configure secrets
