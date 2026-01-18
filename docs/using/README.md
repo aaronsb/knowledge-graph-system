@@ -46,9 +46,9 @@ Use the search bar in the top navigation
 
 **Via CLI:**
 ```bash
-kg concept details <concept-id>
-kg concept related <concept-id>
-kg concept connect --from "concept A" --to "concept B"
+kg search details <concept-id>
+kg search related <concept-id>
+kg search connect "concept A" "concept B"
 ```
 
 **Via Web:**

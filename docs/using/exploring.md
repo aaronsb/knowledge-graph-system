@@ -53,7 +53,7 @@ Each result shows:
 ### CLI
 
 ```bash
-kg concept details <concept-id>
+kg search details <concept-id>
 ```
 
 Shows:
@@ -76,7 +76,7 @@ Concepts connect to other concepts. Explore these connections:
 ### Find Related Concepts
 
 ```bash
-kg concept related <concept-id>
+kg search related <concept-id>
 ```
 
 Returns concepts directly connected, grouped by relationship type:
@@ -89,18 +89,18 @@ Returns concepts directly connected, grouped by relationship type:
 ### Filter by Relationship Type
 
 ```bash
-kg concept related <concept-id> --type SUPPORTS
-kg concept related <concept-id> --type CONTRADICTS
+kg search related <concept-id> --type SUPPORTS
+kg search related <concept-id> --type CONTRADICTS
 ```
 
 ### Explore Deeper
 
 ```bash
 # Go 2 hops out
-kg concept related <concept-id> --depth 2
+kg search related <concept-id> --depth 2
 
 # Go 3 hops
-kg concept related <concept-id> --depth 3
+kg search related <concept-id> --depth 3
 ```
 
 More hops = more concepts, but further from the original.
@@ -112,7 +112,7 @@ Discover how two concepts relate:
 ### CLI
 
 ```bash
-kg concept connect --from "concept A" --to "concept B"
+kg search connect "concept A" "concept B"
 ```
 
 Finds paths between concepts, showing how ideas chain together.
@@ -120,10 +120,10 @@ Finds paths between concepts, showing how ideas chain together.
 **Options:**
 ```bash
 # Limit path length
-kg concept connect --from "X" --to "Y" --max-hops 3
+kg search connect "X" "Y" --max-hops 3
 
 # Use concept IDs for precision
-kg concept connect --from-id abc123 --to-id def456
+kg search connect abc123 def456
 ```
 
 ### What Paths Show
@@ -145,16 +145,16 @@ Find where sources disagree:
 ### Search for Contested Concepts
 
 ```bash
-kg search "vaccination effects" --show-contested
+kg search "vaccination effects"
 ```
 
-Look for concepts with mixed grounding (scores near 0).
+Look for concepts with mixed grounding (scores near 0) in the results.
 
 ### View Both Sides
 
 When you find a contested concept:
 ```bash
-kg concept details <concept-id>
+kg search details <concept-id>
 ```
 
 The evidence section shows which sources support and which contradict.

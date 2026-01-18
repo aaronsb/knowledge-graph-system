@@ -20,13 +20,13 @@ The `kg` command-line interface provides full access.
 
 ```bash
 # Login (opens browser for OAuth)
-kg auth login
+kg login
 
-# Check status
-kg auth status
+# Check configuration and auth status
+kg config show
 
 # Logout
-kg auth logout
+kg logout
 ```
 
 ### Search
@@ -47,15 +47,15 @@ kg search --format table "query"
 
 ```bash
 # Get full details
-kg concept details <concept-id>
+kg search details <concept-id>
 
 # Find related concepts
-kg concept related <concept-id>
-kg concept related <concept-id> --depth 2 --type SUPPORTS
+kg search related <concept-id>
+kg search related <concept-id> --depth 2 --type SUPPORTS
 
 # Find paths between concepts
-kg concept connect --from "concept A" --to "concept B"
-kg concept connect --from-id <id1> --to-id <id2> --max-hops 4
+kg search connect "concept A" "concept B"
+kg search connect <id1> <id2> --max-hops 4
 ```
 
 ### Ontology Operations
