@@ -10,6 +10,69 @@ import * as colors from './colors';
 import { separator } from './colors';
 import { configureColoredHelp, setCommandHelp } from './help-formatter';
 import { Table } from '../lib/table';
+import axios from 'axios';
+
+/**
+ * Test if a URL points to the API root (returns JSON with API info)
+ * Returns true if the URL returns valid API JSON response
+ */
+async function testApiUrl(url: string): Promise<boolean> {
+  try {
+    const response = await axios.get(url, {
+      timeout: 5000,
+      validateStatus: () => true // Don't throw on any status
+    });
+
+    // Check if response is JSON and looks like our API
+    const contentType = response.headers['content-type'] || '';
+    if (!contentType.includes('application/json')) {
+      return false;
+    }
+
+    // Check for API signature fields
+    const data = response.data;
+    return data && (data.service || data.status === 'healthy' || data.endpoints);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Normalize API URL by testing if /api suffix is needed
+ *
+ * Many deployments mount the API at /api while serving the web UI at root.
+ * This function detects that pattern and returns the correct URL.
+ *
+ * @param url The URL to normalize
+ * @returns The normalized URL (possibly with /api appended)
+ */
+async function normalizeApiUrl(url: string): Promise<{ url: string; wasNormalized: boolean; error?: string }> {
+  // Remove trailing slash for consistency
+  url = url.replace(/\/+$/, '');
+
+  // If URL already ends with /api, test it directly
+  if (url.endsWith('/api')) {
+    const works = await testApiUrl(url);
+    if (works) {
+      return { url, wasNormalized: false };
+    }
+    return { url, wasNormalized: false, error: 'API not reachable at this URL' };
+  }
+
+  // Test the URL as-is first
+  if (await testApiUrl(url)) {
+    return { url, wasNormalized: false };
+  }
+
+  // Try with /api suffix
+  const apiUrl = `${url}/api`;
+  if (await testApiUrl(apiUrl)) {
+    return { url: apiUrl, wasNormalized: true };
+  }
+
+  // Neither worked - return original with warning
+  return { url, wasNormalized: false, error: 'API not reachable (tried both URL and URL/api)' };
+}
 
 /**
  * Prompt for input from user
@@ -115,6 +178,7 @@ export const configCommand = setCommandHelp(
       .argument('<value>', 'Value to set (auto-detects JSON arrays/objects, booleans, numbers)')
       .option('--json', 'Force parse value as JSON')
       .option('--string', 'Force treat value as string (no JSON parsing)')
+      .option('--no-test', 'Skip API URL validation (for api_url only)')
       .action(async (key, value, options) => {
         try {
           const config = getConfig();
@@ -144,6 +208,23 @@ export const configCommand = setCommandHelp(
             parsedValue = value === 'true';
           } else if (!isNaN(Number(value)) && value.trim() !== '') {
             parsedValue = Number(value);
+          }
+
+          // Special handling for api_url: test and normalize
+          if (key === 'api_url' && typeof parsedValue === 'string' && options.test !== false) {
+            console.log(colors.status.info(`Testing API URL: ${parsedValue}`));
+
+            const result = await normalizeApiUrl(parsedValue);
+
+            if (result.error) {
+              console.log(colors.status.warning(`⚠ ${result.error}`));
+              console.log(colors.status.dim('Saving URL anyway. Use --no-test to skip validation.'));
+            } else if (result.wasNormalized) {
+              console.log(colors.status.success(`✓ Auto-detected API at ${result.url}`));
+              parsedValue = result.url;
+            } else {
+              console.log(colors.status.success('✓ API reachable'));
+            }
           }
 
           config.set(key, parsedValue);

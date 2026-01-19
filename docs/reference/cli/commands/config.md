@@ -65,6 +65,7 @@ kg set <key> <value>
 |--------|-------------|---------|
 | `--json` | Force parse value as JSON | - |
 | `--string` | Force treat value as string (no JSON parsing) | - |
+| `--no-test` | Skip API URL validation (for api_url only) | - |
 
 ### delete
 

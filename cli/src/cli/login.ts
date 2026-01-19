@@ -12,9 +12,52 @@
 
 import { Command } from 'commander';
 import prompts from 'prompts';
+import axios from 'axios';
 import { getConfig } from '../lib/config.js';
 import { AuthClient } from '../lib/auth/auth-client.js';
 import { setCommandHelp } from './help-formatter.js';
+
+/**
+ * Test if a URL points to the API root (returns JSON with API info)
+ */
+async function testApiUrl(url: string): Promise<boolean> {
+  try {
+    const response = await axios.get(url, {
+      timeout: 5000,
+      validateStatus: () => true
+    });
+    const contentType = response.headers['content-type'] || '';
+    if (!contentType.includes('application/json')) {
+      return false;
+    }
+    const data = response.data;
+    return data && (data.service || data.status === 'healthy' || data.endpoints);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Normalize API URL by testing if /api suffix is needed
+ */
+async function normalizeApiUrl(url: string): Promise<{ url: string; wasNormalized: boolean }> {
+  url = url.replace(/\/+$/, '');
+
+  if (url.endsWith('/api')) {
+    return { url, wasNormalized: false };
+  }
+
+  if (await testApiUrl(url)) {
+    return { url, wasNormalized: false };
+  }
+
+  const apiUrl = `${url}/api`;
+  if (await testApiUrl(apiUrl)) {
+    return { url: apiUrl, wasNormalized: true };
+  }
+
+  return { url, wasNormalized: false };
+}
 
 interface LoginOptions {
   username?: string;
@@ -93,10 +136,20 @@ async function loginCommand(options: LoginOptions) {
 
   // Create personal OAuth client
   console.log('');
-  console.log('Creating OAuth client credentials...');
+  console.log('Connecting to API...');
 
   try {
-    const apiUrl = config.getApiUrl();
+    // Normalize API URL (auto-detect /api suffix if needed)
+    let apiUrl = config.getApiUrl();
+    const normalizeResult = await normalizeApiUrl(apiUrl);
+
+    if (normalizeResult.wasNormalized) {
+      console.log(`\x1b[32m✓ Auto-detected API at ${normalizeResult.url}\x1b[0m`);
+      config.set('api_url', normalizeResult.url);
+      apiUrl = normalizeResult.url;
+    }
+
+    console.log('Creating OAuth client credentials...');
     const authClient = new AuthClient(apiUrl);
 
     // Create personal OAuth client (GitHub CLI-style)

@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-01-06
+> Last updated: 2026-01-19
 
 ---
 
@@ -95,6 +95,7 @@ kg set <key> <value>
 |--------|-------------|---------|
 | `--json` | Force parse value as JSON | - |
 | `--string` | Force treat value as string (no JSON parsing) | - |
+| `--no-test` | Skip API URL validation (for api_url only) | - |
 
 ### delete
 
