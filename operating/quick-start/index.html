@@ -6976,33 +6976,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#production-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Production Install
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Steps
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Steps">
+    <nav class="md-nav" aria-label="Production Install">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-clone-the-repository" class="md-nav__link">
+  <a href="#headless-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Clone the Repository
+        Headless Mode
       
     </span>
   </a>
@@ -7010,32 +6999,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-initialize" class="md-nav__link">
+  <a href="#after-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Initialize
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-access-the-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Access the System
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-verify-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Verify It Works
+        After Installation
       
     </span>
   </a>
@@ -7044,6 +7011,56 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#headless-development-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headless Development Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verify-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platform-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Management
+      
+    </span>
+  </a>
   
 </li>
       
@@ -7063,17 +7080,6 @@
     <span class="md-ellipsis">
       
         What's Next?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
       
     </span>
   </a>
@@ -7101,74 +7107,183 @@
 
 
 <h1 id="quick-start">Quick Start</h1>
-<p>Get the knowledge graph running locally in 5 minutes.</p>
-<h2 id="prerequisites">Prerequisites</h2>
-<ul>
-<li>Docker and Docker Compose installed</li>
-<li>8GB RAM available</li>
-<li>Git</li>
-</ul>
-<h2 id="steps">Steps</h2>
-<h3 id="1-clone-the-repository">1. Clone the Repository</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
+<p>Get the knowledge graph running in 5 minutes. Choose your path:</p>
+<table>
+<thead>
+<tr>
+<th>I want to...</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deploy on a server</td>
+<td><a href="#production-install">Production Install</a></td>
+</tr>
+<tr>
+<td>Set up for development</td>
+<td><a href="#development-setup">Development Setup</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="production-install">Production Install</h2>
+<p>One command installs everything on a Linux server:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
 </code></pre></div>
-<h3 id="2-initialize">2. Initialize</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh<span class="w"> </span>init
-</code></pre></div>
-<p>This starts an interactive wizard that:
+<p>This starts an interactive installer that:
+- Installs Docker if needed
+- Downloads container images from GHCR
 - Generates secure secrets
-- Detects your GPU (if any)
-- Starts the containers
-- Creates an admin user</p>
-<p>Follow the prompts. For defaults, just press Enter.</p>
-<h3 id="3-access-the-system">3. Access the System</h3>
-<p>Once initialization completes:</p>
-<ul>
-<li><strong>Web interface</strong>: http://localhost:3000</li>
-<li><strong>API</strong>: http://localhost:8000</li>
-<li><strong>Login</strong>: Use the admin credentials you set during init</li>
-</ul>
-<h3 id="4-verify-it-works">4. Verify It Works</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./operator.sh<span class="w"> </span>status
+- Configures SSL/HTTPS (optional)
+- Creates admin user</p>
+<h3 id="headless-mode">Headless Mode</h3>
+<p>For automation, CI/CD, or scripted deployments:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--hostname<span class="w"> </span>kg.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--ssl<span class="w"> </span>letsencrypt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--ssl-email<span class="w"> </span>admin@example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--ai-provider<span class="w"> </span>openai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--ai-key<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OPENAI_API_KEY</span><span class="s2">&quot;</span>
 </code></pre></div>
-<p>You should see all containers running and healthy.</p>
+<p><strong>Common options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--hostname</code></td>
+<td>Public hostname or IP (required for headless)</td>
+</tr>
+<tr>
+<td><code>--ssl MODE</code></td>
+<td><code>offload</code>, <code>selfsigned</code>, <code>letsencrypt</code>, or <code>manual</code></td>
+</tr>
+<tr>
+<td><code>--ssl-email</code></td>
+<td>Email for Let's Encrypt (required for letsencrypt)</td>
+</tr>
+<tr>
+<td><code>--ai-provider</code></td>
+<td><code>openai</code>, <code>anthropic</code>, or <code>ollama</code></td>
+</tr>
+<tr>
+<td><code>--ai-key</code></td>
+<td>API key for the provider</td>
+</tr>
+<tr>
+<td><code>--skip-ai</code></td>
+<td>Skip AI configuration (configure later)</td>
+</tr>
+<tr>
+<td><code>--gpu MODE</code></td>
+<td><code>auto</code>, <code>nvidia</code>, <code>amd</code>, or <code>cpu</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Minimal headless (configure AI later):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>.../install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--hostname<span class="w"> </span><span class="m">192</span>.168.1.100<span class="w"> </span>--skip-ai
+</code></pre></div></p>
+<h3 id="after-installation">After Installation</h3>
+<p>The installer shows access URLs and credentials. Your primary management tool is <code>operator.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">cd</span><span class="w"> </span>~/knowledge-graph<span class="w">   </span><span class="c1"># or your install directory</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>./operator.sh<span class="w"> </span>status<span class="w">   </span><span class="c1"># Check platform health</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w"> </span><span class="c1"># View API logs</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>./operator.sh<span class="w"> </span>shell<span class="w">    </span><span class="c1"># Configuration shell</span>
+</code></pre></div>
+<hr />
+<h2 id="development-setup">Development Setup</h2>
+<p>Clone the repo and use <code>operator.sh init</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./operator.sh<span class="w"> </span>init
+</code></pre></div>
+<p>The init wizard will:
+- Generate infrastructure secrets (<code>.env</code>)
+- Detect your GPU (NVIDIA/Mac/CPU)
+- Start all containers
+- Prompt for admin password and AI configuration</p>
+<h3 id="headless-development-setup">Headless Development Setup</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--container-mode<span class="w"> </span>dev<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--gpu<span class="w"> </span>auto<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--skip-ai-config
+</code></pre></div>
+<hr />
+<h2 id="verify-installation">Verify Installation</h2>
+<p>Check that everything is running:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./operator.sh<span class="w"> </span>status
+</code></pre></div>
+<p>You should see all containers healthy:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Container Status:
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg-postgres   Up (healthy)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>kg-garage     Up (healthy)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>kg-api        Up (healthy)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kg-web        Up (healthy)
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>kg-operator   Up
+</code></pre></div></p>
+<p>Access the system:
+- <strong>Web UI</strong>: https://your-hostname (or http://localhost:3000 for dev)
+- <strong>API Docs</strong>: https://your-hostname/api/docs
+- <strong>Login</strong>: Use the admin credentials from installation</p>
+<hr />
+<h2 id="platform-management">Platform Management</h2>
+<p>After installation, <code>operator.sh</code> is your primary tool:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Daily operations</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./operator.sh<span class="w"> </span>start<span class="w">              </span><span class="c1"># Start platform</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>./operator.sh<span class="w"> </span>stop<span class="w">               </span><span class="c1"># Stop platform</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>./operator.sh<span class="w"> </span>status<span class="w">             </span><span class="c1"># Check health</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Logs</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w">           </span><span class="c1"># API logs (last 100 lines)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w"> </span>-f<span class="w">        </span><span class="c1"># Follow logs in real-time</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>web<span class="w">           </span><span class="c1"># Web server logs</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Updates (like apt update/upgrade)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>./operator.sh<span class="w"> </span>update<span class="w">             </span><span class="c1"># Pull latest images</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span>operator<span class="w">    </span><span class="c1"># Pull specific service</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>./operator.sh<span class="w"> </span>upgrade<span class="w">            </span><span class="c1"># Pull, migrate, restart</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Configuration</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>./operator.sh<span class="w"> </span>shell<span class="w">              </span><span class="c1"># Enter configuration shell</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w">        </span><span class="c1"># Run database queries</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="c1"># Maintenance</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api<span class="w">        </span><span class="c1"># Restart a service</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>./operator.sh<span class="w"> </span>teardown<span class="w">           </span><span class="c1"># Remove containers (keeps data)</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>./operator.sh<span class="w"> </span>teardown<span class="w"> </span>--full<span class="w">    </span><span class="c1"># Complete reset</span>
+</code></pre></div>
+<p>Inside the configuration shell (<code>./operator.sh shell</code>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>configure.py<span class="w"> </span>status<span class="w">              </span><span class="c1"># Show current config</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>configure.py<span class="w"> </span>ai-provider<span class="w"> </span>openai<span class="w">  </span><span class="c1"># Change AI provider</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>configure.py<span class="w"> </span>api-key<span class="w"> </span>openai<span class="w">      </span><span class="c1"># Store API key</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>configure.py<span class="w"> </span>oauth<span class="w"> </span>--list<span class="w">        </span><span class="c1"># Manage OAuth clients</span>
+</code></pre></div></p>
+<hr />
 <h2 id="optional-install-the-cli">Optional: Install the CLI</h2>
-<p>The <code>kg</code> CLI provides command-line access to the knowledge graph:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">cd</span><span class="w"> </span>cli
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>npm<span class="w"> </span>install
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>npm<span class="w"> </span>run<span class="w"> </span>build
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>./install.sh
+<p>The <code>kg</code> CLI provides command-line access:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>cli
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>./install.sh
 </code></pre></div>
-<p>Then test it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>health
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;test query&quot;</span>
-</code></pre></div>
+<p>Test it:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>health
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;your query&quot;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>document.pdf
+</code></pre></div></p>
+<hr />
 <h2 id="whats-next">What's Next?</h2>
-<p><strong>Try ingesting a document:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>/path/to/document.pdf
-</code></pre></div></p>
-<p><strong>Or via the web interface:</strong>
-1. Go to http://localhost:3000
-2. Log in with your admin credentials
-3. Navigate to Ingest
-4. Upload a document</p>
-<p><strong>Learn more:</strong>
-- <a href="../production/">Production Deployment</a> - For real use
-- <a href="../configuration/">Configuration</a> - All the settings
-- <a href="../../using/">Using the System</a> - How to use it</p>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<p><strong>Containers won't start:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./operator.sh<span class="w"> </span>logs<span class="w">         </span><span class="c1"># Check for errors</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a<span class="w">               </span><span class="c1"># See container status</span>
-</code></pre></div></p>
-<p><strong>Port already in use:</strong>
-Edit <code>.env</code> and change the port mappings, or stop whatever's using ports 3000/8000.</p>
-<p><strong>Out of memory:</strong>
-The API container needs memory for ML models. Ensure 8GB+ available.</p>
-<p><strong>GPU not detected:</strong>
-Run <code>./operator.sh init</code> again and check GPU detection, or manually set <code>GPU_MODE=cpu</code> in <code>.operator.conf</code>.</p>
-<p>See <a href="../troubleshooting/">Troubleshooting</a> for more.</p>
+<ul>
+<li><a href="../production/">Production Deployment</a> - SSL, scaling, monitoring</li>
+<li><a href="../configuration/">Configuration Reference</a> - All settings explained</li>
+<li><a href="../troubleshooting/">Troubleshooting</a> - Common issues</li>
+<li><a href="../upgrading/">Upgrading</a> - Version updates</li>
+</ul>
 
 
 

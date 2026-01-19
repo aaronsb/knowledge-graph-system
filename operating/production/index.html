@@ -6998,6 +6998,57 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recommended-standalone-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended: Standalone Installer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended: Standalone Installer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#headless-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headless Installer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-git-clone-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative: Git Clone + Operator
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternative: Git Clone + Operator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#headless-initialization" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7006,8 +7057,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Headless Initialization">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#required-parameters" class="md-nav__link">
@@ -7322,22 +7372,62 @@
 - GPU acceleration configured explicitly</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>Docker and Docker Compose</li>
-<li>A server with 16GB+ RAM (8GB minimum)</li>
+<li>Linux server (Ubuntu 20.04+ or Debian 11+ recommended)</li>
+<li>16GB+ RAM (8GB minimum)</li>
 <li>NVIDIA GPU recommended for faster extraction</li>
 <li>A domain name (for HTTPS)</li>
 <li>DNS control (for certificate issuance)</li>
 </ul>
-<h2 id="headless-initialization">Headless Initialization</h2>
-<p>For automated or scripted deployments, use headless mode:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--web-hostname<span class="o">=</span>kg.example.com<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--ai-provider<span class="o">=</span>anthropic<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--ai-model<span class="o">=</span>claude-sonnet-4<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--ai-key<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span>
+<p>Docker will be installed automatically if not present.</p>
+<hr />
+<h2 id="recommended-standalone-installer">Recommended: Standalone Installer</h2>
+<p>The easiest way to deploy to a production server:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+</code></pre></div>
+<p>This interactive installer:
+- Installs Docker if needed
+- Downloads pre-built images from GHCR
+- Generates secure secrets
+- Configures SSL/HTTPS
+- Sets up admin user and AI provider</p>
+<h3 id="headless-installer">Headless Installer</h3>
+<p>For fully automated deployments:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--hostname<span class="w"> </span>kg.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--ssl<span class="w"> </span>letsencrypt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--ssl-email<span class="w"> </span>admin@example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--ai-provider<span class="w"> </span>anthropic<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--ai-key<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--gpu<span class="w"> </span>nvidia
+</code></pre></div>
+<p><strong>SSL options:</strong>
+- <code>--ssl offload</code> - HTTP only (behind reverse proxy that handles SSL)
+- <code>--ssl selfsigned</code> - Generate self-signed certificate
+- <code>--ssl letsencrypt</code> - Auto-generate via Let's Encrypt (requires <code>--ssl-email</code>)
+- <code>--ssl manual</code> - Use existing certificates (requires <code>--ssl-cert</code> and <code>--ssl-key</code>)</p>
+<h3 id="after-installation">After Installation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>~/knowledge-graph<span class="w">   </span><span class="c1"># Default install location</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./operator.sh<span class="w"> </span>status<span class="w">   </span><span class="c1"># Verify everything is running</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w"> </span><span class="c1"># Check API logs</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>./operator.sh<span class="w"> </span>shell<span class="w">    </span><span class="c1"># Configuration shell</span>
+</code></pre></div>
+<hr />
+<h2 id="alternative-git-clone-operator">Alternative: Git Clone + Operator</h2>
+<p>If you prefer to work from the git repository:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>...
+</code></pre></div>
+<h3 id="headless-initialization">Headless Initialization</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--web-hostname<span class="o">=</span>kg.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--ai-provider<span class="o">=</span>anthropic<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--ai-model<span class="o">=</span>claude-sonnet-4<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--ai-key<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span>
 </code></pre></div>
 <h3 id="required-parameters">Required Parameters</h3>
 <table>
@@ -7462,19 +7552,19 @@
 </table>
 <h2 id="gpu-configuration">GPU Configuration</h2>
 <h3 id="nvidia-gpu">NVIDIA GPU</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span>...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span>...
 </code></pre></div>
 <p>Requires NVIDIA Container Toolkit installed on the host.</p>
 <h3 id="amd-gpu-rocm">AMD GPU (ROCm)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>amd<span class="w"> </span>...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>amd<span class="w"> </span>...
 </code></pre></div>
 <p>Uses ROCm PyTorch wheels inside the container.</p>
 <h3 id="amd-gpu-host-rocm">AMD GPU (Host ROCm)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>amd-host<span class="w"> </span>...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>amd-host<span class="w"> </span>...
 </code></pre></div>
 <p>Uses ROCm installed on the host system.</p>
 <h3 id="cpu-only">CPU Only</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>cpu<span class="w"> </span>...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>--gpu<span class="o">=</span>cpu<span class="w"> </span>...
 </code></pre></div>
 <p>No GPU acceleration. Slower but works everywhere.</p>
 <h2 id="https-configuration">HTTPS Configuration</h2>
@@ -7482,76 +7572,76 @@
 <ol>
 <li>
 <p><strong>Install acme.sh on the host:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>curl<span class="w"> </span>https://get.acme.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>https://get.acme.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Configure your DNS provider</strong> (example: Porkbun):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PORKBUN_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PORKBUN_SECRET_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-secret-key&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PORKBUN_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PORKBUN_SECRET_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-secret-key&quot;</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Issue the certificate:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>~/.acme.sh/acme.sh<span class="w"> </span>--issue<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--dns<span class="w"> </span>dns_porkbun<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-d<span class="w"> </span>kg.example.com
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>~/.acme.sh/acme.sh<span class="w"> </span>--issue<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--dns<span class="w"> </span>dns_porkbun<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-d<span class="w"> </span>kg.example.com
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Install to a location the container can access:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/srv/docker/data/knowledge-graph/certs
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>~/.acme.sh/acme.sh<span class="w"> </span>--install-cert<span class="w"> </span>-d<span class="w"> </span>kg.example.com<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--key-file<span class="w"> </span>/srv/docker/data/knowledge-graph/certs/kg.example.com.key<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--fullchain-file<span class="w"> </span>/srv/docker/data/knowledge-graph/certs/kg.example.com.fullchain.cer
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/srv/docker/data/knowledge-graph/certs
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>~/.acme.sh/acme.sh<span class="w"> </span>--install-cert<span class="w"> </span>-d<span class="w"> </span>kg.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--key-file<span class="w"> </span>/srv/docker/data/knowledge-graph/certs/kg.example.com.key<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--fullchain-file<span class="w"> </span>/srv/docker/data/knowledge-graph/certs/kg.example.com.fullchain.cer
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Configure nginx</strong> - edit <code>docker/nginx.prod.conf</code>:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="w"> </span><span class="s">http2</span><span class="p">;</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">kg.example.com</span><span class="p">;</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/etc/nginx/certs/kg.example.com.fullchain.cer</span><span class="p">;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/etc/nginx/certs/kg.example.com.key</span><span class="p">;</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="c1"># ... rest of config</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="p">}</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="w"> </span><span class="s">http2</span><span class="p">;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">kg.example.com</span><span class="p">;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="kn">ssl_certificate</span><span class="w"> </span><span class="s">/etc/nginx/certs/kg.example.com.fullchain.cer</span><span class="p">;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="kn">ssl_certificate_key</span><span class="w"> </span><span class="s">/etc/nginx/certs/kg.example.com.key</span><span class="p">;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="c1"># ... rest of config</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="p">}</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Mount certificates in compose</strong> - the <code>docker-compose.prod.yml</code> mounts:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/srv/docker/data/knowledge-graph/certs:/etc/nginx/certs:ro</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/srv/docker/data/knowledge-graph/certs:/etc/nginx/certs:ro</span>
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="certificate-renewal">Certificate Renewal</h3>
 <p>acme.sh sets up automatic renewal via cron. After renewal, reload nginx:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-web<span class="w"> </span>nginx<span class="w"> </span>-s<span class="w"> </span>reload
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-web<span class="w"> </span>nginx<span class="w"> </span>-s<span class="w"> </span>reload
 </code></pre></div>
 <h2 id="example-full-production-deployment">Example: Full Production Deployment</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># On your production server</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">cd</span><span class="w"> </span>~/knowledge-graph-system
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Set environment variables</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Initialize with all production settings</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">  </span>--web-hostname<span class="o">=</span>kg.example.com<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">  </span>--ai-provider<span class="o">=</span>anthropic<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">  </span>--ai-model<span class="o">=</span>claude-sonnet-4<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">  </span>--ai-key<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="c1"># Verify everything is running</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>./operator.sh<span class="w"> </span>status
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="c1"># Check the web interface</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>curl<span class="w"> </span>-I<span class="w"> </span>https://kg.example.com
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># On your production server</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">cd</span><span class="w"> </span>~/knowledge-graph-system
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Set environment variables</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Initialize with all production settings</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">  </span>--container-prefix<span class="o">=</span>kg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">  </span>--image-source<span class="o">=</span>ghcr<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">  </span>--gpu<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">  </span>--web-hostname<span class="o">=</span>kg.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">  </span>--ai-provider<span class="o">=</span>anthropic<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">  </span>--ai-model<span class="o">=</span>claude-sonnet-4<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="w">  </span>--ai-key<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1"># Verify everything is running</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>./operator.sh<span class="w"> </span>status
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1"># Check the web interface</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>curl<span class="w"> </span>-I<span class="w"> </span>https://kg.example.com
 </code></pre></div>
 <h2 id="secrets-and-security">Secrets and Security</h2>
 <h3 id="generated-secrets">Generated Secrets</h3>
@@ -7589,8 +7679,8 @@
 <p><strong>Never commit <code>.env</code> to version control.</strong></p>
 <h3 id="ai-provider-keys">AI Provider Keys</h3>
 <p>AI provider API keys (OpenAI, Anthropic) are stored encrypted in the database, not in <code>.env</code>. They're configured via:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./operator.sh<span class="w"> </span>shell
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>configure.py<span class="w"> </span>api-key<span class="w"> </span>anthropic<span class="w"> </span>--key<span class="w"> </span><span class="s2">&quot;sk-ant-...&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>configure.py<span class="w"> </span>api-key<span class="w"> </span>anthropic<span class="w"> </span>--key<span class="w"> </span><span class="s2">&quot;sk-ant-...&quot;</span>
 </code></pre></div>
 <p>Or via the <code>--ai-key</code> flag during headless init.</p>
 <h2 id="data-locations">Data Locations</h2>
@@ -7623,23 +7713,23 @@
 </table>
 <h2 id="upgrading">Upgrading</h2>
 <p>See <a href="../upgrading/">Upgrading</a> for version upgrade procedures.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Quick upgrade</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>./operator.sh<span class="w"> </span>upgrade
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># See what would change first</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Quick upgrade</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>./operator.sh<span class="w"> </span>upgrade
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># See what would change first</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
 </code></pre></div>
 <h2 id="monitoring">Monitoring</h2>
 <h3 id="container-health">Container Health</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>./operator.sh<span class="w"> </span>status<span class="w">          </span><span class="c1"># Quick status</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span>ps<span class="w">                     </span><span class="c1"># Detailed container info</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w">        </span><span class="c1"># API logs</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>--follow<span class="w">   </span><span class="c1"># Tail all logs</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>./operator.sh<span class="w"> </span>status<span class="w">          </span><span class="c1"># Quick status</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>docker<span class="w"> </span>ps<span class="w">                     </span><span class="c1"># Detailed container info</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w">        </span><span class="c1"># API logs</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>--follow<span class="w">   </span><span class="c1"># Tail all logs</span>
 </code></pre></div>
 <h3 id="api-health-check">API Health Check</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span>http://localhost:8000/health
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Or via HTTPS:</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>curl<span class="w"> </span>https://kg.example.com/api/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>curl<span class="w"> </span>http://localhost:8000/health
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Or via HTTPS:</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>curl<span class="w"> </span>https://kg.example.com/api/health
 </code></pre></div>
 <h2 id="next-steps">Next Steps</h2>
 <ul>

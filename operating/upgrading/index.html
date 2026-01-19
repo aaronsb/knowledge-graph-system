@@ -6976,6 +6976,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#update-vs-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update vs Upgrade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quick-upgrade" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7074,8 +7085,39 @@
 
 <h1 id="upgrading">Upgrading</h1>
 <p>How to upgrade the knowledge graph system to new versions.</p>
+<h2 id="update-vs-upgrade">Update vs Upgrade</h2>
+<p>Following the familiar Linux package manager pattern:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+<th>Restarts?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./operator.sh update</code></td>
+<td>Pull latest images</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>./operator.sh upgrade</code></td>
+<td>Pull, migrate, restart</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Check for updates first:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>update<span class="w">          </span><span class="c1"># Pull all images</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span>api<span class="w">      </span><span class="c1"># Pull specific service only</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span>operator<span class="w"> </span><span class="c1"># Update operator (scripts/migrations)</span>
+</code></pre></div></p>
+<p><strong>Then apply them:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh<span class="w"> </span>upgrade
+</code></pre></div></p>
 <h2 id="quick-upgrade">Quick Upgrade</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>upgrade
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./operator.sh<span class="w"> </span>upgrade
 </code></pre></div>
 <p>This command:
 1. Pulls latest images (if using GHCR)
@@ -7085,41 +7127,41 @@
 5. Starts containers with new images
 6. Verifies health</p>
 <h2 id="upgrade-options">Upgrade Options</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># See what would change without doing it</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Skip backup (faster, but risky)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--no-backup
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Upgrade to specific version</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--version<span class="w"> </span><span class="m">0</span>.5.0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># See what would change without doing it</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Skip backup (faster, but risky)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--no-backup
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Upgrade to specific version</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--version<span class="w"> </span><span class="m">0</span>.5.0
 </code></pre></div>
 <h2 id="before-upgrading">Before Upgrading</h2>
 <ol>
 <li><strong>Check the changelog</strong> for breaking changes</li>
 <li><strong>Backup your data:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>./operator.sh<span class="w"> </span>backup
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>backup
 </code></pre></div></li>
 <li><strong>Note your current version:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cat<span class="w"> </span>VERSION
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>cat<span class="w"> </span>VERSION
 </code></pre></div></li>
 </ol>
 <h2 id="after-upgrading">After Upgrading</h2>
 <ol>
 <li>
 <p><strong>Verify health:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>status
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./operator.sh<span class="w"> </span>status
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check logs for errors:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Test core functionality:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>health
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;test&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>health
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;test&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -7128,39 +7170,39 @@
 <ol>
 <li>
 <p><strong>Stop containers:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./operator.sh<span class="w"> </span>stop
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./operator.sh<span class="w"> </span>stop
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Restore database:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>./operator.sh<span class="w"> </span>restore<span class="w"> </span>/path/to/backup.sql
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>./operator.sh<span class="w"> </span>restore<span class="w"> </span>/path/to/backup.sql
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Use previous image version:</strong>
    Edit compose file to pin previous version tag, then:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./operator.sh<span class="w"> </span>start
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>./operator.sh<span class="w"> </span>start
 </code></pre></div></p>
 </li>
 </ol>
 <h2 id="version-pinning">Version Pinning</h2>
 <p>By default, GHCR deployments use <code>:latest</code>. To pin a specific version:</p>
 <p>Edit <code>docker-compose.prod.yml</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">api</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/aaronsb/knowledge-graph-system/kg-api:0.5.0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">api</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/aaronsb/knowledge-graph-system/kg-api:0.5.0</span>
 </code></pre></div></p>
 <h2 id="migration-notes">Migration Notes</h2>
 <p>Database migrations run automatically during upgrade. If a migration fails:</p>
 <ol>
 <li>
 <p>Check logs:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>operator
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>operator
 </code></pre></div></p>
 </li>
 <li>
 <p>Run manually:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>./operator.sh<span class="w"> </span>shell
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>api.database.migrate
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>-m<span class="w"> </span>api.database.migrate
 </code></pre></div></p>
 </li>
 <li>

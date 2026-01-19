@@ -4776,6 +4776,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#updateupgrade-lifecycle-added-2026-01-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update/Upgrade Lifecycle (Added 2026-01-19)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7557,6 +7568,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#updateupgrade-lifecycle-added-2026-01-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update/Upgrade Lifecycle (Added 2026-01-19)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7939,12 +7961,108 @@
 <p><strong>Phase 4: Deprecation</strong>
 - [ ] Mark old scripts as deprecated
 - [ ] Remove after one release cycle</p>
+<h3 id="updateupgrade-lifecycle-added-2026-01-19">Update/Upgrade Lifecycle (Added 2026-01-19)</h3>
+<p>Following the familiar Linux package manager pattern:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span><span class="o">[</span>service<span class="o">]</span><span class="w">   </span><span class="c1"># Pull latest images (like apt update)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./operator.sh<span class="w"> </span>upgrade<span class="w">            </span><span class="c1"># Pull, migrate, restart (like apt upgrade)</span>
+</code></pre></div>
+<p><strong>Update</strong> - Fetch without applying:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>./operator.sh<span class="w"> </span>update<span class="w">             </span><span class="c1"># Pull all images from GHCR</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span>operator<span class="w">    </span><span class="c1"># Pull only operator image</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>./operator.sh<span class="w"> </span>update<span class="w"> </span>api<span class="w">         </span><span class="c1"># Pull only API image</span>
+</code></pre></div></p>
+<p><strong>Upgrade</strong> - Full lifecycle:
+1. Pre-flight checks (verify .env, .operator.conf)
+2. Optional pre-upgrade backup
+3. Pull new images
+4. Stop application containers (keep postgres/garage running)
+5. Run database migrations
+6. Start application with new images
+7. Health check</p>
+<p><strong>Version Management Architecture:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>│  operator.sh (host)                                         │
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>│  - Thin shim, rarely changes                                │
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>│  - Delegates to operator container for logic                │
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>│  - Handles: start/stop, exec into container, compose calls  │
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>└─────────────────────────────────────────────────────────────┘
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>                              │
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>                              ▼
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>│  operator container (source of truth)                       │
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>│                                                             │
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>│  Contains:                                                  │
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>│    - Database migration scripts                             │
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>│    - Configuration tools (configure.py)                     │
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>│    - Version compatibility knowledge (future: manifest)     │
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>│                                                             │
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>│  Future evolution:                                          │
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>│    - /versions endpoint for compatible image versions       │
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>│    - Automatic compatibility checking during upgrade        │
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>│    - Rollback support with version pinning                  │
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>└─────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Standalone Install Support:</strong></p>
+<p>For deployments via <code>install.sh</code> (not from git repo), operator.sh detects the environment:</p>
+<ol>
+<li><strong><code>.operator.conf</code></strong> - Created by installer with:</li>
+<li><code>CONTAINER_PREFIX=kg</code> (container naming)</li>
+<li><code>IMAGE_SOURCE=ghcr</code> (pull from registry)</li>
+<li>
+<p><code>DEV_MODE=false</code></p>
+</li>
+<li>
+<p><strong>DOCKER_DIR detection</strong> - Scripts auto-detect:</p>
+</li>
+<li>Repo install: <code>$PROJECT_ROOT/docker/</code></li>
+<li>
+<p>Standalone: <code>$PROJECT_ROOT/</code> (compose files in root)</p>
+</li>
+<li>
+<p><strong>GHCR overlay</strong> - Standalone uses <code>docker-compose.ghcr.yml</code> for image paths</p>
+</li>
+</ol>
+<p><strong>Infrastructure vs Application Updates:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Update Method</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>api, web, operator</td>
+<td><code>update</code> + <code>restart</code></td>
+<td>Our images, freely updatable</td>
+</tr>
+<tr>
+<td>postgres, garage</td>
+<td>Manual</td>
+<td>Versions pinned in compose, require careful migration</td>
+</tr>
+</tbody>
+</table>
+<p>For postgres/garage, operator provides guidance:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>./operator.sh<span class="w"> </span>update<span class="w"> </span>postgres
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>postgres<span class="w"> </span>version<span class="w"> </span>is<span class="w"> </span>pinned<span class="w"> </span><span class="k">in</span><span class="w"> </span>docker-compose.yml
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>To<span class="w"> </span>update<span class="w"> </span>postgres:
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="m">1</span>.<span class="w"> </span>Edit<span class="w"> </span>docker-compose.yml<span class="w"> </span>and<span class="w"> </span>update<span class="w"> </span>the<span class="w"> </span>image<span class="w"> </span>tag
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="m">2</span>.<span class="w"> </span>./operator.sh<span class="w"> </span>update<span class="w"> </span>postgres<span class="w">  </span><span class="c1"># Pull new version</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="m">3</span>.<span class="w"> </span>./operator.sh<span class="w"> </span>restart<span class="w"> </span>postgres<span class="w"> </span><span class="c1"># Apply (caution: may need migration)</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>Warning:<span class="w"> </span>PostgreSQL<span class="w"> </span>upgrades<span class="w"> </span>may<span class="w"> </span>require<span class="w"> </span>data<span class="w"> </span>migration
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>Back<span class="w"> </span>up<span class="w"> </span>your<span class="w"> </span>data<span class="w"> </span>before<span class="w"> </span>upgrading:<span class="w"> </span>operator/database/backup-database.sh
+</code></pre></div></p>
 <h2 id="related-adrs">Related ADRs</h2>
 <ul>
 <li><strong>ADR-031:</strong> Encrypted Credential Storage (ENCRYPTION_KEY usage)</li>
 <li><strong>ADR-054:</strong> OAuth 2.0 Authentication (OAUTH_SIGNING_KEY usage)</li>
 <li><strong>ADR-040:</strong> Database Schema Migration Management (automatic migrations)</li>
 <li><strong>ADR-057:</strong> Garage Object Storage (configuration via operator)</li>
+<li><strong>ADR-086:</strong> Deployment Topology (standalone installer, GHCR images)</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
