@@ -74,8 +74,12 @@ export const HomeWorkspace: React.FC = () => {
       const relationships = stats?.relationships?.total || 0;
       const ontologyCount = ontologies?.count || 0;
 
+      // Accept both 'healthy' and 'degraded' as online
+      // 'degraded' means API works but non-critical component (like Garage) is down
+      const isOnline = health.status === 'healthy' || health.status === 'degraded';
+
       setStatus({
-        health: health.status === 'healthy',
+        health: isOnline,
         database: {
           concepts,
           relationships,
