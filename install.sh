@@ -1427,6 +1427,24 @@ start_containers() {
     '
     log_success "Migrations complete"
 
+    # Configure OAuth redirect URIs for this deployment
+    log_info "Configuring OAuth client redirect URIs..."
+    local redirect_uri
+    if [[ "$SSL_MODE" != "none" ]]; then
+        redirect_uri="https://${HOSTNAME}/callback"
+    else
+        redirect_uri="http://${HOSTNAME}:3000/callback"
+    fi
+    $compose_cmd exec -T operator bash -c "
+        export PGPASSWORD=\"\$POSTGRES_PASSWORD\"
+        psql -h postgres -U admin -d knowledge_graph -c \"
+            UPDATE kg_auth.oauth_clients
+            SET redirect_uris = ARRAY['http://localhost:3000/callback', '$redirect_uri']
+            WHERE client_id = 'kg-web';
+        \"
+    " >/dev/null 2>&1 || log_warning "Could not update OAuth redirect URIs"
+    log_success "OAuth configured for $redirect_uri"
+
     # Start application
     log_info "Starting application (api, web)..."
     $compose_cmd up -d api web
