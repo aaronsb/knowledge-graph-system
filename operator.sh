@@ -464,6 +464,143 @@ cmd_update() {
     fi
 }
 
+cmd_recert() {
+    local force=false
+    local dns_provider=""
+    local dns_key=""
+    local dns_secret=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --force)
+                force=true
+                shift
+                ;;
+            --dns)
+                dns_provider="$2"
+                shift 2
+                ;;
+            --dns-key)
+                dns_key="$2"
+                shift 2
+                ;;
+            --dns-secret)
+                dns_secret="$2"
+                shift 2
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 recert [--force] [--dns PROVIDER --dns-key KEY [--dns-secret SECRET]]"
+                exit 1
+                ;;
+        esac
+    done
+
+    local install_dir="$SCRIPT_DIR"
+    local certs_dir="$install_dir/certs"
+    local acme_home="$HOME/.acme.sh"
+
+    # Load hostname from .env
+    if [ -f "$ENV_FILE" ]; then
+        source "$ENV_FILE"
+    fi
+
+    local hostname="${PUBLIC_HOSTNAME:-}"
+    if [ -z "$hostname" ]; then
+        echo -e "${RED}Could not determine hostname from .env${NC}"
+        echo "Set PUBLIC_HOSTNAME in .env or use install.sh to configure SSL"
+        exit 1
+    fi
+
+    echo -e "\n${BOLD}SSL Certificate Management${NC}"
+    echo -e "  Hostname: ${BLUE}$hostname${NC}"
+
+    # Check for existing acme.sh certificate
+    if [ -d "$acme_home/${hostname}_ecc" ] || [ -d "$acme_home/$hostname" ]; then
+        echo -e "  acme.sh cert: ${GREEN}found${NC}"
+
+        if [ "$force" = "true" ]; then
+            echo -e "\n${BLUE}→ Force renewing certificate...${NC}"
+            "$acme_home/acme.sh" --renew -d "$hostname" --force
+        else
+            echo -e "\n${BLUE}→ Renewing certificate (if due)...${NC}"
+            "$acme_home/acme.sh" --renew -d "$hostname"
+        fi
+
+        # Install to certs directory
+        mkdir -p "$certs_dir"
+        "$acme_home/acme.sh" --install-cert -d "$hostname" \
+            --key-file "$certs_dir/${hostname}.key" \
+            --fullchain-file "$certs_dir/${hostname}.fullchain.cer" \
+            --reloadcmd "docker restart kg-web 2>/dev/null || true"
+
+        echo -e "${GREEN}✓ Certificate renewed${NC}"
+
+    elif [ -n "$dns_provider" ]; then
+        # Issue new certificate with DNS-01 challenge
+        echo -e "  DNS provider: ${BLUE}$dns_provider${NC}"
+        echo -e "\n${BLUE}→ Issuing new certificate via DNS-01...${NC}"
+
+        # Install acme.sh if needed
+        if [ ! -f "$acme_home/acme.sh" ]; then
+            echo -e "${BLUE}→ Installing acme.sh...${NC}"
+            curl -fsSL https://get.acme.sh | sh -s email="${SSL_EMAIL:-admin@$hostname}"
+        fi
+
+        # Set DNS credentials
+        case "$dns_provider" in
+            dns_porkbun)
+                export PORKBUN_API_KEY="$dns_key"
+                export PORKBUN_SECRET_API_KEY="$dns_secret"
+                ;;
+            dns_cloudflare)
+                export CF_Key="$dns_key"
+                export CF_Email="${SSL_EMAIL:-}"
+                ;;
+            dns_digitalocean)
+                export DO_API_KEY="$dns_key"
+                ;;
+            *)
+                export DNS_API_KEY="$dns_key"
+                export DNS_API_SECRET="$dns_secret"
+                ;;
+        esac
+
+        if ! "$acme_home/acme.sh" --issue --dns "$dns_provider" -d "$hostname" --server letsencrypt; then
+            echo -e "${RED}Failed to obtain certificate${NC}"
+            exit 1
+        fi
+
+        mkdir -p "$certs_dir"
+        "$acme_home/acme.sh" --install-cert -d "$hostname" \
+            --key-file "$certs_dir/${hostname}.key" \
+            --fullchain-file "$certs_dir/${hostname}.fullchain.cer" \
+            --reloadcmd "docker restart kg-web 2>/dev/null || true"
+
+        echo -e "${GREEN}✓ Certificate issued and installed${NC}"
+
+    else
+        echo -e "  acme.sh cert: ${YELLOW}not found${NC}"
+        echo ""
+        echo "To issue a new certificate with DNS-01 challenge:"
+        echo "  $0 recert --dns dns_porkbun --dns-key YOUR_API_KEY --dns-secret YOUR_SECRET"
+        echo ""
+        echo "Supported DNS providers: dns_porkbun, dns_cloudflare, dns_digitalocean, dns_gandi, dns_namecheap"
+        echo "See: https://github.com/acmesh-official/acme.sh/wiki/dnsapi"
+        exit 1
+    fi
+
+    # Restart web to pick up new certs
+    load_config
+    local web_container=$(get_container_name web)
+    if docker ps --format '{{.Names}}' | grep -q "^${web_container}$"; then
+        echo -e "${BLUE}→ Restarting web server...${NC}"
+        docker restart "$web_container"
+        echo -e "${GREEN}✓ Web server restarted${NC}"
+    fi
+}
+
 # ============================================================================
 # Help System
 # ============================================================================
@@ -485,6 +622,7 @@ show_help_overview() {
     echo -e "${BOLD}Service Commands:${NC}"
     echo "  restart <service>  Restart a service (api, web, postgres, garage)"
     echo "  rebuild <service>  Rebuild and restart (api, web only)"
+    echo "  recert             Renew/reissue SSL certificates"
     echo ""
     echo -e "${BOLD}Management Commands:${NC}"
     echo "  status             Show platform and container status"
@@ -620,6 +758,21 @@ show_help_services() {
     echo "  - requirements.txt / package.json changes"
     echo "  - Dockerfile changes"
     echo "  - Schema changes requiring rebuild"
+    echo ""
+    echo -e "${BLUE}recert [options]${NC}"
+    echo "  Renew or reissue SSL certificates."
+    echo "  Uses acme.sh for DNS-01 challenge, certbot for HTTP-01."
+    echo ""
+    echo "  Options:"
+    echo "    --force             Force renewal even if not due"
+    echo "    --dns <provider>    DNS provider for new cert (e.g., dns_porkbun)"
+    echo "    --dns-key <key>     DNS API key"
+    echo "    --dns-secret <sec>  DNS API secret"
+    echo ""
+    echo "  Examples:"
+    echo "    $0 recert                  # Renew existing certificate"
+    echo "    $0 recert --force          # Force renewal"
+    echo "    $0 recert --dns dns_porkbun --dns-key KEY --dns-secret SECRET"
     echo ""
     echo -e "${BLUE}logs [service] [-f|--follow] [-n|--lines N]${NC}"
     echo "  Show logs from a service (default: api)."
@@ -771,6 +924,10 @@ case "${1:-help}" in
     teardown)
         shift
         "$SCRIPT_DIR/operator/lib/teardown.sh" "$@"
+        ;;
+    recert)
+        shift
+        cmd_recert "$@"
         ;;
     help|--help|-h)
         shift 2>/dev/null || true

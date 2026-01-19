@@ -48,7 +48,8 @@ SSL_EMAIL=""             # Required for Let's Encrypt
 SSL_CERT_PATH=""         # For manual SSL
 SSL_KEY_PATH=""          # For manual SSL
 SSL_DNS_PROVIDER=""      # For DNS-01 challenge (e.g., dns_porkbun, dns_cloudflare)
-SSL_DNS_CREDENTIALS=""   # DNS API credentials
+SSL_DNS_KEY=""           # DNS API key
+SSL_DNS_SECRET=""        # DNS API secret
 
 # ============================================================================
 # Help
@@ -98,6 +99,14 @@ ${BOLD}SSL/HTTPS Options:${NC}
 
   --ssl-key PATH            Path to SSL private key file (required for manual)
 
+  --ssl-dns PROVIDER        DNS provider for DNS-01 challenge (e.g., dns_porkbun, dns_cloudflare)
+                            Uses acme.sh instead of certbot - works behind firewalls/NAT
+                            See: https://github.com/acmesh-official/acme.sh/wiki/dnsapi
+
+  --ssl-dns-key KEY         DNS API key (provider-specific, e.g., Porkbun API key)
+
+  --ssl-dns-secret SECRET   DNS API secret (provider-specific, e.g., Porkbun secret key)
+
 ${BOLD}Examples:${NC}
 
   # Interactive installation (prompts for configuration)
@@ -135,6 +144,16 @@ ${BOLD}Examples:${NC}
     --ssl manual \\
     --ssl-cert /path/to/fullchain.pem \\
     --ssl-key /path/to/privkey.pem \\
+    --skip-ai
+
+  # With Let's Encrypt DNS-01 challenge (works behind NAT/firewall)
+  curl -fsSL .../install.sh | bash -s -- \\
+    --hostname kg.internal.example.com \\
+    --ssl letsencrypt \\
+    --ssl-email admin@example.com \\
+    --ssl-dns dns_porkbun \\
+    --ssl-dns-key "\$PORKBUN_API_KEY" \\
+    --ssl-dns-secret "\$PORKBUN_SECRET_KEY" \\
     --skip-ai
 
 ${BOLD}Requirements:${NC}
@@ -456,6 +475,33 @@ parse_args() {
                     shift 2
                 fi
                 ;;
+            --ssl-dns|--ssl-dns-provider)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--ssl-dns requires a provider name"
+                    shift
+                else
+                    SSL_DNS_PROVIDER="$2"
+                    shift 2
+                fi
+                ;;
+            --ssl-dns-key)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--ssl-dns-key requires a value"
+                    shift
+                else
+                    SSL_DNS_KEY="$2"
+                    shift 2
+                fi
+                ;;
+            --ssl-dns-secret)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--ssl-dns-secret requires a value"
+                    shift
+                else
+                    SSL_DNS_SECRET="$2"
+                    shift 2
+                fi
+                ;;
             *)
                 add_validation_error "Unknown option: $1"
                 shift
@@ -485,8 +531,16 @@ parse_args() {
             if [[ -z "$SSL_EMAIL" ]]; then
                 add_validation_error "--ssl-email is required for Let's Encrypt"
             fi
-            if [[ "$HOSTNAME" == "localhost" || "$HOSTNAME" =~ ^192\. || "$HOSTNAME" =~ ^10\. || "$HOSTNAME" =~ ^172\. ]]; then
-                add_validation_error "Let's Encrypt requires a public domain name (not localhost or private IP)"
+            # Allow private IPs with DNS-01 challenge, but not HTTP-01
+            if [[ -z "$SSL_DNS_PROVIDER" ]]; then
+                if [[ "$HOSTNAME" == "localhost" || "$HOSTNAME" =~ ^192\. || "$HOSTNAME" =~ ^10\. || "$HOSTNAME" =~ ^172\. ]]; then
+                    add_validation_error "Let's Encrypt HTTP-01 requires a public domain name. Use --ssl-dns for internal networks."
+                fi
+            else
+                # Validate DNS credentials
+                if [[ -z "$SSL_DNS_KEY" ]]; then
+                    add_validation_error "--ssl-dns-key is required for DNS-01 challenge"
+                fi
             fi
         fi
         if [[ "$SSL_MODE" == "manual" ]]; then
@@ -606,6 +660,87 @@ setup_letsencrypt() {
 
     log_info "Setting up Let's Encrypt certificates"
 
+    # Use DNS-01 challenge with acme.sh if DNS provider specified
+    if [[ -n "$SSL_DNS_PROVIDER" ]]; then
+        setup_letsencrypt_dns "$certs_dir"
+        return
+    fi
+
+    # Otherwise use HTTP-01 challenge with certbot (requires port 80)
+    setup_letsencrypt_http "$certs_dir"
+}
+
+setup_letsencrypt_dns() {
+    local certs_dir="$1"
+
+    log_info "Using DNS-01 challenge with $SSL_DNS_PROVIDER"
+
+    # Install acme.sh if needed
+    local acme_home="$HOME/.acme.sh"
+    if [[ ! -f "$acme_home/acme.sh" ]]; then
+        log_info "Installing acme.sh..."
+        curl -fsSL https://get.acme.sh | sh -s email="$SSL_EMAIL"
+    fi
+
+    # Set DNS API credentials based on provider
+    case "$SSL_DNS_PROVIDER" in
+        dns_porkbun)
+            export PORKBUN_API_KEY="$SSL_DNS_KEY"
+            export PORKBUN_SECRET_API_KEY="$SSL_DNS_SECRET"
+            ;;
+        dns_cloudflare)
+            export CF_Key="$SSL_DNS_KEY"
+            export CF_Email="$SSL_EMAIL"
+            ;;
+        dns_digitalocean)
+            export DO_API_KEY="$SSL_DNS_KEY"
+            ;;
+        dns_namecheap)
+            export NAMECHEAP_API_KEY="$SSL_DNS_KEY"
+            export NAMECHEAP_USERNAME="$SSL_DNS_SECRET"
+            ;;
+        dns_gandi)
+            export GANDI_LIVEDNS_KEY="$SSL_DNS_KEY"
+            ;;
+        *)
+            # Generic - set both as env vars, acme.sh will use what it needs
+            log_warning "Unknown DNS provider $SSL_DNS_PROVIDER - setting generic credentials"
+            export DNS_API_KEY="$SSL_DNS_KEY"
+            export DNS_API_SECRET="$SSL_DNS_SECRET"
+            ;;
+    esac
+
+    log_info "Requesting certificate for $HOSTNAME via DNS-01..."
+
+    # Issue certificate using DNS challenge
+    if ! "$acme_home/acme.sh" --issue \
+        --dns "$SSL_DNS_PROVIDER" \
+        -d "$HOSTNAME" \
+        --server letsencrypt; then
+        log_error "Failed to obtain Let's Encrypt certificate via DNS-01"
+        log_info "Check your DNS API credentials and provider name"
+        log_info "See: https://github.com/acmesh-official/acme.sh/wiki/dnsapi"
+        exit 1
+    fi
+
+    # Install certificate to our directory
+    "$acme_home/acme.sh" --install-cert -d "$HOSTNAME" \
+        --key-file "$certs_dir/${HOSTNAME}.key" \
+        --fullchain-file "$certs_dir/${HOSTNAME}.fullchain.cer" \
+        --reloadcmd "docker restart kg-web 2>/dev/null || true"
+
+    chmod 600 "$certs_dir/${HOSTNAME}.key"
+
+    log_success "Let's Encrypt certificate obtained via DNS-01"
+    log_info "Auto-renewal configured via acme.sh cron job"
+    log_info "To manually renew: ./operator.sh recert"
+}
+
+setup_letsencrypt_http() {
+    local certs_dir="$1"
+
+    log_info "Using HTTP-01 challenge (requires port 80 accessible)"
+
     # Install certbot if needed
     if ! command -v certbot &> /dev/null; then
         log_info "Installing certbot..."
@@ -641,6 +776,7 @@ setup_letsencrypt() {
         -d "$HOSTNAME"; then
         log_error "Failed to obtain Let's Encrypt certificate"
         log_info "Make sure port 80 is accessible and DNS points to this server"
+        log_info "For internal networks, use --ssl-dns with a DNS provider instead"
         exit 1
     fi
 
@@ -718,7 +854,8 @@ EOF
     sudo mkdir -p /etc/letsencrypt/renewal-hooks/deploy
     sudo ln -sf "$hook_script" "/etc/letsencrypt/renewal-hooks/deploy/knowledge-graph.sh"
 
-    log_info "Certificate auto-renewal configured"
+    log_info "Certificate auto-renewal configured via certbot cron/timer"
+    log_info "To manually renew: ./operator.sh recert"
 }
 
 generate_ssl_compose_overlay() {
@@ -1116,16 +1253,47 @@ run_interactive_setup() {
     SSL_MODE="${SSL_MODE%% *}"  # Extract first word
 
     if [[ "$SSL_MODE" == "letsencrypt" ]]; then
-        # Validate hostname for Let's Encrypt
-        if [[ "$HOSTNAME" == "localhost" || "$HOSTNAME" =~ ^192\. || "$HOSTNAME" =~ ^10\. || "$HOSTNAME" =~ ^172\. ]]; then
-            log_warning "Let's Encrypt requires a public domain name"
-            log_info "Falling back to HTTP only"
+        SSL_EMAIL=$(prompt_value "Email for Let's Encrypt" "")
+        if [[ -z "$SSL_EMAIL" ]]; then
+            log_warning "Email required for Let's Encrypt. Falling back to HTTP only."
             SSL_MODE="offload"
         else
-            SSL_EMAIL=$(prompt_value "Email for Let's Encrypt" "")
-            if [[ -z "$SSL_EMAIL" ]]; then
-                log_warning "Email required for Let's Encrypt. Falling back to HTTP only."
-                SSL_MODE="offload"
+            # Check if we need DNS-01 challenge (for private IPs or internal domains)
+            if [[ "$HOSTNAME" == "localhost" || "$HOSTNAME" =~ ^192\. || "$HOSTNAME" =~ ^10\. || "$HOSTNAME" =~ ^172\. ]]; then
+                log_warning "Private IP detected - HTTP-01 challenge won't work"
+                log_info "Using DNS-01 challenge instead (requires DNS API credentials)"
+                echo
+                SSL_DNS_PROVIDER=$(prompt_select "DNS provider for DNS-01 challenge" \
+                    "dns_porkbun" "dns_cloudflare" "dns_digitalocean" "dns_gandi" "dns_namecheap" "skip (use HTTP only)")
+                if [[ "$SSL_DNS_PROVIDER" == "skip (use HTTP only)" ]]; then
+                    SSL_MODE="offload"
+                    SSL_DNS_PROVIDER=""
+                fi
+            else
+                # Public domain - offer choice between HTTP-01 and DNS-01
+                echo
+                local challenge_type
+                challenge_type=$(prompt_select "Certificate challenge type" \
+                    "http (port 80 accessible)" "dns (works behind firewall)")
+                if [[ "$challenge_type" == "dns (works behind firewall)" ]]; then
+                    SSL_DNS_PROVIDER=$(prompt_select "DNS provider" \
+                        "dns_porkbun" "dns_cloudflare" "dns_digitalocean" "dns_gandi" "dns_namecheap")
+                fi
+            fi
+
+            # Get DNS credentials if using DNS-01
+            if [[ -n "$SSL_DNS_PROVIDER" ]]; then
+                echo
+                log_info "Enter DNS API credentials for $SSL_DNS_PROVIDER"
+                log_info "See: https://github.com/acmesh-official/acme.sh/wiki/dnsapi"
+                SSL_DNS_KEY=$(prompt_value "API key" "")
+                if [[ -z "$SSL_DNS_KEY" ]]; then
+                    log_warning "DNS API key required. Falling back to HTTP only."
+                    SSL_MODE="offload"
+                    SSL_DNS_PROVIDER=""
+                else
+                    SSL_DNS_SECRET=$(prompt_value "API secret (if required, or press Enter)" "")
+                fi
             fi
         fi
     elif [[ "$SSL_MODE" == "manual" ]]; then
