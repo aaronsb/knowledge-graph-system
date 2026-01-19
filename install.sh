@@ -43,7 +43,7 @@ VALIDATION_FAILED=false
 VALIDATION_ERRORS=()
 
 # SSL Configuration
-SSL_MODE="none"          # none, selfsigned, letsencrypt, manual
+SSL_MODE="offload"       # offload, selfsigned, letsencrypt, manual
 SSL_EMAIL=""             # Required for Let's Encrypt
 SSL_CERT_PATH=""         # For manual SSL
 SSL_KEY_PATH=""          # For manual SSL
@@ -86,8 +86,8 @@ ${BOLD}Options:${NC}
   --help                    Show this help message
 
 ${BOLD}SSL/HTTPS Options:${NC}
-  --ssl MODE                SSL mode: none, selfsigned, letsencrypt, manual (default: none)
-                            • none: HTTP only (port 3000) - only works on localhost
+  --ssl MODE                SSL mode: offload, selfsigned, letsencrypt, manual (default: offload)
+                            • offload: HTTP only - for use behind SSL-terminating reverse proxy
                             • selfsigned: Generate self-signed certificate (testing/internal)
                             • letsencrypt: Auto-generate certs via Let's Encrypt
                             • manual: Use existing certificates
@@ -214,7 +214,7 @@ validate_gpu_mode() {
 validate_ssl_mode() {
     local mode="$1"
     case "$mode" in
-        none|selfsigned|letsencrypt|manual) return 0 ;;
+        offload|selfsigned|letsencrypt|manual) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -381,7 +381,7 @@ parse_args() {
                 if [[ -z "$SSL_MODE" ]]; then
                     add_validation_error "--ssl requires a value"
                 elif ! validate_ssl_mode "$SSL_MODE"; then
-                    add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, selfsigned, letsencrypt, manual)"
+                    add_validation_error "Invalid SSL mode: $SSL_MODE (must be: offload, selfsigned, letsencrypt, manual)"
                 fi
                 shift
                 ;;
@@ -392,7 +392,7 @@ parse_args() {
                 else
                     SSL_MODE="$2"
                     if ! validate_ssl_mode "$SSL_MODE"; then
-                        add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, selfsigned, letsencrypt, manual)"
+                        add_validation_error "Invalid SSL mode: $SSL_MODE (must be: offload, selfsigned, letsencrypt, manual)"
                     fi
                     shift 2
                 fi
@@ -564,7 +564,7 @@ install_docker() {
 setup_ssl() {
     local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
 
-    if [[ "$SSL_MODE" == "none" ]]; then
+    if [[ "$SSL_MODE" == "offload" ]]; then
         log_info "SSL disabled - using HTTP only"
         generate_nginx_http_config "$install_dir"
         return 0
@@ -1100,7 +1100,7 @@ run_interactive_setup() {
     # SSL Configuration
     echo
     SSL_MODE=$(prompt_select "SSL/HTTPS configuration" \
-        "selfsigned (quick setup)" "letsencrypt (auto-generate)" "manual (existing certs)" "none (HTTP only - localhost)")
+        "selfsigned (quick setup)" "letsencrypt (auto-generate)" "manual (existing certs)" "offload (reverse proxy)")
     SSL_MODE="${SSL_MODE%% *}"  # Extract first word
 
     if [[ "$SSL_MODE" == "letsencrypt" ]]; then
@@ -1108,12 +1108,12 @@ run_interactive_setup() {
         if [[ "$HOSTNAME" == "localhost" || "$HOSTNAME" =~ ^192\. || "$HOSTNAME" =~ ^10\. || "$HOSTNAME" =~ ^172\. ]]; then
             log_warning "Let's Encrypt requires a public domain name"
             log_info "Falling back to HTTP only"
-            SSL_MODE="none"
+            SSL_MODE="offload"
         else
             SSL_EMAIL=$(prompt_value "Email for Let's Encrypt" "")
             if [[ -z "$SSL_EMAIL" ]]; then
                 log_warning "Email required for Let's Encrypt. Falling back to HTTP only."
-                SSL_MODE="none"
+                SSL_MODE="offload"
             fi
         fi
     elif [[ "$SSL_MODE" == "manual" ]]; then
@@ -1121,7 +1121,7 @@ run_interactive_setup() {
         SSL_KEY_PATH=$(prompt_value "Path to SSL private key (privkey.pem)" "")
         if [[ ! -f "$SSL_CERT_PATH" || ! -f "$SSL_KEY_PATH" ]]; then
             log_warning "Certificate files not found. Falling back to HTTP only."
-            SSL_MODE="none"
+            SSL_MODE="offload"
         fi
     fi
 
@@ -1211,7 +1211,7 @@ download_files() {
             sed -i '/\/srv\/docker\/data/d' "$file"
 
             # For non-SSL installs, replace https:// with http:// in VITE_ env vars
-            if [[ "$SSL_MODE" == "none" ]]; then
+            if [[ "$SSL_MODE" == "offload" ]]; then
                 sed -i 's|https://\${WEB_HOSTNAME|http://\${WEB_HOSTNAME|g' "$file"
             fi
         fi
@@ -1312,7 +1312,7 @@ WEB_HOSTNAME=${HOSTNAME}
 EOF
 
     # Add protocol-specific settings
-    if [[ "$SSL_MODE" != "none" ]]; then
+    if [[ "$SSL_MODE" != "offload" ]]; then
         cat >> .env << EOF
 VITE_API_URL=https://${HOSTNAME}/api
 VITE_OAUTH_CLIENT_ID=kg-web
@@ -1358,7 +1358,7 @@ build_compose_command() {
     esac
 
     # Add SSL overlay if enabled
-    if [[ "$SSL_MODE" != "none" && -f "docker-compose.ssl.yml" ]]; then
+    if [[ "$SSL_MODE" != "offload" && -f "docker-compose.ssl.yml" ]]; then
         cmd="$cmd -f docker-compose.ssl.yml"
     fi
 
@@ -1430,7 +1430,7 @@ start_containers() {
     # Configure OAuth redirect URIs for this deployment
     log_info "Configuring OAuth client redirect URIs..."
     local redirect_uri
-    if [[ "$SSL_MODE" != "none" ]]; then
+    if [[ "$SSL_MODE" != "offload" ]]; then
         redirect_uri="https://${HOSTNAME}/callback"
     else
         redirect_uri="http://${HOSTNAME}:3000/callback"
@@ -1531,7 +1531,7 @@ show_completion() {
 
     # Determine URLs based on SSL mode
     local web_url api_url docs_url
-    if [[ "$SSL_MODE" != "none" ]]; then
+    if [[ "$SSL_MODE" != "offload" ]]; then
         web_url="https://${HOSTNAME}"
         api_url="https://${HOSTNAME}/api"
         docs_url="https://${HOSTNAME}/api/docs"
@@ -1554,7 +1554,7 @@ show_completion() {
     echo -e "  ${BOLD}Password:${NC}    ${ADMIN_PASSWORD}"
     echo
     echo -e "  ${BOLD}Install Dir:${NC} ${install_dir}"
-    if [[ "$SSL_MODE" != "none" ]]; then
+    if [[ "$SSL_MODE" != "offload" ]]; then
         echo -e "  ${BOLD}SSL:${NC}         ${SSL_MODE}"
     fi
     echo

@@ -369,6 +369,75 @@ class OperatorConfig:
             conn.close()
 
 
+    def cmd_oauth(self, args):
+        """Configure OAuth clients"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                if args.list:
+                    # List all OAuth clients
+                    cur.execute("""
+                        SELECT client_id, client_name, client_type, redirect_uris
+                        FROM kg_auth.oauth_clients
+                        ORDER BY client_id
+                    """)
+                    clients = cur.fetchall()
+                    print("\n📋 OAuth Clients:")
+                    print("-" * 60)
+                    for client in clients:
+                        print(f"  {client['client_id']} ({client['client_type']})")
+                        print(f"    Name: {client['client_name']}")
+                        if client['redirect_uris']:
+                            print(f"    Redirect URIs: {', '.join(client['redirect_uris'])}")
+                        print()
+                    return True
+
+                if not args.client_id:
+                    print("❌ Client ID required (use --list to see all clients)")
+                    return False
+
+                if args.redirect_uri:
+                    # Update redirect URIs for a client
+                    # Parse comma-separated URIs
+                    uris = [u.strip() for u in args.redirect_uri.split(',')]
+                    cur.execute("""
+                        UPDATE kg_auth.oauth_clients
+                        SET redirect_uris = %s
+                        WHERE client_id = %s
+                        RETURNING client_id
+                    """, (uris, args.client_id))
+
+                    if cur.fetchone():
+                        conn.commit()
+                        print(f"✅ Updated redirect URIs for {args.client_id}")
+                        print(f"   URIs: {', '.join(uris)}")
+                        return True
+                    else:
+                        print(f"❌ Client not found: {args.client_id}")
+                        return False
+
+                # Show client details
+                cur.execute("""
+                    SELECT client_id, client_name, client_type, redirect_uris, scopes
+                    FROM kg_auth.oauth_clients
+                    WHERE client_id = %s
+                """, (args.client_id,))
+                client = cur.fetchone()
+                if client:
+                    print(f"\n📋 OAuth Client: {client['client_id']}")
+                    print(f"   Name: {client['client_name']}")
+                    print(f"   Type: {client['client_type']}")
+                    print(f"   Redirect URIs: {', '.join(client['redirect_uris'] or [])}")
+                    print(f"   Scopes: {', '.join(client['scopes'] or [])}")
+                    return True
+                else:
+                    print(f"❌ Client not found: {args.client_id}")
+                    return False
+
+        finally:
+            conn.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="kg-operator configuration tool")
     subparsers = parser.add_subparsers(dest='command', help='Configuration command')
@@ -395,6 +464,12 @@ def main():
     # status
     subparsers.add_parser('status', help='Show configuration status')
 
+    # oauth
+    oauth_parser = subparsers.add_parser('oauth', help='Configure OAuth clients')
+    oauth_parser.add_argument('client_id', nargs='?', help='Client ID (kg-web, kg-cli, kg-mcp)')
+    oauth_parser.add_argument('--list', action='store_true', help='List all OAuth clients')
+    oauth_parser.add_argument('--redirect-uri', help='Set redirect URI(s), comma-separated')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -410,6 +485,7 @@ def main():
         'embedding': config.cmd_embedding,
         'api-key': config.cmd_api_key,
         'status': config.cmd_status,
+        'oauth': config.cmd_oauth,
     }
 
     handler = handlers.get(args.command)
