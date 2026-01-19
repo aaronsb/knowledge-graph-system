@@ -205,8 +205,8 @@ class OperatorConfig:
                 # Deactivate all profiles
                 cur.execute("UPDATE kg_api.embedding_config SET active = false")
 
-                # Activate selected profile
-                cur.execute("UPDATE kg_api.embedding_config SET active = true WHERE id = %s", (profile_id,))
+                # Activate selected profile (use profile['id'] from query, not profile_id arg)
+                cur.execute("UPDATE kg_api.embedding_config SET active = true WHERE id = %s", (profile['id'],))
 
                 conn.commit()
 
