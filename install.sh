@@ -1413,8 +1413,15 @@ download_files() {
     done
     log_success "Compose files downloaded"
 
-    # Note: Schema/migration files are NOT downloaded - they exist in the operator container
-    # and migrations are run via: docker exec kg-operator /workspace/operator/database/migrate-db.sh
+    # Download baseline schema for postgres initialization
+    # (The baseline SQL is mounted into postgres and runs on first start)
+    # Incremental migrations are in the operator container and applied via migrate-db.sh
+    mkdir -p schema
+    log_info "Downloading schema/00_baseline.sql..."
+    if ! curl -fsSL "${KG_REPO_RAW}/schema/00_baseline.sql" -o "schema/00_baseline.sql"; then
+        log_error "Failed to download: schema/00_baseline.sql"
+        exit 1
+    fi
 
     # Config files
     mkdir -p config
