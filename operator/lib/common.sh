@@ -6,7 +6,15 @@
 # Get project root (relative to this script in operator/lib/)
 _COMMON_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="${PROJECT_ROOT:-$( cd "$_COMMON_DIR/../.." && pwd )}"
-DOCKER_DIR="$PROJECT_ROOT/docker"
+
+# Detect standalone vs repo install
+# Standalone: docker-compose.yml in root, no docker/ subdirectory
+# Repo: docker-compose.yml in docker/ subdirectory
+if [ -d "$PROJECT_ROOT/docker" ]; then
+    DOCKER_DIR="$PROJECT_ROOT/docker"
+else
+    DOCKER_DIR="$PROJECT_ROOT"
+fi
 CONFIG_FILE="$PROJECT_ROOT/.operator.conf"
 ENV_FILE="$PROJECT_ROOT/.env"
 

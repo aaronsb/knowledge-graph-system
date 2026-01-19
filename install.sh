@@ -144,9 +144,20 @@ ${BOLD}Requirements:${NC}
   - 20GB disk space
 
 ${BOLD}After Installation:${NC}
-  - Web UI: http://HOSTNAME:3000
-  - API: http://HOSTNAME:8000
+  - Web UI: https://HOSTNAME (or http://HOSTNAME:3000 for offload mode)
+  - API: https://HOSTNAME/api (or http://HOSTNAME:8000)
   - Default admin user: admin
+
+${BOLD}Ongoing Management:${NC}
+  This installer sets up the platform. For day-to-day management, use:
+
+    cd ~/knowledge-graph && ./operator.sh help
+
+  Key commands:
+    ./operator.sh status     # Check platform health
+    ./operator.sh upgrade    # Pull updates and restart
+    ./operator.sh logs       # View container logs
+    ./operator.sh shell      # Access configuration tools
 
 EOF
 }
@@ -1237,7 +1248,13 @@ download_files() {
     local operator_files=(
         "operator/configure.py"
         "operator/lib/common.sh"
+        "operator/lib/upgrade.sh"
+        "operator/lib/start-infra.sh"
+        "operator/lib/start-app.sh"
+        "operator/lib/stop.sh"
+        "operator/lib/teardown.sh"
         "operator/database/migrate-db.sh"
+        "operator/database/backup-database.sh"
     )
 
     for file in "${operator_files[@]}"; do
@@ -1255,6 +1272,18 @@ download_files() {
     else
         log_warning "Could not download operator.sh"
     fi
+
+    # Create operator configuration for standalone install
+    cat > ".operator.conf" << EOF
+# Operator configuration (standalone install)
+# Container naming: kg-* (production style)
+DEV_MODE=false
+GPU_MODE=${GPU_MODE}
+CONTAINER_PREFIX=kg
+IMAGE_SOURCE=ghcr
+INITIALIZED_AT=$(date -Iseconds)
+EOF
+    log_success ".operator.conf created"
 
     log_success "Files downloaded"
 }
@@ -1568,12 +1597,28 @@ show_completion() {
         echo "  3. Configure AI provider in Settings > AI Configuration"
     fi
     echo
-    echo -e "${BOLD}Useful Commands:${NC}"
+    echo -e "${BOLD}Platform Management:${NC}"
     echo "  cd ${install_dir}"
-    echo "  docker compose logs -f          # View logs"
-    echo "  docker compose ps               # Container status"
-    echo "  docker compose down             # Stop platform"
-    echo "  docker compose up -d            # Start platform"
+    echo
+    echo "  ${BOLD}./operator.sh${NC} is your primary tool for managing the platform:"
+    echo "    ./operator.sh status           # Platform and container status"
+    echo "    ./operator.sh logs [service]   # View logs (api, web, postgres)"
+    echo "    ./operator.sh logs api -f      # Follow logs in real-time"
+    echo "    ./operator.sh stop             # Stop the platform"
+    echo "    ./operator.sh start            # Start the platform"
+    echo "    ./operator.sh upgrade          # Pull updates and restart"
+    echo "    ./operator.sh shell            # Configuration shell"
+    echo
+    echo "  Inside the configuration shell (./operator.sh shell):"
+    echo "    configure.py status            # Show current configuration"
+    echo "    configure.py ai-provider       # Change AI extraction provider"
+    echo "    configure.py api-key <name>    # Store API key"
+    echo "    configure.py oauth --list      # Manage OAuth clients"
+    echo
+    echo "  Direct docker access (if needed):"
+    echo "    docker compose ps              # Container status"
+    echo "    docker compose down            # Stop all containers"
+    echo "    docker compose up -d           # Start all containers"
     echo
 }
 

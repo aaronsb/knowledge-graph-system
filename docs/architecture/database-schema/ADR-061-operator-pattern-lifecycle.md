@@ -399,12 +399,100 @@ api_key = decrypt(api_key_encrypted, ENCRYPTION_KEY)  # Decrypt
 - [ ] Mark old scripts as deprecated
 - [ ] Remove after one release cycle
 
+### Update/Upgrade Lifecycle (Added 2026-01-19)
+
+Following the familiar Linux package manager pattern:
+
+```bash
+./operator.sh update [service]   # Pull latest images (like apt update)
+./operator.sh upgrade            # Pull, migrate, restart (like apt upgrade)
+```
+
+**Update** - Fetch without applying:
+```bash
+./operator.sh update             # Pull all images from GHCR
+./operator.sh update operator    # Pull only operator image
+./operator.sh update api         # Pull only API image
+```
+
+**Upgrade** - Full lifecycle:
+1. Pre-flight checks (verify .env, .operator.conf)
+2. Optional pre-upgrade backup
+3. Pull new images
+4. Stop application containers (keep postgres/garage running)
+5. Run database migrations
+6. Start application with new images
+7. Health check
+
+**Version Management Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  operator.sh (host)                                         │
+│  - Thin shim, rarely changes                                │
+│  - Delegates to operator container for logic                │
+│  - Handles: start/stop, exec into container, compose calls  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  operator container (source of truth)                       │
+│                                                             │
+│  Contains:                                                  │
+│    - Database migration scripts                             │
+│    - Configuration tools (configure.py)                     │
+│    - Version compatibility knowledge (future: manifest)     │
+│                                                             │
+│  Future evolution:                                          │
+│    - /versions endpoint for compatible image versions       │
+│    - Automatic compatibility checking during upgrade        │
+│    - Rollback support with version pinning                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Standalone Install Support:**
+
+For deployments via `install.sh` (not from git repo), operator.sh detects the environment:
+
+1. **`.operator.conf`** - Created by installer with:
+   - `CONTAINER_PREFIX=kg` (container naming)
+   - `IMAGE_SOURCE=ghcr` (pull from registry)
+   - `DEV_MODE=false`
+
+2. **DOCKER_DIR detection** - Scripts auto-detect:
+   - Repo install: `$PROJECT_ROOT/docker/`
+   - Standalone: `$PROJECT_ROOT/` (compose files in root)
+
+3. **GHCR overlay** - Standalone uses `docker-compose.ghcr.yml` for image paths
+
+**Infrastructure vs Application Updates:**
+
+| Component | Update Method | Notes |
+|-----------|--------------|-------|
+| api, web, operator | `update` + `restart` | Our images, freely updatable |
+| postgres, garage | Manual | Versions pinned in compose, require careful migration |
+
+For postgres/garage, operator provides guidance:
+```bash
+$ ./operator.sh update postgres
+postgres version is pinned in docker-compose.yml
+
+To update postgres:
+  1. Edit docker-compose.yml and update the image tag
+  2. ./operator.sh update postgres  # Pull new version
+  3. ./operator.sh restart postgres # Apply (caution: may need migration)
+
+Warning: PostgreSQL upgrades may require data migration
+Back up your data before upgrading: operator/database/backup-database.sh
+```
+
 ## Related ADRs
 
 - **ADR-031:** Encrypted Credential Storage (ENCRYPTION_KEY usage)
 - **ADR-054:** OAuth 2.0 Authentication (OAUTH_SIGNING_KEY usage)
 - **ADR-040:** Database Schema Migration Management (automatic migrations)
 - **ADR-057:** Garage Object Storage (configuration via operator)
+- **ADR-086:** Deployment Topology (standalone installer, GHCR images)
 
 ## References
 

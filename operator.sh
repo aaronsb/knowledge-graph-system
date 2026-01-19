@@ -385,6 +385,85 @@ cmd_query() {
              -c "$query"
 }
 
+cmd_update() {
+    check_env
+    load_config
+
+    local service="${1:-}"
+
+    echo -e "\n${BOLD}Pulling latest images${NC}"
+    echo -e "  Source: ${BLUE}${IMAGE_SOURCE:-ghcr}${NC}"
+    echo ""
+
+    # Detect standalone vs repo install for DOCKER_DIR
+    local docker_dir="$SCRIPT_DIR/docker"
+    if [ ! -d "$docker_dir" ]; then
+        docker_dir="$SCRIPT_DIR"
+    fi
+
+    cd "$docker_dir"
+
+    # Build compose command with appropriate overlays
+    local compose_cmd="docker compose -f docker-compose.yml"
+    if [ "$IMAGE_SOURCE" = "ghcr" ] && [ -f "docker-compose.ghcr.yml" ]; then
+        compose_cmd="$compose_cmd -f docker-compose.ghcr.yml"
+    fi
+    compose_cmd="$compose_cmd --env-file $ENV_FILE"
+
+    if [ -n "$service" ]; then
+        # Update specific service
+        case "$service" in
+            api|web|operator)
+                echo -e "${BLUE}→ Pulling $service...${NC}"
+                if [ "$IMAGE_SOURCE" = "ghcr" ] || [ "$IMAGE_SOURCE" = "" ]; then
+                    $compose_cmd pull "$service"
+                else
+                    echo -e "${YELLOW}  Local build - use 'rebuild $service' instead${NC}"
+                    return 1
+                fi
+                echo ""
+                echo -e "${GREEN}✓ $service image updated${NC}"
+                echo ""
+                echo "To apply the update:"
+                echo "  $0 restart $service"
+                ;;
+            postgres|garage)
+                echo -e "${YELLOW}$service version is pinned in docker-compose.yml${NC}"
+                echo ""
+                echo "To update $service:"
+                echo "  1. Edit docker-compose.yml and update the image tag"
+                echo "  2. $0 update $service  # Pull new version"
+                echo "  3. $0 restart $service # Apply (caution: may need migration)"
+                echo ""
+                if [ "$service" = "postgres" ]; then
+                    echo -e "${RED}Warning: PostgreSQL upgrades may require data migration${NC}"
+                    echo "Back up your data before upgrading: operator/database/backup-database.sh"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Unknown service: $service${NC}"
+                echo "Services: api, web, operator"
+                return 1
+                ;;
+        esac
+    else
+        # Update all services
+        echo -e "${BLUE}→ Pulling all images...${NC}"
+        if [ "$IMAGE_SOURCE" = "ghcr" ] || [ "$IMAGE_SOURCE" = "" ]; then
+            $compose_cmd pull
+        else
+            echo -e "${YELLOW}  Local build - use 'rebuild' instead${NC}"
+            return 1
+        fi
+        echo ""
+        echo -e "${GREEN}✓ Images updated${NC}"
+        echo ""
+        echo "To apply updates:"
+        echo "  $0 upgrade           # Full upgrade with migrations"
+        echo "  $0 restart <service> # Restart specific service"
+    fi
+}
+
 # ============================================================================
 # Help System
 # ============================================================================
@@ -397,6 +476,7 @@ show_help_overview() {
     echo -e "${BOLD}Lifecycle Commands:${NC}"
     echo "  init               Guided first-time setup"
     echo "  init --headless    Non-interactive setup (for automation)"
+    echo "  update [service]   Pull latest images (no restart)"
     echo "  upgrade            Pull images, migrate, restart (no data loss)"
     echo "  start              Start the platform"
     echo "  stop               Stop the platform"
@@ -459,8 +539,23 @@ show_help_lifecycle() {
     echo "  Example:"
     echo "    $0 init --headless --container-prefix=kg --image-source=ghcr --skip-ai-config"
     echo ""
+    echo -e "${BLUE}update [service]${NC}"
+    echo "  Pull latest images without restarting (like apt update)."
+    echo "  - Fetches new images from GHCR"
+    echo "  - Shows what was downloaded"
+    echo "  - Does NOT restart services"
+    echo ""
+    echo "  Examples:"
+    echo "    $0 update              # Pull all images"
+    echo "    $0 update api          # Pull only API image"
+    echo "    $0 update operator     # Pull only operator image"
+    echo ""
+    echo "  After updating, apply changes with:"
+    echo "    $0 upgrade             # Full upgrade (recommended)"
+    echo "    $0 restart <service>   # Quick restart of one service"
+    echo ""
     echo -e "${BLUE}upgrade [OPTIONS]${NC}"
-    echo "  Graceful upgrade without data loss."
+    echo "  Graceful upgrade without data loss (like apt upgrade)."
     echo "  - Pulls new images (GHCR) or rebuilds (local)"
     echo "  - Creates pre-upgrade backup (optional)"
     echo "  - Runs database migrations"
@@ -628,6 +723,10 @@ case "${1:-help}" in
         else
             "$SCRIPT_DIR/operator/lib/guided-init.sh" "$@"
         fi
+        ;;
+    update)
+        shift
+        cmd_update "$@"
         ;;
     upgrade)
         shift
