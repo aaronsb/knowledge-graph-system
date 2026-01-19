@@ -256,7 +256,7 @@ SKIP_AI=false
 SHOW_HELP=false
 
 # Arguments that trigger headless mode (configuration args, not utility args)
-HEADLESS_TRIGGERS="--hostname|--ai-provider|--ai-key|--ai-model|--ssl|--ssl-email|--ssl-cert|--ssl-key|--admin-password|--skip-ai"
+HEADLESS_TRIGGERS="--hostname|--ai-provider|--ai-key|--ai-model|--ssl|--ssl-email|--ssl-cert|--ssl-key|--ssl-dns|--ssl-dns-key|--ssl-dns-secret|--admin-password|--skip-ai"
 
 parse_args() {
     # Check if any headless-triggering arguments are provided
