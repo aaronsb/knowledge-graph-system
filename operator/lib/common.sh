@@ -105,6 +105,13 @@ get_compose_cmd() {
     local base_file="${COMPOSE_FILE:-docker-compose.yml}"
     local cmd="docker-compose -f $DOCKER_DIR/$base_file"
 
+    # Add prod overlay for production mode (container naming, resource limits)
+    if [ "$DEV_MODE" != "true" ]; then
+        if [ -f "$DOCKER_DIR/docker-compose.prod.yml" ]; then
+            cmd="$cmd -f $DOCKER_DIR/docker-compose.prod.yml"
+        fi
+    fi
+
     # Add GHCR overlay if using registry images
     if [ "$IMAGE_SOURCE" = "ghcr" ]; then
         if [ -f "$DOCKER_DIR/docker-compose.ghcr.yml" ]; then
