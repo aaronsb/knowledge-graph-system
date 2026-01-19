@@ -712,15 +712,30 @@ setup_letsencrypt_dns() {
 
     log_info "Requesting certificate for $HOSTNAME via DNS-01..."
 
-    # Issue certificate using DNS challenge
-    if ! "$acme_home/acme.sh" --issue \
+    # Check if certificate already exists
+    local cert_exists=false
+    if [[ -d "$acme_home/${HOSTNAME}_ecc" ]] || [[ -d "$acme_home/$HOSTNAME" ]]; then
+        cert_exists=true
+        log_info "Existing certificate found, will reuse"
+    fi
+
+    # Issue certificate using DNS challenge (or renew if exists)
+    local issue_result=0
+    "$acme_home/acme.sh" --issue \
         --dns "$SSL_DNS_PROVIDER" \
         -d "$HOSTNAME" \
-        --server letsencrypt; then
+        --server letsencrypt || issue_result=$?
+
+    # Exit code 2 means cert is up to date (no renewal needed)
+    if [[ $issue_result -ne 0 && $issue_result -ne 2 ]]; then
         log_error "Failed to obtain Let's Encrypt certificate via DNS-01"
         log_info "Check your DNS API credentials and provider name"
         log_info "See: https://github.com/acmesh-official/acme.sh/wiki/dnsapi"
         exit 1
+    fi
+
+    if [[ $issue_result -eq 2 ]]; then
+        log_info "Certificate is up to date, using existing cert"
     fi
 
     # Install certificate to our directory
