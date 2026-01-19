@@ -43,7 +43,9 @@ LABEL org.opencontainers.image.description="React visualization app for knowledg
 # Copy built static files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration for SPA routing
+# Copy nginx configuration
+# Main config suppresses SIGCHLD notices from healthcheck subprocesses
+COPY nginx.main.conf /etc/nginx/nginx.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy entrypoint script that generates config.js from env vars
