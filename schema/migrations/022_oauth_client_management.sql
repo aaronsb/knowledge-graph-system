@@ -165,15 +165,15 @@ VALUES
     '{"description": "Official CLI tool for knowledge graph operations", "builtin": true}'::jsonb
   ),
 
-  -- 2. Knowledge Graph Visualizer (public client, authorization code flow)
+  -- 2. Knowledge Graph Web (public client, authorization code flow)
   (
-    'kg-viz',
-    'Knowledge Graph Visualizer',
+    'kg-web',
+    'Knowledge Graph Web',
     'public',
     ARRAY['authorization_code', 'refresh_token'],
     ARRAY['http://localhost:3000/callback', 'https://viz.kg.example.com/callback'],
     ARRAY['read:*', 'write:*'],
-    '{"description": "Web-based graph visualization interface", "builtin": true}'::jsonb
+    '{"description": "Web-based knowledge graph interface", "builtin": true}'::jsonb
   ),
 
   -- 3. Knowledge Graph MCP Server (confidential client, client credentials flow)
@@ -254,7 +254,7 @@ BEGIN
     END IF;
 
     -- Check that builtin clients were seeded
-    IF (SELECT COUNT(*) FROM kg_auth.oauth_clients WHERE client_id IN ('kg-cli', 'kg-viz', 'kg-mcp')) < 3 THEN
+    IF (SELECT COUNT(*) FROM kg_auth.oauth_clients WHERE client_id IN ('kg-cli', 'kg-web', 'kg-mcp')) < 3 THEN
         RAISE EXCEPTION 'Migration failed: builtin OAuth clients not seeded';
     END IF;
 
@@ -263,11 +263,11 @@ BEGIN
     RAISE NOTICE '  ✓ Renamed oauth_tokens → oauth_external_provider_tokens';
     RAISE NOTICE '  ✓ Dropped api_keys table';
     RAISE NOTICE '  ✓ Added performance indexes';
-    RAISE NOTICE '  ✓ Seeded 3 builtin clients (kg-cli, kg-viz, kg-mcp)';
+    RAISE NOTICE '  ✓ Seeded 3 builtin clients (kg-cli, kg-web, kg-mcp)';
     RAISE NOTICE '';
     RAISE NOTICE 'OAuth clients registered:';
     RAISE NOTICE '  - kg-cli: Device Authorization Grant (for CLI)';
-    RAISE NOTICE '  - kg-viz: Authorization Code + PKCE (for web app)';
+    RAISE NOTICE '  - kg-web: Authorization Code + PKCE (for web app)';
     RAISE NOTICE '  - kg-mcp: Client Credentials (for MCP server)';
     RAISE NOTICE '';
     RAISE NOTICE 'Next steps:';

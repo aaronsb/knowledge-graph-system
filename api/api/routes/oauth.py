@@ -1113,7 +1113,7 @@ async def login_and_authorize(
     curl -X POST http://localhost:8000/auth/oauth/login-and-authorize \\
       -F "username=admin" \\
       -F "password=secret" \\
-      -F "client_id=kg-viz" \\
+      -F "client_id=kg-web" \\
       -F "redirect_uri=http://localhost:3000/callback" \\
       -F "scope=read:* write:*" \\
       -F "code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM" \\

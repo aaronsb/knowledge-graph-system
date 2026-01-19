@@ -14,7 +14,7 @@ escape_js() {
 
 # Set defaults and escape values
 API_URL=$(escape_js "${VITE_API_URL:-http://localhost:8000}")
-OAUTH_CLIENT_ID=$(escape_js "${VITE_OAUTH_CLIENT_ID:-kg-viz}")
+OAUTH_CLIENT_ID=$(escape_js "${VITE_OAUTH_CLIENT_ID:-kg-web}")
 OAUTH_REDIRECT_URI=$(escape_js "${VITE_OAUTH_REDIRECT_URI:-http://localhost:3000/callback}")
 APP_NAME=$(escape_js "${VITE_APP_NAME:-Knowledge Graph Visualizer}")
 APP_VERSION=$(escape_js "${VITE_APP_VERSION:-1.0.0}")
@@ -42,7 +42,7 @@ EOF
 
 echo "✓ Configuration generated:"
 echo "  API URL: ${VITE_API_URL:-http://localhost:8000}"
-echo "  OAuth Client ID: ${VITE_OAUTH_CLIENT_ID:-kg-viz}"
+echo "  OAuth Client ID: ${VITE_OAUTH_CLIENT_ID:-kg-web}"
 echo "  OAuth Redirect URI: ${VITE_OAUTH_REDIRECT_URI:-[auto-detect]}"
 
 # Start Vite dev server

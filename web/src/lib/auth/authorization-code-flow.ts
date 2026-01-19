@@ -35,7 +35,7 @@ declare global {
 }
 
 const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const CLIENT_ID = window.APP_CONFIG?.oauth?.clientId || import.meta.env.VITE_OAUTH_CLIENT_ID || 'kg-viz';
+const CLIENT_ID = window.APP_CONFIG?.oauth?.clientId || import.meta.env.VITE_OAUTH_CLIENT_ID || 'kg-web';
 const REDIRECT_URI =
   window.APP_CONFIG?.oauth?.redirectUri ||
   import.meta.env.VITE_OAUTH_REDIRECT_URI ||

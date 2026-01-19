@@ -15,7 +15,7 @@ window.APP_CONFIG = {
 
   // OAuth 2.0 configuration
   oauth: {
-    clientId: 'kg-viz',
+    clientId: 'kg-web',
     // Redirect URI - if null, uses window.location.origin + '/callback'
     redirectUri: null, // or 'https://viz.example.com/callback'
   },

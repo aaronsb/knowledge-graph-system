@@ -67,7 +67,7 @@ services:
     environment:
       # Vite env vars (runtime config)
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
-      VITE_OAUTH_CLIENT_ID: ${VITE_OAUTH_CLIENT_ID:-kg-viz}
+      VITE_OAUTH_CLIENT_ID: ${VITE_OAUTH_CLIENT_ID:-kg-web}
       VITE_OAUTH_REDIRECT_URI: ${VITE_OAUTH_REDIRECT_URI:-http://localhost:3000/callback}
       VITE_APP_NAME: ${VITE_APP_NAME:-Knowledge Graph}
     depends_on:

@@ -43,7 +43,7 @@ VALIDATION_FAILED=false
 VALIDATION_ERRORS=()
 
 # SSL Configuration
-SSL_MODE="none"          # none, letsencrypt, acme-dns, manual
+SSL_MODE="none"          # none, selfsigned, letsencrypt, manual
 SSL_EMAIL=""             # Required for Let's Encrypt
 SSL_CERT_PATH=""         # For manual SSL
 SSL_KEY_PATH=""          # For manual SSL
@@ -86,8 +86,9 @@ ${BOLD}Options:${NC}
   --help                    Show this help message
 
 ${BOLD}SSL/HTTPS Options:${NC}
-  --ssl MODE                SSL mode: none, letsencrypt, manual (default: none)
-                            • none: HTTP only (port 3000)
+  --ssl MODE                SSL mode: none, selfsigned, letsencrypt, manual (default: none)
+                            • none: HTTP only (port 3000) - only works on localhost
+                            • selfsigned: Generate self-signed certificate (testing/internal)
                             • letsencrypt: Auto-generate certs via Let's Encrypt
                             • manual: Use existing certificates
 
@@ -213,7 +214,7 @@ validate_gpu_mode() {
 validate_ssl_mode() {
     local mode="$1"
     case "$mode" in
-        none|letsencrypt|manual) return 0 ;;
+        none|selfsigned|letsencrypt|manual) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -380,7 +381,7 @@ parse_args() {
                 if [[ -z "$SSL_MODE" ]]; then
                     add_validation_error "--ssl requires a value"
                 elif ! validate_ssl_mode "$SSL_MODE"; then
-                    add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, letsencrypt, manual)"
+                    add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, selfsigned, letsencrypt, manual)"
                 fi
                 shift
                 ;;
@@ -391,7 +392,7 @@ parse_args() {
                 else
                     SSL_MODE="$2"
                     if ! validate_ssl_mode "$SSL_MODE"; then
-                        add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, letsencrypt, manual)"
+                        add_validation_error "Invalid SSL mode: $SSL_MODE (must be: none, selfsigned, letsencrypt, manual)"
                     fi
                     shift 2
                 fi
@@ -574,7 +575,9 @@ setup_ssl() {
     local certs_dir="$install_dir/certs"
     mkdir -p "$certs_dir"
 
-    if [[ "$SSL_MODE" == "letsencrypt" ]]; then
+    if [[ "$SSL_MODE" == "selfsigned" ]]; then
+        setup_selfsigned_ssl "$certs_dir"
+    elif [[ "$SSL_MODE" == "letsencrypt" ]]; then
         setup_letsencrypt "$certs_dir"
     elif [[ "$SSL_MODE" == "manual" ]]; then
         setup_manual_ssl "$certs_dir"
@@ -655,6 +658,31 @@ setup_manual_ssl() {
     log_success "SSL certificates copied"
 }
 
+setup_selfsigned_ssl() {
+    local certs_dir="$1"
+
+    log_info "Generating self-signed SSL certificate for ${HOSTNAME}"
+    log_warning "Self-signed certificates will show browser warnings - click through to continue"
+
+    # Generate self-signed certificate valid for 365 days
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$certs_dir/${HOSTNAME}.key" \
+        -out "$certs_dir/${HOSTNAME}.fullchain.cer" \
+        -subj "/CN=${HOSTNAME}" \
+        -addext "subjectAltName=DNS:${HOSTNAME},DNS:localhost,IP:127.0.0.1" \
+        2>/dev/null
+
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to generate self-signed certificate"
+        log_info "Make sure openssl is installed: apt install openssl"
+        exit 1
+    fi
+
+    chmod 600 "$certs_dir/${HOSTNAME}.key"
+
+    log_success "Self-signed certificate generated (valid for 365 days)"
+}
+
 setup_cert_renewal() {
     local certs_dir="$1"
 
@@ -695,6 +723,12 @@ services:
     volumes:
       - ./nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--no-check-certificate", "--tries=1", "--spider", "https://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 EOF
 
     log_info "Generated SSL compose overlay"
@@ -1066,7 +1100,7 @@ run_interactive_setup() {
     # SSL Configuration
     echo
     SSL_MODE=$(prompt_select "SSL/HTTPS configuration" \
-        "none (HTTP only)" "letsencrypt (auto-generate)" "manual (existing certs)")
+        "selfsigned (quick setup)" "letsencrypt (auto-generate)" "manual (existing certs)" "none (HTTP only - localhost)")
     SSL_MODE="${SSL_MODE%% *}"  # Extract first word
 
     if [[ "$SSL_MODE" == "letsencrypt" ]]; then
@@ -1175,6 +1209,11 @@ download_files() {
 
             # Remove production-specific data paths (use named volumes instead)
             sed -i '/\/srv\/docker\/data/d' "$file"
+
+            # For non-SSL installs, replace https:// with http:// in VITE_ env vars
+            if [[ "$SSL_MODE" == "none" ]]; then
+                sed -i 's|https://\${WEB_HOSTNAME|http://\${WEB_HOSTNAME|g' "$file"
+            fi
         fi
     done
     log_success "Compose files downloaded"
@@ -1206,6 +1245,15 @@ download_files() {
             log_warning "Optional file not found: $file"
         fi
     done
+
+    # Download operator.sh management script
+    log_info "Downloading operator.sh..."
+    if curl -fsSL "${KG_REPO_RAW}/operator.sh" -o "operator.sh"; then
+        chmod +x operator.sh
+        log_success "operator.sh installed - use ./operator.sh to manage the platform"
+    else
+        log_warning "Could not download operator.sh"
+    fi
 
     log_success "Files downloaded"
 }

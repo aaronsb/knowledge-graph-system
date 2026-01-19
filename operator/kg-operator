@@ -181,7 +181,7 @@ cmd_status() {
     # Check containers
     echo -e "${BOLD}Services:${NC}"
 
-    for service in kg-postgres-dev kg-garage-dev kg-api-dev kg-viz-dev; do
+    for service in kg-postgres-dev kg-garage-dev kg-api-dev kg-web-dev; do
         if docker ps --format '{{.Names}}' | grep -q "^$service$"; then
             local status=$(docker ps --format '{{.Status}}' --filter name=$service)
             if echo "$status" | grep -q "healthy"; then

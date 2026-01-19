@@ -22,7 +22,7 @@ window.APP_CONFIG = {
   apiUrl: '${VITE_API_URL:-http://localhost:8000}',
 
   oauth: {
-    clientId: '${VITE_OAUTH_CLIENT_ID:-kg-viz}',
+    clientId: '${VITE_OAUTH_CLIENT_ID:-kg-web}',
     redirectUri: ${OAUTH_REDIRECT_URI_VALUE},
   },
 
@@ -35,7 +35,7 @@ EOF
 
 echo "✓ Configuration generated:"
 echo "  API URL: ${VITE_API_URL:-http://localhost:8000}"
-echo "  OAuth Client ID: ${VITE_OAUTH_CLIENT_ID:-kg-viz}"
+echo "  OAuth Client ID: ${VITE_OAUTH_CLIENT_ID:-kg-web}"
 echo "  OAuth Redirect URI: ${VITE_OAUTH_REDIRECT_URI:-[auto-detect]}"
 
 # Start nginx
