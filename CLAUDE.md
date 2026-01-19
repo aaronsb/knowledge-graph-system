@@ -33,18 +33,44 @@ A multi-dimensional knowledge extraction system that transforms documents into i
 
 ## Quick Start
 
+**Production deployment** (standalone installer):
 ```bash
-# First-time setup (generates secrets, starts containers, prompts for config)
-./operator.sh init
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash
+```
 
-# Daily start
-./operator.sh start
+**Development setup** (from repo):
+```bash
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+./operator.sh init    # Guided setup
+./operator.sh start   # Daily start
+```
 
-# Install kg CLI (optional but recommended)
+**Optional CLI**:
+```bash
 cd cli && npm run build && ./install.sh
-
-# Verify
 kg health
+```
+
+## Platform Lifecycle
+
+**operator.sh** is the primary management tool (apt-style commands):
+
+```bash
+# Updates (pull images, no restart)
+./operator.sh update             # Pull all images
+./operator.sh update api         # Pull specific service
+
+# Upgrades (pull, migrate, restart)
+./operator.sh upgrade            # Full upgrade
+./operator.sh upgrade --dry-run  # Preview changes
+
+# Daily operations
+./operator.sh start              # Start platform
+./operator.sh stop               # Stop platform
+./operator.sh status             # Check health
+./operator.sh logs api -f        # Follow API logs
+./operator.sh shell              # Configuration shell
 ```
 
 ## Contextual Documentation
@@ -98,11 +124,19 @@ echo "0.5.0" > VERSION
 git add VERSION && git commit -m "chore: bump version"
 git push origin main
 
-# 2. Merge to release branch (triggers build)
+# 2. Build and push API/Web locally (faster than GH runners)
+./scripts/publish-images.sh        # Builds and pushes api + web
+./scripts/publish-images.sh api    # Or just one service
+./scripts/publish-images.sh --dry-run  # Build only, don't push
+
+# 3. Merge to release branch (builds operator only)
 git checkout release && git merge main && git push
 ```
 
-Images publish to `ghcr.io/aaronsb/knowledge-graph-system/kg-{api,web,operator}`.
+**Image publishing:**
+- **API/Web**: Built locally via `scripts/publish-images.sh` (GH runners too slow)
+- **Operator**: Built automatically on release branch push
+- All images: `ghcr.io/aaronsb/knowledge-graph-system/kg-{api,web,operator}`
 
 ## Security Notes
 

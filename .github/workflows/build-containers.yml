@@ -6,6 +6,15 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      build_api:
+        description: 'Build API container (slow - prefer local build)'
+        type: boolean
+        default: false
+      build_web:
+        description: 'Build Web container (slow - prefer local build)'
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -44,13 +53,13 @@ jobs:
             git push origin "v${VERSION}"
           fi
 
+  # NOTE: API and Web containers are built locally and pushed to GHCR
+  # due to long build times on GitHub runners. Use: scripts/publish-images.sh
+  # These jobs only run when explicitly requested via workflow_dispatch.
+
   build-api:
     needs: [create-tag]
-    # Only build API on manual dispatch or version tags (not release branch push)
-    if: |
-      always() &&
-      (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped') &&
-      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event.inputs.build_api == 'true'
     name: Build API Container
     runs-on: ubuntu-latest
     permissions:
@@ -65,7 +74,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -78,18 +86,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/kg-api
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/release' }}
+            type=raw,value=latest
             type=sha,prefix=sha-
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=pr,prefix=pr-
 
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./api/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -100,11 +105,7 @@ jobs:
 
   build-web:
     needs: [create-tag]
-    # Only build Web on manual dispatch or version tags (not release branch push)
-    if: |
-      always() &&
-      (needs.create-tag.result == 'success' || needs.create-tag.result == 'skipped') &&
-      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event.inputs.build_web == 'true'
     name: Build Web Container
     runs-on: ubuntu-latest
     permissions:
@@ -119,7 +120,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -132,18 +132,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/kg-web
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/release' }}
+            type=raw,value=latest
             type=sha,prefix=sha-
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=pr,prefix=pr-
 
       - name: Build and push Web image
         uses: docker/build-push-action@v5
         with:
           context: ./web
           file: ./web/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
