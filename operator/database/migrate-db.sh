@@ -33,6 +33,28 @@ fi
 DB_USER="admin"
 DB_NAME="knowledge_graph"
 MIGRATIONS_DIR="schema/migrations"
+DB_HOST="${POSTGRES_HOST:-postgres}"
+
+# Detect if running inside a container (operator) or on host
+if [ -f "/.dockerenv" ] || grep -q docker /proc/1/cgroup 2>/dev/null; then
+    INSIDE_CONTAINER=true
+    # Use direct psql connection when inside container
+    run_psql() {
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" "$@"
+    }
+    run_psql_file() {
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -f "$1"
+    }
+else
+    INSIDE_CONTAINER=false
+    # Use docker exec when on host
+    run_psql() {
+        docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" "$@"
+    }
+    run_psql_file() {
+        docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" < "$1"
+    }
+fi
 
 # Parse arguments
 DRY_RUN=false
@@ -83,11 +105,21 @@ fi
 echo "========================================"
 echo ""
 
-# Check if container is running
-if ! docker ps --format '{{.Names}}' | grep -q $CONTAINER; then
-    echo -e "${RED}✗ Database container not running${NC}"
-    echo -e "${YELLOW}Start it with:${NC} ./scripts/services/start-database.sh"
-    exit 1
+# Check if database is accessible
+if [ "$INSIDE_CONTAINER" = true ]; then
+    # Inside container: check if postgres is reachable
+    if ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
+        echo -e "${RED}✗ Cannot connect to database${NC}"
+        echo -e "${YELLOW}Ensure postgres container is running and accessible${NC}"
+        exit 1
+    fi
+else
+    # On host: check if container is running
+    if ! docker ps --format '{{.Names}}' | grep -q "$CONTAINER"; then
+        echo -e "${RED}✗ Database container not running${NC}"
+        echo -e "${YELLOW}Start it with:${NC} ./scripts/services/start-database.sh"
+        exit 1
+    fi
 fi
 
 # Ensure schema_migrations table exists
@@ -95,7 +127,7 @@ if [ "$VERBOSE" = true ]; then
     echo -e "${GRAY}Ensuring schema_migrations table exists...${NC}"
 fi
 
-docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -c \
+run_psql -c \
   "CREATE TABLE IF NOT EXISTS public.schema_migrations (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -103,7 +135,7 @@ docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -c \
   );" > /dev/null 2>&1
 
 # Get applied migrations
-APPLIED=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+APPLIED=$(run_psql -t -A -c \
   "SELECT version FROM public.schema_migrations ORDER BY version" 2>/dev/null || echo "")
 
 if [ -z "$APPLIED" ]; then
@@ -182,7 +214,7 @@ fi
 # Check if database has data and offer snapshot
 if [ "$AUTO_CONFIRM" = false ]; then
     # Count tables in kg_api schema (simple proxy for "has data")
-    TABLE_COUNT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+    TABLE_COUNT=$(run_psql -t -A -c \
       "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'kg_api'" 2>/dev/null || echo "0")
 
     if [ "$TABLE_COUNT" -gt 0 ]; then
@@ -241,7 +273,7 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
     fi
 
     # Apply migration (capture output to detect errors)
-    MIGRATION_OUTPUT=$(docker exec -i $CONTAINER psql -U $DB_USER -d $DB_NAME < "$FILE" 2>&1)
+    MIGRATION_OUTPUT=$(run_psql_file "$FILE" 2>&1)
     MIGRATION_EXIT_CODE=$?
 
     # Show output in verbose mode
@@ -268,7 +300,7 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
     APPLIED_COUNT=$((APPLIED_COUNT + 1))
 
     # Verify it was recorded in schema_migrations (use VERSION_NUM for INTEGER comparison)
-    RECORDED=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+    RECORDED=$(run_psql -t -A -c \
       "SELECT version FROM public.schema_migrations WHERE version = $VERSION_NUM" 2>/dev/null || echo "")
 
     if [ -z "$RECORDED" ]; then
@@ -286,7 +318,7 @@ if [ $FAILED_COUNT -eq 0 ]; then
     echo -e "   Applied: ${GREEN}$APPLIED_COUNT${NC} migration(s)"
 
     # Show current migration state
-    CURRENT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
+    CURRENT=$(run_psql -t -A -c \
       "SELECT MAX(version) FROM public.schema_migrations" 2>/dev/null || echo "?")
     echo -e "   Current schema version: ${CYAN}$CURRENT${NC}"
 else
