@@ -1660,6 +1660,11 @@ start_containers() {
     " >/dev/null 2>&1 || log_warning "Could not update OAuth redirect URIs"
     log_success "OAuth configured for $redirect_uri"
 
+    # Set admin password (before app startup so it's always available)
+    log_info "Setting admin password..."
+    ./operator.sh admin --password "$ADMIN_PASSWORD" >/dev/null 2>&1 || log_warning "Could not set admin password"
+    log_success "Admin user configured"
+
     # Start application
     log_info "Starting application (api, web)..."
     $compose_cmd up -d api web
@@ -1706,9 +1711,7 @@ configure_platform() {
     local compose_cmd
     compose_cmd=$(build_compose_command)
 
-    # Create admin user
-    log_info "Creating admin user..."
-    $compose_cmd exec -T operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD" || true
+    # Note: Admin password is set earlier in start_containers() before app startup
 
     # Configure AI provider if set
     if [[ "$SKIP_AI" == "false" && -n "$AI_PROVIDER" ]]; then

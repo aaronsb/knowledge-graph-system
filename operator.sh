@@ -464,6 +464,48 @@ cmd_update() {
     fi
 }
 
+cmd_admin() {
+    check_operator
+    load_config
+
+    local operator_container=$(get_container_name operator)
+    local password=""
+    local action="status"
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --password)
+                password="$2"
+                action="set-password"
+                shift 2
+                ;;
+            status|--status)
+                action="status"
+                shift
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 admin [--password PASSWORD]"
+                exit 1
+                ;;
+        esac
+    done
+
+    case "$action" in
+        set-password)
+            if [ -z "$password" ]; then
+                echo -e "${RED}Password is required${NC}"
+                exit 1
+            fi
+            docker exec "$operator_container" python /workspace/operator/configure.py admin --password "$password"
+            ;;
+        status)
+            docker exec "$operator_container" python /workspace/operator/configure.py status
+            ;;
+    esac
+}
+
 cmd_recert() {
     local force=false
     local dns_provider=""
@@ -626,6 +668,7 @@ show_help_overview() {
     echo ""
     echo -e "${BOLD}Management Commands:${NC}"
     echo "  status             Show platform and container status"
+    echo "  admin [options]    Manage admin user (--password to set)"
     echo "  config [options]   Update platform configuration"
     echo "  logs [service] [-f] Show logs (default: api, -f to follow)"
     echo "  shell              Open shell in operator container"
@@ -928,6 +971,10 @@ case "${1:-help}" in
     recert)
         shift
         cmd_recert "$@"
+        ;;
+    admin)
+        shift
+        cmd_admin "$@"
         ;;
     help|--help|-h)
         shift 2>/dev/null || true
