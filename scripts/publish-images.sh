@@ -10,10 +10,10 @@
 #   - Or: gh auth token | docker login ghcr.io -u USERNAME --password-stdin
 #
 # Usage:
-#   ./scripts/publish-images.sh           # Build and push all
-#   ./scripts/publish-images.sh api       # Build and push API only
-#   ./scripts/publish-images.sh web       # Build and push Web only
-#   ./scripts/publish-images.sh --dry-run # Build only, don't push
+#   ./scripts/publish-images.sh -m "Description of changes"
+#   ./scripts/publish-images.sh api -m "API fixes"
+#   ./scripts/publish-images.sh web --dry-run
+#   ./scripts/publish-images.sh  # Prompts for description
 #
 # ============================================================================
 
@@ -36,6 +36,7 @@ IMAGE_PREFIX="aaronsb/knowledge-graph-system"
 # Parse arguments
 DRY_RUN=false
 SERVICES=()
+DESCRIPTION=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -43,13 +44,17 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
+        -m|--message)
+            DESCRIPTION="$2"
+            shift 2
+            ;;
         api|web)
             SERVICES+=("$1")
             shift
             ;;
         *)
             echo -e "${RED}Unknown argument: $1${NC}"
-            echo "Usage: $0 [api|web] [--dry-run]"
+            echo "Usage: $0 [api|web] [-m \"description\"] [--dry-run]"
             exit 1
             ;;
     esac
@@ -65,10 +70,32 @@ VERSION=$(cat "$PROJECT_ROOT/VERSION" | tr -d '[:space:]')
 GIT_SHA=$(git -C "$PROJECT_ROOT" rev-parse --short HEAD)
 BUILD_DATE=$(date -Iseconds)
 
+# If no description provided and not dry-run, show recent commits and prompt
+if [ -z "$DESCRIPTION" ] && [ "$DRY_RUN" = "false" ]; then
+    echo -e "${BOLD}Recent commits since last tag:${NC}"
+    echo ""
+    # Get commits since last tag, or last 5 commits if no tags
+    LAST_TAG=$(git -C "$PROJECT_ROOT" describe --tags --abbrev=0 2>/dev/null || echo "")
+    if [ -n "$LAST_TAG" ]; then
+        git -C "$PROJECT_ROOT" log --oneline "$LAST_TAG"..HEAD | head -10
+    else
+        git -C "$PROJECT_ROOT" log --oneline -5
+    fi
+    echo ""
+    echo -e "${YELLOW}Tip: Add a description with -m to document this release${NC}"
+    echo -e "${YELLOW}Example: $0 -m \"Add update/upgrade lifecycle, fix standalone installs\"${NC}"
+    echo ""
+    read -p "Enter description (or press Enter to skip): " DESCRIPTION
+    echo ""
+fi
+
 echo -e "${BOLD}Publishing container images to GHCR${NC}"
 echo -e "  Version: ${BLUE}$VERSION${NC}"
 echo -e "  Commit:  ${BLUE}$GIT_SHA${NC}"
 echo -e "  Services: ${BLUE}${SERVICES[*]}${NC}"
+if [ -n "$DESCRIPTION" ]; then
+    echo -e "  Description: ${BLUE}$DESCRIPTION${NC}"
+fi
 if [ "$DRY_RUN" = "true" ]; then
     echo -e "  Mode:    ${YELLOW}DRY RUN (build only)${NC}"
 fi
@@ -111,10 +138,23 @@ build_and_push() {
 
     echo -e "${BLUE}→ Building $service...${NC}"
 
+    # Build with OCI annotations
+    local label_args=(
+        --label "org.opencontainers.image.version=$VERSION"
+        --label "org.opencontainers.image.revision=$GIT_SHA"
+        --label "org.opencontainers.image.created=$BUILD_DATE"
+        --label "org.opencontainers.image.source=https://github.com/$IMAGE_PREFIX"
+    )
+
+    if [ -n "$DESCRIPTION" ]; then
+        label_args+=(--label "org.opencontainers.image.description=$DESCRIPTION")
+    fi
+
     docker build \
         --file "$dockerfile" \
         --build-arg GIT_COMMIT="$GIT_SHA" \
         --build-arg BUILD_DATE="$BUILD_DATE" \
+        "${label_args[@]}" \
         --tag "$full_image:latest" \
         --tag "$full_image:$VERSION" \
         --tag "$full_image:sha-$GIT_SHA" \
