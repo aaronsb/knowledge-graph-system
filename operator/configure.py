@@ -166,12 +166,12 @@ class OperatorConfig:
 
     def cmd_embedding(self, args):
         """Configure embedding provider by activating a pre-configured profile"""
-        # If no profile_id provided, list available profiles
-        if not hasattr(args, 'profile_id') or args.profile_id is None:
-            return self.list_embedding_profiles()
+        profile_id = getattr(args, 'profile_id', None)
+        provider_name = getattr(args, 'provider', None)
 
-        profile_id = args.profile_id
-        provider_name = args.provider if hasattr(args, 'provider') else None
+        # If no profile_id or provider specified, list available profiles
+        if profile_id is None and provider_name is None:
+            return self.list_embedding_profiles()
 
         conn = self.get_connection()
         try:
