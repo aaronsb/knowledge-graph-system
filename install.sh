@@ -1413,13 +1413,8 @@ download_files() {
     done
     log_success "Compose files downloaded"
 
-    # Schema files (baseline only - migrations run by operator)
-    mkdir -p schema
-    log_info "Downloading schema/00_baseline.sql..."
-    if ! curl -fsSL "${KG_REPO_RAW}/schema/00_baseline.sql" -o "schema/00_baseline.sql"; then
-        log_error "Failed to download: schema/00_baseline.sql"
-        exit 1
-    fi
+    # Note: Schema/migration files are NOT downloaded - they exist in the operator container
+    # and migrations are run via: docker exec kg-operator /workspace/operator/database/migrate-db.sh
 
     # Config files
     mkdir -p config
@@ -1626,18 +1621,18 @@ start_containers() {
     $compose_cmd up -d operator
     sleep 3
 
-    # Run database migrations via operator (direct psql since image may have old script)
+    # Run database migrations via operator's migrate-db.sh (source of truth)
     log_info "Running database migrations..."
-    $compose_cmd exec -T operator bash -c '
-        cd /workspace
-        export PGPASSWORD="$POSTGRES_PASSWORD"
-        for f in schema/migrations/*.sql; do
-            if [ -f "$f" ]; then
-                echo "  Applying $(basename $f)..."
-                psql -h postgres -U admin -d knowledge_graph -f "$f" > /dev/null 2>&1 || true
-            fi
-        done
-    '
+    if ! $compose_cmd exec -T operator /workspace/operator/database/migrate-db.sh -y 2>&1 | while read line; do
+        # Filter to show progress without overwhelming output
+        if [[ "$line" =~ (Applying|✓|✅|→|Migration) ]]; then
+            echo "  $line"
+        fi
+    done; then
+        log_error "Database migrations failed"
+        log_info "Check operator logs: docker logs kg-operator"
+        exit 1
+    fi
     log_success "Migrations complete"
 
     # Configure OAuth redirect URIs for this deployment
