@@ -1665,6 +1665,11 @@ start_containers() {
     ./operator.sh admin --password "$ADMIN_PASSWORD" >/dev/null 2>&1 || log_warning "Could not set admin password"
     log_success "Admin user configured"
 
+    # Configure local embedding (nomic) as default
+    log_info "Configuring local embedding model..."
+    ./operator.sh embedding local >/dev/null 2>&1 || log_warning "Could not set local embedding"
+    log_success "Local embedding configured (nomic-embed-text-v1.5)"
+
     # Start application
     log_info "Starting application (api, web)..."
     $compose_cmd up -d api web

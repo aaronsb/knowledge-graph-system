@@ -506,6 +506,153 @@ cmd_admin() {
     esac
 }
 
+cmd_ai_provider() {
+    check_operator
+    load_config
+
+    local operator_container=$(get_container_name operator)
+    local provider=""
+    local model=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            openai|anthropic|ollama)
+                provider="$1"
+                shift
+                ;;
+            --model)
+                model="$2"
+                shift 2
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 ai-provider <openai|anthropic|ollama> [--model MODEL]"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ -z "$provider" ]; then
+        # Show current status
+        docker exec "$operator_container" python /workspace/operator/configure.py status
+        echo ""
+        echo "To configure AI extraction provider:"
+        echo "  $0 ai-provider openai              # Use GPT-4o (default)"
+        echo "  $0 ai-provider anthropic           # Use Claude Sonnet"
+        echo "  $0 ai-provider ollama --model mistral:7b-instruct"
+        return
+    fi
+
+    local model_arg=""
+    if [ -n "$model" ]; then
+        model_arg="--model $model"
+    fi
+
+    docker exec "$operator_container" python /workspace/operator/configure.py ai-provider "$provider" $model_arg
+}
+
+cmd_embedding() {
+    check_operator
+    load_config
+
+    local operator_container=$(get_container_name operator)
+    local profile_id=""
+    local provider=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            [0-9]*)
+                profile_id="$1"
+                shift
+                ;;
+            --provider)
+                provider="$2"
+                shift 2
+                ;;
+            local|openai)
+                # Shorthand for --provider
+                provider="$1"
+                shift
+                ;;
+            list|--list)
+                # List profiles
+                docker exec "$operator_container" python /workspace/operator/configure.py embedding
+                return
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 embedding [PROFILE_ID]"
+                echo "       $0 embedding --provider <local|openai>"
+                echo "       $0 embedding list"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ -n "$provider" ]; then
+        docker exec "$operator_container" python /workspace/operator/configure.py embedding --provider "$provider"
+        return
+    fi
+
+    if [ -z "$profile_id" ]; then
+        # Show available profiles
+        docker exec "$operator_container" python /workspace/operator/configure.py embedding
+        echo ""
+        echo "To activate a profile:"
+        echo "  $0 embedding <PROFILE_ID>"
+        echo "  $0 embedding local     # Activate local nomic embeddings"
+        echo "  $0 embedding openai    # Activate OpenAI embeddings"
+        return
+    fi
+
+    docker exec "$operator_container" python /workspace/operator/configure.py embedding "$profile_id"
+}
+
+cmd_api_key() {
+    check_operator
+    load_config
+
+    local operator_container=$(get_container_name operator)
+    local provider=""
+    local key=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            openai|anthropic)
+                provider="$1"
+                shift
+                ;;
+            --key)
+                key="$2"
+                shift 2
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 api-key <openai|anthropic> [--key KEY]"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ -z "$provider" ]; then
+        echo "Usage: $0 api-key <openai|anthropic> [--key KEY]"
+        echo ""
+        echo "Stores encrypted API keys for AI providers."
+        echo "If --key is not provided, you will be prompted securely."
+        return
+    fi
+
+    if [ -n "$key" ]; then
+        docker exec "$operator_container" python /workspace/operator/configure.py api-key "$provider" --key "$key"
+    else
+        # Interactive mode - need TTY
+        docker exec -it "$operator_container" python /workspace/operator/configure.py api-key "$provider"
+    fi
+}
+
 cmd_recert() {
     local force=false
     local dns_provider=""
@@ -859,15 +1006,33 @@ show_help_config() {
     echo -e "${YELLOW}Note:${NC} After changing config, restart to apply:"
     echo "    $0 stop && $0 start"
     echo ""
+    echo -e "${BLUE}admin${NC}"
+    echo "  Manage admin user password."
+    echo "    $0 admin                     # Show config status"
+    echo "    $0 admin --password PASS     # Set admin password"
+    echo ""
+    echo -e "${BLUE}ai-provider${NC}"
+    echo "  Configure AI extraction provider for concept extraction."
+    echo "    $0 ai-provider               # Show current provider"
+    echo "    $0 ai-provider openai        # Use GPT-4o"
+    echo "    $0 ai-provider anthropic     # Use Claude Sonnet"
+    echo "    $0 ai-provider ollama --model mistral:7b-instruct"
+    echo ""
+    echo -e "${BLUE}embedding${NC}"
+    echo "  Configure text embedding model profile."
+    echo "    $0 embedding                 # List available profiles"
+    echo "    $0 embedding <ID>            # Activate profile by ID"
+    echo "    $0 embedding local           # Use local nomic embeddings (free)"
+    echo "    $0 embedding openai          # Use OpenAI embeddings"
+    echo ""
+    echo -e "${BLUE}api-key${NC}"
+    echo "  Store encrypted API keys for AI providers."
+    echo "    $0 api-key openai            # Prompt for OpenAI key"
+    echo "    $0 api-key anthropic --key KEY"
+    echo ""
     echo -e "${BLUE}shell${NC}"
     echo "  Open interactive shell in operator container."
-    echo "  Use for detailed platform configuration:"
-    echo "    - Admin user management"
-    echo "    - AI provider setup"
-    echo "    - Embedding configuration"
-    echo "    - API key management"
-    echo ""
-    echo "  Inside shell, run: operator-help"
+    echo "  For advanced configuration: configure.py --help"
     echo ""
     echo -e "${BLUE}query 'SQL'${NC} (alias: pg)"
     echo "  Run SQL queries directly against the database."
@@ -975,6 +1140,18 @@ case "${1:-help}" in
     admin)
         shift
         cmd_admin "$@"
+        ;;
+    ai-provider)
+        shift
+        cmd_ai_provider "$@"
+        ;;
+    embedding)
+        shift
+        cmd_embedding "$@"
+        ;;
+    api-key)
+        shift
+        cmd_api_key "$@"
         ;;
     help|--help|-h)
         shift 2>/dev/null || true

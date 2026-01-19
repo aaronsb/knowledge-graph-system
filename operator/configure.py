@@ -171,16 +171,24 @@ class OperatorConfig:
             return self.list_embedding_profiles()
 
         profile_id = args.profile_id
+        provider_name = args.provider if hasattr(args, 'provider') else None
 
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                # Get the requested profile
-                cur.execute(
-                    """SELECT id, provider, model_name, embedding_dimensions, precision, device
-                       FROM kg_api.embedding_config WHERE id = %s""",
-                    (profile_id,)
-                )
+                # Get the requested profile - by ID or by provider name
+                if provider_name:
+                    cur.execute(
+                        """SELECT id, provider, model_name, embedding_dimensions, precision, device
+                           FROM kg_api.embedding_config WHERE provider = %s LIMIT 1""",
+                        (provider_name,)
+                    )
+                else:
+                    cur.execute(
+                        """SELECT id, provider, model_name, embedding_dimensions, precision, device
+                           FROM kg_api.embedding_config WHERE id = %s""",
+                        (profile_id,)
+                    )
                 profile = cur.fetchone()
 
                 if not profile:
@@ -455,6 +463,7 @@ def main():
     # embedding
     embed_parser = subparsers.add_parser('embedding', help='List or activate embedding profile')
     embed_parser.add_argument('profile_id', nargs='?', type=int, help='Profile ID to activate (omit to list profiles)')
+    embed_parser.add_argument('--provider', help='Select profile by provider name (local, openai)')
 
     # api-key
     key_parser = subparsers.add_parser('api-key', help='Store encrypted API key')
