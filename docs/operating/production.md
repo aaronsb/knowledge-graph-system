@@ -13,15 +13,74 @@ Production deployment differs from quick start:
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- A server with 16GB+ RAM (8GB minimum)
+- Linux server (Ubuntu 20.04+ or Debian 11+ recommended)
+- 16GB+ RAM (8GB minimum)
 - NVIDIA GPU recommended for faster extraction
 - A domain name (for HTTPS)
 - DNS control (for certificate issuance)
 
-## Headless Initialization
+Docker will be installed automatically if not present.
 
-For automated or scripted deployments, use headless mode:
+---
+
+## Recommended: Standalone Installer
+
+The easiest way to deploy to a production server:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash
+```
+
+This interactive installer:
+- Installs Docker if needed
+- Downloads pre-built images from GHCR
+- Generates secure secrets
+- Configures SSL/HTTPS
+- Sets up admin user and AI provider
+
+### Headless Installer
+
+For fully automated deployments:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash -s -- \
+  --hostname kg.example.com \
+  --ssl letsencrypt \
+  --ssl-email admin@example.com \
+  --ai-provider anthropic \
+  --ai-key "$ANTHROPIC_API_KEY" \
+  --gpu nvidia
+```
+
+**SSL options:**
+- `--ssl offload` - HTTP only (behind reverse proxy that handles SSL)
+- `--ssl selfsigned` - Generate self-signed certificate
+- `--ssl letsencrypt` - Auto-generate via Let's Encrypt (requires `--ssl-email`)
+- `--ssl manual` - Use existing certificates (requires `--ssl-cert` and `--ssl-key`)
+
+### After Installation
+
+```bash
+cd ~/knowledge-graph   # Default install location
+
+./operator.sh status   # Verify everything is running
+./operator.sh logs api # Check API logs
+./operator.sh shell    # Configuration shell
+```
+
+---
+
+## Alternative: Git Clone + Operator
+
+If you prefer to work from the git repository:
+
+```bash
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+./operator.sh init --headless ...
+```
+
+### Headless Initialization
 
 ```bash
 ./operator.sh init --headless \

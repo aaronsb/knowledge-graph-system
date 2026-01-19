@@ -2,6 +2,27 @@
 
 How to upgrade the knowledge graph system to new versions.
 
+## Update vs Upgrade
+
+Following the familiar Linux package manager pattern:
+
+| Command | What it does | Restarts? |
+|---------|--------------|-----------|
+| `./operator.sh update` | Pull latest images | No |
+| `./operator.sh upgrade` | Pull, migrate, restart | Yes |
+
+**Check for updates first:**
+```bash
+./operator.sh update          # Pull all images
+./operator.sh update api      # Pull specific service only
+./operator.sh update operator # Update operator (scripts/migrations)
+```
+
+**Then apply them:**
+```bash
+./operator.sh upgrade
+```
+
 ## Quick Upgrade
 
 ```bash
