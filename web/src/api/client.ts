@@ -1037,9 +1037,14 @@ class APIClient {
     provider: string;
     valid: boolean;
   }> {
-    const formData = new FormData();
+    // Use URLSearchParams for FastAPI Form() compatibility
+    const formData = new URLSearchParams();
     formData.append('api_key', apiKey);
-    const response = await this.client.post(`/admin/keys/${provider}`, formData);
+    const response = await this.client.post(`/admin/keys/${provider}`, formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
     return response.data;
   }
 

@@ -21,6 +21,13 @@ import {
   CheckCircle,
   AlertCircle,
   BarChart3,
+  Play,
+  Save,
+  Trash2,
+  TestTube,
+  Eye,
+  EyeOff,
+  ChevronDown,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { Section, StatusBadge } from './components';
@@ -41,6 +48,16 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const [apiKeys, setApiKeys] = useState<ApiKeyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshingCounters, setRefreshingCounters] = useState(false);
+
+  // Interactive UI states
+  const [activatingEmbedding, setActivatingEmbedding] = useState<number | null>(null);
+  const [confirmActivate, setConfirmActivate] = useState<number | null>(null);
+  const [savingExtraction, setSavingExtraction] = useState(false);
+  const [extractionForm, setExtractionForm] = useState<{ provider: string; model: string } | null>(null);
+  const [apiKeyForm, setApiKeyForm] = useState<{ provider: string; key: string } | null>(null);
+  const [savingApiKey, setSavingApiKey] = useState(false);
+  const [showApiKey, setShowApiKey] = useState<string | null>(null);
+  const [deletingApiKey, setDeletingApiKey] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
@@ -86,6 +103,85 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       setRefreshingCounters(false);
     }
   };
+
+  // Embedding activation handler
+  const handleActivateEmbedding = async (configId: number) => {
+    setActivatingEmbedding(configId);
+    setConfirmActivate(null);
+    try {
+      await apiClient.activateEmbeddingConfig(configId, true);
+      // Reload embedding configs
+      const embeddings = await apiClient.listEmbeddingConfigs();
+      setEmbeddingConfigs(embeddings);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to activate embedding profile');
+    } finally {
+      setActivatingEmbedding(null);
+    }
+  };
+
+  // Extraction config handler
+  const handleSaveExtraction = async () => {
+    if (!extractionForm) return;
+    setSavingExtraction(true);
+    try {
+      await apiClient.updateExtractionConfig({
+        provider: extractionForm.provider,
+        model: extractionForm.model,
+        updated_by: 'web-admin',
+      });
+      // Reload extraction config
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
+      setExtractionForm(null);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to save extraction config');
+    } finally {
+      setSavingExtraction(false);
+    }
+  };
+
+  // API key handlers
+  const handleSaveApiKey = async () => {
+    if (!apiKeyForm) return;
+    setSavingApiKey(true);
+    try {
+      await apiClient.setApiKey(apiKeyForm.provider, apiKeyForm.key);
+      // Reload API keys
+      const keys = await apiClient.listApiKeys();
+      setApiKeys(keys);
+      setApiKeyForm(null);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to save API key');
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  const handleDeleteApiKey = async (provider: string) => {
+    setDeletingApiKey(provider);
+    try {
+      await apiClient.deleteApiKey(provider);
+      // Reload API keys
+      const keys = await apiClient.listApiKeys();
+      setApiKeys(keys);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to delete API key');
+    } finally {
+      setDeletingApiKey(null);
+    }
+  };
+
+  // Provider/model options
+  const extractionProviders = [
+    { provider: 'openai', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'] },
+    { provider: 'anthropic', models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'] },
+    { provider: 'ollama', models: ['mistral', 'llama3.2', 'qwen2.5'] },
+    { provider: 'openrouter', models: ['(placeholder - not yet implemented)'] },
+    { provider: 'llama.cpp', models: ['(placeholder - not yet implemented)'] },
+  ];
+
+  const apiKeyProviders = ['openai', 'anthropic', 'openrouter'];
 
   if (loading) {
     return (
@@ -389,7 +485,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         icon={<Cpu className="w-5 h-5" />}
       >
         <p className="text-sm text-muted-foreground mb-4">
-          Vector embedding model configurations for semantic search.
+          Vector embedding model configurations for semantic search. Activating a different profile will re-embed all content.
         </p>
         {embeddingConfigs.length > 0 ? (
           <div className="space-y-3">
@@ -427,6 +523,42 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                       </span>
                     )}
                   </div>
+                  {/* Activate button for inactive profiles */}
+                  {!config.active && (
+                    <div className="flex items-center gap-2">
+                      {confirmActivate === config.id ? (
+                        <>
+                          <span className="text-xs text-status-warning">Re-embed all content?</span>
+                          <button
+                            onClick={() => handleActivateEmbedding(config.id)}
+                            disabled={activatingEmbedding !== null}
+                            className="px-2 py-1 text-xs bg-status-warning text-white rounded hover:bg-status-warning/80 disabled:opacity-50"
+                          >
+                            {activatingEmbedding === config.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              'Confirm'
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setConfirmActivate(null)}
+                            className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmActivate(config.id)}
+                          disabled={activatingEmbedding !== null}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                        >
+                          <Play className="w-3 h-3" />
+                          Activate
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div>
@@ -454,9 +586,6 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
             No embedding configurations found.
           </p>
         )}
-        <p className="mt-3 text-xs text-muted-foreground">
-          Use <code className="bg-muted px-1 rounded">kg admin embedding</code> to manage profiles
-        </p>
       </Section>
 
       {/* Extraction Config Section */}
@@ -467,51 +596,136 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         <p className="text-sm text-muted-foreground mb-4">
           LLM provider for concept extraction from documents.
         </p>
-        {extractionConfig ? (
-          <div className="p-4 bg-muted/50 rounded-lg border border-border">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Provider:</span>
-                <span className="ml-2 font-medium text-foreground capitalize">{extractionConfig.provider}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Model:</span>
-                <span className="ml-2 font-mono text-foreground">{extractionConfig.model}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Max Tokens:</span>
-                <span className="ml-2 text-foreground">{extractionConfig.max_tokens?.toLocaleString()}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Vision:</span>
-                <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-status-active' : 'text-muted-foreground'}`}>
-                  {extractionConfig.supports_vision ? 'Yes' : 'No'}
-                </span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">JSON Mode:</span>
-                <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-status-active' : 'text-muted-foreground'}`}>
-                  {extractionConfig.supports_json_mode ? 'Yes' : 'No'}
-                </span>
-              </div>
-              {extractionConfig.rate_limit_config && (
+
+        {/* Edit Form */}
+        {extractionForm ? (
+          <div className="p-4 bg-muted/50 rounded-lg border border-border mb-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <span className="text-muted-foreground">Concurrency:</span>
-                  <span className="ml-2 text-foreground">
-                    {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
+                  <label className="block text-sm text-muted-foreground mb-1">Provider</label>
+                  <select
+                    value={extractionForm.provider}
+                    onChange={(e) => {
+                      const provider = e.target.value;
+                      const models = extractionProviders.find(p => p.provider === provider)?.models || [];
+                      setExtractionForm({ provider, model: models[0] || '' });
+                    }}
+                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
+                  >
+                    {extractionProviders.map(p => (
+                      <option key={p.provider} value={p.provider}>
+                        {p.provider}
+                        {(p.provider === 'openrouter' || p.provider === 'llama.cpp') && ' (placeholder)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1">Model</label>
+                  <select
+                    value={extractionForm.model}
+                    onChange={(e) => setExtractionForm({ ...extractionForm, model: e.target.value })}
+                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
+                    disabled={extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp'}
+                  >
+                    {extractionProviders.find(p => p.provider === extractionForm.provider)?.models.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {(extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp') && (
+                <p className="text-xs text-status-warning">
+                  {extractionForm.provider} support is not yet implemented. This is a placeholder for future development.
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setExtractionForm(null)}
+                  className="px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveExtraction}
+                  disabled={savingExtraction || extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp'}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                >
+                  {savingExtraction ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : extractionConfig ? (
+          <div className="p-4 bg-muted/50 rounded-lg border border-border">
+            <div className="flex items-start justify-between">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm flex-1">
+                <div>
+                  <span className="text-muted-foreground">Provider:</span>
+                  <span className="ml-2 font-medium text-foreground capitalize">{extractionConfig.provider}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Model:</span>
+                  <span className="ml-2 font-mono text-foreground">{extractionConfig.model}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Max Tokens:</span>
+                  <span className="ml-2 text-foreground">{extractionConfig.max_tokens?.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Vision:</span>
+                  <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-status-active' : 'text-muted-foreground'}`}>
+                    {extractionConfig.supports_vision ? 'Yes' : 'No'}
                   </span>
                 </div>
-              )}
+                <div>
+                  <span className="text-muted-foreground">JSON Mode:</span>
+                  <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-status-active' : 'text-muted-foreground'}`}>
+                    {extractionConfig.supports_json_mode ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                {extractionConfig.rate_limit_config && (
+                  <div>
+                    <span className="text-muted-foreground">Concurrency:</span>
+                    <span className="ml-2 text-foreground">
+                      {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setExtractionForm({
+                  provider: extractionConfig.provider,
+                  model: extractionConfig.model,
+                })}
+                className="ml-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                title="Edit extraction config"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-center py-4">
-            No extraction configuration found.
-          </p>
+          <div className="p-4 bg-muted/50 rounded-lg border border-border">
+            <p className="text-muted-foreground text-center py-2">
+              No extraction configuration found.
+            </p>
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={() => setExtractionForm({ provider: 'openai', model: 'gpt-4o' })}
+                className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80"
+              >
+                Configure
+              </button>
+            </div>
+          </div>
         )}
-        <p className="mt-3 text-xs text-muted-foreground">
-          Use <code className="bg-muted px-1 rounded">kg admin extraction</code> to configure
-        </p>
       </Section>
 
       {/* API Keys Section */}
@@ -520,8 +734,83 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         icon={<Key className="w-5 h-5" />}
       >
         <p className="text-sm text-muted-foreground mb-4">
-          API keys for AI providers (encrypted at rest).
+          API keys for AI providers (encrypted at rest). Keys are validated on save.
         </p>
+
+        {/* Add Key Form */}
+        {apiKeyForm ? (
+          <div className="p-4 bg-muted/50 rounded-lg border border-border mb-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1">Provider</label>
+                  <select
+                    value={apiKeyForm.provider}
+                    onChange={(e) => setApiKeyForm({ ...apiKeyForm, provider: e.target.value })}
+                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
+                  >
+                    {apiKeyProviders.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-muted-foreground mb-1">API Key</label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey === 'form' ? 'text' : 'password'}
+                      value={apiKeyForm.key}
+                      onChange={(e) => setApiKeyForm({ ...apiKeyForm, key: e.target.value })}
+                      placeholder="sk-..."
+                      className="w-full px-3 py-2 pr-10 bg-background border border-border rounded text-foreground text-sm font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(showApiKey === 'form' ? null : 'form')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                    >
+                      {showApiKey === 'form' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setApiKeyForm(null)}
+                  className="px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={savingApiKey || !apiKeyForm.key}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                >
+                  {savingApiKey ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <TestTube className="w-4 h-4" />
+                      Test & Save
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <button
+              onClick={() => setApiKeyForm({ provider: 'openai', key: '' })}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80"
+            >
+              <Key className="w-4 h-4" />
+              Add API Key
+            </button>
+          </div>
+        )}
+
+        {/* Existing Keys */}
         {apiKeys.length > 0 ? (
           <div className="space-y-2">
             {apiKeys.map((key) => (
@@ -558,11 +847,27 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                     </span>
                   )}
                 </div>
-                {key.last_validated_at && (
-                  <span className="text-xs text-muted-foreground">
-                    Validated: {new Date(key.last_validated_at).toLocaleDateString()}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {key.last_validated_at && (
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(key.last_validated_at).toLocaleDateString()}
+                    </span>
+                  )}
+                  {key.configured && (
+                    <button
+                      onClick={() => handleDeleteApiKey(key.provider)}
+                      disabled={deletingApiKey === key.provider}
+                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
+                      title="Delete API key"
+                    >
+                      {deletingApiKey === key.provider ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -571,9 +876,6 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
             No API keys configured.
           </p>
         )}
-        <p className="mt-3 text-xs text-muted-foreground">
-          Use <code className="bg-muted px-1 rounded">kg admin keys</code> to manage keys
-        </p>
       </Section>
     </>
   );

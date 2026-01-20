@@ -34,11 +34,14 @@ import {
   Waypoints,
   PieChart,
   Layers,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
 import { GraphAnimation } from '../home/GraphAnimation';
 import { AboutInfoBox } from './AboutInfoBox';
+import { isInsecureCryptoMode } from '../../lib/auth/authorization-code-flow';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -48,6 +51,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [aboutBox, setAboutBox] = useState<{ x: number; y: number } | null>(null);
+  const [dismissedInsecureWarning, setDismissedInsecureWarning] = useState(false);
+
+  // Check if running in insecure crypto mode (dev only, tree-shaken in prod)
+  const showInsecureWarning = import.meta.env.DEV && isInsecureCryptoMode() && !dismissedInsecureWarning;
 
   // Handle right-click on branding area to show About box
   const handleBrandingContextMenu = useCallback((e: React.MouseEvent) => {
@@ -270,6 +277,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Insecure Crypto Warning Banner (DEV only) */}
+        {showInsecureWarning && (
+          <div className="bg-amber-500/90 text-black px-4 py-2 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="font-medium">INSECURE CRYPTO MODE</span>
+              <span className="opacity-80">
+                — Using plain PKCE (no SHA-256) due to non-HTTPS context. Development only!
+              </span>
+            </div>
+            <button
+              onClick={() => setDismissedInsecureWarning(true)}
+              className="p-1 hover:bg-black/10 rounded"
+              title="Dismiss warning"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Toolbar */}
         <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
