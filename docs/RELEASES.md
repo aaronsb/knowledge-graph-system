@@ -4,6 +4,7 @@ All components are versioned together and must match for compatibility.
 
 | Version | API | Web | Operator | Date | Notes |
 |---------|-----|-----|----------|------|-------|
+| 0.6.1 | 0.6.1 | 0.6.1 | 0.6.1 | 2026-01-19 | Thin shim operator architecture |
 | 0.6.0 | 0.6.0 | 0.6.0 | 0.6.0 | 2026-01-20 | Macvlan networking, admin config UI |
 | 0.5.0 | 0.5.0 | 0.5.0 | 0.5.0 | 2026-01-19 | DNS-01 SSL, operator shell commands |
 | 0.4.0 | 0.4.0 | 0.4.0 | 0.4.0 | 2026-01-18 | Initial GHCR release |
@@ -15,6 +16,19 @@ All components are versioned together and must match for compatibility.
 - Mixing versions is not supported
 
 ## Changelog
+
+### 0.6.1 (2026-01-19)
+
+**Architecture**
+- Refactored operator.sh to thin shim pattern (~200 lines)
+- All complex logic now lives in kg-operator container
+- Container includes docker compose v2 plugin for sibling management
+- Watchtower-inspired architecture: operator manages platform via docker socket
+
+**Improvements**
+- Better TTY detection for interactive commands
+- Fixed container naming for dev vs standalone modes
+- Added --no-recreate flag to prevent unnecessary container restarts
 
 ### 0.6.0 (2026-01-20)
 
