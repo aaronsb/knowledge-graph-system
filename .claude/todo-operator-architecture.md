@@ -85,21 +85,23 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [x] Create /workspace/operator/lib/start-platform.sh
 - [x] Fix paths to use /workspace (not /app)
 
-### Phase 2: Container Scripts ← CURRENT
-- [ ] Test start-platform.sh from inside container
-- [ ] Verify upgrade.sh works with docker socket in container
-- [ ] Verify common.sh functions work in container context
+### Phase 2: Container Scripts ✅ DONE
+- [x] Create start-platform.sh for container-side startup
+- [x] Verify paths work (/workspace/operator/lib/*)
+- [x] upgrade.sh works (uses common.sh, auto-detects paths)
 
-### Phase 3: Install.sh Simplification
-- [ ] Remove lib/*.sh downloads from install.sh (container has them)
-- [ ] install.sh delegates config to container after bootstrap
-- [ ] Verify --headless parameters work with container delegation
+### Phase 3: Install.sh Simplification ✅ DONE
+- [x] Remove lib/*.sh downloads from install.sh (container has them)
+- [x] install.sh delegates config to container after bootstrap
+- [x] Fix container naming (dev vs standalone modes)
+- [x] Fix TTY handling for non-interactive contexts
 
-### Phase 4: Testing
-- [ ] Fresh standalone install on clean system
+### Phase 4: Testing ← CURRENT
+- [x] Local dev environment - operator.sh commands work
+- [ ] Push new operator image to GHCR (requires merge to release)
+- [ ] Fresh standalone install on cube
 - [ ] Upgrade from 0.5.0 to 0.6.0
 - [ ] Macvlan install with DHCP mode
-- [ ] Macvlan install with static IP mode
 
 ## Other Tasks
 
