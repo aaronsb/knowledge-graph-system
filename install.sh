@@ -1743,7 +1743,12 @@ download_files() {
 
     for file in "${operator_files[@]}"; do
         log_info "Downloading $file..."
-        if ! curl -fsSL "${KG_REPO_RAW}/${file}" -o "$file"; then
+        if curl -fsSL "${KG_REPO_RAW}/${file}" -o "$file"; then
+            # Make shell scripts executable
+            if [[ "$file" == *.sh ]]; then
+                chmod +x "$file"
+            fi
+        else
             log_warning "Optional file not found: $file"
         fi
     done
