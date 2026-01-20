@@ -8,6 +8,7 @@ Guides for deploying, configuring, and maintaining the platform.
 |--------------|-------|
 | Try it locally in 5 minutes | [Quick Start](quick-start.md) |
 | Deploy for real use | [Production Deployment](production.md) |
+| Deploy on a dedicated LAN IP | [Macvlan Headless Install](macvlan-headless-install.md) |
 | Understand all the settings | [Configuration Reference](configuration.md) |
 | Upgrade to a new version | [Upgrading](upgrading.md) |
 | Back up my data | [Backup & Restore](backup-restore.md) |

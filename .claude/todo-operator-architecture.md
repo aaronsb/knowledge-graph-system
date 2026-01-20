@@ -98,10 +98,17 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 
 ### Phase 4: Testing ← CURRENT
 - [x] Local dev environment - operator.sh commands work
+- [x] Fresh standalone install on cube (2026-01-20)
+- [x] Macvlan install with static IP (DHCP mode has Docker MAC limitations)
 - [ ] Push new operator image to GHCR (requires merge to release)
-- [ ] Fresh standalone install on cube
 - [ ] Upgrade from 0.5.0 to 0.6.0
-- [ ] Macvlan install with DHCP mode
+
+**Macvlan findings (2026-01-20):**
+- Docker's `mac_address` compose option doesn't work for multi-network containers
+- Each network interface gets a random MAC, breaking DHCP reservations
+- Solution: Use static IP (`ipv4_address`) in compose overlay instead of DHCP
+- Host cannot reach its own macvlan containers (expected layer 2 isolation)
+- Documented in `docs/operating/macvlan-headless-install.md`
 
 ## Other Tasks
 
@@ -122,4 +129,5 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 
 ### Documentation
 - [x] Create OPERATOR_ARCHITECTURE.md
+- [x] Create docs/operating/macvlan-headless-install.md (2026-01-20)
 - [ ] Update installation docs after architecture finalized
