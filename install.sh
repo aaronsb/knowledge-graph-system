@@ -52,8 +52,14 @@ SSL_DNS_KEY=""           # DNS API key
 SSL_DNS_SECRET=""        # DNS API secret
 
 # Macvlan Configuration (for dedicated LAN IP)
-MACVLAN_NETWORK=""       # External macvlan network name (e.g., lannet)
-MACVLAN_IP=""            # Static IP on the macvlan network (e.g., 192.168.1.82)
+MACVLAN_ENABLED=false    # Whether macvlan is enabled
+MACVLAN_MODE=""          # create, use, delete
+MACVLAN_NETWORK="kg-macvlan"  # Network name (standard name for detection)
+MACVLAN_PARENT=""        # Parent interface for creation (e.g., eth0, eno1)
+MACVLAN_SUBNET=""        # Subnet for creation (e.g., 192.168.1.0/24)
+MACVLAN_GATEWAY=""       # Gateway for creation (e.g., 192.168.1.1)
+MACVLAN_IP=""            # Static IP (optional - omit for DHCP)
+MACVLAN_MAC=""           # MAC address for DHCP persistence (auto-generated if omitted)
 
 # ============================================================================
 # Help
@@ -112,12 +118,21 @@ ${BOLD}SSL/HTTPS Options:${NC}
   --ssl-dns-secret SECRET   DNS API secret (provider-specific, e.g., Porkbun secret key)
 
 ${BOLD}Macvlan Options (Dedicated LAN IP):${NC}
-  --macvlan NETWORK         Use existing macvlan Docker network for dedicated LAN IP
+  --macvlan                 Enable macvlan networking (auto-detects existing kg-macvlan network)
                             Useful when ports 80/443 are already in use on the host
-                            The network must already exist (see docs/deployment/macvlan-dedicated-ip.md)
 
-  --macvlan-ip IP           Static IP address on the macvlan network (required with --macvlan)
-                            Example: 192.168.1.82
+  --macvlan-create          Create new kg-macvlan network (requires parent/subnet/gateway)
+  --macvlan-delete          Delete existing kg-macvlan network (for cleanup)
+
+  --macvlan-parent IFACE    Parent network interface (e.g., eth0, eno1) - required for create
+  --macvlan-subnet CIDR     Network subnet (e.g., 192.168.1.0/24) - required for create
+  --macvlan-gateway IP      Gateway IP (e.g., 192.168.1.1) - required for create
+
+  --macvlan-ip IP           Static IP on macvlan network (optional - omit for DHCP reservation)
+  --macvlan-mac MAC         MAC address for container (optional - auto-generated for DHCP)
+                            Use consistent MAC for DHCP reservation to get same IP
+
+  See docs/deployment/macvlan-dedicated-ip.md for setup guide.
 
 ${BOLD}Examples:${NC}
 
@@ -168,16 +183,27 @@ ${BOLD}Examples:${NC}
     --ssl-dns-secret "\$PORKBUN_SECRET_KEY" \\
     --skip-ai
 
-  # With macvlan for dedicated LAN IP (when host ports 80/443 are in use)
+  # Create macvlan network with static IP
   curl -fsSL .../install.sh | bash -s -- \\
     --hostname kg.example.com \\
-    --ssl letsencrypt \\
-    --ssl-email admin@example.com \\
-    --ssl-dns dns_porkbun \\
-    --ssl-dns-key "\$PORKBUN_API_KEY" \\
-    --ssl-dns-secret "\$PORKBUN_SECRET_KEY" \\
-    --macvlan lannet \\
+    --ssl letsencrypt --ssl-email admin@example.com \\
+    --ssl-dns dns_porkbun --ssl-dns-key "\$PORKBUN_API_KEY" --ssl-dns-secret "\$PORKBUN_SECRET_KEY" \\
+    --macvlan-create --macvlan-parent eno1 \\
+    --macvlan-subnet 192.168.1.0/24 --macvlan-gateway 192.168.1.1 \\
     --macvlan-ip 192.168.1.20 \\
+    --skip-ai
+
+  # Create macvlan with DHCP (reserve the output MAC in your router)
+  curl -fsSL .../install.sh | bash -s -- \\
+    --hostname kg.example.com \\
+    --macvlan-create --macvlan-parent eno1 \\
+    --macvlan-subnet 192.168.1.0/24 --macvlan-gateway 192.168.1.1 \\
+    --skip-ai
+
+  # Reinstall using existing macvlan network (auto-detects kg-macvlan)
+  curl -fsSL .../install.sh | bash -s -- \\
+    --hostname kg.example.com \\
+    --macvlan \\
     --skip-ai
 
 ${BOLD}Requirements:${NC}
@@ -527,11 +553,43 @@ parse_args() {
                 fi
                 ;;
             --macvlan)
+                MACVLAN_ENABLED=true
+                MACVLAN_MODE="use"
+                shift
+                ;;
+            --macvlan-create)
+                MACVLAN_ENABLED=true
+                MACVLAN_MODE="create"
+                shift
+                ;;
+            --macvlan-delete)
+                MACVLAN_MODE="delete"
+                shift
+                ;;
+            --macvlan-parent)
                 if [[ -z "$2" || "$2" == --* ]]; then
-                    add_validation_error "--macvlan requires a network name"
+                    add_validation_error "--macvlan-parent requires an interface name"
                     shift
                 else
-                    MACVLAN_NETWORK="$2"
+                    MACVLAN_PARENT="$2"
+                    shift 2
+                fi
+                ;;
+            --macvlan-subnet)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--macvlan-subnet requires a CIDR"
+                    shift
+                else
+                    MACVLAN_SUBNET="$2"
+                    shift 2
+                fi
+                ;;
+            --macvlan-gateway)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--macvlan-gateway requires an IP"
+                    shift
+                else
+                    MACVLAN_GATEWAY="$2"
                     shift 2
                 fi
                 ;;
@@ -541,6 +599,15 @@ parse_args() {
                     shift
                 else
                     MACVLAN_IP="$2"
+                    shift 2
+                fi
+                ;;
+            --macvlan-mac)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    add_validation_error "--macvlan-mac requires a MAC address"
+                    shift
+                else
+                    MACVLAN_MAC="$2"
                     shift 2
                 fi
                 ;;
@@ -599,11 +666,16 @@ parse_args() {
         fi
 
         # Macvlan validation
-        if [[ -n "$MACVLAN_NETWORK" && -z "$MACVLAN_IP" ]]; then
-            add_validation_error "--macvlan-ip is required when using --macvlan"
-        fi
-        if [[ -n "$MACVLAN_IP" && -z "$MACVLAN_NETWORK" ]]; then
-            add_validation_error "--macvlan is required when using --macvlan-ip"
+        if [[ "$MACVLAN_MODE" == "create" ]]; then
+            if [[ -z "$MACVLAN_PARENT" ]]; then
+                add_validation_error "--macvlan-parent is required for --macvlan-create"
+            fi
+            if [[ -z "$MACVLAN_SUBNET" ]]; then
+                add_validation_error "--macvlan-subnet is required for --macvlan-create"
+            fi
+            if [[ -z "$MACVLAN_GATEWAY" ]]; then
+                add_validation_error "--macvlan-gateway is required for --macvlan-create"
+            fi
         fi
     fi
 }
@@ -671,6 +743,121 @@ install_docker() {
     sudo systemctl start docker
 
     log_success "Docker installed successfully"
+}
+
+# ============================================================================
+# Macvlan Setup
+# ============================================================================
+
+# Generate a deterministic MAC address based on hostname
+# Format: 02:42:kg:XX:XX:XX where XX is derived from hostname hash
+generate_macvlan_mac() {
+    local hostname="$1"
+    # Use 02:42 prefix (locally administered, unicast)
+    # Then 'kg' encoded as hex (6b:67), then 2 bytes from hostname hash
+    local hash=$(echo -n "$hostname" | md5sum | cut -c1-4)
+    local b1="${hash:0:2}"
+    local b2="${hash:2:2}"
+    echo "02:42:6b:67:$b1:$b2"
+}
+
+# Check if kg-macvlan network exists
+detect_macvlan_network() {
+    docker network ls --filter "name=^${MACVLAN_NETWORK}$" --format '{{.Name}}' 2>/dev/null | head -1
+}
+
+# Get macvlan network details
+get_macvlan_info() {
+    docker network inspect "$MACVLAN_NETWORK" --format '{{range .IPAM.Config}}Subnet: {{.Subnet}}, Gateway: {{.Gateway}}{{end}}' 2>/dev/null
+}
+
+# Create macvlan network
+create_macvlan_network() {
+    log_info "Creating macvlan network '$MACVLAN_NETWORK'"
+    log_info "  Parent interface: $MACVLAN_PARENT"
+    log_info "  Subnet: $MACVLAN_SUBNET"
+    log_info "  Gateway: $MACVLAN_GATEWAY"
+
+    if docker network create -d macvlan \
+        --subnet="$MACVLAN_SUBNET" \
+        --gateway="$MACVLAN_GATEWAY" \
+        -o parent="$MACVLAN_PARENT" \
+        "$MACVLAN_NETWORK" >/dev/null 2>&1; then
+        log_success "Created macvlan network '$MACVLAN_NETWORK'"
+        return 0
+    else
+        log_error "Failed to create macvlan network"
+        log_info "Check that interface '$MACVLAN_PARENT' exists: ip link show $MACVLAN_PARENT"
+        return 1
+    fi
+}
+
+# Delete macvlan network
+delete_macvlan_network() {
+    local existing=$(detect_macvlan_network)
+    if [[ -n "$existing" ]]; then
+        log_info "Deleting macvlan network '$MACVLAN_NETWORK'"
+        if docker network rm "$MACVLAN_NETWORK" >/dev/null 2>&1; then
+            log_success "Deleted macvlan network '$MACVLAN_NETWORK'"
+            return 0
+        else
+            log_error "Failed to delete macvlan network (containers may still be using it)"
+            return 1
+        fi
+    else
+        log_info "Macvlan network '$MACVLAN_NETWORK' does not exist"
+        return 0
+    fi
+}
+
+# Setup macvlan based on mode
+setup_macvlan() {
+    # Handle delete mode (standalone operation)
+    if [[ "$MACVLAN_MODE" == "delete" ]]; then
+        delete_macvlan_network
+        if [[ "$MACVLAN_ENABLED" != "true" ]]; then
+            # Delete-only mode, exit after cleanup
+            log_success "Macvlan cleanup complete"
+            exit 0
+        fi
+        return 0
+    fi
+
+    # Skip if macvlan not enabled
+    if [[ "$MACVLAN_ENABLED" != "true" ]]; then
+        return 0
+    fi
+
+    log_step "Configuring macvlan networking"
+
+    local existing=$(detect_macvlan_network)
+
+    if [[ "$MACVLAN_MODE" == "create" ]]; then
+        if [[ -n "$existing" ]]; then
+            log_warning "Macvlan network '$MACVLAN_NETWORK' already exists"
+            log_info "$(get_macvlan_info)"
+            log_info "Using existing network (use --macvlan-delete first to recreate)"
+        else
+            create_macvlan_network || exit 1
+        fi
+    elif [[ "$MACVLAN_MODE" == "use" ]]; then
+        if [[ -z "$existing" ]]; then
+            log_error "Macvlan network '$MACVLAN_NETWORK' not found"
+            log_info "Create it with: --macvlan-create --macvlan-parent <iface> --macvlan-subnet <cidr> --macvlan-gateway <ip>"
+            log_info "Or create manually: docker network create -d macvlan --subnet=... --gateway=... -o parent=... $MACVLAN_NETWORK"
+            exit 1
+        fi
+        log_info "Using existing macvlan network '$MACVLAN_NETWORK'"
+        log_info "$(get_macvlan_info)"
+    fi
+
+    # Generate MAC if not specified and no static IP (DHCP mode)
+    if [[ -z "$MACVLAN_MAC" && -z "$MACVLAN_IP" ]]; then
+        MACVLAN_MAC=$(generate_macvlan_mac "$HOSTNAME")
+        log_info "Generated MAC address for DHCP: $MACVLAN_MAC"
+    fi
+
+    log_success "Macvlan networking configured"
 }
 
 # ============================================================================
@@ -926,17 +1113,35 @@ EOF
 generate_ssl_compose_overlay() {
     local install_dir="$1"
 
-    if [[ -n "$MACVLAN_NETWORK" && -n "$MACVLAN_IP" ]]; then
+    if [[ "$MACVLAN_ENABLED" == "true" ]]; then
         # Macvlan mode: dedicated IP on external network, no port mappings
+        local ip_config=""
+        local mac_config=""
+        local mode_comment=""
+
+        if [[ -n "$MACVLAN_IP" ]]; then
+            # Static IP mode
+            ip_config="        ipv4_address: ${MACVLAN_IP}"
+            mode_comment="# Container gets static IP $MACVLAN_IP on network $MACVLAN_NETWORK"
+        else
+            # DHCP mode - use MAC address for consistent DHCP reservation
+            mode_comment="# Container uses MAC $MACVLAN_MAC for DHCP on network $MACVLAN_NETWORK"
+        fi
+
+        if [[ -n "$MACVLAN_MAC" ]]; then
+            mac_config="    mac_address: \"${MACVLAN_MAC}\""
+        fi
+
         cat > "$install_dir/docker-compose.ssl.yml" << EOF
 # SSL overlay with macvlan - auto-generated by install.sh
-# Container gets dedicated IP $MACVLAN_IP on network $MACVLAN_NETWORK
+${mode_comment}
 services:
   web:
     networks:
       default:        # Keep internal network for API communication
       ${MACVLAN_NETWORK}:
-        ipv4_address: ${MACVLAN_IP}
+${ip_config}
+${mac_config}
     ports: []         # Clear port mappings - not needed with dedicated IP
     volumes:
       - ./nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
@@ -952,7 +1157,11 @@ networks:
   ${MACVLAN_NETWORK}:
     external: true
 EOF
-        log_info "Generated SSL compose overlay with macvlan (IP: $MACVLAN_IP on $MACVLAN_NETWORK)"
+        if [[ -n "$MACVLAN_IP" ]]; then
+            log_info "Generated SSL compose overlay with macvlan (static IP: $MACVLAN_IP)"
+        else
+            log_info "Generated SSL compose overlay with macvlan (DHCP, MAC: $MACVLAN_MAC)"
+        fi
     else
         # Standard mode: port mappings on host
         cat > "$install_dir/docker-compose.ssl.yml" << EOF
@@ -1870,14 +2079,45 @@ show_completion() {
     if [[ "$SSL_MODE" != "offload" ]]; then
         echo -e "  ${BOLD}SSL:${NC}         ${SSL_MODE}"
     fi
+    if [[ "$MACVLAN_ENABLED" == "true" ]]; then
+        echo -e "  ${BOLD}Network:${NC}     macvlan ($MACVLAN_NETWORK)"
+        if [[ -n "$MACVLAN_IP" ]]; then
+            echo -e "  ${BOLD}IP:${NC}          ${MACVLAN_IP} (static)"
+        else
+            echo -e "  ${BOLD}MAC:${NC}         ${MACVLAN_MAC} (DHCP)"
+        fi
+    fi
     echo
     echo -e "${YELLOW}Save these credentials - they won't be shown again!${NC}"
     echo
     echo -e "${BOLD}Next Steps:${NC}"
-    echo "  1. Open ${web_url} in your browser"
-    echo "  2. Log in with admin credentials above"
+    local step=1
+
+    # Macvlan-specific steps come first
+    if [[ "$MACVLAN_ENABLED" == "true" ]]; then
+        if [[ -z "$MACVLAN_IP" ]]; then
+            # DHCP mode
+            echo "  ${step}. Reserve MAC ${MACVLAN_MAC} in your DHCP server/router"
+            ((step++))
+            echo "  ${step}. After container starts, find IP: docker inspect kg-web --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'"
+            ((step++))
+            echo "  ${step}. Point DNS ${HOSTNAME} to the assigned IP"
+            ((step++))
+        else
+            # Static IP mode
+            echo "  ${step}. Ensure ${MACVLAN_IP} is excluded from your DHCP pool (or reserved)"
+            ((step++))
+            echo "  ${step}. Point DNS ${HOSTNAME} to ${MACVLAN_IP}"
+            ((step++))
+        fi
+    fi
+
+    echo "  ${step}. Open ${web_url} in your browser"
+    ((step++))
+    echo "  ${step}. Log in with admin credentials above"
+    ((step++))
     if [[ "$SKIP_AI" == "true" ]]; then
-        echo "  3. Configure AI provider in Settings > AI Configuration"
+        echo "  ${step}. Configure AI provider in Settings > AI Configuration"
     fi
     echo
     echo -e "${BOLD}Platform Management:${NC}"
@@ -1902,6 +2142,15 @@ show_completion() {
     echo "    docker compose ps              # Container status"
     echo "    docker compose down            # Stop all containers"
     echo "    docker compose up -d           # Start all containers"
+
+    if [[ "$MACVLAN_ENABLED" == "true" && -z "$MACVLAN_IP" ]]; then
+        echo
+        echo -e "  ${BOLD}Macvlan (DHCP mode):${NC}"
+        echo "    docker inspect kg-web --format '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}'"
+        echo "                                   # Show container IP addresses"
+        echo "    docker network inspect $MACVLAN_NETWORK"
+        echo "                                   # Show macvlan network details"
+    fi
     echo
 }
 
@@ -1954,6 +2203,7 @@ main() {
     # Execute installation
     check_prerequisites
     install_docker
+    setup_macvlan
     download_files
     generate_secrets
     setup_ssl
