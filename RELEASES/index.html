@@ -7027,6 +7027,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#061-2026-01-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.6.1 (2026-01-19)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#060-2026-01-20" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7121,6 +7132,14 @@
 </thead>
 <tbody>
 <tr>
+<td>0.6.1</td>
+<td>0.6.1</td>
+<td>0.6.1</td>
+<td>0.6.1</td>
+<td>2026-01-19</td>
+<td>Thin shim operator architecture</td>
+</tr>
+<tr>
 <td>0.6.0</td>
 <td>0.6.0</td>
 <td>0.6.0</td>
@@ -7153,6 +7172,16 @@
 <li>Mixing versions is not supported</li>
 </ul>
 <h2 id="changelog">Changelog</h2>
+<h3 id="061-2026-01-19">0.6.1 (2026-01-19)</h3>
+<p><strong>Architecture</strong>
+- Refactored operator.sh to thin shim pattern (~200 lines)
+- All complex logic now lives in kg-operator container
+- Container includes docker compose v2 plugin for sibling management
+- Watchtower-inspired architecture: operator manages platform via docker socket</p>
+<p><strong>Improvements</strong>
+- Better TTY detection for interactive commands
+- Fixed container naming for dev vs standalone modes
+- Added --no-recreate flag to prevent unnecessary container restarts</p>
 <h3 id="060-2026-01-20">0.6.0 (2026-01-20)</h3>
 <p><strong>Features</strong>
 - Macvlan networking support in installer (create/use/delete lifecycle)
