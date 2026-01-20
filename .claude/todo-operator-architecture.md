@@ -25,7 +25,7 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  operator.sh (thin shim on HOST)                                            │
+│  operator.sh (thin shim on HOST, ~200 lines)                                │
 │                                                                             │
 │  HOST-ONLY (bootstrap, can't run in container):                             │
 │    start_infra - docker compose up postgres garage operator                 │
@@ -48,26 +48,24 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  kg-operator container (has ALL logic)                                      │
+│  kg-operator container (TOOLBOX - has ALL logic and dependencies)           │
 │                                                                             │
-│  Includes:                                                                  │
+│  Dependencies (no host installation required):                              │
+│    - Python 3.11 + libraries (encryption, DB access, configure.py)          │
 │    - docker.io CLI (controls sibling containers via socket mount)           │
-│    - postgresql-client (psql for migrations)                                │
-│    - Python + configure.py (admin, ai-provider, embedding, api-key)         │
-│    - /workspace/operator/lib/*.sh scripts                                   │
-│    - /workspace/operator/database/*.sh migrations                           │
-│    - /workspace/schema/*.sql                                                │
+│    - postgresql-client (psql, pg_isready for migrations)                    │
+│    - curl (health checks)                                                   │
+│    - Future: acme.sh, backup tools, etc.                                    │
 │                                                                             │
-│  Key scripts:                                                               │
-│    start-platform.sh - Wait for infra, run migrations, init garage,         │
-│                        start api+web via docker compose                     │
-│    upgrade.sh        - Pull images, stop app, migrate, restart              │
-│    migrate-db.sh     - Apply schema migrations                              │
+│  Scripts:                                                                   │
+│    /workspace/operator/lib/start-platform.sh - migrations, garage, api/web  │
+│    /workspace/operator/lib/upgrade.sh - pull, stop, migrate, restart        │
+│    /workspace/operator/database/migrate-db.sh - schema migrations           │
+│    /workspace/operator/configure.py - admin, ai-provider, embedding, keys   │
 │                                                                             │
-│  Mounted:                                                                   │
+│  Mounts:                                                                    │
 │    /var/run/docker.sock - Control sibling containers                        │
-│    /app/.env            - Environment variables                             │
-│    /app/docker/         - Compose files (standalone installs)               │
+│    /workspace           - Project root (compose files, .env, scripts)       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -75,27 +73,25 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 
 1. **Thin shim avoids permission issues** - No downloaded scripts need chmod
 2. **All complex logic in container** - Easy to update, test, version
-3. **install.sh is just bootstrap + guided config** - Not ongoing dependency
-4. **Operator container is self-sufficient** - Has docker CLI, can manage everything
-
-## Immediate Issues
-
-- [ ] Fix cube nginx.prod.conf directory issue
-- [ ] Decide: Should prod.yml reference nginx config at all, or only ssl.yml?
+3. **Container is the toolbox** - Python, psql, docker CLI all pre-installed
+4. **Host only needs bash + docker** - No other dependencies required
+5. **Like Watchtower** - Container manages siblings via docker socket
+6. **install.sh is just bootstrap** - Not an ongoing dependency
 
 ## Implementation Tasks
 
-### Phase 1: Thin operator.sh (DONE)
+### Phase 1: Thin operator.sh ✅ DONE
 - [x] Rewrite operator.sh as thin shim (~200 lines)
 - [x] Create /workspace/operator/lib/start-platform.sh
+- [x] Fix paths to use /workspace (not /app)
 
-### Phase 2: Container Scripts
-- [ ] Verify upgrade.sh works with docker socket in container
+### Phase 2: Container Scripts ← CURRENT
 - [ ] Test start-platform.sh from inside container
-- [ ] Fix paths: container uses /workspace not /app
+- [ ] Verify upgrade.sh works with docker socket in container
+- [ ] Verify common.sh functions work in container context
 
 ### Phase 3: Install.sh Simplification
-- [ ] Remove lib/*.sh downloads from install.sh (not needed)
+- [ ] Remove lib/*.sh downloads from install.sh (container has them)
 - [ ] install.sh delegates config to container after bootstrap
 - [ ] Verify --headless parameters work with container delegation
 
@@ -105,26 +101,23 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [ ] Macvlan install with DHCP mode
 - [ ] Macvlan install with static IP mode
 
-## Compose File Cleanup
+## Other Tasks
 
-- [ ] Audit what each compose file does:
-  - docker-compose.yml (base)
-  - docker-compose.prod.yml (production overrides)
-  - docker-compose.ghcr.yml (image references)
-  - docker-compose.ssl.yml (SSL config)
-  - docker-compose.gpu-*.yml (GPU support)
+### Immediate Issues
+- [ ] Fix cube nginx.prod.conf directory issue
+- [ ] Decide: Should prod.yml reference nginx config at all, or only ssl.yml?
+
+### Compose File Cleanup
+- [ ] Audit compose file stack order and dependencies
 - [ ] Ensure SSL mode doesn't conflict with prod.yml nginx mount
-- [ ] Document compose file stacking order
+- [ ] Document compose file relationships
 
-## Release/Version Alignment
-
+### Release/Version Alignment
 - [x] Create docs/RELEASES.md with version matrix
-- [ ] Tag kg-operator with version numbers (currently only has 'latest' and '0.4.0')
-- [ ] Merge main to release branch to trigger operator build
+- [ ] Tag kg-operator with version numbers (currently only 'latest' and '0.4.0')
+- [ ] Merge to release branch to trigger operator build
 - [ ] Ensure all three images have matching version tags
 
-## Documentation
-
+### Documentation
 - [x] Create OPERATOR_ARCHITECTURE.md
 - [ ] Update installation docs after architecture finalized
-- [ ] Document compose file relationships
