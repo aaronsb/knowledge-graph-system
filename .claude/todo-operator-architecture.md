@@ -16,26 +16,47 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [ ] Verify all operator/lib/*.sh are executable in repo (they are: 755)
 - [ ] Test fresh install to confirm permissions work
 
-## Architecture Decision Needed
+## Chosen Approach: Self-Contained operator.sh
 
-Choose one of three approaches:
+**Principle: Host controls infrastructure, container handles configuration**
 
-### Option A: Container-First
-- [ ] Move all operator commands into kg-operator container
-- [ ] operator.sh becomes thin shim: `docker exec kg-operator operator-cli $@`
-- [ ] Mount docker socket in operator container for start/stop/upgrade
-- [ ] Remove need for host-side lib/*.sh downloads
+```
+┌─────────────────────────────────────────────────────────────┐
+│  install.sh (one-time bootstrap)                            │
+│    - Downloads: operator.sh, compose files, schema          │
+│    - Creates: .env, certs, nginx config                     │
+│    - Pulls images, starts containers                        │
+│    - Does NOT download operator/lib/*.sh                    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  operator.sh (self-contained, no external lib files)        │
+│                                                             │
+│  Infrastructure (inline bash):     Config (container exec): │
+│    start    - docker compose up      admin                  │
+│    stop     - docker compose down    ai-provider            │
+│    restart  - stop + start           embedding              │
+│    logs     - docker compose logs    api-key                │
+│    status   - docker compose ps      shell                  │
+│    upgrade  - pull + migrate + up                           │
+│                                                             │
+│  Migrations: docker exec kg-operator migrate-db.sh          │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Option B: Clear Host/Container Split
-- [ ] Keep infrastructure commands on host (start/stop/upgrade)
-- [ ] Keep config commands in container (admin/ai-provider/embedding)
-- [ ] Bundle host scripts directly in operator.sh (no separate lib/ files)
-- [ ] Make the split explicit in documentation
+### Implementation Tasks
 
-### Option C: Install/Runtime Split
-- [ ] install.sh handles all setup including first start
-- [ ] operator.sh is trivial (just docker exec for config)
-- [ ] For infrastructure changes, re-run install.sh with flags
+- [ ] Consolidate operator/lib/*.sh logic into operator.sh
+  - start-infra.sh → inline start_infrastructure()
+  - start-app.sh → inline start_application()
+  - stop.sh → inline stop_platform()
+  - upgrade.sh → inline upgrade_platform()
+  - teardown.sh → inline teardown_platform()
+- [ ] Remove operator/lib/*.sh downloads from install.sh
+- [ ] Keep operator/database/*.sh in container only (migrations)
+- [ ] Update install.sh to only download: operator.sh, compose files, schema
+- [ ] Test that all commands still work after consolidation
 
 ## Compose File Cleanup
 
