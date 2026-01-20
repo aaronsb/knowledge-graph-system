@@ -5,9 +5,40 @@
 The Knowledge Graph platform uses two main tools for installation and operation:
 
 1. **install.sh** - One-time bootstrapper that sets up the platform
-2. **operator.sh** - Day-to-day management tool
+2. **operator.sh** - Thin shim that delegates to operator container
 
-## Current Architecture
+## Architecture: Thin Shim + Container Delegation
+
+**Principle: Minimal host logic, delegate everything possible to operator container**
+
+```
+install.sh (one-time bootstrap)
+    │
+    ├─► Downloads: operator.sh, compose files, schema
+    ├─► Generates: .env (secrets)
+    ├─► Configures: SSL (certs, nginx config)
+    ├─► Bootstraps: docker compose up postgres garage operator
+    ├─► Delegates config to container
+    └─► Shows summary
+
+operator.sh (thin shim on HOST, ~200 lines)
+    │
+    ├─► HOST-ONLY: start_infra, stop, teardown, update, logs, restart, status
+    │
+    └─► DELEGATED TO CONTAINER (docker exec kg-operator ...):
+        ├─► start → /workspace/operator/lib/start-platform.sh
+        ├─► upgrade → /workspace/operator/lib/upgrade.sh
+        └─► admin, ai-provider, embedding, api-key → configure.py
+
+kg-operator container (has ALL logic)
+    │
+    ├─► docker.io CLI (controls sibling containers via socket)
+    ├─► postgresql-client (psql for migrations)
+    ├─► /workspace/operator/lib/*.sh scripts
+    └─► /workspace/operator/configure.py
+```
+
+## Current Architecture (Legacy)
 
 ### install.sh Responsibilities
 
