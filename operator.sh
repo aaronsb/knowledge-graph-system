@@ -252,12 +252,17 @@ cmd_update() {
 # CONTAINER DELEGATION: Config commands
 # ============================================================================
 
-# Run command in operator container, with TTY if available
+# Run command in operator container
 run_in_operator() {
     check_operator
+    # -t for TTY (colors/formatting)
+    # -i only if stdin is a real TTY (needed for interactive prompts)
     local docker_flags=""
-    # Use -it only if stdin is a TTY
-    [ -t 0 ] && docker_flags="-it"
+    if [ -t 0 ] && [ -t 1 ]; then
+        docker_flags="-it"
+    elif [ -t 1 ]; then
+        docker_flags="-t"
+    fi
     docker exec $docker_flags "$OPERATOR_CONTAINER" "$@"
 }
 
