@@ -200,15 +200,32 @@ cmd_status() {
         echo "  No containers running"
 }
 
+# Get container name based on service and mode
+get_container_name() {
+    local service=$1
+    load_config
+
+    case "$service" in
+        postgres) echo "${CONTAINER_PREFIX:-knowledge-graph}-postgres" ;;
+        garage)   echo "${CONTAINER_PREFIX:-knowledge-graph}-garage" ;;
+        operator) echo "kg-operator" ;;
+        api|web)
+            # Dev mode uses kg-*-dev, standalone uses kg-*
+            if [ "$DEV_MODE" = "true" ]; then
+                echo "kg-${service}-dev"
+            else
+                echo "kg-${service}"
+            fi
+            ;;
+        *) echo "kg-$service" ;;
+    esac
+}
+
 cmd_logs() {
     local service="${1:-api}"
     shift 2>/dev/null || true
 
-    load_config
-    local prefix="${CONTAINER_PREFIX:-kg}"
-    local container="$prefix-$service"
-    [[ "$service" == "operator" ]] && container="kg-operator"
-
+    local container=$(get_container_name "$service")
     docker logs "$@" "$container"
 }
 
@@ -216,11 +233,7 @@ cmd_restart() {
     local service="${1:-}"
     [ -z "$service" ] && echo "Usage: $0 restart <service>" && exit 1
 
-    load_config
-    local prefix="${CONTAINER_PREFIX:-kg}"
-    local container="$prefix-$service"
-    [[ "$service" == "operator" ]] && container="kg-operator"
-
+    local container=$(get_container_name "$service")
     docker restart "$container"
     echo -e "${GREEN}✓ $service restarted${NC}"
 }
@@ -239,11 +252,20 @@ cmd_update() {
 # CONTAINER DELEGATION: Config commands
 # ============================================================================
 
-cmd_admin()       { check_operator; docker exec -it "$OPERATOR_CONTAINER" python /workspace/operator/configure.py admin "$@"; }
-cmd_ai_provider() { check_operator; docker exec -it "$OPERATOR_CONTAINER" python /workspace/operator/configure.py ai-provider "$@"; }
-cmd_embedding()   { check_operator; docker exec -it "$OPERATOR_CONTAINER" python /workspace/operator/configure.py embedding "$@"; }
-cmd_api_key()     { check_operator; docker exec -it "$OPERATOR_CONTAINER" python /workspace/operator/configure.py api-key "$@"; }
-cmd_query()       { check_operator; docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py query "$@"; }
+# Run command in operator container, with TTY if available
+run_in_operator() {
+    check_operator
+    local docker_flags=""
+    # Use -it only if stdin is a TTY
+    [ -t 0 ] && docker_flags="-it"
+    docker exec $docker_flags "$OPERATOR_CONTAINER" "$@"
+}
+
+cmd_admin()       { run_in_operator python /workspace/operator/configure.py admin "$@"; }
+cmd_ai_provider() { run_in_operator python /workspace/operator/configure.py ai-provider "$@"; }
+cmd_embedding()   { run_in_operator python /workspace/operator/configure.py embedding "$@"; }
+cmd_api_key()     { run_in_operator python /workspace/operator/configure.py api-key "$@"; }
+cmd_query()       { run_in_operator python /workspace/operator/configure.py query "$@"; }
 
 # ============================================================================
 # Help

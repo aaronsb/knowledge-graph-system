@@ -1727,33 +1727,9 @@ download_files() {
     log_info "Downloading config/garage.toml..."
     curl -fsSL "${KG_REPO_RAW}/config/garage.toml" -o "config/garage.toml" 2>/dev/null || true
 
-    # Download operator scripts
-    mkdir -p operator/lib operator/database
-    local operator_files=(
-        "operator/configure.py"
-        "operator/lib/common.sh"
-        "operator/lib/upgrade.sh"
-        "operator/lib/start-infra.sh"
-        "operator/lib/start-app.sh"
-        "operator/lib/stop.sh"
-        "operator/lib/teardown.sh"
-        "operator/database/migrate-db.sh"
-        "operator/database/backup-database.sh"
-    )
-
-    for file in "${operator_files[@]}"; do
-        log_info "Downloading $file..."
-        if curl -fsSL "${KG_REPO_RAW}/${file}" -o "$file"; then
-            # Make shell scripts executable
-            if [[ "$file" == *.sh ]]; then
-                chmod +x "$file"
-            fi
-        else
-            log_warning "Optional file not found: $file"
-        fi
-    done
-
-    # Download operator.sh management script
+    # Download operator.sh management script (thin shim)
+    # Note: All operator logic is in the kg-operator container image
+    # No need to download lib/*.sh - they're baked into the container
     log_info "Downloading operator.sh..."
     if curl -fsSL "${KG_REPO_RAW}/operator.sh" -o "operator.sh"; then
         chmod +x operator.sh
