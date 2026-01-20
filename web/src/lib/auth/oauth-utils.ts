@@ -38,14 +38,44 @@ export function generateCodeVerifier(): string {
 }
 
 /**
+ * Check if we're in a secure context where crypto.subtle is available
+ */
+export function isSecureContext(): boolean {
+  return typeof crypto !== 'undefined' && typeof crypto.subtle !== 'undefined';
+}
+
+/**
  * Generate PKCE code challenge from verifier (RFC 7636)
  * SHA-256 hash of verifier, base64url encoded
+ *
+ * In DEV mode only: Falls back to "plain" method in non-secure contexts (HTTP)
+ * In PROD: Requires secure context, will throw if unavailable
  */
-export async function generateCodeChallenge(verifier: string): Promise<string> {
+export async function generateCodeChallenge(verifier: string): Promise<{ challenge: string; method: 'S256' | 'plain' }> {
+  // Check if crypto.subtle is available
+  if (!isSecureContext()) {
+    // DEV ONLY: Allow insecure fallback for local development over HTTP
+    // This code block is tree-shaken out of production builds
+    if (import.meta.env.DEV) {
+      console.warn(
+        '%c INSECURE CRYPTO FALLBACK ',
+        'background: #ff6b6b; color: white; font-weight: bold;',
+        'crypto.subtle unavailable (non-HTTPS). Using plain PKCE - DEV ONLY!'
+      );
+      return { challenge: verifier, method: 'plain' };
+    }
+
+    // PROD: Throw error - must use HTTPS
+    throw new Error(
+      'Secure context required: crypto.subtle is unavailable. ' +
+      'The application must be served over HTTPS in production.'
+    );
+  }
+
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return base64UrlEncode(hash);
+  return { challenge: base64UrlEncode(hash), method: 'S256' };
 }
 
 /**

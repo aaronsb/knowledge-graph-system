@@ -9,12 +9,21 @@ import axios from 'axios';
 import {
   generateCodeVerifier,
   generateCodeChallenge,
+  isSecureContext,
   storePKCEVerifier,
   consumePKCEVerifier,
   storeAuthState,
   type OAuthTokenResponse,
   type StoredAuthState,
 } from './oauth-utils';
+
+/**
+ * Check if running in insecure crypto fallback mode
+ * Used to display warning banner in UI
+ */
+export function isInsecureCryptoMode(): boolean {
+  return !isSecureContext();
+}
 
 // OAuth configuration - runtime config takes precedence over build-time env vars
 // This enables CDN deployment without rebuilding
@@ -35,6 +44,12 @@ declare global {
 }
 
 const API_BASE_URL = window.APP_CONFIG?.apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Debug: Log what URL we're using
+if (import.meta.env.DEV) {
+  console.log('[OAuth] API_BASE_URL:', API_BASE_URL);
+  console.log('[OAuth] window.APP_CONFIG:', window.APP_CONFIG);
+}
 const CLIENT_ID = window.APP_CONFIG?.oauth?.clientId || import.meta.env.VITE_OAUTH_CLIENT_ID || 'kg-web';
 const REDIRECT_URI =
   window.APP_CONFIG?.oauth?.redirectUri ||
@@ -57,7 +72,16 @@ export async function startAuthorizationFlow(
 ): Promise<void> {
   // Generate PKCE parameters
   const codeVerifier = generateCodeVerifier();
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  const { challenge, method } = await generateCodeChallenge(codeVerifier);
+
+  // Log warning if using insecure fallback
+  if (method === 'plain') {
+    console.warn(
+      '%c INSECURE CRYPTO MODE ',
+      'background: #ff6b6b; color: white; font-weight: bold; padding: 2px 6px;',
+      'Using plain PKCE method due to non-secure context (HTTP). This is acceptable for development only.'
+    );
+  }
 
   // Store verifier for later use in callback
   storePKCEVerifier(codeVerifier);
@@ -69,8 +93,8 @@ export async function startAuthorizationFlow(
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     scope: config.scope || 'read:* write:*',
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
+    code_challenge: challenge,
+    code_challenge_method: method,
   });
 
   if (config.state) {
