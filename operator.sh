@@ -73,7 +73,10 @@ run_compose() {
 # ============================================================================
 
 check_env() {
-    [ ! -f "$ENV_FILE" ] && echo -e "${RED}✗ .env not found. Run ./operator.sh init${NC}" && exit 1
+    if [ ! -f "$ENV_FILE" ]; then
+        echo -e "${RED}✗ .env not found. Run ./operator.sh init${NC}"
+        exit 1
+    fi
 }
 
 check_operator() {
@@ -103,16 +106,24 @@ cmd_start_infra() {
     load_config
     cd "$DOCKER_DIR"
 
-    echo -e "${BLUE}→ Starting infrastructure (postgres, garage, operator)...${NC}"
-    run_compose up -d postgres garage operator
+    # Start postgres and garage
+    echo -e "${BLUE}→ Starting infrastructure (postgres, garage)...${NC}"
+    run_compose up -d postgres garage
 
-    # Wait for operator to be ready
-    echo -e "${BLUE}→ Waiting for operator...${NC}"
-    if wait_for_container "$OPERATOR_CONTAINER" 30; then
-        echo -e "${GREEN}✓ Operator ready${NC}"
+    # Only start operator if not already running (don't recreate - it's the brain!)
+    if docker ps --format '{{.Names}}' | grep -q "^${OPERATOR_CONTAINER}$"; then
+        echo -e "${GREEN}✓ Operator already running${NC}"
     else
-        echo -e "${RED}✗ Operator failed to start${NC}"
-        exit 1
+        echo -e "${BLUE}→ Starting operator...${NC}"
+        run_compose up -d operator
+
+        echo -e "${BLUE}→ Waiting for operator...${NC}"
+        if wait_for_container "$OPERATOR_CONTAINER" 30; then
+            echo -e "${GREEN}✓ Operator ready${NC}"
+        else
+            echo -e "${RED}✗ Operator failed to start${NC}"
+            exit 1
+        fi
     fi
 }
 

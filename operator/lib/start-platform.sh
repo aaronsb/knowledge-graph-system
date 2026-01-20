@@ -43,13 +43,14 @@ wait_for_postgres() {
 
 wait_for_garage() {
     echo -e "${BLUE}→ Waiting for Garage...${NC}"
-    # Try multiple hostnames
-    local garage_host="${GARAGE_HOST:-garage}"
+    # Try multiple hostnames (garage for docker network, knowledge-graph-garage for container name)
     for i in {1..15}; do
-        if curl -sf "http://${garage_host}:3900/health" > /dev/null 2>&1; then
-            echo -e "${GREEN}✓ Garage ready${NC}"
-            return 0
-        fi
+        for host in "garage" "knowledge-graph-garage" "kg-garage"; do
+            if curl -sf "http://${host}:3900/health" > /dev/null 2>&1; then
+                echo -e "${GREEN}✓ Garage ready${NC}"
+                return 0
+            fi
+        done
         sleep 2
     done
     echo -e "${YELLOW}⚠ Garage timeout (continuing)${NC}"
@@ -118,29 +119,43 @@ init_garage() {
 start_application() {
     echo -e "${BLUE}→ Starting application (api, web)...${NC}"
 
-    # Use docker compose from inside container (requires docker socket mount)
     cd "$DOCKER_DIR"
 
     if [ -f docker-compose.yml ]; then
         # Build compose command with available overlays
+        # Check DEV_MODE from config or environment
+        local dev_mode="${DEV_MODE:-false}"
+        [ -f "$WORKSPACE/.operator.conf" ] && source "$WORKSPACE/.operator.conf"
+
         local compose_cmd="docker compose -f docker-compose.yml"
-        [ -f docker-compose.prod.yml ] && compose_cmd="$compose_cmd -f docker-compose.prod.yml"
-        [ -f docker-compose.ghcr.yml ] && compose_cmd="$compose_cmd -f docker-compose.ghcr.yml"
+
+        # Dev mode OR prod mode, not both
+        if [ "$dev_mode" = "true" ] || [ "$DEV_MODE" = "true" ]; then
+            [ -f docker-compose.dev.yml ] && compose_cmd="$compose_cmd -f docker-compose.dev.yml"
+        else
+            [ -f docker-compose.prod.yml ] && compose_cmd="$compose_cmd -f docker-compose.prod.yml"
+            [ -f docker-compose.ghcr.yml ] && compose_cmd="$compose_cmd -f docker-compose.ghcr.yml"
+        fi
+
+        # SSL overlay (can apply to either mode)
         [ -f docker-compose.ssl.yml ] && compose_cmd="$compose_cmd -f docker-compose.ssl.yml"
+
         compose_cmd="$compose_cmd --env-file $ENV_FILE"
 
-        $compose_cmd up -d api web
+        # Use --no-recreate to avoid recreating already-running containers
+        $compose_cmd up -d --no-recreate api web
 
         # Wait for API health
         echo -e "${BLUE}→ Waiting for API...${NC}"
+        local api_host="${API_HOST:-api}"
         for i in {1..30}; do
-            if curl -sf http://kg-api:8000/health > /dev/null 2>&1; then
+            if curl -sf "http://${api_host}:8000/health" > /dev/null 2>&1; then
                 echo -e "${GREEN}✓ API is healthy${NC}"
-                break
+                return 0
             fi
-            [ $i -eq 30 ] && echo -e "${YELLOW}⚠ API health timeout${NC}"
             sleep 2
         done
+        echo -e "${YELLOW}⚠ API health timeout (may still be starting)${NC}"
     else
         echo -e "${YELLOW}⚠ No docker-compose.yml found at $DOCKER_DIR${NC}"
     fi

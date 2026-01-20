@@ -27,6 +27,12 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install docker compose v2 plugin (not included in docker.io package)
+RUN mkdir -p /usr/local/lib/docker/cli-plugins \
+    && curl -fsSL "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-$(uname -m)" \
+       -o /usr/local/lib/docker/cli-plugins/docker-compose \
+    && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
 # Create working directory
 WORKDIR /workspace
 
