@@ -1,15 +1,20 @@
 {
-  "name": "@kg/client",
-  "version": "0.1.0",
-  "description": "Knowledge Graph TypeScript client (CLI + MCP server)",
+  "name": "@aaronsb/kg-cli",
+  "version": "0.6.1",
+  "description": "Knowledge Graph CLI and MCP server - interact with knowledge graph systems",
   "main": "dist/index.js",
   "bin": {
     "kg": "dist/index.js",
     "kg-mcp-server": "dist/mcp-server.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "node scripts/generate-version.js && tsc && npm run postbuild && npm run docs:generate",
     "postbuild": "chmod +x dist/index.js dist/mcp-server.js",
+    "prepublishOnly": "npm run clean && npm run build",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
@@ -26,10 +31,25 @@
   "keywords": [
     "knowledge-graph",
     "cli",
-    "mcp"
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "graph-database"
   ],
-  "author": "",
+  "author": "Aaron Bockelie",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaronsb/knowledge-graph-system.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/aaronsb/knowledge-graph-system#readme",
+  "bugs": {
+    "url": "https://github.com/aaronsb/knowledge-graph-system/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
     "@types/asciichart": "^1.5.8",
