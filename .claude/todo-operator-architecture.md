@@ -100,8 +100,16 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [x] Local dev environment - operator.sh commands work
 - [x] Fresh standalone install on cube (2026-01-20)
 - [x] Macvlan install with static IP (DHCP mode has Docker MAC limitations)
+- [x] Fixed standalone compose overlay issues (2026-01-21)
 - [ ] Push new operator image to GHCR (requires merge to release)
 - [ ] Upgrade from 0.5.0 to 0.6.0
+
+**Standalone overlay fix (2026-01-21):**
+- Created docker/docker-compose.standalone.yml with `!reset` directives
+- Removes dev volume mounts that override GHCR image contents
+- Sets production container names (kg-api not kg-api-dev)
+- Uses proper uvicorn command without file watcher
+- Updated install.sh and operator.sh to use new overlay
 
 **Macvlan findings (2026-01-20):**
 - Docker's `mac_address` compose option doesn't work for multi-network containers
@@ -113,12 +121,16 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 ## Other Tasks
 
 ### Immediate Issues
-- [ ] Fix cube nginx.prod.conf directory issue
-- [ ] Decide: Should prod.yml reference nginx config at all, or only ssl.yml?
+- [x] Fix cube nginx.prod.conf directory issue (N/A - using ssl.yml now)
+- [x] Decide: Should prod.yml reference nginx config at all, or only ssl.yml?
+      **Decision:** Removed prod.yml from standalone workflow. Use:
+      - base.yml + ghcr.yml + standalone.yml for GHCR deployments
+      - ssl.yml only if SSL is enabled
+      - prod.yml is now a standalone complete file for manual deployments
 
 ### Compose File Cleanup
-- [ ] Audit compose file stack order and dependencies
-- [ ] Ensure SSL mode doesn't conflict with prod.yml nginx mount
+- [x] Audit compose file stack order and dependencies
+- [x] Created docker-compose.standalone.yml with `!reset` for clean overrides
 - [ ] Document compose file relationships
 
 ### Release/Version Alignment
