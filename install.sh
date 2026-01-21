@@ -1650,8 +1650,8 @@ download_files() {
     # Docker compose files - download to root (not docker/ subdir)
     local compose_files=(
         "docker-compose.yml"
-        "docker-compose.prod.yml"
         "docker-compose.ghcr.yml"
+        "docker-compose.standalone.yml"
         "docker-compose.gpu-nvidia.yml"
         "docker-compose.gpu-amd.yml"
     )
@@ -1837,7 +1837,7 @@ EOF
 # Container Startup
 # ============================================================================
 build_compose_command() {
-    local cmd="docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml"
+    local cmd="docker compose -f docker-compose.yml -f docker-compose.ghcr.yml -f docker-compose.standalone.yml"
 
     # Add GPU overlay if needed
     case "$GPU_MODE" in

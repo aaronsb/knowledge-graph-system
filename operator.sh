@@ -59,11 +59,19 @@ get_compose_cmd() {
     load_config
     local cmd="docker compose -f $DOCKER_DIR/docker-compose.yml"
 
-    [ "$DEV_MODE" != "true" ] && [ -f "$DOCKER_DIR/docker-compose.prod.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.prod.yml"
+    # GHCR images overlay (must come before standalone)
     [ "$IMAGE_SOURCE" = "ghcr" ] && [ -f "$DOCKER_DIR/docker-compose.ghcr.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ghcr.yml"
+
+    # Standalone mode (curl installer) - removes dev mounts, fixes container names
+    [ -f "$DOCKER_DIR/docker-compose.standalone.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.standalone.yml"
+
+    # SSL overlay (if configured)
     [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
+
+    # Dev mode overlay (adds hot reload, source mounts)
     [ "$DEV_MODE" = "true" ] && [ -f "$DOCKER_DIR/docker-compose.dev.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"
 
+    # GPU overlays
     case "$GPU_MODE" in
         nvidia) [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
         amd)    [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;

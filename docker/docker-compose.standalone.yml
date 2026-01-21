@@ -1,0 +1,30 @@
+# ============================================================================
+# Knowledge Graph System - Standalone Deployment Overlay
+# ============================================================================
+# Removes dev-mode settings for standalone GHCR-based installations.
+# Must be used AFTER docker-compose.ghcr.yml in the compose chain.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml \
+#     -f docker-compose.standalone.yml [other overlays] up -d
+# ============================================================================
+
+services:
+  api:
+    # Production container name (no -dev suffix)
+    container_name: kg-api
+    # Clear dev volume mounts - only keep HF cache
+    volumes: !reset
+      - hf_cache:/home/api/.cache
+    # Production command without file watcher/reloader
+    command: ["uvicorn", "api.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  web:
+    # Production container name (no -dev suffix)
+    container_name: kg-web
+
+  operator:
+    # Clear dev volume mounts - use /project for standalone mode
+    volumes: !reset
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/project
