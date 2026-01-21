@@ -321,6 +321,9 @@ ${BOLD}Configuration:${NC}
   embedding          Configure embeddings
   api-key            Store API keys
 
+${BOLD}Maintenance:${NC}
+  self-update        Update operator.sh from container
+
 ${BOLD}Development (repo only):${NC}
   init               Guided setup
   init --headless    Automated setup
@@ -368,6 +371,26 @@ case "${1:-help}" in
     recert)
         check_operator
         docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/recert.sh "$@"
+        ;;
+
+    # Self-update: extract operator.sh from container
+    self-update)
+        check_operator
+        echo -e "${BLUE}→ Extracting operator.sh from container...${NC}"
+        # Preserve original ownership
+        ORIG_OWNER=$(stat -c '%u:%g' "$SCRIPT_DIR/operator.sh" 2>/dev/null || echo "")
+        if docker cp "$OPERATOR_CONTAINER":/etc/kg/operator.sh "$SCRIPT_DIR/operator.sh.new"; then
+            chmod +x "$SCRIPT_DIR/operator.sh.new"
+            if [ -n "$ORIG_OWNER" ]; then
+                chown "$ORIG_OWNER" "$SCRIPT_DIR/operator.sh.new" 2>/dev/null || true
+            fi
+            mv "$SCRIPT_DIR/operator.sh.new" "$SCRIPT_DIR/operator.sh"
+            echo -e "${GREEN}✓ operator.sh updated from container${NC}"
+        else
+            echo -e "${RED}✗ Failed to extract operator.sh${NC}"
+            echo "  Make sure the operator container has /etc/kg/operator.sh"
+            exit 1
+        fi
         ;;
 
     # Help

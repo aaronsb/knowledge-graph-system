@@ -53,6 +53,10 @@ COPY api/api/__init__.py /workspace/api/api/__init__.py
 # Copy schema directory (for backup/restore operations)
 COPY schema/ /workspace/schema/
 
+# Copy operator.sh for self-update capability
+# Users can extract this trusted copy: docker cp kg-operator:/etc/kg/operator.sh ./
+COPY operator.sh /etc/kg/operator.sh
+
 # Copy development scripts (diagnostics, etc.)
 COPY scripts/development/ /workspace/scripts/development/
 
