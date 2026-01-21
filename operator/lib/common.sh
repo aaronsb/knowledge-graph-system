@@ -103,7 +103,7 @@ get_compose_cmd() {
 
     # Start with base compose file (default or configured)
     local base_file="${COMPOSE_FILE:-docker-compose.yml}"
-    local cmd="docker-compose -f $DOCKER_DIR/$base_file"
+    local cmd="docker compose -f $DOCKER_DIR/$base_file"
 
     # Add prod overlay for production mode (container naming, resource limits)
     if [ "$DEV_MODE" != "true" ]; then
