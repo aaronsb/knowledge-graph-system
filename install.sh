@@ -1696,7 +1696,8 @@ download_files() {
             # These don't exist in standalone installs and would overwrite container contents
             sed -i '/\.\.\/api:\/app\/api/d' "$file"
             sed -i '/\.\.\/web/d' "$file"
-            sed -i '/\.:\/workspace/d' "$file"
+            # Keep operator project mount but use /project to avoid overwriting baked-in scripts
+            sed -i 's|\.\.:\/workspace|.:/project|g' "$file"
 
             # Remove build sections (we use pre-built GHCR images)
             sed -i '/^    build:$/,/^    [a-z]/{ /^    build:/d; /^      /d; }' "$file"

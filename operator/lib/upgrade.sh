@@ -8,17 +8,22 @@
 
 set -e
 
-# Get project root (this script is in operator/lib/)
+# Get project root
+# In standalone mode, host directory is mounted at /project
+# In repo/dev mode, everything is at /workspace
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
-
-# Detect standalone vs repo install
-# Standalone: docker-compose.yml in root, no docker/ subdirectory
-# Repo: docker-compose.yml in docker/ subdirectory
-if [ -d "$PROJECT_ROOT/docker" ]; then
-    DOCKER_DIR="$PROJECT_ROOT/docker"
+if [ -d "/project" ] && [ -f "/project/.env" ]; then
+    # Standalone mode: host directory mounted at /project
+    PROJECT_ROOT="/project"
+    DOCKER_DIR="/project"
 else
-    DOCKER_DIR="$PROJECT_ROOT"
+    # Repo/dev mode: full workspace mounted
+    PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+    if [ -d "$PROJECT_ROOT/docker" ]; then
+        DOCKER_DIR="$PROJECT_ROOT/docker"
+    else
+        DOCKER_DIR="$PROJECT_ROOT"
+    fi
 fi
 
 # Source common functions
