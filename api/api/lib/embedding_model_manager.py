@@ -33,16 +33,18 @@ class EmbeddingModelManager:
     across all requests to avoid repeated model loading overhead.
     """
 
-    def __init__(self, model_name: str = "nomic-ai/nomic-embed-text-v1.5", precision: str = "float16"):
+    def __init__(self, model_name: str = "nomic-ai/nomic-embed-text-v1.5", precision: str = "float16", device: str = None):
         """
         Initialize embedding model manager.
 
         Args:
             model_name: HuggingFace model identifier
             precision: Embedding precision ('float16' or 'float32')
+            device: Device to use ('cpu', 'cuda', 'mps') - if None, auto-detect
         """
         self.model_name = model_name
         self.precision = precision
+        self.configured_device = device  # Device from config (may be None for auto)
         self.model = None
         self.dimensions = None
 
@@ -66,10 +68,16 @@ class EmbeddingModelManager:
             logger.warning(f"Model {self.model_name} already loaded, skipping")
             return
 
-        # Detect best available device
+        # Determine device to use
         from .device_selector import get_best_device, log_device_selection
 
-        device = get_best_device()
+        if self.configured_device and self.configured_device != "auto":
+            # Use device from config (respects user's choice to force CPU)
+            device = self.configured_device
+            logger.info(f"📍 Using configured device: {device}")
+        else:
+            # Auto-detect best available device
+            device = get_best_device()
         log_device_selection(self.model_name)
 
         logger.info(f"📥 Loading embedding model: {self.model_name}")
@@ -219,17 +227,19 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
         return None
 
     precision = config.get('precision', 'float16')
+    device = config.get('device', 'cpu')  # Default to CPU for safety
 
     logger.info(f"📍 Embedding provider: local")
     logger.info(f"   Model: {model_name}")
     logger.info(f"   Precision: {precision}")
+    logger.info(f"   Device: {device}")
     logger.info(f"   Dimensions: {config.get('embedding_dimensions', 'auto-detect')}")
     logger.info(f"   Resource limits: {config.get('max_memory_mb')}MB RAM, {config.get('num_threads')} threads")
     logger.info(f"   Initializing model manager...")
 
     try:
         # Create and load model manager
-        _model_manager = EmbeddingModelManager(model_name=model_name, precision=precision)
+        _model_manager = EmbeddingModelManager(model_name=model_name, precision=precision, device=device)
         _model_manager.load_model()
 
         # Verify dimensions match config (if specified)
@@ -322,13 +332,15 @@ async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
         )
 
     precision = config.get('precision', 'float16')
+    device = config.get('device', 'cpu')  # Default to CPU for safety
 
     logger.info(f"📥 Loading new model: {model_name}")
     logger.info(f"   Precision: {precision}")
+    logger.info(f"   Device: {device}")
 
     try:
         # Create new manager and load model (in parallel with old model serving requests)
-        new_manager = EmbeddingModelManager(model_name=model_name, precision=precision)
+        new_manager = EmbeddingModelManager(model_name=model_name, precision=precision, device=device)
         new_manager.load_model()
 
         # Verify dimensions
