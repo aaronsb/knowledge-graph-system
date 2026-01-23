@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.13
+# Version: 0.6.0-dev.14
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1702,7 +1702,7 @@ cd "\$INSTALL_DIR"
     --fullchain-file "\$INSTALL_DIR/certs/fullchain.crt" \\
     --reloadcmd "docker restart kg-web"
 EOF
-    chmod +x "$install_dir/renew-certs.sh"
+    as_root chmod +x "$install_dir/renew-certs.sh"
 
     # Add cron job for renewal (checks daily, only renews when needed)
     (crontab -l 2>/dev/null | grep -v 'renew-certs.sh'; echo "0 3 * * * $install_dir/renew-certs.sh >/dev/null 2>&1") | crontab -
@@ -2197,7 +2197,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.13${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.14${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
