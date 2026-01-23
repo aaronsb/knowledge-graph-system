@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.16
+# Version: 0.6.0-dev.17
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1794,6 +1794,9 @@ generate_ssl_compose_overlay() {
 
 services:
   web:
+    environment:
+      VITE_API_URL: /api
+      VITE_OAUTH_REDIRECT_URI: https://$HOSTNAME/callback
     volumes:
       - ./nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
@@ -2197,7 +2200,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.16${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.17${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
