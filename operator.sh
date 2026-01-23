@@ -299,6 +299,7 @@ cmd_ai_provider() { run_in_operator python /workspace/operator/configure.py ai-p
 cmd_embedding()   { run_in_operator python /workspace/operator/configure.py embedding "$@"; }
 cmd_api_key()     { run_in_operator python /workspace/operator/configure.py api-key "$@"; }
 cmd_query()       { run_in_operator python /workspace/operator/configure.py query "$@"; }
+cmd_garage()      { run_in_operator /workspace/operator/lib/garage-manager.sh "$@"; }
 
 # ============================================================================
 # Help
@@ -328,6 +329,9 @@ ${BOLD}Configuration:${NC}
   ai-provider        Configure AI extraction
   embedding          Configure embeddings
   api-key            Store API keys
+
+${BOLD}Infrastructure:${NC}
+  garage             Manage Garage storage (status, init, repair)
 
 ${BOLD}Maintenance:${NC}
   self-update        Update operator.sh from container
@@ -374,6 +378,9 @@ case "${1:-help}" in
     embedding)   shift; cmd_embedding "$@" ;;
     api-key)     shift; cmd_api_key "$@" ;;
     query|pg)    shift; cmd_query "$@" ;;
+
+    # Infrastructure
+    garage)      shift; cmd_garage "$@" ;;
 
     # SSL
     recert)

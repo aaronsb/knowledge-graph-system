@@ -1307,12 +1307,13 @@ generate_secrets() {
     fi
 
     # Generate infrastructure secrets
-    local postgres_password encryption_key oauth_key internal_key
+    local postgres_password encryption_key oauth_key internal_key garage_rpc_secret
 
     postgres_password=$(openssl rand -base64 32 | tr -d '/+=' | head -c 32)
     encryption_key=$(python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())' 2>/dev/null || openssl rand -base64 32)
     oauth_key=$(openssl rand -base64 48 | tr -d '/+=' | head -c 64)
     internal_key=$(openssl rand -base64 32 | tr -d '/+=' | head -c 32)
+    garage_rpc_secret=$(openssl rand -hex 32)
 
     # Generate .env file
     cat > .env << EOF
@@ -1343,7 +1344,8 @@ INTERNAL_KEY_SERVICE_SECRET=${internal_key}
 GARAGE_HOST=garage
 GARAGE_PORT=3900
 GARAGE_BUCKET=kg-storage
-# Note: Garage credentials are stored encrypted in the database after initialization
+GARAGE_RPC_SECRET=${garage_rpc_secret}
+# Note: Garage S3 credentials are stored encrypted in the database after initialization
 EOF
 
     # Secure the .env file
