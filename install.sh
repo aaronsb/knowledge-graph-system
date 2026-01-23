@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.10
+# Version: 0.6.0-dev.11
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -156,11 +156,22 @@ log_step() {
 # what requires elevated access. The sudo token is acquired once at startup.
 #
 # Usage:
+#   sudo_ensure                    # Acquire/refresh sudo token
 #   as_root mkdir -p /opt/something
 #   as_root_write "content" /opt/file.txt
 #   as_root_append "line" /opt/file.txt
 #   docker_cmd compose up -d
 # ============================================================================
+
+sudo_ensure() {
+    # Acquire or refresh sudo token
+    # Call at startup and before privileged ops after long-running processes
+    # Usage: sudo_ensure
+    if ! sudo -v; then
+        log_error "Failed to acquire sudo privileges"
+        return 1
+    fi
+}
 
 as_root() {
     # Run a command as root
@@ -1531,16 +1542,17 @@ setup_letsencrypt_dns() {
         --key-file "$cert_tmp/server.key" \
         --fullchain-file "$cert_tmp/fullchain.crt"; then
         cert_success=true
+        # Refresh sudo token (acme.sh DNS wait can take a while)
+        sudo_ensure
         # Copy certs to install directory (needs sudo)
         as_root cp "$cert_tmp/server.crt" "$install_dir/certs/"
         as_root cp "$cert_tmp/server.key" "$install_dir/certs/"
         as_root cp "$cert_tmp/fullchain.crt" "$install_dir/certs/"
+        as_root chmod 600 "$install_dir/certs/server.key"
         rm -rf "$cert_tmp"
     fi
 
     if [ "$cert_success" = true ]; then
-        chmod 600 "$install_dir/certs/server.key"
-        as_root chmod 600 "$install_dir/certs/server.key"
         log_success "Certificate obtained successfully"
     else
         log_error "Failed to obtain certificate"
@@ -2163,7 +2175,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.10${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.11${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
@@ -2179,12 +2191,11 @@ main() {
 
     # Acquire sudo token early (keeps it alive during install)
     echo -e "${YELLOW}This installer requires sudo for some operations.${NC}"
-    if ! sudo -v; then
-        echo -e "${RED}Failed to acquire sudo privileges${NC}"
+    if ! sudo_ensure; then
         exit 1
     fi
-    # Keep sudo alive in background
-    (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+    # Keep sudo alive in background (refresh every 30s, well within typical 5min timeout)
+    (while true; do sudo -n true; sleep 30; kill -0 "$$" 2>/dev/null || exit; done) &
     SUDO_KEEPER_PID=$!
     trap "kill $SUDO_KEEPER_PID 2>/dev/null" EXIT
 
