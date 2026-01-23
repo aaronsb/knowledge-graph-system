@@ -2017,11 +2017,28 @@ configure_platform() {
 
     # Configure Garage storage
     log_info "Configuring storage..."
-    # Create Garage API key
-    local garage_key
-    garage_key=$($compose_cmd exec -T garage /garage key create kg-api-key 2>/dev/null | grep -oP 'GK[a-zA-Z0-9]+' || echo "")
-    if [[ -n "$garage_key" ]]; then
+    # Delete existing key if it exists (silently)
+    $compose_cmd exec -T garage /garage key delete kg-api-key --yes 2>/dev/null || true
+
+    # Create Garage API key and capture full output
+    local key_output garage_key_id garage_secret
+    key_output=$($compose_cmd exec -T garage /garage key create kg-api-key 2>&1)
+    garage_key_id=$(echo "$key_output" | grep "Key ID:" | awk '{print $3}')
+    garage_secret=$(echo "$key_output" | grep "Secret key:" | awk '{print $3}')
+
+    if [[ -n "$garage_key_id" && -n "$garage_secret" ]]; then
+        # Grant bucket permissions
         $compose_cmd exec -T garage /garage bucket allow --read --write --key kg-api-key kg-storage || true
+
+        # Store credentials in encrypted database
+        local garage_credentials="${garage_key_id}:${garage_secret}"
+        if $compose_cmd exec -T operator python /workspace/operator/configure.py api-key garage --key "$garage_credentials" 2>&1 | grep -qi "stored"; then
+            log_success "Garage credentials stored"
+        else
+            log_warning "Failed to store Garage credentials - may need manual configuration"
+        fi
+    else
+        log_warning "Failed to create Garage API key"
     fi
 
     log_success "Platform configured"

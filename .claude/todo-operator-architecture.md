@@ -101,6 +101,8 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [x] Fresh standalone install on cube (2026-01-20)
 - [x] Macvlan install with static IP (DHCP mode has Docker MAC limitations)
 - [x] Fixed standalone compose overlay issues (2026-01-21)
+- [x] Fixed embedding device config to respect CPU setting (2026-01-22)
+- [x] Fixed Garage initialization - credentials must be stored via configure.py (2026-01-22)
 - [ ] Push new operator image to GHCR (requires merge to release)
 - [ ] Upgrade from 0.5.0 to 0.6.0
 
@@ -117,6 +119,13 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - Solution: Use static IP (`ipv4_address`) in compose overlay instead of DHCP
 - Host cannot reach its own macvlan containers (expected layer 2 isolation)
 - Documented in `docs/operating/macvlan-headless-install.md`
+
+**Garage initialization findings (2026-01-22):**
+- install.sh Garage setup doesn't properly configure credentials after initial install
+- Must manually run: `docker exec kg-operator python /workspace/operator/configure.py api-key garage --key "ACCESS_KEY:SECRET_KEY"`
+- Bucket name is `kg-storage` (not `kg-sources`)
+- Issue: The Garage node initialization happens but credential storage was skipped
+- Need to review install.sh Garage configuration flow (lines 2018-2025)
 
 ## Other Tasks
 
