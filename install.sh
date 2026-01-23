@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.11
+# Version: 0.6.0-dev.12
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1536,15 +1536,28 @@ setup_letsencrypt_dns() {
     mkdir -p "$cert_tmp"
 
     local cert_success=false
-    if "$acme_home/acme.sh" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
+    local acme_output
+    acme_output=$("$acme_home/acme.sh" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
         --keylength 2048 \
         --cert-file "$cert_tmp/server.crt" \
         --key-file "$cert_tmp/server.key" \
-        --fullchain-file "$cert_tmp/fullchain.crt"; then
-        cert_success=true
-        # Refresh sudo token (acme.sh DNS wait can take a while)
+        --fullchain-file "$cert_tmp/fullchain.crt" 2>&1) && cert_success=true
+
+    # Check if skipped because cert already valid (not due for renewal)
+    if echo "$acme_output" | grep -q "Skipping.*Next renewal time"; then
+        log_info "Certificate already valid, using existing cert"
+        local existing_cert_dir="$acme_home/$HOSTNAME"
+        if [[ -f "$existing_cert_dir/$HOSTNAME.cer" && -f "$existing_cert_dir/$HOSTNAME.key" ]]; then
+            cert_success=true
+            sudo_ensure
+            as_root cp "$existing_cert_dir/$HOSTNAME.cer" "$install_dir/certs/server.crt"
+            as_root cp "$existing_cert_dir/$HOSTNAME.key" "$install_dir/certs/server.key"
+            as_root cp "$existing_cert_dir/fullchain.cer" "$install_dir/certs/fullchain.crt"
+            as_root chmod 600 "$install_dir/certs/server.key"
+        fi
+    elif [ "$cert_success" = true ]; then
+        # New cert issued - copy from temp location
         sudo_ensure
-        # Copy certs to install directory (needs sudo)
         as_root cp "$cert_tmp/server.crt" "$install_dir/certs/"
         as_root cp "$cert_tmp/server.key" "$install_dir/certs/"
         as_root cp "$cert_tmp/fullchain.crt" "$install_dir/certs/"
@@ -2175,7 +2188,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.11${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.12${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
