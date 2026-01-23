@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.19
+# Version: 0.6.0-dev.20
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1796,6 +1796,7 @@ services:
   web:
     environment:
       VITE_API_URL: /api
+      VITE_OAUTH_CLIENT_ID: kg-web
       VITE_OAUTH_REDIRECT_URI: https://$HOSTNAME/callback
     volumes:
       - ./nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
@@ -2206,7 +2207,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.19${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.20${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
