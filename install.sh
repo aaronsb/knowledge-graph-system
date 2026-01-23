@@ -818,7 +818,7 @@ step_ai() {
         openai)
             AI_MODEL=$(prompt_value "Model name" "gpt-4o")
             echo
-            AI_KEY=$(prompt_password "OpenAI API key")
+            AI_KEY=$(prompt_value "OpenAI API key" "")
 
             if [[ -z "$AI_KEY" ]]; then
                 log_warning "API key required for OpenAI"
@@ -830,7 +830,7 @@ step_ai() {
         anthropic)
             AI_MODEL=$(prompt_value "Model name" "claude-sonnet-4")
             echo
-            AI_KEY=$(prompt_password "Anthropic API key")
+            AI_KEY=$(prompt_value "Anthropic API key" "")
 
             if [[ -z "$AI_KEY" ]]; then
                 log_warning "API key required for Anthropic"
@@ -1328,7 +1328,7 @@ POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=${postgres_password}
-POSTGRES_DB=kg
+POSTGRES_DB=knowledge_graph
 
 # --- Security ---
 # Fernet key for encrypting API keys in database
@@ -1432,7 +1432,17 @@ setup_letsencrypt_dns() {
 
     if [[ ! -f "$acme_home/acme.sh" ]]; then
         log_info "Installing acme.sh to $acme_home..."
-        curl -fsSL https://get.acme.sh | sh -s -- --home "$acme_home" --email "$SSL_EMAIL"
+        mkdir -p "$acme_home"
+
+        # Download and install acme.sh to custom home
+        # The piped installer doesn't support --home, so we download and run directly
+        local acme_installer="$install_dir/acme-install.sh"
+        curl -fsSL https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh -o "$acme_installer"
+        chmod +x "$acme_installer"
+
+        # Install to our custom directory
+        "$acme_installer" --install --home "$acme_home" --accountemail "$SSL_EMAIL" --nocron
+        rm -f "$acme_installer"
     fi
 
     mkdir -p "$install_dir/certs"
