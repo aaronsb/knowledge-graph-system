@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.18
+# Version: 0.6.0-dev.19
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1800,6 +1800,12 @@ services:
     volumes:
       - ./nginx.ssl.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--no-check-certificate", "--tries=1", "--spider", "https://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 EOF
 
     # Add macvlan network configuration if enabled
@@ -2200,7 +2206,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.18${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.19${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
