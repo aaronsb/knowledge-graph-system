@@ -1348,11 +1348,12 @@ GARAGE_RPC_SECRET=${garage_rpc_secret}
 # Note: Garage S3 credentials are stored encrypted in the database after initialization
 EOF
 
-    # Secure the .env file
+    # Secure the .env file (root-only, readable by docker/podman)
+    chown root:root .env
     chmod 600 .env
 
     SECRETS_GENERATED=true
-    log_success "Secrets generated"
+    log_success "Secrets generated (.env secured: root:root 600)"
 }
 
 
