@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.8
+# Version: 0.6.0-dev.9
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -618,14 +618,14 @@ step_network() {
         MACVLAN_ENABLED=true
 
         # Check if kg-macvlan network already exists
-        if docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
+        if sudo docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
             log_success "Found existing '$MACVLAN_NETWORK' network"
 
             # Show current network config
             local subnet gateway parent
-            subnet=$(docker network inspect "$MACVLAN_NETWORK" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
-            gateway=$(docker network inspect "$MACVLAN_NETWORK" --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')
-            parent=$(docker network inspect "$MACVLAN_NETWORK" --format '{{index .Options "parent"}}')
+            subnet=$(sudo docker network inspect "$MACVLAN_NETWORK" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+            gateway=$(sudo docker network inspect "$MACVLAN_NETWORK" --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')
+            parent=$(sudo docker network inspect "$MACVLAN_NETWORK" --format '{{index .Options "parent"}}')
             echo "   Subnet: $subnet, Gateway: $gateway, Parent: $parent"
             echo
 
@@ -1102,15 +1102,15 @@ check_docker() {
         fi
     fi
 
-    # Verify Docker is running
-    if ! docker info &>/dev/null; then
+    # Verify Docker is running (use sudo since user may not be in docker group)
+    if ! sudo docker info &>/dev/null; then
         log_error "Docker daemon is not running"
         log_info "Start with: sudo systemctl start docker"
         exit 1
     fi
 
     # Check for compose plugin
-    if ! docker compose version &>/dev/null; then
+    if ! sudo docker compose version &>/dev/null; then
         log_error "Docker Compose plugin not found"
         log_info "Install with: sudo apt install docker-compose-plugin"
         exit 1
@@ -1123,15 +1123,13 @@ install_docker() {
     # Install Docker using the official convenience script
     log_info "Installing Docker..."
 
-    if curl -fsSL https://get.docker.com | sh; then
+    if curl -fsSL https://get.docker.com | sudo sh; then
         log_success "Docker installed"
 
         # Add current user to docker group
-        if [[ -n "$SUDO_USER" ]]; then
-            sudo usermod -aG docker "$SUDO_USER"
-            log_info "Added $SUDO_USER to docker group"
-            log_warning "You may need to log out and back in for group changes to take effect"
-        fi
+        sudo usermod -aG docker "$USER"
+        log_info "Added $USER to docker group"
+        log_warning "You may need to log out and back in for group changes to take effect"
     else
         log_error "Docker installation failed"
         exit 1
@@ -1161,17 +1159,17 @@ setup_macvlan() {
     if [[ "$MACVLAN_DELETE" == "true" ]]; then
         log_step "Deleting macvlan network"
 
-        if docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
+        if sudo docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
             # Check for connected containers
             local connected
-            connected=$(docker network inspect "$MACVLAN_NETWORK" --format '{{range .Containers}}{{.Name}} {{end}}')
+            connected=$(sudo docker network inspect "$MACVLAN_NETWORK" --format '{{range .Containers}}{{.Name}} {{end}}')
             if [[ -n "$connected" ]]; then
                 log_error "Cannot delete network - containers connected: $connected"
-                log_info "Stop containers first: docker stop $connected"
+                log_info "Stop containers first: sudo docker stop $connected"
                 exit 1
             fi
 
-            docker network rm "$MACVLAN_NETWORK"
+            sudo docker network rm "$MACVLAN_NETWORK"
             log_success "Deleted network: $MACVLAN_NETWORK"
         else
             log_info "Network '$MACVLAN_NETWORK' does not exist"
@@ -1182,9 +1180,9 @@ setup_macvlan() {
         log_step "Creating macvlan network"
 
         # Delete existing if requested
-        if docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
+        if sudo docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
             log_info "Removing existing network '$MACVLAN_NETWORK'"
-            docker network rm "$MACVLAN_NETWORK" || true
+            sudo docker network rm "$MACVLAN_NETWORK" || true
         fi
 
         log_info "Creating network: $MACVLAN_NETWORK"
@@ -1192,7 +1190,7 @@ setup_macvlan() {
         log_info "  Subnet: $MACVLAN_SUBNET"
         log_info "  Gateway: $MACVLAN_GATEWAY"
 
-        docker network create -d macvlan \
+        sudo docker network create -d macvlan \
             --subnet="$MACVLAN_SUBNET" \
             --gateway="$MACVLAN_GATEWAY" \
             -o parent="$MACVLAN_PARENT" \
@@ -1203,7 +1201,7 @@ setup_macvlan() {
 
     # Verify network exists if macvlan is enabled
     if [[ "$MACVLAN_ENABLED" == "true" ]]; then
-        if ! docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
+        if ! sudo docker network inspect "$MACVLAN_NETWORK" &>/dev/null; then
             log_error "Macvlan network '$MACVLAN_NETWORK' not found"
             log_info "Create with: --macvlan-create --macvlan-parent <iface> --macvlan-subnet <cidr> --macvlan-gateway <ip>"
             exit 1
@@ -1225,8 +1223,8 @@ download_files() {
 
     local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
 
-    # Create and enter install directory
-    mkdir -p "$install_dir"
+    # Create install directory (needs sudo for /opt)
+    sudo mkdir -p "$install_dir"
     cd "$install_dir"
 
     log_info "Installing to: $install_dir"
@@ -1242,7 +1240,7 @@ download_files() {
 
     for file in "${compose_files[@]}"; do
         log_info "Downloading $file..."
-        if ! curl -fsSL "${KG_REPO_RAW}/docker/${file}" -o "$file"; then
+        if ! curl -fsSL "${KG_REPO_RAW}/docker/${file}" | sudo tee "$file" > /dev/null; then
             log_error "Failed to download: $file"
             exit 1
         fi
@@ -1254,27 +1252,27 @@ download_files() {
     for file in docker-compose*.yml; do
         if [[ -f "$file" ]]; then
             # Fix relative paths
-            sed -i 's|\.\./schema/|./schema/|g' "$file"
-            sed -i 's|\.\./config/|./config/|g' "$file"
+            sudo sed -i 's|\.\./schema/|./schema/|g' "$file"
+            sudo sed -i 's|\.\./config/|./config/|g' "$file"
         fi
     done
 
     log_success "Compose files downloaded"
 
     # --- Schema files ---
-    mkdir -p schema
+    sudo mkdir -p schema
     log_info "Downloading schema/00_baseline.sql..."
-    curl -fsSL "${KG_REPO_RAW}/schema/00_baseline.sql" -o "schema/00_baseline.sql"
+    curl -fsSL "${KG_REPO_RAW}/schema/00_baseline.sql" | sudo tee "schema/00_baseline.sql" > /dev/null
 
     # --- Garage config ---
-    mkdir -p config
+    sudo mkdir -p config
     log_info "Downloading config/garage.toml..."
-    curl -fsSL "${KG_REPO_RAW}/config/garage.toml" -o "config/garage.toml"
+    curl -fsSL "${KG_REPO_RAW}/config/garage.toml" | sudo tee "config/garage.toml" > /dev/null
 
     # --- Operator script ---
     log_info "Downloading operator.sh..."
-    curl -fsSL "${KG_REPO_RAW}/operator.sh" -o "operator.sh"
-    chmod +x operator.sh
+    curl -fsSL "${KG_REPO_RAW}/operator.sh" | sudo tee "operator.sh" > /dev/null
+    sudo chmod +x operator.sh
     log_success "operator.sh installed - use ./operator.sh to manage the platform"
 
     # --- Operator config ---
@@ -1318,8 +1316,8 @@ generate_secrets() {
     internal_key=$(openssl rand -base64 32 | tr -d '/+=' | head -c 32)
     garage_rpc_secret=$(openssl rand -hex 32)
 
-    # Generate .env file
-    cat > .env << EOF
+    # Generate .env file (use sudo tee for writing to root-owned directory)
+    sudo tee .env > /dev/null << EOF
 # Knowledge Graph Platform Configuration
 # Generated by install.sh on $(date -Iseconds)
 #
@@ -1352,8 +1350,8 @@ GARAGE_RPC_SECRET=${garage_rpc_secret}
 EOF
 
     # Secure the .env file (root-only, readable by docker/podman)
-    chown root:root .env
-    chmod 600 .env
+    sudo chown root:root .env
+    sudo chmod 600 .env
 
     SECRETS_GENERATED=true
     log_success "Secrets generated (.env secured: root:root 600)"
@@ -1405,16 +1403,22 @@ setup_selfsigned_ssl() {
     log_info "Generating self-signed SSL certificate for $HOSTNAME"
     log_warning "Self-signed certificates will show browser warnings - click through to continue"
 
-    mkdir -p certs
+    local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
+    sudo mkdir -p "$install_dir/certs"
 
     # Generate certificate with SAN (Subject Alternative Name)
+    # Generate to temp location, then copy with sudo
+    local cert_tmp=$(mktemp -d)
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout certs/server.key -out certs/server.crt \
+        -keyout "$cert_tmp/server.key" -out "$cert_tmp/server.crt" \
         -subj "/CN=$HOSTNAME" \
         -addext "subjectAltName=DNS:$HOSTNAME,IP:${MACVLAN_IP:-127.0.0.1}" \
         2>/dev/null
 
-    chmod 600 certs/server.key
+    sudo cp "$cert_tmp/server.key" "$install_dir/certs/"
+    sudo cp "$cert_tmp/server.crt" "$install_dir/certs/"
+    sudo chmod 600 "$install_dir/certs/server.key"
+    rm -rf "$cert_tmp"
 
     log_success "Self-signed certificate generated (valid for 365 days)"
 
@@ -1429,29 +1433,17 @@ setup_letsencrypt_dns() {
 
     local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
 
-    # Install acme.sh to install directory (avoids sudo/home dir issues)
-    # Using --home puts everything in a known location we control
-    local acme_home="$install_dir/.acme.sh"
+    # Use acme.sh standard location - don't fight its design
+    # When running as root (via sudo), this is /root/.acme.sh
+    local acme_home="$HOME/.acme.sh"
 
     if [[ ! -f "$acme_home/acme.sh" ]]; then
-        log_info "Installing acme.sh to $acme_home..."
-
-        # Download full acme.sh package (includes dnsapi/ plugins)
-        local acme_tmp="$install_dir/.acme-tmp"
-        mkdir -p "$acme_tmp"
-
-        # Get the full tarball which includes dnsapi/ folder
-        curl -fsSL https://github.com/acmesh-official/acme.sh/archive/master.tar.gz -o "$acme_tmp/acme.tar.gz"
-        tar -xzf "$acme_tmp/acme.tar.gz" -C "$acme_tmp" --strip-components=1
-
-        # Install to our custom directory
-        (cd "$acme_tmp" && ./acme.sh --install --home "$acme_home" --accountemail "$SSL_EMAIL" --nocron)
-
-        # Cleanup temp
-        rm -rf "$acme_tmp"
+        log_info "Installing acme.sh..."
+        # Use official installer - handles everything correctly
+        curl -fsSL https://get.acme.sh | sh -s email="$SSL_EMAIL"
     fi
 
-    mkdir -p "$install_dir/certs"
+    sudo mkdir -p "$install_dir/certs"
 
     # Set DNS API credentials based on provider
     case "$SSL_DNS_PROVIDER" in
@@ -1475,36 +1467,31 @@ setup_letsencrypt_dns() {
             ;;
     esac
 
-    # Issue certificate
-    # acme.sh refuses to run under sudo - it checks for SUDO_* env vars
-    # Unset just those specific variables instead of clearing everything
+    # Issue certificate (running as normal user - no sudo issues with acme.sh)
     log_info "Requesting certificate for $HOSTNAME..."
     log_info "This may take 1-2 minutes for DNS propagation"
 
-    # Temporarily unset SUDO vars that acme.sh checks
-    local old_sudo_user="${SUDO_USER:-}"
-    local old_sudo_uid="${SUDO_UID:-}"
-    local old_sudo_gid="${SUDO_GID:-}"
-    local old_sudo_command="${SUDO_COMMAND:-}"
-    unset SUDO_USER SUDO_UID SUDO_GID SUDO_COMMAND
+    # Request cert to temp location (user-writable), then copy to install dir
+    local cert_tmp="$HOME/.acme.sh/certs-tmp"
+    mkdir -p "$cert_tmp"
 
     local cert_success=false
-    if "$acme_home/acme.sh" --home "$acme_home" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
+    if "$acme_home/acme.sh" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
         --keylength 2048 \
-        --cert-file "$install_dir/certs/server.crt" \
-        --key-file "$install_dir/certs/server.key" \
-        --fullchain-file "$install_dir/certs/fullchain.crt"; then
+        --cert-file "$cert_tmp/server.crt" \
+        --key-file "$cert_tmp/server.key" \
+        --fullchain-file "$cert_tmp/fullchain.crt"; then
         cert_success=true
+        # Copy certs to install directory (needs sudo)
+        sudo cp "$cert_tmp/server.crt" "$install_dir/certs/"
+        sudo cp "$cert_tmp/server.key" "$install_dir/certs/"
+        sudo cp "$cert_tmp/fullchain.crt" "$install_dir/certs/"
+        rm -rf "$cert_tmp"
     fi
-
-    # Restore SUDO vars
-    [ -n "$old_sudo_user" ] && export SUDO_USER="$old_sudo_user"
-    [ -n "$old_sudo_uid" ] && export SUDO_UID="$old_sudo_uid"
-    [ -n "$old_sudo_gid" ] && export SUDO_GID="$old_sudo_gid"
-    [ -n "$old_sudo_command" ] && export SUDO_COMMAND="$old_sudo_command"
 
     if [ "$cert_success" = true ]; then
         chmod 600 "$install_dir/certs/server.key"
+        sudo chmod 600 "$install_dir/certs/server.key"
         log_success "Certificate obtained successfully"
     else
         log_error "Failed to obtain certificate"
@@ -1523,7 +1510,7 @@ setup_letsencrypt_dns() {
 
             if [[ "$choice" == "2" ]]; then
                 log_error "Installation aborted"
-                log_info "Fix the issue and re-run: sudo ./install.sh"
+                log_info "Fix the issue and re-run: ./install.sh"
                 log_info "Common issues:"
                 log_info "  - DNS API credentials incorrect"
                 log_info "  - DNS provider not supported"
@@ -1781,7 +1768,7 @@ EOF
 build_compose_command() {
     # Build the docker compose command with appropriate overlays
     local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
-    local cmd="docker compose"
+    local cmd="sudo docker compose"
 
     # Base files (always included)
     cmd+=" -f $install_dir/docker-compose.yml"
@@ -2126,8 +2113,30 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.8${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.9${NC}"
     echo
+
+    # Don't run as root - we'll use sudo when needed
+    if [[ $EUID -eq 0 ]]; then
+        echo -e "${RED}ERROR: Do not run this script with sudo${NC}"
+        echo
+        echo "Run as your normal user:"
+        echo "  ./install.sh"
+        echo
+        echo "The installer will prompt for sudo when needed."
+        exit 1
+    fi
+
+    # Acquire sudo token early (keeps it alive during install)
+    echo -e "${YELLOW}This installer requires sudo for some operations.${NC}"
+    if ! sudo -v; then
+        echo -e "${RED}Failed to acquire sudo privileges${NC}"
+        exit 1
+    fi
+    # Keep sudo alive in background
+    (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+    SUDO_KEEPER_PID=$!
+    trap "kill $SUDO_KEEPER_PID 2>/dev/null" EXIT
 
     # Parse command-line flags
     parse_flags "$@"
@@ -2174,6 +2183,9 @@ main() {
 
     # Show completion message
     show_completion
+
+    # Drop sudo credentials (cleanup)
+    sudo -k
 }
 
 # Run main with all arguments
