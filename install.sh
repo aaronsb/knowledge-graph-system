@@ -3,6 +3,9 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
+# Version: 0.6.0-dev.5
+# Commit:  404d9b1f
+#
 # A single-command installer for the Knowledge Graph platform. Supports both
 # interactive (wizard) and headless (flag-based) installation modes.
 #
@@ -2076,9 +2079,10 @@ show_completion() {
 #
 
 main() {
-    # Display header
+    # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.5 (404d9b1f)${NC}"
     echo
 
     # Parse command-line flags
