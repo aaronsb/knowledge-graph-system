@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.6
+# Version: 0.6.0-dev.7
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1474,33 +1474,32 @@ setup_letsencrypt_dns() {
     esac
 
     # Issue certificate
-    # acme.sh refuses to run under sudo, so we need to drop privileges
-    # Use env -i to clear SUDO_* variables that acme.sh checks
+    # acme.sh refuses to run under sudo - it checks for SUDO_* env vars
+    # Unset just those specific variables instead of clearing everything
     log_info "Requesting certificate for $HOSTNAME..."
     log_info "This may take 1-2 minutes for DNS propagation"
 
-    # Build the acme.sh command
-    local acme_cmd="$acme_home/acme.sh"
-    local acme_args="--home $acme_home --issue --dns $SSL_DNS_PROVIDER -d $HOSTNAME --keylength 2048"
-    acme_args="$acme_args --cert-file $install_dir/certs/server.crt"
-    acme_args="$acme_args --key-file $install_dir/certs/server.key"
-    acme_args="$acme_args --fullchain-file $install_dir/certs/fullchain.crt"
+    # Temporarily unset SUDO vars that acme.sh checks
+    local old_sudo_user="${SUDO_USER:-}"
+    local old_sudo_uid="${SUDO_UID:-}"
+    local old_sudo_gid="${SUDO_GID:-}"
+    local old_sudo_command="${SUDO_COMMAND:-}"
+    unset SUDO_USER SUDO_UID SUDO_GID SUDO_COMMAND
 
-    # Run with clean environment (removes SUDO_* vars that acme.sh checks)
-    # Preserve only the DNS credential env vars we need
     local cert_success=false
-    if env -i \
-        HOME="$install_dir" \
-        PATH="$PATH" \
-        PORKBUN_API_KEY="${PORKBUN_API_KEY:-}" \
-        PORKBUN_SECRET_API_KEY="${PORKBUN_SECRET_API_KEY:-}" \
-        CF_Key="${CF_Key:-}" \
-        CF_Email="${CF_Email:-}" \
-        DO_API_KEY="${DO_API_KEY:-}" \
-        GANDI_LIVEDNS_KEY="${GANDI_LIVEDNS_KEY:-}" \
-        $acme_cmd $acme_args; then
+    if "$acme_home/acme.sh" --home "$acme_home" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
+        --keylength 2048 \
+        --cert-file "$install_dir/certs/server.crt" \
+        --key-file "$install_dir/certs/server.key" \
+        --fullchain-file "$install_dir/certs/fullchain.crt"; then
         cert_success=true
     fi
+
+    # Restore SUDO vars
+    [ -n "$old_sudo_user" ] && export SUDO_USER="$old_sudo_user"
+    [ -n "$old_sudo_uid" ] && export SUDO_UID="$old_sudo_uid"
+    [ -n "$old_sudo_gid" ] && export SUDO_GID="$old_sudo_gid"
+    [ -n "$old_sudo_command" ] && export SUDO_COMMAND="$old_sudo_command"
 
     if [ "$cert_success" = true ]; then
         chmod 600 "$install_dir/certs/server.key"
@@ -2102,7 +2101,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.6${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.7${NC}"
     echo
 
     # Parse command-line flags
