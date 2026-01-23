@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.15
+# Version: 0.6.0-dev.16
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1752,7 +1752,8 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name _;
 
     ssl_certificate /etc/nginx/certs/server.crt;
@@ -1771,11 +1772,10 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    # Frontend
+    # Frontend (static files)
     location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
     }
 }
 EOF
@@ -2197,7 +2197,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.15${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.16${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
