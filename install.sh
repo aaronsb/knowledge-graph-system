@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.14
+# Version: 0.6.0-dev.15
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1938,9 +1938,9 @@ start_containers() {
     log_info "Starting operator..."
     $compose_cmd up -d operator
 
-    # Run database migrations
+    # Run database migrations (auto-confirm for fresh install)
     log_info "Running database migrations..."
-    $compose_cmd exec -T operator /workspace/operator/database/migrate-db.sh
+    $compose_cmd exec -T operator /workspace/operator/database/migrate-db.sh -y
     log_success "Migrations complete"
 
     # Start application containers
@@ -2197,7 +2197,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.14${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.15${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
