@@ -3,8 +3,8 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.5
-# Commit:  404d9b1f
+# Version: 0.6.0-dev.6
+# Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
 # interactive (wizard) and headless (flag-based) installation modes.
@@ -1474,15 +1474,35 @@ setup_letsencrypt_dns() {
     esac
 
     # Issue certificate
+    # acme.sh refuses to run under sudo, so we need to drop privileges
+    # Use env -i to clear SUDO_* variables that acme.sh checks
     log_info "Requesting certificate for $HOSTNAME..."
     log_info "This may take 1-2 minutes for DNS propagation"
 
-    if "$acme_home/acme.sh" --home "$acme_home" --issue --dns "$SSL_DNS_PROVIDER" -d "$HOSTNAME" \
-        --keylength 2048 \
-        --cert-file "$install_dir/certs/server.crt" \
-        --key-file "$install_dir/certs/server.key" \
-        --fullchain-file "$install_dir/certs/fullchain.crt"; then
+    # Build the acme.sh command
+    local acme_cmd="$acme_home/acme.sh"
+    local acme_args="--home $acme_home --issue --dns $SSL_DNS_PROVIDER -d $HOSTNAME --keylength 2048"
+    acme_args="$acme_args --cert-file $install_dir/certs/server.crt"
+    acme_args="$acme_args --key-file $install_dir/certs/server.key"
+    acme_args="$acme_args --fullchain-file $install_dir/certs/fullchain.crt"
 
+    # Run with clean environment (removes SUDO_* vars that acme.sh checks)
+    # Preserve only the DNS credential env vars we need
+    local cert_success=false
+    if env -i \
+        HOME="$install_dir" \
+        PATH="$PATH" \
+        PORKBUN_API_KEY="${PORKBUN_API_KEY:-}" \
+        PORKBUN_SECRET_API_KEY="${PORKBUN_SECRET_API_KEY:-}" \
+        CF_Key="${CF_Key:-}" \
+        CF_Email="${CF_Email:-}" \
+        DO_API_KEY="${DO_API_KEY:-}" \
+        GANDI_LIVEDNS_KEY="${GANDI_LIVEDNS_KEY:-}" \
+        $acme_cmd $acme_args; then
+        cert_success=true
+    fi
+
+    if [ "$cert_success" = true ]; then
         chmod 600 "$install_dir/certs/server.key"
         log_success "Certificate obtained successfully"
     else
@@ -2082,7 +2102,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.5 (404d9b1f)${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.6${NC}"
     echo
 
     # Parse command-line flags
