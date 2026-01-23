@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.7
+# Version: 0.6.0-dev.8
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1436,13 +1436,15 @@ setup_letsencrypt_dns() {
     if [[ ! -f "$acme_home/acme.sh" ]]; then
         log_info "Installing acme.sh to $acme_home..."
 
-        # Download acme.sh to a temp directory (it expects to find itself as 'acme.sh')
+        # Download full acme.sh package (includes dnsapi/ plugins)
         local acme_tmp="$install_dir/.acme-tmp"
         mkdir -p "$acme_tmp"
-        curl -fsSL https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh -o "$acme_tmp/acme.sh"
-        chmod +x "$acme_tmp/acme.sh"
 
-        # Install to our custom directory (run from temp dir so it can find itself)
+        # Get the full tarball which includes dnsapi/ folder
+        curl -fsSL https://github.com/acmesh-official/acme.sh/archive/master.tar.gz -o "$acme_tmp/acme.tar.gz"
+        tar -xzf "$acme_tmp/acme.tar.gz" -C "$acme_tmp" --strip-components=1
+
+        # Install to our custom directory
         (cd "$acme_tmp" && ./acme.sh --install --home "$acme_home" --accountemail "$SSL_EMAIL" --nocron)
 
         # Cleanup temp
@@ -1507,6 +1509,29 @@ setup_letsencrypt_dns() {
     else
         log_error "Failed to obtain certificate"
         log_info "Check $acme_home/acme.sh.log for details"
+        echo
+
+        # Interactive mode: give user a choice
+        if [[ "$INTERACTIVE" == "true" ]]; then
+            echo -e "${YELLOW}Certificate generation failed. Options:${NC}"
+            echo "  1) Use self-signed certificate (browser warnings)"
+            echo "  2) Abort installation and fix the issue"
+            echo
+            local choice
+            read -p "Choice [1]: " choice </dev/tty
+            choice="${choice:-1}"
+
+            if [[ "$choice" == "2" ]]; then
+                log_error "Installation aborted"
+                log_info "Fix the issue and re-run: sudo ./install.sh"
+                log_info "Common issues:"
+                log_info "  - DNS API credentials incorrect"
+                log_info "  - DNS provider not supported"
+                log_info "  - Rate limited (try again later)"
+                exit 1
+            fi
+        fi
+
         log_info "Falling back to self-signed certificate"
         setup_selfsigned_ssl
         return
@@ -2101,7 +2126,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.7${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.8${NC}"
     echo
 
     # Parse command-line flags
