@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.17
+# Version: 0.6.0-dev.18
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -2016,7 +2016,7 @@ configure_platform() {
     else
         redirect_url="https://${HOSTNAME}/callback"
     fi
-    if $compose_cmd exec -T operator python /workspace/operator/configure.py oauth --redirect-uri "$redirect_url" 2>&1 | grep -qi "updated\|configured"; then
+    if $compose_cmd exec -T operator python /workspace/operator/configure.py oauth kg-web --redirect-uri "$redirect_url" 2>&1 | grep -qi "updated\|configured"; then
         log_success "OAuth configured for $redirect_url"
     else
         log_warning "Could not update OAuth redirect URIs"
@@ -2200,7 +2200,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.17${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.18${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
