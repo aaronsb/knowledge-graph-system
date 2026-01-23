@@ -1432,17 +1432,18 @@ setup_letsencrypt_dns() {
 
     if [[ ! -f "$acme_home/acme.sh" ]]; then
         log_info "Installing acme.sh to $acme_home..."
-        mkdir -p "$acme_home"
 
-        # Download and install acme.sh to custom home
-        # The piped installer doesn't support --home, so we download and run directly
-        local acme_installer="$install_dir/acme-install.sh"
-        curl -fsSL https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh -o "$acme_installer"
-        chmod +x "$acme_installer"
+        # Download acme.sh to a temp directory (it expects to find itself as 'acme.sh')
+        local acme_tmp="$install_dir/.acme-tmp"
+        mkdir -p "$acme_tmp"
+        curl -fsSL https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh -o "$acme_tmp/acme.sh"
+        chmod +x "$acme_tmp/acme.sh"
 
-        # Install to our custom directory
-        "$acme_installer" --install --home "$acme_home" --accountemail "$SSL_EMAIL" --nocron
-        rm -f "$acme_installer"
+        # Install to our custom directory (run from temp dir so it can find itself)
+        (cd "$acme_tmp" && ./acme.sh --install --home "$acme_home" --accountemail "$SSL_EMAIL" --nocron)
+
+        # Cleanup temp
+        rm -rf "$acme_tmp"
     fi
 
     mkdir -p "$install_dir/certs"
