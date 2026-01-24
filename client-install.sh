@@ -86,8 +86,19 @@ DETECTED_DESKTOP=""                 # kde, gnome, macos, unknown
 DETECTED_KG_VERSION=""              # Existing kg CLI version or empty
 DETECTED_FUSE_VERSION=""            # Existing kg-fuse version or empty
 
-# --- Repository URLs ---
+# --- Package Names ---
+# These are the package identifiers used for installation.
+# Change these if you fork the project or use a private registry.
+NPM_PACKAGE="@aaronsb/kg-cli"           # npm package name for kg CLI
+PYPI_PACKAGE="kg-fuse"                  # PyPI package name for FUSE driver
+
+# --- External URLs ---
+# URLs for downloading dependencies and documentation.
+# Change these if you need to use mirrors or internal repositories.
 KG_REPO_RAW="https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main"
+NODESOURCE_SETUP_URL="https://deb.nodesource.com/setup_lts.x"
+NODEJS_DOWNLOAD_URL="https://nodejs.org/"
+MACFUSE_DOWNLOAD_URL="https://osxfuse.github.io"
 
 
 # ============================================================================
@@ -437,7 +448,7 @@ detect_existing_install() {
     # Check kg-fuse
     if command -v kg-fuse &>/dev/null; then
         # Try to get version from pipx or just mark as installed
-        DETECTED_FUSE_VERSION=$(pipx list 2>/dev/null | grep -oP 'kg-fuse \K[0-9.]+' || echo "installed")
+        DETECTED_FUSE_VERSION=$(pipx list 2>/dev/null | grep -oP "${PYPI_PACKAGE} \\K[0-9.]+" || echo "installed")
     else
         DETECTED_FUSE_VERSION=""
     fi
@@ -609,7 +620,7 @@ install_node() {
             # Ubuntu/Debian: Use NodeSource for recent versions
             # nodejs package from default repos is often outdated
             log_info "Setting up NodeSource repository for recent Node.js..."
-            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            curl -fsSL "$NODESOURCE_SETUP_URL" | sudo -E bash -
             sudo apt-get install -y nodejs
             ;;
         dnf)
@@ -622,7 +633,7 @@ install_node() {
             ;;
         *)
             log_error "No supported package manager found"
-            log_info "Please install Node.js 18+ manually: https://nodejs.org/"
+            log_info "Please install Node.js 18+ manually: $NODEJS_DOWNLOAD_URL"
             return 1
             ;;
     esac
@@ -700,7 +711,7 @@ install_fuse_system_package() {
             else
                 log_error "macFUSE requires Homebrew or manual installation"
                 log_info "Install Homebrew: https://brew.sh"
-                log_info "Or install macFUSE: https://osxfuse.github.io"
+                log_info "Or install macFUSE: $MACFUSE_DOWNLOAD_URL"
                 return 1
             fi
             ;;
@@ -728,7 +739,7 @@ install_cli() {
     mkdir -p "$npm_prefix/lib" "$npm_prefix/bin"
 
     # Install the package globally with user prefix
-    if npm install --prefix "$npm_prefix" -g @aaronsb/kg-cli; then
+    if npm install --prefix "$npm_prefix" -g "$NPM_PACKAGE"; then
         log_success "kg CLI installed"
 
         # Ensure ~/.local/bin is in PATH (for current session)
@@ -751,7 +762,7 @@ upgrade_cli() {
 
     local npm_prefix="$HOME/.local"
 
-    if npm install --prefix "$npm_prefix" -g @aaronsb/kg-cli@latest; then
+    if npm install --prefix "$npm_prefix" -g "${NPM_PACKAGE}@latest"; then
         local version
         version=$(kg --version 2>/dev/null || echo "unknown")
         log_success "kg CLI upgraded to v$version"
@@ -768,7 +779,7 @@ uninstall_cli() {
 
     local npm_prefix="$HOME/.local"
 
-    if npm uninstall --prefix "$npm_prefix" -g @aaronsb/kg-cli; then
+    if npm uninstall --prefix "$npm_prefix" -g "$NPM_PACKAGE"; then
         log_success "kg CLI uninstalled"
         return 0
     else
@@ -782,7 +793,7 @@ install_fuse() {
     # pipx creates an isolated environment for the package
     log_info "Installing kg-fuse..."
 
-    if pipx install kg-fuse; then
+    if pipx install "$PYPI_PACKAGE"; then
         log_success "kg-fuse installed"
         return 0
     else
@@ -795,7 +806,7 @@ upgrade_fuse() {
     # Upgrade kg-fuse to latest version
     log_info "Upgrading kg-fuse..."
 
-    if pipx upgrade kg-fuse; then
+    if pipx upgrade "$PYPI_PACKAGE"; then
         log_success "kg-fuse upgraded"
         return 0
     else
@@ -808,7 +819,7 @@ uninstall_fuse() {
     # Uninstall kg-fuse
     log_info "Uninstalling kg-fuse..."
 
-    if pipx uninstall kg-fuse; then
+    if pipx uninstall "$PYPI_PACKAGE"; then
         log_success "kg-fuse uninstalled"
         return 0
     else
@@ -1362,7 +1373,7 @@ show_summary() {
 
     if [[ "$INSTALL_FUSE" == "true" ]]; then
         echo -e "  ${BOLD}FUSE Driver${NC}" >&2
-        echo -e "    Version: $(pipx list 2>/dev/null | grep -oP 'kg-fuse \K[0-9.]+' || echo 'unknown')" >&2
+        echo -e "    Version: $(pipx list 2>/dev/null | grep -oP "${PYPI_PACKAGE} \\K[0-9.]+" || echo 'unknown')" >&2
         echo -e "    Mount: kg-fuse ${FUSE_MOUNT_DIR:-~/Knowledge}" >&2
         if [[ "$FUSE_AUTOSTART" == "true" ]]; then
             echo -e "    Autostart: enabled" >&2
