@@ -130,7 +130,7 @@ CONFIG_FILE="$CONFIG_DIR/client-install.conf"
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  1. Install CLI                                                 │
+│  1. Install CLI (always)                                        │
 │     npm install -g @aaronsb/kg-cli --prefix ~/.local            │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
@@ -149,21 +149,44 @@ CONFIG_FILE="$CONFIG_DIR/client-install.conf"
 │     → Confirms credentials work, platform is reachable          │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-┌──────────────────────┐  ┌──────────────────────┐
-│  4a. MCP Setup       │  │  4b. FUSE Setup      │
-│  (config file only)  │  │  pipx install kg-fuse│
-│  print JSON snippet  │  │  kg oauth create     │
-│                      │  │    --for fuse        │
-└──────────────────────┘  └──────────────────────┘
-                                   │
-                                   ▼
-                          ┌──────────────────────┐
-                          │  4c. FUSE Autostart  │
-                          │  Linux: .desktop     │
-                          │  macOS: launchd      │
-                          └──────────────────────┘
+          ┌───────────┼───────────┐
+          ▼           │           ▼
+┌──────────────────┐  │  ┌──────────────────────┐
+│  IF MCP selected │  │  │  IF FUSE selected    │
+│  ────────────────│  │  │  ────────────────────│
+│  kg oauth        │  │  │  install fuse3       │
+│    create-mcp    │  │  │  pipx install kg-fuse│
+│  print config    │  │  │  kg oauth create     │
+│    snippet       │  │  │    --for fuse        │
+└──────────────────┘  │  └──────────┬───────────┘
+                      │             │
+                      │             ▼
+                      │    ┌──────────────────────┐
+                      │    │  IF autostart wanted │
+                      │    │  ────────────────────│
+                      │    │  Linux: .desktop     │
+                      │    │  macOS: launchd      │
+                      │    └──────────────────────┘
+                      │
+                      ▼
+              ┌───────────────┐
+              │  Show Summary │
+              └───────────────┘
+```
+
+**Branching Logic:**
+- CLI is always installed (required for everything else)
+- MCP OAuth only created if user selects MCP
+- FUSE package + OAuth only installed if user selects FUSE
+- FUSE autostart only configured if user wants it AND selected FUSE
+
+**OAuth Commands:**
+```bash
+# For MCP server (creates OAuth client for AI assistants)
+kg oauth create-mcp
+
+# For FUSE driver (creates OAuth client for filesystem)
+kg oauth create --for fuse
 ```
 
 ---
@@ -420,16 +443,114 @@ Load with: `launchctl load ~/Library/LaunchAgents/com.kg.fuse.plist`
 
 ---
 
+## Code Style & Clarity
+
+The script should be **inspectable and understandable** by users who want to verify what it does before running.
+
+**Principles:**
+- Clear section headers with `# ====` separators
+- Inline comments explaining "why" not just "what"
+- Each function has a docstring-style comment
+- Branching logic is explicit with comments
+- No obscure shell tricks - prefer readability
+
+**Example:**
+```bash
+# ============================================================================
+# INSTALL FUSE DRIVER
+# ============================================================================
+# Only runs if user selected FUSE. Installs the Python package and creates
+# a dedicated OAuth client for filesystem access.
+
+install_fuse() {
+    # Skip if user didn't want FUSE
+    if [ "$INSTALL_FUSE" != "true" ]; then
+        log_info "Skipping FUSE installation (not selected)"
+        return 0
+    fi
+
+    log_step "Installing FUSE driver"
+
+    # Install system FUSE library (requires sudo)
+    # This provides the kernel interface for userspace filesystems
+    install_fuse_system_package
+
+    # Install kg-fuse from PyPI via pipx
+    # pipx isolates Python dependencies in its own virtualenv
+    log_info "Installing kg-fuse..."
+    if ! pipx install kg-fuse; then
+        log_error "Failed to install kg-fuse"
+        return 1
+    fi
+
+    # Create OAuth client specifically for FUSE
+    # This is separate from the CLI credentials for security isolation
+    log_info "Creating FUSE OAuth client..."
+    if ! kg oauth create --for fuse; then
+        log_error "Failed to create FUSE OAuth client"
+        return 1
+    fi
+
+    log_success "FUSE driver installed"
+}
+```
+
+---
+
 ## Implementation Tasks
 
-- [ ] Create `client-install.sh` skeleton with sections
-- [ ] Port utility functions from `install.sh`
-- [ ] Implement detection functions (Linux + macOS)
-- [ ] Implement installation functions
-- [ ] Implement verification functions
-- [ ] Add flag parsing
-- [ ] Add interactive prompts
-- [ ] Test on Arch Linux (KDE)
-- [ ] Test on Ubuntu
-- [ ] Test on macOS
-- [ ] Update documentation
+### Phase 1: Script Skeleton
+- [ ] Create `client-install.sh` with section structure
+- [ ] Add version and header comments
+- [ ] Port logging functions from `install.sh`
+- [ ] Port prompt functions from `install.sh`
+- [ ] Add config save/load functions
+
+### Phase 2: Detection
+- [ ] `detect_os()` - linux-arch, linux-ubuntu, linux-fedora, macos
+- [ ] `detect_package_manager()` - pacman, apt, dnf, brew
+- [ ] `detect_node()` - version check, PATH check
+- [ ] `detect_python()` - version check (3.11+)
+- [ ] `detect_pipx()` - installed check
+- [ ] `detect_existing_install()` - kg version, kg-fuse version
+- [ ] `detect_desktop_environment()` - KDE, GNOME, macOS
+
+### Phase 3: Installation Functions
+- [ ] `install_node()` - via package manager
+- [ ] `install_pipx()` - via package manager
+- [ ] `install_fuse_system_package()` - fuse3/macfuse
+- [ ] `install_cli()` - npm install to ~/.local
+- [ ] `install_fuse()` - pipx install kg-fuse
+
+### Phase 4: Configuration Functions
+- [ ] `configure_api_url()` - kg config set
+- [ ] `authenticate()` - kg login with credentials
+- [ ] `create_mcp_oauth()` - kg oauth create-mcp
+- [ ] `create_fuse_oauth()` - kg oauth create --for fuse
+- [ ] `configure_fuse_autostart()` - .desktop or launchd
+
+### Phase 5: Verification Functions
+- [ ] `verify_api_reachable()` - curl health endpoint
+- [ ] `verify_cli_installed()` - kg --version
+- [ ] `verify_logged_in()` - kg health
+- [ ] `verify_fuse_installed()` - kg-fuse --help
+
+### Phase 6: Main Flow
+- [ ] Flag parsing (--api-url, --username, etc.)
+- [ ] Mode detection (install/upgrade/uninstall/status)
+- [ ] Interactive prompts with three-tier defaults
+- [ ] Branching logic for component selection
+- [ ] Summary display
+- [ ] Config save prompt
+
+### Phase 7: Testing
+- [ ] Test fresh install on Arch Linux
+- [ ] Test upgrade on Arch Linux
+- [ ] Test uninstall on Arch Linux
+- [ ] Test on Ubuntu (VM or container)
+- [ ] Test on macOS (if available)
+
+### Phase 8: Documentation
+- [ ] Update docs/operating/ with client install guide
+- [ ] Add to main README
+- [ ] Update FUSE guide with new install method
