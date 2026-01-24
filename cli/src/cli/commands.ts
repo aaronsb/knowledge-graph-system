@@ -3,6 +3,7 @@
  */
 
 import { Command } from 'commander';
+import pkg from '../../package.json';
 import cfonts from 'cfonts';
 import * as colors from './colors';
 import { configureColoredHelp } from './help-formatter';
@@ -83,7 +84,7 @@ export async function registerCommands(program: Command) {
   program
     .name('kg')
     .description('Knowledge Graph CLI - interact with the knowledge graph API')
-    .version('0.1.0')
+    .version(pkg.version)
     .showHelpAfterError('(add --help for additional information)')
     .showSuggestionAfterError();
 

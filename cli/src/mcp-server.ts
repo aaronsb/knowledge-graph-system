@@ -48,6 +48,7 @@ import {
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import pkg from '../package.json';
 
 /**
  * Default parameters for graph queries (ADR-048 Query Safety)
@@ -66,7 +67,7 @@ const DEFAULT_MAX_DEPTH = 2;             // Related concepts neighborhood depth
 const server = new Server(
   {
     name: 'knowledge-graph-server',
-    version: '0.1.0',
+    version: pkg.version,
   },
   {
     capabilities: {
