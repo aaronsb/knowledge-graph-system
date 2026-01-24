@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --use-system-ca
 /**
  * Knowledge Graph CLI - Entry Point
  *

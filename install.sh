@@ -2,7 +2,7 @@
 # ============================================================================
 # Knowledge Graph Platform Installer
 # ============================================================================
-INSTALLER_VERSION="0.6.0-dev.27"
+INSTALLER_VERSION="0.6.0-dev.28"
 # ============================================================================
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -2182,7 +2182,7 @@ server {
     http2 on;
     server_name _;
 
-    ssl_certificate /etc/nginx/certs/server.crt;
+    ssl_certificate /etc/nginx/certs/fullchain.crt;
     ssl_certificate_key /etc/nginx/certs/server.key;
 
     ssl_protocols TLSv1.2 TLSv1.3;
