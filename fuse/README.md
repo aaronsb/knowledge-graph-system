@@ -107,5 +107,6 @@ The FUSE driver is an independent client that:
 - Authenticates via OAuth (like CLI, MCP server)
 - Makes HTTP requests to the API server
 - Caches directory listings (30s TTL)
+- Defaults to `localhost:8000` if unconfigured (fail-safe: won't accidentally query external endpoints)
 
 See ADR-069 for full design rationale.
