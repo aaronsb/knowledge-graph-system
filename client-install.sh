@@ -23,8 +23,8 @@ CLIENT_INSTALLER_VERSION="0.1.0"
 #
 # USAGE:
 # ------
-#   Interactive:  curl -fsSL .../client-install.sh | bash
-#   Headless:     curl -fsSL .../client-install.sh | bash -s -- --api-url X ...
+#   Interactive:  curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+#   Headless:     curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash -s -- --api-url X ...
 #   Upgrade:      ./client-install.sh --upgrade
 #   Uninstall:    ./client-install.sh --uninstall
 #   Status:       ./client-install.sh --status
@@ -1042,7 +1042,7 @@ OPTIONS:
 
 EXAMPLES:
     # Interactive installation
-    curl -fsSL .../client-install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
 
     # Headless installation
     ./client-install.sh --api-url https://kg.example.com/api \
