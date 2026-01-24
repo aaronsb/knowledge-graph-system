@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.20
+# Version: 0.6.0-dev.21
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -75,6 +75,7 @@ SSL_KEY_PATH=""                     # Path to existing private key (manual mode)
 SSL_DNS_PROVIDER=""                 # acme.sh DNS provider (e.g., dns_porkbun, dns_cloudflare)
 SSL_DNS_KEY=""                      # DNS provider API key
 SSL_DNS_SECRET=""                   # DNS provider API secret (if required)
+SSL_USE_EXISTING_CERT=false         # Reuse existing acme.sh certificate
 
 # --- Macvlan Networking (dedicated LAN IP) ---
 MACVLAN_ENABLED=false               # Use macvlan networking
@@ -374,6 +375,64 @@ is_private_ip() {
     [[ "$host" =~ ^172\.(1[6-9]|2[0-9]|3[01])\. ]] || \
     [[ "$host" =~ \.local$ ]] || \
     [[ "$host" =~ \.internal$ ]]
+}
+
+# --- Certificate Checking ---
+
+check_existing_acme_cert() {
+    # Check for existing acme.sh certificate for a domain
+    # Returns 0 if valid cert exists, 1 otherwise
+    # Usage: if check_existing_acme_cert "example.com"; then ...
+    local domain="$1"
+    local acme_home="${ACME_HOME:-$HOME/.acme.sh}"
+    local cert_dir="$acme_home/$domain"
+    local cert_file="$cert_dir/$domain.cer"
+
+    # Check if cert exists
+    if [[ ! -f "$cert_file" ]]; then
+        return 1
+    fi
+
+    # Check if cert is valid (not expired)
+    local expiry_epoch
+    expiry_epoch=$(openssl x509 -in "$cert_file" -noout -enddate 2>/dev/null | cut -d= -f2)
+    if [[ -z "$expiry_epoch" ]]; then
+        return 1
+    fi
+
+    local expiry_ts
+    expiry_ts=$(date -d "$expiry_epoch" +%s 2>/dev/null)
+    local now_ts
+    now_ts=$(date +%s)
+
+    # Check if cert expires in more than 7 days
+    local min_remaining=$((7 * 24 * 60 * 60))
+    if [[ $((expiry_ts - now_ts)) -lt $min_remaining ]]; then
+        return 1
+    fi
+
+    return 0
+}
+
+show_cert_info() {
+    # Display certificate info for user
+    # Usage: show_cert_info "example.com"
+    local domain="$1"
+    local acme_home="${ACME_HOME:-$HOME/.acme.sh}"
+    local cert_file="$acme_home/$domain/$domain.cer"
+
+    if [[ ! -f "$cert_file" ]]; then
+        return 1
+    fi
+
+    local subject issuer expiry
+    subject=$(openssl x509 -in "$cert_file" -noout -subject 2>/dev/null | sed 's/subject=//')
+    issuer=$(openssl x509 -in "$cert_file" -noout -issuer 2>/dev/null | sed 's/issuer=//' | sed 's/.*O = //' | cut -d',' -f1)
+    expiry=$(openssl x509 -in "$cert_file" -noout -enddate 2>/dev/null | cut -d= -f2)
+
+    echo -e "  ${BOLD}Domain:${NC}  $domain"
+    echo -e "  ${BOLD}Issuer:${NC}  $issuer"
+    echo -e "  ${BOLD}Expires:${NC} $expiry"
 }
 
 
@@ -796,6 +855,26 @@ step_ssl() {
             fi
 
             if [[ "$need_dns" == "true" ]]; then
+                # Check for existing valid certificate first
+                if check_existing_acme_cert "$HOSTNAME"; then
+                    echo
+                    log_success "Found existing valid certificate:"
+                    show_cert_info "$HOSTNAME"
+                    echo
+
+                    local reuse_choice
+                    reuse_choice=$(prompt_select "Use existing certificate?" \
+                        "yes (recommended)" \
+                        "no (request new certificate)")
+
+                    if [[ "$reuse_choice" == yes* ]]; then
+                        SSL_USE_EXISTING_CERT=true
+                        log_info "Will use existing certificate"
+                        return
+                    fi
+                fi
+
+                # Need to request new cert - get DNS provider info
                 echo
                 echo "DNS-01 challenge requires API access to your DNS provider."
                 echo "Supported providers: https://github.com/acmesh-official/acme.sh/wiki/dnsapi"
@@ -1498,21 +1577,41 @@ setup_selfsigned_ssl() {
 setup_letsencrypt_dns() {
     # Set up Let's Encrypt using DNS-01 challenge via acme.sh
     log_info "Setting up Let's Encrypt with DNS-01 challenge"
-    log_info "DNS provider: $SSL_DNS_PROVIDER"
 
     local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
-
-    # Use acme.sh standard location - don't fight its design
-    # When running as root (via sudo), this is /root/.acme.sh
     local acme_home="$HOME/.acme.sh"
+
+    as_root mkdir -p "$install_dir/certs"
+
+    # If user chose to reuse existing cert, just copy it
+    if [[ "$SSL_USE_EXISTING_CERT" == "true" ]]; then
+        log_info "Using existing certificate from $acme_home/$HOSTNAME/"
+        local existing_cert_dir="$acme_home/$HOSTNAME"
+
+        if [[ -f "$existing_cert_dir/$HOSTNAME.cer" && -f "$existing_cert_dir/$HOSTNAME.key" ]]; then
+            sudo_ensure
+            as_root cp "$existing_cert_dir/$HOSTNAME.cer" "$install_dir/certs/server.crt"
+            as_root cp "$existing_cert_dir/$HOSTNAME.key" "$install_dir/certs/server.key"
+            as_root cp "$existing_cert_dir/fullchain.cer" "$install_dir/certs/fullchain.crt"
+            as_root chmod 600 "$install_dir/certs/server.key"
+
+            log_success "Existing certificate installed"
+            generate_nginx_ssl_config
+            generate_ssl_compose_overlay
+            return
+        else
+            log_warning "Expected cert files not found, will request new certificate"
+            SSL_USE_EXISTING_CERT=false
+        fi
+    fi
+
+    log_info "DNS provider: $SSL_DNS_PROVIDER"
 
     if [[ ! -f "$acme_home/acme.sh" ]]; then
         log_info "Installing acme.sh..."
         # Use official installer - handles everything correctly
         curl -fsSL https://get.acme.sh | sh -s email="$SSL_EMAIL"
     fi
-
-    as_root mkdir -p "$install_dir/certs"
 
     # Set DNS API credentials based on provider
     case "$SSL_DNS_PROVIDER" in
@@ -2207,7 +2306,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.20${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.21${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
