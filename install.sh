@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.23
+# Version: 0.6.0-dev.24
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -327,6 +327,40 @@ prompt_bool() {
     response="${response:-$default}"
 
     [[ "$response" =~ ^[Yy] ]]
+}
+
+prompt_with_fallback() {
+    # Three-tier prompt: previous config → auto-detect → custom entry
+    # Usage: result=$(prompt_with_fallback "Prompt text" "$PREVIOUS_VAR" "$auto_detected")
+    #
+    # Behavior:
+    #   - If previous exists: shows "Previous: value" and uses it as default
+    #   - If no previous: uses auto-detected as default
+    #   - User presses Enter to accept shown default, or types to override
+    local prompt="$1"
+    local previous="$2"
+    local detected="$3"
+
+    local default=""
+    local hint=""
+
+    if [[ -n "$previous" ]]; then
+        default="$previous"
+        hint="${GRAY}(previous)${NC}"
+    elif [[ -n "$detected" ]]; then
+        default="$detected"
+        hint="${GRAY}(detected)${NC}"
+    fi
+
+    if [[ -n "$default" ]]; then
+        echo -ne "${CYAN}?${NC} ${prompt} ${hint}\n   [${default}]: " >&2
+    else
+        echo -ne "${CYAN}?${NC} ${prompt}: " >&2
+    fi
+
+    local value
+    read -r value </dev/tty
+    echo "${value:-$default}"
 }
 
 # --- Validation Helpers ---
@@ -954,7 +988,8 @@ step_install_dir() {
     echo -e "${BOLD}=== Installation Location ===${NC}"
     echo
 
-    INSTALL_DIR=$(prompt_value "Installation directory" "$KG_INSTALL_DIR")
+    local previous_dir="$INSTALL_DIR"
+    INSTALL_DIR=$(prompt_with_fallback "Installation directory" "$previous_dir" "$KG_INSTALL_DIR")
 }
 
 step_hostname() {
@@ -963,11 +998,13 @@ step_hostname() {
     echo -e "${BOLD}=== Basic Configuration ===${NC}"
     echo
 
-    local default_host
-    default_host=$(detect_default_ip)
-    [[ -z "$default_host" ]] && default_host="localhost"
+    local detected_host
+    detected_host=$(detect_default_ip)
+    [[ -z "$detected_host" ]] && detected_host="localhost"
 
-    HOSTNAME=$(prompt_value "Hostname or IP for web access" "$default_host")
+    # Previous from config, or auto-detect
+    local previous_hostname="$HOSTNAME"
+    HOSTNAME=$(prompt_with_fallback "Hostname or IP for web access" "$previous_hostname" "$detected_host")
 }
 
 step_network() {
@@ -1018,12 +1055,12 @@ step_network() {
         if [[ "$MACVLAN_CREATE" == "true" ]]; then
             echo
             echo "Configure the macvlan network:"
-            local default_iface
-            default_iface=$(detect_default_interface)
+            local detected_iface
+            detected_iface=$(detect_default_interface)
 
-            MACVLAN_PARENT=$(prompt_value "Parent network interface" "$default_iface")
-            MACVLAN_SUBNET=$(prompt_value "Network subnet (CIDR)" "192.168.1.0/24")
-            MACVLAN_GATEWAY=$(prompt_value "Gateway IP" "192.168.1.1")
+            MACVLAN_PARENT=$(prompt_with_fallback "Parent network interface" "$MACVLAN_PARENT" "$detected_iface")
+            MACVLAN_SUBNET=$(prompt_with_fallback "Network subnet (CIDR)" "$MACVLAN_SUBNET" "192.168.1.0/24")
+            MACVLAN_GATEWAY=$(prompt_with_fallback "Gateway IP" "$MACVLAN_GATEWAY" "192.168.1.1")
         fi
 
         # Static IP (recommended) or DHCP
@@ -1031,7 +1068,7 @@ step_network() {
         echo "A static IP is recommended. DHCP reservations don't work reliably"
         echo "because Docker generates random MAC addresses for secondary networks."
         echo
-        MACVLAN_IP=$(prompt_value "Static IP for container (or leave empty for DHCP)" "")
+        MACVLAN_IP=$(prompt_with_fallback "Static IP for container (or empty for DHCP)" "$MACVLAN_IP" "")
 
         if [[ -z "$MACVLAN_IP" ]]; then
             log_warning "Using DHCP - container IP may change on restart"
@@ -1065,7 +1102,7 @@ step_ssl() {
     case "$SSL_MODE" in
         letsencrypt)
             echo
-            SSL_EMAIL=$(prompt_value "Email for Let's Encrypt registration" "")
+            SSL_EMAIL=$(prompt_with_fallback "Email for Let's Encrypt registration" "$SSL_EMAIL" "")
 
             if [[ -z "$SSL_EMAIL" ]]; then
                 log_warning "Email required for Let's Encrypt"
@@ -1132,13 +1169,14 @@ step_ssl() {
                     "other (enter manually)")
 
                 if [[ "$dns_choice" == "other"* ]]; then
-                    SSL_DNS_PROVIDER=$(prompt_value "DNS provider name (e.g., dns_route53)" "")
+                    SSL_DNS_PROVIDER=$(prompt_with_fallback "DNS provider name (e.g., dns_route53)" "$SSL_DNS_PROVIDER" "")
                 else
                     SSL_DNS_PROVIDER="$dns_choice"
                 fi
 
                 if [[ -n "$SSL_DNS_PROVIDER" ]]; then
                     echo
+                    # Note: API keys are not saved to config for security
                     SSL_DNS_KEY=$(prompt_value "DNS API key" "")
                     SSL_DNS_SECRET=$(prompt_value "DNS API secret (if required, or Enter to skip)" "")
                 fi
@@ -1232,8 +1270,8 @@ step_ai() {
                 echo
             fi
 
-            # Step 5: Select model
-            AI_MODEL=$(prompt_value "Model name" "gpt-4o")
+            # Step 5: Select model (previous from config, or default)
+            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "gpt-4o")
             log_success "OpenAI configured with model: $AI_MODEL"
             ;;
 
@@ -1256,13 +1294,13 @@ step_ai() {
             echo "  - claude-3-haiku-20240307 (faster, cheaper)"
             echo
 
-            AI_MODEL=$(prompt_value "Model name" "claude-sonnet-4-20250514")
+            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "claude-sonnet-4-20250514")
             log_success "Anthropic configured with model: $AI_MODEL"
             ;;
 
         ollama)
             echo
-            AI_MODEL=$(prompt_value "Model name" "llama3.1")
+            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "llama3.1")
             log_info "Ollama runs locally - no API key needed"
             log_info "Make sure Ollama is installed and running"
             ;;
@@ -1336,25 +1374,10 @@ step_confirm() {
 }
 
 run_interactive_setup() {
-    # Check for existing config file and offer to reuse
+    # Load previous config if exists - values will appear as defaults in prompts
+    # User can press Enter to accept or type to override
     if [[ -f "$CONFIG_FILE" ]] && load_config; then
-        echo
-        show_config_summary
-
-        local use_config
-        use_config=$(prompt_select "Use previous configuration?" \
-            "yes (use saved settings as defaults)" \
-            "no (start fresh)")
-
-        if [[ "$use_config" != yes* ]]; then
-            # Reset loaded config, start fresh
-            HOSTNAME=""
-            AI_PROVIDER=""
-            AI_MODEL=""
-            SSL_MODE="offload"
-            MACVLAN_ENABLED=false
-        fi
-        echo
+        log_info "Previous configuration loaded - press Enter to accept defaults"
     fi
 
     # Run all interactive steps in order
@@ -2609,7 +2632,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.23${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.24${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
