@@ -61,6 +61,8 @@ async function normalizeApiUrl(url: string): Promise<{ url: string; wasNormalize
 
 interface LoginOptions {
   username?: string;
+  password?: string;
+  rememberUsername?: boolean;
 }
 
 /**
@@ -114,20 +116,25 @@ async function loginCommand(options: LoginOptions) {
     process.exit(1);
   }
 
-  // Get password (always prompt, never pre-fill for security)
-  const passwordResponse = await prompts({
-    type: 'password',
-    name: 'password',
-    message: 'Password',
-  });
+  // Get password (from option or prompt)
+  let password = options.password;
+  const isNonInteractive = options.username && options.password;
 
-  // Handle Ctrl+C
-  if (passwordResponse.password === undefined) {
-    console.log('\nLogin cancelled.');
-    process.exit(0);
+  if (!password) {
+    const passwordResponse = await prompts({
+      type: 'password',
+      name: 'password',
+      message: 'Password',
+    });
+
+    // Handle Ctrl+C
+    if (passwordResponse.password === undefined) {
+      console.log('\nLogin cancelled.');
+      process.exit(0);
+    }
+
+    password = passwordResponse.password;
   }
-
-  const password = passwordResponse.password;
 
   if (!password) {
     console.error('\x1b[31m❌ Password is required\x1b[0m\n');
@@ -172,15 +179,26 @@ async function loginCommand(options: LoginOptions) {
     // Ask to remember username if it's not already saved
     const savedUsername = config.get('username');
     if (!savedUsername || savedUsername !== username) {
-      const rememberResponse = await prompts({
-        type: 'confirm',
-        name: 'remember',
-        message: `Remember username "${username}" for future logins?`,
-        initial: true
-      });
-
-      if (rememberResponse.remember) {
+      // Check if flag was explicitly set
+      if (options.rememberUsername !== undefined) {
+        if (options.rememberUsername) {
+          config.set('username', username);
+        }
+      } else if (isNonInteractive) {
+        // In non-interactive mode without explicit flag, default to saving
         config.set('username', username);
+      } else {
+        // Interactive mode - prompt user
+        const rememberResponse = await prompts({
+          type: 'confirm',
+          name: 'remember',
+          message: `Remember username "${username}" for future logins?`,
+          initial: true
+        });
+
+        if (rememberResponse.remember) {
+          config.set('username', username);
+        }
       }
     }
 
@@ -235,6 +253,9 @@ export const loginCommand_obj = setCommandHelp(
   'Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)'
 )
   .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
+  .option('-p, --password <password>', 'Password (will prompt if not provided - for scripted/non-interactive use)')
+  .option('--remember-username', 'Save username for future logins (default in non-interactive mode)')
+  .option('--no-remember-username', 'Do not save username')
   .action(loginCommand);
 
 /**
