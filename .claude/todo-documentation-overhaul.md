@@ -164,6 +164,7 @@ Carried forward - testing matrix for deployment combinations:
 | Headless | GHCR | nvidia | No | ❓ Not tested |
 | Headless | GHCR | cpu | No | ❓ Not tested |
 | Headless | Local | nvidia | No | ❓ Not tested |
+| Interactive | GHCR | nvidia | Yes | ✅ Working (0.6.0-dev.28) |
 | Interactive | Local | cpu | No | ❓ Not tested |
 | Interactive | Local | nvidia | No | ❓ Not tested |
 | Dev mode | Local | cpu | No | ❓ Not tested |

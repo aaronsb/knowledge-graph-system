@@ -103,6 +103,9 @@ See: `docs/architecture/OPERATOR_ARCHITECTURE.md`
 - [x] Fixed standalone compose overlay issues (2026-01-21)
 - [x] Fixed embedding device config to respect CPU setting (2026-01-22)
 - [x] Fixed Garage initialization - credentials must be stored via configure.py (2026-01-22)
+- [x] Fixed SSL fullchain.crt in nginx config (2026-01-23)
+- [x] Fixed API restart after embedding config for model loading (2026-01-23)
+- [x] Config file caching for install.sh (three-tier prompts) (2026-01-23)
 - [ ] Push new operator image to GHCR (requires merge to release)
 - [ ] Upgrade from 0.5.0 to 0.6.0
 

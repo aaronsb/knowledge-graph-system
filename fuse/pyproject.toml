@@ -1,14 +1,36 @@
 [project]
 name = "kg-fuse"
 version = "0.1.0"
-description = "FUSE filesystem for Knowledge Graph"
+description = "FUSE filesystem for Knowledge Graph - mount your knowledge graph as a filesystem"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Aaron Bockelie" }
+]
 requires-python = ">=3.11"
+keywords = ["fuse", "filesystem", "knowledge-graph", "semantic-search"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Filesystems",
+]
 dependencies = [
     "pyfuse3>=3.3.0",
     "httpx>=0.27.0",
     "trio>=0.25.0",
     "tomli_w>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/aaronsb/knowledge-graph-system"
+Repository = "https://github.com/aaronsb/knowledge-graph-system.git"
+Documentation = "https://github.com/aaronsb/knowledge-graph-system/blob/main/docs/guides/FUSE_FILESYSTEM.md"
+Issues = "https://github.com/aaronsb/knowledge-graph-system/issues"
 
 [project.scripts]
 kg-fuse = "kg_fuse.main:main"

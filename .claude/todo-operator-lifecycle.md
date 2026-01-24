@@ -24,9 +24,10 @@ Tracking file for ADR-061 update/upgrade lifecycle improvements.
 
 ## In Progress
 
-- [ ] Test Let's Encrypt with Porkbun DNS on cube.broccoli.house
-  - Requires: DNS credentials, dedicated IP
-  - Mode: `--ssl letsencrypt --ssl-email ...`
+- [x] Test Let's Encrypt with Porkbun DNS on cube.broccoli.house
+  - Tested with acme.sh DNS-01 challenge (ZeroSSL via Porkbun)
+  - Existing cert detection and reuse working
+  - Fixed fullchain.crt usage in nginx (0.6.0-dev.28)
 
 ## Future Evolution
 
