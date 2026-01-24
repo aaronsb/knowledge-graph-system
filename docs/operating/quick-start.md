@@ -1,11 +1,51 @@
 # Quick Start
 
-Get the knowledge graph running in 5 minutes. Choose your path:
+Get started in 5 minutes. Choose your path:
 
 | I want to... | Use |
 |--------------|-----|
+| Connect to an existing platform | [Client Install](#client-install) |
 | Deploy on a server | [Production Install](#production-install) |
 | Set up for development | [Development Setup](#development-setup) |
+
+---
+
+## Client Install
+
+If someone else is running the platform and you just need to connect:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+```
+
+This installs:
+- **kg CLI** — Command-line access to the knowledge graph
+- **MCP server** — Lets AI assistants (Claude, etc.) use the graph as memory
+- **FUSE driver** (optional) — Mount the graph as a filesystem
+
+The installer will prompt for:
+- Platform API URL (e.g., `https://kg.example.com/api`)
+- Your username and password
+
+### Quick Install (npm only)
+
+If you just need the CLI and already have Node.js:
+
+```bash
+npm install -g @aaronsb/kg-cli
+kg config set api_url https://kg.example.com/api
+kg login
+```
+
+### What Gets Installed
+
+| Component | Package | Purpose |
+|-----------|---------|---------|
+| kg CLI | npm: `@aaronsb/kg-cli` | Command-line queries, ingestion |
+| MCP server | (included with CLI) | AI assistant integration |
+| kg-fuse | PyPI: `kg-fuse` | FUSE filesystem (optional) |
+
+See [Client Tools](client-tools.md) for detailed configuration.
 
 ---
 
@@ -162,19 +202,35 @@ configure.py oauth --list        # Manage OAuth clients
 
 ## Optional: Install the CLI
 
-The `kg` CLI provides command-line access:
+The `kg` CLI provides command-line access. Choose your method:
+
+### From npm (recommended)
+
+```bash
+npm install -g @aaronsb/kg-cli
+```
+
+### Using the client installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+```
+
+### From source (development)
 
 ```bash
 cd cli
 npm install && npm run build
-./install.sh
+npm install -g .
 ```
 
-Test it:
+### Configure and test
+
 ```bash
-kg health
-kg search "your query"
-kg ingest file document.pdf
+kg config set api_url http://localhost:8000  # or your API URL
+kg login                                      # authenticate
+kg health                                     # verify connection
+kg search "your query"                        # test search
 ```
 
 ---

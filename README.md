@@ -87,6 +87,23 @@ The graph becomes a spatial map—without GPS coordinates. "The pharmacy is betw
 
 ## Quick Start
 
+### Connect to an Existing Platform
+
+If someone else is running the platform:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+```
+
+Or just install the CLI: `npm install -g @aaronsb/kg-cli`
+
+### Deploy Your Own Platform
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash
+```
+
+Or from source:
 ```bash
 git clone https://github.com/aaronsb/knowledge-graph-system.git
 cd knowledge-graph-system
