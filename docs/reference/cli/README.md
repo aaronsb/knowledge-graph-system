@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-01-19
+> Last updated: 2026-01-24
 
 ---
 
@@ -255,6 +255,9 @@ kg login [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-u, --username <username>` | Username (will prompt if not provided - can be saved for future logins) | - |
+| `-p, --password <password>` | Password (will prompt if not provided - for scripted/non-interactive use) | - |
+| `--remember-username` | Save username for future logins (default in non-interactive mode) | - |
+| `--no-remember-username` | Do not save username | - |
 
 
 ## logout
