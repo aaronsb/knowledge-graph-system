@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.21
+# Version: 0.6.0-dev.22
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -433,6 +433,119 @@ show_cert_info() {
     echo -e "  ${BOLD}Domain:${NC}  $domain"
     echo -e "  ${BOLD}Issuer:${NC}  $issuer"
     echo -e "  ${BOLD}Expires:${NC} $expiry"
+}
+
+# --- API Key Validation ---
+
+validate_openai_key() {
+    # Validate OpenAI API key by hitting the models endpoint
+    # Returns 0 if valid, 1 if invalid
+    # Usage: if validate_openai_key "$key"; then ...
+    local api_key="$1"
+
+    if [[ -z "$api_key" ]]; then
+        return 1
+    fi
+
+    local response
+    response=$(curl -sf -w "%{http_code}" -o /dev/null \
+        -H "Authorization: Bearer $api_key" \
+        "https://api.openai.com/v1/models" 2>/dev/null)
+
+    [[ "$response" == "200" ]]
+}
+
+list_openai_models() {
+    # List available OpenAI models for chat/completion
+    # Returns newline-separated list of model IDs
+    # Usage: models=$(list_openai_models "$key")
+    local api_key="$1"
+
+    curl -sf -H "Authorization: Bearer $api_key" \
+        "https://api.openai.com/v1/models" 2>/dev/null | \
+        grep -o '"id":"[^"]*"' | \
+        sed 's/"id":"//g; s/"//g' | \
+        grep -E '^gpt-' | \
+        sort -r | \
+        head -10
+}
+
+validate_anthropic_key() {
+    # Validate Anthropic API key
+    # Returns 0 if valid, 1 if invalid
+    local api_key="$1"
+
+    if [[ -z "$api_key" ]]; then
+        return 1
+    fi
+
+    # Anthropic doesn't have a simple models list endpoint
+    # Use a minimal message request that will fail but tell us if key is valid
+    local response
+    response=$(curl -sf -w "%{http_code}" -o /dev/null \
+        -H "x-api-key: $api_key" \
+        -H "anthropic-version: 2023-06-01" \
+        -H "content-type: application/json" \
+        -d '{"model":"claude-3-haiku-20240307","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}' \
+        "https://api.anthropic.com/v1/messages" 2>/dev/null)
+
+    # 200 = valid request, 400 = valid key but bad request, 401 = invalid key
+    [[ "$response" == "200" || "$response" == "400" ]]
+}
+
+prompt_api_key_with_validation() {
+    # Prompt for API key with retry on failure
+    # Usage: key=$(prompt_api_key_with_validation "openai")
+    local provider="$1"
+    local key=""
+    local max_attempts=3
+    local attempt=1
+
+    while [[ $attempt -le $max_attempts ]]; do
+        key=$(prompt_value "${provider^} API key" "")
+
+        if [[ -z "$key" ]]; then
+            log_warning "API key is required"
+            return 1
+        fi
+
+        echo -ne "  Validating API key... " >&2
+
+        local valid=false
+        case "$provider" in
+            openai)
+                if validate_openai_key "$key"; then
+                    valid=true
+                fi
+                ;;
+            anthropic)
+                if validate_anthropic_key "$key"; then
+                    valid=true
+                fi
+                ;;
+            *)
+                # Unknown provider - skip validation
+                valid=true
+                ;;
+        esac
+
+        if [[ "$valid" == "true" ]]; then
+            echo -e "${GREEN}✓ Valid${NC}" >&2
+            echo "$key"
+            return 0
+        else
+            echo -e "${RED}✗ Invalid${NC}" >&2
+            if [[ $attempt -lt $max_attempts ]]; then
+                log_warning "Invalid API key. Please try again ($attempt/$max_attempts)"
+                ((attempt++))
+            else
+                log_error "Failed to validate API key after $max_attempts attempts"
+                return 1
+            fi
+        fi
+    done
+
+    return 1
 }
 
 
@@ -936,12 +1049,12 @@ step_ssl() {
 step_ai() {
     # Step: Configure AI provider for document extraction
     #
-    # The AI provider is used to extract concepts and relationships from
-    # documents. Options:
-    #   - openai: GPT-4o, GPT-4o-mini (cloud, requires API key)
-    #   - anthropic: Claude Sonnet 4, Claude 3.5 (cloud, requires API key)
-    #   - ollama: Local inference (requires separate Ollama installation)
-    #   - skip: Configure later via operator.sh
+    # Flow:
+    #   1. Select provider
+    #   2. Enter API key
+    #   3. Validate API key (with retry)
+    #   4. List available models (for OpenAI)
+    #   5. Select model
     echo
     echo -e "${BOLD}=== AI Provider Configuration ===${NC}"
     echo
@@ -949,6 +1062,7 @@ step_ai() {
     echo "You can skip this and configure later with: ./operator.sh shell"
     echo
 
+    # Step 1: Select provider
     local ai_choice
     ai_choice=$(prompt_select "AI provider for document extraction" \
         "openai (GPT-4o)" \
@@ -967,30 +1081,58 @@ step_ai() {
 
     case "$AI_PROVIDER" in
         openai)
-            AI_MODEL=$(prompt_value "Model name" "gpt-4o")
             echo
-            AI_KEY=$(prompt_value "OpenAI API key" "")
+            # Step 2 & 3: Get and validate API key
+            AI_KEY=$(prompt_api_key_with_validation "openai")
 
             if [[ -z "$AI_KEY" ]]; then
-                log_warning "API key required for OpenAI"
                 SKIP_AI=true
                 AI_PROVIDER=""
+                return
             fi
+
+            # Step 4: List available models
+            echo
+            log_info "Fetching available models..."
+            local models
+            models=$(list_openai_models "$AI_KEY")
+
+            if [[ -n "$models" ]]; then
+                echo "Available GPT models:"
+                echo "$models" | head -8 | sed 's/^/  - /'
+                echo
+            fi
+
+            # Step 5: Select model
+            AI_MODEL=$(prompt_value "Model name" "gpt-4o")
+            log_success "OpenAI configured with model: $AI_MODEL"
             ;;
 
         anthropic)
-            AI_MODEL=$(prompt_value "Model name" "claude-sonnet-4")
             echo
-            AI_KEY=$(prompt_value "Anthropic API key" "")
+            # Step 2 & 3: Get and validate API key
+            AI_KEY=$(prompt_api_key_with_validation "anthropic")
 
             if [[ -z "$AI_KEY" ]]; then
-                log_warning "API key required for Anthropic"
                 SKIP_AI=true
                 AI_PROVIDER=""
+                return
             fi
+
+            # Anthropic doesn't have a public models list API
+            echo
+            echo "Available Claude models:"
+            echo "  - claude-sonnet-4-20250514 (recommended)"
+            echo "  - claude-3-5-sonnet-20241022"
+            echo "  - claude-3-haiku-20240307 (faster, cheaper)"
+            echo
+
+            AI_MODEL=$(prompt_value "Model name" "claude-sonnet-4-20250514")
+            log_success "Anthropic configured with model: $AI_MODEL"
             ;;
 
         ollama)
+            echo
             AI_MODEL=$(prompt_value "Model name" "llama3.1")
             log_info "Ollama runs locally - no API key needed"
             log_info "Make sure Ollama is installed and running"
@@ -2306,7 +2448,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.21${NC}"
+    echo -e "${GRAY}Version: 0.6.0-dev.22${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
