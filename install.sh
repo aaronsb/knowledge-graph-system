@@ -50,7 +50,7 @@ set -e  # Exit on error
 #
 
 # --- Version ---
-INSTALLER_VERSION="0.6.0-dev.26"    # Single source of truth for version
+INSTALLER_VERSION="0.6.0-dev.27"    # Single source of truth for version
 
 # --- Installation ---
 INSTALL_DIR=""                      # Where to install (default: ~/knowledge-graph)
