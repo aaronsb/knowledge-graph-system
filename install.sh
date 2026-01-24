@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.25
+# Version: 0.6.0-dev.26
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -2489,6 +2489,12 @@ configure_platform() {
     log_info "Configuring storage..."
     configure_garage "$compose_cmd"
 
+    # Restart API to load embedding model (configured after initial startup)
+    log_info "Restarting API to load embedding model..."
+    $compose_cmd restart api >/dev/null 2>&1 || true
+    sleep 3  # Brief wait for API to come back up
+    log_success "API restarted"
+
     log_success "Platform configured"
 }
 
@@ -2634,7 +2640,7 @@ main() {
     # Display header with version
     echo
     echo -e "${BOLD}${BLUE}Knowledge Graph Platform Installer${NC}"
-    echo -e "${GRAY}Version: 0.6.0-dev.24${NC}"
+    echo -e "${GRAY}Version: $(get_installer_version)${NC}"
     echo
 
     # Don't run as root - we'll use sudo when needed
