@@ -49,6 +49,9 @@ set -e  # Exit on error
 #   - lowercase for internal/derived values
 #
 
+# --- Version ---
+INSTALLER_VERSION="0.6.0-dev.26"    # Single source of truth for version
+
 # --- Installation ---
 INSTALL_DIR=""                      # Where to install (default: ~/knowledge-graph)
 KG_INSTALL_DIR="$HOME/knowledge-graph"  # Default install location
@@ -593,8 +596,7 @@ prompt_api_key_with_validation() {
 # Similar to acme.sh, the config is stored in user profile (not root-owned).
 
 get_installer_version() {
-    # Extract version from script header
-    grep -m1 "^# Version:" "$0" 2>/dev/null | sed 's/# Version: //' || echo "unknown"
+    echo "$INSTALLER_VERSION"
 }
 
 save_config() {
