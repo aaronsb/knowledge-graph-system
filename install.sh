@@ -3,7 +3,7 @@
 # Knowledge Graph Platform Installer
 # ============================================================================
 #
-# Version: 0.6.0-dev.24
+# Version: 0.6.0-dev.25
 # Commit:  (pending)
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1857,7 +1857,9 @@ setup_ssl() {
             ;;
 
         letsencrypt)
-            if [[ -n "$SSL_DNS_PROVIDER" ]]; then
+            # Route to DNS function if we have DNS provider OR if using existing cert
+            # (setup_letsencrypt_dns handles SSL_USE_EXISTING_CERT with early return)
+            if [[ -n "$SSL_DNS_PROVIDER" || "$SSL_USE_EXISTING_CERT" == "true" ]]; then
                 setup_letsencrypt_dns
             else
                 setup_letsencrypt_http
