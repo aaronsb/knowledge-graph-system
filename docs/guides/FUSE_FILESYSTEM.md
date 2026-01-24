@@ -6,20 +6,42 @@ The FUSE driver (`kg-fuse`) mounts your knowledge graph as a virtual filesystem.
 
 ## Prerequisites
 
-- Linux with FUSE support (most distributions)
+- Linux with FUSE3 library
 - Python 3.11+
-- Running Knowledge Graph API (`./operator.sh start`)
-- OAuth credentials for FUSE access
+- Running Knowledge Graph API
+- `kg` CLI (for OAuth setup)
 
 ## Installation
 
-```bash
-# Install with pipx (recommended)
-cd fuse/
-pipx install .
+### 1. Install System Dependencies
 
-# Or with pip
-pip install .
+```bash
+# Arch Linux
+sudo pacman -S fuse3
+
+# Debian/Ubuntu
+sudo apt install fuse3
+
+# Fedora
+sudo dnf install fuse3
+```
+
+### 2. Install kg CLI (if not already installed)
+
+```bash
+npm install -g @aaronsb/kg-cli
+```
+
+### 3. Install kg-fuse
+
+```bash
+pipx install kg-fuse
+```
+
+### Upgrade
+
+```bash
+pipx upgrade kg-fuse
 ```
 
 ## Setup
@@ -27,23 +49,29 @@ pip install .
 ### 1. Create OAuth Credentials
 
 ```bash
-# Generate FUSE-specific OAuth client
 kg oauth create --for fuse
-
-# This writes to ~/.config/kg/config.json with client_id and client_secret
 ```
 
-### 2. Mount the Filesystem
+This writes credentials to `~/.config/kg-fuse/config.toml`.
+
+### 2. Create Mount Point
 
 ```bash
-# Mount to any empty directory
-kg-fuse /mnt/knowledge
-
-# Or with explicit config path
-kg-fuse --config ~/.config/kg/config.json /mnt/knowledge
+sudo mkdir -p /mnt/knowledge
+sudo chown $USER:$USER /mnt/knowledge
 ```
 
-### 3. Unmount When Done
+### 3. Mount the Filesystem
+
+```bash
+# Mount (runs in background by default)
+kg-fuse /mnt/knowledge
+
+# Or run in foreground for debugging
+kg-fuse /mnt/knowledge -f
+```
+
+### 4. Unmount When Done
 
 ```bash
 # Normal unmount
@@ -317,7 +345,7 @@ mount | grep kg-fuse
 fusermount -uz /mnt/knowledge
 
 # Check API is running
-curl http://localhost:8000/health
+curl https://kg.example.com/api/health
 ```
 
 ### Permission Errors

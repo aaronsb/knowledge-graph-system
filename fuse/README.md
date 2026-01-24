@@ -4,14 +4,30 @@ Mount the knowledge graph as a filesystem.
 
 ## Installation
 
-```bash
-# System dependency
-sudo pacman -S fuse3  # Arch
-sudo apt install fuse3  # Debian/Ubuntu
+### Prerequisites
 
-# Install kg-fuse
-cd fuse
-pipx install -e .
+**System FUSE library** (required):
+```bash
+sudo pacman -S fuse3       # Arch
+sudo apt install fuse3     # Debian/Ubuntu
+sudo dnf install fuse3     # Fedora
+```
+
+**kg CLI** (for OAuth setup):
+```bash
+npm install -g @aaronsb/kg-cli
+```
+
+### Install kg-fuse
+
+```bash
+pipx install kg-fuse
+```
+
+### Upgrade
+
+```bash
+pipx upgrade kg-fuse
 ```
 
 ## Setup
@@ -47,7 +63,7 @@ You can also pass credentials directly:
 
 ```bash
 kg-fuse /mnt/knowledge \
-  --api-url http://localhost:8000 \
+  --api-url https://kg.example.com/api \
   --client-id YOUR_CLIENT_ID \
   --client-secret YOUR_SECRET
 ```
@@ -91,5 +107,6 @@ The FUSE driver is an independent client that:
 - Authenticates via OAuth (like CLI, MCP server)
 - Makes HTTP requests to the API server
 - Caches directory listings (30s TTL)
+- Defaults to `localhost:8000` if unconfigured (fail-safe: won't accidentally query external endpoints)
 
 See ADR-069 for full design rationale.
