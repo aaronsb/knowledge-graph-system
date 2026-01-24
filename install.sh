@@ -2,9 +2,8 @@
 # ============================================================================
 # Knowledge Graph Platform Installer
 # ============================================================================
-#
-# Version: 0.6.0-dev.26
-# Commit:  (pending)
+INSTALLER_VERSION="0.6.0-dev.27"
+# ============================================================================
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
 # interactive (wizard) and headless (flag-based) installation modes.
@@ -48,9 +47,6 @@ set -e  # Exit on error
 #   - UPPERCASE for config that can be set by user
 #   - lowercase for internal/derived values
 #
-
-# --- Version ---
-INSTALLER_VERSION="0.6.0-dev.27"    # Single source of truth for version
 
 # --- Installation ---
 INSTALL_DIR=""                      # Where to install (default: ~/knowledge-graph)
