@@ -3,6 +3,17 @@
 ## Overview
 
 A user-friendly installer for Knowledge Graph clients (CLI, MCP server, FUSE driver).
+Follows the same patterns as `install.sh` (platform installer):
+
+- **Configuration-first** - All options defined as variables at top
+- **Dual-mode** - Interactive prompts OR command-line flags
+- **Three-tier prompts** - Previous value → Auto-detected → Default
+- **Config persistence** - Save/load choices to XDG config
+- **Staged verification** - Test each step before proceeding
+- **Multi-platform** - Linux (Arch, Ubuntu, Fedora) + macOS
+
+**Key difference from platform installer:**
+- **Dual-use** - Detects existing install, offers upgrade (platform uses operator.sh after install)
 
 **One-liner install:**
 ```bash
@@ -15,18 +26,107 @@ curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main
 
 | Component | Source | Install Method | Root Required |
 |-----------|--------|----------------|---------------|
-| **fuse3** | System package | pacman/apt/dnf | Yes |
+| **fuse3/macfuse** | System package | pacman/apt/dnf/brew | Yes |
 | **kg CLI** | npm | `npm install -g` to ~/.local | No |
 | **kg-mcp-server** | npm (same package) | Included with CLI | No |
 | **kg-fuse** | PyPI | `pipx install` | No |
 
 ---
 
+## Platform Support
+
+| Platform | Package Manager | FUSE | Node | Python/pipx | Autostart |
+|----------|-----------------|------|------|-------------|-----------|
+| Arch Linux | pacman | `fuse3` | `nodejs npm` | `python-pipx` | systemd user / KDE autostart |
+| Ubuntu/Debian | apt | `fuse3` | `nodejs npm` | `pipx` | systemd user / GNOME autostart |
+| Fedora/RHEL | dnf | `fuse3` | `nodejs npm` | `pipx` | systemd user |
+| macOS | brew | `macfuse` | `node` | `pipx` | launchd plist |
+
+**macOS Notes:**
+- FUSE support via macFUSE (requires kernel extension approval in Security settings)
+- macFUSE has limitations compared to Linux FUSE3
+- Node.js often pre-installed or via Xcode CLI tools
+- pipx via `brew install pipx`
+
+---
+
+## Script Structure (matching install.sh)
+
+```bash
+#!/bin/bash
+# ============================================================================
+# Knowledge Graph Client Installer
+# ============================================================================
+CLIENT_INSTALLER_VERSION="0.1.0"
+
+# ============================================================================
+# SECTION 1: CONFIGURATION VARIABLES
+# ============================================================================
+
+# --- Platform Connection ---
+API_URL=""                          # Platform API URL (e.g., https://kg.example.com/api)
+USERNAME=""                         # Admin username for authentication
+PASSWORD=""                         # Admin password (prompted, not saved to config)
+
+# --- Component Selection ---
+INSTALL_CLI=true                    # kg CLI (required, always true)
+INSTALL_MCP=true                    # MCP server config
+INSTALL_FUSE=false                  # FUSE driver
+
+# --- FUSE Options ---
+FUSE_MOUNT_DIR=""                   # Default: ~/Knowledge
+FUSE_AUTOSTART=false                # Configure autostart on login
+
+# --- State ---
+INTERACTIVE=false                   # Interactive or headless mode
+MODE="install"                      # install, upgrade, uninstall, status
+
+# --- Config File (XDG-compliant) ---
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kg"
+CONFIG_FILE="$CONFIG_DIR/client-install.conf"
+
+# ============================================================================
+# SECTION 2: UTILITY FUNCTIONS (ported from install.sh)
+# ============================================================================
+# - log_info, log_success, log_warning, log_error, log_step
+# - prompt_value, prompt_password, prompt_bool, prompt_select
+# - prompt_with_fallback (three-tier: previous → detected → default)
+# - save_config, load_config
+
+# ============================================================================
+# SECTION 3: DETECTION FUNCTIONS
+# ============================================================================
+# - detect_os (linux-arch, linux-ubuntu, linux-fedora, macos)
+# - detect_package_manager (pacman, apt, dnf, brew)
+# - detect_node, detect_python, detect_pipx
+# - detect_existing_install (CLI version, FUSE version)
+# - detect_desktop_environment (KDE, GNOME, macOS)
+
+# ============================================================================
+# SECTION 4: VERIFICATION FUNCTIONS
+# ============================================================================
+# - verify_api_url (curl test)
+# - verify_login (kg login + kg health)
+# - verify_cli_install (kg --version)
+# - verify_fuse_install (kg-fuse --help)
+
+# ============================================================================
+# SECTION 5: INSTALLATION FUNCTIONS
+# ============================================================================
+# - install_prerequisites (node, python, pipx, fuse)
+# - install_cli
+# - install_fuse
+# - configure_mcp
+# - configure_fuse_autostart
+
+# ============================================================================
+# SECTION 6: MAIN FLOW
+# ============================================================================
+```
+
+---
+
 ## Bootstrap Chain
-
-The CLI is the keystone - it's needed to authenticate and create OAuth clients for other components.
-
-**Key insight:** After `kg login`, credentials are cached. All subsequent `kg` commands work without re-authenticating.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -38,117 +138,154 @@ The CLI is the keystone - it's needed to authenticate and create OAuth clients f
 ┌─────────────────────────────────────────────────────────────────┐
 │  2. Configure & Authenticate (ONE TIME - caches credentials)    │
 │     kg config set api-url https://kg.example.com/api            │
-│     kg login -u admin -p secret --remember-username             │
-│     → Creates OAuth client, stores in ~/.config/kg/config.json  │
+│     kg login -u USER -p PASS --remember-username                │
+│     → Stores OAuth client in ~/.config/kg/config.json           │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  3. Verify Connection                                           │
+│     kg health                                                   │
+│     → Confirms credentials work, platform is reachable          │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
           ┌───────────┴───────────┐
           ▼                       ▼
 ┌──────────────────────┐  ┌──────────────────────┐
-│  3a. MCP Setup       │  │  3b. FUSE Setup      │
-│  (no auth needed -   │  │  pipx install kg-fuse│
-│   uses cached creds) │  │  kg oauth create     │
-│  kg mcp-config       │  │    --for fuse        │
+│  4a. MCP Setup       │  │  4b. FUSE Setup      │
+│  (config file only)  │  │  pipx install kg-fuse│
+│  print JSON snippet  │  │  kg oauth create     │
+│                      │  │    --for fuse        │
 └──────────────────────┘  └──────────────────────┘
-```
-
-**Non-interactive login (for scripted install):**
-```bash
-kg login -u "$USERNAME" -p "$PASSWORD" --remember-username
+                                   │
+                                   ▼
+                          ┌──────────────────────┐
+                          │  4c. FUSE Autostart  │
+                          │  Linux: .desktop     │
+                          │  macOS: launchd      │
+                          └──────────────────────┘
 ```
 
 ---
 
-## Proposed Flow
+## Staged Verification
 
-### Phase 1: Environment Detection
+Each step is verified before proceeding:
 
-```
-Detecting environment...
-  OS: Arch Linux
-  Package manager: pacman
-  Node.js: v22.3.0 ✓
-  Python: 3.11.8 ✓
-  pipx: installed ✓
-```
+| Step | Verification | Failure Action |
+|------|--------------|----------------|
+| API URL entered | `curl -s $API_URL/health` | Prompt to re-enter or continue anyway |
+| CLI installed | `kg --version` | Abort with error |
+| Login | `kg login` exit code | Prompt to re-enter credentials |
+| Health check | `kg health` | Warn but continue (might be network issue) |
+| FUSE installed | `kg-fuse --help` | Abort FUSE setup |
+| FUSE OAuth | `kg oauth create` exit code | Warn, offer retry |
 
-**Missing prerequisites:**
-- If Node.js missing: offer to install via package manager
-- If Python < 3.11: warn, offer to continue anyway
-- If pipx missing: offer to install
+---
 
-### Phase 2: Configuration
+## Interactive Flow
+
+### Phase 1: Detection & Mode Selection
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Knowledge Graph Client Installer                               │
+│  Knowledge Graph Client Installer v0.1.0                        │
 └─────────────────────────────────────────────────────────────────┘
 
-What's your Knowledge Graph API URL?
-  > https://kg.example.com/api
+Detecting environment...
+  OS: Arch Linux (pacman)
+  Node.js: v22.3.0 ✓
+  Python: 3.12.1 ✓
+  pipx: installed ✓
+  Desktop: KDE Plasma
 
-What would you like to install?
-  [x] CLI (kg command - required)
-  [x] MCP Server (for AI assistants like Claude)
-  [x] FUSE Driver (mount as filesystem)
+Checking existing installation...
+  kg CLI: v0.6.5 (installed)
+  kg-fuse: v0.1.1 (installed)
 
-Note: FUSE requires the fuse3 system package (needs sudo).
+What would you like to do?
+  (1) Upgrade existing installation
+  (2) Reconfigure (change API URL, add components)
+  (3) Uninstall
+  (4) Fresh install (removes existing)
+
+> 1
 ```
 
-### Phase 3: System Dependencies (if FUSE selected)
+### Phase 2: Configuration (three-tier prompts)
 
 ```
-Installing system dependencies...
+Platform Configuration
+──────────────────────
 
-The FUSE driver requires fuse3. This needs sudo access.
-  sudo pacman -S fuse3
+Knowledge Graph API URL
+  Previous: https://kg.example.com/api
+  Enter new value or press Enter to keep: _
 
-Continue? [Y/n]
+Username
+  Previous: admin
+  Enter new value or press Enter to keep: _
+
+Password: ********
 ```
 
-### Phase 4: User-level Installation
+### Phase 3: Component Selection
 
 ```
+Components to Install
+─────────────────────
+
+[✓] CLI (kg command) - required
+[✓] MCP Server configuration (for Claude, Cursor, etc.)
+[ ] FUSE Driver (mount as filesystem)
+
+Change selection? [y/N]: y
+
+Install FUSE driver? [y/N]: y
+
+FUSE Configuration
+──────────────────
+
+Mount directory
+  Default: ~/Knowledge
+  Enter path or press Enter for default: _
+
+Start FUSE automatically on login? [y/N]: y
+```
+
+### Phase 4: Verification & Installation
+
+```
+Verifying API connection...
+  Testing https://kg.example.com/api/health
+  ✓ API reachable
+
 Installing CLI...
   npm install -g @aaronsb/kg-cli --prefix ~/.local
-  ✓ kg command available
+  ✓ kg v0.6.5 installed
+
+Authenticating...
+  kg login -u admin --remember-username
+  ✓ Logged in successfully
+
+Verifying connection...
+  kg health
+  ✓ Platform healthy (125 concepts, 2 ontologies)
 
 Installing FUSE driver...
   pipx install kg-fuse
-  ✓ kg-fuse command available
-```
+  ✓ kg-fuse v0.1.1 installed
 
-### Phase 5: Authentication
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Authentication                                                 │
-└─────────────────────────────────────────────────────────────────┘
-
-To configure the clients, you need to authenticate with the platform.
-
-How would you like to authenticate?
-  (1) Browser login (opens browser for OAuth)
-  (2) Admin password (for headless/server environments)
-
-> 1
-
-Opening browser for authentication...
-  ✓ Logged in as aaron@example.com
-```
-
-### Phase 6: Client Configuration
-
-```
-Configuring MCP server...
-  ✓ Config written to ~/.config/kg/mcp.json
-
-Configuring FUSE driver...
-  Creating OAuth client for FUSE...
+Configuring FUSE...
+  kg oauth create --for fuse
+  ✓ OAuth client created
   ✓ Config written to ~/.config/kg-fuse/config.toml
+
+Setting up FUSE autostart...
+  ✓ Created ~/.config/autostart/kg-fuse.desktop
 ```
 
-### Phase 7: Summary
+### Phase 5: Summary
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -156,123 +293,143 @@ Configuring FUSE driver...
 └─────────────────────────────────────────────────────────────────┘
 
 Installed:
-  ✓ kg CLI (v0.6.4)
+  ✓ kg CLI v0.6.5
   ✓ kg-mcp-server (included with CLI)
-  ✓ kg-fuse (v0.1.1)
+  ✓ kg-fuse v0.1.1
 
 Configuration:
   API URL: https://kg.example.com/api
   CLI config: ~/.config/kg/config.json
   FUSE config: ~/.config/kg-fuse/config.toml
+  FUSE mount: ~/Knowledge (autostart enabled)
 
 Quick start:
-  kg health              # Check connection
-  kg search "topic"      # Search concepts
-  kg-fuse /mnt/kg        # Mount filesystem
+  kg health                    # Check connection
+  kg search "topic"            # Search concepts
+  kg-fuse ~/Knowledge          # Mount (or reboot for autostart)
 
-MCP Server (add to Claude config):
-  {
-    "mcpServers": {
-      "knowledge-graph": {
-        "command": "kg-mcp-server"
-      }
-    }
-  }
+MCP Server - add to your AI assistant config:
+┌─────────────────────────────────────────────────────────────────┐
+│  {                                                              │
+│    "mcpServers": {                                              │
+│      "knowledge-graph": {                                       │
+│        "command": "kg-mcp-server"                               │
+│      }                                                          │
+│    }                                                            │
+│  }                                                              │
+└─────────────────────────────────────────────────────────────────┘
 
-To uninstall:
-  client-install.sh --uninstall
+Save these settings for future installs/upgrades? [Y/n]: y
+  ✓ Saved to ~/.config/kg/client-install.conf
 ```
+
+---
+
+## Command-Line Flags
+
+```bash
+# Fresh install (headless)
+client-install.sh \
+  --api-url https://kg.example.com/api \
+  --username admin \
+  --password secret \
+  --install-fuse \
+  --fuse-mount ~/Knowledge \
+  --fuse-autostart
+
+# Upgrade existing
+client-install.sh --upgrade
+
+# Uninstall
+client-install.sh --uninstall [--remove-config]
+
+# Check status
+client-install.sh --status
+
+# Use saved config
+client-install.sh --config ~/.config/kg/client-install.conf
+```
+
+---
+
+## FUSE Autostart
+
+### Linux (KDE/GNOME)
+
+Create `~/.config/autostart/kg-fuse.desktop`:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=Knowledge Graph FUSE
+Comment=Mount knowledge graph filesystem
+Exec=kg-fuse /home/USER/Knowledge
+Terminal=false
+StartupNotify=false
+```
+
+### macOS (launchd)
+
+Create `~/Library/LaunchAgents/com.kg.fuse.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.kg.fuse</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/USER/.local/bin/kg-fuse</string>
+        <string>/Users/USER/Knowledge</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+```
+
+Load with: `launchctl load ~/Library/LaunchAgents/com.kg.fuse.plist`
 
 ---
 
 ## XDG Config Locations
 
-| Component | Config Path | Created By |
-|-----------|-------------|------------|
-| CLI | `~/.config/kg/config.json` | `kg login` |
-| MCP | `~/.config/kg/mcp.json` | `kg mcp-config` |
-| FUSE | `~/.config/kg-fuse/config.toml` | `kg oauth create --for fuse` |
-| Installer state | `~/.config/kg/installer.conf` | `client-install.sh` |
+| Component | Linux | macOS |
+|-----------|-------|-------|
+| CLI config | `~/.config/kg/config.json` | `~/Library/Application Support/kg/config.json` |
+| FUSE config | `~/.config/kg-fuse/config.toml` | `~/Library/Application Support/kg-fuse/config.toml` |
+| Installer config | `~/.config/kg/client-install.conf` | `~/Library/Application Support/kg/client-install.conf` |
+| FUSE autostart | `~/.config/autostart/kg-fuse.desktop` | `~/Library/LaunchAgents/com.kg.fuse.plist` |
 
 ---
 
-## Uninstall Support
+## Error Handling
 
-```bash
-client-install.sh --uninstall
-```
-
-```
-What would you like to uninstall?
-  [x] CLI
-  [x] MCP Server (included with CLI)
-  [x] FUSE Driver
-  [ ] Configuration files (keep by default)
-
-Uninstalling...
-  npm uninstall -g @aaronsb/kg-cli
-  pipx uninstall kg-fuse
-  ✓ Uninstalled (config files preserved)
-
-To remove config files:
-  rm -rf ~/.config/kg ~/.config/kg-fuse
-```
+| Error | Recovery |
+|-------|----------|
+| API unreachable | Prompt to re-enter URL or continue (configure later) |
+| Auth failed | Prompt to re-enter credentials (3 attempts) |
+| npm install fails | Check node version, offer to install node |
+| pipx install fails | Check python version, offer to install pipx |
+| FUSE mount fails | Check fuse installed, check permissions |
+| macFUSE not approved | Guide user to System Preferences > Security |
 
 ---
 
-## Package Manager Support
+## Implementation Tasks
 
-| Distro | Package Manager | fuse3 Package | Node Install |
-|--------|-----------------|---------------|--------------|
-| Arch | pacman | `fuse3` | `nodejs npm` |
-| Ubuntu/Debian | apt | `fuse3` | `nodejs npm` |
-| Fedora/RHEL | dnf | `fuse3` | `nodejs npm` |
-| macOS | brew | `macfuse` (limited) | `node` |
-
----
-
-## Edge Cases to Handle
-
-1. **No platform yet**: User might be installing clients before platform is ready
-   - Allow skipping auth, configure API URL only
-   - Can run `kg login` later
-
-2. **Multiple platforms**: User might have multiple KG instances
-   - Support profiles? (`kg --profile work`)
-   - Or just document re-running installer
-
-3. **Corporate proxy**: npm/pip might need proxy config
-   - Detect from environment variables
-   - Document manual workarounds
-
-4. **Existing installation**: Upgrade vs fresh install
-   - Detect existing versions
-   - Offer upgrade path
-
-5. **PATH issues**: ~/.local/bin not in PATH
-   - Detect and warn
-   - Offer to add to shell rc file
-
----
-
-## Questions for Discussion
-
-1. **Single script or modular?**
-   - Single `client-install.sh` (simpler)
-   - vs. `install-cli.sh`, `install-fuse.sh` (more flexible)
-
-2. **Profile support?**
-   - Do we need multiple platform profiles now?
-   - Or defer to future version?
-
-3. **Offline/air-gapped support?**
-   - Download tarballs for npm/pip?
-   - Or document manual process only?
-
-4. **MCP config format?**
-   - Auto-detect Claude Desktop location?
-   - Or just print config snippet to copy?
-
-5. **Version pinning?**
-   - Install latest by default?
-   - Or pin to tested versions?
+- [ ] Create `client-install.sh` skeleton with sections
+- [ ] Port utility functions from `install.sh`
+- [ ] Implement detection functions (Linux + macOS)
+- [ ] Implement installation functions
+- [ ] Implement verification functions
+- [ ] Add flag parsing
+- [ ] Add interactive prompts
+- [ ] Test on Arch Linux (KDE)
+- [ ] Test on Ubuntu
+- [ ] Test on macOS
+- [ ] Update documentation
