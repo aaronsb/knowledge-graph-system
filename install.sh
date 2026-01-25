@@ -2,7 +2,7 @@
 # ============================================================================
 # Knowledge Graph Platform Installer
 # ============================================================================
-INSTALLER_VERSION="0.6.0-dev.29"
+INSTALLER_VERSION="0.6.0-dev.30"
 # ============================================================================
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
