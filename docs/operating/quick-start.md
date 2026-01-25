@@ -15,7 +15,7 @@ Get started in 5 minutes. Choose your path:
 Install the CLI, MCP server, and optionally the FUSE filesystem driver:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh | bash
 ```
 
 **What's included:**
@@ -211,7 +211,7 @@ npm install -g @aaronsb/kg-cli
 ### Using the client installer
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh | bash
 ```
 
 ### From source (development)

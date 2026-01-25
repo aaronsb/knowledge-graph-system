@@ -92,7 +92,7 @@ The graph becomes a spatial map—without GPS coordinates. "The pharmacy is betw
 The `kg` CLI, MCP server (for AI assistants), and optional FUSE filesystem:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh | bash
 ```
 
 Or just the CLI: `npm install -g @aaronsb/kg-cli`

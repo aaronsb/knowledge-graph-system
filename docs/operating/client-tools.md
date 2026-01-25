@@ -7,7 +7,7 @@ Tools for connecting to a Knowledge Graph platform.
 ### All-in-one Installer
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh | bash
 ```
 
 This interactive installer:
@@ -73,7 +73,7 @@ See [FUSE Guide](../guides/FUSE_FILESYSTEM.md) for details.
 
 ```bash
 # Using the installer
-./client-install.sh --upgrade
+./client-manager.sh --upgrade
 
 # Manual
 npm update -g @aaronsb/kg-cli
@@ -84,7 +84,7 @@ pipx upgrade kg-fuse
 
 ```bash
 # Using the installer
-./client-install.sh --uninstall
+./client-manager.sh --uninstall
 
 # Manual
 npm uninstall -g @aaronsb/kg-cli
