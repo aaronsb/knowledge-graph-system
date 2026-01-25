@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../OPERATOR_ARCHITECTURE/">
+        <link rel="prev" href="../ADR-087-documentation-strategy/">
       
       
-        <link rel="next" href="../RECURSIVE_UPSERT_ARCHITECTURE/">
+        <link rel="next" href="../ARCHITECTURE_DECISIONS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Query Safety Baseline - Technical Debt - Knowledge Graph System</title>
+        <title>ADR-089: Deterministic Node and Edge Creation - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#query-safety-baseline-technical-debt" class="md-skip">
+        <a href="#adr-089-deterministic-node-and-edge-creation" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Query Safety Baseline - Technical Debt
+              ADR-089: Deterministic Node and Edge Creation
             
           </span>
         </div>
@@ -3131,10 +3131,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-089: Deterministic Node and Edge Creation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3150,6 +3177,635 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-workflow-iterative-graph-enrichment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Workflow: Iterative Graph Enrichment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-creation-flow-ingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Creation Flow (Ingest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-property-creation_method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Property: creation_method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#free-thinking-pattern-agents-and-humans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Free Thinking" Pattern (Agents and Humans)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="&#34;Free Thinking&#34; Pattern (Agents and Humans)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-evidence-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Evidence (Instance)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#foreign-graph-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foreign Graph Import
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Foreign Graph Import">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-import-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Import Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalization-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalization Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provenance-for-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance for Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry Points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-assisted-curation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM-Assisted Curation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuse-filesystem-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FUSE Filesystem Exposure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-and-mcp-shared-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI and MCP Shared Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-nodes-for-manual-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Nodes for Manual Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-properties-for-manual-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Properties for Manual Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles and Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Roles and Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth Scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-server-authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Authorization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-permission-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Permission Checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuse-permission-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FUSE Permission Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility-with-existing-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compatibility with Existing Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-core-api-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Core API + Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-mcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: MCP Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-batch-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Batch &amp; UI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-foreign-graph-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Foreign Graph Import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-fuse-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: FUSE Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Advanced
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3243,37 +3899,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Query Safety Baseline - Technical Debt
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -3289,298 +3918,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#phase-2-fixes-2025-10-27" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2 Fixes (2025-10-27)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Phase 2 Fixes (2025-10-27)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fix-1-database-health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fix 1: Database Health Check ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fix-2-restore-worker-delete-relationships" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fix 2: Restore Worker - Delete Relationships ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fix-3-restore-worker-delete-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fix 3: Restore Worker - Delete Nodes ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#original-findings-phase-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Original Findings (Phase 1)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Original Findings (Phase 1)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-health-check-node-count" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Health Check Node Count
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-restore-worker-delete-all-relationships" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Restore Worker - Delete All Relationships
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-restore-worker-delete-all-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Restore Worker - Delete All Nodes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prioritization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prioritization
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Strategy
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Migration Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-current" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1 (Current)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-before-vocabulary-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2 (Before Vocabulary Migration)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-vocabulary-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3 (Vocabulary Migration)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architectural-implication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architectural Implication
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#phase-completion-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase Completion Status
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Phase Completion Status">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-foundation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Foundation ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-critical-path-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Critical Path Migration ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-vocabulary-to-graph-complete-2025-10-27" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Vocabulary to Graph ✅ COMPLETE (2025-10-27)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Metrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Metrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-phase-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before Phase 2
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#after-phase-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        After Phase 2 ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -7357,10 +7694,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
+  <a href="#status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary
+        Status
       
     </span>
   </a>
@@ -7368,22 +7705,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-2-fixes-2025-10-27" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2 Fixes (2025-10-27)
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 2 Fixes (2025-10-27)">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fix-1-database-health-check" class="md-nav__link">
+  <a href="#key-workflow-iterative-graph-enrichment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fix 1: Database Health Check ✅
+        Key Workflow: Iterative Graph Enrichment
       
     </span>
   </a>
@@ -7391,21 +7728,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fix-2-restore-worker-delete-relationships" class="md-nav__link">
+  <a href="#current-creation-flow-ingest" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fix 2: Restore Worker - Delete Relationships ✅
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fix-3-restore-worker-delete-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fix 3: Restore Worker - Delete Nodes ✅
+        Current Creation Flow (Ingest)
       
     </span>
   </a>
@@ -7418,22 +7744,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#original-findings-phase-1" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Original Findings (Phase 1)
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Original Findings (Phase 1)">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-health-check-node-count" class="md-nav__link">
+  <a href="#design-principles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Health Check Node Count
+        Design Principles
       
     </span>
   </a>
@@ -7441,10 +7767,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-restore-worker-delete-all-relationships" class="md-nav__link">
+  <a href="#new-property-creation_method" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Restore Worker - Delete All Relationships
+        New Property: creation_method
       
     </span>
   </a>
@@ -7452,10 +7778,375 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-restore-worker-delete-all-nodes" class="md-nav__link">
+  <a href="#api-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Restore Worker - Delete All Nodes
+        API Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#free-thinking-pattern-agents-and-humans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Free Thinking" Pattern (Agents and Humans)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="&#34;Free Thinking&#34; Pattern (Agents and Humans)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-evidence-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create Evidence (Instance)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete Concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete Edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#foreign-graph-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foreign Graph Import
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Foreign Graph Import">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-import-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Import Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalization-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalization Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provenance-for-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance for Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry Points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-assisted-curation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM-Assisted Curation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuse-filesystem-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FUSE Filesystem Exposure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-and-mcp-shared-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI and MCP Shared Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-nodes-for-manual-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Nodes for Manual Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-properties-for-manual-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Properties for Manual Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles and Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Roles and Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth Scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-server-authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Authorization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-permission-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Permission Checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuse-permission-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FUSE Permission Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility-with-existing-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compatibility with Existing Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
       
     </span>
   </a>
@@ -7468,33 +8159,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prioritization" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prioritization
+        Consequences
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration Strategy
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Migration Strategy">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-current" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1 (Current)
+        Positive
       
     </span>
   </a>
@@ -7502,10 +8182,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-before-vocabulary-migration" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2 (Before Vocabulary Migration)
+        Negative
       
     </span>
   </a>
@@ -7513,10 +8193,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-vocabulary-migration" class="md-nav__link">
+  <a href="#risks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3 (Vocabulary Migration)
+        Risks
       
     </span>
   </a>
@@ -7529,10 +8209,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architectural-implication" class="md-nav__link">
+  <a href="#related-adrs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architectural Implication
+        Related ADRs
       
     </span>
   </a>
@@ -7540,22 +8220,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#phase-completion-status" class="md-nav__link">
+  <a href="#implementation-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase Completion Status
+        Implementation Notes
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase Completion Status">
+    <nav class="md-nav" aria-label="Implementation Notes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-foundation" class="md-nav__link">
+  <a href="#phase-1-core-api-permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: Foundation ✅
+        Phase 1: Core API + Permissions
       
     </span>
   </a>
@@ -7563,10 +8243,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-critical-path-migration" class="md-nav__link">
+  <a href="#phase-2-mcp-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2: Critical Path Migration ✅
+        Phase 2: MCP Tools
       
     </span>
   </a>
@@ -7574,38 +8254,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-vocabulary-to-graph-complete-2025-10-27" class="md-nav__link">
+  <a href="#phase-3-batch-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: Vocabulary to Graph ✅ COMPLETE (2025-10-27)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Metrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Metrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#before-phase-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before Phase 2
+        Phase 3: Batch &amp; UI
       
     </span>
   </a>
@@ -7613,10 +8265,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#after-phase-2" class="md-nav__link">
+  <a href="#phase-4-foreign-graph-import" class="md-nav__link">
     <span class="md-ellipsis">
       
-        After Phase 2 ✅
+        Phase 4: Foreign Graph Import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-fuse-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: FUSE Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Advanced
       
     </span>
   </a>
@@ -7648,195 +8322,821 @@
   
 
 
-<h1 id="query-safety-baseline-technical-debt">Query Safety Baseline - Technical Debt</h1>
-<p><strong>Date:</strong> 2025-10-27
-<strong>ADR:</strong> ADR-048 (Vocabulary Metadata as First-Class Graph)
-<strong>Phase:</strong> Phase 2 - Critical Path Migration ✅ COMPLETE</p>
-<h2 id="summary">Summary</h2>
-<p>~~Initial query safety audit identified <strong>3 unsafe queries</strong> in the codebase.~~ <strong>All unsafe queries have been fixed!</strong></p>
-<p><strong>Phase 1 (Complete):</strong> Identified 3 unsafe queries that would cause catastrophic failures in Phase 3
-<strong>Phase 2 (Complete):</strong> Fixed all 3 unsafe queries with namespace-aware alternatives
-<strong>Current Status:</strong> ✅ <strong>0 unsafe queries</strong> - Ready for Phase 3</p>
-<h2 id="phase-2-fixes-2025-10-27">Phase 2 Fixes (2025-10-27)</h2>
-<p>All 3 unsafe queries have been migrated to namespace-aware alternatives:</p>
-<h3 id="fix-1-database-health-check">Fix 1: Database Health Check ✅</h3>
-<p><strong>File:</strong> <code>src/api/routes/database.py:195</code>
-<strong>Before:</strong> <code>MATCH (n) RETURN count(n)</code> (counted ALL nodes)
-<strong>After:</strong> <code>client.facade.count_concepts()</code> (namespace-aware)
-<strong>Impact:</strong> Health check now returns correct concept count, won't be affected by vocabulary nodes</p>
-<h3 id="fix-2-restore-worker-delete-relationships">Fix 2: Restore Worker - Delete Relationships ✅</h3>
-<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:230</code>
-<strong>Before:</strong> <code>MATCH (n)-[r]-() DELETE r</code> (deleted ALL relationships)
-<strong>After:</strong> Explicit deletion by namespace:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (c:Concept)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (s:Source)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (i:Instance)-[r]-() DELETE r&quot;</span><span class="p">)</span>
+<h1 id="adr-089-deterministic-node-and-edge-creation">ADR-089: Deterministic Node and Edge Creation</h1>
+<h2 id="status">Status</h2>
+<p>DRAFT</p>
+<h2 id="context">Context</h2>
+<p>The knowledge graph currently populates exclusively through the <strong>ingest pipeline</strong>: documents are chunked, concepts are extracted via LLM, and nodes/edges are created with embedding-based matching. This works well for document-driven knowledge but doesn't support:</p>
+<ol>
+<li><strong>Manual curation</strong> - Humans wanting to directly create/edit/delete concepts via web workstation</li>
+<li><strong>Agent-driven creation</strong> - MCP tools that let AI agents build knowledge structures programmatically</li>
+<li><strong>LLM-assisted curation</strong> - Using LLM to help humans draft/refine concepts (not document extraction)</li>
+<li><strong>Bulk import</strong> - Loading structured data (CSV, JSON) without LLM processing</li>
+<li><strong>Subgraph construction</strong> - Creating independent concept clusters for specific purposes</li>
+<li><strong>Foreign graph import</strong> - Importing knowledge graphs from external systems (Neo4j exports, RDF, JSON-LD, etc.)</li>
+<li><strong>Filesystem exposure</strong> - Concepts accessible via FUSE for file-based editing workflows</li>
+</ol>
+<h3 id="key-workflow-iterative-graph-enrichment">Key Workflow: Iterative Graph Enrichment</h3>
+<p>A primary use case for deterministic creation is the <strong>research-then-enrich</strong> cycle:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│ 1. INGEST                                                               │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│    Documents → LLM extraction → Initial graph                           │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                    ↓
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│ 2. RESEARCH                                                             │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│    Query graph → Discover patterns → Identify gaps → Learn structure    │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                    ↓
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│ 3. ENRICH (Deterministic Creation)                                      │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│    Add bridging concepts → Create missing relationships →               │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│    Strengthen weak connections → Add domain expert knowledge            │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                                    ↓
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│ 4. SYNTHESIZE                                                           │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│    LLM queries enriched graph → Higher quality reasoning →              │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│    Better serialization for downstream tasks                            │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                                    ↓
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                              (repeat 2-4)
 </code></pre></div>
-<strong>Impact:</strong> Restore preserves vocabulary metadata, only clears concept graph</p>
-<h3 id="fix-3-restore-worker-delete-nodes">Fix 3: Restore Worker - Delete Nodes ✅</h3>
-<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:233</code>
-<strong>Before:</strong> <code>MATCH (n) DELETE n</code> (deleted ALL nodes)
-<strong>After:</strong> Explicit deletion by namespace:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (c:Concept) DELETE c&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (s:Source) DELETE s&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (i:Instance) DELETE i&quot;</span><span class="p">)</span>
+<p><strong>Why this matters:</strong>
+- LLM extraction captures what's explicitly in documents
+- Human/agent curation adds implicit knowledge, expert judgment, cross-domain connections
+- Enriched graphs enable more sophisticated reasoning than raw extraction alone
+- Each cycle improves graph quality for future queries</p>
+<h3 id="current-creation-flow-ingest">Current Creation Flow (Ingest)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Document → Chunking → LLM Extraction → Embedding → Matching → MERGE
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>                                                      ↓
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>                                            ≥0.85: Link existing
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>                                            0.75-0.84 + label: Link
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>                                            &lt;0.75: Create new
 </code></pre></div>
-<strong>Impact:</strong> Vocabulary nodes (:VocabType, :VocabCategory) are preserved during restore</p>
-<h2 id="original-findings-phase-1">Original Findings (Phase 1)</h2>
-<h3 id="1-health-check-node-count">1. Health Check Node Count</h3>
-<p><strong>File:</strong> <code>src/api/routes/database.py:195</code>
-<strong>Query:</strong> <code>MATCH (n) RETURN count(n) as node_count LIMIT 1</code>
-<strong>Purpose:</strong> Verify graph is accessible
-<strong>Risk:</strong> Once vocabulary is in graph, counts ALL nodes (concepts + vocabulary)</p>
-<p><strong>Fix Required:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Before (unsafe)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">graph_check</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s2">&quot;MATCH (n) RETURN count(n) as node_count LIMIT 1&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">fetch_one</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># After (safe)</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">graph_check</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="s2">&quot;MATCH (n:Concept) RETURN count(n) as concept_count LIMIT 1&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">fetch_one</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">)</span>
+<p><strong>What gets created:</strong>
+- <code>Source</code> node (chunk text, embeddings)
+- <code>Concept</code> nodes (matched or new)
+- <code>Instance</code> nodes (evidence quotes)
+- Relationship edges (IMPLIES, SUPPORTS, etc.)</p>
+<p><strong>Provenance tracked:</strong>
+- <code>source</code>: "llm_extraction"
+- <code>created_by</code>: user_id
+- <code>job_id</code>: ingestion job
+- <code>document_id</code>: source document hash</p>
+<h2 id="decision">Decision</h2>
+<p>Implement a <strong>deterministic creation API</strong> that allows direct node/edge creation while maintaining full compatibility with auto-created graph elements.</p>
+<h3 id="design-principles">Design Principles</h3>
+<ol>
+<li><strong>Functionally Identical</strong> - Manual nodes are indistinguishable from auto nodes (same properties, same schema)</li>
+<li><strong>Full Embedding Support</strong> - Manual concepts get embeddings via same unified worker</li>
+<li><strong>Optional Matching</strong> - Can match to existing concepts or force-create standalone</li>
+<li><strong>Pruning Compatible</strong> - Manual edges have same properties, subject to same pruning rules</li>
+<li><strong>Provenance Tracked</strong> - Clear distinction via <code>source</code> property, not node structure</li>
+</ol>
+<h3 id="new-property-creation_method">New Property: <code>creation_method</code></h3>
+<p>Add to <strong>Concept nodes</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>creation_method: &quot;llm_extraction&quot; | &quot;manual_api&quot; | &quot;mcp_tool&quot; | &quot;workstation&quot; | &quot;graph_import&quot;
 </code></pre></div></p>
-<h3 id="2-restore-worker-delete-all-relationships">2. Restore Worker - Delete All Relationships</h3>
-<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:230</code>
-<strong>Query:</strong> <code>MATCH (n)-[r]-() DELETE r</code>
-<strong>Purpose:</strong> Clear database before restore
-<strong>Risk:</strong> CRITICAL - Would delete vocabulary relationships in Phase 3</p>
-<p><strong>Fix Required:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Before (unsafe - deletes EVERYTHING)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># After (safe - only delete concept graph)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Concept)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Source)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Instance)-[r]-() DELETE r&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Vocabulary graph remains intact</span>
-</code></pre></div></p>
-<h3 id="3-restore-worker-delete-all-nodes">3. Restore Worker - Delete All Nodes</h3>
-<p><strong>File:</strong> <code>src/api/workers/restore_worker.py:233</code>
-<strong>Query:</strong> <code>MATCH (n) DELETE n</code>
-<strong>Purpose:</strong> Clear database before restore
-<strong>Risk:</strong> CRITICAL - Would delete vocabulary nodes in Phase 3</p>
-<p><strong>Fix Required:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Before (unsafe - deletes EVERYTHING)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n) DELETE n&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># After (safe - only delete concept graph)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Concept) DELETE n&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Source) DELETE n&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Instance) DELETE n&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Vocabulary graph remains intact</span>
-</code></pre></div></p>
-<h2 id="prioritization">Prioritization</h2>
+<p>Values:
+- <code>llm_extraction</code> - Created through document ingest pipeline
+- <code>manual_api</code> - Created via REST API directly
+- <code>mcp_tool</code> - Created by AI agents through MCP tools
+- <code>workstation</code> - Created via web workstation UI by humans
+- <code>graph_import</code> - Imported from foreign graph systems</p>
+<p><strong>Note:</strong> Backup/restore preserves the original <code>creation_method</code> - it's not overwritten during restore.</p>
+<p>This is informational only - all concepts are treated identically by queries, matching, and pruning.</p>
+<h3 id="api-endpoints">API Endpoints</h3>
+<h4 id="create-concept">Create Concept</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>POST /api/v1/concepts
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  &quot;label&quot;: &quot;Quantum Entanglement&quot;,
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  &quot;description&quot;: &quot;A quantum mechanical phenomenon...&quot;,
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;quantum correlation&quot;],
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  &quot;ontology&quot;: &quot;physics&quot;,
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  &quot;matching_mode&quot;: &quot;auto&quot; | &quot;force_create&quot; | &quot;match_only&quot;
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>}
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>Response:
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>{
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>  &quot;concept_id&quot;: &quot;manual_abc123&quot;,
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>  &quot;matched_existing&quot;: false,
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  &quot;embedding_generated&quot;: true
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>}
+</code></pre></div>
+<p><strong>Matching modes:</strong>
+- <code>auto</code> (default): Use standard two-tier matching, create if no match
+- <code>force_create</code>: Always create new concept, skip matching
+- <code>match_only</code>: Return match or error, never create</p>
+<h3 id="free-thinking-pattern-agents-and-humans">"Free Thinking" Pattern (Agents and Humans)</h3>
+<p>When using <code>matching_mode: "auto"</code>, creators (agents or humans) can work freely without graph topology knowledge:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>│  AGENT REASONING                                                        │
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│  &quot;I notice these documents discuss supply chain resilience...&quot;          │
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│                           ↓                                             │
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│  Agent emits concept: { label: &quot;Supply Chain Resilience&quot;, ... }         │
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>                            ↓
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│  GRAPH MATCHING (automatic)                                             │
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│  - Embed new concept                                                    │
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│  - Search existing concepts (≥0.85 similarity)                          │
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│  - Found match? → Link to existing &quot;Supply Chain Robustness&quot;            │
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│  - No match? → Create new node, auto-attach via relationships           │
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>└─────────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>                            ↓
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>┌─────────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│  RESULT                                                                 │
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│  Agent&#39;s thought integrated into graph without explicit wiring          │
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>└─────────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Why this matters:</strong>
+- Creator focuses on <strong>ideation</strong>, graph handles <strong>integration</strong>
+- No need to query graph structure before creating
+- Duplicate concepts naturally merge via similarity matching
+- Rapid concept emission without cognitive overhead of "where does this fit?"
+- Graph becomes a <strong>thought accumulator</strong> that self-organizes</p>
+<p><strong>For agents:</strong>
+- "Think out loud" - emit many concepts during reasoning
+- Graph captures agent's evolving understanding
+- No API calls to discover existing structure</p>
+<p><strong>For humans:</strong>
+- Domain expert can dump knowledge without learning graph structure
+- Brainstorming sessions become graph-building sessions
+- Lower barrier to contribution - just describe concepts naturally
+- Web workstation becomes a "knowledge notepad" that auto-organizes</p>
+<p><strong>Contrast with <code>force_create</code>:</strong>
+- Use when creator intentionally wants distinct concept (even if similar exists)
+- Useful for tracking different perspectives on same topic
+- Creates isolated subgraphs when desired</p>
+<h4 id="create-edge">Create Edge</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>POST /api/v1/edges
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>{
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  &quot;from_concept_id&quot;: &quot;concept_123&quot;,
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  &quot;to_concept_id&quot;: &quot;concept_456&quot;,
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  &quot;relationship_type&quot;: &quot;IMPLIES&quot;,
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  &quot;confidence&quot;: 0.85,
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  &quot;ontology&quot;: &quot;physics&quot;
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>}
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>Response:
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>{
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  &quot;edge_id&quot;: &quot;edge_abc123&quot;,
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>  &quot;relationship_type&quot;: &quot;IMPLIES&quot;,  // May be normalized
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  &quot;vocabulary_created&quot;: false      // True if new type added
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>}
+</code></pre></div>
+<p><strong>Relationship handling:</strong>
+- Type normalized via existing mapper (ADR-032)
+- Unknown types auto-added to vocabulary with <code>category: "manual"</code>
+- Embedding generated for new types</p>
+<h4 id="create-evidence-instance">Create Evidence (Instance)</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>POST /api/v1/concepts/{concept_id}/evidence
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>{
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  &quot;quote&quot;: &quot;Einstein described entanglement as &#39;spooky action&#39;&quot;,
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  &quot;source_reference&quot;: &quot;Einstein 1935 paper&quot;  // Optional metadata
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>}
+</code></pre></div>
+<h4 id="update-concept">Update Concept</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PATCH /api/v1/concepts/{concept_id}
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>{
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  &quot;label&quot;: &quot;Quantum Entanglement (updated)&quot;,
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  &quot;description&quot;: &quot;Revised description...&quot;,
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;quantum correlation&quot;, &quot;spooky action&quot;]
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>}
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Response:
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>{
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  &quot;concept_id&quot;: &quot;concept_123&quot;,
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  &quot;embedding_regenerated&quot;: true,
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>  &quot;modified_by&quot;: &quot;user_456&quot;,
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>  &quot;modified_at&quot;: &quot;2026-01-25T...&quot;
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>}
+</code></pre></div>
+<p><strong>Update behavior:</strong>
+- Partial updates supported (only changed fields)
+- Embedding regenerated if label/description/search_terms change
+- <code>modified_by</code> and <code>modified_at</code> tracked for audit
+- Original <code>created_by</code> and <code>creation_method</code> preserved</p>
+<h4 id="update-edge">Update Edge</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PATCH /api/v1/edges/{edge_id}
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>{
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  &quot;confidence&quot;: 0.95,
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  &quot;relationship_type&quot;: &quot;STRONGLY_IMPLIES&quot;  // Type change allowed
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>}
+</code></pre></div>
+<h4 id="delete-concept">Delete Concept</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>DELETE /api/v1/concepts/{concept_id}?cascade=false
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Response:
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>{
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>  &quot;deleted&quot;: true,
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  &quot;edges_orphaned&quot;: 3,      // If cascade=false
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>  &quot;edges_deleted&quot;: 0        // If cascade=true, these would be deleted
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>}
+</code></pre></div>
+<p><strong>Delete modes:</strong>
+- <code>cascade=false</code> (default): Delete concept, orphan edges (they remain with dangling references)
+- <code>cascade=true</code>: Delete concept and all connected edges
+- Returns error if concept has evidence instances (must delete those first)</p>
+<h4 id="delete-edge">Delete Edge</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>DELETE /api/v1/edges/{edge_id}
+</code></pre></div>
+<h4 id="batch-creation">Batch Creation</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>POST /api/v1/graph/batch
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>{
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  &quot;ontology&quot;: &quot;physics&quot;,
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  &quot;concepts&quot;: [...],
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  &quot;edges&quot;: [...],
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  &quot;instances&quot;: [...]
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>}
+</code></pre></div>
+<h3 id="foreign-graph-import">Foreign Graph Import</h3>
+<p>A significant capability enabled by deterministic creation is importing knowledge from external graph systems. This expands KG beyond document-driven knowledge to incorporate existing structured knowledge.</p>
+<h4 id="supported-import-formats">Supported Import Formats</h4>
 <table>
 <thead>
 <tr>
-<th>Query</th>
-<th>Severity</th>
-<th>Phase</th>
-<th>Rationale</th>
+<th>Format</th>
+<th>Source Systems</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>restore_worker.py:230</td>
-<td><strong>CRITICAL</strong></td>
-<td>Before Phase 3</td>
-<td>Would destroy vocabulary metadata</td>
+<td>JSON Graph Format</td>
+<td>Generic exports, custom systems</td>
+<td>Lightweight, easy to transform</td>
 </tr>
 <tr>
-<td>restore_worker.py:233</td>
-<td><strong>CRITICAL</strong></td>
-<td>Before Phase 3</td>
-<td>Would destroy vocabulary metadata</td>
+<td>Neo4j JSON</td>
+<td>Neo4j exports</td>
+<td>Direct node/edge mapping</td>
 </tr>
 <tr>
-<td>database.py:195</td>
-<td><strong>HIGH</strong></td>
-<td>Before Phase 3</td>
-<td>Would return incorrect counts</td>
+<td>RDF/JSON-LD</td>
+<td>Semantic web, linked data</td>
+<td>Requires vocabulary mapping</td>
+</tr>
+<tr>
+<td>GraphML</td>
+<td>yEd, Gephi, NetworkX</td>
+<td>XML-based, widely supported</td>
+</tr>
+<tr>
+<td>CSV (nodes + edges)</td>
+<td>Spreadsheets, databases</td>
+<td>Simple tabular format</td>
 </tr>
 </tbody>
 </table>
-<h2 id="migration-strategy">Migration Strategy</h2>
-<h3 id="phase-1-current">Phase 1 (Current)</h3>
+<h4 id="import-pipeline">Import Pipeline</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Foreign Graph Data
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>       ↓
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>   Validation (schema check)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>       ↓
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>   Normalization (required properties)
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>       ↓
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>   Enrichment (sources, embeddings)
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>       ↓
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>   Matching (optional deduplication)
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>       ↓
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>   MERGE into Apache AGE
+</code></pre></div>
+<h4 id="import-api">Import API</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>POST /api/v1/graph/import
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>{
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  &quot;format&quot;: &quot;json_graph&quot; | &quot;neo4j&quot; | &quot;rdf&quot; | &quot;graphml&quot; | &quot;csv&quot;,
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  &quot;ontology&quot;: &quot;imported_knowledge&quot;,
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  &quot;data&quot;: { ... } | &quot;file_path&quot;,
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  &quot;options&quot;: {
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    &quot;matching_mode&quot;: &quot;auto&quot; | &quot;force_create&quot;,
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    &quot;generate_embeddings&quot;: true,
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    &quot;create_synthetic_sources&quot;: true,
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    &quot;node_mapping&quot;: {
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>      &quot;label_field&quot;: &quot;name&quot;,
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>      &quot;description_field&quot;: &quot;description&quot;
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    },
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    &quot;edge_mapping&quot;: {
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>      &quot;type_field&quot;: &quot;relationship&quot;,
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>      &quot;confidence_field&quot;: &quot;weight&quot;
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    }
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>  }
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>}
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>Response:
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>{
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>  &quot;job_id&quot;: &quot;import_abc123&quot;,
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>  &quot;nodes_imported&quot;: 150,
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>  &quot;edges_imported&quot;: 320,
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>  &quot;nodes_matched&quot;: 12,
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>  &quot;nodes_created&quot;: 138,
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>  &quot;warnings&quot;: [&quot;Unknown relationship type &#39;RELATED_TO&#39; normalized to &#39;RELATES_TO&#39;&quot;]
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>}
+</code></pre></div>
+<h4 id="normalization-requirements">Normalization Requirements</h4>
+<p>Foreign nodes must be enriched to meet KG schema:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Required</th>
+<th>Default/Generation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>label</code></td>
+<td>Yes</td>
+<td>Mapped from source field</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>No</td>
+<td>Empty or mapped</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td>Yes</td>
+<td>Generated via unified worker</td>
+</tr>
+<tr>
+<td><code>creation_method</code></td>
+<td>Auto</td>
+<td>Set to "graph_import"</td>
+</tr>
+<tr>
+<td><code>source_graph</code></td>
+<td>Auto</td>
+<td>Original system identifier</td>
+</tr>
+<tr>
+<td><code>import_job_id</code></td>
+<td>Auto</td>
+<td>Job tracking</td>
+</tr>
+</tbody>
+</table>
+<h4 id="provenance-for-imports">Provenance for Imports</h4>
+<p>Each import creates a synthetic Source node for provenance:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;import_{job_id}&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;graph_import:{format}:{source_name}&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Imported from {source_system} on {date}&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;graph_import&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span><span class="n">original_format</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;neo4j&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span><span class="n">original_node_count</span><span class="p">:</span><span class="w"> </span><span class="m">150</span><span class="p">,</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span><span class="n">original_edge_count</span><span class="p">:</span><span class="w"> </span><span class="m">320</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="p">})</span>
+</code></pre></div></p>
+<p>This enables:
+- Tracking which concepts came from which import
+- Filtering queries by import source
+- Auditing import history
+- Potential rollback of imports</p>
+<h3 id="entry-points">Entry Points</h3>
+<p>The deterministic creation API supports multiple interfaces suited to different users:</p>
+<table>
+<thead>
+<tr>
+<th>Interface</th>
+<th>Users</th>
+<th>Use Cases</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>REST API</strong></td>
+<td>Developers, scripts</td>
+<td>Automation, integration, bulk operations</td>
+</tr>
+<tr>
+<td><strong>MCP Tools</strong></td>
+<td>AI agents (Claude, etc.)</td>
+<td>Agent-driven knowledge building</td>
+</tr>
+<tr>
+<td><strong>Web Workstation</strong></td>
+<td>Human curators</td>
+<td>Manual curation, visual graph editing</td>
+</tr>
+<tr>
+<td><strong>CLI</strong></td>
+<td>Operators, developers</td>
+<td>Quick edits, scripting</td>
+</tr>
+<tr>
+<td><strong>FUSE Filesystem</strong></td>
+<td>Power users, editors</td>
+<td>File-based concept editing</td>
+</tr>
+<tr>
+<td><strong>Import API</strong></td>
+<td>Data engineers</td>
+<td>Foreign graph ingestion</td>
+</tr>
+</tbody>
+</table>
+<h3 id="llm-assisted-curation">LLM-Assisted Curation</h3>
+<p>Beyond document extraction, LLMs can assist human curators in drafting and refining concepts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>POST /api/v1/concepts/draft
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>{
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  &quot;prompt&quot;: &quot;Create a concept about quantum entanglement for a physics ontology&quot;,
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  &quot;context&quot;: [&quot;related_concept_id_1&quot;, &quot;related_concept_id_2&quot;],  // Optional
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>  &quot;ontology&quot;: &quot;physics&quot;
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>}
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>Response:
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>{
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>  &quot;draft&quot;: {
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    &quot;label&quot;: &quot;Quantum Entanglement&quot;,
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    &quot;description&quot;: &quot;A quantum mechanical phenomenon where...&quot;,
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;EPR paradox&quot;, &quot;quantum correlation&quot;],
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    &quot;suggested_relationships&quot;: [
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>      {&quot;to&quot;: &quot;concept_123&quot;, &quot;type&quot;: &quot;IMPLIES&quot;, &quot;rationale&quot;: &quot;...&quot;}
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>    ]
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>  },
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>  &quot;requires_approval&quot;: true
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>}
+</code></pre></div>
+<p><strong>Use cases:</strong>
+- Human provides rough idea, LLM refines into proper concept structure
+- LLM suggests relationships based on existing graph context
+- Human reviews and approves before creation
+- Different from ingest: no source document, human-in-the-loop</p>
+<h3 id="fuse-filesystem-exposure">FUSE Filesystem Exposure</h3>
+<p>Concepts can be exposed as files via FUSE mount, enabling file-based workflows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>/mnt/kg/
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>├── ontologies/
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>│   ├── physics/
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>│   │   ├── concepts/
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>│   │   │   ├── quantum-entanglement.json
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>│   │   │   ├── wave-particle-duality.json
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>│   │   │   └── ...
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>│   │   └── edges/
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>│   │       └── ...
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>│   └── biology/
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>│       └── ...
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>└── queries/
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>    └── ...
+</code></pre></div>
+<p><strong>File format (concept):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept_123&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Quantum Entanglement&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span><span class="nt">&quot;search_terms&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;...&quot;</span><span class="p">],</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">  </span><span class="nt">&quot;creation_method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">&quot;created_by&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_456&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="nt">&quot;readonly&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Editing via FUSE:</strong>
+- Edit JSON file → triggers PATCH /api/v1/concepts/{id}
+- Delete file → triggers DELETE /api/v1/concepts/{id}
+- Create file → triggers POST /api/v1/concepts
+- File permissions reflect user's graph editing rights
+- <code>readonly: true</code> for concepts user cannot edit</p>
+<h3 id="cli-and-mcp-shared-implementation">CLI and MCP Shared Implementation</h3>
+<p>The <code>kg</code> CLI and MCP server share the same codebase (<code>cli/src/</code>). New concept CRUD operations will be implemented once and exposed through both interfaces:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>CLI Command</th>
+<th>MCP Tool Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create</td>
+<td><code>kg concept create -l "Label" -d "Description"</code></td>
+<td><code>concept</code> action: <code>create</code></td>
+</tr>
+<tr>
+<td>Update</td>
+<td><code>kg concept edit &lt;id&gt; -l "New Label"</code></td>
+<td><code>concept</code> action: <code>update</code></td>
+</tr>
+<tr>
+<td>Delete</td>
+<td><code>kg concept delete &lt;id&gt; --force</code></td>
+<td><code>concept</code> action: <code>delete</code></td>
+</tr>
+<tr>
+<td>List</td>
+<td><code>kg concept list -o ontology</code></td>
+<td><code>concept</code> action: <code>list</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implementation notes:</strong>
+- API client methods added to <code>cli/src/api/client.ts</code>
+- CLI commands in <code>cli/src/cli/concept.ts</code>
+- MCP actions extend existing <code>concept</code> tool (action enum)
+- Same validation, same error handling, same formatting</p>
+<h3 id="mcp-tools">MCP Tools</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">// Create single concept</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nx">mcp__kg__create_concept</span><span class="p">({</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Quantum Entanglement&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;physics&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span><span class="nx">matching_mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;auto&quot;</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="p">})</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="c1">// Create relationship between concepts</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="nx">mcp__kg__create_edge</span><span class="p">({</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span><span class="nx">from_query</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;quantum entanglement&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Semantic search</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">  </span><span class="nx">to_query</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;quantum superposition&quot;</span><span class="p">,</span><span class="w">    </span><span class="c1">// Semantic search</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">  </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;REQUIRES&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">  </span><span class="nx">confidence</span><span class="o">:</span><span class="w"> </span><span class="kt">0.9</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="p">})</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="c1">// Batch create subgraph</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="nx">mcp__kg__create_subgraph</span><span class="p">({</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;physics&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">  </span><span class="nx">nodes</span><span class="o">:</span><span class="w"> </span><span class="p">[...],</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="w">  </span><span class="nx">edges</span><span class="o">:</span><span class="w"> </span><span class="p">[...]</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="p">})</span>
+</code></pre></div>
+<p><strong>Semantic ID resolution:</strong> MCP tools can use concept queries instead of IDs:
+- Search by label/description
+- Use embedding similarity
+- Fail if ambiguous (multiple matches)</p>
+<h3 id="source-nodes-for-manual-concepts">Source Nodes for Manual Concepts</h3>
+<p>Manual concepts don't have source documents. Options:</p>
+<p><strong>Option A: Synthetic Source (Recommended)</strong>
+Create a placeholder source node for provenance:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_{user_id}_{timestamp}&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_entry&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{description}&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual&quot;</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="p">})</span>
+</code></pre></div></p>
+<p><strong>Option B: Optional Source</strong>
+Allow concepts without source links. Query patterns must handle NULL.</p>
+<p><strong>Option C: Virtual Source</strong>
+Single shared "manual entries" source per ontology.</p>
+<p><strong>Recommendation:</strong> Option A - maintains graph integrity, enables evidence attachment later.</p>
+<h3 id="edge-properties-for-manual-creation">Edge Properties for Manual Creation</h3>
+<p>Manual edges get same properties as auto edges:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">[</span><span class="p">:</span><span class="n">IMPLIES</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">85</span><span class="p">,</span><span class="w">           </span><span class="c1">// User-provided or default 1.0</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;logical_truth&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// From vocabulary</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_api&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// Distinguishes from llm_extraction</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="n">created_by</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user_123&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">  </span><span class="n">created_at</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-01-25T...&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">  </span><span class="n">job_id</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">               </span><span class="c1">// No job for manual</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span><span class="n">document_id</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="w">           </span><span class="c1">// No document for manual</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="p">}</span><span class="o">]</span>
+</code></pre></div></p>
+<h3 id="roles-and-permissions">Roles and Permissions</h3>
+<p>Graph editing requires explicit authorization. Casual users should not modify the knowledge graph.</p>
+<h4 id="role-hierarchy">Role Hierarchy</h4>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Capabilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>viewer</code></td>
+<td>Read-only: search, query, browse concepts</td>
+</tr>
+<tr>
+<td><code>contributor</code></td>
+<td>Create concepts/edges (own ontologies only)</td>
+</tr>
+<tr>
+<td><code>graph_editor</code></td>
+<td>Full CRUD on concepts/edges across ontologies</td>
+</tr>
+<tr>
+<td><code>ontology_admin</code></td>
+<td>Manage specific ontologies + contributor rights</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>Full system access including user management</td>
+</tr>
+</tbody>
+</table>
+<h4 id="oauth-scopes">OAuth Scopes</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg:read           - Query and search (all authenticated users)
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg:write          - Create concepts/edges (contributor+)
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>kg:edit           - Update/delete concepts/edges (graph_editor+)
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>kg:import         - Import foreign graphs (graph_editor+)
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kg:ontology       - Create/delete ontologies (ontology_admin+)
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>kg:admin          - User management, system config (admin)
+</code></pre></div>
+<h4 id="mcp-server-authorization">MCP Server Authorization</h4>
+<p>MCP tools MUST respect the OAuth token's scopes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">// MCP tool registration includes required scope</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nx">mcp__kg__create_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:write&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="c1">// ...</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">}</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="nx">mcp__kg__update_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:edit&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">  </span><span class="c1">// ...</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="p">}</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="nx">mcp__kg__delete_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:edit&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="w">  </span><span class="c1">// ...</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Enforcement:</strong>
+- MCP server validates token scopes before tool execution
+- Insufficient scope → tool returns permission error
+- Agents cannot escalate beyond their token's permissions
+- Audit log captures attempted unauthorized operations</p>
+<h4 id="api-permission-checks">API Permission Checks</h4>
+<p>All mutation endpoints verify permissions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/concepts&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_concept</span><span class="p">(</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">request</span><span class="p">:</span> <span class="n">CreateConceptRequest</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;kg:write&quot;</span><span class="p">))</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="p">):</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="c1"># User has kg:write scope, proceed</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="o">...</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="nd">@router</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">&quot;/concepts/</span><span class="si">{concept_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_concept</span><span class="p">(</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>    <span class="n">request</span><span class="p">:</span> <span class="n">UpdateConceptRequest</span><span class="p">,</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;kg:edit&quot;</span><span class="p">))</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="p">):</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="c1"># Also check ontology-level permissions if user is contributor</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s2">&quot;contributor&quot;</span><span class="p">:</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>        <span class="n">concept</span> <span class="o">=</span> <span class="n">get_concept</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>        <span class="k">if</span> <span class="n">concept</span><span class="o">.</span><span class="n">ontology</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user</span><span class="o">.</span><span class="n">allowed_ontologies</span><span class="p">:</span>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>            <span class="k">raise</span> <span class="n">PermissionDenied</span><span class="p">(</span><span class="s2">&quot;Cannot edit concepts in this ontology&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>    <span class="o">...</span>
+</code></pre></div>
+<h4 id="fuse-permission-mapping">FUSE Permission Mapping</h4>
+<p>FUSE filesystem reflects user permissions:
+- Files appear read-only if user lacks <code>kg:edit</code> scope
+- Directories hidden if user lacks access to ontology
+- Write operations fail with EACCES if unauthorized</p>
+<h3 id="embedding-generation">Embedding Generation</h3>
+<p>Manual concepts MUST have embeddings for:
+- Similarity matching (when <code>matching_mode: "auto"</code>)
+- Future vector searches
+- Grounding calculations</p>
+<p><strong>Flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Label + Description + Search Terms
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>        ↓
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>  Unified Embedding Worker
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>        ↓
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>  Same model as ingest (nomic-embed-text-v1.5 or configured)
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>        ↓
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>  Stored on Concept node
+</code></pre></div></p>
+<h3 id="compatibility-with-existing-features">Compatibility with Existing Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Manual Nodes</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vector search</td>
+<td>✓</td>
+<td>Same embeddings</td>
+</tr>
+<tr>
+<td>Grounding calc</td>
+<td>✓</td>
+<td>Same edge properties</td>
+</tr>
+<tr>
+<td>Pruning</td>
+<td>✓</td>
+<td>Same confidence/source properties</td>
+</tr>
+<tr>
+<td>Backup/export</td>
+<td>✓</td>
+<td>Same node structure</td>
+</tr>
+<tr>
+<td>Polarity analysis</td>
+<td>✓</td>
+<td>Same relationships</td>
+</tr>
+<tr>
+<td>Query definitions</td>
+<td>✓</td>
+<td>Cypher works identically</td>
+</tr>
+</tbody>
+</table>
+<h3 id="migration">Migration</h3>
+<p>No schema migration needed. The <code>creation_method</code> property is optional and added only to new manually-created nodes. Existing nodes implicitly have <code>creation_method: "llm_extraction"</code>.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li>✅ Query linter identifies unsafe patterns</li>
-<li>✅ Baseline documented</li>
-<li>⏳ Add linter to CI to prevent new unsafe queries</li>
+<li>Users can curate knowledge directly via web workstation</li>
+<li>Agents can build structured knowledge via MCP</li>
+<li>Bulk import possible without LLM costs</li>
+<li>Independent subgraphs for specialized use cases</li>
+<li>Full compatibility with existing features</li>
+<li><strong>Foreign graph import</strong> expands knowledge sources beyond documents</li>
+<li>Leverage existing knowledge graphs from other systems (Neo4j, RDF stores)</li>
+<li>Enable knowledge federation and migration scenarios</li>
+<li><strong>Iterative enrichment</strong> - ingest → research → enrich cycle produces higher quality graphs</li>
+<li>LLMs querying enriched graphs can synthesize better reasoning than raw extraction alone</li>
+<li>Human expert knowledge can augment automated extraction</li>
+<li><strong>Free thinking for all</strong> - humans and agents emit concepts without graph topology knowledge</li>
+<li>Graph becomes a self-organizing thought accumulator for any contributor</li>
+<li>Lowers barrier to knowledge contribution - describe concepts naturally, graph handles wiring</li>
 </ul>
-<h3 id="phase-2-before-vocabulary-migration">Phase 2 (Before Vocabulary Migration)</h3>
+<h3 id="negative">Negative</h3>
 <ul>
-<li>Fix restore_worker.py to be label-aware</li>
-<li>Fix health check to count only concept nodes</li>
-<li>Verify all queries pass linter</li>
+<li>More ways to create inconsistent data (user error)</li>
+<li>Need input validation for manual entries</li>
+<li>Potential for orphaned nodes if not careful</li>
+<li>Documentation complexity increases</li>
+<li>Permission system adds complexity to all mutation paths</li>
+<li>Must audit MCP tools for scope enforcement</li>
 </ul>
-<h3 id="phase-3-vocabulary-migration">Phase 3 (Vocabulary Migration)</h3>
+<h3 id="risks">Risks</h3>
 <ul>
-<li>Move vocabulary to graph only after Phase 2 complete</li>
-<li>Vocabulary graph isolated from restore operations</li>
-<li>Health checks correctly distinguish namespace</li>
+<li>Users creating low-quality concepts (garbage in)</li>
+<li>Duplicate concepts if matching disabled carelessly</li>
+<li>Relationship type explosion if not normalized</li>
+<li>Foreign graph imports may have incompatible semantics</li>
+<li>Large imports could overwhelm embedding generation</li>
 </ul>
-<h2 id="architectural-implication">Architectural Implication</h2>
-<p>This audit validates ADR-048's core thesis:</p>
-<blockquote>
-<p><strong>Without namespace isolation, operations that are "safe" in single-namespace graphs become catastrophic in multi-namespace graphs.</strong></p>
-</blockquote>
-<p>The restore worker assumes it owns the entire graph. Once vocabulary metadata lives in the graph, this assumption breaks. GraphQueryFacade enforces namespace awareness to prevent this class of bugs.</p>
-<h2 id="phase-completion-status">Phase Completion Status</h2>
-<h3 id="phase-1-foundation">Phase 1: Foundation ✅</h3>
-<ol>
-<li>✅ Create query linter (<code>scripts/lint_queries.py</code>)</li>
-<li>✅ Add linter to CI workflow</li>
-<li>✅ Create GraphQueryFacade with safe abstractions</li>
-<li>✅ Document baseline technical debt</li>
-</ol>
-<h3 id="phase-2-critical-path-migration">Phase 2: Critical Path Migration ✅</h3>
-<ol>
-<li>✅ Fix restore_worker.py (CRITICAL - would destroy vocabulary)</li>
-<li>✅ Fix database.py health check (incorrect counts)</li>
-<li>✅ Re-run linter and verify 0 errors</li>
-<li>✅ Test fixes with live system</li>
-</ol>
-<h3 id="phase-3-vocabulary-to-graph-complete-2025-10-27">Phase 3: Vocabulary to Graph ✅ COMPLETE (2025-10-27)</h3>
-<ol>
-<li>✅ Created migration 014 (<code>schema/migrations/014_vocabulary_as_graph.sql</code>)</li>
-<li>✅ Created :VocabType and :VocabCategory graph nodes</li>
-<li>✅ Created IN_CATEGORY relationships</li>
-<li>✅ Verified with automated tests (<code>tests/test_phase3_vocabulary_graph.py</code>)</li>
-<li>✅ All vocabulary metadata now exists in graph alongside SQL</li>
-</ol>
-<p><strong>Results:</strong>
-- ✅ 30 VocabType nodes created (IMPLIES, CAUSES, SUPPORTS, etc.)
-- ✅ 10 VocabCategory nodes created (causation, semantic, composition, etc.)
-- ✅ 30 IN_CATEGORY relationships created
-- ✅ Namespace isolation maintained (:VocabType/:VocabCategory separate from :Concept)
-- ✅ SQL vocabulary table preserved for backward compatibility</p>
-<h2 id="metrics">Metrics</h2>
-<h3 id="before-phase-2">Before Phase 2</h3>
+<h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li><strong>Total unsafe queries:</strong> 3</li>
-<li><strong>Critical severity:</strong> 2 (restore worker)</li>
-<li><strong>High severity:</strong> 1 (health check)</li>
+<li>ADR-032: Relationship vocabulary normalization</li>
+<li>ADR-044: Grounding strength calculation</li>
+<li>ADR-045: Unified embedding generation</li>
+<li>ADR-048: Query safety patterns</li>
+<li>ADR-051: Provenance tracking</li>
+<li>ADR-065: Epistemic status classification</li>
 </ul>
-<h3 id="after-phase-2">After Phase 2 ✅</h3>
+<h2 id="implementation-notes">Implementation Notes</h2>
+<h3 id="phase-1-core-api-permissions">Phase 1: Core API + Permissions</h3>
 <ul>
-<li><strong>Total unsafe queries:</strong> 0 🎉</li>
-<li><strong>Critical severity:</strong> 0</li>
-<li><strong>High severity:</strong> 0</li>
-<li><strong>System status:</strong> Ready for Phase 3</li>
+<li>POST /concepts endpoint</li>
+<li>POST /edges endpoint</li>
+<li>PATCH /concepts, PATCH /edges endpoints</li>
+<li>DELETE /concepts, DELETE /edges endpoints</li>
+<li>Embedding generation integration</li>
+<li>Basic validation</li>
+<li><strong>OAuth scope enforcement</strong> (kg:read, kg:write, kg:edit)</li>
+<li><strong>graph_editor role</strong> definition</li>
 </ul>
-<hr />
-<p><strong>Last Updated:</strong> 2025-10-27
-<strong>Status:</strong> Phase 3 Complete - Vocabulary now exists as graph nodes
-<strong>Next Steps:</strong>
-- Optional: Add GraphQueryFacade methods for vocabulary namespace
-- Optional: Migrate vocabulary queries from SQL to graph
-- Optional: Add triggers to keep SQL and graph in sync</p>
+<h3 id="phase-2-mcp-tools">Phase 2: MCP Tools</h3>
+<ul>
+<li>create_concept tool</li>
+<li>create_edge tool</li>
+<li>update_concept, delete_concept tools</li>
+<li>Semantic ID resolution</li>
+<li><strong>MCP scope validation</strong> for all mutation tools</li>
+</ul>
+<h3 id="phase-3-batch-ui">Phase 3: Batch &amp; UI</h3>
+<ul>
+<li>Batch creation endpoint</li>
+<li>Web workstation curation UI</li>
+<li>LLM-assisted concept drafting</li>
+<li>Import from CSV/JSON</li>
+</ul>
+<h3 id="phase-4-foreign-graph-import">Phase 4: Foreign Graph Import</h3>
+<ul>
+<li>JSON Graph Format importer</li>
+<li>Neo4j export importer</li>
+<li>Format detection and validation</li>
+<li>Mapping configuration UI</li>
+<li><strong>kg:import scope</strong> enforcement</li>
+</ul>
+<h3 id="phase-5-fuse-filesystem">Phase 5: FUSE Filesystem</h3>
+<ul>
+<li>Mount concepts as JSON files</li>
+<li>Permission-aware file visibility</li>
+<li>Edit-via-save workflow</li>
+<li>Read-only mode for viewers</li>
+</ul>
+<h3 id="phase-6-advanced">Phase 6: Advanced</h3>
+<ul>
+<li>RDF/JSON-LD importer</li>
+<li>GraphML importer</li>
+<li>Subgraph templates</li>
+<li>Concept merging</li>
+<li>Edge bulk operations</li>
+<li>Import rollback capability</li>
+<li>Ontology-level permission delegation</li>
+</ul>
 
 
 
