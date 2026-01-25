@@ -59,7 +59,12 @@ load_config() {
     DEV_MODE="${DEV_MODE:-false}"
     GPU_MODE="${GPU_MODE:-cpu}"
     CONTAINER_PREFIX="${CONTAINER_PREFIX:-kg}"
-    IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
+    # Dev mode uses local builds by default, standalone uses GHCR
+    if [ "$DEV_MODE" = "true" ]; then
+        IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
+    else
+        IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
+    fi
 }
 
 # Build compose command with overlays
@@ -226,13 +231,22 @@ cmd_upgrade() {
     echo ""
 
     if [ "$dry_run" = true ]; then
-        echo -e "${YELLOW}[DRY RUN] Would pull images, run migrations, restart services${NC}"
+        if [ "$IMAGE_SOURCE" = "local" ]; then
+            echo -e "${YELLOW}[DRY RUN] Would build images, run migrations, restart services${NC}"
+        else
+            echo -e "${YELLOW}[DRY RUN] Would pull images, run migrations, restart services${NC}"
+        fi
         return
     fi
 
-    # Pull images
-    echo -e "${BLUE}→ Pulling images...${NC}"
-    run_compose pull
+    # Build or pull images
+    if [ "$IMAGE_SOURCE" = "local" ]; then
+        echo -e "${BLUE}→ Building local images...${NC}"
+        run_compose build
+    else
+        echo -e "${BLUE}→ Pulling images...${NC}"
+        run_compose pull
+    fi
     echo ""
 
     # Stop app containers (keep infra running)
@@ -352,9 +366,15 @@ cmd_update() {
     load_config
     cd "$DOCKER_DIR"
 
-    echo -e "${BLUE}→ Pulling images...${NC}"
-    run_compose pull "$@"
-    echo -e "${GREEN}✓ Images updated. Run './operator.sh upgrade' to apply.${NC}"
+    if [ "$IMAGE_SOURCE" = "local" ]; then
+        echo -e "${BLUE}→ Building local images...${NC}"
+        run_compose build "$@"
+        echo -e "${GREEN}✓ Images built. Run './operator.sh upgrade' to apply.${NC}"
+    else
+        echo -e "${BLUE}→ Pulling images...${NC}"
+        run_compose pull "$@"
+        echo -e "${GREEN}✓ Images updated. Run './operator.sh upgrade' to apply.${NC}"
+    fi
 }
 
 # ============================================================================
