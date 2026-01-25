@@ -460,6 +460,23 @@ Concepts can be exposed as files via FUSE mount, enabling file-based workflows:
 - File permissions reflect user's graph editing rights
 - `readonly: true` for concepts user cannot edit
 
+### CLI and MCP Shared Implementation
+
+The `kg` CLI and MCP server share the same codebase (`cli/src/`). New concept CRUD operations will be implemented once and exposed through both interfaces:
+
+| Operation | CLI Command | MCP Tool Action |
+|-----------|-------------|-----------------|
+| Create | `kg concept create -l "Label" -d "Description"` | `concept` action: `create` |
+| Update | `kg concept edit <id> -l "New Label"` | `concept` action: `update` |
+| Delete | `kg concept delete <id> --force` | `concept` action: `delete` |
+| List | `kg concept list -o ontology` | `concept` action: `list` |
+
+**Implementation notes:**
+- API client methods added to `cli/src/api/client.ts`
+- CLI commands in `cli/src/cli/concept.ts`
+- MCP actions extend existing `concept` tool (action enum)
+- Same validation, same error handling, same formatting
+
 ### MCP Tools
 
 ```typescript
