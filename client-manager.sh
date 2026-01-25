@@ -1412,9 +1412,14 @@ parse_args() {
         esac
     done
 
-    # If running in a terminal with no API URL, enable interactive mode
-    if [ -t 0 ] && [[ -z "$API_URL" ]]; then
-        INTERACTIVE=true
+    # Enable interactive mode if:
+    # - Running in a terminal directly (stdin is a tty), OR
+    # - Piped from curl but /dev/tty is available for prompts
+    # AND no API URL was provided (headless mode requires --api-url)
+    if [[ -z "$API_URL" ]]; then
+        if [ -t 0 ] || [ -e /dev/tty ]; then
+            INTERACTIVE=true
+        fi
     fi
 }
 
@@ -1722,7 +1727,5 @@ main() {
     esac
 }
 
-# Run main if script is executed (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+# Run main with all arguments
+main "$@"
