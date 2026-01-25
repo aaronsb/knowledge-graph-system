@@ -2,7 +2,7 @@
 # ============================================================================
 # Knowledge Graph Platform Installer
 # ============================================================================
-INSTALLER_VERSION="0.6.0-dev.30"
+INSTALLER_VERSION="0.6.0-dev.31"
 # ============================================================================
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -2472,7 +2472,7 @@ configure_platform() {
     else
         redirect_url="https://${HOSTNAME}/callback"
     fi
-    if $compose_cmd exec -T operator python /workspace/operator/configure.py oauth kg-web --redirect-uri "$redirect_url" 2>&1 | grep -qi "updated\|configured"; then
+    if docker_cmd exec kg-operator python /workspace/operator/configure.py oauth kg-web --redirect-uri "$redirect_url" 2>&1 | grep -qi "updated\|configured"; then
         log_success "OAuth configured for $redirect_url"
     else
         log_warning "Could not update OAuth redirect URIs"
@@ -2480,7 +2480,7 @@ configure_platform() {
 
     # Configure admin password
     log_info "Setting admin password..."
-    if $compose_cmd exec -T operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD" 2>&1 | grep -qi "updated\|configured\|password"; then
+    if docker_cmd exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD" 2>&1 | grep -qi "updated\|configured\|password"; then
         log_success "Admin user configured"
     else
         log_warning "Could not set admin password"
@@ -2491,10 +2491,10 @@ configure_platform() {
         log_info "Configuring AI provider: $AI_PROVIDER"
 
         local model="${AI_MODEL:-gpt-4o}"
-        $compose_cmd exec -T operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$model" || true
+        docker_cmd exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$model" || true
 
         if [[ -n "$AI_KEY" ]]; then
-            if $compose_cmd exec -T operator python /workspace/operator/configure.py api-key "$AI_PROVIDER" --key "$AI_KEY" 2>&1 | grep -qi "stored"; then
+            if docker_cmd exec kg-operator python /workspace/operator/configure.py api-key "$AI_PROVIDER" --key "$AI_KEY" 2>&1 | grep -qi "stored"; then
                 log_success "AI provider configured: $AI_PROVIDER / $model"
             else
                 log_warning "Could not store AI API key"
@@ -2504,7 +2504,7 @@ configure_platform() {
 
     # Configure embeddings (local by default)
     log_info "Configuring embeddings..."
-    $compose_cmd exec -T operator python /workspace/operator/configure.py embedding 2 || true
+    docker_cmd exec kg-operator python /workspace/operator/configure.py embedding 2 || true
     log_success "Local embedding configured (nomic-embed-text-v1.5)"
 
     # Configure Garage storage
@@ -2566,7 +2566,7 @@ configure_garage() {
 
         # Store credentials in encrypted database
         local garage_credentials="${garage_key_id}:${garage_secret}"
-        if $compose_cmd exec -T operator python /workspace/operator/configure.py api-key garage --key "$garage_credentials" 2>&1 | grep -qi "stored"; then
+        if docker_cmd exec kg-operator python /workspace/operator/configure.py api-key garage --key "$garage_credentials" 2>&1 | grep -qi "stored"; then
             log_success "Garage credentials stored"
         else
             log_warning "Failed to store Garage credentials - may need manual configuration"
