@@ -103,6 +103,7 @@ All ADRs follow a consistent format:
 | [ADR-086](infrastructure/ADR-086-deployment-topology.md) | Deployment Topology | Accepted | Multi-machine deployment with dev/stable split - north (development) and cube (production), GHCR images, headless init, and upgrade workflows |
 | [ADR-087](ADR-087-documentation-strategy.md) | Documentation Strategy | Proposed | Six-audience documentation framework (builder pair, operators, users, developers, AI agents, non-technical) with audience-organized structure and non-technical feature inventory |
 | [ADR-088](infrastructure/ADR-088-semantic-election-protocol.md) | Semantic Election Protocol | Proposed | Distributed concept placement via competitive bidding - shards elect concepts based on epistemic fit (embedding similarity to hub concepts), enabling self-organizing knowledge placement without central coordination |
+| [ADR-089](ADR-089-deterministic-node-edge-creation.md) | Deterministic Node and Edge Creation | Draft | Direct API/MCP for creating concepts and edges without LLM extraction - manual curation, agent-driven knowledge building, bulk import with full embedding support and optional matching |
 
 ## How to Use This Index
 
