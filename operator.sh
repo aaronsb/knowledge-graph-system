@@ -400,7 +400,7 @@ cmd_garage()      { run_in_operator /workspace/operator/lib/garage-manager.sh "$
 
 show_help() {
     cat << EOF
-${BOLD}Knowledge Graph Platform Manager${NC}
+${BOLD}Knowledge Graph Platform Manager${NC} v${OPERATOR_VERSION}
 
 Usage: $0 <command> [options]
 
