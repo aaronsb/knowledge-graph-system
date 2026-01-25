@@ -1120,14 +1120,40 @@ ensure_prerequisites() {
     log_success "Prerequisites ready"
 }
 
+npm_user_install() {
+    # Install npm package to user-local directory (~/.local)
+    # This avoids needing sudo and doesn't touch system packages
+    # Usage: npm_user_install <package-name>
+    local package="$1"
+    local npm_dir="$HOME/.local"
+
+    # Ensure user npm directories exist
+    mkdir -p "$npm_dir/lib/node_modules" "$npm_dir/bin"
+
+    # Install to user directory using --prefix
+    (cd /tmp && npm install -g --prefix "$npm_dir" "$package")
+
+    # Ensure bin directory is in PATH for this session
+    if [[ ":$PATH:" != *":$npm_dir/bin:"* ]]; then
+        export PATH="$npm_dir/bin:$PATH"
+    fi
+}
+
+npm_user_uninstall() {
+    # Uninstall npm package from user-local directory
+    # Usage: npm_user_uninstall <package-name>
+    local package="$1"
+    local npm_dir="$HOME/.local"
+
+    npm uninstall -g --prefix "$npm_dir" "$package" 2>/dev/null || true
+}
+
 install_kg_cli() {
-    # Install the kg CLI via npm
+    # Install the kg CLI via npm to user-local directory
     log_step "Installing kg CLI"
 
-    # Install globally via npm
-    # Run from /tmp to avoid picking up local package.json if run from repo
-    log_info "Installing $NPM_PACKAGE via npm..."
-    (cd /tmp && npm install -g "$NPM_PACKAGE")
+    log_info "Installing $NPM_PACKAGE to ~/.local..."
+    npm_user_install "$NPM_PACKAGE"
 
     # Verify installation
     if command -v kg &>/dev/null; then
@@ -1135,6 +1161,7 @@ install_kg_cli() {
         log_success "kg CLI installed: $DETECTED_KG_VERSION"
     else
         log_error "kg CLI installation failed"
+        log_warning "Ensure ~/.local/bin is in your PATH"
         return 1
     fi
 }
@@ -1202,7 +1229,7 @@ upgrade_kg_cli() {
     log_step "Upgrading kg CLI"
 
     log_info "Upgrading $NPM_PACKAGE..."
-    (cd /tmp && npm update -g "$NPM_PACKAGE")
+    npm_user_install "$NPM_PACKAGE"
 
     # Re-detect version
     if command -v kg &>/dev/null; then
@@ -1236,11 +1263,11 @@ upgrade_kg_fuse() {
 }
 
 uninstall_kg_cli() {
-    # Uninstall the kg CLI
+    # Uninstall the kg CLI from user-local directory
     log_step "Uninstalling kg CLI"
 
     log_info "Uninstalling $NPM_PACKAGE..."
-    npm uninstall -g "$NPM_PACKAGE" 2>/dev/null || true
+    npm_user_uninstall "$NPM_PACKAGE"
 
     # Verify uninstallation
     if ! command -v kg &>/dev/null; then
