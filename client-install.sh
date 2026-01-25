@@ -1044,6 +1044,62 @@ remove_fuse_autostart() {
     return 0
 }
 
+stop_fuse() {
+    # Stop running FUSE driver (if any)
+    # Uses fusermount to cleanly unmount
+
+    local mount_dir="${FUSE_MOUNT_DIR:-$HOME/Knowledge}"
+
+    # Check if mounted
+    if mount | grep -q "kg-fuse.*$mount_dir"; then
+        log_info "Stopping FUSE driver..."
+        if fusermount -u "$mount_dir" 2>/dev/null || fusermount3 -u "$mount_dir" 2>/dev/null; then
+            log_success "FUSE driver stopped"
+            return 0
+        else
+            log_warning "Could not unmount FUSE (may not be running)"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+start_fuse() {
+    # Start the FUSE driver in background
+    # Only if FUSE was selected for installation
+
+    if [[ "$INSTALL_FUSE" != "true" ]]; then
+        return 0
+    fi
+
+    local mount_dir="${FUSE_MOUNT_DIR:-$HOME/Knowledge}"
+
+    # Ensure mount directory exists
+    mkdir -p "$mount_dir"
+
+    # Check if already mounted
+    if mount | grep -q "kg-fuse.*$mount_dir"; then
+        log_info "FUSE already mounted at $mount_dir"
+        return 0
+    fi
+
+    # Start kg-fuse in background
+    if command -v kg-fuse &>/dev/null; then
+        log_info "Starting FUSE driver..."
+        nohup kg-fuse "$mount_dir" >/dev/null 2>&1 &
+        sleep 1  # Give it a moment to mount
+
+        if mount | grep -q "$mount_dir"; then
+            log_success "FUSE driver started at $mount_dir"
+            return 0
+        else
+            log_warning "FUSE driver may not have started correctly"
+            return 1
+        fi
+    fi
+    return 1
+}
+
 
 # ============================================================================
 # SECTION 6: MAIN FLOW
@@ -1443,14 +1499,25 @@ show_summary() {
 
     echo -e "  ${BOLD}Next steps:${NC}" >&2
     echo -e "    • Run ${CYAN}kg health${NC} to verify connection" >&2
-    echo -e "    • Run ${CYAN}kg search \"your query\"${NC} to search the knowledge graph" >&2
-    if [[ "$INSTALL_MCP" == "true" ]]; then
-        echo -e "    • Run ${CYAN}kg mcp-config${NC} to configure Claude or other AI assistants" >&2
-    fi
+    echo "" >&2
+    echo -e "  ${BOLD}To add knowledge:${NC}" >&2
+    echo -e "    • ${CYAN}kg ingest file document.pdf --ontology myproject${NC}" >&2
+    echo -e "      Ingest a document into a new or existing ontology" >&2
+    echo -e "    • ${CYAN}kg ingest dir ./docs --ontology myproject${NC}" >&2
+    echo -e "      Ingest an entire directory of documents" >&2
+    echo "" >&2
+    echo -e "  ${BOLD}To explore knowledge:${NC}" >&2
+    echo -e "    • ${CYAN}kg search \"your query\"${NC} - Search concepts by meaning" >&2
+    echo -e "    • ${CYAN}kg ontology list${NC} - List available ontologies" >&2
     if [[ "$INSTALL_FUSE" == "true" ]]; then
-        echo -e "    • Run ${CYAN}kg-fuse ${FUSE_MOUNT_DIR:-~/Knowledge}${NC} to mount the knowledge graph" >&2
+        echo -e "    • ${CYAN}ls ${FUSE_MOUNT_DIR:-~/Knowledge}${NC} - Browse via filesystem" >&2
     fi
     echo "" >&2
+    if [[ "$INSTALL_MCP" == "true" ]]; then
+        echo -e "  ${BOLD}For AI assistants:${NC}" >&2
+        echo -e "    • ${CYAN}kg mcp-config${NC} - Configure Claude or other AI tools" >&2
+        echo "" >&2
+    fi
 
     echo -e "  ${BOLD}Web UI:${NC}" >&2
     echo -e "    The platform also has a browser interface at:" >&2
@@ -1492,6 +1559,12 @@ do_install() {
     do_install_prerequisites
     do_install_clients
     do_configure
+
+    # Start FUSE driver if installed (so user can explore immediately)
+    if [[ "$INSTALL_FUSE" == "true" ]]; then
+        start_fuse
+    fi
+
     show_summary
 }
 
@@ -1506,6 +1579,11 @@ do_upgrade() {
         exit 1
     fi
 
+    # Stop FUSE before upgrading (so we can replace the binary)
+    if [[ -n "$DETECTED_FUSE_VERSION" ]]; then
+        stop_fuse
+    fi
+
     # Upgrade kg CLI
     if [[ -n "$DETECTED_KG_VERSION" ]]; then
         upgrade_cli
@@ -1514,6 +1592,9 @@ do_upgrade() {
     # Upgrade kg-fuse
     if [[ -n "$DETECTED_FUSE_VERSION" ]]; then
         upgrade_fuse
+        # Restart FUSE with new version
+        INSTALL_FUSE=true  # Ensure start_fuse runs
+        start_fuse
     fi
 
     log_success "Upgrade complete"
