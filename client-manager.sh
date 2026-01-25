@@ -1195,7 +1195,7 @@ configure_cli() {
     if [[ -n "$USERNAME" ]] && [[ -n "$PASSWORD" ]]; then
         log_info "Authenticating..."
         # kg login with credentials
-        echo "$PASSWORD" | kg login --username "$USERNAME" --password-stdin
+        kg login --username "$USERNAME" --password "$PASSWORD"
         log_success "Authenticated as $USERNAME"
     else
         log_info "Skipping authentication (no credentials provided)"
