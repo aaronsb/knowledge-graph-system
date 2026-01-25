@@ -272,9 +272,9 @@ class OperatorConfig:
 
         # Import required modules
         try:
-            from api.api.lib.encrypted_keys import EncryptedKeyStore
-            from api.api.lib.age_client import AGEClient
-            from api.api.lib.ai_providers import OpenAIProvider, AnthropicProvider
+            from api.app.lib.encrypted_keys import EncryptedKeyStore
+            from api.app.lib.age_client import AGEClient
+            from api.app.lib.ai_providers import OpenAIProvider, AnthropicProvider
         except ImportError as e:
             print(f"❌ Cannot import required modules: {e}")
             print("   Make sure PYTHONPATH includes api directory")

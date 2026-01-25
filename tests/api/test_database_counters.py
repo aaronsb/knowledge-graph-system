@@ -44,7 +44,7 @@ MOCK_REFRESH_RESULT = {
 @pytest.fixture
 def mock_db_connection():
     """Mock database connection for counter tests."""
-    with patch('api.api.routes.database.AGEClient') as mock_client_class:
+    with patch('api.app.routes.database.AGEClient') as mock_client_class:
         mock_client = MagicMock()
         mock_pool = MagicMock()
         mock_conn = MagicMock()
@@ -80,7 +80,7 @@ class TestGetDatabaseCounters:
 
     def test_response_has_counters_structure(self, api_client, mock_oauth_validation, auth_headers_user):
         """Test that response has expected structure."""
-        with patch('api.api.routes.database.get_graph_counters_data') as mock_get:
+        with patch('api.app.routes.database.get_graph_counters_data') as mock_get:
             mock_get.return_value = MOCK_COUNTERS
 
             response = api_client.get("/database/counters", headers=auth_headers_user)
@@ -98,7 +98,7 @@ class TestGetDatabaseCounters:
 
     def test_counters_categorized_by_type(self, api_client, mock_oauth_validation, auth_headers_user):
         """Test that counters are categorized into snapshot/activity/legacy."""
-        with patch('api.api.routes.database.get_graph_counters_data') as mock_get:
+        with patch('api.app.routes.database.get_graph_counters_data') as mock_get:
             mock_get.return_value = MOCK_COUNTERS
 
             response = api_client.get("/database/counters", headers=auth_headers_user)
@@ -116,7 +116,7 @@ class TestRefreshDatabaseCounters:
 
     def test_returns_200_on_success(self, api_client, mock_oauth_validation, auth_headers_admin):
         """Test that refresh returns 200 OK."""
-        with patch('api.api.routes.database.refresh_graph_counters') as mock_refresh:
+        with patch('api.app.routes.database.refresh_graph_counters') as mock_refresh:
             mock_refresh.return_value = MOCK_REFRESH_RESULT
 
             response = api_client.post("/database/counters/refresh", headers=auth_headers_admin)
@@ -133,7 +133,7 @@ class TestRefreshDatabaseCounters:
 
     def test_refresh_returns_updated_count(self, api_client, mock_oauth_validation, auth_headers_admin):
         """Test that refresh returns count of updated counters."""
-        with patch('api.api.routes.database.refresh_graph_counters') as mock_refresh:
+        with patch('api.app.routes.database.refresh_graph_counters') as mock_refresh:
             mock_refresh.return_value = MOCK_REFRESH_RESULT
 
             response = api_client.post("/database/counters/refresh", headers=auth_headers_admin)

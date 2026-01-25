@@ -17,8 +17,8 @@ import argparse
 import sys
 from typing import List, Tuple
 
-from api.api.dependencies.auth import get_db_connection, check_permission
-from api.api.models.auth import UserInDB
+from api.app.dependencies.auth import get_db_connection, check_permission
+from api.app.models.auth import UserInDB
 
 
 def get_user(username: str) -> UserInDB:

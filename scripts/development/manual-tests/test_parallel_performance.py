@@ -13,8 +13,8 @@ import argparse
 # Add API to path
 sys.path.insert(0, '/workspace/api')
 
-from api.api.lib.age_client import AGEClient
-from api.api.lib.polarity_axis import (
+from api.app.lib.age_client import AGEClient
+from api.app.lib.polarity_axis import (
     discover_candidate_concepts,
     discover_candidate_concepts_parallel
 )

@@ -55,13 +55,13 @@ def mock_s3_client():
 @pytest.fixture
 def mock_garage_client(mock_s3_client):
     """Provide GarageClient with mocked S3 client."""
-    with patch('api.api.lib.garage_client._get_garage_credentials') as mock_creds:
+    with patch('api.app.lib.garage_client._get_garage_credentials') as mock_creds:
         mock_creds.return_value = ('test_access_key', 'test_secret_key')
 
         with patch('boto3.client') as mock_boto:
             mock_boto.return_value = mock_s3_client
 
-            from api.api.lib.garage_client import GarageClient
+            from api.app.lib.garage_client import GarageClient
             client = GarageClient(
                 endpoint="http://test:3900",
                 bucket_name="test-bucket"

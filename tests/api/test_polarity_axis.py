@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Dict, Any
 
 # Import the polarity axis module
-from api.api.lib.polarity_axis import (
+from api.app.lib.polarity_axis import (
     PolarityAxis,
     Concept,
     calculate_grounding_correlation

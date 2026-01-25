@@ -15,7 +15,10 @@ LABEL org.opencontainers.image.title="Knowledge Graph Operator"
 LABEL org.opencontainers.image.description="Platform configuration and lifecycle management"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Use BuildKit cache for apt to speed up rebuilds
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     # Docker CLI for container management via socket
     docker.io \
     # PostgreSQL client for database operations
@@ -24,8 +27,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     # Build tools for Python packages
     gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libpq-dev
 
 # Install docker compose v2 plugin (not included in docker.io package)
 # v2.35.1 fixes network override issues with mixed list/map syntax
@@ -46,10 +48,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Copy operator scripts and tools
 COPY operator/ /workspace/operator/
 
-# Copy API library code (operator imports from api.api.lib.*)
+# Copy API library code (operator imports from api.app.lib.*)
 # Only copy what's needed for configuration, not the full API server
-COPY api/api/lib/ /workspace/api/api/lib/
-COPY api/api/__init__.py /workspace/api/api/__init__.py
+COPY api/__init__.py /workspace/api/__init__.py
+COPY api/app/lib/ /workspace/api/app/lib/
+COPY api/app/__init__.py /workspace/api/app/__init__.py
 
 # Copy schema directory (for backup/restore operations)
 COPY schema/ /workspace/schema/
@@ -61,7 +64,8 @@ COPY operator.sh /etc/kg/operator.sh
 # Copy development scripts (diagnostics, etc.)
 COPY scripts/development/ /workspace/scripts/development/
 
-# Set Python path so imports work (api.api.lib.*)
+# Set Python path so imports work (api.app.lib.*)
+# Note: The directory structure is api/app/ but Python imports use api.app
 ENV PYTHONPATH=/workspace
 
 # Make scripts executable

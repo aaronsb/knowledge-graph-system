@@ -20,7 +20,7 @@ import sys
 import json
 import argparse
 from typing import Dict, List, Any, Set, Tuple
-from api.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 
 
 def sanitize_id(text: str) -> str:

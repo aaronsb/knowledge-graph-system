@@ -37,10 +37,12 @@ ARG PYTORCH_VARIANT=cpu
 WORKDIR /build
 
 # Install system dependencies for building Python packages
-RUN apt-get update && apt-get install -y \
+# Use BuildKit cache for apt to speed up rebuilds
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libpq-dev
 
 # Copy requirements
 COPY requirements.txt .
@@ -76,10 +78,12 @@ LABEL org.opencontainers.image.description="FastAPI server for knowledge graph s
 WORKDIR /app
 
 # Install runtime system dependencies
-RUN apt-get update && apt-get install -y \
+# Use BuildKit cache for apt to speed up rebuilds
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    curl
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -89,7 +93,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY api/ /app/api/
 COPY schema/ /app/schema/
 
-# Set Python path for imports (api.api.lib.*)
+# Set Python path for imports (api.app.lib.*)
 ENV PYTHONPATH=/app
 
 # Create non-root user for running the API
@@ -110,4 +114,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 # Start FastAPI server with uvicorn
 # Note: Uses --reload for development hot reload (disable in production)
-CMD ["uvicorn", "api.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
