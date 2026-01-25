@@ -298,7 +298,19 @@ cmd_admin()       { run_in_operator python /workspace/operator/configure.py admi
 cmd_ai_provider() { run_in_operator python /workspace/operator/configure.py ai-provider "$@"; }
 cmd_embedding()   { run_in_operator python /workspace/operator/configure.py embedding "$@"; }
 cmd_api_key()     { run_in_operator python /workspace/operator/configure.py api-key "$@"; }
-cmd_query()       { run_in_operator python /workspace/operator/configure.py query "$@"; }
+cmd_query() {
+    # Run SQL query against PostgreSQL (host-side, uses docker compose)
+    local query="$1"
+    if [ -z "$query" ]; then
+        echo -e "${RED}Usage: $0 query 'SQL query'${NC}"
+        echo ""
+        echo "Examples:"
+        echo "  $0 query 'SELECT count(*) FROM kg_auth.users'"
+        echo "  $0 query 'SELECT username, primary_role FROM kg_auth.users'"
+        exit 1
+    fi
+    $(get_compose_cmd) exec -T postgres psql -U admin -d knowledge_graph -c "$query"
+}
 cmd_garage()      { run_in_operator /workspace/operator/lib/garage-manager.sh "$@"; }
 
 # ============================================================================
@@ -329,6 +341,9 @@ ${BOLD}Configuration:${NC}
   ai-provider        Configure AI extraction
   embedding          Configure embeddings
   api-key            Store API keys
+
+${BOLD}Database:${NC}
+  query 'SQL'        Run SQL query (also: pg)
 
 ${BOLD}Infrastructure:${NC}
   garage             Manage Garage storage (status, init, repair)
