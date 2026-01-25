@@ -51,7 +51,7 @@ Implement a **deterministic creation API** that allows direct node/edge creation
 
 Add to **Concept nodes**:
 ```
-creation_method: "llm_extraction" | "manual_api" | "mcp_tool" | "workstation" | "graph_import" | "backup_restore"
+creation_method: "llm_extraction" | "manual_api" | "mcp_tool" | "workstation" | "graph_import"
 ```
 
 Values:
@@ -60,7 +60,8 @@ Values:
 - `mcp_tool` - Created by AI agents through MCP tools
 - `workstation` - Created via web workstation UI by humans
 - `graph_import` - Imported from foreign graph systems
-- `backup_restore` - Restored from backup
+
+**Note:** Backup/restore preserves the original `creation_method` - it's not overwritten during restore.
 
 This is informational only - all concepts are treated identically by queries, matching, and pruning.
 
