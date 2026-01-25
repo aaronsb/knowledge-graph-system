@@ -7,11 +7,49 @@ DRAFT
 
 The knowledge graph currently populates exclusively through the **ingest pipeline**: documents are chunked, concepts are extracted via LLM, and nodes/edges are created with embedding-based matching. This works well for document-driven knowledge but doesn't support:
 
-1. **Manual curation** - Users wanting to directly create/edit/delete concepts
-2. **Agent-driven creation** - MCP tools that let agents build knowledge structures programmatically
-3. **Bulk import** - Loading structured data (CSV, JSON) without LLM processing
-4. **Subgraph construction** - Creating independent concept clusters for specific purposes
-5. **Foreign graph import** - Importing knowledge graphs from external systems (Neo4j exports, RDF, JSON-LD, etc.)
+1. **Manual curation** - Humans wanting to directly create/edit/delete concepts via web workstation
+2. **Agent-driven creation** - MCP tools that let AI agents build knowledge structures programmatically
+3. **LLM-assisted curation** - Using LLM to help humans draft/refine concepts (not document extraction)
+4. **Bulk import** - Loading structured data (CSV, JSON) without LLM processing
+5. **Subgraph construction** - Creating independent concept clusters for specific purposes
+6. **Foreign graph import** - Importing knowledge graphs from external systems (Neo4j exports, RDF, JSON-LD, etc.)
+7. **Filesystem exposure** - Concepts accessible via FUSE for file-based editing workflows
+
+### Key Workflow: Iterative Graph Enrichment
+
+A primary use case for deterministic creation is the **research-then-enrich** cycle:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 1. INGEST                                                               │
+│    Documents → LLM extraction → Initial graph                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 2. RESEARCH                                                             │
+│    Query graph → Discover patterns → Identify gaps → Learn structure    │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 3. ENRICH (Deterministic Creation)                                      │
+│    Add bridging concepts → Create missing relationships →               │
+│    Strengthen weak connections → Add domain expert knowledge            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 4. SYNTHESIZE                                                           │
+│    LLM queries enriched graph → Higher quality reasoning →              │
+│    Better serialization for downstream tasks                            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+                              (repeat 2-4)
+```
+
+**Why this matters:**
+- LLM extraction captures what's explicitly in documents
+- Human/agent curation adds implicit knowledge, expert judgment, cross-domain connections
+- Enriched graphs enable more sophisticated reasoning than raw extraction alone
+- Each cycle improves graph quality for future queries
 
 ### Current Creation Flow (Ingest)
 
@@ -122,6 +160,61 @@ POST /api/v1/concepts/{concept_id}/evidence
   "quote": "Einstein described entanglement as 'spooky action'",
   "source_reference": "Einstein 1935 paper"  // Optional metadata
 }
+```
+
+#### Update Concept
+```
+PATCH /api/v1/concepts/{concept_id}
+{
+  "label": "Quantum Entanglement (updated)",
+  "description": "Revised description...",
+  "search_terms": ["entanglement", "quantum correlation", "spooky action"]
+}
+
+Response:
+{
+  "concept_id": "concept_123",
+  "embedding_regenerated": true,
+  "modified_by": "user_456",
+  "modified_at": "2026-01-25T..."
+}
+```
+
+**Update behavior:**
+- Partial updates supported (only changed fields)
+- Embedding regenerated if label/description/search_terms change
+- `modified_by` and `modified_at` tracked for audit
+- Original `created_by` and `creation_method` preserved
+
+#### Update Edge
+```
+PATCH /api/v1/edges/{edge_id}
+{
+  "confidence": 0.95,
+  "relationship_type": "STRONGLY_IMPLIES"  // Type change allowed
+}
+```
+
+#### Delete Concept
+```
+DELETE /api/v1/concepts/{concept_id}?cascade=false
+
+Response:
+{
+  "deleted": true,
+  "edges_orphaned": 3,      // If cascade=false
+  "edges_deleted": 0        // If cascade=true, these would be deleted
+}
+```
+
+**Delete modes:**
+- `cascade=false` (default): Delete concept, orphan edges (they remain with dangling references)
+- `cascade=true`: Delete concept and all connected edges
+- Returns error if concept has evidence instances (must delete those first)
+
+#### Delete Edge
+```
+DELETE /api/v1/edges/{edge_id}
 ```
 
 #### Batch Creation
@@ -243,7 +336,80 @@ The deterministic creation API supports multiple interfaces suited to different 
 | **MCP Tools** | AI agents (Claude, etc.) | Agent-driven knowledge building |
 | **Web Workstation** | Human curators | Manual curation, visual graph editing |
 | **CLI** | Operators, developers | Quick edits, scripting |
+| **FUSE Filesystem** | Power users, editors | File-based concept editing |
 | **Import API** | Data engineers | Foreign graph ingestion |
+
+### LLM-Assisted Curation
+
+Beyond document extraction, LLMs can assist human curators in drafting and refining concepts:
+
+```
+POST /api/v1/concepts/draft
+{
+  "prompt": "Create a concept about quantum entanglement for a physics ontology",
+  "context": ["related_concept_id_1", "related_concept_id_2"],  // Optional
+  "ontology": "physics"
+}
+
+Response:
+{
+  "draft": {
+    "label": "Quantum Entanglement",
+    "description": "A quantum mechanical phenomenon where...",
+    "search_terms": ["entanglement", "EPR paradox", "quantum correlation"],
+    "suggested_relationships": [
+      {"to": "concept_123", "type": "IMPLIES", "rationale": "..."}
+    ]
+  },
+  "requires_approval": true
+}
+```
+
+**Use cases:**
+- Human provides rough idea, LLM refines into proper concept structure
+- LLM suggests relationships based on existing graph context
+- Human reviews and approves before creation
+- Different from ingest: no source document, human-in-the-loop
+
+### FUSE Filesystem Exposure
+
+Concepts can be exposed as files via FUSE mount, enabling file-based workflows:
+
+```
+/mnt/kg/
+├── ontologies/
+│   ├── physics/
+│   │   ├── concepts/
+│   │   │   ├── quantum-entanglement.json
+│   │   │   ├── wave-particle-duality.json
+│   │   │   └── ...
+│   │   └── edges/
+│   │       └── ...
+│   └── biology/
+│       └── ...
+└── queries/
+    └── ...
+```
+
+**File format (concept):**
+```json
+{
+  "concept_id": "concept_123",
+  "label": "Quantum Entanglement",
+  "description": "...",
+  "search_terms": ["..."],
+  "creation_method": "workstation",
+  "created_by": "user_456",
+  "readonly": false
+}
+```
+
+**Editing via FUSE:**
+- Edit JSON file → triggers PATCH /api/v1/concepts/{id}
+- Delete file → triggers DELETE /api/v1/concepts/{id}
+- Create file → triggers POST /api/v1/concepts
+- File permissions reflect user's graph editing rights
+- `readonly: true` for concepts user cannot edit
 
 ### MCP Tools
 
@@ -315,6 +481,93 @@ Manual edges get same properties as auto edges:
 }]
 ```
 
+### Roles and Permissions
+
+Graph editing requires explicit authorization. Casual users should not modify the knowledge graph.
+
+#### Role Hierarchy
+
+| Role | Capabilities |
+|------|-------------|
+| `viewer` | Read-only: search, query, browse concepts |
+| `contributor` | Create concepts/edges (own ontologies only) |
+| `graph_editor` | Full CRUD on concepts/edges across ontologies |
+| `ontology_admin` | Manage specific ontologies + contributor rights |
+| `admin` | Full system access including user management |
+
+#### OAuth Scopes
+
+```
+kg:read           - Query and search (all authenticated users)
+kg:write          - Create concepts/edges (contributor+)
+kg:edit           - Update/delete concepts/edges (graph_editor+)
+kg:import         - Import foreign graphs (graph_editor+)
+kg:ontology       - Create/delete ontologies (ontology_admin+)
+kg:admin          - User management, system config (admin)
+```
+
+#### MCP Server Authorization
+
+MCP tools MUST respect the OAuth token's scopes:
+
+```typescript
+// MCP tool registration includes required scope
+mcp__kg__create_concept: {
+  required_scope: "kg:write",
+  // ...
+}
+
+mcp__kg__update_concept: {
+  required_scope: "kg:edit",
+  // ...
+}
+
+mcp__kg__delete_concept: {
+  required_scope: "kg:edit",
+  // ...
+}
+```
+
+**Enforcement:**
+- MCP server validates token scopes before tool execution
+- Insufficient scope → tool returns permission error
+- Agents cannot escalate beyond their token's permissions
+- Audit log captures attempted unauthorized operations
+
+#### API Permission Checks
+
+All mutation endpoints verify permissions:
+
+```python
+@router.post("/concepts")
+async def create_concept(
+    request: CreateConceptRequest,
+    user: User = Depends(require_scope("kg:write"))
+):
+    # User has kg:write scope, proceed
+    ...
+
+@router.patch("/concepts/{concept_id}")
+async def update_concept(
+    concept_id: str,
+    request: UpdateConceptRequest,
+    user: User = Depends(require_scope("kg:edit"))
+):
+    # Also check ontology-level permissions if user is contributor
+    if user.role == "contributor":
+        concept = get_concept(concept_id)
+        if concept.ontology not in user.allowed_ontologies:
+            raise PermissionDenied("Cannot edit concepts in this ontology")
+    ...
+```
+
+#### FUSE Permission Mapping
+
+FUSE filesystem reflects user permissions:
+- Files appear read-only if user lacks `kg:edit` scope
+- Directories hidden if user lacks access to ontology
+- Write operations fail with EACCES if unauthorized
+
 ### Embedding Generation
 
 Manual concepts MUST have embeddings for:
@@ -359,12 +612,17 @@ No schema migration needed. The `creation_method` property is optional and added
 - **Foreign graph import** expands knowledge sources beyond documents
 - Leverage existing knowledge graphs from other systems (Neo4j, RDF stores)
 - Enable knowledge federation and migration scenarios
+- **Iterative enrichment** - ingest → research → enrich cycle produces higher quality graphs
+- LLMs querying enriched graphs can synthesize better reasoning than raw extraction alone
+- Human expert knowledge can augment automated extraction
 
 ### Negative
 - More ways to create inconsistent data (user error)
 - Need input validation for manual entries
 - Potential for orphaned nodes if not careful
 - Documentation complexity increases
+- Permission system adds complexity to all mutation paths
+- Must audit MCP tools for scope enforcement
 
 ### Risks
 - Users creating low-quality concepts (garbage in)
@@ -384,20 +642,27 @@ No schema migration needed. The `creation_method` property is optional and added
 
 ## Implementation Notes
 
-### Phase 1: Core API
+### Phase 1: Core API + Permissions
 - POST /concepts endpoint
 - POST /edges endpoint
+- PATCH /concepts, PATCH /edges endpoints
+- DELETE /concepts, DELETE /edges endpoints
 - Embedding generation integration
 - Basic validation
+- **OAuth scope enforcement** (kg:read, kg:write, kg:edit)
+- **graph_editor role** definition
 
 ### Phase 2: MCP Tools
 - create_concept tool
 - create_edge tool
+- update_concept, delete_concept tools
 - Semantic ID resolution
+- **MCP scope validation** for all mutation tools
 
 ### Phase 3: Batch & UI
 - Batch creation endpoint
 - Web workstation curation UI
+- LLM-assisted concept drafting
 - Import from CSV/JSON
 
 ### Phase 4: Foreign Graph Import
@@ -405,11 +670,19 @@ No schema migration needed. The `creation_method` property is optional and added
 - Neo4j export importer
 - Format detection and validation
 - Mapping configuration UI
+- **kg:import scope** enforcement
 
-### Phase 5: Advanced
+### Phase 5: FUSE Filesystem
+- Mount concepts as JSON files
+- Permission-aware file visibility
+- Edit-via-save workflow
+- Read-only mode for viewers
+
+### Phase 6: Advanced
 - RDF/JSON-LD importer
 - GraphML importer
 - Subgraph templates
 - Concept merging
 - Edge bulk operations
 - Import rollback capability
+- Ontology-level permission delegation
