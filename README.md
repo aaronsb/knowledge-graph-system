@@ -87,17 +87,19 @@ The graph becomes a spatial map—without GPS coordinates. "The pharmacy is betw
 
 ## Quick Start
 
-### Connect to an Existing Platform
+### Install Client Tools
 
-If someone else is running the platform:
+The `kg` CLI, MCP server (for AI assistants), and optional FUSE filesystem:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
 ```
 
-Or just install the CLI: `npm install -g @aaronsb/kg-cli`
+Or just the CLI: `npm install -g @aaronsb/kg-cli`
 
-### Deploy Your Own Platform
+### Deploy the Platform
+
+Run your own knowledge graph backend:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash
@@ -111,7 +113,7 @@ cd knowledge-graph-system
 ./operator.sh start   # Start containers
 ```
 
-Access points:
+**Access points:**
 - **Web UI**: http://localhost:3000
 - **API**: http://localhost:8000/docs
 - **CLI**: `kg search "your query"`

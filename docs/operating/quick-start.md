@@ -4,28 +4,26 @@ Get started in 5 minutes. Choose your path:
 
 | I want to... | Use |
 |--------------|-----|
-| Connect to an existing platform | [Client Install](#client-install) |
-| Deploy on a server | [Production Install](#production-install) |
+| Install client tools (CLI, MCP, FUSE) | [Client Tools](#client-tools) |
+| Deploy the platform on a server | [Production Install](#production-install) |
 | Set up for development | [Development Setup](#development-setup) |
 
 ---
 
-## Client Install
+## Client Tools
 
-If someone else is running the platform and you just need to connect:
+Install the CLI, MCP server, and optionally the FUSE filesystem driver:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh | bash
 ```
 
-This installs:
+**What's included:**
 - **kg CLI** — Command-line access to the knowledge graph
 - **MCP server** — Lets AI assistants (Claude, etc.) use the graph as memory
 - **FUSE driver** (optional) — Mount the graph as a filesystem
 
-The installer will prompt for:
-- Platform API URL (e.g., `https://kg.example.com/api`)
-- Your username and password
+The installer prompts for the API URL and credentials, then configures everything.
 
 ### Quick Install (npm only)
 
@@ -45,7 +43,7 @@ kg login
 | MCP server | (included with CLI) | AI assistant integration |
 | kg-fuse | PyPI: `kg-fuse` | FUSE filesystem (optional) |
 
-See [Client Tools](client-tools.md) for detailed configuration.
+See [Client Tools Guide](client-tools.md) for detailed configuration.
 
 ---
 
