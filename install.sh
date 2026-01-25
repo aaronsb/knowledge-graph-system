@@ -2,7 +2,7 @@
 # ============================================================================
 # Knowledge Graph Platform Installer
 # ============================================================================
-INSTALLER_VERSION="0.6.0-dev.28"
+INSTALLER_VERSION="0.6.0-dev.29"
 # ============================================================================
 #
 # A single-command installer for the Knowledge Graph platform. Supports both
@@ -1754,6 +1754,7 @@ download_files() {
 OPERATOR_MODE=standalone
 COMPOSE_PROJECT_NAME=knowledge-graph
 INSTALLER_VERSION=${INSTALLER_VERSION}
+IMAGE_SOURCE=ghcr
 EOF
     log_success ".operator.conf created"
 
@@ -2338,6 +2339,15 @@ start_containers() {
     log_info "Pulling images from GitHub Container Registry..."
     $compose_cmd pull
 
+    # Create /project symlink for operator container compatibility
+    # The operator runs docker compose from /project, but Docker daemon on host
+    # needs paths to resolve. This symlink makes /project/config/... work on host.
+    if [[ ! -L /project ]] || [[ "$(readlink /project)" != "$install_dir" ]]; then
+        log_info "Creating /project symlink for operator compatibility..."
+        as_root rm -f /project 2>/dev/null || true
+        as_root ln -s "$install_dir" /project
+    fi
+
     # Start infrastructure first (postgres, garage)
     log_info "Starting infrastructure (postgres, garage)..."
     $compose_cmd up -d postgres garage
@@ -2370,9 +2380,18 @@ start_containers() {
     done
     log_success "Garage ready"
 
-    # Start operator
+    # Start operator with explicit mounts (compose !reset directive doesn't work)
     log_info "Starting operator..."
-    $compose_cmd up -d operator
+    local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
+    docker_cmd rm -f kg-operator 2>/dev/null || true
+    docker_cmd run -d \
+        --name kg-operator \
+        --network knowledge-graph-network \
+        --env-file "$install_dir/.env" \
+        -e COMPOSE_PROJECT_NAME=knowledge-graph \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v "$install_dir:/project" \
+        ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
 
     # Run database migrations (auto-confirm for fresh install)
     log_info "Running database migrations..."
