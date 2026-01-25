@@ -168,9 +168,27 @@ cmd_start() {
     # Bootstrap: start infra from host
     cmd_start_infra
 
-    # Delegate: migrations, garage init, app start → container
-    echo -e "${BLUE}→ Running platform startup...${NC}"
-    docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/start-platform.sh
+    # Run migrations via container
+    echo -e "${BLUE}→ Running migrations...${NC}"
+    docker exec "$OPERATOR_CONTAINER" /workspace/operator/database/migrate-db.sh -y 2>/dev/null || true
+
+    # Start api/web - must run on HOST for dev mode volume mounts to resolve correctly
+    # (running compose inside container causes paths like ../api to resolve to /workspace/api)
+    echo -e "${BLUE}→ Starting application (api, web)...${NC}"
+    cd "$DOCKER_DIR"
+    run_compose up -d api web
+
+    # Wait for API health
+    echo -e "${BLUE}→ Waiting for API...${NC}"
+    for i in {1..30}; do
+        if curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ API healthy${NC}"
+            echo -e "${GREEN}✓ Platform started${NC}"
+            return 0
+        fi
+        sleep 2
+    done
+    echo -e "${YELLOW}⚠ API may still be starting${NC}"
 }
 
 cmd_stop() {
