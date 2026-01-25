@@ -47,7 +47,7 @@ async def list_query_definitions(
         with conn.cursor() as cur:
             # Build query
             query = """
-                SELECT id, name, definition_type, definition, owner_id, created_at, updated_at
+                SELECT id, name, definition_type, definition, metadata, owner_id, created_at, updated_at
                 FROM kg_api.query_definitions
                 WHERE 1=1
             """
@@ -88,9 +88,10 @@ async def list_query_definitions(
                     name=row[1],
                     definition_type=row[2],
                     definition=row[3],
-                    owner_id=row[4],
-                    created_at=row[5],
-                    updated_at=row[6]
+                    metadata=row[4],
+                    owner_id=row[5],
+                    created_at=row[6],
+                    updated_at=row[7]
                 )
                 for row in rows
             ]
@@ -121,7 +122,7 @@ async def get_query_definition(
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, name, definition_type, definition, owner_id, created_at, updated_at
+                SELECT id, name, definition_type, definition, metadata, owner_id, created_at, updated_at
                 FROM kg_api.query_definitions
                 WHERE id = %s
             """, (definition_id,))
@@ -134,7 +135,7 @@ async def get_query_definition(
                 )
 
             # Check ownership
-            owner_id = row[4]
+            owner_id = row[5]
             if owner_id is not None and owner_id != current_user.id:
                 if current_user.role not in ("admin", "platform_admin"):
                     raise HTTPException(
@@ -147,9 +148,10 @@ async def get_query_definition(
                 name=row[1],
                 definition_type=row[2],
                 definition=row[3],
-                owner_id=row[4],
-                created_at=row[5],
-                updated_at=row[6]
+                metadata=row[4],
+                owner_id=row[5],
+                created_at=row[6],
+                updated_at=row[7]
             )
     finally:
         conn.close()
@@ -174,13 +176,14 @@ async def create_query_definition(
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO kg_api.query_definitions (name, definition_type, definition, owner_id)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id, created_at
+                INSERT INTO kg_api.query_definitions (name, definition_type, definition, metadata, owner_id)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id, created_at, updated_at
             """, (
                 definition.name,
                 definition.definition_type,
                 psycopg2.extras.Json(definition.definition),
+                psycopg2.extras.Json(definition.metadata) if definition.metadata else None,
                 current_user.id
             ))
 
@@ -193,7 +196,8 @@ async def create_query_definition(
                 id=row[0],
                 name=definition.name,
                 definition_type=definition.definition_type,
-                created_at=row[1]
+                created_at=row[1],
+                updated_at=row[2]
             )
     except Exception as e:
         conn.rollback()
@@ -256,6 +260,10 @@ async def update_query_definition(
                 updates.append("definition = %s")
                 params.append(psycopg2.extras.Json(update.definition))
 
+            if update.metadata is not None:
+                updates.append("metadata = %s")
+                params.append(psycopg2.extras.Json(update.metadata))
+
             if not updates:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -267,7 +275,7 @@ async def update_query_definition(
                 UPDATE kg_api.query_definitions
                 SET {', '.join(updates)}
                 WHERE id = %s
-                RETURNING id, name, definition_type, definition, owner_id, created_at, updated_at
+                RETURNING id, name, definition_type, definition, metadata, owner_id, created_at, updated_at
             """
 
             cur.execute(query, params)
@@ -281,9 +289,10 @@ async def update_query_definition(
                 name=row[1],
                 definition_type=row[2],
                 definition=row[3],
-                owner_id=row[4],
-                created_at=row[5],
-                updated_at=row[6]
+                metadata=row[4],
+                owner_id=row[5],
+                created_at=row[6],
+                updated_at=row[7]
             )
     except HTTPException:
         raise

@@ -125,6 +125,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
   useHistoryKeyboard(undo, redo, canUndo, canRedo);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
+  const [executionSuccess, setExecutionSuccess] = useState<{ nodeCount: number; edgeCount: number } | null>(null);
 
   // Resizable panel state
   const [bottomPanelHeight, setBottomPanelHeight] = useState(200); // Default 200px
@@ -537,6 +538,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
 
     setIsExecuting(true);
     setExecutionError(null);
+    setExecutionSuccess(null);
 
     try {
       console.log('[BlockBuilder] Executing annotated openCypher:', compiledCypher);
@@ -712,6 +714,9 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
       store.setGraphData(null); // Clear old transformed data
       store.setRawGraphData({ nodes: rawNodes, links: rawLinks });
 
+      // Set success feedback
+      setExecutionSuccess({ nodeCount: rawNodes.length, edgeCount: rawLinks.length });
+
       console.log('[BlockBuilder] Raw graph data set in store (transformation will happen automatically)');
     } catch (error: any) {
       console.error('[BlockBuilder] Execution error:', error);
@@ -719,7 +724,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
     } finally {
       setIsExecuting(false);
     }
-  }, [compiledCypher, compileErrors]);
+  }, [compiledCypher, compileErrors, nodes]);
 
   const hasErrors = compileErrors.length > 0;
   const canExecute = compiledCypher && !hasErrors && !isExecuting;
@@ -1021,6 +1026,13 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
           {executionError && (
             <div className="mt-3 p-3 bg-red-900/20 dark:bg-red-900/30 border border-red-700 dark:border-red-800 rounded text-red-300 dark:text-red-400 text-sm">
               {executionError}
+            </div>
+          )}
+
+          {executionSuccess && (
+            <div className="mt-3 p-3 bg-green-900/20 dark:bg-green-900/30 border border-green-700 dark:border-green-800 rounded text-green-300 dark:text-green-400 text-sm flex items-center gap-2">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              Query returned {executionSuccess.nodeCount} node{executionSuccess.nodeCount !== 1 ? 's' : ''}{executionSuccess.edgeCount > 0 && `, ${executionSuccess.edgeCount} edge${executionSuccess.edgeCount !== 1 ? 's' : ''}`}
             </div>
           )}
         </div>
