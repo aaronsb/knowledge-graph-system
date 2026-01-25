@@ -1156,9 +1156,19 @@ run_interactive_prompts() {
 
     # --- API URL ---
     # Try to auto-detect from existing kg config
+    # Use 'kg config json get' for machine-readable output (no ANSI colors)
     local detected_url=""
     if command -v kg &>/dev/null; then
-        detected_url=$(kg config get api_url 2>/dev/null || true)
+        local json_config
+        json_config=$(kg config json get 2>/dev/null || true)
+        if [[ -n "$json_config" ]]; then
+            # Try jq first, fall back to grep/sed for systems without jq
+            if command -v jq &>/dev/null; then
+                detected_url=$(echo "$json_config" | jq -r '.api_url // empty' 2>/dev/null || true)
+            else
+                detected_url=$(echo "$json_config" | grep -o '"api_url"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' || true)
+            fi
+        fi
     fi
 
     API_URL=$(prompt_with_fallback "API URL (e.g., https://kg.example.com/api)" "$API_URL" "$detected_url")
@@ -1180,9 +1190,14 @@ run_interactive_prompts() {
     fi
 
     # --- Username ---
+    # Reuse json_config from API URL detection above
     local detected_username=""
-    if command -v kg &>/dev/null; then
-        detected_username=$(kg config get username 2>/dev/null || true)
+    if [[ -n "$json_config" ]]; then
+        if command -v jq &>/dev/null; then
+            detected_username=$(echo "$json_config" | jq -r '.username // empty' 2>/dev/null || true)
+        else
+            detected_username=$(echo "$json_config" | grep -o '"username"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' || true)
+        fi
     fi
 
     USERNAME=$(prompt_with_fallback "Username" "$USERNAME" "$detected_username")
@@ -1362,7 +1377,7 @@ show_summary() {
 
     echo -e "  ${BOLD}kg CLI${NC}" >&2
     echo -e "    Version: $(kg --version 2>/dev/null || echo 'unknown')" >&2
-    echo -e "    API URL: $(kg config get api_url 2>/dev/null || echo 'unknown')" >&2
+    echo -e "    API URL: $API_URL" >&2
     echo "" >&2
 
     if [[ "$INSTALL_MCP" == "true" ]]; then
