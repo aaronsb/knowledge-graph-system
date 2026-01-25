@@ -7004,15 +7004,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#client-install" class="md-nav__link">
+  <a href="#client-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Client Install
+        Client Tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Client Install">
+    <nav class="md-nav" aria-label="Client Tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -7234,11 +7234,11 @@
 </thead>
 <tbody>
 <tr>
-<td>Connect to an existing platform</td>
-<td><a href="#client-install">Client Install</a></td>
+<td>Install client tools (CLI, MCP, FUSE)</td>
+<td><a href="#client-tools">Client Tools</a></td>
 </tr>
 <tr>
-<td>Deploy on a server</td>
+<td>Deploy the platform on a server</td>
 <td><a href="#production-install">Production Install</a></td>
 </tr>
 <tr>
@@ -7248,17 +7248,15 @@
 </tbody>
 </table>
 <hr />
-<h2 id="client-install">Client Install</h2>
-<p>If someone else is running the platform and you just need to connect:</p>
+<h2 id="client-tools">Client Tools</h2>
+<p>Install the CLI, MCP server, and optionally the FUSE filesystem driver:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
 </code></pre></div>
-<p>This installs:
+<p><strong>What's included:</strong>
 - <strong>kg CLI</strong> — Command-line access to the knowledge graph
 - <strong>MCP server</strong> — Lets AI assistants (Claude, etc.) use the graph as memory
 - <strong>FUSE driver</strong> (optional) — Mount the graph as a filesystem</p>
-<p>The installer will prompt for:
-- Platform API URL (e.g., <code>https://kg.example.com/api</code>)
-- Your username and password</p>
+<p>The installer prompts for the API URL and credentials, then configures everything.</p>
 <h3 id="quick-install-npm-only">Quick Install (npm only)</h3>
 <p>If you just need the CLI and already have Node.js:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@aaronsb/kg-cli
@@ -7292,7 +7290,7 @@
 </tr>
 </tbody>
 </table>
-<p>See <a href="../client-tools/">Client Tools</a> for detailed configuration.</p>
+<p>See <a href="../client-tools/">Client Tools Guide</a> for detailed configuration.</p>
 <hr />
 <h2 id="production-install">Production Install</h2>
 <p>One command installs everything on a Linux server:</p>
