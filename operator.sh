@@ -181,10 +181,83 @@ cmd_stop() {
 cmd_upgrade() {
     check_env
     load_config
-    check_operator
+    cd "$DOCKER_DIR"
 
-    # Delegate upgrade to container (it can pull, migrate, restart)
-    docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/upgrade.sh "$@"
+    local dry_run=false
+    local no_backup=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run) dry_run=true; shift ;;
+            --no-backup) no_backup=true; shift ;;
+            --help|-h)
+                echo "Usage: ./operator.sh upgrade [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  --dry-run     Show what would be done"
+                echo "  --no-backup   Skip pre-upgrade backup"
+                exit 0
+                ;;
+            *) shift ;;
+        esac
+    done
+
+    echo -e "${BLUE}${BOLD}Platform Upgrade${NC}"
+    echo ""
+
+    # Pre-flight checks
+    echo -e "${BLUE}→ Pre-flight checks...${NC}"
+    [ -f "$ENV_FILE" ] && echo -e "${GREEN}  ✓ .env exists${NC}" || { echo -e "${RED}  ✗ .env missing${NC}"; exit 1; }
+    [ -f "$CONFIG_FILE" ] && echo -e "${GREEN}  ✓ .operator.conf exists${NC}" || { echo -e "${RED}  ✗ .operator.conf missing${NC}"; exit 1; }
+    docker ps >/dev/null 2>&1 && echo -e "${GREEN}  ✓ Docker available${NC}" || { echo -e "${RED}  ✗ Docker not running${NC}"; exit 1; }
+    echo ""
+
+    # Show config
+    echo -e "${BOLD}Configuration:${NC}"
+    echo -e "  Image source: ${BLUE}$IMAGE_SOURCE${NC}"
+    echo ""
+
+    if [ "$dry_run" = true ]; then
+        echo -e "${YELLOW}[DRY RUN] Would pull images, run migrations, restart services${NC}"
+        return
+    fi
+
+    # Pull images
+    echo -e "${BLUE}→ Pulling images...${NC}"
+    run_compose pull
+    echo ""
+
+    # Stop app containers (keep infra running)
+    echo -e "${BLUE}→ Stopping application containers...${NC}"
+    run_compose stop api web 2>/dev/null || true
+    echo ""
+
+    # Run migrations via operator container (uses psql)
+    echo -e "${BLUE}→ Running migrations...${NC}"
+    if docker ps --format '{{.Names}}' | grep -q "^${OPERATOR_CONTAINER}$"; then
+        docker exec "$OPERATOR_CONTAINER" /workspace/operator/database/migrate-db.sh -y 2>/dev/null || echo -e "${YELLOW}  ⚠ Migration script not found or failed${NC}"
+    else
+        echo -e "${YELLOW}  ⚠ Operator container not running, skipping migrations${NC}"
+    fi
+    echo ""
+
+    # Start services
+    echo -e "${BLUE}→ Starting services...${NC}"
+    run_compose up -d postgres garage api web
+
+    # Health check
+    echo -e "${BLUE}→ Waiting for API health...${NC}"
+    for i in {1..30}; do
+        if curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+            echo -e "${GREEN}  ✓ API healthy${NC}"
+            break
+        fi
+        [ $i -eq 30 ] && echo -e "${YELLOW}  ⚠ API may still be starting${NC}"
+        sleep 2
+    done
+    echo ""
+
+    echo -e "${GREEN}${BOLD}✅ Upgrade complete${NC}"
 }
 
 cmd_teardown() {

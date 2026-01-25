@@ -2339,15 +2339,6 @@ start_containers() {
     log_info "Pulling images from GitHub Container Registry..."
     $compose_cmd pull
 
-    # Create /project symlink for operator container compatibility
-    # The operator runs docker compose from /project, but Docker daemon on host
-    # needs paths to resolve. This symlink makes /project/config/... work on host.
-    if [[ ! -L /project ]] || [[ "$(readlink /project)" != "$install_dir" ]]; then
-        log_info "Creating /project symlink for operator compatibility..."
-        as_root rm -rf /project 2>/dev/null || true
-        as_root ln -s "$install_dir" /project
-    fi
-
     # Start infrastructure first (postgres, garage)
     log_info "Starting infrastructure (postgres, garage)..."
     $compose_cmd up -d postgres garage
