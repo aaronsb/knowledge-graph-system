@@ -116,27 +116,33 @@ Ways are in `.claude/ways/kg/`.
 
 Configure via: `./operator.sh shell` then `configure.py ai-provider`
 
-## Release Process
+## Development → Deployment Flow
 
+**Development (workstation):**
 ```bash
-# 1. Update VERSION file
-echo "0.5.0" > VERSION
-git add VERSION && git commit -m "chore: bump version"
-git push origin main
-
-# 2. Build and push API/Web locally (faster than GH runners)
-./scripts/publish-images.sh        # Builds and pushes api + web
-./scripts/publish-images.sh api    # Or just one service
-./scripts/publish-images.sh --dry-run  # Build only, don't push
-
-# 3. Merge to release branch (builds operator only)
-git checkout release && git merge main && git push
+./operator.sh init        # First time setup
+./operator.sh start       # Start platform
+# ... develop, test locally ...
+git add . && git commit && git push
 ```
 
-**Image publishing:**
-- **API/Web**: Built locally via `scripts/publish-images.sh` (GH runners too slow)
-- **Operator**: Built automatically on release branch push
-- All images: `ghcr.io/aaronsb/knowledge-graph-system/kg-{api,web,operator}`
+**Release (workstation):**
+```bash
+# Build and push app containers
+./scripts/publish-images.sh api web    # Or just: ./scripts/publish-images.sh
+
+# If operator.sh or operator/* changed, rebuild operator too
+docker build -t ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest -f operator/Dockerfile .
+docker push ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
+```
+
+**Deploy (standalone installs like cube):**
+```bash
+sudo ./operator.sh upgrade      # Pull images, migrate, restart apps
+sudo ./operator.sh self-update  # Update operator container (if needed)
+```
+
+**Image registry:** `ghcr.io/aaronsb/knowledge-graph-system/kg-{api,web,operator}`
 
 ## Security Notes
 
