@@ -12,12 +12,21 @@ Usage:
 import argparse
 import logging
 import sys
+from importlib.metadata import version, PackageNotFoundError
 
 import pyfuse3
 import trio
 
 from .config import load_config, get_config_path, TagsConfig
 from .filesystem import KnowledgeGraphFS
+
+
+def get_version() -> str:
+    """Get package version from installed metadata."""
+    try:
+        return version("kg-fuse")
+    except PackageNotFoundError:
+        return "dev"
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +37,13 @@ def parse_args() -> argparse.Namespace:
         epilog=f"Config file: {get_config_path()}\nCreate with: kg oauth create --for fuse",
     )
     parser.add_argument(
+        "--version", "-V",
+        action="version",
+        version=f"kg-fuse {get_version()}",
+    )
+    parser.add_argument(
         "mountpoint",
+        nargs="?",  # Optional when --version is used
         help="Directory to mount the filesystem",
     )
     parser.add_argument(
@@ -58,6 +73,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+
+    # Mountpoint is required unless --version was used (which exits before here)
+    if not args.mountpoint:
+        print("Error: mountpoint is required", file=sys.stderr)
+        print("Usage: kg-fuse MOUNTPOINT [options]", file=sys.stderr)
+        sys.exit(1)
 
     # Setup logging
     logging.basicConfig(

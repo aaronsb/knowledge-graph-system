@@ -1,6 +1,6 @@
 [project]
 name = "kg-fuse"
-version = "0.1.1"
+version = "0.1.2"
 description = "FUSE filesystem for Knowledge Graph - mount your knowledge graph as a filesystem"
 readme = "README.md"
 license = "MIT"
