@@ -129,9 +129,9 @@ Response:
 - `force_create`: Always create new concept, skip matching
 - `match_only`: Return match or error, never create
 
-### Agent "Free Thinking" Pattern
+### "Free Thinking" Pattern (Agents and Humans)
 
-When agents use `matching_mode: "auto"`, they can reason freely without graph topology knowledge:
+When using `matching_mode: "auto"`, creators (agents or humans) can work freely without graph topology knowledge:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -156,14 +156,25 @@ When agents use `matching_mode: "auto"`, they can reason freely without graph to
 ```
 
 **Why this matters:**
-- Agent focuses on **ideation**, graph handles **integration**
+- Creator focuses on **ideation**, graph handles **integration**
 - No need to query graph structure before creating
 - Duplicate concepts naturally merge via similarity matching
-- Agent can "think out loud" - emit many concepts rapidly
+- Rapid concept emission without cognitive overhead of "where does this fit?"
 - Graph becomes a **thought accumulator** that self-organizes
 
+**For agents:**
+- "Think out loud" - emit many concepts during reasoning
+- Graph captures agent's evolving understanding
+- No API calls to discover existing structure
+
+**For humans:**
+- Domain expert can dump knowledge without learning graph structure
+- Brainstorming sessions become graph-building sessions
+- Lower barrier to contribution - just describe concepts naturally
+- Web workstation becomes a "knowledge notepad" that auto-organizes
+
 **Contrast with `force_create`:**
-- Use when agent intentionally wants distinct concept (even if similar exists)
+- Use when creator intentionally wants distinct concept (even if similar exists)
 - Useful for tracking different perspectives on same topic
 - Creates isolated subgraphs when desired
 
@@ -653,8 +664,9 @@ No schema migration needed. The `creation_method` property is optional and added
 - **Iterative enrichment** - ingest → research → enrich cycle produces higher quality graphs
 - LLMs querying enriched graphs can synthesize better reasoning than raw extraction alone
 - Human expert knowledge can augment automated extraction
-- **Agent free thinking** - agents emit concepts without graph topology knowledge; matching handles integration
-- Graph becomes a self-organizing thought accumulator
+- **Free thinking for all** - humans and agents emit concepts without graph topology knowledge
+- Graph becomes a self-organizing thought accumulator for any contributor
+- Lowers barrier to knowledge contribution - describe concepts naturally, graph handles wiring
 
 ### Negative
 - More ways to create inconsistent data (user error)
