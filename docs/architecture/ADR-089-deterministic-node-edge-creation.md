@@ -11,6 +11,7 @@ The knowledge graph currently populates exclusively through the **ingest pipelin
 2. **Agent-driven creation** - MCP tools that let agents build knowledge structures programmatically
 3. **Bulk import** - Loading structured data (CSV, JSON) without LLM processing
 4. **Subgraph construction** - Creating independent concept clusters for specific purposes
+5. **Foreign graph import** - Importing knowledge graphs from external systems (Neo4j exports, RDF, JSON-LD, etc.)
 
 ### Current Creation Flow (Ingest)
 
@@ -50,8 +51,16 @@ Implement a **deterministic creation API** that allows direct node/edge creation
 
 Add to **Concept nodes**:
 ```
-creation_method: "llm_extraction" | "manual_api" | "mcp_tool" | "backup_restore"
+creation_method: "llm_extraction" | "manual_api" | "mcp_tool" | "workstation" | "graph_import" | "backup_restore"
 ```
+
+Values:
+- `llm_extraction` - Created through document ingest pipeline
+- `manual_api` - Created via REST API directly
+- `mcp_tool` - Created by AI agents through MCP tools
+- `workstation` - Created via web workstation UI by humans
+- `graph_import` - Imported from foreign graph systems
+- `backup_restore` - Restored from backup
 
 This is informational only - all concepts are treated identically by queries, matching, and pruning.
 
@@ -124,6 +133,116 @@ POST /api/v1/graph/batch
   "instances": [...]
 }
 ```
+
+### Foreign Graph Import
+
+A significant capability enabled by deterministic creation is importing knowledge from external graph systems. This expands KG beyond document-driven knowledge to incorporate existing structured knowledge.
+
+#### Supported Import Formats
+
+| Format | Source Systems | Notes |
+|--------|----------------|-------|
+| JSON Graph Format | Generic exports, custom systems | Lightweight, easy to transform |
+| Neo4j JSON | Neo4j exports | Direct node/edge mapping |
+| RDF/JSON-LD | Semantic web, linked data | Requires vocabulary mapping |
+| GraphML | yEd, Gephi, NetworkX | XML-based, widely supported |
+| CSV (nodes + edges) | Spreadsheets, databases | Simple tabular format |
+
+#### Import Pipeline
+
+```
+Foreign Graph Data
+       ↓
+   Validation (schema check)
+       ↓
+   Normalization (required properties)
+       ↓
+   Enrichment (sources, embeddings)
+       ↓
+   Matching (optional deduplication)
+       ↓
+   MERGE into Apache AGE
+```
+
+#### Import API
+
+```
+POST /api/v1/graph/import
+{
+  "format": "json_graph" | "neo4j" | "rdf" | "graphml" | "csv",
+  "ontology": "imported_knowledge",
+  "data": { ... } | "file_path",
+  "options": {
+    "matching_mode": "auto" | "force_create",
+    "generate_embeddings": true,
+    "create_synthetic_sources": true,
+    "node_mapping": {
+      "label_field": "name",
+      "description_field": "description"
+    },
+    "edge_mapping": {
+      "type_field": "relationship",
+      "confidence_field": "weight"
+    }
+  }
+}
+
+Response:
+{
+  "job_id": "import_abc123",
+  "nodes_imported": 150,
+  "edges_imported": 320,
+  "nodes_matched": 12,
+  "nodes_created": 138,
+  "warnings": ["Unknown relationship type 'RELATED_TO' normalized to 'RELATES_TO'"]
+}
+```
+
+#### Normalization Requirements
+
+Foreign nodes must be enriched to meet KG schema:
+
+| Property | Required | Default/Generation |
+|----------|----------|-------------------|
+| `label` | Yes | Mapped from source field |
+| `description` | No | Empty or mapped |
+| `embedding` | Yes | Generated via unified worker |
+| `creation_method` | Auto | Set to "graph_import" |
+| `source_graph` | Auto | Original system identifier |
+| `import_job_id` | Auto | Job tracking |
+
+#### Provenance for Imports
+
+Each import creates a synthetic Source node for provenance:
+```cypher
+(:Source {
+  source_id: "import_{job_id}",
+  document: "graph_import:{format}:{source_name}",
+  full_text: "Imported from {source_system} on {date}",
+  content_type: "graph_import",
+  original_format: "neo4j",
+  original_node_count: 150,
+  original_edge_count: 320
+})
+```
+
+This enables:
+- Tracking which concepts came from which import
+- Filtering queries by import source
+- Auditing import history
+- Potential rollback of imports
+
+### Entry Points
+
+The deterministic creation API supports multiple interfaces suited to different users:
+
+| Interface | Users | Use Cases |
+|-----------|-------|-----------|
+| **REST API** | Developers, scripts | Automation, integration, bulk operations |
+| **MCP Tools** | AI agents (Claude, etc.) | Agent-driven knowledge building |
+| **Web Workstation** | Human curators | Manual curation, visual graph editing |
+| **CLI** | Operators, developers | Quick edits, scripting |
+| **Import API** | Data engineers | Foreign graph ingestion |
 
 ### MCP Tools
 
@@ -231,11 +350,14 @@ No schema migration needed. The `creation_method` property is optional and added
 ## Consequences
 
 ### Positive
-- Users can curate knowledge directly
+- Users can curate knowledge directly via web workstation
 - Agents can build structured knowledge via MCP
 - Bulk import possible without LLM costs
 - Independent subgraphs for specialized use cases
 - Full compatibility with existing features
+- **Foreign graph import** expands knowledge sources beyond documents
+- Leverage existing knowledge graphs from other systems (Neo4j, RDF stores)
+- Enable knowledge federation and migration scenarios
 
 ### Negative
 - More ways to create inconsistent data (user error)
@@ -247,6 +369,8 @@ No schema migration needed. The `creation_method` property is optional and added
 - Users creating low-quality concepts (garbage in)
 - Duplicate concepts if matching disabled carelessly
 - Relationship type explosion if not normalized
+- Foreign graph imports may have incompatible semantics
+- Large imports could overwhelm embedding generation
 
 ## Related ADRs
 
@@ -272,10 +396,19 @@ No schema migration needed. The `creation_method` property is optional and added
 
 ### Phase 3: Batch & UI
 - Batch creation endpoint
-- Web UI for manual curation
+- Web workstation curation UI
 - Import from CSV/JSON
 
-### Phase 4: Advanced
+### Phase 4: Foreign Graph Import
+- JSON Graph Format importer
+- Neo4j export importer
+- Format detection and validation
+- Mapping configuration UI
+
+### Phase 5: Advanced
+- RDF/JSON-LD importer
+- GraphML importer
 - Subgraph templates
 - Concept merging
 - Edge bulk operations
+- Import rollback capability
