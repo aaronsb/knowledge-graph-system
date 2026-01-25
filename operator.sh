@@ -564,7 +564,7 @@ case "${1:-help}" in
 
         # Get current container config for recreation
         load_config
-        local install_dir="$SCRIPT_DIR"
+        install_dir="$SCRIPT_DIR"
 
         # Stop and remove old container
         echo -e "  Recreating container..."
