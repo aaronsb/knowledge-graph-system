@@ -1396,6 +1396,9 @@ show_summary() {
         echo "" >&2
     fi
 
+    # Derive web UI URL from API URL (strip /api suffix)
+    local web_url="${API_URL%/api}"
+
     echo -e "  ${BOLD}Next steps:${NC}" >&2
     echo -e "    • Run ${CYAN}kg health${NC} to verify connection" >&2
     echo -e "    • Run ${CYAN}kg search \"your query\"${NC} to search the knowledge graph" >&2
@@ -1405,6 +1408,14 @@ show_summary() {
     if [[ "$INSTALL_FUSE" == "true" ]]; then
         echo -e "    • Run ${CYAN}kg-fuse ${FUSE_MOUNT_DIR:-~/Knowledge}${NC} to mount the knowledge graph" >&2
     fi
+    echo "" >&2
+
+    echo -e "  ${BOLD}Web UI:${NC}" >&2
+    echo -e "    The platform also has a browser interface at:" >&2
+    echo -e "    ${CYAN}${web_url}${NC}" >&2
+    echo "" >&2
+    echo -e "    Many CLI features are also available in the web UI:" >&2
+    echo -e "    searching, exploring connections, ingesting documents, etc." >&2
     echo "" >&2
 }
 
