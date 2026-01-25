@@ -2384,9 +2384,22 @@ start_containers() {
         -v "$install_dir:/project" \
         ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
 
+    # Wait for operator to be ready
+    log_info "Waiting for operator..."
+    retries=10
+    while ! docker_cmd exec kg-operator echo "ready" &>/dev/null; do
+        ((retries--))
+        if [[ $retries -le 0 ]]; then
+            log_warning "Operator may still be starting..."
+            break
+        fi
+        sleep 1
+    done
+
     # Run database migrations (auto-confirm for fresh install)
+    # Note: operator started with docker run, not compose, so use docker exec directly
     log_info "Running database migrations..."
-    $compose_cmd exec -T operator /workspace/operator/database/migrate-db.sh -y
+    docker_cmd exec kg-operator /workspace/operator/database/migrate-db.sh -y
     log_success "Migrations complete"
 
     # Start application containers
