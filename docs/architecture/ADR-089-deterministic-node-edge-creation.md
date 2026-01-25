@@ -129,6 +129,44 @@ Response:
 - `force_create`: Always create new concept, skip matching
 - `match_only`: Return match or error, never create
 
+### Agent "Free Thinking" Pattern
+
+When agents use `matching_mode: "auto"`, they can reason freely without graph topology knowledge:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  AGENT REASONING                                                        │
+│  "I notice these documents discuss supply chain resilience..."          │
+│                           ↓                                             │
+│  Agent emits concept: { label: "Supply Chain Resilience", ... }         │
+└─────────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  GRAPH MATCHING (automatic)                                             │
+│  - Embed new concept                                                    │
+│  - Search existing concepts (≥0.85 similarity)                          │
+│  - Found match? → Link to existing "Supply Chain Robustness"            │
+│  - No match? → Create new node, auto-attach via relationships           │
+└─────────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  RESULT                                                                 │
+│  Agent's thought integrated into graph without explicit wiring          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Why this matters:**
+- Agent focuses on **ideation**, graph handles **integration**
+- No need to query graph structure before creating
+- Duplicate concepts naturally merge via similarity matching
+- Agent can "think out loud" - emit many concepts rapidly
+- Graph becomes a **thought accumulator** that self-organizes
+
+**Contrast with `force_create`:**
+- Use when agent intentionally wants distinct concept (even if similar exists)
+- Useful for tracking different perspectives on same topic
+- Creates isolated subgraphs when desired
+
 #### Create Edge
 ```
 POST /api/v1/edges
@@ -615,6 +653,8 @@ No schema migration needed. The `creation_method` property is optional and added
 - **Iterative enrichment** - ingest → research → enrich cycle produces higher quality graphs
 - LLMs querying enriched graphs can synthesize better reasoning than raw extraction alone
 - Human expert knowledge can augment automated extraction
+- **Agent free thinking** - agents emit concepts without graph topology knowledge; matching handles integration
+- Graph becomes a self-organizing thought accumulator
 
 ### Negative
 - More ways to create inconsistent data (user error)
