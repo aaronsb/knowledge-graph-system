@@ -1612,7 +1612,7 @@ run_uninstall() {
 
 run_interactive() {
     # Run interactive installation flow
-    log_step "Knowledge Graph Client Manager"
+    log_step "Knowledge Graph Client Manager v$CLIENT_MANAGER_VERSION"
 
     # Try to load existing config
     if load_config; then
