@@ -2344,7 +2344,7 @@ start_containers() {
     # needs paths to resolve. This symlink makes /project/config/... work on host.
     if [[ ! -L /project ]] || [[ "$(readlink /project)" != "$install_dir" ]]; then
         log_info "Creating /project symlink for operator compatibility..."
-        as_root rm -f /project 2>/dev/null || true
+        as_root rm -rf /project 2>/dev/null || true
         as_root ln -s "$install_dir" /project
     fi
 
