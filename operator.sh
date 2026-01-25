@@ -1,9 +1,17 @@
 #!/bin/bash
 # ============================================================================
 # operator.sh - Knowledge Graph Platform Manager (Thin Shim)
+# ============================================================================
+OPERATOR_VERSION="0.6.0-dev.31"
+# ============================================================================
 #
 # Minimal host-side script that delegates to operator container.
 # Only host-critical operations run directly; everything else via docker exec.
+#
+# GitHub repository for self-update
+KG_REPO="aaronsb/knowledge-graph-system"
+KG_REPO_RAW="https://raw.githubusercontent.com/${KG_REPO}/main"
+KG_GHCR="ghcr.io/${KG_REPO}"
 #
 # ============================================================================
 
@@ -422,7 +430,7 @@ ${BOLD}Infrastructure:${NC}
   garage             Manage Garage storage (status, init, repair)
 
 ${BOLD}Maintenance:${NC}
-  self-update        Update operator.sh from container
+  self-update        Update operator.sh and operator container
 
 ${BOLD}Development (repo only):${NC}
   init               Guided setup
@@ -476,24 +484,117 @@ case "${1:-help}" in
         docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/recert.sh "$@"
         ;;
 
-    # Self-update: extract operator.sh from container
+    # Self-update: update operator.sh and operator container
     self-update)
-        check_operator
-        echo -e "${BLUE}→ Extracting operator.sh from container...${NC}"
-        # Preserve original ownership
-        ORIG_OWNER=$(stat -c '%u:%g' "$SCRIPT_DIR/operator.sh" 2>/dev/null || echo "")
-        if docker cp "$OPERATOR_CONTAINER":/etc/kg/operator.sh "$SCRIPT_DIR/operator.sh.new"; then
-            chmod +x "$SCRIPT_DIR/operator.sh.new"
-            if [ -n "$ORIG_OWNER" ]; then
-                chown "$ORIG_OWNER" "$SCRIPT_DIR/operator.sh.new" 2>/dev/null || true
-            fi
-            mv "$SCRIPT_DIR/operator.sh.new" "$SCRIPT_DIR/operator.sh"
-            echo -e "${GREEN}✓ operator.sh updated from container${NC}"
-        else
-            echo -e "${RED}✗ Failed to extract operator.sh${NC}"
-            echo "  Make sure the operator container has /etc/kg/operator.sh"
+        echo -e "${BLUE}${BOLD}Self-Update${NC}"
+        echo ""
+
+        # Check docker permissions
+        if ! docker ps >/dev/null 2>&1; then
+            echo -e "${RED}✗ Cannot access Docker. Try: sudo ./operator.sh self-update${NC}"
             exit 1
         fi
+
+        # Check write permissions to script directory
+        if [ ! -w "$SCRIPT_DIR" ]; then
+            echo -e "${RED}✗ Cannot write to $SCRIPT_DIR. Try: sudo ./operator.sh self-update${NC}"
+            exit 1
+        fi
+
+        local_version="$OPERATOR_VERSION"
+        container_version=""
+
+        echo -e "${BLUE}→ Checking versions...${NC}"
+        echo -e "  Local:     ${BOLD}$local_version${NC}"
+
+        # Get version from container (if running)
+        if docker ps --format '{{.Names}}' | grep -q "^${OPERATOR_CONTAINER}$"; then
+            container_version=$(docker exec "$OPERATOR_CONTAINER" grep '^OPERATOR_VERSION=' /etc/kg/operator.sh 2>/dev/null | cut -d'"' -f2 || echo "")
+            if [ -n "$container_version" ]; then
+                echo -e "  Container: ${BOLD}$container_version${NC}"
+            else
+                echo -e "  Container: ${YELLOW}unknown${NC}"
+            fi
+        else
+            echo -e "  Container: ${YELLOW}not running${NC}"
+        fi
+        echo ""
+
+        # Compare versions (simple string comparison - newer versions should sort higher)
+        update_script=false
+        if [ -n "$container_version" ] && [ "$container_version" != "$local_version" ]; then
+            # Use sort -V for version comparison
+            newer=$(printf '%s\n%s\n' "$local_version" "$container_version" | sort -V | tail -1)
+            if [ "$newer" = "$container_version" ] && [ "$newer" != "$local_version" ]; then
+                echo -e "${BLUE}→ Container has newer operator.sh ($container_version)${NC}"
+                update_script=true
+            fi
+        fi
+
+        # Update operator.sh from container if newer
+        if [ "$update_script" = true ]; then
+            echo -e "${BLUE}→ Extracting operator.sh from container...${NC}"
+            ORIG_OWNER=$(stat -c '%u:%g' "$SCRIPT_DIR/operator.sh" 2>/dev/null || echo "")
+            if docker cp "$OPERATOR_CONTAINER":/etc/kg/operator.sh "$SCRIPT_DIR/operator.sh.new"; then
+                chmod +x "$SCRIPT_DIR/operator.sh.new"
+                if [ -n "$ORIG_OWNER" ]; then
+                    chown "$ORIG_OWNER" "$SCRIPT_DIR/operator.sh.new" 2>/dev/null || true
+                fi
+                mv "$SCRIPT_DIR/operator.sh.new" "$SCRIPT_DIR/operator.sh"
+                echo -e "${GREEN}  ✓ operator.sh updated to $container_version${NC}"
+            else
+                echo -e "${RED}  ✗ Failed to extract operator.sh${NC}"
+            fi
+        else
+            echo -e "${GREEN}  ✓ operator.sh is current${NC}"
+        fi
+
+        # Always pull and recreate operator container
+        echo ""
+        echo -e "${BLUE}→ Updating operator container...${NC}"
+
+        # Pull latest operator image
+        echo -e "  Pulling ${KG_GHCR}/kg-operator:latest..."
+        if docker pull "${KG_GHCR}/kg-operator:latest" >/dev/null 2>&1; then
+            echo -e "${GREEN}  ✓ Image pulled${NC}"
+        else
+            echo -e "${RED}  ✗ Failed to pull operator image${NC}"
+            exit 1
+        fi
+
+        # Get current container config for recreation
+        load_config
+        local install_dir="$SCRIPT_DIR"
+
+        # Stop and remove old container
+        echo -e "  Recreating container..."
+        docker rm -f "$OPERATOR_CONTAINER" >/dev/null 2>&1 || true
+
+        # Start new container with same mounts as install.sh creates
+        docker run -d \
+            --name "$OPERATOR_CONTAINER" \
+            --network knowledge-graph-network \
+            --env-file "$ENV_FILE" \
+            -e COMPOSE_PROJECT_NAME=knowledge-graph \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$install_dir:/project" \
+            "${KG_GHCR}/kg-operator:latest" >/dev/null
+
+        echo -e "${GREEN}  ✓ Operator container updated${NC}"
+
+        # Check if new container has newer script
+        echo ""
+        new_container_version=$(docker exec "$OPERATOR_CONTAINER" grep '^OPERATOR_VERSION=' /etc/kg/operator.sh 2>/dev/null | cut -d'"' -f2 || echo "")
+        if [ -n "$new_container_version" ] && [ "$new_container_version" != "$local_version" ] && [ "$update_script" = false ]; then
+            newer=$(printf '%s\n%s\n' "$local_version" "$new_container_version" | sort -V | tail -1)
+            if [ "$newer" = "$new_container_version" ]; then
+                echo -e "${YELLOW}Note: New container has operator.sh $new_container_version${NC}"
+                echo -e "${YELLOW}Run './operator.sh self-update' again to update the script${NC}"
+            fi
+        fi
+
+        echo ""
+        echo -e "${GREEN}${BOLD}✅ Self-update complete${NC}"
         ;;
 
     # Help
