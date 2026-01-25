@@ -48,6 +48,7 @@ set -e  # Exit on error
 
 # --- Platform Connection ---
 API_URL=""                          # Platform API URL (e.g., https://kg.example.com/api)
+API_VERSION=""                      # Platform version (fetched from API, saved to config)
 USERNAME=""                         # Admin username for authentication
 PASSWORD=""                         # Admin password (prompted, never saved to config)
 
@@ -269,6 +270,36 @@ prompt_with_fallback() {
     echo "${value:-$default}"
 }
 
+# --- API Version ---
+# Fetch version from platform API
+
+fetch_api_version() {
+    # Fetch platform version from API root endpoint
+    # Args: $1 = API URL
+    # Sets: API_VERSION
+    local url="$1"
+
+    if [[ -z "$url" ]]; then
+        API_VERSION=""
+        return 1
+    fi
+
+    # Fetch API root and extract version
+    local response
+    response=$(curl -sf "$url" --max-time 10 2>/dev/null || true)
+
+    if [[ -n "$response" ]]; then
+        # Try jq first, fall back to grep/sed
+        if command -v jq &>/dev/null; then
+            API_VERSION=$(echo "$response" | jq -r '.version // empty' 2>/dev/null || true)
+        else
+            API_VERSION=$(echo "$response" | grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/' || true)
+        fi
+    fi
+
+    [[ -n "$API_VERSION" ]]
+}
+
 # --- Config Save/Load ---
 # Saves user choices to XDG-compliant config file for future upgrades
 
@@ -295,6 +326,7 @@ CLIENT_INSTALLER_VERSION="$version"
 
 # --- Platform Connection ---
 API_URL="$API_URL"
+API_VERSION="$API_VERSION"
 USERNAME="$USERNAME"
 # Note: PASSWORD is NOT saved for security - enter during install
 
@@ -333,8 +365,9 @@ load_config() {
 show_config_summary() {
     # Display loaded config for user confirmation
     echo -e "${BOLD}Previous configuration found:${NC}"
-    echo -e "  ${BOLD}Version:${NC}    $CONFIG_VERSION"
+    echo -e "  ${BOLD}Installer:${NC}  v$CONFIG_VERSION"
     echo -e "  ${BOLD}API URL:${NC}    ${API_URL:-not set}"
+    [[ -n "$API_VERSION" ]] && echo -e "  ${BOLD}Platform:${NC}   $API_VERSION"
     echo -e "  ${BOLD}Username:${NC}   ${USERNAME:-not set}"
     echo -e "  ${BOLD}MCP:${NC}        ${INSTALL_MCP:-true}"
     echo -e "  ${BOLD}FUSE:${NC}       ${INSTALL_FUSE:-false}"
@@ -1346,6 +1379,11 @@ do_configure() {
     # Set API URL
     configure_api_url "$API_URL" || exit 1
 
+    # Fetch and store platform version
+    if fetch_api_version "$API_URL"; then
+        log_success "Platform version: $API_VERSION"
+    fi
+
     # Authenticate
     authenticate "$USERNAME" "$PASSWORD" || exit 1
 
@@ -1375,9 +1413,13 @@ show_summary() {
     log_step "Installation Complete"
     echo "" >&2
 
+    echo -e "  ${BOLD}Platform${NC}" >&2
+    echo -e "    API URL: $API_URL" >&2
+    [[ -n "$API_VERSION" ]] && echo -e "    Version: $API_VERSION" >&2
+    echo "" >&2
+
     echo -e "  ${BOLD}kg CLI${NC}" >&2
     echo -e "    Version: $(kg --version 2>/dev/null || echo 'unknown')" >&2
-    echo -e "    API URL: $API_URL" >&2
     echo "" >&2
 
     if [[ "$INSTALL_MCP" == "true" ]]; then
@@ -1511,6 +1553,106 @@ do_uninstall() {
     log_success "Uninstall complete"
 }
 
+show_lifecycle_menu() {
+    # Show interactive menu based on what's detected
+    # Returns: sets MODE based on user choice
+
+    local has_tools=false
+    local has_config=false
+
+    [[ -n "$DETECTED_KG_VERSION" || -n "$DETECTED_FUSE_VERSION" ]] && has_tools=true
+    [[ -f "$CONFIG_FILE" ]] && has_config=true
+
+    echo "" >&2
+    log_step "What would you like to do?"
+    echo "" >&2
+
+    if [[ "$has_tools" == "true" ]]; then
+        # Existing installation detected
+        echo -e "  ${BOLD}1)${NC} Upgrade        - Update client tools to latest versions" >&2
+        echo -e "  ${BOLD}2)${NC} Reconfigure    - Change settings, re-authenticate" >&2
+        echo -e "  ${BOLD}3)${NC} Reinstall      - Remove and reinstall from scratch" >&2
+        echo -e "  ${BOLD}4)${NC} Uninstall      - Remove client tools" >&2
+        echo -e "  ${BOLD}5)${NC} Exit           - Do nothing" >&2
+        echo "" >&2
+
+        local choice
+        echo -ne "  ${CYAN}?${NC} Choice [1]: " >&2
+        read -r choice </dev/tty
+        choice="${choice:-1}"
+
+        case "$choice" in
+            1) MODE="upgrade" ;;
+            2) MODE="reconfigure" ;;
+            3) MODE="reinstall" ;;
+            4) MODE="uninstall" ;;
+            5|q|Q)
+                log_info "Exiting"
+                exit 0
+                ;;
+            *)
+                log_warning "Invalid choice, defaulting to upgrade"
+                MODE="upgrade"
+                ;;
+        esac
+    else
+        # No existing installation
+        echo -e "  ${BOLD}1)${NC} Install        - Install client tools" >&2
+        echo -e "  ${BOLD}2)${NC} Exit           - Do nothing" >&2
+        echo "" >&2
+
+        local choice
+        echo -ne "  ${CYAN}?${NC} Choice [1]: " >&2
+        read -r choice </dev/tty
+        choice="${choice:-1}"
+
+        case "$choice" in
+            1) MODE="install" ;;
+            2|q|Q)
+                log_info "Exiting"
+                exit 0
+                ;;
+            *)
+                log_warning "Invalid choice, defaulting to install"
+                MODE="install"
+                ;;
+        esac
+    fi
+}
+
+do_reconfigure() {
+    # Reconfigure existing installation (change settings, re-auth)
+    log_step "Reconfiguring"
+
+    # Run interactive prompts to collect new settings
+    run_interactive_prompts
+
+    # Reconfigure
+    do_configure
+
+    show_summary
+}
+
+do_reinstall() {
+    # Uninstall then install fresh
+    log_step "Reinstalling"
+
+    # Uninstall existing
+    if [[ -n "$DETECTED_FUSE_VERSION" ]]; then
+        uninstall_fuse
+    fi
+    if [[ -n "$DETECTED_KG_VERSION" ]]; then
+        uninstall_cli
+    fi
+
+    # Clear detection so install doesn't skip
+    DETECTED_KG_VERSION=""
+    DETECTED_FUSE_VERSION=""
+
+    # Fresh install
+    do_install
+}
+
 main() {
     # Main entry point
     parse_flags "$@"
@@ -1524,21 +1666,21 @@ main() {
     show_banner
     run_all_detection
 
-    # Try to load existing config for upgrades
+    # Try to load existing config
     if [[ -f "$CONFIG_FILE" ]]; then
         load_config
-        if [[ "$MODE" == "install" && "$INTERACTIVE" == "true" ]]; then
+    fi
+
+    # In interactive mode without explicit mode flag, show lifecycle menu
+    if [[ "$INTERACTIVE" == "true" && "$MODE" == "install" ]]; then
+        # Show config summary if we have previous config
+        if [[ -f "$CONFIG_FILE" ]]; then
             echo "" >&2
             show_config_summary
-            if prompt_bool "Use previous configuration?"; then
-                # Keep loaded values
-                :
-            else
-                # Clear for fresh prompts
-                API_URL=""
-                USERNAME=""
-            fi
         fi
+
+        # Show lifecycle menu to let user choose action
+        show_lifecycle_menu
     fi
 
     # Handle different modes
@@ -1552,6 +1694,12 @@ main() {
             ;;
         upgrade)
             do_upgrade
+            ;;
+        reconfigure)
+            do_reconfigure
+            ;;
+        reinstall)
+            do_reinstall
             ;;
         install)
             do_install
