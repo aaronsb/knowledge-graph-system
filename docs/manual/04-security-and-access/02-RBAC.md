@@ -8,6 +8,7 @@ This guide covers day-to-day operations for managing users, roles, and permissio
 
 - [Overview](#overview)
 - [Built-in Roles](#built-in-roles)
+- [Job Permissions](#job-permissions)
 - [User Management](#user-management)
 - [Role Management](#role-management)
 - [Permission Management](#permission-management)
@@ -33,16 +34,71 @@ All RBAC operations require admin authentication and are accessed via `kg admin 
 
 ## Built-in Roles
 
-The system includes four built-in roles:
+The system includes five built-in roles:
 
 | Role | Description | Default Permissions |
 |------|-------------|---------------------|
-| `read_only` | Read-only access to public resources | Read concepts, search |
-| `contributor` | Can create and modify content | All read_only + create/update content |
-| `curator` | Can approve and manage content | All contributor + approve jobs, view RBAC |
-| `admin` | Full system access | All curator + manage users, roles, permissions |
+| `read_only` | Read-only access to public resources | Read concepts, search, view own jobs |
+| `contributor` | Can create and modify content | All read_only + create/update content, cancel own jobs |
+| `curator` | Can approve and manage content | All contributor + approve jobs, view all user jobs |
+| `admin` | Full system access | All curator + manage users/roles/permissions, cancel any job, delete own jobs, bulk delete user jobs |
+| `platform_admin` | Platform operator access | All admin + system job management, bulk delete all jobs |
 
 **Note**: Built-in roles cannot be deleted but can be modified with caution.
+
+---
+
+## Job Permissions
+
+Jobs are a first-class RBAC resource with scoped permissions. This enables granular control over who can view, cancel, and delete jobs.
+
+### Permission Scopes
+
+| Scope | Description | Example |
+|-------|-------------|---------|
+| `own` | User's own jobs (user_id matches) | Contributors managing their ingestion jobs |
+| `global` | All user-created jobs | Admins viewing queue status |
+| `system` | System/scheduled jobs | Platform admins managing scheduled tasks |
+
+### Permission Matrix
+
+| Role | Read | Cancel | Delete | Bulk Delete |
+|------|------|--------|--------|-------------|
+| `read_only` | own | — | — | — |
+| `contributor` | own | own | — | — |
+| `curator` | global | own | — | — |
+| `admin` | global | global | own | user jobs only |
+| `platform_admin` | global + system | global + system | global + system | all jobs |
+
+### System Jobs
+
+System jobs are created by scheduled tasks (e.g., `system:scheduler`) rather than user requests. They require `platform_admin` role to:
+
+- View in job listings
+- Cancel running system jobs
+- Delete system job records
+- Bulk delete system jobs
+
+Regular admins can manage all user-created jobs but cannot touch system jobs.
+
+### CLI Examples
+
+```bash
+# Contributor: View own jobs only
+kg job list
+
+# Admin: View all user jobs
+kg job list
+
+# Platform admin: View all jobs including system
+kg job list
+
+# Delete with filters (admin: user jobs only)
+kg job cleanup --status completed --older-than 7d --confirm
+
+# Delete system jobs (platform_admin only)
+kg job cleanup --system --status failed --confirm
+```
 
 ---
 
@@ -162,6 +218,7 @@ admin                Administrator        ●       Yes      -
 contributor          Contributor          ●       Yes      -
 curator              Curator              ●       Yes      -
 data_scientist       Data Scientist       ●       No       contributor
+platform_admin       Platform Admin       ●       Yes      -
 read_only            Read Only            ●       Yes      -
 ────────────────────────────────────────────────────────────
 ```
@@ -573,13 +630,20 @@ kg admin user update <user_id> --password "NewTempPass123!"
 **Symptom**: No users have admin role
 
 **Recovery**:
-1. Use the initialization script to reset admin account:
+1. Use the operator shell to access configuration tools:
    ```bash
-   ./scripts/setup/initialize-platform.sh
+   ./operator.sh shell
    ```
 
-2. This will prompt to reset the admin password
-3. Login as admin and restore access
+2. Run the configuration wizard to reset the admin account:
+   ```bash
+   configure.py users
+   ```
+
+3. Login as admin and restore access:
+   ```bash
+   kg login --username admin
+   ```
 
 ---
 
@@ -620,13 +684,14 @@ See API documentation at `http://localhost:8000/docs` for detailed schemas.
 
 ## See Also
 
-- [ADR-028: Dynamic RBAC](../../architecture/ADR-028-dynamic-rbac-system.md) - Architecture decision record
-- [ADR-027: User Management API](../../architecture/ADR-027-user-management-api.md) - Authentication system
-- [Authentication Guide](../04-security-and-access/01-AUTHENTICATION.md) - Login and authentication flows
-- [API Documentation](../api/) - REST API reference
+- [ADR-028: Dynamic RBAC](../../architecture/authentication-security/ADR-028-dynamic-rbac-system.md) - Architecture decision record
+- [ADR-027: User Management API](../../architecture/authentication-security/ADR-027-user-management-api.md) - Authentication system
+- [ADR-074: Platform Admin Role](../../architecture/authentication-security/ADR-074-platform-admin-role.md) - Platform admin capabilities
+- [Authentication Guide](01-AUTHENTICATION.md) - Login and authentication flows
+- [API Documentation](../../reference/api/) - REST API reference
 
 ---
 
-**Version**: 1.0
-**Last Updated**: October 2025
+**Version**: 1.1
+**Last Updated**: January 2026
 **Maintainer**: Knowledge Graph Team
