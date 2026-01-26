@@ -404,6 +404,16 @@ async def search_concepts(
 
                 # Get documents and evidence count
                 concept_id = match['concept_id']
+
+                # Filter by ontology if specified
+                if request.ontology:
+                    ontology_query = client._execute_cypher(
+                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}}) RETURN c.ontology as ontology",
+                        fetch_one=True
+                    )
+                    concept_ontology = ontology_query.get('ontology') if ontology_query else None
+                    if concept_ontology != request.ontology:
+                        continue
                 docs_query = client._execute_cypher(
                     f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc"
                 )

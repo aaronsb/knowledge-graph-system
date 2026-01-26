@@ -4,7 +4,7 @@ Edge Routes - Deterministic edge CRUD (ADR-089).
 Thin HTTP layer that delegates to EdgeService.
 Handles:
 - Request/response formatting
-- OAuth scope validation
+- RBAC permission validation
 - Error responses
 """
 
@@ -21,7 +21,7 @@ from ..models.edges import (
     RelationshipCategory,
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import require_scope
+from ..dependencies.auth import require_permission
 from ..services.edge_service import get_edge_service
 from ..services.audit_service import log_audit_standalone, AuditAction
 from .database import get_age_client
@@ -39,7 +39,7 @@ router = APIRouter(prefix="/edges", tags=["edges"])
 )
 async def create_edge(
     request: EdgeCreate,
-    current_user: UserInDB = Depends(require_scope("kg:write"))
+    current_user: UserInDB = Depends(require_permission("graph", "create"))
 ):
     """
     Create a new edge (relationship) between two concepts.
@@ -60,7 +60,7 @@ async def create_edge(
     - `functional`: Purpose, capability
     - `definitional`: Definition, classification
 
-    Requires `kg:write` scope.
+    Requires `graph:create` permission.
     """
 
     age_client = get_age_client()
@@ -114,7 +114,7 @@ async def list_edges(
     source: Optional[EdgeSource] = Query(None, description="Filter by creation source"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(50, ge=1, le=500, description="Maximum results"),
-    current_user: UserInDB = Depends(require_scope("kg:read"))
+    current_user: UserInDB = Depends(require_permission("graph", "read"))
 ):
     """
     List edges with optional filtering.
@@ -130,7 +130,7 @@ async def list_edges(
     - `offset`: Number to skip
     - `limit`: Maximum to return (1-500)
 
-    Requires `kg:read` scope.
+    Requires `graph:read` permission.
     """
     age_client = get_age_client()
     service = get_edge_service(age_client)
@@ -164,7 +164,7 @@ async def update_edge(
     relationship_type: str,
     to_concept_id: str,
     request: EdgeUpdate,
-    current_user: UserInDB = Depends(require_scope("kg:edit"))
+    current_user: UserInDB = Depends(require_permission("graph", "write"))
 ):
     """
     Update an existing edge (partial update).
@@ -174,7 +174,7 @@ async def update_edge(
     Only provided fields are updated. If `relationship_type` is changed,
     the old edge is deleted and a new one is created.
 
-    Requires `kg:edit` scope.
+    Requires `graph:write` permission.
     """
 
     age_client = get_age_client()
@@ -215,14 +215,14 @@ async def delete_edge(
     from_concept_id: str,
     relationship_type: str,
     to_concept_id: str,
-    current_user: UserInDB = Depends(require_scope("kg:edit"))
+    current_user: UserInDB = Depends(require_permission("graph", "delete"))
 ):
     """
     Delete an edge.
 
     Edges are identified by the (from, type, to) tuple.
 
-    Requires `kg:edit` scope.
+    Requires `graph:delete` permission.
     """
 
     age_client = get_age_client()

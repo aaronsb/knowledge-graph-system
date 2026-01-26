@@ -81,11 +81,13 @@ class ConceptService:
         logger.info(f"Creating concept: label='{request.label}', mode={request.matching_mode}")
 
         # Generate embedding for the concept label
-        embedding_result = self.embedding_worker.generate_concept_embedding(request.label)
-        if not embedding_result.get("success"):
-            raise ValueError(f"Failed to generate embedding: {embedding_result.get('error')}")
-
-        embedding = embedding_result.get("embedding", [])
+        try:
+            embedding_result = self.embedding_worker.generate_concept_embedding(request.label)
+            embedding = embedding_result.get("embedding", [])
+            if not embedding:
+                raise ValueError("Embedding worker returned empty embedding")
+        except Exception as e:
+            raise ValueError(f"Failed to generate embedding: {e}")
 
         # Handle matching based on mode
         matched_concept = None
@@ -367,10 +369,14 @@ class ConceptService:
 
             # Regenerate embedding if label changed
             if regenerate_embedding:
-                embedding_result = self.embedding_worker.generate_concept_embedding(request.label)
-                if embedding_result.get("success"):
-                    set_parts.append("c.embedding = $embedding")
-                    params["embedding"] = embedding_result.get("embedding", [])
+                try:
+                    embedding_result = self.embedding_worker.generate_concept_embedding(request.label)
+                    embedding = embedding_result.get("embedding", [])
+                    if embedding:
+                        set_parts.append("c.embedding = $embedding")
+                        params["embedding"] = embedding
+                except Exception as e:
+                    logger.warning(f"Failed to regenerate embedding for concept update: {e}")
 
         if request.description is not None:
             set_parts.append("c.description = $description")

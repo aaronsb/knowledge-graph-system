@@ -51,7 +51,18 @@ import {
   UserRoleAssign,
   UserRoleRead,
   PermissionCheckRequest,
-  PermissionCheckResponse
+  PermissionCheckResponse,
+  // ADR-089: Concept/Edge CRUD types
+  ConceptCreate,
+  ConceptUpdate,
+  ConceptCRUDResponse,
+  ConceptListCRUDResponse,
+  EdgeCreate,
+  EdgeUpdate,
+  EdgeResponse,
+  EdgeListResponse,
+  BatchCreateRequest,
+  BatchCreateResponse,
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -656,6 +667,133 @@ export class KnowledgeGraphClient {
     total: number;
   }> {
     const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
+  // ========== Concept CRUD Methods (ADR-089) ==========
+
+  /**
+   * Create a new concept in the knowledge graph.
+   * Description is embedded and similarity-matched against existing concepts.
+   */
+  async createConcept(request: ConceptCreate): Promise<ConceptCRUDResponse> {
+    const response = await this.client.post('/concepts', request);
+    return response.data;
+  }
+
+  /**
+   * Get a concept by ID.
+   */
+  async getConceptById(conceptId: string): Promise<ConceptCRUDResponse> {
+    const response = await this.client.get(`/concepts/${encodeURIComponent(conceptId)}`);
+    return response.data;
+  }
+
+  /**
+   * List concepts with optional filters.
+   */
+  async listConceptsCRUD(params?: {
+    ontology?: string;
+    label_contains?: string;
+    creation_method?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<ConceptListCRUDResponse> {
+    const response = await this.client.get('/concepts', { params });
+    return response.data;
+  }
+
+  /**
+   * Update a concept by ID.
+   * @param regenerateEmbedding If true, regenerate embedding when label changes
+   */
+  async updateConcept(
+    conceptId: string,
+    request: ConceptUpdate,
+    regenerateEmbedding?: boolean
+  ): Promise<ConceptCRUDResponse> {
+    const params = regenerateEmbedding !== undefined
+      ? { regenerate_embedding: regenerateEmbedding }
+      : {};
+    const response = await this.client.patch(
+      `/concepts/${encodeURIComponent(conceptId)}`,
+      request,
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete a concept by ID.
+   * @param cascade If true, also delete orphaned synthetic sources
+   */
+  async deleteConcept(conceptId: string, cascade?: boolean): Promise<void> {
+    const params = cascade ? { cascade: true } : {};
+    await this.client.delete(`/concepts/${encodeURIComponent(conceptId)}`, { params });
+  }
+
+  // ========== Edge CRUD Methods (ADR-089) ==========
+
+  /**
+   * Create a new edge between concepts.
+   */
+  async createEdge(request: EdgeCreate): Promise<EdgeResponse> {
+    const response = await this.client.post('/edges', request);
+    return response.data;
+  }
+
+  /**
+   * List edges with optional filters.
+   */
+  async listEdges(params?: {
+    from_concept_id?: string;
+    to_concept_id?: string;
+    relationship_type?: string;
+    category?: string;
+    source?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<EdgeListResponse> {
+    const response = await this.client.get('/edges', { params });
+    return response.data;
+  }
+
+  /**
+   * Update an edge by its composite key.
+   */
+  async updateEdge(
+    fromConceptId: string,
+    relationshipType: string,
+    toConceptId: string,
+    request: EdgeUpdate
+  ): Promise<EdgeResponse> {
+    const response = await this.client.patch(
+      `/edges/${encodeURIComponent(fromConceptId)}/${encodeURIComponent(relationshipType)}/${encodeURIComponent(toConceptId)}`,
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Delete an edge by its composite key.
+   */
+  async deleteEdge(
+    fromConceptId: string,
+    relationshipType: string,
+    toConceptId: string
+  ): Promise<void> {
+    await this.client.delete(
+      `/edges/${encodeURIComponent(fromConceptId)}/${encodeURIComponent(relationshipType)}/${encodeURIComponent(toConceptId)}`
+    );
+  }
+
+  // ========== Batch Methods (ADR-089 Phase 1b) ==========
+
+  /**
+   * Batch create concepts and edges in a single transaction.
+   */
+  async batchCreate(request: BatchCreateRequest): Promise<BatchCreateResponse> {
+    const response = await this.client.post('/graph/batch', request);
     return response.data;
   }
 
