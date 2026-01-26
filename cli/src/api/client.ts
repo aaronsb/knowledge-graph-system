@@ -371,10 +371,53 @@ export class KnowledgeGraphClient {
 
   /**
    * Clear all jobs (nuclear option - requires confirmation)
+   * @deprecated Use deleteJobs() with filters instead
    */
   async clearAllJobs(confirm: boolean = false): Promise<{ success: boolean; jobs_deleted: number; message: string }> {
     const response = await this.client.delete('/jobs', {
       params: { confirm }
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete a single job permanently
+   */
+  async deleteJob(jobId: string, options: { purge?: boolean; force?: boolean } = {}): Promise<{ job_id: string; deleted?: boolean; cancelled?: boolean; message: string }> {
+    const response = await this.client.delete(`/jobs/${jobId}`, {
+      params: { purge: options.purge ?? true, force: options.force ?? false }
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete jobs matching filters
+   */
+  async deleteJobs(options: {
+    confirm?: boolean;
+    dryRun?: boolean;
+    status?: string;
+    system?: boolean;
+    olderThan?: string;
+    jobType?: string;
+  }): Promise<{
+    success?: boolean;
+    dry_run?: boolean;
+    jobs_deleted?: number;
+    jobs_to_delete?: number;
+    jobs?: Array<{ job_id: string; job_type: string; status: string; ontology: string | null; created_at: string }>;
+    filters?: Record<string, any>;
+    message: string;
+  }> {
+    const response = await this.client.delete('/jobs', {
+      params: {
+        confirm: options.confirm,
+        dry_run: options.dryRun,
+        status: options.status,
+        system: options.system,
+        older_than: options.olderThan,
+        job_type: options.jobType
+      }
     });
     return response.data;
   }
