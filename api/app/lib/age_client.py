@@ -124,10 +124,15 @@ class AGEClient:
                         # Then escape single quotes
                         value_str = value_str.replace("'", "\\'")
                         query = query.replace(f"${key}", f"'{value_str}'")
-                    elif isinstance(value, (list, dict)):
-                        # Convert lists/dicts to JSON strings
+                    elif isinstance(value, list):
+                        # Lists: JSON array syntax is Cypher-compatible
                         value_str = json.dumps(value).replace("\\", "\\\\").replace("'", "\\'")
                         query = query.replace(f"${key}", value_str)
+                    elif isinstance(value, dict):
+                        # Dicts: Store as JSON string (Cypher maps require unquoted keys,
+                        # but JSON uses quoted keys - see GitHub issue for future improvement)
+                        value_str = json.dumps(value).replace("\\", "\\\\").replace("'", "\\'")
+                        query = query.replace(f"${key}", f"'{value_str}'")
                     elif isinstance(value, (int, float)):
                         query = query.replace(f"${key}", str(value))
                     elif value is None:
