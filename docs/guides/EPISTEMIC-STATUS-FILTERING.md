@@ -85,7 +85,7 @@ CONTESTED (1)
 Check that epistemic statuss were stored:
 
 ```python
-from api.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 
 client = AGEClient()
 facade = client.facade
@@ -114,7 +114,7 @@ INFLUENCES: UNCLASSIFIED (avg: -0.049)
 ### Basic Role Filtering
 
 ```python
-from api.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 
 client = AGEClient()
 facade = client.facade

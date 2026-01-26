@@ -145,7 +145,7 @@ Replace synchronous await with job enqueue:
 results = await manager.aitl_consolidate_vocabulary(...)
 
 # ADD THIS (non-blocking)
-from api.api.services.job_queue import get_job_queue
+from api.app.services.job_queue import get_job_queue
 queue = get_job_queue()
 
 job_data = {

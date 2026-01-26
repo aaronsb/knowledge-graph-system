@@ -229,7 +229,7 @@ Docker Network: knowledge-graph-system
 ```python
 # operator/configure.py
 import psycopg2
-from api.api.lib.encryption import encrypt_credential
+from api.app.lib.encryption import encrypt_credential
 
 class Operator:
     def __init__(self):
@@ -286,7 +286,7 @@ COPY schema/ ./schema/
 # No secrets in image!
 # All secrets come from environment at runtime
 
-CMD ["uvicorn", "api.api.main:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0"]
 ```
 
 **docker-compose.yml:**
@@ -309,7 +309,7 @@ services:
 **API server reads config at startup:**
 ```python
 # api/api/main.py
-from api.api.lib.config import load_config
+from api.app.lib.config import load_config
 
 # Infrastructure secrets from environment
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")  # For decrypting API keys
