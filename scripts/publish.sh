@@ -1,23 +1,27 @@
 #!/bin/bash
 # ============================================================================
-# publish.sh - Unified publishing tool for Knowledge Graph System
+# publish.sh - Unified publishing and versioning tool for Knowledge Graph System
 #
-# Publishes:
+# Manages:
+#   - Version bumping (platform, scripts, packages)
 #   - Docker images (api, web) → GitHub Container Registry
 #   - npm package (CLI/MCP)    → npm registry
 #   - Python package (FUSE)    → PyPI
 #
 # Usage:
-#   ./scripts/publish.sh images [api|web]  # Docker images
-#   ./scripts/publish.sh cli               # npm package
-#   ./scripts/publish.sh fuse              # PyPI package
-#   ./scripts/publish.sh all               # Everything
-#   ./scripts/publish.sh status            # Show versions and auth status
+#   ./scripts/publish.sh status                  # Show all versions
+#   ./scripts/publish.sh bump patch              # Bump platform version
+#   ./scripts/publish.sh bump cli patch          # Bump CLI version
+#   ./scripts/publish.sh sync-scripts            # Update script versions
+#   ./scripts/publish.sh release patch -m "msg"  # Full release workflow
+#   ./scripts/publish.sh images [api|web]        # Publish Docker images
+#   ./scripts/publish.sh cli                     # Publish npm package
+#   ./scripts/publish.sh fuse                    # Publish PyPI package
 #
 # Options:
 #   -m, --message "desc"   Description for release
-#   --dry-run              Build/pack without publishing
-#   --skip-build           Skip build step (push existing)
+#   --dry-run              Preview without making changes
+#   --skip-build           Skip build step
 #
 # ============================================================================
 
@@ -30,6 +34,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
+DIM='\033[2m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,14 +50,63 @@ IMAGE_PREFIX="aaronsb/knowledge-graph-system"
 
 DRY_RUN=false
 SKIP_BUILD=false
+FORCE=false
 DESCRIPTION=""
 COMMAND=""
+BUMP_TYPE=""
+BUMP_TARGET="platform"
 TARGETS=()
+
+show_help() {
+    cat << 'EOF'
+Usage: publish.sh <command> [options]
+
+Version Management:
+  status                    Show all versions and auth status
+  bump <type> [target]      Bump version (type: major|minor|patch)
+                            target: platform (default), cli, fuse
+  sync-scripts              Update script versions to match VERSION file
+  release <type> -m "msg"   Full release: bump, sync, tag, publish
+
+Publishing:
+  images [api|web]          Publish Docker images to GHCR
+  cli                       Publish npm package (@aaronsb/kg-cli)
+  fuse                      Publish Python package (kg-fuse) to PyPI
+  all                       Publish everything (images, cli, fuse)
+
+Options:
+  -m, --message "desc"      Description for release/publish
+  --dry-run                 Preview without making changes
+  --skip-build              Skip build step (push existing)
+  --force                   Bypass "already published" checks
+  -h, --help                Show this help
+
+Examples:
+  publish.sh status
+  publish.sh bump patch                    # 0.6.5 → 0.6.6
+  publish.sh bump cli minor                # CLI 0.6.6 → 0.7.0
+  publish.sh release patch -m "Bug fixes"  # Full release workflow
+  publish.sh images -m "API improvements"
+  publish.sh all -m "Release v0.7.0"
+EOF
+}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        images|cli|fuse|all|status)
+        status|bump|sync-scripts|release|images|cli|fuse|all)
             COMMAND="$1"
+            shift
+            ;;
+        major|minor|patch)
+            BUMP_TYPE="$1"
+            shift
+            ;;
+        platform|cli|fuse)
+            if [ "$COMMAND" = "bump" ]; then
+                BUMP_TARGET="$1"
+            else
+                TARGETS+=("$1")
+            fi
             shift
             ;;
         api|web)
@@ -67,30 +121,16 @@ while [[ $# -gt 0 ]]; do
             SKIP_BUILD=true
             shift
             ;;
+        --force)
+            FORCE=true
+            shift
+            ;;
         -m|--message)
             DESCRIPTION="$2"
             shift 2
             ;;
         -h|--help)
-            echo "Usage: $0 <command> [targets] [options]"
-            echo ""
-            echo "Commands:"
-            echo "  images [api|web]  Publish Docker images to GHCR"
-            echo "  cli               Publish npm package (@aaronsb/kg-cli)"
-            echo "  fuse              Publish Python package (kg-fuse) to PyPI"
-            echo "  all               Publish everything"
-            echo "  status            Show versions and authentication status"
-            echo ""
-            echo "Options:"
-            echo "  -m, --message     Description for this release"
-            echo "  --dry-run         Build/pack without actually publishing"
-            echo "  --skip-build      Skip build (push existing artifacts)"
-            echo ""
-            echo "Examples:"
-            echo "  $0 images -m 'Fix API bug'"
-            echo "  $0 images api --dry-run"
-            echo "  $0 cli"
-            echo "  $0 all -m 'Release v1.2.3'"
+            show_help
             exit 0
             ;;
         *)
@@ -108,7 +148,7 @@ if [ -z "$COMMAND" ]; then
 fi
 
 # ============================================================================
-# Version information
+# Version reading
 # ============================================================================
 
 get_versions() {
@@ -117,8 +157,149 @@ get_versions() {
     GIT_BRANCH=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
     BUILD_DATE=$(date -Iseconds)
 
+    # Package versions
     CLI_VERSION=$(node -p "require('$PROJECT_ROOT/cli/package.json').version" 2>/dev/null || echo "unknown")
     FUSE_VERSION=$(grep -E "^version" "$PROJECT_ROOT/fuse/pyproject.toml" 2>/dev/null | cut -d'"' -f2 || echo "unknown")
+
+    # Script versions (embedded) - match only static definitions like VAR="x.y.z"
+    INSTALL_VERSION=$(grep -E '^INSTALLER_VERSION="[0-9]' "$PROJECT_ROOT/install.sh" 2>/dev/null | head -1 | cut -d'"' -f2 || echo "unknown")
+    OPERATOR_VERSION=$(grep -E '^OPERATOR_VERSION="[0-9]' "$PROJECT_ROOT/operator.sh" 2>/dev/null | head -1 | cut -d'"' -f2 || echo "unknown")
+    CLIENT_MGR_VERSION=$(grep -E '^CLIENT_MANAGER_VERSION="[0-9]' "$PROJECT_ROOT/client-manager.sh" 2>/dev/null | head -1 | cut -d'"' -f2 || echo "unknown")
+
+    # Git tag info for smart publish checks
+    LATEST_TAG=$(git -C "$PROJECT_ROOT" describe --tags --abbrev=0 2>/dev/null || echo "")
+    if [ -n "$LATEST_TAG" ]; then
+        COMMITS_SINCE_TAG=$(git -C "$PROJECT_ROOT" rev-list "$LATEST_TAG"..HEAD --count 2>/dev/null || echo "0")
+    else
+        COMMITS_SINCE_TAG=$(git -C "$PROJECT_ROOT" rev-list HEAD --count 2>/dev/null || echo "0")
+    fi
+}
+
+# Check if version is already published
+is_version_published() {
+    local target="$1"
+    local version="$2"
+
+    case "$target" in
+        images)
+            # Check GHCR for api image with this version tag
+            local manifest_url="https://ghcr.io/v2/$IMAGE_PREFIX/kg-api/manifests/$version"
+            curl -sf -o /dev/null -H "Authorization: Bearer $(echo -n | base64)" "$manifest_url" 2>/dev/null
+            return $?
+            ;;
+        cli)
+            npm view "@aaronsb/kg-cli@$version" version &>/dev/null
+            return $?
+            ;;
+        fuse)
+            pip index versions kg-fuse 2>/dev/null | grep -q "$version"
+            return $?
+            ;;
+    esac
+    return 1
+}
+
+# Smart pre-publish check
+check_publish_needed() {
+    local target="$1"
+    local version="$2"
+    local force="${3:-false}"
+
+    if [ "$force" = "true" ]; then
+        return 0
+    fi
+
+    # Check if already published
+    if is_version_published "$target" "$version"; then
+        echo -e "${YELLOW}⚠ $target v$version already published${NC}"
+        if [ "$COMMITS_SINCE_TAG" -gt 0 ]; then
+            echo -e "  ${DIM}$COMMITS_SINCE_TAG commit(s) since last tag ($LATEST_TAG)${NC}"
+            echo -e "  ${DIM}Run: ./scripts/publish.sh release patch -m \"description\"${NC}"
+        else
+            echo -e "  ${DIM}No new commits. Nothing to publish.${NC}"
+        fi
+        return 1
+    fi
+
+    return 0
+}
+
+# ============================================================================
+# Version bumping
+# ============================================================================
+
+bump_version() {
+    local current="$1"
+    local type="$2"
+
+    IFS='.' read -r major minor patch <<< "${current%-*}"  # Strip any -dev suffix
+    patch=${patch:-0}
+
+    case "$type" in
+        major) echo "$((major + 1)).0.0" ;;
+        minor) echo "$major.$((minor + 1)).0" ;;
+        patch) echo "$major.$minor.$((patch + 1))" ;;
+        *) echo "$current" ;;
+    esac
+}
+
+update_version_file() {
+    local new_version="$1"
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would update VERSION to $new_version${NC}"
+    else
+        echo "$new_version" > "$PROJECT_ROOT/VERSION"
+        echo -e "${GREEN}✓ Updated VERSION to $new_version${NC}"
+    fi
+}
+
+update_script_version() {
+    local file="$1"
+    local var_name="$2"
+    local new_version="$3"
+
+    if [ ! -f "$file" ]; then
+        echo -e "${YELLOW}⚠ $file not found${NC}"
+        return
+    fi
+
+    local basename=$(basename "$file")
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would update $basename $var_name to $new_version${NC}"
+    else
+        sed -i "s/^${var_name}=\"[^\"]*\"/${var_name}=\"${new_version}\"/" "$file"
+        echo -e "${GREEN}✓ Updated $basename to $new_version${NC}"
+    fi
+}
+
+update_cli_version() {
+    local new_version="$1"
+    local package_json="$PROJECT_ROOT/cli/package.json"
+
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would update cli/package.json to $new_version${NC}"
+    else
+        # Use node to update package.json properly
+        node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('$package_json'));
+            pkg.version = '$new_version';
+            fs.writeFileSync('$package_json', JSON.stringify(pkg, null, 2) + '\n');
+        "
+        echo -e "${GREEN}✓ Updated cli/package.json to $new_version${NC}"
+    fi
+}
+
+update_fuse_version() {
+    local new_version="$1"
+    local pyproject="$PROJECT_ROOT/fuse/pyproject.toml"
+
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would update fuse/pyproject.toml to $new_version${NC}"
+    else
+        sed -i "s/^version = \"[^\"]*\"/version = \"$new_version\"/" "$pyproject"
+        echo -e "${GREEN}✓ Updated fuse/pyproject.toml to $new_version${NC}"
+    fi
 }
 
 # ============================================================================
@@ -129,15 +310,11 @@ check_ghcr_auth() {
     if docker login ghcr.io --get-login &>/dev/null; then
         return 0
     fi
-
-    # Try gh CLI
     if command -v gh &>/dev/null; then
-        echo -e "${YELLOW}Logging into GHCR via gh CLI...${NC}"
-        if gh auth token | docker login ghcr.io -u "$(gh api user -q .login)" --password-stdin 2>/dev/null; then
+        if gh auth token 2>/dev/null | docker login ghcr.io -u "$(gh api user -q .login 2>/dev/null)" --password-stdin &>/dev/null; then
             return 0
         fi
     fi
-
     return 1
 }
 
@@ -146,80 +323,230 @@ check_npm_auth() {
 }
 
 check_pypi_auth() {
-    # Check for twine and credentials
-    if ! command -v twine &>/dev/null; then
-        return 1
-    fi
-    # PyPI auth is checked at upload time via ~/.pypirc or TWINE_* env vars
-    return 0
+    command -v twine &>/dev/null
 }
 
 # ============================================================================
-# Status command
+# Commands
 # ============================================================================
 
 cmd_status() {
     get_versions
 
-    echo -e "${BOLD}Knowledge Graph System - Publish Status${NC}"
+    echo -e "${BOLD}Knowledge Graph System - Version Status${NC}"
     echo ""
 
-    echo -e "${CYAN}Versions:${NC}"
-    echo "  Main VERSION:  $VERSION"
-    echo "  CLI (npm):     $CLI_VERSION"
-    echo "  FUSE (PyPI):   $FUSE_VERSION"
-    echo "  Git commit:    $GIT_SHA"
-    echo "  Git branch:    $GIT_BRANCH"
+    echo -e "${CYAN}Platform:${NC}"
+    echo "  VERSION file:     $VERSION"
+    echo "  Git commit:       $GIT_SHA"
+    echo "  Git branch:       $GIT_BRANCH"
+    if [ -n "$LATEST_TAG" ]; then
+        if [ "$COMMITS_SINCE_TAG" -gt 0 ]; then
+            echo -e "  Latest tag:       $LATEST_TAG ${YELLOW}(+$COMMITS_SINCE_TAG commits)${NC}"
+        else
+            echo -e "  Latest tag:       $LATEST_TAG ${GREEN}(current)${NC}"
+        fi
+    else
+        echo -e "  Latest tag:       ${DIM}none${NC}"
+    fi
     echo ""
 
-    echo -e "${CYAN}Authentication:${NC}"
+    echo -e "${CYAN}Scripts (embedded versions):${NC}"
+    local scripts_match=true
+    if [ "$INSTALL_VERSION" != "$VERSION" ]; then
+        echo -e "  install.sh:       ${YELLOW}$INSTALL_VERSION${NC} (differs from VERSION)"
+        scripts_match=false
+    else
+        echo -e "  install.sh:       ${GREEN}$INSTALL_VERSION${NC}"
+    fi
+    if [ "$OPERATOR_VERSION" != "$VERSION" ]; then
+        echo -e "  operator.sh:      ${YELLOW}$OPERATOR_VERSION${NC} (differs from VERSION)"
+        scripts_match=false
+    else
+        echo -e "  operator.sh:      ${GREEN}$OPERATOR_VERSION${NC}"
+    fi
+    if [ "$CLIENT_MGR_VERSION" != "$VERSION" ]; then
+        echo -e "  client-manager:   ${YELLOW}$CLIENT_MGR_VERSION${NC} (differs from VERSION)"
+        scripts_match=false
+    else
+        echo -e "  client-manager:   ${GREEN}$CLIENT_MGR_VERSION${NC}"
+    fi
+    if [ "$scripts_match" = "false" ]; then
+        echo -e "  ${DIM}Run 'publish.sh sync-scripts' to update${NC}"
+    fi
+    echo ""
 
-    # GHCR
+    echo -e "${CYAN}Packages (independent versions):${NC}"
+    echo "  CLI (npm):        $CLI_VERSION"
+    echo "  FUSE (PyPI):      $FUSE_VERSION"
+    echo ""
+
+    echo -e "${CYAN}Registry Authentication:${NC}"
     if check_ghcr_auth; then
-        echo -e "  GHCR:  ${GREEN}✓ authenticated${NC}"
+        echo -e "  GHCR:   ${GREEN}✓ authenticated${NC}"
     else
-        echo -e "  GHCR:  ${RED}✗ not logged in${NC} (run: docker login ghcr.io)"
+        echo -e "  GHCR:   ${RED}✗ not logged in${NC}"
     fi
-
-    # npm
     if check_npm_auth; then
-        NPM_USER=$(npm whoami 2>/dev/null)
-        echo -e "  npm:   ${GREEN}✓ authenticated${NC} as $NPM_USER"
+        echo -e "  npm:    ${GREEN}✓ authenticated${NC} ($(npm whoami 2>/dev/null))"
     else
-        echo -e "  npm:   ${RED}✗ not logged in${NC} (run: npm login)"
+        echo -e "  npm:    ${RED}✗ not logged in${NC}"
     fi
-
-    # PyPI
     if check_pypi_auth; then
-        echo -e "  PyPI:  ${GREEN}✓ twine available${NC} (credentials checked at upload)"
+        echo -e "  PyPI:   ${GREEN}✓ twine available${NC}"
     else
-        echo -e "  PyPI:  ${RED}✗ twine not found${NC} (run: pip install twine)"
+        echo -e "  PyPI:   ${RED}✗ twine not found${NC}"
+    fi
+    echo ""
+
+    echo -e "${CYAN}Published versions:${NC}"
+    local npm_pub=$(npm view @aaronsb/kg-cli version 2>/dev/null || echo "not published")
+    local pypi_pub=$(pip index versions kg-fuse 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "not published")
+    echo "  npm (@aaronsb/kg-cli):  $npm_pub"
+    echo "  PyPI (kg-fuse):         $pypi_pub"
+    echo ""
+
+    # Publish readiness summary
+    echo -e "${CYAN}Publish Readiness:${NC}"
+    local images_published=false
+    local cli_published=false
+    local fuse_published=false
+
+    if is_version_published "cli" "$CLI_VERSION" 2>/dev/null; then
+        cli_published=true
+        echo -e "  CLI:    ${GREEN}✓ v$CLI_VERSION published${NC}"
+    else
+        echo -e "  CLI:    ${BLUE}○ v$CLI_VERSION ready to publish${NC}"
+    fi
+
+    if is_version_published "fuse" "$FUSE_VERSION" 2>/dev/null; then
+        fuse_published=true
+        echo -e "  FUSE:   ${GREEN}✓ v$FUSE_VERSION published${NC}"
+    else
+        echo -e "  FUSE:   ${BLUE}○ v$FUSE_VERSION ready to publish${NC}"
+    fi
+
+    # Check if current VERSION tag exists (images use platform version)
+    if is_version_published "images" "$VERSION" 2>/dev/null; then
+        images_published=true
+        echo -e "  Images: ${GREEN}✓ v$VERSION published${NC}"
+    else
+        echo -e "  Images: ${BLUE}○ v$VERSION ready to publish${NC}"
     fi
 
     echo ""
 
-    # Published versions
-    echo -e "${CYAN}Published versions:${NC}"
-
-    # Check npm
-    NPM_PUBLISHED=$(npm view @aaronsb/kg-cli version 2>/dev/null || echo "not published")
-    echo "  npm (@aaronsb/kg-cli): $NPM_PUBLISHED"
-
-    # Check PyPI
-    PYPI_PUBLISHED=$(pip index versions kg-fuse 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "not published")
-    echo "  PyPI (kg-fuse):        $PYPI_PUBLISHED"
-
-    echo ""
+    # Recommendations
+    if [ "$COMMITS_SINCE_TAG" -gt 0 ]; then
+        echo -e "${CYAN}Recommendation:${NC}"
+        echo -e "  $COMMITS_SINCE_TAG commit(s) since $LATEST_TAG"
+        echo -e "  → ${BOLD}./scripts/publish.sh release patch -m \"description\"${NC}"
+        echo ""
+    fi
 }
 
-# ============================================================================
-# Docker images
-# ============================================================================
+cmd_bump() {
+    if [ -z "$BUMP_TYPE" ]; then
+        echo -e "${RED}Bump type required: major, minor, or patch${NC}"
+        exit 1
+    fi
+
+    get_versions
+
+    case "$BUMP_TARGET" in
+        platform)
+            local new_version=$(bump_version "$VERSION" "$BUMP_TYPE")
+            echo -e "${BOLD}Bumping platform version${NC}"
+            echo "  Current: $VERSION"
+            echo "  New:     $new_version"
+            echo ""
+            update_version_file "$new_version"
+            ;;
+        cli)
+            local new_version=$(bump_version "$CLI_VERSION" "$BUMP_TYPE")
+            echo -e "${BOLD}Bumping CLI version${NC}"
+            echo "  Current: $CLI_VERSION"
+            echo "  New:     $new_version"
+            echo ""
+            update_cli_version "$new_version"
+            ;;
+        fuse)
+            local new_version=$(bump_version "$FUSE_VERSION" "$BUMP_TYPE")
+            echo -e "${BOLD}Bumping FUSE version${NC}"
+            echo "  Current: $FUSE_VERSION"
+            echo "  New:     $new_version"
+            echo ""
+            update_fuse_version "$new_version"
+            ;;
+    esac
+}
+
+cmd_sync_scripts() {
+    get_versions
+
+    echo -e "${BOLD}Syncing script versions to $VERSION${NC}"
+    echo ""
+
+    update_script_version "$PROJECT_ROOT/install.sh" "INSTALLER_VERSION" "$VERSION"
+    update_script_version "$PROJECT_ROOT/operator.sh" "OPERATOR_VERSION" "$VERSION"
+    update_script_version "$PROJECT_ROOT/client-manager.sh" "CLIENT_MANAGER_VERSION" "$VERSION"
+}
+
+cmd_release() {
+    if [ -z "$BUMP_TYPE" ]; then
+        echo -e "${RED}Release requires bump type: major, minor, or patch${NC}"
+        echo "Usage: publish.sh release <patch|minor|major> -m \"message\""
+        exit 1
+    fi
+
+    get_versions
+    local new_version=$(bump_version "$VERSION" "$BUMP_TYPE")
+
+    echo -e "${BOLD}Release workflow: $VERSION → $new_version${NC}"
+    [ -n "$DESCRIPTION" ] && echo -e "  Message: $DESCRIPTION"
+    [ "$DRY_RUN" = "true" ] && echo -e "  ${YELLOW}DRY RUN MODE${NC}"
+    echo ""
+
+    # Step 1: Bump VERSION
+    echo -e "${CYAN}Step 1: Bump version${NC}"
+    update_version_file "$new_version"
+    VERSION="$new_version"  # Update for subsequent steps
+
+    # Step 2: Sync scripts
+    echo ""
+    echo -e "${CYAN}Step 2: Sync script versions${NC}"
+    update_script_version "$PROJECT_ROOT/install.sh" "INSTALLER_VERSION" "$VERSION"
+    update_script_version "$PROJECT_ROOT/operator.sh" "OPERATOR_VERSION" "$VERSION"
+    update_script_version "$PROJECT_ROOT/client-manager.sh" "CLIENT_MANAGER_VERSION" "$VERSION"
+
+    # Step 3: Commit and tag
+    echo ""
+    echo -e "${CYAN}Step 3: Commit and tag${NC}"
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would commit: 'Release v$VERSION'${NC}"
+        echo -e "${DIM}Would tag: v$VERSION${NC}"
+    else
+        git -C "$PROJECT_ROOT" add VERSION install.sh operator.sh client-manager.sh
+        local commit_msg="Release v$VERSION"
+        [ -n "$DESCRIPTION" ] && commit_msg="$commit_msg: $DESCRIPTION"
+        git -C "$PROJECT_ROOT" commit -m "$commit_msg"
+        git -C "$PROJECT_ROOT" tag -a "v$VERSION" -m "$commit_msg"
+        echo -e "${GREEN}✓ Committed and tagged v$VERSION${NC}"
+    fi
+
+    # Step 4: Instructions
+    echo ""
+    echo -e "${CYAN}Next steps:${NC}"
+    echo "  1. Push: git push origin main --tags"
+    echo "  2. Publish images: ./scripts/publish.sh images"
+    echo "  3. Publish CLI (if needed): ./scripts/publish.sh cli"
+    echo "  4. Publish FUSE (if needed): ./scripts/publish.sh fuse"
+    echo ""
+}
 
 cmd_images() {
     get_versions
 
-    # Default to both if no targets specified
     if [ ${#TARGETS[@]} -eq 0 ]; then
         TARGETS=(api web)
     fi
@@ -232,10 +559,14 @@ cmd_images() {
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Auth check
+    # Smart check: is this version already published?
+    if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "images" "$VERSION" "$FORCE"; then
+        exit 0
+    fi
+
     if [ "$DRY_RUN" = "false" ] && ! check_ghcr_auth; then
         echo -e "${RED}Not authenticated to GHCR${NC}"
-        echo "Run: docker login ghcr.io -u YOUR_USERNAME"
+        echo "Run: docker login ghcr.io"
         exit 1
     fi
 
@@ -294,14 +625,9 @@ cmd_images() {
             docker push "$full_image:sha-$GIT_SHA"
             echo -e "${GREEN}✓ Pushed $full_image:$VERSION${NC}"
         fi
-
         echo ""
     done
 }
-
-# ============================================================================
-# npm CLI
-# ============================================================================
 
 cmd_cli() {
     get_versions
@@ -311,7 +637,12 @@ cmd_cli() {
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Auth check
+    # Smart check: is this version already published?
+    if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "cli" "$CLI_VERSION" "$FORCE"; then
+        echo -e "  ${DIM}Bump first: ./scripts/publish.sh bump cli patch${NC}"
+        exit 0
+    fi
+
     if [ "$DRY_RUN" = "false" ] && ! check_npm_auth; then
         echo -e "${RED}Not authenticated to npm${NC}"
         echo "Run: npm login"
@@ -319,13 +650,6 @@ cmd_cli() {
     fi
 
     cd "$PROJECT_ROOT/cli"
-
-    # Check if version already published
-    if npm view "@aaronsb/kg-cli@$CLI_VERSION" version &>/dev/null; then
-        echo -e "${RED}Version $CLI_VERSION already published${NC}"
-        echo "Bump version in cli/package.json first"
-        exit 1
-    fi
 
     if [ "$SKIP_BUILD" = "false" ]; then
         echo -e "${BLUE}→ Building CLI...${NC}"
@@ -335,22 +659,12 @@ cmd_cli() {
     fi
 
     echo ""
-    echo -e "${BLUE}Package contents:${NC}"
-    npm pack --dry-run 2>&1 | grep -E "^npm notice [0-9]" | head -15
-    echo ""
-
     if [ "$DRY_RUN" = "false" ]; then
         echo -e "${BLUE}→ Publishing to npm...${NC}"
         npm publish --access public
         echo -e "${GREEN}✓ Published @aaronsb/kg-cli@$CLI_VERSION${NC}"
-        echo ""
-        echo "Install: npm install -g @aaronsb/kg-cli"
     fi
 }
-
-# ============================================================================
-# PyPI FUSE
-# ============================================================================
 
 cmd_fuse() {
     get_versions
@@ -360,7 +674,12 @@ cmd_fuse() {
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Check twine
+    # Smart check: is this version already published?
+    if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "fuse" "$FUSE_VERSION" "$FORCE"; then
+        echo -e "  ${DIM}Bump first: ./scripts/publish.sh bump fuse patch${NC}"
+        exit 0
+    fi
+
     if ! command -v twine &>/dev/null; then
         echo -e "${RED}twine not found${NC}"
         echo "Run: pip install twine build"
@@ -369,58 +688,27 @@ cmd_fuse() {
 
     cd "$PROJECT_ROOT/fuse"
 
-    # Check if version already on PyPI
-    if pip index versions kg-fuse 2>/dev/null | grep -q "$FUSE_VERSION"; then
-        echo -e "${RED}Version $FUSE_VERSION already published${NC}"
-        echo "Bump version in fuse/pyproject.toml first"
-        exit 1
-    fi
-
     if [ "$SKIP_BUILD" = "false" ]; then
         echo -e "${BLUE}→ Building package...${NC}"
-
-        # Clean previous builds
         rm -rf dist/ build/ *.egg-info/
-
-        # Build with hatch/build
-        if command -v python -m build &>/dev/null; then
-            python -m build
-        else
-            echo -e "${YELLOW}python-build not found, installing...${NC}"
-            pip install build
-            python -m build
-        fi
-
+        python -m build 2>/dev/null || { pip install build && python -m build; }
         echo -e "${GREEN}✓ Build complete${NC}"
     fi
 
     echo ""
-    echo -e "${BLUE}Package contents:${NC}"
-    ls -la dist/
-    echo ""
-
     if [ "$DRY_RUN" = "false" ]; then
         echo -e "${BLUE}→ Uploading to PyPI...${NC}"
         twine upload dist/*
         echo -e "${GREEN}✓ Published kg-fuse==$FUSE_VERSION${NC}"
-        echo ""
-        echo "Install: pip install kg-fuse"
     fi
 }
-
-# ============================================================================
-# All
-# ============================================================================
 
 cmd_all() {
     echo -e "${BOLD}Publishing all packages${NC}"
     echo ""
-
     cmd_images
     cmd_cli
     cmd_fuse
-
-    echo ""
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}✅ All packages published${NC}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -431,19 +719,12 @@ cmd_all() {
 # ============================================================================
 
 case "$COMMAND" in
-    status)
-        cmd_status
-        ;;
-    images)
-        cmd_images
-        ;;
-    cli)
-        cmd_cli
-        ;;
-    fuse)
-        cmd_fuse
-        ;;
-    all)
-        cmd_all
-        ;;
+    status)       cmd_status ;;
+    bump)         cmd_bump ;;
+    sync-scripts) cmd_sync_scripts ;;
+    release)      cmd_release ;;
+    images)       cmd_images ;;
+    cli)          cmd_cli ;;
+    fuse)         cmd_fuse ;;
+    all)          cmd_all ;;
 esac
