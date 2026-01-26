@@ -128,8 +128,20 @@ git add . && git commit && git push
 
 **Release (workstation):**
 ```bash
-# Build and push app containers
-./scripts/publish-images.sh api web    # Or just: ./scripts/publish-images.sh
+# Check auth status and versions
+./scripts/publish.sh status
+
+# Publish Docker images (api, web)
+./scripts/publish.sh images -m "Description of changes"
+
+# Publish CLI/MCP to npm
+./scripts/publish.sh cli
+
+# Publish FUSE driver to PyPI
+./scripts/publish.sh fuse
+
+# Publish everything
+./scripts/publish.sh all -m "Release v1.2.3"
 
 # If operator.sh or operator/* changed, rebuild operator too
 docker build -t ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest -f operator/Dockerfile .
