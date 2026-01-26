@@ -1697,6 +1697,95 @@ export function formatGraphBatchResult(result: any): string {
   return output;
 }
 
+/**
+ * Queue operation result type for formatter
+ */
+interface QueueOperationResult {
+  index: number;
+  status: 'ok' | 'error';
+  op: string;
+  entity: string;
+  label?: string;
+  id?: string;
+  relationship?: string;
+  count?: number;
+  total?: number;
+  matched_existing?: boolean;
+  concepts?: Array<{ id: string; label: string }>;
+  edges?: Array<{ from: string; type: string; to: string }>;
+  error?: string;
+}
+
+/**
+ * Queue execution result type for formatter
+ */
+interface QueueExecutionResult {
+  results: QueueOperationResult[];
+  stopIndex: number;
+  successCount: number;
+  errorCount: number;
+}
+
+/**
+ * Format queue execution results for MCP output
+ */
+export function formatGraphQueueResult(
+  queueResult: QueueExecutionResult,
+  totalOperations: number
+): string {
+  const { results, stopIndex, successCount, errorCount } = queueResult;
+
+  let output = `# Queue Results\n\n`;
+  output += `**Executed:** ${results.length} of ${totalOperations} operations\n`;
+  output += `**Success:** ${successCount} | **Errors:** ${errorCount}\n`;
+  if (stopIndex >= 0) {
+    output += `**Stopped at:** operation ${stopIndex + 1} (error)\n`;
+  }
+  output += '\n## Operations\n\n';
+
+  results.forEach((r) => {
+    const icon = r.status === 'ok' ? '✓' : '✗';
+    output += `${r.index}. ${icon} **${r.op} ${r.entity}**`;
+    if (r.status === 'ok') {
+      if (r.label) output += ` - ${r.label}`;
+      if (r.id) output += ` (${r.id})`;
+      if (r.relationship) output += ` - ${r.relationship}`;
+      if (r.count !== undefined) output += ` - ${r.count}/${r.total} results`;
+      if (r.matched_existing) output += ' ⚠️ matched existing';
+    } else {
+      output += ` - ${r.error}`;
+    }
+    output += '\n';
+  });
+
+  // Include list results inline for convenience
+  const listResults = results.filter((r) => r.status === 'ok' && r.op === 'list');
+  if (listResults.length > 0) {
+    output += '\n## List Results\n\n';
+    listResults.forEach((r) => {
+      output += `### Operation ${r.index}: ${r.entity} list\n\n`;
+      if (r.entity === 'concept' && r.concepts) {
+        r.concepts.slice(0, 10).forEach((c, i) => {
+          output += `${i + 1}. ${c.label} (${c.id})\n`;
+        });
+        if (r.concepts.length > 10) {
+          output += `... and ${r.concepts.length - 10} more\n`;
+        }
+      } else if (r.entity === 'edge' && r.edges) {
+        r.edges.slice(0, 10).forEach((e, i) => {
+          output += `${i + 1}. ${e.from} -[${e.type}]-> ${e.to}\n`;
+        });
+        if (r.edges.length > 10) {
+          output += `... and ${r.edges.length - 10} more\n`;
+        }
+      }
+      output += '\n';
+    });
+  }
+
+  return output;
+}
+
 export function formatDocumentConceptsDetailed(docResult: any, conceptDetails: any[]): string {
   let output = `# Concepts: ${docResult.filename}\n\n`;
   output += `Document: ${docResult.document_id}\n`;

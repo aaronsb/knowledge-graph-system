@@ -51,7 +51,12 @@ import {
   formatGraphConceptList,
   formatGraphEdgeList,
   formatGraphBatchResult,
+  formatGraphQueueResult,
 } from './mcp/formatters.js';
+import {
+  GraphOperationExecutor,
+  type QueueOperation,
+} from './mcp/graph-operations.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import pkg from '../package.json';
@@ -2009,7 +2014,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
 
-      // ADR-089 Phase 3a: Graph CRUD Tool Handler
+      // ADR-089 Phase 3a: Graph CRUD Tool Handler (Refactored)
       case 'graph': {
         const action = toolArgs.action as string;
         const entity = toolArgs.entity as string;
@@ -2019,95 +2024,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('entity is required (concept or edge)');
         }
 
-        // Helper: Resolve concept by label using search
-        async function resolveConceptByLabel(label: string): Promise<string> {
-          const searchResult = await client.searchConcepts({
-            query: label,
-            limit: 1,
-            min_similarity: 0.85,
-          });
-
-          if (searchResult.count === 0) {
-            throw new Error(`No concept found matching label: "${label}". Try creating it first or use a more specific label.`);
-          }
-
-          const match = searchResult.results[0];
-          if (match.score < 0.85) {
-            throw new Error(`No confident match for "${label}". Best match: "${match.label}" (${(match.score * 100).toFixed(1)}% similarity). Use concept_id for precise reference.`);
-          }
-
-          return match.concept_id;
-        }
+        // Create executor instance for this request
+        const executor = new GraphOperationExecutor(client);
 
         switch (action) {
           case 'create': {
             if (entity === 'concept') {
-              // Create concept
-              const label = toolArgs.label as string;
-              const ontology = toolArgs.ontology as string;
-
-              if (!label) {
-                throw new Error('label is required for creating a concept');
-              }
-              if (!ontology) {
-                throw new Error('ontology is required for creating a concept');
-              }
-
-              const result = await client.createConcept({
-                label,
-                ontology,
+              const result = await executor.createConcept({
+                label: toolArgs.label as string,
+                ontology: toolArgs.ontology as string,
                 description: toolArgs.description as string | undefined,
                 search_terms: toolArgs.search_terms as string[] | undefined,
-                matching_mode: (toolArgs.matching_mode as 'auto' | 'force_create' | 'match_only') || 'auto',
-                creation_method: 'mcp',
+                matching_mode: toolArgs.matching_mode as 'auto' | 'force_create' | 'match_only' | undefined,
               });
-
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphConceptResult(result, 'create') }],
+                content: [{ type: 'text', text: formatGraphConceptResult(result.data, 'create') }],
               };
             } else if (entity === 'edge') {
-              // Create edge
-              let fromId = toolArgs.from_concept_id as string | undefined;
-              let toId = toolArgs.to_concept_id as string | undefined;
-              const relationshipType = toolArgs.relationship_type as string;
-
-              if (!relationshipType) {
-                throw new Error('relationship_type is required for creating an edge');
-              }
-
-              // Semantic resolution: from_label → from_concept_id
-              if (!fromId && toolArgs.from_label) {
-                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
-              }
-              if (!toId && toolArgs.to_label) {
-                toId = await resolveConceptByLabel(toolArgs.to_label as string);
-              }
-
-              if (!fromId) {
-                throw new Error('from_concept_id or from_label is required for creating an edge');
-              }
-              if (!toId) {
-                throw new Error('to_concept_id or to_label is required for creating an edge');
-              }
-
-              const result = await client.createEdge({
-                from_concept_id: fromId,
-                to_concept_id: toId,
-                relationship_type: relationshipType,
-                category: toolArgs.category as any || 'logical_truth',
-                confidence: (toolArgs.confidence as number) || 1.0,
-                source: 'api_creation',
+              const result = await executor.createEdge({
+                from_concept_id: toolArgs.from_concept_id as string | undefined,
+                from_label: toolArgs.from_label as string | undefined,
+                to_concept_id: toolArgs.to_concept_id as string | undefined,
+                to_label: toolArgs.to_label as string | undefined,
+                relationship_type: toolArgs.relationship_type as string,
+                category: toolArgs.category as string | undefined,
+                confidence: toolArgs.confidence as number | undefined,
               });
-
-              // Add resolved labels to result for better output
-              const enrichedResult = {
-                ...result,
-                from_label: toolArgs.from_label || fromId,
-                to_label: toolArgs.to_label || toId,
-              };
-
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphEdgeResult(enrichedResult, 'create') }],
+                content: [{ type: 'text', text: formatGraphEdgeResult(result.data, 'create') }],
               };
             } else {
               throw new Error(`Unknown entity type: ${entity}`);
@@ -2116,49 +2062,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           case 'list': {
             if (entity === 'concept') {
-              const result = await client.listConceptsCRUD({
+              const result = await executor.listConcepts({
                 ontology: toolArgs.ontology as string | undefined,
                 label_contains: toolArgs.label_contains as string | undefined,
                 creation_method: toolArgs.creation_method as string | undefined,
-                offset: (toolArgs.offset as number) || 0,
-                limit: (toolArgs.limit as number) || 20,
+                offset: toolArgs.offset as number | undefined,
+                limit: toolArgs.limit as number | undefined,
               });
-
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphConceptList(result) }],
+                content: [{ type: 'text', text: formatGraphConceptList(result.data) }],
               };
             } else if (entity === 'edge') {
-              let fromId = toolArgs.from_concept_id as string | undefined;
-              let toId = toolArgs.to_concept_id as string | undefined;
-
-              // Semantic resolution for list filters
-              if (!fromId && toolArgs.from_label) {
-                try {
-                  fromId = await resolveConceptByLabel(toolArgs.from_label as string);
-                } catch {
-                  // Ignore resolution errors for list - just skip filter
-                }
-              }
-              if (!toId && toolArgs.to_label) {
-                try {
-                  toId = await resolveConceptByLabel(toolArgs.to_label as string);
-                } catch {
-                  // Ignore resolution errors for list - just skip filter
-                }
-              }
-
-              const result = await client.listEdges({
-                from_concept_id: fromId,
-                to_concept_id: toId,
+              const result = await executor.listEdges({
+                from_concept_id: toolArgs.from_concept_id as string | undefined,
+                from_label: toolArgs.from_label as string | undefined,
+                to_concept_id: toolArgs.to_concept_id as string | undefined,
+                to_label: toolArgs.to_label as string | undefined,
                 relationship_type: toolArgs.relationship_type as string | undefined,
                 category: toolArgs.category as string | undefined,
                 source: toolArgs.source as string | undefined,
-                offset: (toolArgs.offset as number) || 0,
-                limit: (toolArgs.limit as number) || 20,
+                offset: toolArgs.offset as number | undefined,
+                limit: toolArgs.limit as number | undefined,
               });
-
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphEdgeList(result) }],
+                content: [{ type: 'text', text: formatGraphEdgeList(result.data) }],
               };
             } else {
               throw new Error(`Unknown entity type: ${entity}`);
@@ -2167,60 +2096,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           case 'edit': {
             if (entity === 'concept') {
-              const conceptId = toolArgs.concept_id as string;
-              if (!conceptId) {
-                throw new Error('concept_id is required for editing a concept');
-              }
-
-              const updateData: any = {};
-              if (toolArgs.label !== undefined) updateData.label = toolArgs.label;
-              if (toolArgs.description !== undefined) updateData.description = toolArgs.description;
-              if (toolArgs.search_terms !== undefined) updateData.search_terms = toolArgs.search_terms;
-
-              if (Object.keys(updateData).length === 0) {
-                throw new Error('At least one field (label, description, or search_terms) must be provided for edit');
-              }
-
-              const result = await client.updateConcept(conceptId, updateData);
-
+              const result = await executor.editConcept({
+                concept_id: toolArgs.concept_id as string,
+                label: toolArgs.label as string | undefined,
+                description: toolArgs.description as string | undefined,
+                search_terms: toolArgs.search_terms as string[] | undefined,
+              });
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphConceptResult(result, 'edit') }],
+                content: [{ type: 'text', text: formatGraphConceptResult(result.data, 'edit') }],
               };
             } else if (entity === 'edge') {
-              // Edge update requires from, type, to identification
-              let fromId = toolArgs.from_concept_id as string | undefined;
-              let toId = toolArgs.to_concept_id as string | undefined;
-              const relationshipType = toolArgs.relationship_type as string;
-
-              if (!fromId && toolArgs.from_label) {
-                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
-              }
-              if (!toId && toolArgs.to_label) {
-                toId = await resolveConceptByLabel(toolArgs.to_label as string);
-              }
-
-              if (!fromId || !toId || !relationshipType) {
-                throw new Error('from_concept_id (or from_label), to_concept_id (or to_label), and relationship_type are required for editing an edge');
-              }
-
-              const updateData: any = {};
-              if (toolArgs.confidence !== undefined) updateData.confidence = toolArgs.confidence;
-              if (toolArgs.category !== undefined) updateData.category = toolArgs.category;
-
-              if (Object.keys(updateData).length === 0) {
-                throw new Error('At least one field (confidence or category) must be provided for edge edit');
-              }
-
-              const result = await client.updateEdge(fromId, relationshipType, toId, updateData);
-
-              const enrichedResult = {
-                ...result,
-                from_label: toolArgs.from_label || fromId,
-                to_label: toolArgs.to_label || toId,
-              };
-
+              const result = await executor.editEdge({
+                from_concept_id: toolArgs.from_concept_id as string | undefined,
+                from_label: toolArgs.from_label as string | undefined,
+                to_concept_id: toolArgs.to_concept_id as string | undefined,
+                to_label: toolArgs.to_label as string | undefined,
+                relationship_type: toolArgs.relationship_type as string,
+                confidence: toolArgs.confidence as number | undefined,
+                category: toolArgs.category as string | undefined,
+              });
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphEdgeResult(enrichedResult, 'edit') }],
+                content: [{ type: 'text', text: formatGraphEdgeResult(result.data, 'edit') }],
               };
             } else {
               throw new Error(`Unknown entity type: ${entity}`);
@@ -2229,37 +2127,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           case 'delete': {
             if (entity === 'concept') {
-              const conceptId = toolArgs.concept_id as string;
-              if (!conceptId) {
-                throw new Error('concept_id is required for deleting a concept');
-              }
-
-              const cascade = (toolArgs.cascade as boolean) || false;
-              await client.deleteConcept(conceptId, cascade);
-
+              const result = await executor.deleteConcept({
+                concept_id: toolArgs.concept_id as string,
+                cascade: toolArgs.cascade as boolean | undefined,
+              });
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphConceptResult({ concept_id: conceptId }, 'delete') }],
+                content: [{ type: 'text', text: formatGraphConceptResult(result.data, 'delete') }],
               };
             } else if (entity === 'edge') {
-              let fromId = toolArgs.from_concept_id as string | undefined;
-              let toId = toolArgs.to_concept_id as string | undefined;
-              const relationshipType = toolArgs.relationship_type as string;
-
-              if (!fromId && toolArgs.from_label) {
-                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
-              }
-              if (!toId && toolArgs.to_label) {
-                toId = await resolveConceptByLabel(toolArgs.to_label as string);
-              }
-
-              if (!fromId || !toId || !relationshipType) {
-                throw new Error('from_concept_id (or from_label), to_concept_id (or to_label), and relationship_type are required for deleting an edge');
-              }
-
-              await client.deleteEdge(fromId, relationshipType, toId);
-
+              const result = await executor.deleteEdge({
+                from_concept_id: toolArgs.from_concept_id as string | undefined,
+                from_label: toolArgs.from_label as string | undefined,
+                to_concept_id: toolArgs.to_concept_id as string | undefined,
+                to_label: toolArgs.to_label as string | undefined,
+                relationship_type: toolArgs.relationship_type as string,
+              });
+              if (!result.success) throw new Error(result.error);
               return {
-                content: [{ type: 'text', text: formatGraphEdgeResult({ from_concept_id: fromId, to_concept_id: toId, relationship_type: relationshipType }, 'delete') }],
+                content: [{ type: 'text', text: formatGraphEdgeResult(result.data, 'delete') }],
               };
             } else {
               throw new Error(`Unknown entity type: ${entity}`);
@@ -2267,291 +2153,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
 
           case 'queue': {
-            const operations = toolArgs.operations as any[];
+            const operations = toolArgs.operations as QueueOperation[];
             const continueOnError = toolArgs.continue_on_error === true;
 
             if (!operations || !Array.isArray(operations)) {
               throw new Error('operations array is required for queue action');
             }
-
             if (operations.length === 0) {
               throw new Error('operations array cannot be empty');
             }
-
             if (operations.length > 20) {
               throw new Error(`Queue too large: ${operations.length} operations (max 20)`);
             }
 
-            const results: any[] = [];
-            let stopIndex = -1;
-
-            for (let i = 0; i < operations.length; i++) {
-              const op = operations[i];
-              const opAction = op.op as string;
-              const opEntity = op.entity as string;
-
-              if (!opAction || !opEntity) {
-                const error = `Operation ${i + 1}: missing 'op' or 'entity'`;
-                results.push({ index: i + 1, status: 'error', error });
-                if (!continueOnError) {
-                  stopIndex = i;
-                  break;
-                }
-                continue;
-              }
-
-              try {
-                let result: any;
-
-                if (opAction === 'create' && opEntity === 'concept') {
-                  if (!op.label || !op.ontology) {
-                    throw new Error('label and ontology required');
-                  }
-                  result = await client.createConcept({
-                    label: op.label,
-                    ontology: op.ontology,
-                    description: op.description,
-                    search_terms: op.search_terms,
-                    matching_mode: op.matching_mode || 'auto',
-                    creation_method: 'mcp',
-                  });
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'create',
-                    entity: 'concept',
-                    label: result.label,
-                    id: result.concept_id,
-                    matched_existing: result.matched_existing,
-                  });
-
-                } else if (opAction === 'create' && opEntity === 'edge') {
-                  let fromId = op.from_concept_id;
-                  let toId = op.to_concept_id;
-                  if (!fromId && op.from_label) {
-                    fromId = await resolveConceptByLabel(op.from_label);
-                  }
-                  if (!toId && op.to_label) {
-                    toId = await resolveConceptByLabel(op.to_label);
-                  }
-                  if (!fromId || !toId || !op.relationship_type) {
-                    throw new Error('from, to, and relationship_type required');
-                  }
-                  result = await client.createEdge({
-                    from_concept_id: fromId,
-                    to_concept_id: toId,
-                    relationship_type: op.relationship_type,
-                    category: op.category || 'logical_truth',
-                    confidence: op.confidence || 1.0,
-                    source: 'api_creation',
-                  });
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'create',
-                    entity: 'edge',
-                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
-                  });
-
-                } else if (opAction === 'list' && opEntity === 'concept') {
-                  result = await client.listConceptsCRUD({
-                    ontology: op.ontology,
-                    label_contains: op.label_contains,
-                    creation_method: op.creation_method,
-                    offset: op.offset || 0,
-                    limit: op.limit || 20,
-                  });
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'list',
-                    entity: 'concept',
-                    count: result.concepts.length,
-                    total: result.total,
-                    concepts: result.concepts.map((c: any) => ({ id: c.concept_id, label: c.label })),
-                  });
-
-                } else if (opAction === 'list' && opEntity === 'edge') {
-                  let fromId = op.from_concept_id;
-                  let toId = op.to_concept_id;
-                  if (!fromId && op.from_label) {
-                    try { fromId = await resolveConceptByLabel(op.from_label); } catch { /* skip */ }
-                  }
-                  if (!toId && op.to_label) {
-                    try { toId = await resolveConceptByLabel(op.to_label); } catch { /* skip */ }
-                  }
-                  result = await client.listEdges({
-                    from_concept_id: fromId,
-                    to_concept_id: toId,
-                    relationship_type: op.relationship_type,
-                    category: op.category,
-                    source: op.source,
-                    offset: op.offset || 0,
-                    limit: op.limit || 20,
-                  });
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'list',
-                    entity: 'edge',
-                    count: result.edges.length,
-                    total: result.total,
-                    edges: result.edges.map((e: any) => ({
-                      from: e.from_concept_id,
-                      type: e.relationship_type,
-                      to: e.to_concept_id,
-                    })),
-                  });
-
-                } else if (opAction === 'edit' && opEntity === 'concept') {
-                  if (!op.concept_id) {
-                    throw new Error('concept_id required for edit');
-                  }
-                  const updateData: any = {};
-                  if (op.label !== undefined) updateData.label = op.label;
-                  if (op.description !== undefined) updateData.description = op.description;
-                  if (op.search_terms !== undefined) updateData.search_terms = op.search_terms;
-                  result = await client.updateConcept(op.concept_id, updateData);
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'edit',
-                    entity: 'concept',
-                    id: result.concept_id,
-                    label: result.label,
-                  });
-
-                } else if (opAction === 'edit' && opEntity === 'edge') {
-                  let fromId = op.from_concept_id;
-                  let toId = op.to_concept_id;
-                  if (!fromId && op.from_label) {
-                    fromId = await resolveConceptByLabel(op.from_label);
-                  }
-                  if (!toId && op.to_label) {
-                    toId = await resolveConceptByLabel(op.to_label);
-                  }
-                  if (!fromId || !toId || !op.relationship_type) {
-                    throw new Error('from, to, and relationship_type required');
-                  }
-                  const updateData: any = {};
-                  if (op.confidence !== undefined) updateData.confidence = op.confidence;
-                  if (op.category !== undefined) updateData.category = op.category;
-                  result = await client.updateEdge(fromId, op.relationship_type, toId, updateData);
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'edit',
-                    entity: 'edge',
-                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
-                  });
-
-                } else if (opAction === 'delete' && opEntity === 'concept') {
-                  if (!op.concept_id) {
-                    throw new Error('concept_id required for delete');
-                  }
-                  await client.deleteConcept(op.concept_id, op.cascade || false);
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'delete',
-                    entity: 'concept',
-                    id: op.concept_id,
-                  });
-
-                } else if (opAction === 'delete' && opEntity === 'edge') {
-                  let fromId = op.from_concept_id;
-                  let toId = op.to_concept_id;
-                  if (!fromId && op.from_label) {
-                    fromId = await resolveConceptByLabel(op.from_label);
-                  }
-                  if (!toId && op.to_label) {
-                    toId = await resolveConceptByLabel(op.to_label);
-                  }
-                  if (!fromId || !toId || !op.relationship_type) {
-                    throw new Error('from, to, and relationship_type required');
-                  }
-                  await client.deleteEdge(fromId, op.relationship_type, toId);
-                  results.push({
-                    index: i + 1,
-                    status: 'ok',
-                    op: 'delete',
-                    entity: 'edge',
-                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
-                  });
-
-                } else {
-                  throw new Error(`Unknown operation: ${opAction} ${opEntity}`);
-                }
-
-              } catch (err: any) {
-                results.push({
-                  index: i + 1,
-                  status: 'error',
-                  op: opAction,
-                  entity: opEntity,
-                  error: err.message,
-                });
-                if (!continueOnError) {
-                  stopIndex = i;
-                  break;
-                }
-              }
-            }
-
-            // Format queue results
-            const successCount = results.filter(r => r.status === 'ok').length;
-            const errorCount = results.filter(r => r.status === 'error').length;
-
-            let output = `# Queue Results\n\n`;
-            output += `**Executed:** ${results.length} of ${operations.length} operations\n`;
-            output += `**Success:** ${successCount} | **Errors:** ${errorCount}\n`;
-            if (stopIndex >= 0) {
-              output += `**Stopped at:** operation ${stopIndex + 1} (error)\n`;
-            }
-            output += '\n## Operations\n\n';
-
-            results.forEach(r => {
-              const icon = r.status === 'ok' ? '✓' : '✗';
-              output += `${r.index}. ${icon} **${r.op} ${r.entity}**`;
-              if (r.status === 'ok') {
-                if (r.label) output += ` - ${r.label}`;
-                if (r.id) output += ` (${r.id})`;
-                if (r.relationship) output += ` - ${r.relationship}`;
-                if (r.count !== undefined) output += ` - ${r.count}/${r.total} results`;
-                if (r.matched_existing) output += ' ⚠️ matched existing';
-              } else {
-                output += ` - ${r.error}`;
-              }
-              output += '\n';
-            });
-
-            // Include list results inline for convenience
-            const listResults = results.filter(r => r.status === 'ok' && r.op === 'list');
-            if (listResults.length > 0) {
-              output += '\n## List Results\n\n';
-              listResults.forEach(r => {
-                output += `### Operation ${r.index}: ${r.entity} list\n\n`;
-                if (r.entity === 'concept' && r.concepts) {
-                  r.concepts.slice(0, 10).forEach((c: any, i: number) => {
-                    output += `${i + 1}. ${c.label} (${c.id})\n`;
-                  });
-                  if (r.concepts.length > 10) {
-                    output += `... and ${r.concepts.length - 10} more\n`;
-                  }
-                } else if (r.entity === 'edge' && r.edges) {
-                  r.edges.slice(0, 10).forEach((e: any, i: number) => {
-                    output += `${i + 1}. ${e.from} -[${e.type}]-> ${e.to}\n`;
-                  });
-                  if (r.edges.length > 10) {
-                    output += `... and ${r.edges.length - 10} more\n`;
-                  }
-                }
-                output += '\n';
-              });
-            }
+            const queueResult = await executor.executeQueue(operations, continueOnError);
+            const formattedOutput = formatGraphQueueResult(queueResult, operations.length);
 
             return {
-              content: [{ type: 'text', text: output }],
+              content: [{ type: 'text', text: formattedOutput }],
             };
           }
 
