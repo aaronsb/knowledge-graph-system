@@ -2227,6 +2227,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clear" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7445,6 +7467,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clear" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7495,7 +7539,9 @@
 <li><code>list</code> - List recent jobs with optional filtering by status or user - includes subcommands for common filters</li>
 <li><code>approve</code> - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status</li>
 <li><code>cancel</code> - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)</li>
-<li><code>clear</code> - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</li>
+<li><code>delete</code> - Permanently delete a job from database (removes record entirely, not just cancels)</li>
+<li><code>cleanup</code> - Delete jobs matching filters (with preview) - safer alternative to clear</li>
+<li><code>clear</code> - Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)</li>
 </ul>
 <hr />
 <h3 id="status">status</h3>
@@ -7840,10 +7886,83 @@
 </tr>
 </tbody>
 </table>
-<h3 id="clear">clear</h3>
-<p>Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</p>
+<h3 id="delete">delete</h3>
+<p>Permanently delete a job from database (removes record entirely, not just cancels)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;job-id&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;job-id&gt;</code> - Required</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Force delete even if job is processing (dangerous)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cleanup">cleanup</h3>
+<p>Delete jobs matching filters (with preview) - safer alternative to clear</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-s, --status &lt;status&gt;</code></td>
+<td>Filter by status (pending</td>
+<td>cancelled</td>
+</tr>
+<tr>
+<td><code>--system</code></td>
+<td>Only delete system/scheduled jobs</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--older-than &lt;duration&gt;</code></td>
+<td>Delete jobs older than duration (1h</td>
+<td>24h</td>
+</tr>
+<tr>
+<td><code>-t, --type &lt;job-type&gt;</code></td>
+<td>Filter by job type (ingestion</td>
+<td>epistemic_remeasurement</td>
+</tr>
+<tr>
+<td><code>--confirm</code></td>
+<td>Execute deletion (without this flag, shows preview only)</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--all</code></td>
+<td>Delete ALL jobs (nuclear option, requires --confirm)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="clear">clear</h3>
+<p>Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>

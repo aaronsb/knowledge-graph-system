@@ -2342,6 +2342,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clear" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2558,7 +2580,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delete_1" class="md-nav__link">
+  <a href="#delete_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         delete
@@ -8323,6 +8345,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#delete_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clear" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8539,7 +8583,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delete_1" class="md-nav__link">
+  <a href="#delete_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         delete
@@ -8578,7 +8622,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from CLI source code.
-Last updated: 2026-01-24</p>
+Last updated: 2026-01-26</p>
 </blockquote>
 <hr />
 <h2 id="commands">Commands</h2>
@@ -9249,7 +9293,9 @@ Last updated: 2026-01-24</p>
 <li><code>list</code> - List recent jobs with optional filtering by status or user - includes subcommands for common filters</li>
 <li><code>approve</code> - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status</li>
 <li><code>cancel</code> - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)</li>
-<li><code>clear</code> - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</li>
+<li><code>delete</code> - Permanently delete a job from database (removes record entirely, not just cancels)</li>
+<li><code>cleanup</code> - Delete jobs matching filters (with preview) - safer alternative to clear</li>
+<li><code>clear</code> - Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)</li>
 </ul>
 <hr />
 <h3 id="status">status</h3>
@@ -9594,10 +9640,83 @@ Last updated: 2026-01-24</p>
 </tr>
 </tbody>
 </table>
-<h3 id="clear">clear</h3>
-<p>Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)</p>
+<h3 id="delete_1">delete</h3>
+<p>Permanently delete a job from database (removes record entirely, not just cancels)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;job-id&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;job-id&gt;</code> - Required</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Force delete even if job is processing (dangerous)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cleanup">cleanup</h3>
+<p>Delete jobs matching filters (with preview) - safer alternative to clear</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-s, --status &lt;status&gt;</code></td>
+<td>Filter by status (pending</td>
+<td>cancelled</td>
+</tr>
+<tr>
+<td><code>--system</code></td>
+<td>Only delete system/scheduled jobs</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--older-than &lt;duration&gt;</code></td>
+<td>Delete jobs older than duration (1h</td>
+<td>24h</td>
+</tr>
+<tr>
+<td><code>-t, --type &lt;job-type&gt;</code></td>
+<td>Filter by job type (ingestion</td>
+<td>epistemic_remeasurement</td>
+</tr>
+<tr>
+<td><code>--confirm</code></td>
+<td>Execute deletion (without this flag, shows preview only)</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--all</code></td>
+<td>Delete ALL jobs (nuclear option, requires --confirm)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="clear">clear</h3>
+<p>Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>clear<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -9619,7 +9738,7 @@ Last updated: 2026-01-24</p>
 <h2 id="search">search</h2>
 <p>Search and explore the knowledge graph using vector similarity, graph traversal, and path finding</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="o">[</span>query<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="o">[</span>query<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9669,7 +9788,7 @@ Last updated: 2026-01-24</p>
 <h3 id="query">query</h3>
 <p>Search for concepts using vector similarity (embeddings) - use specific phrases for best results</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9740,7 +9859,7 @@ Last updated: 2026-01-24</p>
 <h3 id="show-details">show (details)</h3>
 <p>Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9771,7 +9890,7 @@ Last updated: 2026-01-24</p>
 <h3 id="related">related</h3>
 <p>Find concepts related through graph traversal (breadth-first search) - groups results by distance</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9817,7 +9936,7 @@ Last updated: 2026-01-24</p>
 <h3 id="connect">connect</h3>
 <p>Find shortest path between two concepts using IDs or semantic phrase matching</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>connect<span class="w"> </span>&lt;from&gt;<span class="w"> </span>&lt;to&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>connect<span class="w"> </span>&lt;from&gt;<span class="w"> </span>&lt;to&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9884,7 +10003,7 @@ Last updated: 2026-01-24</p>
 <h3 id="sources">sources</h3>
 <p>Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>sources<span class="w"> </span>&lt;query&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>sources<span class="w"> </span>&lt;query&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -9935,7 +10054,7 @@ Last updated: 2026-01-24</p>
 <h2 id="database-db">database (db)</h2>
 <p>Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>database<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>database<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -9949,22 +10068,22 @@ Last updated: 2026-01-24</p>
 <h3 id="stats">stats</h3>
 <p>Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="info">info</h3>
 <p>Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="health_1">health</h3>
 <p>Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="query_1">query</h3>
 <p>Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.<em>recursive.</em>' RETURN c.label LIMIT 5" --namespace concept</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>query<span class="w"> </span>&lt;query&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -10000,7 +10119,7 @@ Last updated: 2026-01-24</p>
 <h3 id="counters">counters</h3>
 <p>Show graph metrics counters organized by type (ADR-079). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>counters<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>counters<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -10022,7 +10141,7 @@ Last updated: 2026-01-24</p>
 <h2 id="ontology-onto">ontology (onto)</h2>
 <p>Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kg<span class="w"> </span>ontology<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -10036,12 +10155,12 @@ Last updated: 2026-01-24</p>
 <h3 id="list_2">list</h3>
 <p>List all ontologies in the knowledge graph. Shows a table with ontology name, file count, chunk count, and concept count. Use this to get a bird's-eye view of all knowledge domains, verify ingestion results, and understand how knowledge is distributed.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="info_1">info</h3>
 <p>Get detailed information about a specific ontology. Shows statistics (files, chunks, concepts, evidence, relationships) and lists all source files. Use this to understand ontology composition, verify expected files are present, and troubleshoot ingestion issues.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -10050,7 +10169,7 @@ Last updated: 2026-01-24</p>
 <h3 id="files">files</h3>
 <p>List files in a specific ontology with per-file statistics (chunks and concepts). Shows which files contributed most concepts and helps identify files that may need re-ingestion. Original file paths are preserved, though temporary paths may appear for text-based ingestion.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kg<span class="w"> </span>files<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kg<span class="w"> </span>files<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -10059,7 +10178,7 @@ Last updated: 2026-01-24</p>
 <h3 id="rename">rename</h3>
 <p>Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -10083,10 +10202,10 @@ Last updated: 2026-01-24</p>
 </tr>
 </tbody>
 </table>
-<h3 id="delete_1">delete</h3>
+<h3 id="delete_2">delete</h3>
 <p>Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>

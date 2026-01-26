@@ -7469,7 +7469,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - <a href="#concept"><code>concept</code></a> - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).</p>
 <p>PERFORMANCE CRITICAL: For "connect" action, use threshold &gt;= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 - <a href="#ontology"><code>ontology</code></a> - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
-- <a href="#job"><code>job</code></a> - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
+- <a href="#job"><code>job</code></a> - Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.
 - <a href="#ingest"><code>ingest</code></a> - Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
 - <a href="#source"><code>source</code></a> - Retrieve original source content (text or image) for a source node (ADR-057).</p>
 <p>For IMAGE sources: Returns the image for visual verification
@@ -7639,15 +7639,25 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 </ul>
 <hr />
 <h3 id="job">job</h3>
-<p>Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.</p>
+<p>Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job)</li>
-<li>Allowed values: <code>status</code>, <code>list</code>, <code>approve</code>, <code>cancel</code></li>
-<li><code>job_id</code> (<code>string</code>) - Job ID (required for status, approve, cancel)</li>
-<li><code>status</code> (<code>string</code>) - Filter by status for list (pending, awaiting_approval, running, completed, failed)</li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job), "delete" (permanently delete single job), "cleanup" (delete jobs matching filters)</li>
+<li>Allowed values: <code>status</code>, <code>list</code>, <code>approve</code>, <code>cancel</code>, <code>delete</code>, <code>cleanup</code></li>
+<li><code>job_id</code> (<code>string</code>) - Job ID (required for status, approve, cancel, delete)</li>
+<li><code>status</code> (<code>string</code>) - Filter by status for list/cleanup (pending, awaiting_approval, running, completed, failed)</li>
 <li><code>limit</code> (<code>number</code>) - Max jobs to return for list (default: 50)</li>
 <li>Default: <code>50</code></li>
+<li><code>force</code> (<code>boolean</code>) - Force delete even if job is processing (for delete action)</li>
+<li>Default: <code>false</code></li>
+<li><code>system_only</code> (<code>boolean</code>) - Only delete system/scheduled jobs (for cleanup action)</li>
+<li>Default: <code>false</code></li>
+<li><code>older_than</code> (<code>string</code>) - Delete jobs older than duration: 1h, 24h, 7d, 30d (for cleanup action)</li>
+<li><code>job_type</code> (<code>string</code>) - Filter by job type for cleanup (ingestion, epistemic_remeasurement, projection, etc)</li>
+<li><code>dry_run</code> (<code>boolean</code>) - Preview what would be deleted without deleting (for cleanup, default: true)</li>
+<li>Default: <code>true</code></li>
+<li><code>confirm</code> (<code>boolean</code>) - Confirm deletion - set to true to actually delete (for cleanup action)</li>
+<li>Default: <code>false</code></li>
 </ul>
 <hr />
 <h3 id="ingest">ingest</h3>
