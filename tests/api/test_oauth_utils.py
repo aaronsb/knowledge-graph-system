@@ -15,7 +15,7 @@ import pytest
 import re
 from datetime import datetime, timedelta, timezone
 
-from src.api.lib.oauth_utils import (
+from api.app.lib.oauth_utils import (
     generate_oauth_token,
     generate_authorization_code,
     generate_device_code,

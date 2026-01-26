@@ -19,9 +19,9 @@ import argparse
 # Add project to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.api.lib.ai_providers import get_provider
-from src.api.lib.age_client import AGEClient
-from src.api.services.vocabulary_manager import VocabularyManager
+from api.app.lib.ai_providers import get_provider
+from api.app.lib.age_client import AGEClient
+from api.app.services.vocabulary_manager import VocabularyManager
 
 
 async def main():

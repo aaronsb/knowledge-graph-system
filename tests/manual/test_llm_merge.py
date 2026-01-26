@@ -18,8 +18,8 @@ import os
 # Add project to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.api.lib.pruning_strategies import llm_evaluate_merge
-from src.api.lib.ai_providers import get_provider
+from api.app.lib.pruning_strategies import llm_evaluate_merge
+from api.app.lib.ai_providers import get_provider
 
 
 async def main():

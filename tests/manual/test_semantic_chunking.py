@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.api.lib.markdown_preprocessor import MarkdownPreprocessor
+from api.app.lib.markdown_preprocessor import MarkdownPreprocessor
 
 
 def test_semantic_chunking():

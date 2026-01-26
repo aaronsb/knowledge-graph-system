@@ -18,11 +18,11 @@ from typing import List, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 
-from src.api.services.vocabulary_manager import VocabularyManager
-from src.api.lib.aggressiveness_curve import calculate_aggressiveness
-from src.api.lib.vocabulary_scoring import EdgeTypeScore
-from src.api.lib.synonym_detector import SynonymCandidate, SynonymStrength
-from src.api.lib.pruning_strategies import ActionType, ReviewLevel
+from api.app.services.vocabulary_manager import VocabularyManager
+from api.app.lib.aggressiveness_curve import calculate_aggressiveness
+from api.app.lib.vocabulary_scoring import EdgeTypeScore
+from api.app.lib.synonym_detector import SynonymCandidate, SynonymStrength
+from api.app.lib.pruning_strategies import ActionType, ReviewLevel
 
 
 # =============================================================================

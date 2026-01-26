@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import MagicMock
 
-from src.api.lib.pruning_strategies import (
+from api.app.lib.pruning_strategies import (
     PruningStrategy,
     PruningMode,
     ActionType,
@@ -17,8 +17,8 @@ from src.api.lib.pruning_strategies import (
     filter_by_review_level,
     group_by_action_type
 )
-from src.api.lib.synonym_detector import SynonymCandidate, SynonymStrength
-from src.api.lib.vocabulary_scoring import EdgeTypeScore
+from api.app.lib.synonym_detector import SynonymCandidate, SynonymStrength
+from api.app.lib.vocabulary_scoring import EdgeTypeScore
 
 
 # ============================================================================

@@ -8,7 +8,7 @@ Tests the LocalEmbeddingProvider to ensure embeddings are generated correctly.
 import sys
 sys.path.insert(0, '/home/aaron/Projects/ai/knowledge-graph-system')
 
-from src.api.lib.embedding_model_manager import get_embedding_model_manager
+from api.app.lib.embedding_model_manager import get_embedding_model_manager
 import numpy as np
 
 print("=" * 80)
@@ -19,7 +19,7 @@ print()
 # Initialize the model manager
 print("Initializing embedding model manager...")
 try:
-    from src.api.lib.embedding_model_manager import EmbeddingModelManager
+    from api.app.lib.embedding_model_manager import EmbeddingModelManager
 
     # Create and load model manager (same as API startup)
     manager = EmbeddingModelManager(

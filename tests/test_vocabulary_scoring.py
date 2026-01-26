@@ -17,7 +17,7 @@ Test Coverage:
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.api.lib.vocabulary_scoring import (
+from api.app.lib.vocabulary_scoring import (
     EdgeTypeScore,
     VocabularyScorer,
     compare_scores,

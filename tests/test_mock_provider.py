@@ -9,7 +9,7 @@ Verifies that the mock provider:
 """
 
 import pytest
-from src.api.lib.mock_ai_provider import MockAIProvider, get_mock_provider
+from api.app.lib.mock_ai_provider import MockAIProvider, get_mock_provider
 
 
 def test_mock_provider_initialization():

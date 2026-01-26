@@ -14,12 +14,13 @@ from typing import Generator, Dict, Any
 from fastapi.testclient import TestClient
 
 # Set test environment before imports
+# AI provider mocking (always mock for tests)
 os.environ["AI_PROVIDER"] = "mock"
 os.environ["MOCK_MODE"] = "default"
-os.environ["POSTGRES_DB"] = "knowledge_graph_test"
+# Database config comes from container env vars (set in docker-compose)
 
-from src.api.lib.mock_ai_provider import MockAIProvider, get_mock_provider
-from src.api.lib.ai_providers import get_provider
+from api.app.lib.mock_ai_provider import MockAIProvider, get_mock_provider
+from api.app.lib.ai_providers import get_provider
 
 
 # ============================================================================
@@ -82,7 +83,7 @@ def api_client() -> Generator[TestClient, None, None]:
             response = api_client.get("/health")
             assert response.status_code == 200
     """
-    from src.api.main import app
+    from api.app.main import app
 
     with TestClient(app) as client:
         yield client
@@ -102,7 +103,7 @@ async def async_api_client():
             assert response.status_code == 200
     """
     import httpx
-    from src.api.main import app
+    from api.app.main import app
 
     async with httpx.AsyncClient(app=app, base_url="http://test") as client:
         yield client
@@ -366,7 +367,7 @@ def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credent
             # OAuth validation is now mocked
             response = api_client.get("/protected", headers=auth_headers_user)
     """
-    from src.api.models.auth import UserInDB
+    from api.app.models.auth import UserInDB
     from datetime import datetime, timezone
 
     def mock_validate(token: str):
@@ -401,10 +402,59 @@ def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credent
         except Exception:
             return None
 
+    def mock_get_scopes(token: str):
+        """Mock get_token_scopes to return all kg scopes for test tokens."""
+        if token.startswith("test_oauth_token:"):
+            # Return all scopes for testing
+            return ["kg:read", "kg:write", "kg:edit", "kg:import"]
+        return []
+
     # Patch the validation function
     monkeypatch.setattr(
-        "src.api.dependencies.auth.validate_oauth_access_token",
+        "api.app.dependencies.auth.validate_oauth_access_token",
         mock_validate
+    )
+    # Patch scope checking for ADR-089 routes
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.get_token_scopes",
+        mock_get_scopes
+    )
+
+
+@pytest.fixture
+def mock_oauth_read_only(monkeypatch, test_user_credentials):
+    """
+    Mock OAuth validation with read-only scopes.
+
+    Use this to test 403 Forbidden when write/edit scopes are required.
+    """
+    from api.app.models.auth import UserInDB
+
+    def mock_validate(token: str):
+        if not token.startswith("test_oauth_token:"):
+            return None
+        try:
+            parts = token.replace("test_oauth_token:", "").split("|")
+            user_id = int(parts[0].replace("user_", ""))
+            creds = test_user_credentials.copy()
+            creds["id"] = user_id
+            return UserInDB(**creds)
+        except Exception:
+            return None
+
+    def mock_get_scopes_read_only(token: str):
+        """Return only read scope."""
+        if token.startswith("test_oauth_token:"):
+            return ["kg:read"]  # Only read, no write/edit
+        return []
+
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.validate_oauth_access_token",
+        mock_validate
+    )
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.get_token_scopes",
+        mock_get_scopes_read_only
     )
 
 

@@ -12,12 +12,12 @@ Tests:
 
 import pytest
 from fastapi import HTTPException
-from src.api.dependencies.auth import (
+from api.app.dependencies.auth import (
     get_current_user,
     get_current_active_user,
     require_role,
 )
-from src.api.models.auth import UserInDB
+from api.app.models.auth import UserInDB
 
 
 # =============================================================================
@@ -117,7 +117,7 @@ async def test_get_current_active_user_active(mock_oauth_validation, create_test
 @pytest.mark.asyncio
 async def test_get_current_active_user_disabled(mock_oauth_validation, test_user_credentials):
     """Test get_current_active_user returns 403 for disabled user"""
-    from src.api.models.auth import UserInDB
+    from api.app.models.auth import UserInDB
 
     # Create disabled user
     disabled_user = UserInDB(**{**test_user_credentials, "disabled": True})
@@ -188,7 +188,7 @@ async def test_require_role_wrong_role(mock_oauth_validation, create_test_oauth_
 @pytest.mark.asyncio
 async def test_require_role_disabled_user_rejected(mock_oauth_validation, test_user_credentials):
     """Test require_role rejects disabled user even with correct role"""
-    from src.api.models.auth import UserInDB
+    from api.app.models.auth import UserInDB
 
     # Create disabled admin
     disabled_admin = UserInDB(**{**test_user_credentials, "role": "admin", "disabled": True})
@@ -208,7 +208,7 @@ async def test_require_role_disabled_user_rejected(mock_oauth_validation, test_u
 @pytest.mark.security
 def test_current_user_type_alias_exists():
     """Test CurrentUser type alias is defined"""
-    from src.api.dependencies.auth import CurrentUser
+    from api.app.dependencies.auth import CurrentUser
 
     # Should be importable
     assert CurrentUser is not None
@@ -218,7 +218,7 @@ def test_current_user_type_alias_exists():
 @pytest.mark.security
 def test_token_dep_type_alias_exists():
     """Test TokenDep type alias is defined"""
-    from src.api.dependencies.auth import TokenDep
+    from api.app.dependencies.auth import TokenDep
 
     # Should be importable
     assert TokenDep is not None
@@ -284,7 +284,7 @@ async def test_auth_chain_fails_at_token_validation(mock_oauth_validation):
 @pytest.mark.asyncio
 async def test_auth_chain_fails_at_active_check(mock_oauth_validation, test_user_credentials):
     """Test auth chain fails at active user check for disabled user"""
-    from src.api.models.auth import UserInDB
+    from api.app.models.auth import UserInDB
 
     disabled_user = UserInDB(**{**test_user_credentials, "disabled": True})
 

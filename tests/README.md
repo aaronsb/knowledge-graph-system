@@ -2,21 +2,49 @@
 
 Comprehensive test suite for functional correctness without requiring live API keys.
 
+## Quick Start (Recommended)
+
+Tests run inside the API container (dev mode required):
+
+```bash
+./tests/run.sh                           # Full suite
+./tests/run.sh tests/api/                # Just API tests
+./tests/run.sh tests/api/test_health.py  # Single file
+./tests/run.sh -k "concept"              # Pattern match
+./tests/run.sh -m "not slow"             # Skip slow tests
+```
+
+**Prerequisites:**
+- Platform running in dev mode: `./operator.sh start`
+- Tests mounted in container (automatic with dev overlay)
+
 ## Test Organization
 
 ```
 tests/
 ├── conftest.py              # Shared fixtures and configuration
-├── test_mock_provider.py    # Mock AI provider tests
-├── unit/                    # Unit tests (fast, isolated)
-├── integration/             # Integration tests (database required)
+├── run.sh                   # Container test runner
 ├── api/                     # API endpoint tests
+│   ├── test_concepts.py     # ADR-089 concept CRUD
+│   ├── test_edges.py        # ADR-089 edge CRUD
+│   └── ...
+├── unit/                    # Unit tests (fast, isolated)
+├── security/                # Auth/security tests
+├── manual/                  # LLM tests (not in CI)
 └── README.md               # This file
 ```
 
 ## Running Tests
 
-### All Tests
+### In-Container (Recommended)
+
+```bash
+./tests/run.sh                    # All tests
+./tests/run.sh tests/api/         # API tests only
+./tests/run.sh -v --tb=short      # Verbose with short tracebacks
+```
+
+### Direct pytest (Local Development)
 
 ```bash
 pytest
@@ -135,6 +163,38 @@ async def test_async_endpoint(async_api_client):
     response = await async_api_client.get("/health")
     assert response.status_code == 200
 ```
+
+### Authentication Fixtures
+
+Most API endpoints require authentication. Use `mock_oauth_validation` to bypass database OAuth lookup:
+
+```python
+@pytest.fixture(autouse=True)
+def setup_auth_mocks(mock_oauth_validation):
+    """Auto-use mock OAuth validation for all tests in this module."""
+    pass
+
+class TestMyEndpoint:
+    def test_requires_auth(self, api_client):
+        """No auth returns 401."""
+        response = api_client.get("/my-endpoint")
+        assert response.status_code == 401
+
+    def test_with_auth(self, api_client, auth_headers_user):
+        """With auth succeeds."""
+        response = api_client.get("/my-endpoint", headers=auth_headers_user)
+        assert response.status_code == 200
+```
+
+**Available auth fixtures:**
+| Fixture | Description |
+|---------|-------------|
+| `mock_oauth_validation` | Patches OAuth validation (add to module) |
+| `auth_headers_user` | Headers dict with user-level token |
+| `auth_headers_admin` | Headers dict with admin-level token |
+| `expired_oauth_token` | Token that will fail validation |
+
+The mock validation returns all scopes (`kg:read`, `kg:write`, `kg:edit`, `kg:import`) for test tokens.
 
 ### Test Data Fixtures
 
