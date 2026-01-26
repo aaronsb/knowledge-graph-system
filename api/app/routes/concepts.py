@@ -22,6 +22,7 @@ from ..models.concepts import (
 from ..models.auth import UserInDB
 from ..dependencies.auth import require_scope
 from ..services.concept_service import get_concept_service
+from ..services.audit_service import log_audit_standalone, AuditAction
 from .database import get_age_client
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,22 @@ async def create_concept(
             request=request,
             user_id=str(current_user.id) if current_user else None
         )
+
+        # Audit log (non-transactional)
+        log_audit_standalone(
+            age_client=age_client,
+            user_id=current_user.id if current_user else None,
+            action=AuditAction.CREATE_CONCEPT.value,
+            resource_type="concepts",
+            resource_id=result.concept_id,
+            details={
+                "label": request.label,
+                "ontology": request.ontology,
+                "matched_existing": result.matched_existing
+            },
+            outcome="success"
+        )
+
         return result
     except ValueError as e:
         raise HTTPException(
