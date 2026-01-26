@@ -1,14 +1,14 @@
 ---
 match: regex
 pattern: \bapi\b|AGEClient|routes/|FastAPI|endpoint|backend
-files: api/api/
+files: api/app/
 ---
 # API Way
 
 ## Structure
 
 ```
-api/api/
+api/app/
 ├── main.py              # FastAPI app entry
 ├── routes/              # Endpoint handlers
 │   ├── queries.py       # Graph queries, polarity

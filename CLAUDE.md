@@ -81,7 +81,7 @@ This project uses **ways** for contextual guidance. When you work with specific 
 |------|---------|--------------|
 | CLI/MCP | `kg `, `cli/src` | Source locations, build commands |
 | Operator | `operator.sh`, docker | Container names, common commands |
-| API | `api/api/`, routes | Structure, query safety patterns |
+| API | `api/app/`, routes | Structure, query safety patterns |
 | Web | `web/src/`, Zustand | Store patterns, component structure |
 | Schema | `schema/`, migrations | Migration patterns, Cypher notes |
 | ADR | `ADR-\d` | Key ADRs, index location |
