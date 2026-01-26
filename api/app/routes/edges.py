@@ -23,6 +23,7 @@ from ..models.edges import (
 from ..models.auth import UserInDB
 from ..dependencies.auth import require_scope
 from ..services.edge_service import get_edge_service
+from ..services.audit_service import log_audit_standalone, AuditAction
 from .database import get_age_client
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,22 @@ async def create_edge(
             request=request,
             user_id=str(current_user.id) if current_user else None
         )
+
+        # Audit log (non-transactional)
+        log_audit_standalone(
+            age_client=age_client,
+            user_id=current_user.id if current_user else None,
+            action=AuditAction.CREATE_EDGE.value,
+            resource_type="edges",
+            resource_id=result.edge_id,
+            details={
+                "from_concept_id": request.from_concept_id,
+                "to_concept_id": request.to_concept_id,
+                "relationship_type": request.relationship_type
+            },
+            outcome="success"
+        )
+
         return result
     except ValueError as e:
         raise HTTPException(
