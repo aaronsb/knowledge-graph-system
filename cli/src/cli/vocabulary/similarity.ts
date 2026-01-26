@@ -116,6 +116,75 @@ export function createOppositeCommand(): Command {
     });
 }
 
+export function createSearchCommand(): Command {
+  return new Command('search')
+    .description('Search for vocabulary terms by natural language query. Useful when creating edges to find the best relationship type.')
+    .argument('<query>', 'Natural language search term (e.g., "prevents", "leads to", "causes")')
+    .option('--limit <n>', 'Number of results to return (1-20)', '5')
+    .option('--json', 'Output as JSON for scripting')
+    .action(async (query: string, options: { limit: string; json?: boolean }) => {
+      try {
+        const client = createClientFromEnv();
+        const limit = Math.min(parseInt(options.limit, 10) || 5, 20);
+
+        // Use the similar types endpoint with the query
+        // This works because the API accepts any term and compares embeddings
+        const data = await client.getSimilarTypes(query.toUpperCase().replace(/\s+/g, '_'), limit, false);
+
+        if (options.json) {
+          console.log(JSON.stringify({
+            query,
+            results: data.similar_types.map((t: any) => ({
+              term: t.relationship_type,
+              similarity: t.similarity,
+              category: t.category,
+              usage_count: t.usage_count,
+            })),
+          }, null, 2));
+          return;
+        }
+
+        console.log();
+        console.log(colors.ui.title(`🔍 Vocabulary Search: "${query}"`));
+        console.log(separator());
+        console.log();
+
+        if (!data.similar_types || data.similar_types.length === 0) {
+          console.log(colors.status.warning('No matching vocabulary terms found.'));
+          console.log();
+          console.log(colors.status.dim('To create a new term, use:'));
+          console.log(colors.status.dim(`  kg edge create --type ${query.toUpperCase().replace(/\s+/g, '_')} --create-vocab`));
+          return;
+        }
+
+        for (let i = 0; i < data.similar_types.length; i++) {
+          const t = data.similar_types[i];
+          const simScore = (t.similarity * 100).toFixed(0) + '%';
+          const simColor = t.similarity >= 0.90 ? colors.status.success :
+                          t.similarity >= 0.75 ? colors.status.warning :
+                          colors.status.dim;
+
+          console.log(
+            `  ${colors.status.info((i + 1).toString() + '.')} ` +
+            `${colors.concept.label(t.relationship_type.padEnd(25))} ` +
+            `${simColor(simScore.padEnd(8))} ` +
+            `${colors.status.dim(t.category)}`
+          );
+        }
+
+        console.log();
+        console.log(colors.status.dim('Use: kg edge create --type <TERM> ...'));
+
+      } catch (error: any) {
+        // If the term doesn't exist, the API might return an error
+        // In that case, try to search concepts instead
+        console.error(colors.status.error('✗ Search failed'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}
+
 export function createAnalyzeCommand(): Command {
   return new Command('analyze')
     .description('Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.')

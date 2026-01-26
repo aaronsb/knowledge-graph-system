@@ -212,6 +212,7 @@ class EdgeService:
             to_id = r.get("to_concept_id", "")
             rel_type = r.get("relationship_type", "UNKNOWN")
 
+            created_by = r.get("created_by")
             edges.append(EdgeResponse(
                 edge_id=f"e_{from_id}_{rel_type}_{to_id}",
                 from_concept_id=from_id,
@@ -221,7 +222,7 @@ class EdgeService:
                 confidence=r.get("confidence", 1.0),
                 source=r.get("source", "unknown"),
                 created_at=r.get("created_at"),
-                created_by=r.get("created_by")
+                created_by=str(created_by) if created_by is not None else None
             ))
 
         return EdgeListResponse(
@@ -300,6 +301,7 @@ class EdgeService:
 
         if not set_parts:
             # Nothing to update
+            existing_created_by = existing.get("created_by")
             return EdgeResponse(
                 edge_id=f"e_{from_concept_id}_{rel_type}_{to_concept_id}",
                 from_concept_id=from_concept_id,
@@ -309,7 +311,7 @@ class EdgeService:
                 confidence=existing.get("confidence", 1.0),
                 source=existing.get("source", "unknown"),
                 created_at=existing.get("created_at"),
-                created_by=existing.get("created_by")
+                created_by=str(existing_created_by) if existing_created_by is not None else None
             )
 
         # Add updated timestamp
@@ -330,6 +332,7 @@ class EdgeService:
         # Fetch updated edge
         updated = await self._get_edge(from_concept_id, to_concept_id, rel_type)
 
+        updated_created_by = updated.get("created_by")
         return EdgeResponse(
             edge_id=f"e_{from_concept_id}_{rel_type}_{to_concept_id}",
             from_concept_id=from_concept_id,
@@ -339,7 +342,7 @@ class EdgeService:
             confidence=updated.get("confidence", 1.0),
             source=updated.get("source", "unknown"),
             created_at=updated.get("created_at"),
-            created_by=updated.get("created_by")
+            created_by=str(updated_created_by) if updated_created_by is not None else None
         )
 
     async def delete_edge(

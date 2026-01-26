@@ -855,3 +855,185 @@ export interface ProjectionRegenerateResponse {
   message: string;
   changelist_id?: string | null;
 }
+
+// ========== Concept CRUD Types (ADR-089) ==========
+
+/**
+ * How to handle potential duplicates when creating concepts.
+ * - auto: Match existing concepts by embedding similarity, create if no match
+ * - force_create: Always create new concept, skip matching
+ * - match_only: Only link to existing concept, fail if no match found
+ */
+export type MatchingMode = 'auto' | 'force_create' | 'match_only';
+
+/**
+ * How this concept was created (provenance tracking).
+ */
+export type CreationMethod = 'api' | 'cli' | 'mcp' | 'workstation' | 'import' | 'llm_extraction';
+
+/**
+ * Request to create a new concept.
+ */
+export interface ConceptCreate {
+  label: string;
+  ontology: string;
+  description?: string;
+  search_terms?: string[];
+  matching_mode?: MatchingMode;
+  creation_method?: CreationMethod;
+}
+
+/**
+ * Request to update an existing concept (partial update).
+ */
+export interface ConceptUpdate {
+  label?: string;
+  description?: string;
+  search_terms?: string[];
+}
+
+/**
+ * Response containing concept details.
+ */
+export interface ConceptCRUDResponse {
+  concept_id: string;
+  label: string;
+  description?: string;
+  search_terms: string[];
+  ontology?: string;
+  creation_method?: string;
+  has_embedding: boolean;
+  matched_existing: boolean;
+}
+
+/**
+ * Response containing a list of concepts.
+ */
+export interface ConceptListCRUDResponse {
+  concepts: ConceptCRUDResponse[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+// ========== Edge CRUD Types (ADR-089) ==========
+
+/**
+ * How this edge was created (provenance tracking).
+ */
+export type EdgeSource = 'api_creation' | 'human_curation' | 'llm_extraction' | 'import';
+
+/**
+ * Semantic category of the relationship (ADR-022).
+ */
+export type RelationshipCategory =
+  | 'logical_truth'
+  | 'causal'
+  | 'structural'
+  | 'temporal'
+  | 'comparative'
+  | 'functional'
+  | 'definitional';
+
+/**
+ * Request to create a new edge between concepts.
+ */
+export interface EdgeCreate {
+  from_concept_id: string;
+  to_concept_id: string;
+  relationship_type: string;
+  category?: RelationshipCategory;
+  confidence?: number;
+  source?: EdgeSource;
+}
+
+/**
+ * Request to update an existing edge (partial update).
+ */
+export interface EdgeUpdate {
+  relationship_type?: string;
+  category?: RelationshipCategory;
+  confidence?: number;
+}
+
+/**
+ * Response containing edge details.
+ */
+export interface EdgeResponse {
+  edge_id: string;
+  from_concept_id: string;
+  to_concept_id: string;
+  relationship_type: string;
+  category: string;
+  confidence: number;
+  source: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+/**
+ * Response containing a list of edges.
+ */
+export interface EdgeListResponse {
+  edges: EdgeResponse[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+// ========== Batch Types (ADR-089 Phase 1b) ==========
+
+/**
+ * Concept definition for batch creation.
+ */
+export interface BatchConceptCreate {
+  label: string;
+  description?: string;
+  search_terms?: string[];
+}
+
+/**
+ * Edge definition for batch creation.
+ * References concepts by label (not ID) to allow referencing
+ * concepts created in the same batch request.
+ */
+export interface BatchEdgeCreate {
+  from_label: string;
+  to_label: string;
+  relationship_type: string;
+  category?: RelationshipCategory;
+  confidence?: number;
+}
+
+/**
+ * Request to batch create concepts and edges.
+ */
+export interface BatchCreateRequest {
+  ontology: string;
+  matching_mode?: MatchingMode;
+  creation_method?: CreationMethod;
+  concepts?: BatchConceptCreate[];
+  edges?: BatchEdgeCreate[];
+}
+
+/**
+ * Result for a single item in the batch.
+ */
+export interface BatchItemResult {
+  label: string;
+  status: 'created' | 'matched' | 'error';
+  id?: string;
+  error?: string;
+}
+
+/**
+ * Response from batch creation.
+ */
+export interface BatchCreateResponse {
+  concepts_created: number;
+  concepts_matched: number;
+  edges_created: number;
+  errors: string[];
+  concept_results: BatchItemResult[];
+  edge_results: BatchItemResult[];
+}

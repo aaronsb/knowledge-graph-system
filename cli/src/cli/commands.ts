@@ -24,6 +24,9 @@ import { documentCommand } from './document';
 import { artifactCommand } from './artifact';
 import { groupCommand } from './group';
 import { queryDefCommand } from './query-def';
+import { conceptCommand } from './concept';
+import { edgeCommand } from './edge';
+import { batchCommand } from './batch';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -107,6 +110,9 @@ export async function registerCommands(program: Command) {
     ontologyCommand,
     sourceCommand,
     vocabularyCommand,
+    conceptCommand,   // ADR-089: Concept CRUD
+    edgeCommand,      // ADR-089: Edge CRUD
+    batchCommand,     // ADR-089: Batch operations
     adminCommand,
     polarityCommand,
     projectionCommand,

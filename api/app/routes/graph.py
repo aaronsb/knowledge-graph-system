@@ -9,7 +9,7 @@ import logging
 
 from ..models.graph import BatchCreateRequest, BatchResponse
 from ..models.auth import UserInDB
-from ..dependencies.auth import require_scope
+from ..dependencies.auth import require_permission
 from ..services.batch_service import BatchService
 from .database import get_age_client
 
@@ -32,7 +32,7 @@ def get_batch_service() -> BatchService:
 )
 async def create_batch(
     request: BatchCreateRequest,
-    current_user: UserInDB = Depends(require_scope("kg:import"))
+    current_user: UserInDB = Depends(require_permission("graph", "import"))
 ):
     """
     Create multiple concepts and edges in a single transaction.
@@ -71,7 +71,7 @@ async def create_batch(
     }
     ```
 
-    Requires `kg:import` scope.
+    Requires `graph:import` permission.
     """
     service = get_batch_service()
 

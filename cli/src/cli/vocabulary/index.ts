@@ -10,7 +10,7 @@ import { setCommandHelp } from '../help-formatter';
 import { createStatusCommand, createListCommand } from './status';
 import { createConsolidateCommand, createMergeCommand } from './consolidate';
 import { createGenerateEmbeddingsCommand, createCategoryScoresCommand, createRefreshCategoriesCommand } from './embeddings';
-import { createSimilarCommand, createOppositeCommand, createAnalyzeCommand } from './similarity';
+import { createSimilarCommand, createOppositeCommand, createAnalyzeCommand, createSearchCommand } from './similarity';
 import { createConfigCommand } from './config';
 import { createProfilesCommand } from './profiles';
 import { createEpistemicStatusCommand } from './epistemic';
@@ -35,6 +35,7 @@ export const vocabularyCommand = setCommandHelp(
   .addCommand(createCategoryScoresCommand())
   .addCommand(createRefreshCategoriesCommand())
   // Similarity analysis
+  .addCommand(createSearchCommand())  // Natural language search for edge creation
   .addCommand(createSimilarCommand())
   .addCommand(createOppositeCommand())
   .addCommand(createAnalyzeCommand())
