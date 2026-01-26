@@ -4,9 +4,9 @@
 #
 # Manages:
 #   - Version bumping (platform, scripts, packages)
-#   - Docker images (api, web) → GitHub Container Registry
-#   - npm package (CLI/MCP)    → npm registry
-#   - Python package (FUSE)    → PyPI
+#   - Docker images (api, web, operator) → GitHub Container Registry
+#   - npm package (CLI/MCP)              → npm registry
+#   - Python package (FUSE)              → PyPI
 #
 # Usage:
 #   ./scripts/publish.sh status                  # Show all versions
@@ -72,7 +72,7 @@ Version Management:
   release <type> -m "msg"   Full release: bump, sync, tag, publish
 
 Publishing:
-  images [api|web]          Publish Docker images to GHCR
+  images [api|web|operator] Publish Docker images to GHCR
   cli                       Publish npm package (@aaronsb/kg-cli)
   fuse                      Publish Python package (kg-fuse) to PyPI
   all                       Publish everything (images, cli, fuse)
@@ -113,7 +113,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        api|web)
+        api|web|operator)
             TARGETS+=("$1")
             shift
             ;;
@@ -190,9 +190,8 @@ is_version_published() {
 
     case "$target" in
         images)
-            # Check GHCR for api image with this version tag
-            local manifest_url="https://ghcr.io/v2/$IMAGE_PREFIX/kg-api/manifests/$version"
-            curl -sf -o /dev/null -H "Authorization: Bearer $(echo -n | base64)" "$manifest_url" 2>/dev/null
+            # Check GHCR using docker manifest inspect (respects auth)
+            docker manifest inspect "$GHCR_REGISTRY/$IMAGE_PREFIX/kg-api:$version" &>/dev/null
             return $?
             ;;
         cli)
@@ -200,7 +199,12 @@ is_version_published() {
             return $?
             ;;
         fuse)
-            pip index versions kg-fuse 2>/dev/null | grep -q "$version"
+            # Try pip index first (pip 21.2+), fall back to pip show with version check
+            if pip index versions kg-fuse 2>/dev/null | grep -q "$version"; then
+                return 0
+            fi
+            # Fallback: check if installed version matches (less reliable)
+            pip show kg-fuse 2>/dev/null | grep -q "Version: $version"
             return $?
             ;;
     esac
@@ -268,21 +272,32 @@ update_script_version() {
 
     if [ ! -f "$file" ]; then
         echo -e "${YELLOW}⚠ $file not found${NC}"
-        return
+        return 1
     fi
 
-    local basename=$(basename "$file")
+    local file_basename=$(basename "$file")
     if [ "$DRY_RUN" = "true" ]; then
-        echo -e "${DIM}Would update $basename $var_name to $new_version${NC}"
+        echo -e "${DIM}Would update $file_basename $var_name to $new_version${NC}"
     else
         sed -i "s/^${var_name}=\"[^\"]*\"/${var_name}=\"${new_version}\"/" "$file"
-        echo -e "${GREEN}✓ Updated $basename to $new_version${NC}"
+        # Verify the update succeeded
+        if grep -q "^${var_name}=\"${new_version}\"" "$file"; then
+            echo -e "${GREEN}✓ Updated $file_basename to $new_version${NC}"
+        else
+            echo -e "${RED}✗ Failed to update $file_basename${NC}"
+            return 1
+        fi
     fi
 }
 
 update_cli_version() {
     local new_version="$1"
     local package_json="$PROJECT_ROOT/cli/package.json"
+
+    if [ ! -f "$package_json" ]; then
+        echo -e "${RED}✗ cli/package.json not found${NC}"
+        return 1
+    fi
 
     if [ "$DRY_RUN" = "true" ]; then
         echo -e "${DIM}Would update cli/package.json to $new_version${NC}"
@@ -302,11 +317,22 @@ update_fuse_version() {
     local new_version="$1"
     local pyproject="$PROJECT_ROOT/fuse/pyproject.toml"
 
+    if [ ! -f "$pyproject" ]; then
+        echo -e "${RED}✗ fuse/pyproject.toml not found${NC}"
+        return 1
+    fi
+
     if [ "$DRY_RUN" = "true" ]; then
         echo -e "${DIM}Would update fuse/pyproject.toml to $new_version${NC}"
     else
         sed -i "s/^version = \"[^\"]*\"/version = \"$new_version\"/" "$pyproject"
-        echo -e "${GREEN}✓ Updated fuse/pyproject.toml to $new_version${NC}"
+        # Verify the update succeeded
+        if grep -q "^version = \"$new_version\"" "$pyproject"; then
+            echo -e "${GREEN}✓ Updated fuse/pyproject.toml to $new_version${NC}"
+        else
+            echo -e "${RED}✗ Failed to update fuse/pyproject.toml${NC}"
+            return 1
+        fi
     fi
 }
 
@@ -416,19 +442,14 @@ cmd_status() {
 
     # Publish readiness summary
     echo -e "${CYAN}Publish Readiness:${NC}"
-    local images_published=false
-    local cli_published=false
-    local fuse_published=false
 
     if is_version_published "cli" "$CLI_VERSION" 2>/dev/null; then
-        cli_published=true
         echo -e "  CLI:    ${GREEN}✓ v$CLI_VERSION published${NC}"
     else
         echo -e "  CLI:    ${BLUE}○ v$CLI_VERSION ready to publish${NC}"
     fi
 
     if is_version_published "fuse" "$FUSE_VERSION" 2>/dev/null; then
-        fuse_published=true
         echo -e "  FUSE:   ${GREEN}✓ v$FUSE_VERSION published${NC}"
     else
         echo -e "  FUSE:   ${BLUE}○ v$FUSE_VERSION ready to publish${NC}"
@@ -436,7 +457,6 @@ cmd_status() {
 
     # Check if current VERSION tag exists (images use platform version)
     if is_version_published "images" "$VERSION" 2>/dev/null; then
-        images_published=true
         echo -e "  Images: ${GREEN}✓ v$VERSION published${NC}"
     else
         echo -e "  Images: ${BLUE}○ v$VERSION ready to publish${NC}"
@@ -448,7 +468,7 @@ cmd_status() {
     if [ "$COMMITS_SINCE_TAG" -gt 0 ]; then
         echo -e "${CYAN}Recommendation:${NC}"
         echo -e "  $COMMITS_SINCE_TAG commit(s) since $LATEST_TAG"
-        echo -e "  → ${BOLD}./scripts/publish.sh release patch -m \"description\"${NC}"
+        echo -e "  → ${BOLD}./publish.sh release patch -m \"description\"${NC}"
         echo ""
     fi
 }
@@ -545,10 +565,11 @@ cmd_release() {
     # Step 4: Instructions
     echo ""
     echo -e "${CYAN}Next steps:${NC}"
-    echo "  1. Push: git push origin main --tags"
-    echo "  2. Publish images: ./scripts/publish.sh images"
-    echo "  3. Publish CLI (if needed): ./scripts/publish.sh cli"
-    echo "  4. Publish FUSE (if needed): ./scripts/publish.sh fuse"
+    local current_branch=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+    echo "  1. Push: git push origin $current_branch --tags"
+    echo "  2. Publish images: ./publish.sh images"
+    echo "  3. Publish CLI (if needed): ./publish.sh cli"
+    echo "  4. Publish FUSE (if needed): ./publish.sh fuse"
     echo ""
 }
 
@@ -556,7 +577,7 @@ cmd_images() {
     get_versions
 
     if [ ${#TARGETS[@]} -eq 0 ]; then
-        TARGETS=(api web)
+        TARGETS=(api web operator)
     fi
 
     echo -e "${BOLD}Publishing Docker images to GHCR${NC}"
@@ -593,6 +614,11 @@ cmd_images() {
                 context="./web"
                 dockerfile="./web/Dockerfile"
                 image_name="kg-web"
+                ;;
+            operator)
+                context="."
+                dockerfile="./operator/Dockerfile"
+                image_name="kg-operator"
                 ;;
             *)
                 echo -e "${RED}Unknown target: $target${NC}"
