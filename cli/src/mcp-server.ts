@@ -45,14 +45,13 @@ import {
   formatDocumentContent,
   formatDocumentConcepts,
   formatDocumentConceptsDetailed,
-  // ADR-089 Phase 3a: Graph CRUD formatters
   formatGraphConceptResult,
   formatGraphEdgeResult,
   formatGraphConceptList,
   formatGraphEdgeList,
   formatGraphBatchResult,
   formatGraphQueueResult,
-} from './mcp/formatters.js';
+} from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
   type QueueOperation,
