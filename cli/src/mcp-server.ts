@@ -807,19 +807,66 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 - Create concept: \`{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}\`
 - Create edge: \`{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}\`
 - List concepts: \`{action: "list", entity: "concept", ontology: "distributed-systems"}\`
-- Delete concept: \`{action: "delete", entity: "concept", concept_id: "c_abc123"}\``,
+- Delete concept: \`{action: "delete", entity: "concept", concept_id: "c_abc123"}\`
+
+**Queue Mode** (batch multiple operations in one call):
+\`\`\`json
+{
+  "action": "queue",
+  "operations": [
+    {"op": "create", "entity": "concept", "label": "A", "ontology": "test"},
+    {"op": "create", "entity": "concept", "label": "B", "ontology": "test"},
+    {"op": "create", "entity": "edge", "from_label": "A", "to_label": "B", "relationship_type": "IMPLIES"}
+  ]
+}
+\`\`\`
+Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.`,
         inputSchema: {
           type: 'object',
           properties: {
             action: {
               type: 'string',
-              enum: ['create', 'edit', 'delete', 'list'],
-              description: 'Operation to perform',
+              enum: ['create', 'edit', 'delete', 'list', 'queue'],
+              description: 'Operation to perform. Use "queue" to batch multiple operations.',
             },
             entity: {
               type: 'string',
               enum: ['concept', 'edge'],
-              description: 'Entity type (required for all actions)',
+              description: 'Entity type (required for create/edit/delete/list, not for queue)',
+            },
+            // Queue fields
+            operations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  op: { type: 'string', enum: ['create', 'edit', 'delete', 'list'], description: 'Operation' },
+                  entity: { type: 'string', enum: ['concept', 'edge'] },
+                  label: { type: 'string' },
+                  ontology: { type: 'string' },
+                  description: { type: 'string' },
+                  search_terms: { type: 'array', items: { type: 'string' } },
+                  matching_mode: { type: 'string', enum: ['auto', 'force_create', 'match_only'] },
+                  concept_id: { type: 'string' },
+                  from_concept_id: { type: 'string' },
+                  to_concept_id: { type: 'string' },
+                  from_label: { type: 'string' },
+                  to_label: { type: 'string' },
+                  relationship_type: { type: 'string' },
+                  category: { type: 'string' },
+                  confidence: { type: 'number' },
+                  limit: { type: 'number' },
+                  offset: { type: 'number' },
+                  cascade: { type: 'boolean' },
+                },
+                required: ['op', 'entity'],
+              },
+              description: 'Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.',
+            },
+            continue_on_error: {
+              type: 'boolean',
+              description: 'For queue: continue executing after errors (default: false, stop on first error)',
+              default: false,
             },
             // Concept fields
             label: {
@@ -913,7 +960,7 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
               default: false,
             },
           },
-          required: ['action', 'entity'],
+          required: ['action'],
         },
       },
     ],
@@ -1967,7 +2014,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const action = toolArgs.action as string;
         const entity = toolArgs.entity as string;
 
-        if (!entity) {
+        // Entity required for all actions except queue
+        if (action !== 'queue' && !entity) {
           throw new Error('entity is required (concept or edge)');
         }
 
@@ -2218,8 +2266,297 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           }
 
+          case 'queue': {
+            const operations = toolArgs.operations as any[];
+            const continueOnError = toolArgs.continue_on_error === true;
+
+            if (!operations || !Array.isArray(operations)) {
+              throw new Error('operations array is required for queue action');
+            }
+
+            if (operations.length === 0) {
+              throw new Error('operations array cannot be empty');
+            }
+
+            if (operations.length > 20) {
+              throw new Error(`Queue too large: ${operations.length} operations (max 20)`);
+            }
+
+            const results: any[] = [];
+            let stopIndex = -1;
+
+            for (let i = 0; i < operations.length; i++) {
+              const op = operations[i];
+              const opAction = op.op as string;
+              const opEntity = op.entity as string;
+
+              if (!opAction || !opEntity) {
+                const error = `Operation ${i + 1}: missing 'op' or 'entity'`;
+                results.push({ index: i + 1, status: 'error', error });
+                if (!continueOnError) {
+                  stopIndex = i;
+                  break;
+                }
+                continue;
+              }
+
+              try {
+                let result: any;
+
+                if (opAction === 'create' && opEntity === 'concept') {
+                  if (!op.label || !op.ontology) {
+                    throw new Error('label and ontology required');
+                  }
+                  result = await client.createConcept({
+                    label: op.label,
+                    ontology: op.ontology,
+                    description: op.description,
+                    search_terms: op.search_terms,
+                    matching_mode: op.matching_mode || 'auto',
+                    creation_method: 'mcp',
+                  });
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'create',
+                    entity: 'concept',
+                    label: result.label,
+                    id: result.concept_id,
+                    matched_existing: result.matched_existing,
+                  });
+
+                } else if (opAction === 'create' && opEntity === 'edge') {
+                  let fromId = op.from_concept_id;
+                  let toId = op.to_concept_id;
+                  if (!fromId && op.from_label) {
+                    fromId = await resolveConceptByLabel(op.from_label);
+                  }
+                  if (!toId && op.to_label) {
+                    toId = await resolveConceptByLabel(op.to_label);
+                  }
+                  if (!fromId || !toId || !op.relationship_type) {
+                    throw new Error('from, to, and relationship_type required');
+                  }
+                  result = await client.createEdge({
+                    from_concept_id: fromId,
+                    to_concept_id: toId,
+                    relationship_type: op.relationship_type,
+                    category: op.category || 'logical_truth',
+                    confidence: op.confidence || 1.0,
+                    source: 'api_creation',
+                  });
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'create',
+                    entity: 'edge',
+                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
+                  });
+
+                } else if (opAction === 'list' && opEntity === 'concept') {
+                  result = await client.listConceptsCRUD({
+                    ontology: op.ontology,
+                    label_contains: op.label_contains,
+                    creation_method: op.creation_method,
+                    offset: op.offset || 0,
+                    limit: op.limit || 20,
+                  });
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'list',
+                    entity: 'concept',
+                    count: result.concepts.length,
+                    total: result.total,
+                    concepts: result.concepts.map((c: any) => ({ id: c.concept_id, label: c.label })),
+                  });
+
+                } else if (opAction === 'list' && opEntity === 'edge') {
+                  let fromId = op.from_concept_id;
+                  let toId = op.to_concept_id;
+                  if (!fromId && op.from_label) {
+                    try { fromId = await resolveConceptByLabel(op.from_label); } catch { /* skip */ }
+                  }
+                  if (!toId && op.to_label) {
+                    try { toId = await resolveConceptByLabel(op.to_label); } catch { /* skip */ }
+                  }
+                  result = await client.listEdges({
+                    from_concept_id: fromId,
+                    to_concept_id: toId,
+                    relationship_type: op.relationship_type,
+                    category: op.category,
+                    source: op.source,
+                    offset: op.offset || 0,
+                    limit: op.limit || 20,
+                  });
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'list',
+                    entity: 'edge',
+                    count: result.edges.length,
+                    total: result.total,
+                    edges: result.edges.map((e: any) => ({
+                      from: e.from_concept_id,
+                      type: e.relationship_type,
+                      to: e.to_concept_id,
+                    })),
+                  });
+
+                } else if (opAction === 'edit' && opEntity === 'concept') {
+                  if (!op.concept_id) {
+                    throw new Error('concept_id required for edit');
+                  }
+                  const updateData: any = {};
+                  if (op.label !== undefined) updateData.label = op.label;
+                  if (op.description !== undefined) updateData.description = op.description;
+                  if (op.search_terms !== undefined) updateData.search_terms = op.search_terms;
+                  result = await client.updateConcept(op.concept_id, updateData);
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'edit',
+                    entity: 'concept',
+                    id: result.concept_id,
+                    label: result.label,
+                  });
+
+                } else if (opAction === 'edit' && opEntity === 'edge') {
+                  let fromId = op.from_concept_id;
+                  let toId = op.to_concept_id;
+                  if (!fromId && op.from_label) {
+                    fromId = await resolveConceptByLabel(op.from_label);
+                  }
+                  if (!toId && op.to_label) {
+                    toId = await resolveConceptByLabel(op.to_label);
+                  }
+                  if (!fromId || !toId || !op.relationship_type) {
+                    throw new Error('from, to, and relationship_type required');
+                  }
+                  const updateData: any = {};
+                  if (op.confidence !== undefined) updateData.confidence = op.confidence;
+                  if (op.category !== undefined) updateData.category = op.category;
+                  result = await client.updateEdge(fromId, op.relationship_type, toId, updateData);
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'edit',
+                    entity: 'edge',
+                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
+                  });
+
+                } else if (opAction === 'delete' && opEntity === 'concept') {
+                  if (!op.concept_id) {
+                    throw new Error('concept_id required for delete');
+                  }
+                  await client.deleteConcept(op.concept_id, op.cascade || false);
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'delete',
+                    entity: 'concept',
+                    id: op.concept_id,
+                  });
+
+                } else if (opAction === 'delete' && opEntity === 'edge') {
+                  let fromId = op.from_concept_id;
+                  let toId = op.to_concept_id;
+                  if (!fromId && op.from_label) {
+                    fromId = await resolveConceptByLabel(op.from_label);
+                  }
+                  if (!toId && op.to_label) {
+                    toId = await resolveConceptByLabel(op.to_label);
+                  }
+                  if (!fromId || !toId || !op.relationship_type) {
+                    throw new Error('from, to, and relationship_type required');
+                  }
+                  await client.deleteEdge(fromId, op.relationship_type, toId);
+                  results.push({
+                    index: i + 1,
+                    status: 'ok',
+                    op: 'delete',
+                    entity: 'edge',
+                    relationship: `${op.from_label || fromId} -[${op.relationship_type}]-> ${op.to_label || toId}`,
+                  });
+
+                } else {
+                  throw new Error(`Unknown operation: ${opAction} ${opEntity}`);
+                }
+
+              } catch (err: any) {
+                results.push({
+                  index: i + 1,
+                  status: 'error',
+                  op: opAction,
+                  entity: opEntity,
+                  error: err.message,
+                });
+                if (!continueOnError) {
+                  stopIndex = i;
+                  break;
+                }
+              }
+            }
+
+            // Format queue results
+            const successCount = results.filter(r => r.status === 'ok').length;
+            const errorCount = results.filter(r => r.status === 'error').length;
+
+            let output = `# Queue Results\n\n`;
+            output += `**Executed:** ${results.length} of ${operations.length} operations\n`;
+            output += `**Success:** ${successCount} | **Errors:** ${errorCount}\n`;
+            if (stopIndex >= 0) {
+              output += `**Stopped at:** operation ${stopIndex + 1} (error)\n`;
+            }
+            output += '\n## Operations\n\n';
+
+            results.forEach(r => {
+              const icon = r.status === 'ok' ? '✓' : '✗';
+              output += `${r.index}. ${icon} **${r.op} ${r.entity}**`;
+              if (r.status === 'ok') {
+                if (r.label) output += ` - ${r.label}`;
+                if (r.id) output += ` (${r.id})`;
+                if (r.relationship) output += ` - ${r.relationship}`;
+                if (r.count !== undefined) output += ` - ${r.count}/${r.total} results`;
+                if (r.matched_existing) output += ' ⚠️ matched existing';
+              } else {
+                output += ` - ${r.error}`;
+              }
+              output += '\n';
+            });
+
+            // Include list results inline for convenience
+            const listResults = results.filter(r => r.status === 'ok' && r.op === 'list');
+            if (listResults.length > 0) {
+              output += '\n## List Results\n\n';
+              listResults.forEach(r => {
+                output += `### Operation ${r.index}: ${r.entity} list\n\n`;
+                if (r.entity === 'concept' && r.concepts) {
+                  r.concepts.slice(0, 10).forEach((c: any, i: number) => {
+                    output += `${i + 1}. ${c.label} (${c.id})\n`;
+                  });
+                  if (r.concepts.length > 10) {
+                    output += `... and ${r.concepts.length - 10} more\n`;
+                  }
+                } else if (r.entity === 'edge' && r.edges) {
+                  r.edges.slice(0, 10).forEach((e: any, i: number) => {
+                    output += `${i + 1}. ${e.from} -[${e.type}]-> ${e.to}\n`;
+                  });
+                  if (r.edges.length > 10) {
+                    output += `... and ${r.edges.length - 10} more\n`;
+                  }
+                }
+                output += '\n';
+              });
+            }
+
+            return {
+              content: [{ type: 'text', text: output }],
+            };
+          }
+
           default:
-            throw new Error(`Unknown graph action: ${action}. Use: create, edit, delete, or list`);
+            throw new Error(`Unknown graph action: ${action}. Use: create, edit, delete, list, or queue`);
         }
       }
 

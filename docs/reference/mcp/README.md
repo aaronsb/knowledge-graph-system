@@ -140,6 +140,19 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 - List concepts: `{action: "list", entity: "concept", ontology: "distributed-systems"}`
 - Delete concept: `{action: "delete", entity: "concept", concept_id: "c_abc123"}`
 
+**Queue Mode** (batch multiple operations in one call):
+```json
+{
+  "action": "queue",
+  "operations": [
+    {"op": "create", "entity": "concept", "label": "A", "ontology": "test"},
+    {"op": "create", "entity": "concept", "label": "B", "ontology": "test"},
+    {"op": "create", "entity": "edge", "from_label": "A", "to_label": "B", "relationship_type": "IMPLIES"}
+  ]
+}
+```
+Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.
+
 ---
 
 ### search
@@ -460,12 +473,28 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 - List concepts: `{action: "list", entity: "concept", ontology: "distributed-systems"}`
 - Delete concept: `{action: "delete", entity: "concept", concept_id: "c_abc123"}`
 
+**Queue Mode** (batch multiple operations in one call):
+```json
+{
+  "action": "queue",
+  "operations": [
+    {"op": "create", "entity": "concept", "label": "A", "ontology": "test"},
+    {"op": "create", "entity": "concept", "label": "B", "ontology": "test"},
+    {"op": "create", "entity": "edge", "from_label": "A", "to_label": "B", "relationship_type": "IMPLIES"}
+  ]
+}
+```
+Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.
+
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation to perform
-  - Allowed values: `create`, `edit`, `delete`, `list`
-- `entity` (`string`) **(required)** - Entity type (required for all actions)
+- `action` (`string`) **(required)** - Operation to perform. Use "queue" to batch multiple operations.
+  - Allowed values: `create`, `edit`, `delete`, `list`, `queue`
+- `entity` (`string`) - Entity type (required for create/edit/delete/list, not for queue)
   - Allowed values: `concept`, `edge`
+- `operations` (`array`) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.
+- `continue_on_error` (`boolean`) - For queue: continue executing after errors (default: false, stop on first error)
+  - Default: `false`
 - `label` (`string`) - Concept label (required for create concept)
 - `ontology` (`string`) - Ontology/namespace (required for create concept, optional filter for list)
 - `description` (`string`) - Concept description (optional)
