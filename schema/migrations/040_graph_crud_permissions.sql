@@ -79,7 +79,14 @@ WHERE NOT EXISTS (
     WHERE role_name = 'platform_admin' AND resource_type = 'graph' AND action = 'import'
 );
 
--- Contributor role: can create graph content (but not delete)
+-- Contributor role: can read and create graph content (but not update/delete)
+INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
+SELECT 'contributor', 'graph', 'read', 'global', TRUE
+WHERE NOT EXISTS (
+    SELECT 1 FROM kg_auth.role_permissions
+    WHERE role_name = 'contributor' AND resource_type = 'graph' AND action = 'read'
+);
+
 INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
 SELECT 'contributor', 'graph', 'create', 'global', TRUE
 WHERE NOT EXISTS (

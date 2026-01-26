@@ -7,6 +7,7 @@ If any operation fails, the entire batch is rolled back.
 
 import logging
 import json
+import re
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -42,15 +43,33 @@ def _escape_cypher_string(value: str) -> str:
 
 def _normalize_relationship_type(rel_type: str) -> str:
     """
-    Normalize relationship type for consistency.
+    Normalize and validate relationship type for safe use in Cypher queries.
 
     - Convert to uppercase
     - Replace spaces with underscores
     - Remove other special characters
+    - Validate result is non-empty and starts with a letter
+
+    Raises:
+        ValueError: If relationship type is invalid after normalization
     """
     normalized = rel_type.upper().replace(" ", "_")
     # Only allow alphanumeric and underscores
-    return "".join(c for c in normalized if c.isalnum() or c == "_")
+    cleaned = "".join(c for c in normalized if c.isalnum() or c == "_")
+
+    # Validate result
+    if not cleaned:
+        raise ValueError(f"Invalid relationship type '{rel_type}': empty after normalization")
+    if not cleaned[0].isalpha():
+        raise ValueError(
+            f"Invalid relationship type '{rel_type}': must start with a letter"
+        )
+    if len(cleaned) > 100:
+        raise ValueError(
+            f"Invalid relationship type '{rel_type}': exceeds 100 character limit"
+        )
+
+    return cleaned
 
 
 class BatchService:

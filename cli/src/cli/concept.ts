@@ -17,6 +17,7 @@ import {
   selectOption,
   confirmYesNo,
   withSpinner,
+  handleCliError,
 } from '../lib/interactive';
 
 export const conceptCommand = setCommandHelp(
@@ -86,9 +87,7 @@ function createListCommand(): Command {
           console.log(colors.status.dim(`\nUse --offset ${result.offset + result.concepts.length} to see more`));
         }
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to list concepts'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to list concepts');
       }
     });
 }
@@ -129,13 +128,9 @@ function createShowCommand(): Command {
 
         console.log('\n' + separator());
       } catch (error: any) {
-        if (error.response?.status === 404) {
-          console.error(colors.status.error(`✗ Concept not found: ${id}`));
-        } else {
-          console.error(colors.status.error('✗ Failed to get concept'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
-        }
-        process.exit(1);
+        handleCliError(error, 'Failed to get concept', {
+          notFoundMessage: `Concept not found: ${id}`,
+        });
       }
     });
 }
@@ -285,9 +280,7 @@ function createCreateCommand(): Command {
         console.log(`  ${colors.ui.key('Label:')} ${result.label}`);
         console.log(`  ${colors.ui.key('Has Embedding:')} ${result.has_embedding ? 'Yes' : 'No'}`);
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to create concept'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to create concept');
       }
     });
 }
@@ -308,12 +301,10 @@ function createDeleteCommand(): Command {
         try {
           concept = await client.getConceptById(id);
         } catch (error: any) {
-          if (error.response?.status === 404) {
-            console.error(colors.status.error(`✗ Concept not found: ${id}`));
-          } else {
-            throw error;
-          }
-          process.exit(1);
+          handleCliError(error, 'Failed to get concept', {
+            notFoundMessage: `Concept not found: ${id}`,
+          });
+          return; // handleCliError exits, but TypeScript needs this
         }
 
         if (!options.force) {
@@ -346,9 +337,7 @@ function createDeleteCommand(): Command {
 
         console.log(colors.status.success(`\n✓ Deleted concept: ${id}`));
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to delete concept'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to delete concept');
       }
     });
 }

@@ -28,6 +28,7 @@ class SearchRequest(BaseModel):
     limit: int = Field(10, description="Maximum number of results to return", ge=1, le=100)
     min_similarity: float = Field(0.7, description="Minimum similarity score (0.0-1.0, default 70%)", ge=0.0, le=1.0)
     offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
+    ontology: Optional[str] = Field(None, description="Filter results to concepts from this ontology only")
     include_evidence: bool = Field(False, description="Include sample evidence instances (quotes from source text) for each concept")
     include_grounding: bool = Field(True, description="Include grounding strength (ADR-044: probabilistic truth score) for each concept")
     include_diversity: bool = Field(False, description="Include semantic diversity score (ADR-063: authenticity signal) for each concept")

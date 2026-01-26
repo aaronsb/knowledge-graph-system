@@ -22,6 +22,7 @@ import {
   selectOption,
   confirmYesNo,
   withSpinner,
+  handleCliError,
 } from '../lib/interactive';
 
 export const edgeCommand = setCommandHelp(
@@ -90,9 +91,7 @@ function createListCommand(): Command {
           console.log(colors.status.dim(`\nUse --offset ${result.offset + result.edges.length} to see more`));
         }
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to list edges'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to list edges');
       }
     });
 }
@@ -321,9 +320,7 @@ function createCreateCommand(): Command {
         console.log(colors.status.success(`\n✓ Created edge: ${result.edge_id}`));
         console.log(`  ${result.from_concept_id} -[${result.relationship_type}]-> ${result.to_concept_id}`);
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to create edge'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to create edge');
       }
     });
 }
@@ -366,13 +363,9 @@ function createDeleteCommand(): Command {
 
         console.log(colors.status.success(`\n✓ Deleted edge: ${from} -[${type}]-> ${to}`));
       } catch (error: any) {
-        if (error.response?.status === 404) {
-          console.error(colors.status.error(`✗ Edge not found: ${from} -[${type}]-> ${to}`));
-        } else {
-          console.error(colors.status.error('✗ Failed to delete edge'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
-        }
-        process.exit(1);
+        handleCliError(error, 'Failed to delete edge', {
+          notFoundMessage: `Edge not found: ${from} -[${type}]-> ${to}`,
+        });
       }
     });
 }

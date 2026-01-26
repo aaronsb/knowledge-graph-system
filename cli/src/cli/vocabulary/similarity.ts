@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { createClientFromEnv } from '../../api/client';
 import * as colors from '../colors';
 import { separator } from '../colors';
+import { handleCliError } from '../../lib/interactive';
 
 export function createSimilarCommand(): Command {
   return new Command('similar')
@@ -58,9 +59,7 @@ export function createSimilarCommand(): Command {
         console.log(colors.status.dim('   Similarity 75-90%: Review for potential consolidation'));
 
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to find similar types'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to find similar types');
       }
     });
 }
@@ -109,9 +108,7 @@ export function createOppositeCommand(): Command {
         console.log(colors.status.dim('──────────────────────────────────────────────────────────────'));
 
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to find opposite types'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to find opposite types');
       }
     });
 }
@@ -176,11 +173,7 @@ export function createSearchCommand(): Command {
         console.log(colors.status.dim('Use: kg edge create --type <TERM> ...'));
 
       } catch (error: any) {
-        // If the term doesn't exist, the API might return an error
-        // In that case, try to search concepts instead
-        console.error(colors.status.error('✗ Search failed'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Search failed');
       }
     });
 }
@@ -249,9 +242,7 @@ export function createAnalyzeCommand(): Command {
         console.log(separator(64, '═'));
 
       } catch (error: any) {
-        console.error(colors.status.error('✗ Failed to analyze type'));
-        console.error(colors.status.error(error.response?.data?.detail || error.message));
-        process.exit(1);
+        handleCliError(error, 'Failed to analyze type');
       }
     });
 }

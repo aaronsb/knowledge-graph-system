@@ -6,6 +6,7 @@ Delegates to AGEClient for graph operations.
 """
 
 import logging
+import re
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -21,6 +22,74 @@ from ..models.edges import (
 from ..lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
+
+# Regex pattern for valid relationship types: alphanumeric and underscores only
+# Must start with a letter, max 100 characters (matches EdgeCreate model constraint)
+VALID_RELATIONSHIP_TYPE_PATTERN = re.compile(r'^[A-Z][A-Z0-9_]{0,99}$')
+
+
+def validate_relationship_type(rel_type: str) -> str:
+    """
+    Validate and normalize a relationship type for safe use in Cypher queries.
+
+    Prevents Cypher injection by ensuring only safe characters are used.
+
+    Args:
+        rel_type: Raw relationship type string
+
+    Returns:
+        Normalized, validated relationship type (uppercase with underscores)
+
+    Raises:
+        ValueError: If relationship type contains invalid characters
+    """
+    # Normalize: uppercase, spaces to underscores
+    normalized = rel_type.upper().replace(" ", "_")
+
+    # Remove any non-alphanumeric/underscore characters
+    cleaned = re.sub(r'[^A-Z0-9_]', '', normalized)
+
+    # Ensure it starts with a letter
+    if not cleaned or not cleaned[0].isalpha():
+        raise ValueError(
+            f"Invalid relationship type '{rel_type}': must start with a letter "
+            "and contain only letters, numbers, and underscores"
+        )
+
+    # Validate against pattern
+    if not VALID_RELATIONSHIP_TYPE_PATTERN.match(cleaned):
+        raise ValueError(
+            f"Invalid relationship type '{rel_type}': must be 1-100 characters, "
+            "start with a letter, and contain only uppercase letters, numbers, and underscores"
+        )
+
+    return cleaned
+
+
+def safe_relationship_category(value: str) -> RelationshipCategory:
+    """
+    Safely convert a string to RelationshipCategory, handling legacy values.
+
+    Returns STRUCTURAL as default for unknown/invalid values.
+    """
+    try:
+        return RelationshipCategory(value)
+    except ValueError:
+        logger.warning(f"Unknown relationship category '{value}', defaulting to 'structural'")
+        return RelationshipCategory.STRUCTURAL
+
+
+def safe_edge_source(value: str) -> EdgeSource:
+    """
+    Safely convert a string to EdgeSource, handling legacy values.
+
+    Returns API_CREATION as default for unknown/invalid values.
+    """
+    try:
+        return EdgeSource(value)
+    except ValueError:
+        logger.warning(f"Unknown edge source '{value}', defaulting to 'api_creation'")
+        return EdgeSource.API_CREATION
 
 
 class EdgeService:
@@ -75,8 +144,8 @@ class EdgeService:
         if not to_exists:
             raise ValueError(f"Target concept not found: {request.to_concept_id}")
 
-        # Normalize relationship type to uppercase
-        rel_type = request.relationship_type.upper().replace(" ", "_")
+        # Validate and normalize relationship type (prevents Cypher injection)
+        rel_type = validate_relationship_type(request.relationship_type)
 
         # Create the relationship
         created_at = datetime.now(timezone.utc).isoformat()
@@ -176,7 +245,12 @@ class EdgeService:
         where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
 
         # Build relationship type filter (can't parameterize in AGE)
-        rel_match = "-[r]->" if not relationship_type else f"-[r:{relationship_type.upper()}]->"
+        # Validate to prevent Cypher injection
+        if relationship_type:
+            validated_type = validate_relationship_type(relationship_type)
+            rel_match = f"-[r:{validated_type}]->"
+        else:
+            rel_match = "-[r]->"
 
         # Count total
         count_query = f"""
@@ -257,7 +331,8 @@ class EdgeService:
         Raises:
             ValueError: If edge not found or update fails
         """
-        rel_type = relationship_type.upper()
+        # Validate relationship type to prevent Cypher injection
+        rel_type = validate_relationship_type(relationship_type)
 
         # Verify edge exists
         existing = await self._get_edge(from_concept_id, to_concept_id, rel_type)
@@ -283,7 +358,7 @@ class EdgeService:
 
         # Handle relationship type change (requires delete + create)
         if request.relationship_type is not None:
-            new_rel_type = request.relationship_type.upper().replace(" ", "_")
+            new_rel_type = validate_relationship_type(request.relationship_type)
             if new_rel_type != rel_type:
                 # Delete old edge
                 await self.delete_edge(from_concept_id, to_concept_id, rel_type)
@@ -293,9 +368,9 @@ class EdgeService:
                         from_concept_id=from_concept_id,
                         to_concept_id=to_concept_id,
                         relationship_type=new_rel_type,
-                        category=request.category or RelationshipCategory(existing.get("category", "structural")),
+                        category=request.category or safe_relationship_category(existing.get("category", "structural")),
                         confidence=request.confidence or existing.get("confidence", 1.0),
-                        source=EdgeSource(existing.get("source", "api_creation"))
+                        source=safe_edge_source(existing.get("source", "api_creation"))
                     )
                 )
 
@@ -365,7 +440,8 @@ class EdgeService:
         Raises:
             ValueError: If edge not found
         """
-        rel_type = relationship_type.upper()
+        # Validate relationship type to prevent Cypher injection
+        rel_type = validate_relationship_type(relationship_type)
 
         # Verify edge exists
         existing = await self._get_edge(from_concept_id, to_concept_id, rel_type)

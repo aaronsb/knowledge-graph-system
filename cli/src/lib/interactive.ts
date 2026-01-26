@@ -304,3 +304,39 @@ export async function withSpinner<T>(
     throw error;
   }
 }
+
+/**
+ * Standardized CLI error handler.
+ *
+ * Extracts error message from API responses or Error objects,
+ * displays formatted error, and exits with code 1.
+ */
+export function handleCliError(
+  error: any,
+  context: string,
+  options?: {
+    notFoundMessage?: string;
+    exitOnError?: boolean;
+  }
+): void {
+  const { notFoundMessage, exitOnError = true } = options || {};
+
+  // Handle 404 specifically if custom message provided
+  if (error.response?.status === 404 && notFoundMessage) {
+    console.error(colors.status.error(`✗ ${notFoundMessage}`));
+  } else {
+    // Extract error message from various formats
+    const message =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      'Unknown error';
+
+    console.error(colors.status.error(`✗ ${context}`));
+    console.error(colors.status.error(message));
+  }
+
+  if (exitOnError) {
+    process.exit(1);
+  }
+}

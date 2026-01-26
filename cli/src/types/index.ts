@@ -138,6 +138,7 @@ export interface SearchRequest {
   limit?: number;
   min_similarity?: number;
   offset?: number; // Pagination offset
+  ontology?: string; // Filter results to concepts from this ontology only
   include_evidence?: boolean; // Include sample evidence instances (quotes from source text)
   include_grounding?: boolean; // Include grounding strength (ADR-044: probabilistic truth score)
   include_diversity?: boolean; // Include semantic diversity (ADR-063: authenticity signal)

@@ -240,18 +240,12 @@ export async function searchConceptsByLabel(
       query,
       limit,
       min_similarity: 0.5, // Lower threshold for search
+      ontology, // Filter by ontology if specified
     });
-
-    // Filter by ontology if specified
-    let filtered = results.results;
-    if (ontology) {
-      // We'd need to check each concept's ontology
-      // For now, return all and let caller filter
-    }
 
     return {
       valid: true,
-      data: filtered.map((r) => ({
+      data: results.results.map((r) => ({
         concept_id: r.concept_id,
         label: r.label,
         similarity: r.score,

@@ -11,6 +11,7 @@ import * as colors from './colors';
 import { separator } from './colors';
 import { setCommandHelp } from './help-formatter';
 import { BatchCreateRequest } from '../types';
+import { handleCliError } from '../lib/interactive';
 
 export const batchCommand = setCommandHelp(
   new Command('batch'),
@@ -55,6 +56,39 @@ export const batchCommand = setCommandHelp(
               (!request.edges || request.edges.length === 0)) {
             console.error(colors.status.error('✗ Batch must contain at least one concept or edge'));
             process.exit(1);
+          }
+
+          // Check for edge references to concepts not in the batch
+          if (request.edges && request.edges.length > 0 && request.concepts) {
+            const batchLabels = new Set(
+              request.concepts.map((c) => c.label.toLowerCase())
+            );
+            const unreferencedEdges: string[] = [];
+
+            for (const edge of request.edges) {
+              const fromInBatch = batchLabels.has(edge.from_label.toLowerCase());
+              const toInBatch = batchLabels.has(edge.to_label.toLowerCase());
+
+              if (!fromInBatch || !toInBatch) {
+                const missing: string[] = [];
+                if (!fromInBatch) missing.push(`from: "${edge.from_label}"`);
+                if (!toInBatch) missing.push(`to: "${edge.to_label}"`);
+                unreferencedEdges.push(
+                  `  ${edge.from_label} -[${edge.relationship_type}]-> ${edge.to_label} (${missing.join(', ')} not in batch)`
+                );
+              }
+            }
+
+            if (unreferencedEdges.length > 0 && !options.json) {
+              console.log(colors.status.warning('\n⚠️  Some edges reference concepts not in this batch file:'));
+              for (const edge of unreferencedEdges.slice(0, 5)) {
+                console.log(colors.status.dim(edge));
+              }
+              if (unreferencedEdges.length > 5) {
+                console.log(colors.status.dim(`  ... and ${unreferencedEdges.length - 5} more`));
+              }
+              console.log(colors.status.dim('  These edges will resolve to existing concepts in the database, or fail if not found.\n'));
+            }
           }
 
           if (options.dryRun) {
@@ -143,9 +177,7 @@ export const batchCommand = setCommandHelp(
             process.exit(1);
           }
         } catch (error: any) {
-          console.error(colors.status.error('✗ Batch import failed'));
-          console.error(colors.status.error(error.response?.data?.detail || error.message));
-          process.exit(1);
+          handleCliError(error, 'Batch import failed');
         }
       })
   )
