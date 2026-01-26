@@ -16,8 +16,7 @@ services:
     # Clear dev volume mounts - only keep HF cache
     volumes: !reset
       - hf_cache:/home/api/.cache
-    # Production command without file watcher/reloader
-    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    # Image default is production-ready (no --reload)
 
   web:
     # Production container name (no -dev suffix)

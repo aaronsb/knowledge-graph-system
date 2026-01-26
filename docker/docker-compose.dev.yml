@@ -21,9 +21,8 @@ services:
       - kg-network
 
   api:
-    # API already configured with --reload in base Dockerfile
-    # Volume mount already exists in base docker-compose.yml
-    # Override to ensure proper mounts and rebuild
+    # Enable hot reload for development
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     build:
       context: ..
       dockerfile: api/Dockerfile
