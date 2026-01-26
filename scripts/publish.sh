@@ -51,6 +51,7 @@ IMAGE_PREFIX="aaronsb/knowledge-graph-system"
 DRY_RUN=false
 SKIP_BUILD=false
 FORCE=false
+USE_TESTPYPI=false
 DESCRIPTION=""
 COMMAND=""
 BUMP_TYPE=""
@@ -79,6 +80,7 @@ Options:
   --dry-run                 Preview without making changes
   --skip-build              Skip build step (push existing)
   --force                   Bypass "already published" checks
+  --test                    Use TestPyPI instead of PyPI (fuse only)
   -h, --help                Show this help
 
 Examples:
@@ -123,6 +125,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --force)
             FORCE=true
+            shift
+            ;;
+        --test)
+            USE_TESTPYPI=true
             shift
             ;;
         -m|--message)
@@ -669,15 +675,25 @@ cmd_cli() {
 cmd_fuse() {
     get_versions
 
-    echo -e "${BOLD}Publishing FUSE driver to PyPI${NC}"
+    local registry="PyPI"
+    local twine_repo=""
+    if [ "$USE_TESTPYPI" = "true" ]; then
+        registry="TestPyPI"
+        twine_repo="--repository testpypi"
+    fi
+
+    echo -e "${BOLD}Publishing FUSE driver to $registry${NC}"
     echo -e "  Version: ${BLUE}$FUSE_VERSION${NC}"
+    [ "$USE_TESTPYPI" = "true" ] && echo -e "  Registry: ${YELLOW}TestPyPI (test.pypi.org)${NC}"
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Smart check: is this version already published?
-    if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "fuse" "$FUSE_VERSION" "$FORCE"; then
-        echo -e "  ${DIM}Bump first: ./scripts/publish.sh bump fuse patch${NC}"
-        exit 0
+    # Smart check: skip for testpypi (versions can be reused for testing)
+    if [ "$DRY_RUN" = "false" ] && [ "$USE_TESTPYPI" = "false" ]; then
+        if ! check_publish_needed "fuse" "$FUSE_VERSION" "$FORCE"; then
+            echo -e "  ${DIM}Bump first: ./publish.sh bump fuse patch${NC}"
+            exit 0
+        fi
     fi
 
     if ! command -v twine &>/dev/null; then
@@ -697,9 +713,12 @@ cmd_fuse() {
 
     echo ""
     if [ "$DRY_RUN" = "false" ]; then
-        echo -e "${BLUE}→ Uploading to PyPI...${NC}"
-        twine upload dist/*
-        echo -e "${GREEN}✓ Published kg-fuse==$FUSE_VERSION${NC}"
+        echo -e "${BLUE}→ Uploading to $registry...${NC}"
+        twine upload $twine_repo dist/*
+        echo -e "${GREEN}✓ Published kg-fuse==$FUSE_VERSION to $registry${NC}"
+        if [ "$USE_TESTPYPI" = "true" ]; then
+            echo -e "  ${DIM}Install with: pip install -i https://test.pypi.org/simple/ kg-fuse${NC}"
+        fi
     fi
 }
 
