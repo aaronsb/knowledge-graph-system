@@ -141,6 +141,38 @@ export interface JobsClearResponse {
   message: string;
 }
 
+// Delete single job response
+export interface JobDeleteResponse {
+  job_id: string;
+  deleted?: boolean;
+  cancelled?: boolean;
+  message: string;
+}
+
+// Bulk delete with filters
+export interface JobsDeleteFilters {
+  status?: string;
+  system?: boolean;
+  olderThan?: string;  // '1h', '24h', '7d', '30d'
+  jobType?: string;
+}
+
+export interface JobsDeleteResponse {
+  success?: boolean;
+  dry_run?: boolean;
+  jobs_deleted?: number;
+  jobs_to_delete?: number;
+  jobs?: Array<{
+    job_id: string;
+    job_type: string;
+    status: string;
+    ontology: string | null;
+    created_at: string;
+  }>;
+  filters?: Record<string, unknown>;
+  message: string;
+}
+
 // SSE Event types for streaming
 export interface JobProgressEvent {
   stage: string;
