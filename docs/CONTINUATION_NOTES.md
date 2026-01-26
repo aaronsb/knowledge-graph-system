@@ -288,7 +288,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "
 
 # Check epistemic status cache
 docker exec kg-operator python -c "
-from api.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 client = AGEClient()
 query = '''
   MATCH (v:VocabType {name: \"SUPPORTS\"})

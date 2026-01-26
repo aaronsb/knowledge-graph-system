@@ -5,7 +5,7 @@ Tests sentence-based chunking with offset tracking for embedding generation.
 """
 
 import pytest
-from api.api.lib.source_chunker import (
+from api.app.lib.source_chunker import (
     SourceChunk,
     chunk_by_sentence,
     chunk_by_paragraph,
@@ -438,7 +438,7 @@ class TestIntegrationScenarios:
 
     def test_duplicate_content_with_hash_verification(self):
         """Test duplicate content with hash verification (code review issue #5)."""
-        from api.api.lib.hash_utils import sha256_text, verify_chunk_extraction
+        from api.app.lib.hash_utils import sha256_text, verify_chunk_extraction
 
         text = "The cat sat. The cat sat. The dog sat."
         chunks = chunk_by_sentence(text, max_chars=20, min_chars=0)

@@ -5,7 +5,7 @@ Tests SHA256 hashing and verification for source text embeddings.
 """
 
 import pytest
-from api.api.lib.hash_utils import (
+from api.app.lib.hash_utils import (
     sha256_text,
     verify_source_hash,
     verify_chunk_hash,

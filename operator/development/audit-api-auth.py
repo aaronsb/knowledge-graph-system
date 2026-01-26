@@ -27,7 +27,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # Now we can import from the API
 from fastapi import FastAPI, Depends
-from api.api.main import app
+from api.app.main import app
 
 
 def extract_dependency_names(dependencies: List) -> List[str]:

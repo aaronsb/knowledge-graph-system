@@ -34,8 +34,8 @@ SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.api.lib.age_client import AGEClient
-from api.api.lib.encrypted_keys import EncryptedKeyStore, mask_api_key
+from api.app.lib.age_client import AGEClient
+from api.app.lib.encrypted_keys import EncryptedKeyStore, mask_api_key
 
 
 def validate_api_key(provider: str, api_key: str) -> tuple[bool, str]:

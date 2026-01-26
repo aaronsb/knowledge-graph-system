@@ -16,23 +16,23 @@ class TestSanitizePathComponent:
     """Tests for sanitize_path_component utility."""
 
     def test_replaces_spaces_with_underscores(self):
-        from api.api.lib.garage import sanitize_path_component
+        from api.app.lib.garage import sanitize_path_component
         assert sanitize_path_component("My Ontology") == "My_Ontology"
 
     def test_replaces_slashes_with_underscores(self):
-        from api.api.lib.garage import sanitize_path_component
+        from api.app.lib.garage import sanitize_path_component
         assert sanitize_path_component("Category/Subcategory") == "Category_Subcategory"
 
     def test_handles_multiple_spaces_and_slashes(self):
-        from api.api.lib.garage import sanitize_path_component
+        from api.app.lib.garage import sanitize_path_component
         assert sanitize_path_component("A B/C D") == "A_B_C_D"
 
     def test_preserves_already_safe_strings(self):
-        from api.api.lib.garage import sanitize_path_component
+        from api.app.lib.garage import sanitize_path_component
         assert sanitize_path_component("already_safe") == "already_safe"
 
     def test_empty_string(self):
-        from api.api.lib.garage import sanitize_path_component
+        from api.app.lib.garage import sanitize_path_component
         assert sanitize_path_component("") == ""
 
 
@@ -40,7 +40,7 @@ class TestDocumentIdentity:
     """Tests for DocumentIdentity dataclass."""
 
     def test_dataclass_fields(self):
-        from api.api.lib.garage import DocumentIdentity
+        from api.app.lib.garage import DocumentIdentity
 
         identity = DocumentIdentity(
             content_hash="abc123",
@@ -58,7 +58,7 @@ class TestComputeIdentity:
 
     def test_hash_prefix_exactly_32_chars(self):
         """Critical: garage_key must use exactly 32-char hash prefix (128 bits)."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         # Create service without base client (we only test compute_identity)
         service = SourceDocumentService.__new__(SourceDocumentService)
@@ -75,7 +75,7 @@ class TestComputeIdentity:
 
     def test_same_content_produces_same_identity(self):
         """Idempotent: same content always produces same key."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -89,7 +89,7 @@ class TestComputeIdentity:
 
     def test_different_content_produces_different_identity(self):
         """Different content must produce different keys."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -101,7 +101,7 @@ class TestComputeIdentity:
 
     def test_key_format_sources_ontology_hash_ext(self):
         """Key format: sources/{ontology}/{hash}.{ext}"""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -112,7 +112,7 @@ class TestComputeIdentity:
 
     def test_ontology_name_sanitized(self):
         """Ontology names with spaces/slashes are sanitized."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -124,7 +124,7 @@ class TestComputeIdentity:
 
     def test_size_bytes_correct(self):
         """size_bytes reflects actual content length."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -135,7 +135,7 @@ class TestComputeIdentity:
 
     def test_full_hash_preserved(self):
         """content_hash contains full SHA-256 (64 hex chars)."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -151,7 +151,7 @@ class TestComputeIdentity:
 
     def test_extension_stripped_of_leading_dot(self):
         """Extension with or without leading dot works."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -168,7 +168,7 @@ class TestHashPrefixConstant:
 
     def test_constant_is_32(self):
         """HASH_PREFIX_LENGTH must be 32 (128 bits = UUID-equivalent)."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         assert SourceDocumentService.HASH_PREFIX_LENGTH == 32
 
@@ -184,21 +184,21 @@ class TestNormalizeContentHash:
 
     def test_strips_sha256_prefix(self):
         """Strips 'sha256:' prefix from prefixed hash."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         prefixed = "sha256:" + "a" * 64
         assert normalize_content_hash(prefixed) == "a" * 64
 
     def test_passes_through_raw_hash(self):
         """Raw hash (no prefix) passes through unchanged."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         raw = "b" * 64
         assert normalize_content_hash(raw) == raw
 
     def test_validates_hash_length(self):
         """Rejects hashes that are not exactly 64 chars after normalization."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         with pytest.raises(ValueError, match="expected 64 chars"):
             normalize_content_hash("tooshort")
@@ -208,7 +208,7 @@ class TestNormalizeContentHash:
 
     def test_validates_hex_format(self):
         """Rejects hashes with non-hex characters."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         # 64 chars but contains 'g' (not hex)
         invalid_hex = "g" * 64
@@ -217,21 +217,21 @@ class TestNormalizeContentHash:
 
     def test_rejects_none(self):
         """Rejects None input."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         with pytest.raises(ValueError, match="cannot be None or empty"):
             normalize_content_hash(None)
 
     def test_rejects_empty_string(self):
         """Rejects empty string input."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
 
         with pytest.raises(ValueError, match="cannot be None or empty"):
             normalize_content_hash("")
 
     def test_valid_sha256_examples(self):
         """Accepts real SHA-256 hash examples."""
-        from api.api.lib.garage import normalize_content_hash
+        from api.app.lib.garage import normalize_content_hash
         import hashlib
 
         # Generate a real hash
@@ -247,7 +247,7 @@ class TestPrecomputedHash:
 
     def test_uses_precomputed_hash_when_provided(self):
         """Skips hashing when precomputed_hash is provided."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
         import hashlib
 
         service = SourceDocumentService.__new__(SourceDocumentService)
@@ -265,7 +265,7 @@ class TestPrecomputedHash:
 
     def test_normalizes_prefixed_precomputed_hash(self):
         """Strips sha256: prefix from precomputed hash."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
 
         service = SourceDocumentService.__new__(SourceDocumentService)
 
@@ -285,7 +285,7 @@ class TestPrecomputedHash:
 
     def test_computes_hash_when_not_provided(self):
         """Computes SHA-256 when precomputed_hash is None."""
-        from api.api.lib.garage.source_storage import SourceDocumentService
+        from api.app.lib.garage.source_storage import SourceDocumentService
         import hashlib
 
         service = SourceDocumentService.__new__(SourceDocumentService)

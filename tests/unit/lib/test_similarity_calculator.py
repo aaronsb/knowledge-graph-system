@@ -8,7 +8,7 @@ validation, and performance benchmarks.
 import pytest
 import numpy as np
 import time
-from api.api.lib.similarity_calculator import (
+from api.app.lib.similarity_calculator import (
     cosine_similarity,
     batch_cosine_similarity
 )
