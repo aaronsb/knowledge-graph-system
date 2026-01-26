@@ -147,6 +147,22 @@ def _split_into_sentences_with_positions(text: str) -> List[_SentenceWithPositio
     return sentences
 
 
+def _split_into_sentences(text: str) -> List[str]:
+    """
+    Split text into sentences (returns just text, no position tracking).
+
+    Convenience wrapper around _split_into_sentences_with_positions for
+    cases where only the sentence text is needed.
+
+    Args:
+        text: Input text to split
+
+    Returns:
+        List of sentence strings
+    """
+    return [s.text for s in _split_into_sentences_with_positions(text)]
+
+
 def chunk_by_sentence(
     text: str,
     max_chars: int = 500,
