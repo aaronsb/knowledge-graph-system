@@ -7,6 +7,7 @@ decide WHEN to trigger workers.
 """
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Dict, Optional
 import logging
 
@@ -122,13 +123,21 @@ class JobLauncher(ABC):
             job_data=job_data
         )
 
-        # Mark as system job (ADR-050: job ownership)
+        # Mark as system job and auto-approve (ADR-050: job ownership)
+        # System/scheduled jobs bypass the approval workflow since they're
+        # triggered by internal conditions, not user uploads
         if job_id:
             self.job_queue.update_job(job_id, {
                 "is_system_job": True,
                 "job_source": "scheduled_task",
-                "created_by": f"system:scheduler:{self.__class__.__name__}"
+                "created_by": f"system:scheduler:{self.__class__.__name__}",
+                "status": "approved",
+                "approved_at": datetime.now().isoformat(),
+                "approved_by": "system:scheduler"
             })
 
-        logger.info(f"✅ {self.__class__.__name__}: Enqueued job {job_id}")
+            # Trigger execution immediately (fixes #221: jobs stuck in pending)
+            self.job_queue.execute_job_async(job_id)
+
+        logger.info(f"✅ {self.__class__.__name__}: Enqueued and started job {job_id}")
         return job_id
