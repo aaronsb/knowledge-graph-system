@@ -493,6 +493,51 @@ class PostgreSQLJobQueue(JobQueue):
         finally:
             self._return_connection(conn)
 
+    def _build_job_filter(
+        self,
+        status: Optional[str] = None,
+        system_only: bool = False,
+        older_than: Optional[str] = None,
+        job_type: Optional[str] = None
+    ) -> tuple:
+        """
+        Build SQL filter conditions for job queries.
+
+        Returns:
+            Tuple of (where_clause, params) for use in SQL queries.
+        """
+        conditions = ["status NOT IN ('processing', 'running')"]
+        params = []
+
+        if status:
+            conditions.append("status = %s")
+            params.append(status)
+
+        if system_only:
+            conditions.append("(is_system_job = true OR created_by LIKE 'system:%%')")
+
+        if older_than:
+            # Use parameterized make_interval for safety
+            # Map duration strings to (hours, days) tuples
+            duration_map = {
+                '1h': (1, 0),
+                '24h': (24, 0),
+                '7d': (0, 7),
+                '30d': (0, 30)
+            }
+            duration = duration_map.get(older_than)
+            if duration:
+                hours, days = duration
+                conditions.append("created_at < NOW() - make_interval(hours => %s, days => %s)")
+                params.extend([hours, days])
+
+        if job_type:
+            conditions.append("job_type = %s")
+            params.append(job_type)
+
+        where_clause = " AND ".join(conditions)
+        return where_clause, params
+
     def delete_jobs(
         self,
         status: Optional[str] = None,
@@ -512,37 +557,11 @@ class PostgreSQLJobQueue(JobQueue):
         Returns:
             Number of jobs deleted
         """
+        where_clause, params = self._build_job_filter(status, system_only, older_than, job_type)
+
         conn = self._get_connection()
         try:
             with conn.cursor() as cur:
-                conditions = ["status NOT IN ('processing', 'running')"]
-                params = []
-
-                if status:
-                    conditions.append("status = %s")
-                    params.append(status)
-
-                if system_only:
-                    conditions.append("(is_system_job = true OR created_by LIKE 'system:%%')")
-
-                if older_than:
-                    # Parse duration string (1h, 24h, 7d, 30d)
-                    duration_map = {
-                        '1h': '1 hour',
-                        '24h': '24 hours',
-                        '7d': '7 days',
-                        '30d': '30 days'
-                    }
-                    interval = duration_map.get(older_than)
-                    if interval:
-                        conditions.append(f"created_at < NOW() - INTERVAL '{interval}'")
-
-                if job_type:
-                    conditions.append("job_type = %s")
-                    params.append(job_type)
-
-                where_clause = " AND ".join(conditions)
-
                 cur.execute(f"""
                     DELETE FROM kg_api.jobs
                     WHERE {where_clause}
@@ -569,36 +588,11 @@ class PostgreSQLJobQueue(JobQueue):
 
         Same filters as delete_jobs but returns job summaries instead of deleting.
         """
+        where_clause, params = self._build_job_filter(status, system_only, older_than, job_type)
+
         conn = self._get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                conditions = ["status NOT IN ('processing', 'running')"]
-                params = []
-
-                if status:
-                    conditions.append("status = %s")
-                    params.append(status)
-
-                if system_only:
-                    conditions.append("(is_system_job = true OR created_by LIKE 'system:%%')")
-
-                if older_than:
-                    duration_map = {
-                        '1h': '1 hour',
-                        '24h': '24 hours',
-                        '7d': '7 days',
-                        '30d': '30 days'
-                    }
-                    interval = duration_map.get(older_than)
-                    if interval:
-                        conditions.append(f"created_at < NOW() - INTERVAL '{interval}'")
-
-                if job_type:
-                    conditions.append("job_type = %s")
-                    params.append(job_type)
-
-                where_clause = " AND ".join(conditions)
-
                 cur.execute(f"""
                     SELECT job_id, job_type, status, ontology, created_at
                     FROM kg_api.jobs
