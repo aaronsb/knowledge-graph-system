@@ -251,7 +251,7 @@ class TestConceptGet:
              patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
 
             mock_service = AsyncMock()
-            mock_service._get_concept_response.return_value = make_concept_response()
+            mock_service.get_concept_response.return_value = make_concept_response()
             mock_service_factory.return_value = mock_service
 
             response = api_client.get("/concepts/c_123", headers=auth_headers_user)
@@ -266,7 +266,7 @@ class TestConceptGet:
              patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
 
             mock_service = AsyncMock()
-            mock_service._get_concept_response.side_effect = ValueError("Concept not found")
+            mock_service.get_concept_response.side_effect = ValueError("Concept not found")
             mock_service_factory.return_value = mock_service
 
             response = api_client.get("/concepts/c_nonexistent", headers=auth_headers_user)
@@ -376,3 +376,67 @@ class TestConceptDelete:
             response = api_client.delete("/concepts/c_nonexistent", headers=auth_headers_user)
 
             assert response.status_code == 404
+
+
+class TestConceptScopeEnforcement:
+    """Tests for OAuth scope enforcement on concept endpoints."""
+
+    def test_create_concept_requires_write_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Create concept with read-only scope returns 403."""
+        response = api_client.post(
+            "/concepts",
+            json={"label": "Test", "ontology": "test"},
+            headers=auth_headers_user
+        )
+        assert response.status_code == 403
+        assert "kg:write" in response.json()["detail"]
+
+    def test_update_concept_requires_edit_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Update concept with read-only scope returns 403."""
+        response = api_client.patch(
+            "/concepts/c_123",
+            json={"label": "Updated"},
+            headers=auth_headers_user
+        )
+        assert response.status_code == 403
+        assert "kg:edit" in response.json()["detail"]
+
+    def test_delete_concept_requires_edit_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Delete concept with read-only scope returns 403."""
+        response = api_client.delete("/concepts/c_123", headers=auth_headers_user)
+        assert response.status_code == 403
+        assert "kg:edit" in response.json()["detail"]
+
+    def test_list_concepts_allowed_with_read_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """List concepts succeeds with read-only scope."""
+        with patch('api.app.routes.concepts.get_age_client'), \
+             patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.list_concepts.return_value = make_concept_list_response()
+            mock_service_factory.return_value = mock_service
+
+            response = api_client.get("/concepts", headers=auth_headers_user)
+            assert response.status_code == 200
+
+    def test_get_concept_allowed_with_read_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Get concept succeeds with read-only scope."""
+        with patch('api.app.routes.concepts.get_age_client'), \
+             patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.get_concept_response.return_value = make_concept_response()
+            mock_service_factory.return_value = mock_service
+
+            response = api_client.get("/concepts/c_123", headers=auth_headers_user)
+            assert response.status_code == 200

@@ -421,6 +421,43 @@ def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credent
     )
 
 
+@pytest.fixture
+def mock_oauth_read_only(monkeypatch, test_user_credentials):
+    """
+    Mock OAuth validation with read-only scopes.
+
+    Use this to test 403 Forbidden when write/edit scopes are required.
+    """
+    from api.app.models.auth import UserInDB
+
+    def mock_validate(token: str):
+        if not token.startswith("test_oauth_token:"):
+            return None
+        try:
+            parts = token.replace("test_oauth_token:", "").split("|")
+            user_id = int(parts[0].replace("user_", ""))
+            creds = test_user_credentials.copy()
+            creds["id"] = user_id
+            return UserInDB(**creds)
+        except Exception:
+            return None
+
+    def mock_get_scopes_read_only(token: str):
+        """Return only read scope."""
+        if token.startswith("test_oauth_token:"):
+            return ["kg:read"]  # Only read, no write/edit
+        return []
+
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.validate_oauth_access_token",
+        mock_validate
+    )
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.get_token_scopes",
+        mock_get_scopes_read_only
+    )
+
+
 # ============================================================================
 # Pytest Configuration Hooks
 # ============================================================================

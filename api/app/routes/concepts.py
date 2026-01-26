@@ -143,7 +143,7 @@ async def get_concept(
     service = get_concept_service(age_client)
 
     try:
-        result = await service._get_concept_response(concept_id)
+        result = await service.get_concept_response(concept_id)
         return result
     except ValueError as e:
         raise HTTPException(

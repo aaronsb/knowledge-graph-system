@@ -398,7 +398,7 @@ class ConceptService:
         if not result:
             raise ValueError(f"Failed to update concept: {concept_id}")
 
-        return await self._get_concept_response(concept_id)
+        return await self.get_concept_response(concept_id)
 
     async def delete_concept(
         self,
@@ -423,6 +423,11 @@ class ConceptService:
         if not existing:
             raise ValueError(f"Concept not found: {concept_id}")
 
+        # If cascade, find synthetic sources connected only to this concept
+        orphaned_sources = []
+        if cascade:
+            orphaned_sources = await self._find_orphaned_synthetic_sources(concept_id)
+
         # Delete concept and its relationships
         query = """
         MATCH (c:Concept {concept_id: $concept_id})
@@ -432,9 +437,72 @@ class ConceptService:
         try:
             self.age_client._execute_cypher(query, params={"concept_id": concept_id})
             logger.info(f"Deleted concept: {concept_id}")
+
+            # Delete orphaned synthetic sources if cascade
+            if cascade and orphaned_sources:
+                await self._delete_orphaned_sources(orphaned_sources)
+                logger.info(f"Cascade deleted {len(orphaned_sources)} orphaned synthetic sources")
+
             return True
         except Exception as e:
             raise ValueError(f"Failed to delete concept: {e}")
+
+    async def _find_orphaned_synthetic_sources(self, concept_id: str) -> List[str]:
+        """
+        Find synthetic sources that will be orphaned when this concept is deleted.
+
+        A source is orphaned if:
+        1. It has content_type = 'synthetic'
+        2. All its Instance connections lead only to this concept
+
+        Args:
+            concept_id: Concept being deleted
+
+        Returns:
+            List of source_ids that will be orphaned
+        """
+        # Find synthetic sources connected to this concept
+        # that have NO other concept connections
+        query = """
+        MATCH (c:Concept {concept_id: $concept_id})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source)
+        WHERE s.content_type = 'synthetic'
+        WITH s
+        OPTIONAL MATCH (other:Concept)-[:EVIDENCED_BY]->(:Instance)-[:FROM_SOURCE]->(s)
+        WHERE other.concept_id <> $concept_id
+        WITH s, count(other) as other_count
+        WHERE other_count = 0
+        RETURN s.source_id as source_id
+        """
+
+        try:
+            results = self.age_client._execute_cypher(
+                query,
+                params={"concept_id": concept_id}
+            )
+            return [r.get("source_id") for r in (results or []) if r.get("source_id")]
+        except Exception as e:
+            logger.warning(f"Failed to find orphaned sources: {e}")
+            return []
+
+    async def _delete_orphaned_sources(self, source_ids: List[str]) -> None:
+        """
+        Delete orphaned source nodes and their connected instances.
+
+        Args:
+            source_ids: List of source IDs to delete
+        """
+        for source_id in source_ids:
+            try:
+                # Delete source and connected instances
+                query = """
+                MATCH (s:Source {source_id: $source_id})
+                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(s)
+                DETACH DELETE i, s
+                """
+                self.age_client._execute_cypher(query, params={"source_id": source_id})
+                logger.debug(f"Deleted orphaned synthetic source: {source_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete orphaned source {source_id}: {e}")
 
     async def _get_concept(self, concept_id: str) -> Optional[Dict[str, Any]]:
         """Get concept by ID."""
@@ -452,7 +520,7 @@ class ConceptService:
             return parsed.get("properties", {}) if isinstance(parsed, dict) else {}
         return None
 
-    async def _get_concept_response(self, concept_id: str) -> ConceptResponse:
+    async def get_concept_response(self, concept_id: str) -> ConceptResponse:
         """Get concept as response model."""
         concept = await self._get_concept(concept_id)
         if not concept:

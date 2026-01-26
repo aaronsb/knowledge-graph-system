@@ -396,3 +396,58 @@ class TestEdgeCategories:
         )
 
         assert response.status_code == 422
+
+
+class TestEdgeScopeEnforcement:
+    """Tests for OAuth scope enforcement on edge endpoints."""
+
+    def test_create_edge_requires_write_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Create edge with read-only scope returns 403."""
+        response = api_client.post(
+            "/edges",
+            json={
+                "from_concept_id": "c_1",
+                "to_concept_id": "c_2",
+                "relationship_type": "IMPLIES",
+                "category": "logical_truth"
+            },
+            headers=auth_headers_user
+        )
+        assert response.status_code == 403
+        assert "kg:write" in response.json()["detail"]
+
+    def test_update_edge_requires_edit_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Update edge with read-only scope returns 403."""
+        response = api_client.patch(
+            "/edges/c_1/IMPLIES/c_2",
+            json={"confidence": 0.5},
+            headers=auth_headers_user
+        )
+        assert response.status_code == 403
+        assert "kg:edit" in response.json()["detail"]
+
+    def test_delete_edge_requires_edit_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """Delete edge with read-only scope returns 403."""
+        response = api_client.delete("/edges/c_1/IMPLIES/c_2", headers=auth_headers_user)
+        assert response.status_code == 403
+        assert "kg:edit" in response.json()["detail"]
+
+    def test_list_edges_allowed_with_read_scope(
+        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    ):
+        """List edges succeeds with read-only scope."""
+        with patch('api.app.routes.edges.get_age_client'), \
+             patch('api.app.routes.edges.get_edge_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.list_edges.return_value = make_edge_list_response()
+            mock_service_factory.return_value = mock_service
+
+            response = api_client.get("/edges", headers=auth_headers_user)
+            assert response.status_code == 200
