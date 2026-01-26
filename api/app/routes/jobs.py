@@ -10,7 +10,8 @@ from api.app.lib.datetime_utils import utcnow, to_iso
 
 from ..services.job_queue import get_job_queue
 from ..models.job import JobStatus
-from ..middleware.auth import get_current_user, verify_job_ownership
+from ..dependencies.auth import CurrentUser, get_current_active_user
+from ..lib.job_permissions import JobPermissionContext
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 )
 async def get_job_status(
     job_id: str,
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    current_user: CurrentUser
 ):
     """
     Get the current status of a job.
@@ -42,6 +43,11 @@ async def get_job_status(
     - Check `analysis` field when status is "awaiting_approval" to see cost estimates
     - Stop polling when status is "completed", "failed", or "cancelled"
     - Use the `progress.percent` field to show progress bar
+
+    **Authorization:**
+    - Users can view their own jobs
+    - Curators+ can view all user jobs
+    - Platform admins can view system jobs
     """
     queue = get_job_queue()
     job = queue.get_job(job_id)
@@ -49,8 +55,10 @@ async def get_job_status(
     if not job:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    # Verify ownership (Phase 1: no-op, Phase 2: enforced)
-    await verify_job_ownership(job_id, job, current_user)
+    # Check permission to read this job
+    with JobPermissionContext() as checker:
+        if not checker.can_access_job(current_user.id, 'read', job):
+            raise HTTPException(status_code=403, detail="Not authorized to view this job")
 
     return JobStatus(**job)
 
@@ -61,38 +69,45 @@ async def get_job_status(
     summary="List jobs"
 )
 async def list_jobs(
+    current_user: CurrentUser,
     status: Optional[str] = Query(
         None,
         description="Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)"
     ),
-    user_id: Optional[str] = Query(
-        None,
-        description="Filter by client ID (ADR-014: view specific user's jobs)"
-    ),
     limit: int = Query(50, ge=1, le=500, description="Maximum jobs to return"),
-    offset: int = Query(0, ge=0, description="Number of jobs to skip (for pagination)"),
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    offset: int = Query(0, ge=0, description="Number of jobs to skip (for pagination)")
 ):
     """
-    List recent jobs, optionally filtered by status and/or user_id.
+    List recent jobs, filtered by user's permissions.
+
+    **Authorization:**
+    - Contributors: See only their own jobs
+    - Curators+: See all user jobs
+    - Platform admins: See all jobs including system jobs
 
     Useful for:
     - Viewing jobs awaiting approval: `?status=awaiting_approval`
-    - Viewing your own jobs: `?user_id=your-client-id`
-    - Viewing another user's jobs: `?user_id=other-user`
     - Monitoring queue backlog
     - Debugging failed jobs
 
     Examples:
     - `GET /jobs?status=awaiting_approval` - Jobs needing approval
-    - `GET /jobs?user_id=alice&status=awaiting_approval` - Alice's pending jobs
     - `GET /jobs?status=completed&limit=100` - Last 100 completed jobs
     """
     queue = get_job_queue()
-    jobs = queue.list_jobs(status=status, user_id=user_id, limit=limit, offset=offset)
 
-    # Phase 2: Enforce ownership filtering based on current_user.user_id
-    # For now, allow viewing all jobs (no filtering enforcement)
+    # Get permission-based filter
+    with JobPermissionContext() as checker:
+        perm_filter = checker.get_job_list_filter(current_user.id)
+
+    # Apply permission filter
+    jobs = queue.list_jobs(
+        status=status,
+        user_id=perm_filter.get('user_id'),
+        exclude_system=perm_filter.get('exclude_system', False),
+        limit=limit,
+        offset=offset
+    )
 
     return [JobStatus(**job) for job in jobs]
 
@@ -103,9 +118,9 @@ async def list_jobs(
 )
 async def cancel_or_delete_job(
     job_id: str,
-    purge: bool = Query(False, description="Permanently delete job record (admin only)"),
-    force: bool = Query(False, description="Force delete even if processing (dangerous)"),
-    current_user: dict = Depends(get_current_user)
+    current_user: CurrentUser,
+    purge: bool = Query(False, description="Permanently delete job record"),
+    force: bool = Query(False, description="Force delete even if processing (dangerous)")
 ):
     """
     Cancel or permanently delete a job.
@@ -117,7 +132,11 @@ async def cancel_or_delete_job(
     **With purge=true:** Permanently delete job record
     - Removes job from database entirely
     - Cannot delete processing jobs unless force=true
-    - Requires admin privileges
+
+    **Authorization:**
+    - Users can cancel/delete their own jobs
+    - Admins can cancel/delete any user job
+    - Platform admins can cancel/delete system jobs
 
     **ADR-014: Can cancel jobs in these states:**
     - `pending`: Job queued, analysis running
@@ -131,6 +150,7 @@ async def cancel_or_delete_job(
 
     **Returns:**
     - 200: Job cancelled/deleted successfully
+    - 403: Not authorized
     - 404: Job not found
     - 409: Job cannot be cancelled/deleted in current state
     """
@@ -141,12 +161,14 @@ async def cancel_or_delete_job(
     if not job:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    # Verify ownership (Phase 1: no-op, Phase 2: enforced)
-    await verify_job_ownership(job_id, job, current_user)
+    # Check permission
+    action = 'delete' if purge else 'cancel'
+    with JobPermissionContext() as checker:
+        if not checker.can_access_job(current_user.id, action, job):
+            raise HTTPException(status_code=403, detail=f"Not authorized to {action} this job")
 
     if purge:
         # Permanently delete the job record
-        # TODO: Add admin check when auth is fully implemented
         deleted = queue.delete_job(job_id, force=force)
 
         if not deleted:
@@ -186,7 +208,7 @@ async def cancel_or_delete_job(
 async def approve_job(
     job_id: str,
     background_tasks: BackgroundTasks,
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    current_user: CurrentUser
 ):
     """
     Approve a job for processing (ADR-014 approval workflow).
@@ -197,12 +219,13 @@ async def approve_job(
     3. User approves → status: `approved` (this endpoint)
     4. Job starts → status: `processing`
 
-    **Requirements:**
-    - Job must be in `awaiting_approval` status
-    - User must have permission (Phase 2: enforced, Phase 1: placeholder)
+    **Authorization:**
+    - Users can approve their own jobs
+    - Admins can approve any user job
 
     **Returns:**
     - 200: Job approved and queued for processing
+    - 403: Not authorized
     - 404: Job not found
     - 409: Job not in awaiting_approval status
     """
@@ -213,8 +236,10 @@ async def approve_job(
     if not job:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    # Verify ownership (Phase 1: no-op, Phase 2: enforced)
-    await verify_job_ownership(job_id, job, current_user)
+    # Check permission (approve maps to cancel action - manage the job)
+    with JobPermissionContext() as checker:
+        if not checker.can_access_job(current_user.id, 'cancel', job):
+            raise HTTPException(status_code=403, detail="Not authorized to approve this job")
 
     # Validate state
     if job["status"] != "awaiting_approval":
@@ -227,7 +252,7 @@ async def approve_job(
     queue.update_job(job_id, {
         "status": "approved",
         "approved_at": to_iso(utcnow()),
-        "approved_by": current_user.get("user_id", "anonymous")  # Phase 2: real user ID
+        "approved_by": current_user.username
     })
 
     # Handle serial vs parallel processing
@@ -249,19 +274,24 @@ async def approve_job(
 
 @router.delete(
     "",
-    summary="Delete jobs with filters (admin only)"
+    summary="Delete jobs with filters"
 )
 async def delete_jobs(
+    current_user: CurrentUser,
     confirm: bool = Query(False, description="Must set to true to confirm deletion"),
     dry_run: bool = Query(False, description="Preview what would be deleted without deleting"),
     status: Optional[str] = Query(None, description="Filter by status (pending|cancelled|completed|failed)"),
     system: bool = Query(False, description="Only delete system/scheduled jobs"),
     older_than: Optional[str] = Query(None, description="Delete jobs older than duration (1h|24h|7d|30d)"),
-    job_type: Optional[str] = Query(None, description="Filter by job type"),
-    current_user: dict = Depends(get_current_user)
+    job_type: Optional[str] = Query(None, description="Filter by job type")
 ):
     """
     Delete jobs matching filters.
+
+    **Authorization:**
+    - Admins can delete user jobs in bulk
+    - Platform admins can delete system jobs
+    - Requires `jobs:delete` permission with appropriate scope
 
     **Safety:**
     - Cannot delete jobs in `processing` or `running` status
@@ -288,6 +318,15 @@ async def delete_jobs(
     - dry_run=true: List of jobs that would be deleted
     - dry_run=false: Count of jobs deleted
     """
+    # Check bulk delete permission
+    with JobPermissionContext() as checker:
+        if not checker.can_delete_in_bulk(current_user.id, include_system=system):
+            raise HTTPException(
+                status_code=403,
+                detail="Not authorized to perform bulk job deletion" +
+                       (" (system jobs require platform_admin)" if system else "")
+            )
+
     queue = get_job_queue()
 
     if dry_run:
@@ -349,7 +388,7 @@ async def delete_jobs(
 )
 async def stream_job_progress(
     job_id: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: CurrentUser
 ):
     """
     Stream real-time job progress updates via Server-Sent Events (ADR-018).
@@ -375,10 +414,15 @@ async def stream_job_progress(
     **Polling Fallback**: If SSE fails, client should fall back to `GET /jobs/{job_id}`
 
     **Connection:** Uses HTTP/1.1 chunked transfer encoding. Works through most proxies.
+
+    **Authorization:**
+    - Users can stream their own jobs
+    - Curators+ can stream all user jobs
+    - Platform admins can stream system jobs
     """
     queue = get_job_queue()
 
-    # Check job exists and verify ownership upfront
+    # Check job exists and verify permission upfront
     job = queue.get_job(job_id)
     if not job:
         # Send error event and close
@@ -395,8 +439,21 @@ async def stream_job_progress(
             }
         )
 
-    # Verify ownership (Phase 1: no-op, Phase 2: enforced)
-    await verify_job_ownership(job_id, job, current_user)
+    # Check permission
+    with JobPermissionContext() as checker:
+        if not checker.can_access_job(current_user.id, 'read', job):
+            async def forbidden_generator():
+                yield f"event: error\ndata: {json.dumps({'error': 'Not authorized to view this job'})}\n\n"
+
+            return StreamingResponse(
+                forbidden_generator(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no"
+                }
+            )
 
     async def event_generator():
         """

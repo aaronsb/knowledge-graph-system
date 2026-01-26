@@ -62,10 +62,21 @@ class JobQueue(ABC):
     def list_jobs(
         self,
         status: Optional[str] = None,
+        user_id: Optional[int] = None,
+        exclude_system: bool = False,
         limit: int = 50,
         offset: int = 0
     ) -> List[Dict]:
-        """List jobs, optionally filtered by status"""
+        """
+        List jobs, optionally filtered.
+
+        Args:
+            status: Filter by job status
+            user_id: Filter by owner user ID (for permission-based filtering)
+            exclude_system: Exclude system/scheduled jobs
+            limit: Maximum jobs to return
+            offset: Number to skip (pagination)
+        """
         pass
 
     @abstractmethod
@@ -387,11 +398,21 @@ class PostgreSQLJobQueue(JobQueue):
     def list_jobs(
         self,
         status: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[int] = None,
+        exclude_system: bool = False,
         limit: int = 50,
         offset: int = 0
     ) -> List[Dict]:
-        """List jobs from PostgreSQL, optionally filtered"""
+        """
+        List jobs from PostgreSQL, optionally filtered.
+
+        Args:
+            status: Filter by job status
+            user_id: Filter by owner user ID (for permission-based filtering)
+            exclude_system: Exclude system/scheduled jobs (for non-platform-admin users)
+            limit: Maximum number of jobs to return
+            offset: Number of jobs to skip (pagination)
+        """
         conn = self._get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -405,6 +426,15 @@ class PostgreSQLJobQueue(JobQueue):
                 if user_id:
                     conditions.append("j.user_id = %s")
                     params.append(user_id)
+
+                if exclude_system:
+                    # Exclude system jobs (is_system_job=true or created_by starts with 'system:')
+                    conditions.append(
+                        "(j.is_system_job = false OR j.is_system_job IS NULL)"
+                    )
+                    conditions.append(
+                        "(j.created_by NOT LIKE 'system:%%' OR j.created_by IS NULL)"
+                    )
 
                 where_clause = " AND ".join(conditions) if conditions else "1=1"
                 params.append(limit)
