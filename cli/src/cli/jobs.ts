@@ -505,18 +505,138 @@ jobsCommand
     }
   });
 
-// Clear all jobs
+// Delete a single job permanently
+jobsCommand
+  .command('delete <job-id>')
+  .description('Permanently delete a job from database (removes record entirely, not just cancels)')
+  .option('-f, --force', 'Force delete even if job is processing (dangerous)', false)
+  .showHelpAfterError()
+  .action(async (jobId: string, options) => {
+    try {
+      const client = createClientFromEnv();
+
+      console.log(chalk.blue(`Deleting job ${jobId}...`));
+      const result = await client.deleteJob(jobId, { purge: true, force: options.force });
+
+      if (result.deleted) {
+        console.log(chalk.green('✓ Job permanently deleted'));
+      } else {
+        console.log(chalk.yellow('⚠ Job could not be deleted'));
+      }
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to delete job'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+// Cleanup jobs with filters
+jobsCommand
+  .command('cleanup')
+  .description('Delete jobs matching filters (with preview) - safer alternative to clear')
+  .option('-s, --status <status>', 'Filter by status (pending|cancelled|completed|failed)')
+  .option('--system', 'Only delete system/scheduled jobs', false)
+  .option('--older-than <duration>', 'Delete jobs older than duration (1h|24h|7d|30d)')
+  .option('-t, --type <job-type>', 'Filter by job type (ingestion|epistemic_remeasurement|projection|etc)')
+  .option('--confirm', 'Execute deletion (without this flag, shows preview only)', false)
+  .option('--all', 'Delete ALL jobs (nuclear option, requires --confirm)', false)
+  .showHelpAfterError()
+  .action(async (options) => {
+    try {
+      const client = createClientFromEnv();
+
+      // Check for --all without filters
+      const hasFilters = options.status || options.system || options.olderThan || options.type;
+
+      if (options.all && !options.confirm) {
+        console.error(chalk.red('✗ Confirmation required for --all'));
+        console.error(chalk.yellow('\n⚠️  This will DELETE ALL jobs from the database!'));
+        console.error(chalk.gray('\nTo confirm, run: ') + chalk.cyan('kg job cleanup --all --confirm'));
+        process.exit(1);
+      }
+
+      if (!hasFilters && !options.all) {
+        console.error(chalk.red('✗ No filters specified'));
+        console.error(chalk.gray('\nExamples:'));
+        console.error(chalk.gray('  kg job cleanup --status pending              # Preview pending jobs'));
+        console.error(chalk.gray('  kg job cleanup --status pending --confirm    # Delete pending jobs'));
+        console.error(chalk.gray('  kg job cleanup --system --older-than 24h     # Preview old system jobs'));
+        console.error(chalk.gray('  kg job cleanup --all --confirm               # Delete ALL jobs (nuclear)'));
+        process.exit(1);
+      }
+
+      // Preview mode (default)
+      if (!options.confirm) {
+        console.log(chalk.blue('Preview mode - showing jobs that would be deleted:\n'));
+
+        const result = await client.deleteJobs({
+          dryRun: true,
+          status: options.status,
+          system: options.system,
+          olderThan: options.olderThan,
+          jobType: options.type
+        });
+
+        if (!result.jobs || result.jobs.length === 0) {
+          console.log(chalk.gray('No jobs match the specified filters\n'));
+          return;
+        }
+
+        console.log(chalk.yellow(`Found ${result.jobs_to_delete} job(s) to delete:\n`));
+
+        // Show preview table (limit to 10)
+        const previewJobs = result.jobs.slice(0, 10);
+        for (const job of previewJobs) {
+          const created = new Date(job.created_at).toLocaleString();
+          console.log(chalk.gray(`  ${job.job_id.substring(0, 16)}  ${job.status.padEnd(10)}  ${(job.job_type || '-').padEnd(24)}  ${created}`));
+        }
+
+        if (result.jobs.length > 10) {
+          console.log(chalk.gray(`  ... and ${result.jobs.length - 10} more\n`));
+        }
+
+        console.log(chalk.blue('\nTo delete these jobs, add --confirm'));
+      } else {
+        // Execute deletion
+        if (options.all) {
+          console.log(chalk.yellow('\n⚠️  Deleting ALL jobs from database...'));
+        } else {
+          console.log(chalk.yellow('\n⚠️  Deleting jobs matching filters...'));
+        }
+
+        const result = await client.deleteJobs({
+          confirm: true,
+          status: options.status,
+          system: options.system,
+          olderThan: options.olderThan,
+          jobType: options.type
+        });
+
+        console.log(chalk.green(`\n✓ ${result.message}`));
+        console.log(chalk.gray(`  Jobs deleted: ${result.jobs_deleted}\n`));
+      }
+    } catch (error: any) {
+      console.error(chalk.red('✗ Failed to cleanup jobs'));
+      console.error(chalk.red(error.response?.data?.detail || error.message));
+      process.exit(1);
+    }
+  });
+
+// Clear all jobs (deprecated, kept for backwards compatibility)
 jobsCommand
   .command('clear')
-  .description('Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)')
+  .description('Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)')
   .option('--confirm', 'Confirm deletion (REQUIRED for safety)', false)
   .showHelpAfterError()
   .action(async (options) => {
     try {
+      console.log(chalk.yellow('⚠️  Note: "kg job clear" is deprecated. Use "kg job cleanup --all --confirm" instead.\n'));
+
       if (!options.confirm) {
         console.error(chalk.red('✗ Confirmation required'));
         console.error(chalk.yellow('\n⚠️  This will DELETE ALL jobs from the database!'));
-        console.error(chalk.gray('\nTo confirm, run: ') + chalk.cyan('kg jobs clear --confirm'));
+        console.error(chalk.gray('\nTo confirm, run: ') + chalk.cyan('kg job clear --confirm'));
+        console.error(chalk.gray('Or use: ') + chalk.cyan('kg job cleanup --all --confirm'));
         process.exit(1);
       }
 

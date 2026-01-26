@@ -17,7 +17,9 @@ kg job [options]
 - `list` - List recent jobs with optional filtering by status or user - includes subcommands for common filters
 - `approve` - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
 - `cancel` - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)
-- `clear` - Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)
+- `delete` - Permanently delete a job from database (removes record entirely, not just cancels)
+- `cleanup` - Delete jobs matching filters (with preview) - safer alternative to clear
+- `clear` - Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)
 
 ---
 
@@ -239,9 +241,48 @@ kg cancel <job-id-or-filter>
 | `-c, --client <user-id>` | Filter by user ID for batch operations | - |
 | `-l, --limit <n>` | Maximum jobs to cancel for safety (default: 100) | `"100"` |
 
+### delete
+
+Permanently delete a job from database (removes record entirely, not just cancels)
+
+**Usage:**
+```bash
+kg delete <job-id>
+```
+
+**Arguments:**
+
+- `<job-id>` - Required
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-f, --force` | Force delete even if job is processing (dangerous) | `false` |
+
+### cleanup
+
+Delete jobs matching filters (with preview) - safer alternative to clear
+
+**Usage:**
+```bash
+kg cleanup [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-s, --status <status>` | Filter by status (pending|cancelled|completed|failed) | - |
+| `--system` | Only delete system/scheduled jobs | `false` |
+| `--older-than <duration>` | Delete jobs older than duration (1h|24h|7d|30d) | - |
+| `-t, --type <job-type>` | Filter by job type (ingestion|epistemic_remeasurement|projection|etc) | - |
+| `--confirm` | Execute deletion (without this flag, shows preview only) | `false` |
+| `--all` | Delete ALL jobs (nuclear option, requires --confirm) | `false` |
+
 ### clear
 
-Clear ALL jobs from database - DESTRUCTIVE operation requiring --confirm flag (use for dev/testing cleanup)
+Clear ALL jobs from database (deprecated: use "cleanup --all --confirm" instead)
 
 **Usage:**
 ```bash
