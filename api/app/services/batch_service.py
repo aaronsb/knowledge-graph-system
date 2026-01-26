@@ -28,6 +28,31 @@ from .audit_service import log_audit, AuditAction, AuditOutcome
 logger = logging.getLogger(__name__)
 
 
+def _escape_cypher_string(value: str) -> str:
+    """
+    Escape a string for safe use in Cypher queries.
+
+    Handles backslashes and single quotes to prevent injection.
+    """
+    if value is None:
+        return ""
+    # Escape backslashes first, then single quotes
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
+
+def _normalize_relationship_type(rel_type: str) -> str:
+    """
+    Normalize relationship type for consistency.
+
+    - Convert to uppercase
+    - Replace spaces with underscores
+    - Remove other special characters
+    """
+    normalized = rel_type.upper().replace(" ", "_")
+    # Only allow alphanumeric and underscores
+    return "".join(c for c in normalized if c.isalnum() or c == "_")
+
+
 class BatchService:
     """
     Service for batch graph operations with transaction support.
@@ -348,11 +373,12 @@ class BatchService:
         ontology: str
     ) -> Optional[str]:
         """Find matching concept by embedding similarity."""
+        escaped_ontology = _escape_cypher_string(ontology)
         # Use cosine similarity to find matches
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 MATCH (c:Concept)
-                WHERE c.ontology = '{ontology}'
+                WHERE c.ontology = '{escaped_ontology}'
                 RETURN c.concept_id as concept_id, c.embedding as embedding
             $$) as (concept_id agtype, embedding agtype);
         """
@@ -380,11 +406,12 @@ class BatchService:
         ontology: str
     ) -> Optional[str]:
         """Find concept by label in ontology."""
-        escaped_label = label.replace("'", "\\'")
+        escaped_label = _escape_cypher_string(label)
+        escaped_ontology = _escape_cypher_string(ontology)
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 MATCH (c:Concept)
-                WHERE c.label = '{escaped_label}' AND c.ontology = '{ontology}'
+                WHERE c.label = '{escaped_label}' AND c.ontology = '{escaped_ontology}'
                 RETURN c.concept_id as concept_id
             $$) as (concept_id agtype);
         """
@@ -403,20 +430,22 @@ class BatchService:
         user_id: Optional[int]
     ) -> str:
         """Create synthetic source node for provenance."""
-        source_id = f"s_{uuid4().hex[:12]}"
+        source_id = f"src_{uuid4().hex[:12]}"
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        escaped_label = concept_label.replace("'", "\\'")
+        escaped_label = _escape_cypher_string(concept_label)
+        escaped_ontology = _escape_cypher_string(ontology)
+        escaped_method = _escape_cypher_string(creation_method)
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 CREATE (s:Source {{
                     source_id: '{source_id}',
-                    document_name: 'synthetic:{creation_method}',
+                    document_name: 'synthetic:{escaped_method}',
                     paragraph_number: 0,
                     chunk_index: 0,
                     full_text: 'Manually created concept: {escaped_label}',
                     content_type: 'synthetic',
-                    ontology: '{ontology}',
+                    ontology: '{escaped_ontology}',
                     created_at: '{timestamp}',
                     created_by: '{user_id or "system"}'
                 }})
@@ -438,8 +467,10 @@ class BatchService:
         creation_method: str
     ) -> None:
         """Create concept node in graph."""
-        escaped_label = label.replace("'", "\\'")
-        escaped_desc = description.replace("'", "\\'")
+        escaped_label = _escape_cypher_string(label)
+        escaped_desc = _escape_cypher_string(description)
+        escaped_ontology = _escape_cypher_string(ontology)
+        escaped_method = _escape_cypher_string(creation_method)
         embedding_str = json.dumps(embedding)
         search_terms_str = json.dumps(search_terms)
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -452,8 +483,8 @@ class BatchService:
                     description: '{escaped_desc}',
                     embedding: {embedding_str},
                     search_terms: {search_terms_str},
-                    ontology: '{ontology}',
-                    creation_method: '{creation_method}',
+                    ontology: '{escaped_ontology}',
+                    creation_method: '{escaped_method}',
                     created_at: '{timestamp}'
                 }})
                 RETURN c.concept_id as concept_id
@@ -518,14 +549,18 @@ class BatchService:
         """Create edge between concepts."""
         timestamp = datetime.now(timezone.utc).isoformat()
 
+        # Normalize relationship type (uppercase, no spaces, alphanumeric only)
+        normalized_rel_type = _normalize_relationship_type(relationship_type)
+        escaped_category = _escape_cypher_string(category)
+
         # Create dynamic relationship type
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 MATCH (from:Concept {{concept_id: '{from_id}'}}),
                       (to:Concept {{concept_id: '{to_id}'}})
-                CREATE (from)-[r:{relationship_type} {{
+                CREATE (from)-[r:{normalized_rel_type} {{
                     edge_id: '{edge_id}',
-                    category: '{category}',
+                    category: '{escaped_category}',
                     confidence: {confidence},
                     source: 'api_creation',
                     created_at: '{timestamp}'
