@@ -45,7 +45,7 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
-- [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
+- [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.
 - [`ingest`](#ingest) - Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
 - [`source`](#source) - Retrieve original source content (text or image) for a source node (ADR-057).
 
@@ -253,16 +253,26 @@ Manage ontologies (knowledge domains/collections): list all, get info, list file
 
 ### job
 
-Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.
+Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.
 
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job)
-  - Allowed values: `status`, `list`, `approve`, `cancel`
-- `job_id` (`string`) - Job ID (required for status, approve, cancel)
-- `status` (`string`) - Filter by status for list (pending, awaiting_approval, running, completed, failed)
+- `action` (`string`) **(required)** - Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job), "delete" (permanently delete single job), "cleanup" (delete jobs matching filters)
+  - Allowed values: `status`, `list`, `approve`, `cancel`, `delete`, `cleanup`
+- `job_id` (`string`) - Job ID (required for status, approve, cancel, delete)
+- `status` (`string`) - Filter by status for list/cleanup (pending, awaiting_approval, running, completed, failed)
 - `limit` (`number`) - Max jobs to return for list (default: 50)
   - Default: `50`
+- `force` (`boolean`) - Force delete even if job is processing (for delete action)
+  - Default: `false`
+- `system_only` (`boolean`) - Only delete system/scheduled jobs (for cleanup action)
+  - Default: `false`
+- `older_than` (`string`) - Delete jobs older than duration: 1h, 24h, 7d, 30d (for cleanup action)
+- `job_type` (`string`) - Filter by job type for cleanup (ingestion, epistemic_remeasurement, projection, etc)
+- `dry_run` (`boolean`) - Preview what would be deleted without deleting (for cleanup, default: true)
+  - Default: `true`
+- `confirm` (`boolean`) - Confirm deletion - set to true to actually delete (for cleanup action)
+  - Default: `false`
 
 ---
 

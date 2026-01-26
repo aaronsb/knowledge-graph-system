@@ -438,27 +438,55 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
       },
       {
         name: 'job',
-        description: 'Manage ingestion jobs: get status, list jobs, approve, or cancel. Use action parameter to specify operation.',
+        description: 'Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.',
         inputSchema: {
           type: 'object',
           properties: {
             action: {
               type: 'string',
-              enum: ['status', 'list', 'approve', 'cancel'],
-              description: 'Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job)',
+              enum: ['status', 'list', 'approve', 'cancel', 'delete', 'cleanup'],
+              description: 'Operation: "status" (get job status), "list" (list jobs), "approve" (approve job), "cancel" (cancel job), "delete" (permanently delete single job), "cleanup" (delete jobs matching filters)',
             },
             job_id: {
               type: 'string',
-              description: 'Job ID (required for status, approve, cancel)',
+              description: 'Job ID (required for status, approve, cancel, delete)',
             },
             status: {
               type: 'string',
-              description: 'Filter by status for list (pending, awaiting_approval, running, completed, failed)',
+              description: 'Filter by status for list/cleanup (pending, awaiting_approval, running, completed, failed)',
             },
             limit: {
               type: 'number',
               description: 'Max jobs to return for list (default: 50)',
               default: 50,
+            },
+            force: {
+              type: 'boolean',
+              description: 'Force delete even if job is processing (for delete action)',
+              default: false,
+            },
+            system_only: {
+              type: 'boolean',
+              description: 'Only delete system/scheduled jobs (for cleanup action)',
+              default: false,
+            },
+            older_than: {
+              type: 'string',
+              description: 'Delete jobs older than duration: 1h, 24h, 7d, 30d (for cleanup action)',
+            },
+            job_type: {
+              type: 'string',
+              description: 'Filter by job type for cleanup (ingestion, epistemic_remeasurement, projection, etc)',
+            },
+            dry_run: {
+              type: 'boolean',
+              description: 'Preview what would be deleted without deleting (for cleanup, default: true)',
+              default: true,
+            },
+            confirm: {
+              type: 'boolean',
+              description: 'Confirm deletion - set to true to actually delete (for cleanup action)',
+              default: false,
             },
           },
           required: ['action'],
@@ -1389,6 +1417,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const result = await client.cancelJob(toolArgs.job_id as string);
             return {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'delete': {
+            const result = await client.deleteJob(toolArgs.job_id as string, {
+              purge: true,
+              force: toolArgs.force as boolean || false
+            });
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'cleanup': {
+            const result = await client.deleteJobs({
+              dryRun: toolArgs.dry_run !== false && !toolArgs.confirm,
+              confirm: toolArgs.confirm as boolean || false,
+              status: toolArgs.status as string | undefined,
+              system: toolArgs.system_only as boolean || false,
+              olderThan: toolArgs.older_than as string | undefined,
+              jobType: toolArgs.job_type as string | undefined
+            });
+
+            let output = '';
+            if (result.dry_run) {
+              output = `## Cleanup Preview (dry run)\n\n`;
+              output += `Jobs matching filters: ${result.jobs_to_delete}\n\n`;
+              if (result.jobs && result.jobs.length > 0) {
+                output += `| Job ID | Type | Status | Created |\n`;
+                output += `|--------|------|--------|--------|\n`;
+                for (const job of result.jobs.slice(0, 20)) {
+                  output += `| ${job.job_id.substring(0, 16)} | ${job.job_type} | ${job.status} | ${job.created_at} |\n`;
+                }
+                if (result.jobs.length > 20) {
+                  output += `\n... and ${result.jobs.length - 20} more\n`;
+                }
+              }
+              output += `\nTo delete, use confirm: true`;
+            } else {
+              output = `## Cleanup Complete\n\n`;
+              output += `Jobs deleted: ${result.jobs_deleted}\n`;
+              output += `\n${result.message}`;
+            }
+
+            return {
+              content: [{ type: 'text', text: output }],
             };
           }
 
