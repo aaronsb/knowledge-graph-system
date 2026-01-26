@@ -2543,6 +2543,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2814,6 +2825,34 @@
     
   
     epistemic_status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tools/graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    graph
   
 
     
@@ -7357,6 +7396,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7386,7 +7436,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2026-01-05</p>
+Last updated: 2026-01-26</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -7471,7 +7521,41 @@ For TEXT sources: Returns full_text content with metadata (document, paragraph, 
 - "show": Retrieve document content from Garage storage
 - "concepts": Get all concepts extracted from a document</p>
 <p>Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
-Use search tool with type="documents" to find documents semantically.</p>
+Use search tool with type="documents" to find documents semantically.
+- <a href="#graph"><code>graph</code></a> - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).</p>
+<p>This tool provides deterministic graph editing without going through the LLM ingest pipeline.
+Use for manual curation, agent-driven knowledge building, and precise graph manipulation.</p>
+<p><strong>Actions:</strong>
+- "create": Create a new concept or edge
+- "edit": Update an existing concept or edge
+- "delete": Delete a concept or edge
+- "list": List concepts or edges with filters</p>
+<p><strong>Entity Types:</strong>
+- "concept": Knowledge graph concepts (nodes)
+- "edge": Relationships between concepts</p>
+<p><strong>Matching Modes (for create):</strong>
+- "auto": Link to existing if match found, create if not (default)
+- "force_create": Always create new, even if similar exists
+- "match_only": Only link to existing, error if no match</p>
+<p><strong>Semantic Resolution:</strong>
+- Use <code>from_label</code>/<code>to_label</code> to reference concepts by name instead of ID
+- Resolution uses vector similarity (85% threshold) to find matching concepts</p>
+<p><strong>Examples:</strong>
+- Create concept: <code>{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}</code>
+- Create edge: <code>{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}</code>
+- List concepts: <code>{action: "list", entity: "concept", ontology: "distributed-systems"}</code>
+- Delete concept: <code>{action: "delete", entity: "concept", concept_id: "c_abc123"}</code></p>
+<p><strong>Queue Mode</strong> (batch multiple operations in one call):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;queue&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;operations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;edge&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;from_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;to_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;relationship_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
+</code></pre></div>
+Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.</p>
 <hr />
 <h3 id="search">search</h3>
 <p>Search for concepts, source passages, or documents using semantic similarity. Your ENTRY POINT to the graph.</p>
@@ -7709,6 +7793,79 @@ Use search tool with type="documents" to find documents semantically.</p>
 <li>Default: <code>50</code></li>
 <li><code>offset</code> (<code>number</code>) - Number to skip for pagination (default: 0)</li>
 <li>Default: <code>0</code></li>
+</ul>
+<hr />
+<h3 id="graph">graph</h3>
+<p>Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).</p>
+<p>This tool provides deterministic graph editing without going through the LLM ingest pipeline.
+Use for manual curation, agent-driven knowledge building, and precise graph manipulation.</p>
+<p><strong>Actions:</strong>
+- "create": Create a new concept or edge
+- "edit": Update an existing concept or edge
+- "delete": Delete a concept or edge
+- "list": List concepts or edges with filters</p>
+<p><strong>Entity Types:</strong>
+- "concept": Knowledge graph concepts (nodes)
+- "edge": Relationships between concepts</p>
+<p><strong>Matching Modes (for create):</strong>
+- "auto": Link to existing if match found, create if not (default)
+- "force_create": Always create new, even if similar exists
+- "match_only": Only link to existing, error if no match</p>
+<p><strong>Semantic Resolution:</strong>
+- Use <code>from_label</code>/<code>to_label</code> to reference concepts by name instead of ID
+- Resolution uses vector similarity (85% threshold) to find matching concepts</p>
+<p><strong>Examples:</strong>
+- Create concept: <code>{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}</code>
+- Create edge: <code>{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}</code>
+- List concepts: <code>{action: "list", entity: "concept", ontology: "distributed-systems"}</code>
+- Delete concept: <code>{action: "delete", entity: "concept", concept_id: "c_abc123"}</code></p>
+<p><strong>Queue Mode</strong> (batch multiple operations in one call):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;queue&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;operations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">},</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">},</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;entity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;edge&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;from_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;to_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;relationship_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">}</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+</code></pre></div>
+Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation to perform. Use "queue" to batch multiple operations.</li>
+<li>Allowed values: <code>create</code>, <code>edit</code>, <code>delete</code>, <code>list</code>, <code>queue</code></li>
+<li><code>entity</code> (<code>string</code>) - Entity type (required for create/edit/delete/list, not for queue)</li>
+<li>Allowed values: <code>concept</code>, <code>edge</code></li>
+<li><code>operations</code> (<code>array</code>) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.</li>
+<li><code>continue_on_error</code> (<code>boolean</code>) - For queue: continue executing after errors (default: false, stop on first error)</li>
+<li>Default: <code>false</code></li>
+<li><code>label</code> (<code>string</code>) - Concept label (required for create concept)</li>
+<li><code>ontology</code> (<code>string</code>) - Ontology/namespace (required for create concept, optional filter for list)</li>
+<li><code>description</code> (<code>string</code>) - Concept description (optional)</li>
+<li><code>search_terms</code> (<code>array</code>) - Alternative search terms for the concept</li>
+<li><code>matching_mode</code> (<code>string</code>) - How to handle similar existing concepts (default: auto)</li>
+<li>Allowed values: <code>auto</code>, <code>force_create</code>, <code>match_only</code></li>
+<li>Default: <code>"auto"</code></li>
+<li><code>from_concept_id</code> (<code>string</code>) - Source concept ID (for edge create/delete)</li>
+<li><code>to_concept_id</code> (<code>string</code>) - Target concept ID (for edge create/delete)</li>
+<li><code>from_label</code> (<code>string</code>) - Source concept by label (semantic resolution)</li>
+<li><code>to_label</code> (<code>string</code>) - Target concept by label (semantic resolution)</li>
+<li><code>relationship_type</code> (<code>string</code>) - Edge relationship type (e.g., IMPLIES, SUPPORTS, CONTRADICTS)</li>
+<li><code>category</code> (<code>string</code>) - Semantic category of the relationship (default: logical_truth)</li>
+<li>Allowed values: <code>logical_truth</code>, <code>empirical_claim</code>, <code>value_judgment</code>, <code>conceptual</code>, <code>temporal_sequence</code>, <code>causal</code>, <code>other</code></li>
+<li>Default: <code>"logical_truth"</code></li>
+<li><code>confidence</code> (<code>number</code>) - Edge confidence 0.0-1.0 (default: 1.0)</li>
+<li>Default: <code>1</code></li>
+<li><code>concept_id</code> (<code>string</code>) - Concept ID (for edit/delete concept)</li>
+<li><code>label_contains</code> (<code>string</code>) - Filter concepts by label substring (for list)</li>
+<li><code>creation_method</code> (<code>string</code>) - Filter by creation method (for list)</li>
+<li><code>source</code> (<code>string</code>) - Filter edges by source (for list)</li>
+<li><code>limit</code> (<code>number</code>) - Max results to return (default: 20)</li>
+<li>Default: <code>20</code></li>
+<li><code>offset</code> (<code>number</code>) - Number to skip for pagination (default: 0)</li>
+<li>Default: <code>0</code></li>
+<li><code>cascade</code> (<code>boolean</code>) - For concept delete: also delete orphaned synthetic sources (default: false)</li>
+<li>Default: <code>false</code></li>
 </ul>
 <hr />
 
