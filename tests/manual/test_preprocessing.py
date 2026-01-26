@@ -13,7 +13,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.api.lib.markdown_preprocessor import MarkdownPreprocessor
+from api.app.lib.markdown_preprocessor import MarkdownPreprocessor
 
 
 def test_single_file(file_path: str, show_output: bool = False):

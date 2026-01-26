@@ -15,7 +15,7 @@ import pytest
 import re
 from datetime import timedelta
 
-from src.api.lib.auth import (
+from api.app.lib.auth import (
     verify_password,
     get_password_hash,
     create_access_token,
@@ -338,7 +338,7 @@ def test_validate_oauth_configuration():
 @pytest.mark.security
 def test_validate_oauth_configuration_secure(monkeypatch):
     """Test OAuth configuration validation passes for secure config"""
-    import src.api.lib.auth as auth_module
+    import api.app.lib.auth as auth_module
 
     # Set secure configuration
     secure_key = "a" * 64  # Long random key
@@ -355,7 +355,7 @@ def test_validate_oauth_configuration_secure(monkeypatch):
 @pytest.mark.security
 def test_validate_oauth_configuration_short_key(monkeypatch):
     """Test OAuth configuration validation warns about short key"""
-    import src.api.lib.auth as auth_module
+    import api.app.lib.auth as auth_module
 
     # Set short key (less than 32 chars)
     monkeypatch.setattr(auth_module, "SECRET_KEY", "short_key_12345")
@@ -371,7 +371,7 @@ def test_validate_oauth_configuration_short_key(monkeypatch):
 @pytest.mark.security
 def test_validate_oauth_configuration_long_expiration(monkeypatch):
     """Test OAuth configuration validation warns about long expiration"""
-    import src.api.lib.auth as auth_module
+    import api.app.lib.auth as auth_module
 
     # Set secure key but very long expiration
     secure_key = "a" * 64

@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Any
 
-from src.api.lib.backup_integrity import (
+from api.app.lib.backup_integrity import (
     BackupIntegrityChecker,
     BackupIntegrity,
     check_backup_integrity,

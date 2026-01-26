@@ -6,7 +6,7 @@ Tests timezone-aware datetime utilities to prevent naive/aware comparison errors
 
 import pytest
 from datetime import datetime, timezone, timedelta
-from src.api.lib.datetime_utils import (
+from api.app.lib.datetime_utils import (
     utcnow,
     utc_from_timestamp,
     utc_from_iso,

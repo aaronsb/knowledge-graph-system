@@ -21,6 +21,8 @@ services:
       - kg-network
 
   api:
+    # Override standalone container_name back to dev name
+    container_name: kg-api-dev
     # Enable hot reload for development
     command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     build:
@@ -33,6 +35,7 @@ services:
       # Mount tests for in-container testing
       - ../tests:/app/tests
       - ../pytest.ini:/app/pytest.ini
+      - ../scripts:/app/scripts
       # Persistent HuggingFace model cache (must repeat from base when overriding volumes)
       - hf_cache:/home/api/.cache
     environment:

@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 @pytest.mark.asyncio
 async def test_stream_backup_json_chunks_data():
     """Test that stream_backup_json yields data in chunks"""
-    from src.api.lib.backup_streaming import stream_backup_json
+    from api.app.lib.backup_streaming import stream_backup_json
 
     backup_data = {
         "version": "1.0",
@@ -45,7 +45,7 @@ async def test_stream_backup_json_chunks_data():
 @pytest.mark.asyncio
 async def test_stream_backup_json_respects_chunk_size():
     """Test that chunks are properly sized"""
-    from src.api.lib.backup_streaming import stream_backup_json
+    from api.app.lib.backup_streaming import stream_backup_json
 
     backup_data = {"data": "x" * 100}  # Create data larger than chunk size
     chunk_size = 20
@@ -64,7 +64,7 @@ async def test_stream_backup_json_respects_chunk_size():
 @pytest.mark.asyncio
 async def test_create_backup_stream_full_backup():
     """Test creating full backup stream"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
     mock_backup_data = {
@@ -75,8 +75,8 @@ async def test_create_backup_stream_full_backup():
         "statistics": {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_full_backup.return_value = mock_backup_data
 
@@ -107,7 +107,7 @@ async def test_create_backup_stream_full_backup():
 @pytest.mark.asyncio
 async def test_create_backup_stream_ontology_backup():
     """Test creating ontology-specific backup stream"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
     mock_backup_data = {
@@ -119,8 +119,8 @@ async def test_create_backup_stream_ontology_backup():
         "statistics": {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_ontology_backup.return_value = mock_backup_data
 
@@ -146,7 +146,7 @@ async def test_create_backup_stream_ontology_backup():
 @pytest.mark.asyncio
 async def test_create_backup_stream_missing_ontology_name():
     """Test that ontology backup requires ontology_name"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
 
@@ -162,7 +162,7 @@ async def test_create_backup_stream_missing_ontology_name():
 @pytest.mark.asyncio
 async def test_create_backup_stream_invalid_type():
     """Test that invalid backup_type raises ValueError"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
 
@@ -176,7 +176,7 @@ async def test_create_backup_stream_invalid_type():
 @pytest.mark.unit
 def test_get_backup_size():
     """Test backup size calculation"""
-    from src.api.lib.backup_streaming import get_backup_size
+    from api.app.lib.backup_streaming import get_backup_size
 
     backup_data = {
         "version": "1.0",
@@ -202,7 +202,7 @@ def test_get_backup_size():
 @pytest.mark.asyncio
 async def test_create_backup_stream_validates_backup_data():
     """Test that create_backup_stream validates backup before streaming"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
     valid_backup_data = {
@@ -223,8 +223,8 @@ async def test_create_backup_stream_validates_backup_data():
         }
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_full_backup.return_value = valid_backup_data
 
@@ -254,7 +254,7 @@ async def test_create_backup_stream_validates_backup_data():
 @pytest.mark.asyncio
 async def test_create_backup_stream_fails_on_invalid_backup():
     """Test that create_backup_stream raises error when validation fails"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
     invalid_backup_data = {
@@ -263,8 +263,8 @@ async def test_create_backup_stream_fails_on_invalid_backup():
         # Missing required fields
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_full_backup.return_value = invalid_backup_data
 
@@ -289,7 +289,7 @@ async def test_create_backup_stream_fails_on_invalid_backup():
 @pytest.mark.asyncio
 async def test_create_backup_stream_logs_validation_success(caplog):
     """Test that successful validation logs statistics"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
     import logging
 
     caplog.set_level(logging.INFO)
@@ -313,8 +313,8 @@ async def test_create_backup_stream_logs_validation_success(caplog):
         }
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_full_backup.return_value = valid_backup_data
 
@@ -341,7 +341,7 @@ async def test_create_backup_stream_logs_validation_success(caplog):
 @pytest.mark.asyncio
 async def test_create_backup_stream_logs_validation_warnings(caplog):
     """Test that validation warnings are logged"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
     import logging
 
     caplog.set_level(logging.WARNING)
@@ -365,8 +365,8 @@ async def test_create_backup_stream_logs_validation_warnings(caplog):
         }
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_full_backup.return_value = valid_backup_data
 
@@ -397,7 +397,7 @@ async def test_create_backup_stream_logs_validation_warnings(caplog):
 @pytest.mark.asyncio
 async def test_create_backup_stream_ontology_validates():
     """Test that ontology backups are also validated"""
-    from src.api.lib.backup_streaming import create_backup_stream
+    from api.app.lib.backup_streaming import create_backup_stream
 
     mock_client = Mock()
     valid_backup_data = {
@@ -419,8 +419,8 @@ async def test_create_backup_stream_ontology_validates():
         }
     }
 
-    with patch('src.api.lib.backup_streaming.DataExporter') as mock_exporter, \
-         patch('src.api.lib.backup_streaming.check_backup_data') as mock_check:
+    with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
+         patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
         mock_exporter.export_ontology_backup.return_value = valid_backup_data
 
@@ -448,8 +448,8 @@ async def test_create_backup_stream_ontology_validates():
 @pytest.mark.api
 def test_backup_endpoint_full_backup_streams_response(api_client):
     """Test POST /admin/backup streams full backup"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class, \
-         patch('src.api.routes.admin.create_backup_stream') as mock_stream:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
+         patch('api.app.routes.admin.create_backup_stream') as mock_stream:
 
         # Mock the stream generator
         async def mock_generator():
@@ -473,8 +473,8 @@ def test_backup_endpoint_full_backup_streams_response(api_client):
 @pytest.mark.api
 def test_backup_endpoint_ontology_backup_includes_headers(api_client):
     """Test POST /admin/backup includes custom headers for ontology backup"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class, \
-         patch('src.api.routes.admin.create_backup_stream') as mock_stream:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
+         patch('api.app.routes.admin.create_backup_stream') as mock_stream:
 
         async def mock_generator():
             yield b'{"type": "ontology_backup"}'
@@ -497,8 +497,8 @@ def test_backup_endpoint_ontology_backup_includes_headers(api_client):
 @pytest.mark.api
 def test_backup_endpoint_missing_ontology_name_returns_400(api_client):
     """Test POST /admin/backup returns 400 when ontology_name missing"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class, \
-         patch('src.api.routes.admin.create_backup_stream') as mock_stream:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
+         patch('api.app.routes.admin.create_backup_stream') as mock_stream:
 
         mock_stream.side_effect = ValueError("ontology_name required for ontology backup")
 
@@ -514,8 +514,8 @@ def test_backup_endpoint_missing_ontology_name_returns_400(api_client):
 @pytest.mark.api
 def test_backup_endpoint_invalid_backup_type_returns_400(api_client):
     """Test POST /admin/backup returns 400 for invalid backup type"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class, \
-         patch('src.api.routes.admin.create_backup_stream') as mock_stream:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
+         patch('api.app.routes.admin.create_backup_stream') as mock_stream:
 
         mock_stream.side_effect = ValueError("Invalid backup_type: invalid")
 
@@ -531,7 +531,7 @@ def test_backup_endpoint_invalid_backup_type_returns_400(api_client):
 @pytest.mark.api
 def test_backup_endpoint_database_error_returns_500(api_client):
     """Test POST /admin/backup returns 500 on database error"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class:
         mock_client_class.side_effect = Exception("Database connection failed")
 
         response = api_client.post(
@@ -546,8 +546,8 @@ def test_backup_endpoint_database_error_returns_500(api_client):
 @pytest.mark.api
 def test_backup_endpoint_content_disposition_header_format(api_client):
     """Test that Content-Disposition header is properly formatted"""
-    with patch('src.api.routes.admin.AGEClient') as mock_client_class, \
-         patch('src.api.routes.admin.create_backup_stream') as mock_stream:
+    with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
+         patch('api.app.routes.admin.create_backup_stream') as mock_stream:
 
         async def mock_generator():
             yield b'{}'

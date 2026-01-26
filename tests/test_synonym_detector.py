@@ -7,7 +7,7 @@ Validates embedding-based synonym detection for edge type merging (ADR-032).
 import pytest
 import numpy as np
 from unittest.mock import AsyncMock, MagicMock
-from src.api.lib.synonym_detector import (
+from api.app.lib.synonym_detector import (
     SynonymDetector,
     SynonymCandidate,
     SynonymStrength,

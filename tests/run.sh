@@ -30,5 +30,9 @@ if ! docker exec "${CONTAINER}" test -f /app/pytest.ini 2>/dev/null; then
 fi
 
 # Run pytest inside the container
-# Pass all arguments through to pytest
-docker exec -it "${CONTAINER}" pytest "$@"
+# Use -it if TTY available, otherwise just -i
+if [ -t 0 ]; then
+    docker exec -it "${CONTAINER}" pytest "$@"
+else
+    docker exec -i "${CONTAINER}" pytest "$@"
+fi

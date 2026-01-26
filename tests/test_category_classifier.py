@@ -17,7 +17,7 @@ Test Coverage:
 import pytest
 import numpy as np
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.api.lib.category_classifier import (
+from api.app.lib.category_classifier import (
     CategoryClassification,
     CategoryClassifier,
     get_category_for_edge_type,

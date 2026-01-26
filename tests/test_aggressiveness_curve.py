@@ -15,7 +15,7 @@ Test Coverage:
 
 import pytest
 import math
-from src.api.lib.aggressiveness_curve import (
+from api.app.lib.aggressiveness_curve import (
     CubicBezier,
     AGGRESSIVENESS_CURVES,
     calculate_aggressiveness,

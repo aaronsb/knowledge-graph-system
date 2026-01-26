@@ -6,7 +6,7 @@ Tests namespace-safe query interface for Apache AGE (ADR-048).
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
-from src.api.lib.query_facade import GraphQueryFacade, QueryAuditLog
+from api.app.lib.query_facade import GraphQueryFacade, QueryAuditLog
 
 
 class TestQueryAuditLog:
@@ -400,7 +400,7 @@ class TestGraphQueryFacadeIntegration:
         """
         pytest.skip("Integration test - requires database")
 
-        from src.api.lib.age_client import AGEClient
+        from api.app.lib.age_client import AGEClient
 
         client = AGEClient()
         facade = client.facade
