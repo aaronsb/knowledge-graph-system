@@ -71,12 +71,20 @@ def empty_mock_provider() -> MockAIProvider:
 # FastAPI Test Client Fixtures
 # ============================================================================
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def api_client() -> Generator[TestClient, None, None]:
     """
-    Provide FastAPI test client.
+    Provide FastAPI test client (module-scoped for performance).
 
-    Creates a test client for API endpoint testing without running the server.
+    Creates ONE test client per test module, reused across all tests in that file.
+    This dramatically reduces test time by avoiding repeated app initialization.
+
+    State leakage concerns (why module-scope is safe here):
+    - Tests use mocked services (no real DB mutations)
+    - TestClient doesn't persist state between requests
+    - OAuth mocks are applied via monkeypatch (function-scoped, reapplied each test)
+
+    If you need isolated app state, use a function-scoped fixture instead.
 
     Usage:
         def test_health(api_client):
@@ -89,10 +97,10 @@ def api_client() -> Generator[TestClient, None, None]:
         yield client
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def async_api_client():
     """
-    Provide async FastAPI test client.
+    Provide async FastAPI test client (module-scoped for performance).
 
     For tests that need async/await support.
 

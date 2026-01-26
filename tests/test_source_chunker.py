@@ -158,7 +158,7 @@ class TestChunkBySentence:
         """Test chunking single sentence over max_chars."""
         # Single sentence longer than max_chars should still be one chunk
         text = "This is a very long sentence that exceeds the maximum character limit but cannot be split because it is a single sentence and we want to maintain semantic coherence by not breaking sentences in the middle."
-        chunks = chunk_by_sentence(text, max_chars=50)
+        chunks = chunk_by_sentence(text, max_chars=50, min_chars=0)
 
         assert len(chunks) == 1
         assert chunks[0].text == text
@@ -174,14 +174,14 @@ class TestChunkBySentence:
         """Test multiple sentences split into multiple chunks."""
         # Each sentence ~30 chars, max_chars=50 should give 2 chunks
         text = "This is the first sentence. This is the second sentence. This is the third sentence."
-        chunks = chunk_by_sentence(text, max_chars=50)
+        chunks = chunk_by_sentence(text, max_chars=50, min_chars=0)
 
         assert len(chunks) >= 2
 
     def test_chunk_offset_tracking(self):
         """Test that offsets correctly map to source text."""
         text = "Sentence one. Sentence two. Sentence three."
-        chunks = chunk_by_sentence(text, max_chars=30)
+        chunks = chunk_by_sentence(text, max_chars=30, min_chars=0)
 
         for chunk in chunks:
             # Extract text using offsets
@@ -192,7 +192,7 @@ class TestChunkBySentence:
     def test_chunk_index_sequential(self):
         """Test that chunk indexes are sequential."""
         text = "One. Two. Three. Four. Five. Six. Seven. Eight."
-        chunks = chunk_by_sentence(text, max_chars=20)
+        chunks = chunk_by_sentence(text, max_chars=20, min_chars=0)
 
         for i, chunk in enumerate(chunks):
             assert chunk.index == i
@@ -209,7 +209,7 @@ class TestChunkBySentence:
     def test_chunk_with_newlines(self):
         """Test chunking text with newlines."""
         text = "First sentence.\nSecond sentence.\nThird sentence."
-        chunks = chunk_by_sentence(text, max_chars=30)
+        chunks = chunk_by_sentence(text, max_chars=30, min_chars=0)
 
         # Should split on sentence boundaries
         assert len(chunks) >= 2
@@ -254,7 +254,7 @@ class TestChunkBySentence:
     def test_chunk_mixed_language(self):
         """Test chunking mixed language text."""
         text = "Hello world. 你好世界。Bonjour monde. Hola mundo."
-        chunks = chunk_by_sentence(text, max_chars=30)
+        chunks = chunk_by_sentence(text, max_chars=30, min_chars=0)
 
         # Should split into multiple chunks
         assert len(chunks) >= 2
@@ -343,7 +343,7 @@ class TestIntegrationScenarios:
         Default value is 500 characters for optimal embedding quality.
         """
 
-        chunks = chunk_by_sentence(text.strip(), max_chars=80)
+        chunks = chunk_by_sentence(text.strip(), max_chars=80, min_chars=0)
 
         # Verify offset integrity
         for chunk in chunks:
@@ -370,7 +370,7 @@ class TestIntegrationScenarios:
     def test_edge_case_all_short_sentences(self):
         """Test chunking many very short sentences."""
         text = "One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten."
-        chunks = chunk_by_sentence(text, max_chars=20)
+        chunks = chunk_by_sentence(text, max_chars=20, min_chars=0)
 
         # Should combine short sentences into chunks
         assert len(chunks) < 10
@@ -399,7 +399,7 @@ class TestIntegrationScenarios:
     def test_round_trip_reconstruction(self):
         """Test that source text can be reconstructed from chunks."""
         text = "First sentence here. Second sentence here. Third sentence here. Fourth sentence here."
-        chunks = chunk_by_sentence(text, max_chars=40)
+        chunks = chunk_by_sentence(text, max_chars=40, min_chars=0)
 
         # Reconstruct text from chunks using offsets
         reconstructed_parts = []
