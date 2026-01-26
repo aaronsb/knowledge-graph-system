@@ -13,6 +13,9 @@ import type {
   JobApproveResponse,
   JobCancelResponse,
   JobsClearResponse,
+  JobDeleteResponse,
+  JobsDeleteFilters,
+  JobsDeleteResponse,
   JobProgressEvent,
   JobCompletedEvent,
   JobFailedEvent,
@@ -516,10 +519,51 @@ class APIClient {
 
   /**
    * Clear all jobs (admin operation)
+   * @deprecated Use deleteJobs() with filters instead
    */
   async clearAllJobs(): Promise<JobsClearResponse> {
     const response = await this.client.delete<JobsClearResponse>('/jobs', {
       params: { confirm: true },
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete a single job permanently
+   */
+  async deleteJob(
+    jobId: string,
+    options: { purge?: boolean; force?: boolean } = {}
+  ): Promise<JobDeleteResponse> {
+    const response = await this.client.delete<JobDeleteResponse>(`/jobs/${jobId}`, {
+      params: {
+        purge: options.purge ?? true,
+        force: options.force ?? false
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete jobs matching filters (with dry-run support)
+   */
+  async deleteJobs(options: {
+    confirm?: boolean;
+    dryRun?: boolean;
+    status?: string;
+    system?: boolean;
+    olderThan?: string;
+    jobType?: string;
+  }): Promise<JobsDeleteResponse> {
+    const response = await this.client.delete<JobsDeleteResponse>('/jobs', {
+      params: {
+        confirm: options.confirm,
+        dry_run: options.dryRun,
+        status: options.status,
+        system: options.system,
+        older_than: options.olderThan,
+        job_type: options.jobType,
+      },
     });
     return response.data;
   }

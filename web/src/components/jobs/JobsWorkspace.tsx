@@ -87,6 +87,19 @@ export const JobsWorkspace: React.FC = () => {
   // Action state
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Cleanup modal state
+  const [showCleanupModal, setShowCleanupModal] = useState(false);
+  const [cleanupPreview, setCleanupPreview] = useState<{
+    jobs: Array<{ job_id: string; job_type: string; status: string; ontology: string | null; created_at: string }>;
+    count: number;
+  } | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupFilters, setCleanupFilters] = useState({
+    status: '',
+    system: false,
+    olderThan: '',
+  });
+
   // Auto-refresh for active jobs
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -182,6 +195,69 @@ export const JobsWorkspace: React.FC = () => {
       alert(`Failed to cancel job: ${err.response?.data?.detail || err.message}`);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // Delete job permanently
+  const handleDelete = async (jobId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this job record?')) return;
+
+    setActionLoading(jobId);
+    try {
+      await apiClient.deleteJob(jobId, { purge: true });
+      await fetchJobs();
+      if (selectedJob?.job_id === jobId) {
+        setSelectedJob(null);
+      }
+    } catch (err: any) {
+      alert(`Failed to delete job: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Preview cleanup (dry run)
+  const handleCleanupPreview = async () => {
+    setCleanupLoading(true);
+    try {
+      const result = await apiClient.deleteJobs({
+        dryRun: true,
+        status: cleanupFilters.status || undefined,
+        system: cleanupFilters.system || undefined,
+        olderThan: cleanupFilters.olderThan || undefined,
+      });
+      setCleanupPreview({
+        jobs: result.jobs || [],
+        count: result.jobs_to_delete || 0,
+      });
+    } catch (err: any) {
+      alert(`Failed to preview cleanup: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
+  // Execute cleanup
+  const handleCleanupExecute = async () => {
+    if (!cleanupPreview || cleanupPreview.count === 0) return;
+    if (!confirm(`Are you sure you want to delete ${cleanupPreview.count} job(s)?`)) return;
+
+    setCleanupLoading(true);
+    try {
+      await apiClient.deleteJobs({
+        confirm: true,
+        status: cleanupFilters.status || undefined,
+        system: cleanupFilters.system || undefined,
+        olderThan: cleanupFilters.olderThan || undefined,
+      });
+      setShowCleanupModal(false);
+      setCleanupPreview(null);
+      setCleanupFilters({ status: '', system: false, olderThan: '' });
+      await fetchJobs();
+    } catch (err: any) {
+      alert(`Failed to cleanup jobs: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setCleanupLoading(false);
     }
   };
 
@@ -490,6 +566,24 @@ export const JobsWorkspace: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Delete action for terminal jobs */}
+        {['completed', 'failed', 'cancelled'].includes(job.status) && (
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={() => handleDelete(job.job_id)}
+              disabled={actionLoading === job.job_id}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-muted-foreground/30 text-muted-foreground hover:border-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {actionLoading === job.job_id ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Delete Job Record
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -512,14 +606,23 @@ export const JobsWorkspace: React.FC = () => {
             )}
           </div>
 
-          <button
-            onClick={() => fetchJobs(true)}
-            disabled={refreshing}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowCleanupModal(true)}
+              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+              title="Cleanup Jobs"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => fetchJobs(true)}
+              disabled={refreshing}
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Status filter tabs */}
@@ -588,6 +691,160 @@ export const JobsWorkspace: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cleanup Modal */}
+      {showCleanupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-destructive" />
+                Cleanup Jobs
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCleanupModal(false);
+                  setCleanupPreview(null);
+                }}
+                className="p-1 text-muted-foreground hover:text-foreground rounded"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
+              {/* Filters */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-card-foreground mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={cleanupFilters.status}
+                    onChange={(e) => {
+                      setCleanupFilters({ ...cleanupFilters, status: e.target.value });
+                      setCleanupPreview(null);
+                    }}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground"
+                  >
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-card-foreground mb-1">
+                    Older than
+                  </label>
+                  <select
+                    value={cleanupFilters.olderThan}
+                    onChange={(e) => {
+                      setCleanupFilters({ ...cleanupFilters, olderThan: e.target.value });
+                      setCleanupPreview(null);
+                    }}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground"
+                  >
+                    <option value="">Any age</option>
+                    <option value="1h">1 hour</option>
+                    <option value="24h">24 hours</option>
+                    <option value="7d">7 days</option>
+                    <option value="30d">30 days</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="system-only"
+                    checked={cleanupFilters.system}
+                    onChange={(e) => {
+                      setCleanupFilters({ ...cleanupFilters, system: e.target.checked });
+                      setCleanupPreview(null);
+                    }}
+                    className="rounded border-border"
+                  />
+                  <label htmlFor="system-only" className="text-sm text-card-foreground">
+                    System/scheduled jobs only
+                  </label>
+                </div>
+              </div>
+
+              {/* Preview button */}
+              <button
+                onClick={handleCleanupPreview}
+                disabled={cleanupLoading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-accent-foreground hover:bg-accent/80 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {cleanupLoading && !cleanupPreview ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Info className="w-4 h-4" />
+                )}
+                Preview
+              </button>
+
+              {/* Preview results */}
+              {cleanupPreview && (
+                <div className="bg-muted rounded-lg p-3 space-y-2">
+                  <div className="text-sm font-medium text-card-foreground">
+                    {cleanupPreview.count === 0 ? (
+                      'No jobs match the selected filters'
+                    ) : (
+                      `${cleanupPreview.count} job(s) will be deleted:`
+                    )}
+                  </div>
+                  {cleanupPreview.count > 0 && (
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {cleanupPreview.jobs.slice(0, 10).map((job) => (
+                        <div key={job.job_id} className="text-xs text-muted-foreground flex justify-between">
+                          <span className="font-mono truncate flex-1">{job.job_id.substring(0, 12)}...</span>
+                          <span className="ml-2">{job.status}</span>
+                          <span className="ml-2">{job.job_type}</span>
+                        </div>
+                      ))}
+                      {cleanupPreview.count > 10 && (
+                        <div className="text-xs text-muted-foreground italic">
+                          ...and {cleanupPreview.count - 10} more
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border flex gap-2">
+              <button
+                onClick={() => {
+                  setShowCleanupModal(false);
+                  setCleanupPreview(null);
+                }}
+                className="flex-1 px-4 py-2 border border-border text-card-foreground hover:bg-accent rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCleanupExecute}
+                disabled={cleanupLoading || !cleanupPreview || cleanupPreview.count === 0}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive/80 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {cleanupLoading && cleanupPreview ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Delete {cleanupPreview?.count || 0} Jobs
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
