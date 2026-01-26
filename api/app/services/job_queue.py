@@ -69,8 +69,39 @@ class JobQueue(ABC):
         pass
 
     @abstractmethod
-    def delete_job(self, job_id: str) -> bool:
-        """Permanently delete a job from the queue"""
+    def delete_job(self, job_id: str, force: bool = False) -> bool:
+        """
+        Permanently delete a job from the queue.
+
+        Args:
+            job_id: Job ID to delete
+            force: If True, delete even if job is processing (dangerous)
+
+        Returns:
+            True if deleted, False if not found or blocked
+        """
+        pass
+
+    @abstractmethod
+    def delete_jobs(
+        self,
+        status: Optional[str] = None,
+        system_only: bool = False,
+        older_than: Optional[str] = None,
+        job_type: Optional[str] = None
+    ) -> int:
+        """
+        Delete jobs matching filters.
+
+        Args:
+            status: Filter by status (pending, cancelled, completed, failed)
+            system_only: Only delete system/scheduled jobs
+            older_than: Delete jobs older than duration (1h, 24h, 7d, 30d)
+            job_type: Filter by job type
+
+        Returns:
+            Number of jobs deleted
+        """
         pass
 
     @abstractmethod
@@ -429,17 +460,160 @@ class PostgreSQLJobQueue(JobQueue):
         finally:
             self._return_connection(conn)
 
-    def delete_job(self, job_id: str) -> bool:
-        """Permanently delete a job from PostgreSQL"""
+    def delete_job(self, job_id: str, force: bool = False) -> bool:
+        """
+        Permanently delete a job from PostgreSQL.
+
+        Args:
+            job_id: Job ID to delete
+            force: If True, delete even if processing (dangerous)
+
+        Returns:
+            True if deleted, False if not found or blocked (processing)
+        """
         conn = self._get_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute("""
-                    DELETE FROM kg_api.jobs
-                    WHERE job_id = %s
-                """, (job_id,))
+                if force:
+                    # Delete regardless of status
+                    cur.execute("""
+                        DELETE FROM kg_api.jobs
+                        WHERE job_id = %s
+                    """, (job_id,))
+                else:
+                    # Don't delete processing jobs
+                    cur.execute("""
+                        DELETE FROM kg_api.jobs
+                        WHERE job_id = %s
+                          AND status != 'processing'
+                          AND status != 'running'
+                    """, (job_id,))
                 conn.commit()
                 return cur.rowcount > 0
+        finally:
+            self._return_connection(conn)
+
+    def delete_jobs(
+        self,
+        status: Optional[str] = None,
+        system_only: bool = False,
+        older_than: Optional[str] = None,
+        job_type: Optional[str] = None
+    ) -> int:
+        """
+        Delete jobs matching filters.
+
+        Args:
+            status: Filter by status (pending, cancelled, completed, failed)
+            system_only: Only delete system/scheduled jobs
+            older_than: Delete jobs older than duration (1h, 24h, 7d, 30d)
+            job_type: Filter by job type
+
+        Returns:
+            Number of jobs deleted
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                conditions = ["status NOT IN ('processing', 'running')"]
+                params = []
+
+                if status:
+                    conditions.append("status = %s")
+                    params.append(status)
+
+                if system_only:
+                    conditions.append("(is_system_job = true OR created_by LIKE 'system:%%')")
+
+                if older_than:
+                    # Parse duration string (1h, 24h, 7d, 30d)
+                    duration_map = {
+                        '1h': '1 hour',
+                        '24h': '24 hours',
+                        '7d': '7 days',
+                        '30d': '30 days'
+                    }
+                    interval = duration_map.get(older_than)
+                    if interval:
+                        conditions.append(f"created_at < NOW() - INTERVAL '{interval}'")
+
+                if job_type:
+                    conditions.append("job_type = %s")
+                    params.append(job_type)
+
+                where_clause = " AND ".join(conditions)
+
+                cur.execute(f"""
+                    DELETE FROM kg_api.jobs
+                    WHERE {where_clause}
+                    RETURNING job_id
+                """, params if params else None)
+
+                deleted_count = cur.rowcount
+                conn.commit()
+
+                logger.info(f"Deleted {deleted_count} jobs matching filters: status={status}, system_only={system_only}, older_than={older_than}, job_type={job_type}")
+                return deleted_count
+        finally:
+            self._return_connection(conn)
+
+    def preview_delete_jobs(
+        self,
+        status: Optional[str] = None,
+        system_only: bool = False,
+        older_than: Optional[str] = None,
+        job_type: Optional[str] = None
+    ) -> List[Dict]:
+        """
+        Preview which jobs would be deleted (dry run).
+
+        Same filters as delete_jobs but returns job summaries instead of deleting.
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                conditions = ["status NOT IN ('processing', 'running')"]
+                params = []
+
+                if status:
+                    conditions.append("status = %s")
+                    params.append(status)
+
+                if system_only:
+                    conditions.append("(is_system_job = true OR created_by LIKE 'system:%%')")
+
+                if older_than:
+                    duration_map = {
+                        '1h': '1 hour',
+                        '24h': '24 hours',
+                        '7d': '7 days',
+                        '30d': '30 days'
+                    }
+                    interval = duration_map.get(older_than)
+                    if interval:
+                        conditions.append(f"created_at < NOW() - INTERVAL '{interval}'")
+
+                if job_type:
+                    conditions.append("job_type = %s")
+                    params.append(job_type)
+
+                where_clause = " AND ".join(conditions)
+
+                cur.execute(f"""
+                    SELECT job_id, job_type, status, ontology, created_at
+                    FROM kg_api.jobs
+                    WHERE {where_clause}
+                    ORDER BY created_at DESC
+                """, params if params else None)
+
+                jobs = []
+                for row in cur.fetchall():
+                    job = dict(row)
+                    if job.get('created_at'):
+                        job['created_at'] = job['created_at'].isoformat()
+                    jobs.append(job)
+
+                return jobs
         finally:
             self._return_connection(conn)
 

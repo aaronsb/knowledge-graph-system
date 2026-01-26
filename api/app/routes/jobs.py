@@ -99,14 +99,25 @@ async def list_jobs(
 
 @router.delete(
     "/{job_id}",
-    summary="Cancel a job"
+    summary="Cancel or delete a job"
 )
-async def cancel_job(
+async def cancel_or_delete_job(
     job_id: str,
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    purge: bool = Query(False, description="Permanently delete job record (admin only)"),
+    force: bool = Query(False, description="Force delete even if processing (dangerous)"),
+    current_user: dict = Depends(get_current_user)
 ):
     """
-    Cancel a job before it starts processing.
+    Cancel or permanently delete a job.
+
+    **Default behavior (purge=false):** Cancel the job
+    - Changes status to 'cancelled'
+    - Job record remains in database
+
+    **With purge=true:** Permanently delete job record
+    - Removes job from database entirely
+    - Cannot delete processing jobs unless force=true
+    - Requires admin privileges
 
     **ADR-014: Can cancel jobs in these states:**
     - `pending`: Job queued, analysis running
@@ -114,14 +125,14 @@ async def cancel_job(
     - `approved`: Approved but not yet started
     - `queued`: Legacy state
 
-    **Cannot cancel:**
-    - `processing`: Job already running
-    - `completed`, `failed`, `cancelled`: Already finished
+    **Cannot cancel/delete:**
+    - `processing`: Job already running (unless force=true)
+    - `completed`, `failed`, `cancelled`: Can delete but not cancel
 
     **Returns:**
-    - 200: Job cancelled successfully
+    - 200: Job cancelled/deleted successfully
     - 404: Job not found
-    - 409: Job cannot be cancelled (already processing or completed)
+    - 409: Job cannot be cancelled/deleted in current state
     """
     queue = get_job_queue()
 
@@ -133,20 +144,39 @@ async def cancel_job(
     # Verify ownership (Phase 1: no-op, Phase 2: enforced)
     await verify_job_ownership(job_id, job, current_user)
 
-    # Attempt cancellation
-    cancelled = queue.cancel_job(job_id)
+    if purge:
+        # Permanently delete the job record
+        # TODO: Add admin check when auth is fully implemented
+        deleted = queue.delete_job(job_id, force=force)
 
-    if not cancelled:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Cannot cancel job in status: {job['status']}"
-        )
+        if not deleted:
+            if job['status'] in ('processing', 'running') and not force:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Cannot delete job in status: {job['status']}. Use force=true to override."
+                )
+            raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    return {
-        "job_id": job_id,
-        "cancelled": True,
-        "message": "Job cancelled successfully"
-    }
+        return {
+            "job_id": job_id,
+            "deleted": True,
+            "message": "Job permanently deleted"
+        }
+    else:
+        # Cancel the job (change status)
+        cancelled = queue.cancel_job(job_id)
+
+        if not cancelled:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Cannot cancel job in status: {job['status']}"
+            )
+
+        return {
+            "job_id": job_id,
+            "cancelled": True,
+            "message": "Job cancelled successfully"
+        }
 
 
 @router.post(
@@ -219,42 +249,97 @@ async def approve_job(
 
 @router.delete(
     "",
-    summary="Clear all jobs (admin only)"
+    summary="Delete jobs with filters (admin only)"
 )
-async def clear_all_jobs(
+async def delete_jobs(
     confirm: bool = Query(False, description="Must set to true to confirm deletion"),
-    current_user: dict = Depends(get_current_user)  # Auth placeholder
+    dry_run: bool = Query(False, description="Preview what would be deleted without deleting"),
+    status: Optional[str] = Query(None, description="Filter by status (pending|cancelled|completed|failed)"),
+    system: bool = Query(False, description="Only delete system/scheduled jobs"),
+    older_than: Optional[str] = Query(None, description="Delete jobs older than duration (1h|24h|7d|30d)"),
+    job_type: Optional[str] = Query(None, description="Filter by job type"),
+    current_user: dict = Depends(get_current_user)
 ):
     """
-    Clear ALL jobs from the database (nuclear option).
+    Delete jobs matching filters.
 
-    **Use with caution!** This deletes all job history.
+    **Safety:**
+    - Cannot delete jobs in `processing` or `running` status
+    - Requires `confirm=true` to execute (unless dry_run=true)
+    - Use `dry_run=true` to preview what would be deleted
 
-    **Common use cases:**
-    - After database reset to sync jobs with empty graph
-    - Cleaning up after testing/development
-    - Fresh start when migrating systems
+    **Filters (all optional, combined with AND):**
+    - `status`: pending, cancelled, completed, failed
+    - `system=true`: Only system/scheduled jobs
+    - `older_than`: 1h, 24h, 7d, 30d
+    - `job_type`: ingestion, epistemic_remeasurement, etc.
 
-    **Requires:**
-    - `confirm=true` query parameter to prevent accidents
-    - Admin authentication (Phase 2)
+    **Examples:**
+    - Clean up stuck pending system jobs:
+      `DELETE /jobs?status=pending&system=true&confirm=true`
+    - Remove old completed jobs:
+      `DELETE /jobs?status=completed&older_than=7d&confirm=true`
+    - Preview before delete:
+      `DELETE /jobs?status=pending&dry_run=true`
+    - Delete all jobs (requires no filters + confirm):
+      `DELETE /jobs?confirm=true`
 
     **Returns:**
-    - Number of jobs deleted
+    - dry_run=true: List of jobs that would be deleted
+    - dry_run=false: Count of jobs deleted
     """
+    queue = get_job_queue()
+
+    if dry_run:
+        # Preview mode - show what would be deleted
+        jobs = queue.preview_delete_jobs(
+            status=status,
+            system_only=system,
+            older_than=older_than,
+            job_type=job_type
+        )
+        return {
+            "dry_run": True,
+            "jobs_to_delete": len(jobs),
+            "jobs": jobs,
+            "message": f"Would delete {len(jobs)} job(s). Use confirm=true to execute."
+        }
+
     if not confirm:
         raise HTTPException(
             status_code=400,
-            detail="Must set confirm=true to clear all jobs"
+            detail="Must set confirm=true to delete jobs (or use dry_run=true to preview)"
         )
 
-    queue = get_job_queue()
-    jobs_deleted = queue.clear_all_jobs()
+    # Check if this is a "delete all" operation (no filters)
+    has_filters = any([status, system, older_than, job_type])
+    if not has_filters:
+        # No filters = delete all (nuclear option, still supported)
+        jobs_deleted = queue.clear_all_jobs()
+        return {
+            "success": True,
+            "jobs_deleted": jobs_deleted,
+            "message": f"Cleared {jobs_deleted} job(s) from database (all jobs)"
+        }
+
+    # Filtered deletion
+    jobs_deleted = queue.delete_jobs(
+        status=status,
+        system_only=system,
+        older_than=older_than,
+        job_type=job_type
+    )
 
     return {
         "success": True,
         "jobs_deleted": jobs_deleted,
-        "message": f"Cleared {jobs_deleted} job(s) from database"
+        "filters": {
+            "status": status,
+            "system": system,
+            "older_than": older_than,
+            "job_type": job_type
+        },
+        "message": f"Deleted {jobs_deleted} job(s) matching filters"
     }
 
 
