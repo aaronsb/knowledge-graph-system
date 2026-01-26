@@ -53,8 +53,8 @@ jobs:
             git push origin "v${VERSION}"
           fi
 
-  # NOTE: API and Web containers are built locally and pushed to GHCR
-  # due to long build times on GitHub runners. Use: scripts/publish-images.sh
+  # NOTE: API, Web, and Operator containers are built locally and pushed to GHCR
+  # due to long build times on GitHub runners. Use: ./publish.sh images
   # These jobs only run when explicitly requested via workflow_dispatch.
 
   build-api:
