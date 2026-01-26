@@ -402,10 +402,22 @@ def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credent
         except Exception:
             return None
 
+    def mock_get_scopes(token: str):
+        """Mock get_token_scopes to return all kg scopes for test tokens."""
+        if token.startswith("test_oauth_token:"):
+            # Return all scopes for testing
+            return ["kg:read", "kg:write", "kg:edit", "kg:import"]
+        return []
+
     # Patch the validation function
     monkeypatch.setattr(
         "api.app.dependencies.auth.validate_oauth_access_token",
         mock_validate
+    )
+    # Patch scope checking for ADR-089 routes
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.get_token_scopes",
+        mock_get_scopes
     )
 
 
