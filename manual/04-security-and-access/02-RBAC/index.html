@@ -1192,6 +1192,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#job-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permission-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#user-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7630,6 +7691,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#job-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permission-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#user-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8105,6 +8227,7 @@
 <ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#built-in-roles">Built-in Roles</a></li>
+<li><a href="#job-permissions">Job Permissions</a></li>
 <li><a href="#user-management">User Management</a></li>
 <li><a href="#role-management">Role Management</a></li>
 <li><a href="#permission-management">Permission Management</a></li>
@@ -8125,7 +8248,7 @@
 <p>All RBAC operations require admin authentication and are accessed via <code>kg admin rbac</code> commands.</p>
 <hr />
 <h2 id="built-in-roles">Built-in Roles</h2>
-<p>The system includes four built-in roles:</p>
+<p>The system includes five built-in roles:</p>
 <table>
 <thead>
 <tr>
@@ -8138,138 +8261,248 @@
 <tr>
 <td><code>read_only</code></td>
 <td>Read-only access to public resources</td>
-<td>Read concepts, search</td>
+<td>Read concepts, search, view own jobs</td>
 </tr>
 <tr>
 <td><code>contributor</code></td>
 <td>Can create and modify content</td>
-<td>All read_only + create/update content</td>
+<td>All read_only + create/update content, cancel own jobs</td>
 </tr>
 <tr>
 <td><code>curator</code></td>
 <td>Can approve and manage content</td>
-<td>All contributor + approve jobs, view RBAC</td>
+<td>All contributor + approve jobs, view all user jobs</td>
 </tr>
 <tr>
 <td><code>admin</code></td>
 <td>Full system access</td>
-<td>All curator + manage users, roles, permissions</td>
+<td>All curator + manage users/roles/permissions, cancel any job, delete own jobs, bulk delete user jobs</td>
+</tr>
+<tr>
+<td><code>platform_admin</code></td>
+<td>Platform operator access</td>
+<td>All admin + system job management, bulk delete all jobs</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Note</strong>: Built-in roles cannot be deleted but can be modified with caution.</p>
 <hr />
+<h2 id="job-permissions">Job Permissions</h2>
+<p>Jobs are a first-class RBAC resource with scoped permissions. This enables granular control over who can view, cancel, and delete jobs.</p>
+<h3 id="permission-scopes">Permission Scopes</h3>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>own</code></td>
+<td>User's own jobs (user_id matches)</td>
+<td>Contributors managing their ingestion jobs</td>
+</tr>
+<tr>
+<td><code>global</code></td>
+<td>All user-created jobs</td>
+<td>Admins viewing queue status</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td>System/scheduled jobs</td>
+<td>Platform admins managing scheduled tasks</td>
+</tr>
+</tbody>
+</table>
+<h3 id="permission-matrix">Permission Matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Read</th>
+<th>Cancel</th>
+<th>Delete</th>
+<th>Bulk Delete</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_only</code></td>
+<td>own</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>contributor</code></td>
+<td>own</td>
+<td>own</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>curator</code></td>
+<td>global</td>
+<td>own</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>global</td>
+<td>global</td>
+<td>own</td>
+<td>user jobs only</td>
+</tr>
+<tr>
+<td><code>platform_admin</code></td>
+<td>global + system</td>
+<td>global + system</td>
+<td>global + system</td>
+<td>all jobs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="system-jobs">System Jobs</h3>
+<p>System jobs are created by scheduled tasks (e.g., <code>system:scheduler</code>) rather than user requests. They require <code>platform_admin</code> role to:</p>
+<ul>
+<li>View in job listings</li>
+<li>Cancel running system jobs</li>
+<li>Delete system job records</li>
+<li>Bulk delete system jobs</li>
+</ul>
+<p>Regular admins can manage all user-created jobs but cannot touch system jobs.</p>
+<h3 id="cli-examples">CLI Examples</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Contributor: View own jobs only</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Admin: View all user jobs</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Platform admin: View all jobs including system</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kg<span class="w"> </span>job<span class="w"> </span>list
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Delete with filters (admin: user jobs only)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>kg<span class="w"> </span>job<span class="w"> </span>cleanup<span class="w"> </span>--status<span class="w"> </span>completed<span class="w"> </span>--older-than<span class="w"> </span>7d<span class="w"> </span>--confirm
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Delete system jobs (platform_admin only)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>kg<span class="w"> </span>job<span class="w"> </span>cleanup<span class="w"> </span>--system<span class="w"> </span>--status<span class="w"> </span>failed<span class="w"> </span>--confirm
+</code></pre></div>
+<hr />
 <h2 id="user-management">User Management</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <p>You must be logged in with admin role:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>admin
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>admin
 </code></pre></div>
 <h3 id="create-a-user">Create a User</h3>
 <p><strong>Interactive (prompts for password):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor
 </code></pre></div></p>
 <p><strong>Non-interactive (with password):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123!&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123!&quot;</span>
 </code></pre></div></p>
 <h3 id="list-users">List Users</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># List all users</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Filter by role</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>admin
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Pagination</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--skip<span class="w"> </span><span class="m">10</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># List all users</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Filter by role</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>admin
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Pagination</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--skip<span class="w"> </span><span class="m">10</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
 </code></pre></div>
 <h3 id="view-user-details">View User Details</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div>
 <p>Example:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">3</span>
 </code></pre></div></p>
 <p>Output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>User Details
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ID:         3
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>Username:   alice
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Role:       contributor
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Created:    10/12/2025, 12:00:00 AM
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Last Login: 10/12/2025, 1:30:15 AM
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Status:     Active
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>User Details
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>ID:         3
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>Username:   alice
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Role:       contributor
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Created:    10/12/2025, 12:00:00 AM
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Last Login: 10/12/2025, 1:30:15 AM
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Status:     Active
 </code></pre></div></p>
 <h3 id="update-user">Update User</h3>
 <p><strong>Change role:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--role<span class="w"> </span>curator
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--role<span class="w"> </span>curator
 </code></pre></div></p>
 <p><strong>Change password (interactive):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password
 </code></pre></div></p>
 <p><strong>Change password (non-interactive):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewSecurePass123!&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewSecurePass123!&quot;</span>
 </code></pre></div></p>
 <p><strong>Disable user:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--disable
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--disable
 </code></pre></div></p>
 <p><strong>Enable user:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--enable
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--enable
 </code></pre></div></p>
 <h3 id="delete-user">Delete User</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 <p><strong>Note</strong>: Requires re-authentication challenge for safety. Cannot delete your own account.</p>
 <hr />
 <h2 id="role-management">Role Management</h2>
 <h3 id="list-roles">List Roles</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Active roles only</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Include inactive roles</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Active roles only</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Include inactive roles</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list<span class="w"> </span>--all
 </code></pre></div>
 <p>Output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Role Name            Display Name         Active  Builtin  Parent
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>admin                Administrator        ●       Yes      -
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>contributor          Contributor          ●       Yes      -
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>curator              Curator              ●       Yes      -
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>data_scientist       Data Scientist       ●       No       contributor
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>read_only            Read Only            ●       Yes      -
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>────────────────────────────────────────────────────────────
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Role Name            Display Name         Active  Builtin  Parent
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>admin                Administrator        ●       Yes      -
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>contributor          Contributor          ●       Yes      -
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>curator              Curator              ●       Yes      -
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>data_scientist       Data Scientist       ●       No       contributor
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>platform_admin       Platform Admin       ●       Yes      -
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>read_only            Read Only            ●       Yes      -
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>────────────────────────────────────────────────────────────
 </code></pre></div></p>
 <h3 id="show-role-details">Show Role Details</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
 </code></pre></div>
 <p>Output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Role: Data Scientist
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>ID: data_scientist
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>Description: Advanced analytics and data exploration
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Status: Active
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>Builtin: No
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>Inherits from: contributor
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>Created: 10/12/2025, 12:30:00 AM
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>Permissions (3):
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>  ✓ read on concepts (global)
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>  ✓ read on vocabulary (global)
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>  ✓ write on concepts (filter)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Role: Data Scientist
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>ID: data_scientist
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>Description: Advanced analytics and data exploration
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>Status: Active
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>Builtin: No
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>Inherits from: contributor
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>Created: 10/12/2025, 12:30:00 AM
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>Permissions (3):
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>  ✓ read on concepts (global)
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>  ✓ read on vocabulary (global)
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>  ✓ write on concepts (filter)
 </code></pre></div></p>
 <h3 id="create-a-custom-role">Create a Custom Role</h3>
 <p><strong>Basic role:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;data_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Analytics and reporting access&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;data_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Analytics and reporting access&quot;</span>
 </code></pre></div></p>
 <p><strong>Role with inheritance:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;senior_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Senior Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Advanced analytics with additional permissions&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>-p<span class="w"> </span>data_analyst
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;senior_analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;Senior Data Analyst&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Advanced analytics with additional permissions&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span>-p<span class="w"> </span>data_analyst
 </code></pre></div></p>
 <h3 id="delete-a-role">Delete a Role</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>data_analyst
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>data_analyst
 </code></pre></div>
 <p><strong>Note</strong>:
 - Cannot delete built-in roles
@@ -8279,144 +8512,144 @@
 <h2 id="permission-management">Permission Management</h2>
 <h3 id="list-permissions">List Permissions</h3>
 <p><strong>All permissions:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list
 </code></pre></div></p>
 <p><strong>Filter by role:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
 </code></pre></div></p>
 <p><strong>Filter by resource type:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--resource-type<span class="w"> </span>concepts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--resource-type<span class="w"> </span>concepts
 </code></pre></div></p>
 <p>Output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>Role              Action  Resource      Scope     Granted
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>admin             delete  resources     global    ✓
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>admin             read    resources     global    ✓
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>admin             write   resources     global    ✓
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>data_scientist    read    concepts      global    ✓
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>────────────────────────────────────────────────────────────
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>Role              Action  Resource      Scope     Granted
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>admin             delete  resources     global    ✓
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>admin             read    resources     global    ✓
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>admin             write   resources     global    ✓
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>data_scientist    read    concepts      global    ✓
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>────────────────────────────────────────────────────────────
 </code></pre></div></p>
 <h3 id="grant-permissions">Grant Permissions</h3>
 <p><strong>Global permission:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span>-a<span class="w"> </span><span class="nb">read</span>
-</code></pre></div></p>
-<p><strong>Instance-scoped permission:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>-t<span class="w"> </span>ontology<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">  </span>-s<span class="w"> </span>instance<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">  </span>--scope-id<span class="w"> </span><span class="s2">&quot;research-2024&quot;</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>-a<span class="w"> </span><span class="nb">read</span>
 </code></pre></div></p>
-<p><strong>Filter-scoped permission:</strong>
+<p><strong>Instance-scoped permission:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span>-t<span class="w"> </span>ontology<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span>-s<span class="w"> </span>filter
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span>-s<span class="w"> </span>instance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">  </span>--scope-id<span class="w"> </span><span class="s2">&quot;research-2024&quot;</span>
+</code></pre></div></p>
+<p><strong>Filter-scoped permission:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>-t<span class="w"> </span>concepts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>-s<span class="w"> </span>filter
 </code></pre></div></p>
 <p><strong>Explicit deny:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span>-r<span class="w"> </span>contributor<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>-t<span class="w"> </span>users<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>-a<span class="w"> </span>delete<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>--deny
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span>-r<span class="w"> </span>contributor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">  </span>-t<span class="w"> </span>users<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span>-a<span class="w"> </span>delete<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span>--deny
 </code></pre></div></p>
 <h3 id="revoke-permissions">Revoke Permissions</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>revoke<span class="w"> </span>&lt;permission_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>revoke<span class="w"> </span>&lt;permission_id&gt;
 </code></pre></div>
 <p><strong>Note</strong>: Use <code>kg admin rbac permissions list</code> to find the permission ID.</p>
 <hr />
 <h2 id="user-role-assignments">User Role Assignments</h2>
 <p>The system supports dynamic role assignments beyond the primary role.</p>
 <h3 id="list-users-role-assignments">List User's Role Assignments</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div>
 <p>Example:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
 </code></pre></div></p>
 <p>Output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>Role              Scope Type  Scope ID    Assigned          Expires
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>────────────────────────────────────────────────────────────
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>data_scientist    global      -           Oct 12, 12:00 AM  Never
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>curator           workspace   ws-001      Oct 12, 01:00 AM  Oct 13, 01:00 AM
-<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>────────────────────────────────────────────────────────────
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>Role              Scope Type  Scope ID    Assigned          Expires
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>────────────────────────────────────────────────────────────
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>data_scientist    global      -           Oct 12, 12:00 AM  Never
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>curator           workspace   ws-001      Oct 12, 01:00 AM  Oct 13, 01:00 AM
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>────────────────────────────────────────────────────────────
 </code></pre></div></p>
 <h3 id="assign-role-to-user">Assign Role to User</h3>
 <p><strong>Global assignment:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist
-</code></pre></div></p>
-<p><strong>Scoped assignment:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">  </span>-s<span class="w"> </span>workspace<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">  </span>--scope-id<span class="w"> </span>ws-001
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist
+</code></pre></div></p>
+<p><strong>Scoped assignment:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">  </span>-s<span class="w"> </span>workspace<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="w">  </span>--scope-id<span class="w"> </span>ws-001
 </code></pre></div></p>
 <h3 id="remove-role-assignment">Remove Role Assignment</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
 </code></pre></div>
 <p><strong>Note</strong>: Use <code>kg admin rbac assign list &lt;user_id&gt;</code> to find the assignment ID.</p>
 <hr />
 <h2 id="common-workflows">Common Workflows</h2>
 <h3 id="onboard-a-new-user">Onboard a New User</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># 1. Create user account</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TempPass123!&quot;</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># 2. Assign additional roles if needed</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span>&lt;alice_id&gt;<span class="w"> </span>-r<span class="w"> </span>data_scientist
-<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>
-<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="c1"># 3. Send credentials to user (use secure channel)</span>
-<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Username: alice, Temporary password: TempPass123!&quot;</span>
-<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>
-<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="c1"># 4. User logs in and changes password</span>
-<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="c1"># (User runs: kg login, then kg admin user update &lt;id&gt; --password)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># 1. Create user account</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TempPass123!&quot;</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># 2. Assign additional roles if needed</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span>&lt;alice_id&gt;<span class="w"> </span>-r<span class="w"> </span>data_scientist
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1"># 3. Send credentials to user (use secure channel)</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Username: alice, Temporary password: TempPass123!&quot;</span>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>
+<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a><span class="c1"># 4. User logs in and changes password</span>
+<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a><span class="c1"># (User runs: kg login, then kg admin user update &lt;id&gt; --password)</span>
 </code></pre></div>
 <h3 id="create-a-project-specific-role">Create a Project-Specific Role</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># 1. Create the role with inheritance</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;ml_researcher&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;ML Researcher&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Machine learning research team&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="w">  </span>-p<span class="w"> </span>contributor
-<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>
-<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="c1"># 2. Grant specific permissions</span>
-<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
-<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
-<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>vocabulary<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
-<a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>-a<span class="w"> </span>approve
-<a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a>
-<a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="c1"># 3. Assign to team members</span>
-<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">10</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
-<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">11</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># 1. Create the role with inheritance</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;ml_researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;ML Researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Machine learning research team&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a><span class="w">  </span>-p<span class="w"> </span>contributor
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a><span class="c1"># 2. Grant specific permissions</span>
+<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-37-10" name="__codelineno-37-10" href="#__codelineno-37-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
+<a id="__codelineno-37-11" name="__codelineno-37-11" href="#__codelineno-37-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>vocabulary<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-37-12" name="__codelineno-37-12" href="#__codelineno-37-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>-a<span class="w"> </span>approve
+<a id="__codelineno-37-13" name="__codelineno-37-13" href="#__codelineno-37-13"></a>
+<a id="__codelineno-37-14" name="__codelineno-37-14" href="#__codelineno-37-14"></a><span class="c1"># 3. Assign to team members</span>
+<a id="__codelineno-37-15" name="__codelineno-37-15" href="#__codelineno-37-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">10</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
+<a id="__codelineno-37-16" name="__codelineno-37-16" href="#__codelineno-37-16"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">11</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
 </code></pre></div>
 <h3 id="temporary-access-time-limited">Temporary Access (Time-Limited)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Grant temporary curator access for code review</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="w">  </span>--expires<span class="w"> </span><span class="s2">&quot;2025-10-15T23:59:59Z&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Grant temporary curator access for code review</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="w">  </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="w">  </span>--expires<span class="w"> </span><span class="s2">&quot;2025-10-15T23:59:59Z&quot;</span>
 </code></pre></div>
 <p><strong>Note</strong>: The system will automatically revoke expired assignments.</p>
 <h3 id="audit-user-permissions">Audit User Permissions</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># 1. View user details</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">5</span>
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
-<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># 2. List all role assignments</span>
-<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
-<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>
-<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="c1"># 3. Check specific role permissions</span>
-<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
-<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>
-<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a><span class="c1"># 4. Review all permissions for that role</span>
-<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># 1. View user details</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># 2. List all role assignments</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="c1"># 3. Check specific role permissions</span>
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>show<span class="w"> </span>data_scientist
+<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>
+<a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a><span class="c1"># 4. Review all permissions for that role</span>
+<a id="__codelineno-39-11" name="__codelineno-39-11" href="#__codelineno-39-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
 </code></pre></div>
 <hr />
 <h2 id="best-practices">Best Practices</h2>
@@ -8424,22 +8657,22 @@
 <ol>
 <li>
 <p><strong>Use role hierarchy</strong>: Create specific roles that inherit from base roles
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>contributor<span class="w"> </span>→<span class="w"> </span>data_scientist<span class="w"> </span>→<span class="w"> </span>senior_data_scientist
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>contributor<span class="w"> </span>→<span class="w"> </span>data_scientist<span class="w"> </span>→<span class="w"> </span>senior_data_scientist
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Principle of least privilege</strong>: Grant minimum necessary permissions
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Good: Specific permissions</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Avoid: Overly broad permissions</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Good: Specific permissions</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># Avoid: Overly broad permissions</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>analyst<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Use scoped permissions</strong>: Limit access to specific resources when possible
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Project-specific write access</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>dev<span class="w"> </span>-t<span class="w"> </span>ontology<span class="w"> </span>-a<span class="w"> </span>write<span class="w"> </span>-s<span class="w"> </span>instance<span class="w"> </span>--scope-id<span class="w"> </span><span class="s2">&quot;project-x&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Project-specific write access</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>dev<span class="w"> </span>-t<span class="w"> </span>ontology<span class="w"> </span>-a<span class="w"> </span>write<span class="w"> </span>-s<span class="w"> </span>instance<span class="w"> </span>--scope-id<span class="w"> </span><span class="s2">&quot;project-x&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -8453,12 +8686,12 @@
 </li>
 <li>
 <p><strong>Regular audits</strong>: Periodically review user list and assignments
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>users_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>users_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Disable instead of delete</strong>: Preserve audit trail by disabling inactive users
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--disable
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--disable
 </code></pre></div></p>
 </li>
 </ol>
@@ -8469,7 +8702,7 @@
 </li>
 <li>
 <p><strong>Test permissions</strong>: Create test users to verify permission behavior
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>test_analyst<span class="w"> </span>--role<span class="w"> </span>data_analyst<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TestPass123!&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>test_analyst<span class="w"> </span>--role<span class="w"> </span>data_analyst<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;TestPass123!&quot;</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -8477,7 +8710,7 @@
 </li>
 <li>
 <p><strong>Regular permission reviews</strong>: Audit permissions quarterly
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>permissions_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>&gt;<span class="w"> </span>permissions_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.txt
 </code></pre></div></p>
 </li>
 </ol>
@@ -8487,22 +8720,22 @@
 <p><strong>Symptom</strong>: User cannot perform an action</p>
 <p><strong>Diagnosis</strong>:
 1. Check user's primary role:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 <ol>
 <li>
 <p>Check role assignments:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 </li>
 <li>
 <p>Check role permissions:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
 </code></pre></div></p>
 </li>
 <li>
 <p>Check for explicit denies:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -8513,32 +8746,32 @@
 - Role is builtin (cannot delete)
 - Role has assigned users (must remove assignments first)</p>
 <p><strong>Solution</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># 1. Find users with this role</span>
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
-<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="c1"># 2. Change their role or remove assignment</span>
-<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--role<span class="w"> </span>&lt;new_role&gt;
-<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="c1"># OR</span>
-<a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
-<a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a>
-<a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="c1"># 3. Delete the role</span>
-<a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>&lt;role_name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># 1. Find users with this role</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="c1"># 2. Change their role or remove assignment</span>
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--role<span class="w"> </span>&lt;new_role&gt;
+<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a><span class="c1"># OR</span>
+<a id="__codelineno-51-7" name="__codelineno-51-7" href="#__codelineno-51-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>remove<span class="w"> </span>&lt;assignment_id&gt;
+<a id="__codelineno-51-8" name="__codelineno-51-8" href="#__codelineno-51-8"></a>
+<a id="__codelineno-51-9" name="__codelineno-51-9" href="#__codelineno-51-9"></a><span class="c1"># 3. Delete the role</span>
+<a id="__codelineno-51-10" name="__codelineno-51-10" href="#__codelineno-51-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>&lt;role_name&gt;
 </code></pre></div></p>
 <h3 id="user-locked-out">User locked out</h3>
 <p><strong>Symptom</strong>: User cannot login</p>
 <p><strong>Diagnosis</strong>:
 1. Check if user is disabled:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
 </code></pre></div></p>
 <ol>
 <li>Check if password was recently changed</li>
 </ol>
 <p><strong>Solution</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># Enable user</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--enable
-<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
-<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># Reset password</span>
-<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewTempPass123!&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a><span class="c1"># Enable user</span>
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--enable
+<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>
+<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="c1"># Reset password</span>
+<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewTempPass123!&quot;</span>
 </code></pre></div></p>
 <h3 id="permission-not-taking-effect">Permission not taking effect</h3>
 <p><strong>Symptom</strong>: Granted permission doesn't work</p>
@@ -8550,58 +8783,67 @@
 1. Check permission precedence order: DENY → Instance → Filter → Global → Inherited
 2. Verify resource type spelling matches exactly
 3. Check if there's an explicit deny:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>&lt;role_name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;✗&quot;</span>
 </code></pre></div></p>
 <h3 id="lost-admin-access">Lost admin access</h3>
 <p><strong>Symptom</strong>: No users have admin role</p>
 <p><strong>Recovery</strong>:
-1. Use the initialization script to reset admin account:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>./scripts/setup/initialize-platform.sh
+1. Use the operator shell to access configuration tools:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>./operator.sh<span class="w"> </span>shell
 </code></pre></div></p>
 <ol>
-<li>This will prompt to reset the admin password</li>
-<li>Login as admin and restore access</li>
+<li>
+<p>Run the configuration wizard to reset the admin account:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>configure.py<span class="w"> </span>users
+</code></pre></div></p>
+</li>
+<li>
+<p>Login as admin and restore access:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kg<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>admin
+</code></pre></div></p>
+</li>
 </ol>
 <hr />
 <h2 id="api-reference">API Reference</h2>
 <p>All RBAC operations are also available via REST API:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a><span class="c1"># Resources</span>
-<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>GET<span class="w">    </span>/api/rbac/resources
-<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>POST<span class="w">   </span>/api/rbac/resources
-<a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a>GET<span class="w">    </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
-<a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a>DELETE<span class="w"> </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
-<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>
-<a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a><span class="c1"># Roles</span>
-<a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a>GET<span class="w">    </span>/api/rbac/roles
-<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>POST<span class="w">   </span>/api/rbac/roles
-<a id="__codelineno-55-10" name="__codelineno-55-10" href="#__codelineno-55-10"></a>GET<span class="w">    </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
-<a id="__codelineno-55-11" name="__codelineno-55-11" href="#__codelineno-55-11"></a>DELETE<span class="w"> </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
-<a id="__codelineno-55-12" name="__codelineno-55-12" href="#__codelineno-55-12"></a>
-<a id="__codelineno-55-13" name="__codelineno-55-13" href="#__codelineno-55-13"></a><span class="c1"># Permissions</span>
-<a id="__codelineno-55-14" name="__codelineno-55-14" href="#__codelineno-55-14"></a>GET<span class="w">    </span>/api/rbac/permissions
-<a id="__codelineno-55-15" name="__codelineno-55-15" href="#__codelineno-55-15"></a>POST<span class="w">   </span>/api/rbac/permissions
-<a id="__codelineno-55-16" name="__codelineno-55-16" href="#__codelineno-55-16"></a>DELETE<span class="w"> </span>/api/rbac/permissions/<span class="o">{</span>id<span class="o">}</span>
-<a id="__codelineno-55-17" name="__codelineno-55-17" href="#__codelineno-55-17"></a>
-<a id="__codelineno-55-18" name="__codelineno-55-18" href="#__codelineno-55-18"></a><span class="c1"># User Role Assignments</span>
-<a id="__codelineno-55-19" name="__codelineno-55-19" href="#__codelineno-55-19"></a>GET<span class="w">    </span>/api/rbac/user-roles/<span class="o">{</span>user_id<span class="o">}</span>
-<a id="__codelineno-55-20" name="__codelineno-55-20" href="#__codelineno-55-20"></a>POST<span class="w">   </span>/api/rbac/user-roles
-<a id="__codelineno-55-21" name="__codelineno-55-21" href="#__codelineno-55-21"></a>DELETE<span class="w"> </span>/api/rbac/user-roles/<span class="o">{</span>id<span class="o">}</span>
-<a id="__codelineno-55-22" name="__codelineno-55-22" href="#__codelineno-55-22"></a>
-<a id="__codelineno-55-23" name="__codelineno-55-23" href="#__codelineno-55-23"></a><span class="c1"># Permission Check</span>
-<a id="__codelineno-55-24" name="__codelineno-55-24" href="#__codelineno-55-24"></a>POST<span class="w">   </span>/api/rbac/check-permission
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a><span class="c1"># Resources</span>
+<a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>GET<span class="w">    </span>/api/rbac/resources
+<a id="__codelineno-58-3" name="__codelineno-58-3" href="#__codelineno-58-3"></a>POST<span class="w">   </span>/api/rbac/resources
+<a id="__codelineno-58-4" name="__codelineno-58-4" href="#__codelineno-58-4"></a>GET<span class="w">    </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
+<a id="__codelineno-58-5" name="__codelineno-58-5" href="#__codelineno-58-5"></a>DELETE<span class="w"> </span>/api/rbac/resources/<span class="o">{</span>type<span class="o">}</span>
+<a id="__codelineno-58-6" name="__codelineno-58-6" href="#__codelineno-58-6"></a>
+<a id="__codelineno-58-7" name="__codelineno-58-7" href="#__codelineno-58-7"></a><span class="c1"># Roles</span>
+<a id="__codelineno-58-8" name="__codelineno-58-8" href="#__codelineno-58-8"></a>GET<span class="w">    </span>/api/rbac/roles
+<a id="__codelineno-58-9" name="__codelineno-58-9" href="#__codelineno-58-9"></a>POST<span class="w">   </span>/api/rbac/roles
+<a id="__codelineno-58-10" name="__codelineno-58-10" href="#__codelineno-58-10"></a>GET<span class="w">    </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
+<a id="__codelineno-58-11" name="__codelineno-58-11" href="#__codelineno-58-11"></a>DELETE<span class="w"> </span>/api/rbac/roles/<span class="o">{</span>name<span class="o">}</span>
+<a id="__codelineno-58-12" name="__codelineno-58-12" href="#__codelineno-58-12"></a>
+<a id="__codelineno-58-13" name="__codelineno-58-13" href="#__codelineno-58-13"></a><span class="c1"># Permissions</span>
+<a id="__codelineno-58-14" name="__codelineno-58-14" href="#__codelineno-58-14"></a>GET<span class="w">    </span>/api/rbac/permissions
+<a id="__codelineno-58-15" name="__codelineno-58-15" href="#__codelineno-58-15"></a>POST<span class="w">   </span>/api/rbac/permissions
+<a id="__codelineno-58-16" name="__codelineno-58-16" href="#__codelineno-58-16"></a>DELETE<span class="w"> </span>/api/rbac/permissions/<span class="o">{</span>id<span class="o">}</span>
+<a id="__codelineno-58-17" name="__codelineno-58-17" href="#__codelineno-58-17"></a>
+<a id="__codelineno-58-18" name="__codelineno-58-18" href="#__codelineno-58-18"></a><span class="c1"># User Role Assignments</span>
+<a id="__codelineno-58-19" name="__codelineno-58-19" href="#__codelineno-58-19"></a>GET<span class="w">    </span>/api/rbac/user-roles/<span class="o">{</span>user_id<span class="o">}</span>
+<a id="__codelineno-58-20" name="__codelineno-58-20" href="#__codelineno-58-20"></a>POST<span class="w">   </span>/api/rbac/user-roles
+<a id="__codelineno-58-21" name="__codelineno-58-21" href="#__codelineno-58-21"></a>DELETE<span class="w"> </span>/api/rbac/user-roles/<span class="o">{</span>id<span class="o">}</span>
+<a id="__codelineno-58-22" name="__codelineno-58-22" href="#__codelineno-58-22"></a>
+<a id="__codelineno-58-23" name="__codelineno-58-23" href="#__codelineno-58-23"></a><span class="c1"># Permission Check</span>
+<a id="__codelineno-58-24" name="__codelineno-58-24" href="#__codelineno-58-24"></a>POST<span class="w">   </span>/api/rbac/check-permission
 </code></pre></div>
 <p>See API documentation at <code>http://localhost:8000/docs</code> for detailed schemas.</p>
 <hr />
 <h2 id="see-also">See Also</h2>
 <ul>
-<li><a href="../../architecture/ADR-028-dynamic-rbac-system.md">ADR-028: Dynamic RBAC</a> - Architecture decision record</li>
-<li><a href="../../architecture/ADR-027-user-management-api.md">ADR-027: User Management API</a> - Authentication system</li>
+<li><a href="../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC</a> - Architecture decision record</li>
+<li><a href="../../../architecture/authentication-security/ADR-027-user-management-api/">ADR-027: User Management API</a> - Authentication system</li>
+<li><a href="../../../architecture/authentication-security/ADR-074-platform-admin-role/">ADR-074: Platform Admin Role</a> - Platform admin capabilities</li>
 <li><a href="../01-AUTHENTICATION/">Authentication Guide</a> - Login and authentication flows</li>
-<li><a href="../api/">API Documentation</a> - REST API reference</li>
+<li><a href="../../reference/api/">API Documentation</a> - REST API reference</li>
 </ul>
 <hr />
-<p><strong>Version</strong>: 1.0
-<strong>Last Updated</strong>: October 2025
+<p><strong>Version</strong>: 1.1
+<strong>Last Updated</strong>: January 2026
 <strong>Maintainer</strong>: Knowledge Graph Team</p>
 
 
