@@ -20,7 +20,7 @@ from ..models.concepts import (
     CreationMethod,
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user
+from ..dependencies.auth import require_scope
 from ..services.concept_service import get_concept_service
 from .database import get_age_client
 
@@ -37,7 +37,7 @@ router = APIRouter(prefix="/concepts", tags=["concepts"])
 )
 async def create_concept(
     request: ConceptCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:write"))
 ):
     """
     Create a new concept or match to an existing one.
@@ -56,8 +56,6 @@ async def create_concept(
 
     Requires `kg:write` scope.
     """
-    # TODO: Check kg:write scope once OAuth scopes are implemented (Task #6)
-
     age_client = get_age_client()
     service = get_concept_service(age_client)
 
@@ -91,7 +89,7 @@ async def list_concepts(
     creation_method: Optional[CreationMethod] = Query(None, description="Filter by creation method"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(50, ge=1, le=500, description="Maximum results"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:read"))
 ):
     """
     List concepts with optional filtering.
@@ -134,7 +132,7 @@ async def list_concepts(
 )
 async def get_concept(
     concept_id: str,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:read"))
 ):
     """
     Get a single concept by ID.
@@ -172,7 +170,7 @@ async def update_concept(
         True,
         description="Regenerate embedding if label changes"
     ),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:edit"))
 ):
     """
     Update an existing concept (partial update).
@@ -182,7 +180,6 @@ async def update_concept(
 
     Requires `kg:edit` scope.
     """
-    # TODO: Check kg:edit scope once OAuth scopes are implemented (Task #6)
 
     age_client = get_age_client()
     service = get_concept_service(age_client)
@@ -223,7 +220,7 @@ async def delete_concept(
         False,
         description="Also delete orphaned synthetic sources"
     ),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:edit"))
 ):
     """
     Delete a concept and its relationships.
@@ -233,7 +230,6 @@ async def delete_concept(
 
     Requires `kg:edit` scope.
     """
-    # TODO: Check kg:edit scope once OAuth scopes are implemented (Task #6)
 
     age_client = get_age_client()
     service = get_concept_service(age_client)

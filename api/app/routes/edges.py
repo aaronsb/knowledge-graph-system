@@ -21,7 +21,7 @@ from ..models.edges import (
     RelationshipCategory,
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user
+from ..dependencies.auth import require_scope
 from ..services.edge_service import get_edge_service
 from .database import get_age_client
 
@@ -38,7 +38,7 @@ router = APIRouter(prefix="/edges", tags=["edges"])
 )
 async def create_edge(
     request: EdgeCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:write"))
 ):
     """
     Create a new edge (relationship) between two concepts.
@@ -61,7 +61,6 @@ async def create_edge(
 
     Requires `kg:write` scope.
     """
-    # TODO: Check kg:write scope once OAuth scopes are implemented (Task #6)
 
     age_client = get_age_client()
     service = get_edge_service(age_client)
@@ -98,7 +97,7 @@ async def list_edges(
     source: Optional[EdgeSource] = Query(None, description="Filter by creation source"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(50, ge=1, le=500, description="Maximum results"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:read"))
 ):
     """
     List edges with optional filtering.
@@ -148,7 +147,7 @@ async def update_edge(
     relationship_type: str,
     to_concept_id: str,
     request: EdgeUpdate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:edit"))
 ):
     """
     Update an existing edge (partial update).
@@ -160,7 +159,6 @@ async def update_edge(
 
     Requires `kg:edit` scope.
     """
-    # TODO: Check kg:edit scope once OAuth scopes are implemented (Task #6)
 
     age_client = get_age_client()
     service = get_edge_service(age_client)
@@ -200,7 +198,7 @@ async def delete_edge(
     from_concept_id: str,
     relationship_type: str,
     to_concept_id: str,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(require_scope("kg:edit"))
 ):
     """
     Delete an edge.
@@ -209,7 +207,6 @@ async def delete_edge(
 
     Requires `kg:edit` scope.
     """
-    # TODO: Check kg:edit scope once OAuth scopes are implemented (Task #6)
 
     age_client = get_age_client()
     service = get_edge_service(age_client)

@@ -492,6 +492,98 @@ def require_permission(
 
 
 # =============================================================================
+# OAuth Scope Checking (ADR-089)
+# =============================================================================
+
+# Define graph editing scopes
+GRAPH_SCOPES = {
+    "kg:read": "Read concepts, edges, and graph data",
+    "kg:write": "Create new concepts and edges",
+    "kg:edit": "Update and delete concepts and edges",
+    "kg:import": "Import foreign graph data",
+}
+
+
+def get_token_scopes(token: str) -> list:
+    """
+    Get scopes associated with an OAuth access token.
+
+    Args:
+        token: OAuth access token
+
+    Returns:
+        List of scope strings
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            token_hash_value = hash_token(token)
+            cur.execute("""
+                SELECT scopes
+                FROM kg_auth.oauth_access_tokens
+                WHERE token_hash = %s
+                  AND revoked = false
+            """, (token_hash_value,))
+
+            row = cur.fetchone()
+            if row and row[0]:
+                return row[0] if isinstance(row[0], list) else []
+            return []
+    finally:
+        conn.close()
+
+
+def require_scope(*required_scopes: str):
+    """
+    Dependency factory for OAuth scope-based access control (ADR-089).
+
+    Checks that the access token has at least one of the required scopes.
+    Works with the OAuth 2.0 token flow.
+
+    Usage:
+        @router.post("/concepts")
+        async def create_concept(
+            current_user: Annotated[UserInDB, Depends(require_scope("kg:write"))]
+        ):
+            ...
+
+    Args:
+        *required_scopes: Scopes that grant access (any one is sufficient)
+
+    Returns:
+        Dependency function that checks token scopes
+    """
+    async def check_scope(
+        token: Annotated[str, Depends(oauth2_scheme)],
+        current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+    ) -> UserInDB:
+        token_scopes = get_token_scopes(token)
+
+        # Check if any required scope is present
+        # Also accept wildcard scopes like "read:*" for backward compatibility
+        has_required_scope = False
+        for required in required_scopes:
+            if required in token_scopes:
+                has_required_scope = True
+                break
+            # Check wildcard patterns
+            scope_prefix = required.split(":")[0]
+            if f"{scope_prefix}:*" in token_scopes:
+                has_required_scope = True
+                break
+
+        if not has_required_scope:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires scope: {' or '.join(required_scopes)}"
+            )
+
+        return current_user
+
+    return check_scope
+
+
+# =============================================================================
 # Type Aliases (ADR-060 - FastAPI Full-Stack Template Pattern)
 # =============================================================================
 
