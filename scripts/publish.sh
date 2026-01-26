@@ -79,8 +79,8 @@ Publishing:
 
 Options:
   -m, --message "desc"      Description for release/publish
-  --dry-run                 Preview without making changes
-  --skip-build              Skip build step (push existing)
+  --dry-run                 Build locally but don't push to registries
+  --skip-build              Skip build step (push existing images only)
   --force                   Bypass "already published" checks
   --test                    Use TestPyPI instead of PyPI (fuse only)
   -h, --help                Show this help
