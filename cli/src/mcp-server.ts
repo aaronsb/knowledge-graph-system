@@ -45,6 +45,12 @@ import {
   formatDocumentContent,
   formatDocumentConcepts,
   formatDocumentConceptsDetailed,
+  // ADR-089 Phase 3a: Graph CRUD formatters
+  formatGraphConceptResult,
+  formatGraphEdgeResult,
+  formatGraphConceptList,
+  formatGraphEdgeList,
+  formatGraphBatchResult,
 } from './mcp/formatters.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -768,6 +774,146 @@ Use search tool with type="documents" to find documents semantically.`,
             },
           },
           required: ['action'],
+        },
+      },
+      // ADR-089 Phase 3a: Graph CRUD Tool
+      {
+        name: 'graph',
+        description: `Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
+
+This tool provides deterministic graph editing without going through the LLM ingest pipeline.
+Use for manual curation, agent-driven knowledge building, and precise graph manipulation.
+
+**Actions:**
+- "create": Create a new concept or edge
+- "edit": Update an existing concept or edge
+- "delete": Delete a concept or edge
+- "list": List concepts or edges with filters
+
+**Entity Types:**
+- "concept": Knowledge graph concepts (nodes)
+- "edge": Relationships between concepts
+
+**Matching Modes (for create):**
+- "auto": Link to existing if match found, create if not (default)
+- "force_create": Always create new, even if similar exists
+- "match_only": Only link to existing, error if no match
+
+**Semantic Resolution:**
+- Use \`from_label\`/\`to_label\` to reference concepts by name instead of ID
+- Resolution uses vector similarity (85% threshold) to find matching concepts
+
+**Examples:**
+- Create concept: \`{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}\`
+- Create edge: \`{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}\`
+- List concepts: \`{action: "list", entity: "concept", ontology: "distributed-systems"}\`
+- Delete concept: \`{action: "delete", entity: "concept", concept_id: "c_abc123"}\``,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['create', 'edit', 'delete', 'list'],
+              description: 'Operation to perform',
+            },
+            entity: {
+              type: 'string',
+              enum: ['concept', 'edge'],
+              description: 'Entity type (required for all actions)',
+            },
+            // Concept fields
+            label: {
+              type: 'string',
+              description: 'Concept label (required for create concept)',
+            },
+            ontology: {
+              type: 'string',
+              description: 'Ontology/namespace (required for create concept, optional filter for list)',
+            },
+            description: {
+              type: 'string',
+              description: 'Concept description (optional)',
+            },
+            search_terms: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Alternative search terms for the concept',
+            },
+            matching_mode: {
+              type: 'string',
+              enum: ['auto', 'force_create', 'match_only'],
+              description: 'How to handle similar existing concepts (default: auto)',
+              default: 'auto',
+            },
+            // Edge fields
+            from_concept_id: {
+              type: 'string',
+              description: 'Source concept ID (for edge create/delete)',
+            },
+            to_concept_id: {
+              type: 'string',
+              description: 'Target concept ID (for edge create/delete)',
+            },
+            from_label: {
+              type: 'string',
+              description: 'Source concept by label (semantic resolution)',
+            },
+            to_label: {
+              type: 'string',
+              description: 'Target concept by label (semantic resolution)',
+            },
+            relationship_type: {
+              type: 'string',
+              description: 'Edge relationship type (e.g., IMPLIES, SUPPORTS, CONTRADICTS)',
+            },
+            category: {
+              type: 'string',
+              enum: ['logical_truth', 'empirical_claim', 'value_judgment', 'conceptual', 'temporal_sequence', 'causal', 'other'],
+              description: 'Semantic category of the relationship (default: logical_truth)',
+              default: 'logical_truth',
+            },
+            confidence: {
+              type: 'number',
+              description: 'Edge confidence 0.0-1.0 (default: 1.0)',
+              default: 1.0,
+            },
+            // Identifiers for edit/delete
+            concept_id: {
+              type: 'string',
+              description: 'Concept ID (for edit/delete concept)',
+            },
+            // List filters
+            label_contains: {
+              type: 'string',
+              description: 'Filter concepts by label substring (for list)',
+            },
+            creation_method: {
+              type: 'string',
+              description: 'Filter by creation method (for list)',
+            },
+            source: {
+              type: 'string',
+              description: 'Filter edges by source (for list)',
+            },
+            // Pagination
+            limit: {
+              type: 'number',
+              description: 'Max results to return (default: 20)',
+              default: 20,
+            },
+            offset: {
+              type: 'number',
+              description: 'Number to skip for pagination (default: 0)',
+              default: 0,
+            },
+            // Delete option
+            cascade: {
+              type: 'boolean',
+              description: 'For concept delete: also delete orphaned synthetic sources (default: false)',
+              default: false,
+            },
+          },
+          required: ['action', 'entity'],
         },
       },
     ],
@@ -1813,6 +1959,267 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           default:
             throw new Error(`Unknown document action: ${action}`);
+        }
+      }
+
+      // ADR-089 Phase 3a: Graph CRUD Tool Handler
+      case 'graph': {
+        const action = toolArgs.action as string;
+        const entity = toolArgs.entity as string;
+
+        if (!entity) {
+          throw new Error('entity is required (concept or edge)');
+        }
+
+        // Helper: Resolve concept by label using search
+        async function resolveConceptByLabel(label: string): Promise<string> {
+          const searchResult = await client.searchConcepts({
+            query: label,
+            limit: 1,
+            min_similarity: 0.85,
+          });
+
+          if (searchResult.count === 0) {
+            throw new Error(`No concept found matching label: "${label}". Try creating it first or use a more specific label.`);
+          }
+
+          const match = searchResult.results[0];
+          if (match.score < 0.85) {
+            throw new Error(`No confident match for "${label}". Best match: "${match.label}" (${(match.score * 100).toFixed(1)}% similarity). Use concept_id for precise reference.`);
+          }
+
+          return match.concept_id;
+        }
+
+        switch (action) {
+          case 'create': {
+            if (entity === 'concept') {
+              // Create concept
+              const label = toolArgs.label as string;
+              const ontology = toolArgs.ontology as string;
+
+              if (!label) {
+                throw new Error('label is required for creating a concept');
+              }
+              if (!ontology) {
+                throw new Error('ontology is required for creating a concept');
+              }
+
+              const result = await client.createConcept({
+                label,
+                ontology,
+                description: toolArgs.description as string | undefined,
+                search_terms: toolArgs.search_terms as string[] | undefined,
+                matching_mode: (toolArgs.matching_mode as 'auto' | 'force_create' | 'match_only') || 'auto',
+                creation_method: 'mcp',
+              });
+
+              return {
+                content: [{ type: 'text', text: formatGraphConceptResult(result, 'create') }],
+              };
+            } else if (entity === 'edge') {
+              // Create edge
+              let fromId = toolArgs.from_concept_id as string | undefined;
+              let toId = toolArgs.to_concept_id as string | undefined;
+              const relationshipType = toolArgs.relationship_type as string;
+
+              if (!relationshipType) {
+                throw new Error('relationship_type is required for creating an edge');
+              }
+
+              // Semantic resolution: from_label → from_concept_id
+              if (!fromId && toolArgs.from_label) {
+                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
+              }
+              if (!toId && toolArgs.to_label) {
+                toId = await resolveConceptByLabel(toolArgs.to_label as string);
+              }
+
+              if (!fromId) {
+                throw new Error('from_concept_id or from_label is required for creating an edge');
+              }
+              if (!toId) {
+                throw new Error('to_concept_id or to_label is required for creating an edge');
+              }
+
+              const result = await client.createEdge({
+                from_concept_id: fromId,
+                to_concept_id: toId,
+                relationship_type: relationshipType,
+                category: toolArgs.category as any || 'logical_truth',
+                confidence: (toolArgs.confidence as number) || 1.0,
+                source: 'api_creation',
+              });
+
+              // Add resolved labels to result for better output
+              const enrichedResult = {
+                ...result,
+                from_label: toolArgs.from_label || fromId,
+                to_label: toolArgs.to_label || toId,
+              };
+
+              return {
+                content: [{ type: 'text', text: formatGraphEdgeResult(enrichedResult, 'create') }],
+              };
+            } else {
+              throw new Error(`Unknown entity type: ${entity}`);
+            }
+          }
+
+          case 'list': {
+            if (entity === 'concept') {
+              const result = await client.listConceptsCRUD({
+                ontology: toolArgs.ontology as string | undefined,
+                label_contains: toolArgs.label_contains as string | undefined,
+                creation_method: toolArgs.creation_method as string | undefined,
+                offset: (toolArgs.offset as number) || 0,
+                limit: (toolArgs.limit as number) || 20,
+              });
+
+              return {
+                content: [{ type: 'text', text: formatGraphConceptList(result) }],
+              };
+            } else if (entity === 'edge') {
+              let fromId = toolArgs.from_concept_id as string | undefined;
+              let toId = toolArgs.to_concept_id as string | undefined;
+
+              // Semantic resolution for list filters
+              if (!fromId && toolArgs.from_label) {
+                try {
+                  fromId = await resolveConceptByLabel(toolArgs.from_label as string);
+                } catch {
+                  // Ignore resolution errors for list - just skip filter
+                }
+              }
+              if (!toId && toolArgs.to_label) {
+                try {
+                  toId = await resolveConceptByLabel(toolArgs.to_label as string);
+                } catch {
+                  // Ignore resolution errors for list - just skip filter
+                }
+              }
+
+              const result = await client.listEdges({
+                from_concept_id: fromId,
+                to_concept_id: toId,
+                relationship_type: toolArgs.relationship_type as string | undefined,
+                category: toolArgs.category as string | undefined,
+                source: toolArgs.source as string | undefined,
+                offset: (toolArgs.offset as number) || 0,
+                limit: (toolArgs.limit as number) || 20,
+              });
+
+              return {
+                content: [{ type: 'text', text: formatGraphEdgeList(result) }],
+              };
+            } else {
+              throw new Error(`Unknown entity type: ${entity}`);
+            }
+          }
+
+          case 'edit': {
+            if (entity === 'concept') {
+              const conceptId = toolArgs.concept_id as string;
+              if (!conceptId) {
+                throw new Error('concept_id is required for editing a concept');
+              }
+
+              const updateData: any = {};
+              if (toolArgs.label !== undefined) updateData.label = toolArgs.label;
+              if (toolArgs.description !== undefined) updateData.description = toolArgs.description;
+              if (toolArgs.search_terms !== undefined) updateData.search_terms = toolArgs.search_terms;
+
+              if (Object.keys(updateData).length === 0) {
+                throw new Error('At least one field (label, description, or search_terms) must be provided for edit');
+              }
+
+              const result = await client.updateConcept(conceptId, updateData);
+
+              return {
+                content: [{ type: 'text', text: formatGraphConceptResult(result, 'edit') }],
+              };
+            } else if (entity === 'edge') {
+              // Edge update requires from, type, to identification
+              let fromId = toolArgs.from_concept_id as string | undefined;
+              let toId = toolArgs.to_concept_id as string | undefined;
+              const relationshipType = toolArgs.relationship_type as string;
+
+              if (!fromId && toolArgs.from_label) {
+                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
+              }
+              if (!toId && toolArgs.to_label) {
+                toId = await resolveConceptByLabel(toolArgs.to_label as string);
+              }
+
+              if (!fromId || !toId || !relationshipType) {
+                throw new Error('from_concept_id (or from_label), to_concept_id (or to_label), and relationship_type are required for editing an edge');
+              }
+
+              const updateData: any = {};
+              if (toolArgs.confidence !== undefined) updateData.confidence = toolArgs.confidence;
+              if (toolArgs.category !== undefined) updateData.category = toolArgs.category;
+
+              if (Object.keys(updateData).length === 0) {
+                throw new Error('At least one field (confidence or category) must be provided for edge edit');
+              }
+
+              const result = await client.updateEdge(fromId, relationshipType, toId, updateData);
+
+              const enrichedResult = {
+                ...result,
+                from_label: toolArgs.from_label || fromId,
+                to_label: toolArgs.to_label || toId,
+              };
+
+              return {
+                content: [{ type: 'text', text: formatGraphEdgeResult(enrichedResult, 'edit') }],
+              };
+            } else {
+              throw new Error(`Unknown entity type: ${entity}`);
+            }
+          }
+
+          case 'delete': {
+            if (entity === 'concept') {
+              const conceptId = toolArgs.concept_id as string;
+              if (!conceptId) {
+                throw new Error('concept_id is required for deleting a concept');
+              }
+
+              const cascade = (toolArgs.cascade as boolean) || false;
+              await client.deleteConcept(conceptId, cascade);
+
+              return {
+                content: [{ type: 'text', text: formatGraphConceptResult({ concept_id: conceptId }, 'delete') }],
+              };
+            } else if (entity === 'edge') {
+              let fromId = toolArgs.from_concept_id as string | undefined;
+              let toId = toolArgs.to_concept_id as string | undefined;
+              const relationshipType = toolArgs.relationship_type as string;
+
+              if (!fromId && toolArgs.from_label) {
+                fromId = await resolveConceptByLabel(toolArgs.from_label as string);
+              }
+              if (!toId && toolArgs.to_label) {
+                toId = await resolveConceptByLabel(toolArgs.to_label as string);
+              }
+
+              if (!fromId || !toId || !relationshipType) {
+                throw new Error('from_concept_id (or from_label), to_concept_id (or to_label), and relationship_type are required for deleting an edge');
+              }
+
+              await client.deleteEdge(fromId, relationshipType, toId);
+
+              return {
+                content: [{ type: 'text', text: formatGraphEdgeResult({ from_concept_id: fromId, to_concept_id: toId, relationship_type: relationshipType }, 'delete') }],
+              };
+            } else {
+              throw new Error(`Unknown entity type: ${entity}`);
+            }
+          }
+
+          default:
+            throw new Error(`Unknown graph action: ${action}. Use: create, edit, delete, or list`);
         }
       }
 

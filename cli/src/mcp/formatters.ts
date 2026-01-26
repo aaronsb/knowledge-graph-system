@@ -1514,6 +1514,189 @@ export function formatDocumentConcepts(result: any): string {
  * Format document concepts with full details (ADR-084)
  * Used when include_details=true - fetches all concept info in one call
  */
+// ============================================================================
+// Graph CRUD Formatters (ADR-089 Phase 3a)
+// ============================================================================
+
+/**
+ * Format a created/updated concept for MCP output
+ */
+export function formatGraphConceptResult(result: any, action: string): string {
+  let output = `# ${action === 'create' ? 'Created' : action === 'edit' ? 'Updated' : 'Deleted'} Concept\n\n`;
+
+  if (action === 'delete') {
+    output += `Concept deleted successfully.\n`;
+    return output;
+  }
+
+  output += `**Label:** ${result.label}\n`;
+  output += `**ID:** ${result.concept_id}\n`;
+  output += `**Ontology:** ${result.ontology || 'N/A'}\n`;
+
+  if (result.description) {
+    output += `**Description:** ${result.description}\n`;
+  }
+
+  if (result.search_terms && result.search_terms.length > 0) {
+    output += `**Search Terms:** ${result.search_terms.join(', ')}\n`;
+  }
+
+  output += `**Creation Method:** ${result.creation_method || 'mcp'}\n`;
+  output += `**Has Embedding:** ${result.has_embedding ? 'Yes' : 'Pending'}\n`;
+
+  if (result.matched_existing) {
+    output += `\n⚠️ **Matched Existing Concept** - no new concept created\n`;
+  }
+
+  return output;
+}
+
+/**
+ * Format a created/updated edge for MCP output
+ */
+export function formatGraphEdgeResult(result: any, action: string): string {
+  let output = `# ${action === 'create' ? 'Created' : action === 'edit' ? 'Updated' : 'Deleted'} Edge\n\n`;
+
+  if (action === 'delete') {
+    output += `Edge deleted successfully.\n`;
+    return output;
+  }
+
+  output += `**Relationship:** ${result.from_label || result.from_concept_id} → [${result.relationship_type}] → ${result.to_label || result.to_concept_id}\n\n`;
+  output += `**From Concept:** ${result.from_concept_id}\n`;
+  output += `**To Concept:** ${result.to_concept_id}\n`;
+  output += `**Type:** ${result.relationship_type}\n`;
+  output += `**Category:** ${result.category}\n`;
+  output += `**Confidence:** ${(result.confidence * 100).toFixed(0)}%\n`;
+  output += `**Source:** ${result.source}\n`;
+
+  if (result.created_at) {
+    output += `**Created:** ${result.created_at}\n`;
+  }
+
+  return output;
+}
+
+/**
+ * Format concept list for MCP output
+ */
+export function formatGraphConceptList(result: any): string {
+  let output = `# Concepts\n\n`;
+  output += `Showing ${result.concepts.length} of ${result.total} concepts\n\n`;
+
+  if (result.concepts.length === 0) {
+    output += 'No concepts found matching the filters.\n';
+    return output;
+  }
+
+  result.concepts.forEach((concept: any, i: number) => {
+    output += `${i + 1}. **${concept.label}**\n`;
+    output += `   - ID: ${concept.concept_id}\n`;
+    if (concept.ontology) {
+      output += `   - Ontology: ${concept.ontology}\n`;
+    }
+    if (concept.description) {
+      const truncated = concept.description.length > 80
+        ? concept.description.substring(0, 80) + '...'
+        : concept.description;
+      output += `   - Description: ${truncated}\n`;
+    }
+    output += `   - Method: ${concept.creation_method || 'unknown'}\n`;
+    output += `   - Embedding: ${concept.has_embedding ? '✓' : '⏳'}\n`;
+    output += '\n';
+  });
+
+  if (result.total > result.offset + result.concepts.length) {
+    output += `Use offset=${result.offset + result.limit} to see more.\n`;
+  }
+
+  return output;
+}
+
+/**
+ * Format edge list for MCP output
+ */
+export function formatGraphEdgeList(result: any): string {
+  let output = `# Edges\n\n`;
+  output += `Showing ${result.edges.length} of ${result.total} edges\n\n`;
+
+  if (result.edges.length === 0) {
+    output += 'No edges found matching the filters.\n';
+    return output;
+  }
+
+  result.edges.forEach((edge: any, i: number) => {
+    output += `${i + 1}. **${edge.relationship_type}**\n`;
+    output += `   - From: ${edge.from_concept_id}\n`;
+    output += `   - To: ${edge.to_concept_id}\n`;
+    output += `   - Category: ${edge.category}\n`;
+    output += `   - Confidence: ${(edge.confidence * 100).toFixed(0)}%\n`;
+    output += `   - Source: ${edge.source}\n`;
+    output += '\n';
+  });
+
+  if (result.total > result.offset + result.edges.length) {
+    output += `Use offset=${result.offset + result.limit} to see more.\n`;
+  }
+
+  return output;
+}
+
+/**
+ * Format batch create response for MCP output
+ */
+export function formatGraphBatchResult(result: any): string {
+  let output = `# Batch Create Results\n\n`;
+
+  output += `## Summary\n\n`;
+  output += `- **Concepts Created:** ${result.concepts_created}\n`;
+  output += `- **Concepts Matched:** ${result.concepts_matched}\n`;
+  output += `- **Edges Created:** ${result.edges_created}\n`;
+
+  if (result.errors && result.errors.length > 0) {
+    output += `- **Errors:** ${result.errors.length}\n`;
+  }
+
+  if (result.concept_results && result.concept_results.length > 0) {
+    output += `\n## Concept Results\n\n`;
+    result.concept_results.forEach((item: any, i: number) => {
+      const statusIcon = item.status === 'created' ? '✓' : item.status === 'matched' ? '⊘' : '✗';
+      output += `${i + 1}. ${statusIcon} **${item.label}** - ${item.status}`;
+      if (item.id) {
+        output += ` (${item.id})`;
+      }
+      if (item.error) {
+        output += ` - ${item.error}`;
+      }
+      output += '\n';
+    });
+  }
+
+  if (result.edge_results && result.edge_results.length > 0) {
+    output += `\n## Edge Results\n\n`;
+    result.edge_results.forEach((item: any, i: number) => {
+      const statusIcon = item.status === 'created' ? '✓' : item.status === 'error' ? '✗' : '⊘';
+      output += `${i + 1}. ${statusIcon} **${item.label}** - ${item.status}`;
+      if (item.id) {
+        output += ` (${item.id})`;
+      }
+      if (item.error) {
+        output += ` - ${item.error}`;
+      }
+      output += '\n';
+    });
+  }
+
+  if (result.errors && result.errors.length > 0) {
+    output += `\n## Errors\n\n`;
+    result.errors.forEach((error: string, i: number) => {
+      output += `${i + 1}. ${error}\n`;
+    });
+  }
+
+  return output;
+}
+
 export function formatDocumentConceptsDetailed(docResult: any, conceptDetails: any[]): string {
   let output = `# Concepts: ${docResult.filename}\n\n`;
   output += `Document: ${docResult.document_id}\n`;
