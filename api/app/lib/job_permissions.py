@@ -60,16 +60,7 @@ class JobPermissionChecker:
         job_owner_id = job.get('user_id')
         is_system_job = self._is_system_job(job)
 
-        # Build resource context for filter-based permission check
-        # Maps to scope_filter values in role_permissions table:
-        #   - {"owner": "self"} matches if user owns the job
-        #   - {"is_system": true} matches if job is a system job
-        resource_context = {
-            'owner': 'self' if job_owner_id == user_id else 'other',
-            'is_system': is_system_job
-        }
-
-        # For system jobs, also check if user has system job permissions
+        # For system jobs, check system job permissions
         if is_system_job:
             return self.checker.can_user(
                 user_id=user_id,
@@ -78,17 +69,17 @@ class JobPermissionChecker:
                 resource_context={'is_system': True}
             )
 
-        # For user jobs, check both global and owner-scoped permissions
-        # Global permission covers all user jobs
+        # For user jobs, check global permission first (covers all user jobs)
         if self.checker.can_user(user_id, action, 'jobs'):
             return True
 
-        # Filter-scoped permission for own jobs
+        # Check filter-scoped permission for own jobs
+        # Maps to scope_filter {"owner": "self"} in role_permissions table
         return self.checker.can_user(
             user_id=user_id,
             action=action,
             resource_type='jobs',
-            resource_context=resource_context
+            resource_context={'owner': 'self' if job_owner_id == user_id else 'other'}
         )
 
     def get_job_list_filter(self, user_id: int) -> Dict[str, Any]:
@@ -181,25 +172,6 @@ class JobPermissionChecker:
             return True
 
         return False
-
-
-def get_job_permission_checker() -> JobPermissionChecker:
-    """
-    Factory function to create a JobPermissionChecker with DB connection.
-
-    Returns:
-        JobPermissionChecker instance
-
-    Usage in routes:
-        checker = get_job_permission_checker()
-        if not checker.can_access_job(current_user.id, 'read', job):
-            raise HTTPException(403, "Not authorized")
-    """
-    from api.app.dependencies.auth import get_db_connection
-
-    conn = get_db_connection()
-    permission_checker = PermissionChecker(conn)
-    return JobPermissionChecker(permission_checker)
 
 
 # Context manager for proper connection cleanup
