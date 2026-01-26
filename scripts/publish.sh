@@ -54,6 +54,7 @@ DRY_RUN=false
 SKIP_BUILD=false
 FORCE=false
 USE_TESTPYPI=false
+MULTI_ARCH=false
 DESCRIPTION=""
 COMMAND=""
 BUMP_TYPE=""
@@ -82,6 +83,7 @@ Options:
   --dry-run                 Build locally but don't push to registries
   --skip-build              Skip build step (push existing images only)
   --force                   Bypass "already published" checks
+  --multi-arch              Build for amd64 + arm64 (auto on release branch)
   --test                    Use TestPyPI instead of PyPI (fuse only)
   -h, --help                Show this help
 
@@ -131,6 +133,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --test)
             USE_TESTPYPI=true
+            shift
+            ;;
+        --multi-arch)
+            MULTI_ARCH=true
             shift
             ;;
         -m|--message)
@@ -580,10 +586,21 @@ cmd_images() {
         TARGETS=(api web operator)
     fi
 
+    # Auto-enable multi-arch on release branch
+    local use_multi_arch="$MULTI_ARCH"
+    if [ "$GIT_BRANCH" = "release" ] || [ "$GIT_BRANCH" = "main" ]; then
+        use_multi_arch=true
+    fi
+
     echo -e "${BOLD}Publishing Docker images to GHCR${NC}"
     echo -e "  Version: ${BLUE}$VERSION${NC}"
     echo -e "  Commit:  ${BLUE}$GIT_SHA${NC}"
     echo -e "  Targets: ${BLUE}${TARGETS[*]}${NC}"
+    if [ "$use_multi_arch" = "true" ]; then
+        echo -e "  Arch:    ${CYAN}linux/amd64, linux/arm64${NC}"
+    else
+        echo -e "  Arch:    ${DIM}host only (use --multi-arch for amd64+arm64)${NC}"
+    fi
     [ -n "$DESCRIPTION" ] && echo -e "  Message: ${BLUE}$DESCRIPTION${NC}"
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
@@ -597,6 +614,16 @@ cmd_images() {
         echo -e "${RED}Not authenticated to GHCR${NC}"
         echo "Run: docker login ghcr.io"
         exit 1
+    fi
+
+    # Ensure buildx builder exists for multi-arch
+    if [ "$use_multi_arch" = "true" ]; then
+        if ! docker buildx inspect multiarch &>/dev/null; then
+            echo -e "${BLUE}→ Creating buildx builder for multi-arch...${NC}"
+            docker buildx create --name multiarch --use --bootstrap
+        else
+            docker buildx use multiarch
+        fi
     fi
 
     cd "$PROJECT_ROOT"
@@ -639,20 +666,43 @@ cmd_images() {
             )
             [ -n "$DESCRIPTION" ] && label_args+=(--label "org.opencontainers.image.description=$DESCRIPTION")
 
-            docker build \
-                --file "$dockerfile" \
-                --build-arg GIT_COMMIT="$GIT_SHA" \
-                --build-arg BUILD_DATE="$BUILD_DATE" \
-                "${label_args[@]}" \
-                --tag "$full_image:latest" \
-                --tag "$full_image:$VERSION" \
-                --tag "$full_image:sha-$GIT_SHA" \
-                "$context"
+            if [ "$use_multi_arch" = "true" ]; then
+                # Multi-arch build with buildx (builds and pushes in one step)
+                local push_flag=""
+                [ "$DRY_RUN" = "false" ] && push_flag="--push"
 
-            echo -e "${GREEN}✓ Built $full_image${NC}"
+                docker buildx build \
+                    --platform linux/amd64,linux/arm64 \
+                    --file "$dockerfile" \
+                    --build-arg GIT_COMMIT="$GIT_SHA" \
+                    --build-arg BUILD_DATE="$BUILD_DATE" \
+                    "${label_args[@]}" \
+                    --tag "$full_image:latest" \
+                    --tag "$full_image:$VERSION" \
+                    --tag "$full_image:sha-$GIT_SHA" \
+                    $push_flag \
+                    "$context"
+
+                echo -e "${GREEN}✓ Built $full_image (amd64 + arm64)${NC}"
+                [ "$DRY_RUN" = "false" ] && echo -e "${GREEN}✓ Pushed $full_image:$VERSION${NC}"
+            else
+                # Single-arch build (host architecture)
+                docker build \
+                    --file "$dockerfile" \
+                    --build-arg GIT_COMMIT="$GIT_SHA" \
+                    --build-arg BUILD_DATE="$BUILD_DATE" \
+                    "${label_args[@]}" \
+                    --tag "$full_image:latest" \
+                    --tag "$full_image:$VERSION" \
+                    --tag "$full_image:sha-$GIT_SHA" \
+                    "$context"
+
+                echo -e "${GREEN}✓ Built $full_image${NC}"
+            fi
         fi
 
-        if [ "$DRY_RUN" = "false" ]; then
+        # Push for single-arch (multi-arch pushes during build)
+        if [ "$DRY_RUN" = "false" ] && [ "$use_multi_arch" = "false" ]; then
             echo -e "${BLUE}→ Pushing $target...${NC}"
             docker push "$full_image:latest"
             docker push "$full_image:$VERSION"
