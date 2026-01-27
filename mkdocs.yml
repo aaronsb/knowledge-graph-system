@@ -36,12 +36,10 @@ plugins:
 
 # Navigation structure (order controlled, content auto-generated)
 nav:
-  - Documentation Index: README.md
-  - Guides:
-    - 5-Minute Cold Start: guides/COLD-START.md
+  - Home: README.md
+  - Getting Started:
     - Deployment Guide: guides/DEPLOYMENT.md
     - FUSE Filesystem: guides/FUSE_FILESYSTEM.md
-    - Vocabulary Categories: guides/VOCABULARY_CATEGORIES.md
   - Manual:
     - manual/README.md
     - Introduction: manual/00-introduction/
@@ -51,14 +49,18 @@ nav:
     - Security & Access: manual/04-security-and-access/
     - Maintenance: manual/05-maintenance/
     - Reference: manual/06-reference/
-  - Tool Reference:
+  - Reference:
     - reference/README.md
     - CLI Commands: reference/cli/
     - MCP Tools: reference/mcp/
-  - API Reference:
     - REST API: reference/api/
-  - Architecture: architecture/
-  - Development: development/
+    - Architecture Overview: reference/ARCHITECTURE_OVERVIEW.md
+    - Operator Architecture: reference/OPERATOR_ARCHITECTURE.md
+    - Storage Architecture: reference/STORAGE-ARCHITECTURE.md
+  - Guides: guides/
+  - Architecture (ADRs): architecture/
+  - Operating: operating/
+  - Research: research/
   - Testing: testing/
 
 # Build settings
