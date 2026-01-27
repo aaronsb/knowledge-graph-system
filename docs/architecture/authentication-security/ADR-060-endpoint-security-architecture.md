@@ -1,12 +1,11 @@
-# ADR-060: API Endpoint Security Architecture
+---
+status: Proposed
+date: 2025-01-05
+deciders:
+  - Engineering Team
+---
 
-**Status:** Proposed
-**Date:** 2025-01-05
-**Deciders:** Engineering Team
-**Related ADRs:**
-- [ADR-028: Dynamic RBAC System](./ADR-028-dynamic-rbac-system.md) - RBAC implementation
-- [ADR-054: OAuth Client Management](./ADR-054-oauth-client-management.md) - OAuth 2.0 authentication
-- [ADR-027: User Management API](./ADR-027-user-management-api.md) - User operations
+# ADR-060: API Endpoint Security Architecture
 
 ## Overview
 

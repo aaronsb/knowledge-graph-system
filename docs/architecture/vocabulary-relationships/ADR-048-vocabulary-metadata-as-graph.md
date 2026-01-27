@@ -1,12 +1,16 @@
+---
+status: Accepted
+date: 2025-10-27
+deciders:
+  - System Architects
+related:
+  - ADR-047
+  - ADR-032
+  - ADR-046
+---
+
 # ADR-048: Vocabulary Metadata as First-Class Graph
 
-**Status:** Implemented ✅ - All Phases Complete
-**Date:** 2025-10-27
-**Completion Date:** 2025-10-27
-**Deciders:** System Architects
-**Related:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
-
-**Implementation Status:**
 - ✅ **Phase 1 Complete** - GraphQueryFacade, query linter, CI integration
 - ✅ **Phase 2 Complete** - Critical path migrations (restore worker, health checks)
 - ✅ **Phase 3.1 Complete** - Vocabulary graph nodes created (migration 014)

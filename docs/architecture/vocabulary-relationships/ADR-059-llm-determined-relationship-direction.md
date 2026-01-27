@@ -1,9 +1,16 @@
-# ADR-059: LLM-Determined Relationship Direction Semantics
+---
+status: Proposed
+date: 2025-10-27
+deciders:
+  - System Architects
+related:
+  - ADR-047
+  - ADR-048
+  - ADR-022
+  - ADR-025
+---
 
-**Status:** Proposed
-**Date:** 2025-10-27 (Renumbered from ADR-049: 2025-11-04)
-**Deciders:** System Architects
-**Related:** ADR-047 (Probabilistic Categorization), ADR-048 (Vocabulary as Graph), ADR-022 (Semantic Taxonomy), ADR-025 (Dynamic Vocabulary)
+# ADR-059: LLM-Determined Relationship Direction Semantics
 
 ## Overview
 

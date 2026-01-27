@@ -1,14 +1,17 @@
-# ADR-078: Embedding Landscape Explorer
+---
+status: Accepted
+date: 2025-12-11
+updated: 2025-12-12
+deciders:
+  - Engineering Team
+related:
+  - ADR-070
+  - ADR-063
+  - ADR-044
+  - ADR-058
+---
 
-**Status:** Accepted (Phase 1 implemented)
-**Date:** 2025-12-11
-**Updated:** 2025-12-12
-**Deciders:** Engineering Team
-**Related ADRs:**
-- ADR-070: Polarity Axis Analysis (downstream consumer of discovered axes)
-- ADR-063: Semantic Diversity as Authenticity Signal (diversity overlay)
-- ADR-044: Probabilistic Truth Convergence (grounding overlay)
-- ADR-058: Polarity Axis Triangulation (mathematical foundation)
+# ADR-078: Embedding Landscape Explorer
 
 ## Overview
 

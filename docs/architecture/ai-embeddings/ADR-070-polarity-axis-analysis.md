@@ -1,15 +1,17 @@
-# ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
+---
+status: Accepted
+date: 2025-11-29
+deciders:
+  - System Architect
+related:
+  - ADR-044
+  - ADR-045
+  - ADR-048
+  - ADR-058
+  - ADR-068
+---
 
-**Status:** Accepted
-**Date:** 2025-11-29
-**Implementation Date:** 2025-11-30
-**Deciders:** System Architect
-**Related ADRs:**
-- ADR-044: Probabilistic Truth Convergence (grounding calculation)
-- ADR-045: Unified Embedding Generation
-- ADR-048: GraphQueryFacade (namespace safety)
-- ADR-058: Polarity Axis Triangulation for Grounding (explains relationship to this ADR)
-- ADR-068: Unified Embedding Regeneration
+# ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
 
 ## Overview
 

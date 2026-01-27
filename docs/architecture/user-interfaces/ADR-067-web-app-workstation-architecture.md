@@ -1,14 +1,15 @@
-# ADR-067: Web Application Workstation Architecture
-
-**Status:** Proposed
-**Date:** 2025-11-18
-**Deciders:** Engineering Team
-**Related ADRs:**
-- ADR-034 (Graph Visualization Architecture) - Original explorer pattern
-- ADR-064 (Specialized Visualizations) - Additional explorer types
-- ADR-066 (Published Query Endpoints) - Block flow publishing
-
 ---
+status: Proposed
+date: 2025-11-18
+deciders:
+  - Engineering Team
+related:
+  - ADR-034
+  - ADR-064
+  - ADR-066
+---
+
+# ADR-067: Web Application Workstation Architecture
 
 ## Overview
 

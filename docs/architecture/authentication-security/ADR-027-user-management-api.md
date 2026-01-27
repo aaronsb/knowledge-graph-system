@@ -1,10 +1,15 @@
-# ADR-027: User Management API with Lightweight JWT Authentication
+---
+status: Superseded
+date: 2025-10-11
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-024
+  - ADR-054
+---
 
-**Status:** Superseded by ADR-054 (OAuth 2.0 Client Management)
-**Date:** 2025-10-11
-**Superseded Date:** 2025-11-01
-**Author:** Aaron Bockelie
-**Related ADRs:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-054 (OAuth 2.0 Client Management)
+# ADR-027: User Management API with Lightweight JWT Authentication
 
 ## Overview
 

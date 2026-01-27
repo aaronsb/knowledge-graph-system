@@ -1,9 +1,18 @@
-# ADR-088: Semantic Election Protocol for Distributed Concept Placement
+---
+status: Proposed
+date: 2026-01-17
+deciders:
+  - Engineering Team
+related:
+  - ADR-044
+  - ADR-044
+  - ADR-055
+  - ADR-055
+  - ADR-058
+  - ADR-058
+---
 
-**Status:** Proposed
-**Date:** 2026-01-17
-**Deciders:** Engineering Team
-**Related ADRs:** [ADR-044](../ai-embeddings/ADR-044-probabilistic-truth-convergence.md), [ADR-055](ADR-055-cdn-serverless-deployment-model.md), [ADR-058](../ai-embeddings/ADR-058-polarity-axis-triangulation.md)
+# ADR-088: Semantic Election Protocol for Distributed Concept Placement
 
 ## Overview
 

@@ -1,9 +1,15 @@
-# ADR-056: Timezone-Aware Datetime Utilities
+---
+status: Accepted
+date: 2025-11-03
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-054
+  - ADR-055
+---
 
-**Status:** Accepted
-**Date:** 2025-11-03
-**Implemented:** 2025-11-04
-**Related ADRs:** ADR-054 (OAuth Client Management), ADR-055 (CDN/Serverless Deployment)
+# ADR-056: Timezone-Aware Datetime Utilities
 
 ## Overview
 

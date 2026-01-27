@@ -1,8 +1,14 @@
-# ADR-055: CDN and Serverless Deployment Model
+---
+status: Proposed
+date: 2025-11-03
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-054
+---
 
-**Status:** Proposed
-**Date:** 2025-11-03
-**Related ADRs:** ADR-054 (OAuth Client Management)
+# ADR-055: CDN and Serverless Deployment Model
 
 ## Overview
 

@@ -1,10 +1,15 @@
-# ADR-034: Graph Visualization & Interactive Query Explorers
+---
+status: Proposed
+date: 2025-10-16
+deciders:
+  - Development Team
+related:
+  - ADR-016
+  - ADR-029
+  - ADR-033
+---
 
-**Status:** Proposed
-**Date:** 2025-10-16
-**Last Updated:** 2025-10-16
-**Deciders:** Development Team
-**Related:** ADR-016 (Apache AGE Migration), ADR-029 (CLI Theory of Operation), ADR-033 (Multimodal Ingestion)
+# ADR-034: Graph Visualization & Interactive Query Explorers
 
 ## Overview
 

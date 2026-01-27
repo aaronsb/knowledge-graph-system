@@ -1,3 +1,11 @@
+---
+status: Draft
+date: 2026-01-25
+deciders:
+  - aaronsb
+  - claude
+---
+
 # ADR-089: Deterministic Node and Edge Creation
 
 ## Status

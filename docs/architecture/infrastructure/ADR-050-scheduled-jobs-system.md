@@ -1,9 +1,15 @@
-# ADR-050: Scheduled Jobs System
+---
+status: Proposed
+date: 2025-10-28
+deciders:
+  - Development Team
+related:
+  - ADR-012
+  - ADR-014
+  - ADR-049
+---
 
-**Status:** Proposed
-**Date:** 2025-10-28
-**Deciders:** Development Team
-**Related:** ADR-012 (API Server Architecture), ADR-014 (Job Approval Workflow), ADR-049 (Rate Limiting)
+# ADR-050: Scheduled Jobs System
 
 ## Overview
 

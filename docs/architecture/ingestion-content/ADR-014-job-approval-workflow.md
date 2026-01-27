@@ -1,3 +1,11 @@
+---
+status: Draft
+date: 2025-10-07
+deciders:
+  - aaronsb
+  - claude
+---
+
 # ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
 
 ## Status
@@ -832,5 +840,5 @@ if estimated_cost < threshold:
 
 ## Authors
 
-- @aaronsb (user request and requirements)
+- aaronsb (user request and requirements)
 - @claude (ADR documentation and implementation design)

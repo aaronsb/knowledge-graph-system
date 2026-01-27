@@ -1,9 +1,15 @@
-# ADR-033: Multimodal Image Ingestion with Configurable Prompt System
+---
+status: Proposed
+date: 2025-10-16
+deciders:
+  - Development Team
+related:
+  - ADR-014
+  - ADR-015
+  - ADR-023
+---
 
-**Status:** Proposed
-**Date:** 2025-10-16
-**Deciders:** Development Team
-**Related:** ADR-014 (Job Approval Workflow), ADR-015 (Smart Chunking), ADR-023 (Markdown Preprocessing)
+# ADR-033: Multimodal Image Ingestion with Configurable Prompt System
 
 ## Overview
 

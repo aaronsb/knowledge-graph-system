@@ -1,10 +1,15 @@
-# ADR-042: Local LLM Inference for Concept Extraction
+---
+status: Accepted
+date: 2025-10-22
+deciders:
+  - System Architects
+related:
+  - ADR-039
+  - ADR-041
+  - ADR-025
+---
 
-**Status:** Accepted
-**Date:** 2025-10-22
-**Implemented:** 2025-10-22
-**Deciders:** System Architects
-**Related:** ADR-039 (Local Embedding Service), ADR-041 (AI Extraction Config), ADR-025 (Dynamic Relationship Vocabulary)
+# ADR-042: Local LLM Inference for Concept Extraction
 
 ## Overview
 

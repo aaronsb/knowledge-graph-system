@@ -1,9 +1,14 @@
-# ADR-041: AI Extraction Provider Configuration
+---
+status: Proposed
+date: 2025-10-21
+deciders:
+  - Development Team
+related:
+  - ADR-031
+  - ADR-039
+---
 
-**Status:** Proposed
-**Date:** 2025-10-21
-**Deciders:** Development Team
-**Related:** ADR-031 (Encrypted API Key Storage), ADR-039 (Local Embedding Service)
+# ADR-041: AI Extraction Provider Configuration
 
 ## Overview
 

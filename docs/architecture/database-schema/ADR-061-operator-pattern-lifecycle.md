@@ -1,8 +1,12 @@
-# ADR-061: Operator Pattern for Platform Lifecycle Management
+---
+status: Accepted
+date: 2025-01-07
+deciders:
+  - aaronsb
+  - claude
+---
 
-**Status:** Accepted
-**Date:** 2025-01-07
-**Replaces:** Previous containerization attempts with excessive script sprawl
+# ADR-061: Operator Pattern for Platform Lifecycle Management
 
 ## Overview
 

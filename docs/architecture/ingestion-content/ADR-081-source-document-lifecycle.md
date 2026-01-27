@@ -1,10 +1,15 @@
-# ADR-081: Source Document Lifecycle
+---
+status: Proposed
+date: 2025-12-14
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-080
+  - ADR-057
+---
 
-**Status:** Proposed
-**Date:** 2025-12-14
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-080 (Garage Service Architecture), ADR-057 (Multimodal Image Ingestion)
-**Closes:** #172 (partially)
+# ADR-081: Source Document Lifecycle
 
 ## Context
 

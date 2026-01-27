@@ -1,8 +1,12 @@
-# ADR-072: Concept Matching Strategies and Configuration
+---
+status: Draft
+date: 2025-12-04
+deciders:
+  - aaronsb
+  - claude
+---
 
-**Status:** Draft
-**Date:** 2025-12-04
-**Supersedes:** Initial ingestion implementation (no formal ADR)
+# ADR-072: Concept Matching Strategies and Configuration
 
 ## Context
 

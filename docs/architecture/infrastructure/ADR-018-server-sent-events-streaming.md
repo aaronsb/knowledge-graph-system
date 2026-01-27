@@ -1,3 +1,11 @@
+---
+status: Draft
+date: 2025-10-09
+deciders:
+  - aaronsb
+  - claude
+---
+
 # ADR-018: Server-Sent Events for Real-Time Progress Streaming
 
 **Status**: Proposed

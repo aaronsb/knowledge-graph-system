@@ -1,3 +1,11 @@
+---
+status: Draft
+date: 2025-11-08
+deciders:
+  - aaronsb
+  - claude
+---
+
 # ADR-063: Semantic Diversity as Authenticity Signal
 
 **Status**: Proposed

@@ -1,10 +1,14 @@
-# ADR-035: Explorer Methods, Uses, and Capabilities
+---
+status: Proposed
+date: 2025-10-17
+deciders:
+  - Development Team
+related:
+  - ADR-034
+  - ADR-037
+---
 
-**Status:** Proposed
-**Date:** 2025-10-17
-**Last Updated:** 2025-10-17
-**Deciders:** Development Team
-**Related:** ADR-034 (Graph Visualization Architecture), ADR-037 (Human-Guided Graph Editing)
+# ADR-035: Explorer Methods, Uses, and Capabilities
 
 ## Overview
 

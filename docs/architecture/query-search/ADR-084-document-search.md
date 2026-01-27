@@ -1,8 +1,12 @@
-# ADR-084: Document-Level Search
+---
+status: Proposed
+date: 2026-01-03
+deciders:
+  - aaronsb
+  - claude
+---
 
-**Status:** Proposed
-**Date:** 2026-01-03
-**Deciders:** @aaronsb, @claude
+# ADR-084: Document-Level Search
 
 ## Context
 

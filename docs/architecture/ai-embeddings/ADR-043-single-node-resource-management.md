@@ -1,10 +1,14 @@
-# ADR-043: Single-Node Resource Management for Local Inference
+---
+status: Accepted
+date: 2025-10-23
+deciders:
+  - System Architects
+related:
+  - ADR-039
+  - ADR-042
+---
 
-**Status:** Accepted
-**Date:** 2025-10-23
-**Implemented:** 2025-10-23
-**Deciders:** System Architects
-**Related:** ADR-039 (Local Embedding Service), ADR-042 (Local LLM Inference)
+# ADR-043: Single-Node Resource Management for Local Inference
 
 ## Overview
 

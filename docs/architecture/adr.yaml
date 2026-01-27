@@ -1,0 +1,86 @@
+# ADR Configuration
+# This file defines the domain numbering system and validation rules.
+# Used by: docs/scripts/adr
+
+# Domain Number Series
+# Each domain reserves a range of 100 numbers for ADRs.
+# New ADRs are assigned the next available number in their domain.
+domains:
+  infra:
+    range: [100, 199]
+    name: Infrastructure
+    description: Containers, deployment, backup, storage, networking
+    folder: infrastructure
+
+  db:
+    range: [200, 299]
+    name: Database/Schema
+    description: Apache AGE, migrations, schema design, PostgreSQL
+    folder: database-schema
+
+  ingest:
+    range: [300, 399]
+    name: Ingestion
+    description: Content processing, jobs, extraction, deduplication
+    folder: ingestion-content
+
+  auth:
+    range: [400, 499]
+    name: Auth/Security
+    description: RBAC, OAuth, API keys, endpoint security
+    folder: authentication-security
+
+  query:
+    range: [500, 599]
+    name: Query/Search
+    description: Pathfinding, projections, diversity, search
+    folder: query-search
+
+  vocab:
+    range: [600, 699]
+    name: Vocabulary
+    description: Relationships, grounding, categorization
+    folder: vocabulary-relationships
+
+  ui:
+    range: [700, 799]
+    name: Interfaces
+    description: CLI, web, FUSE, MCP, visualization
+    folder: [user-interfaces, visualization]
+
+  ai:
+    range: [800, 899]
+    name: AI/Embeddings
+    description: Providers, extraction, convergence, prompts
+    folder: ai-embeddings
+
+  meta:
+    range: [900, 999]
+    name: Meta/Process
+    description: Documentation, workflow, access models, ADR system
+    folder: access-workflow
+
+# Valid ADR statuses
+statuses:
+  - Draft       # Initial creation, not yet proposed
+  - Proposed    # Under discussion/review
+  - Accepted    # Approved and ready for implementation
+  - Superseded  # Replaced by another ADR
+  - Deprecated  # No longer relevant
+
+# Default values for new ADRs
+defaults:
+  deciders:
+    - aaronsb
+    - claude
+  status: Draft
+
+# Legacy ADR range (pre-domain numbering)
+# ADRs in this range are shown separately in the index
+legacy:
+  range: [1, 99]
+  label: "Legacy (Pre-Domain Numbering)"
+
+# Viewer command for `adr view`
+# Use {file} as placeholder for the file path
+viewer: glow {file}

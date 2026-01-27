@@ -1,9 +1,14 @@
-# ADR-020: Admin Module Architecture Pattern
+---
+status: Accepted
+date: 2025-10-09
+deciders:
+  - Development Team
+related:
+  - ADR-015
+  - ADR-016
+---
 
-**Status:** Accepted
-**Date:** 2025-10-09
-**Deciders:** Development Team
-**Related:** ADR-015 (Backup/Restore), ADR-016 (Apache AGE)
+# ADR-020: Admin Module Architecture Pattern
 
 ## Overview
 

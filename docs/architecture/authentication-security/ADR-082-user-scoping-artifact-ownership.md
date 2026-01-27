@@ -1,9 +1,15 @@
-# ADR-082: User Scoping and Artifact Ownership Model
+---
+status: Accepted
+date: 2025-12-17
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-028
+  - ADR-079
+---
 
-**Status:** Accepted
-**Date:** 2025-12-17
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-028 (Dynamic RBAC), ADR-079 (Projection Storage)
+# ADR-082: User Scoping and Artifact Ownership Model
 
 ## Context
 

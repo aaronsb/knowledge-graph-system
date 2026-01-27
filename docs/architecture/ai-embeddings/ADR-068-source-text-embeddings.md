@@ -1,10 +1,11 @@
-# ADR-068: Source Text Embeddings for Grounding Truth Retrieval
+---
+status: Accepted
+date: 2025-11-27
+deciders:
+  - System Architect
+---
 
-**Status:** Accepted - Partially Implemented (Phase 1-3, 5 complete, Phase 4 pending)
-**Date:** 2025-11-27
-**Updated:** 2025-11-29 (Phase 5 complete: Source search interfaces - CLI, MCP, Web UI)
-**Deciders:** System Architect
-**Tags:** #embeddings #source-retrieval #async-processing #lcm
+# ADR-068: Source Text Embeddings for Grounding Truth Retrieval
 
 ## Overview
 

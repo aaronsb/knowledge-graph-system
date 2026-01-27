@@ -1,9 +1,19 @@
-# ADR-021: Live Man Switch - AI Safety for Critical Operations
+---
+status: Superseded
+date: 2025-10-09
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-020
+deprecation_note: >
+  Implemented and effective - prevented several accidental database purges.
+  Superseded when deployment model matured to containerized operations with
+  RBAC (ADR-028, ADR-074). Architectural controls now handle what physical
+  confirmation once did.
+---
 
-**Status:** Accepted
-**Date:** 2025-10-09
-**Deciders:** Development Team
-**Related:** ADR-020 (Admin Module Architecture)
+# ADR-021: Live Man Switch - AI Safety for Critical Operations
 
 ## Overview
 

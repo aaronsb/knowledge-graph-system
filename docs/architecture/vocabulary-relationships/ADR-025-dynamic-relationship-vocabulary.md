@@ -1,9 +1,14 @@
-# ADR-025: Dynamic Relationship Vocabulary Management
+---
+status: Proposed
+date: 2025-10-10
+deciders:
+  - System Architects
+related:
+  - ADR-024
+  - ADR-004
+---
 
-**Status:** Proposed
-**Date:** 2025-10-10
-**Deciders:** System Architects
-**Related:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-004 (Pure Graph Design)
+# ADR-025: Dynamic Relationship Vocabulary Management
 
 ## Overview
 

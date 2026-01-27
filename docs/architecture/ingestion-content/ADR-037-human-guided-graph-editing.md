@@ -1,13 +1,17 @@
-# ADR-037: Human-Guided Graph Editing
+---
+status: Proposed
+date: 2025-10-17
+deciders:
+  - Aaron Bockelie
+  - Claude Code
+related:
+  - ADR-014
+  - ADR-016
+  - ADR-033
+  - ADR-036
+---
 
-**Status:** Proposed
-**Date:** 2025-10-17
-**Deciders:** Aaron Bockelie, Claude Code
-**Related ADRs:**
-- ADR-014: Job Approval Workflow
-- ADR-016: Apache AGE Migration
-- ADR-033: Multimodal Image Ingestion
-- ADR-036: Universal Visual Query Builder
+# ADR-037: Human-Guided Graph Editing
 
 ## Overview
 

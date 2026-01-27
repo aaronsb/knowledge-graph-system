@@ -1,9 +1,14 @@
-# ADR-058: Polarity Axis Triangulation for Grounding Calculation
+---
+status: Accepted
+date: 2025-11-04
+deciders:
+  - Engineering Team
+related:
+  - ADR-044
+  - ADR-045
+---
 
-**Status:** Accepted
-**Date:** 2025-11-04
-**Deciders:** Engineering Team
-**Related ADRs:** ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
+# ADR-058: Polarity Axis Triangulation for Grounding Calculation
 
 ## Overview
 

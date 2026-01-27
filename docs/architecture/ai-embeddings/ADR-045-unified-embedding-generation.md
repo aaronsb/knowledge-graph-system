@@ -1,9 +1,17 @@
-# ADR-045: Unified Embedding Generation System
+---
+status: Proposed
+date: 2025-10-25
+deciders:
+  - aaronsb
+  - claude
+related:
+  - ADR-044
+  - ADR-046
+  - ADR-039
+  - ADR-032
+---
 
-**Status:** Proposed
-**Date:** 2025-10-25
-**Authors:** System Architecture Team
-**Related:** ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)
+# ADR-045: Unified Embedding Generation System
 
 ## Overview
 

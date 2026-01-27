@@ -1,9 +1,11 @@
-# ADR-013: Unified TypeScript Client (CLI + MCP Server)
+---
+status: Accepted
+date: 2025-10-06
+deciders:
+  - Development Team
+---
 
-**Status:** Implemented
-**Date:** 2025-10-06 (Updated: 2025-11-08)
-**Deciders:** Development Team
-**Pattern Source:** Anthropic's `@modelcontextprotocol` packages
+# ADR-013: Unified TypeScript Client (CLI + MCP Server)
 
 ## Overview
 

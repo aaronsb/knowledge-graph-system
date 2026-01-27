@@ -1,11 +1,14 @@
-# ADR-066: Published Query Endpoints
+---
+status: Proposed
+date: 2025-11-18
+deciders:
+  - Engineering Team
+related:
+  - ADR-031
+  - ADR-014
+---
 
-**Status:** Proposed
-**Date:** 2025-11-18
-**Deciders:** Engineering Team
-**Related ADRs:**
-- ADR-031 (Encrypted API Key Storage) - OAuth/auth infrastructure
-- ADR-014 (Job Approval Workflow) - Existing approval patterns
+# ADR-066: Published Query Endpoints
 
 ## Overview
 
