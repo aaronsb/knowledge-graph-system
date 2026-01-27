@@ -1,0 +1,537 @@
+#!/usr/bin/env python3
+"""
+ADR - Architecture Decision Record CLI Tool
+
+A librarian for managing Architecture Decision Records.
+
+Usage:
+    adr list [--domain DOMAIN] [--status STATUS]
+    adr new <domain> <title>
+    adr lint [--check] [paths...]
+    adr index
+    adr domains
+
+Domain Number Series:
+    100-199: infra      Infrastructure (containers, deployment, backup)
+    200-299: db         Database/Schema (AGE, migrations, architecture)
+    300-399: ingest     Ingestion (content, jobs, extraction)
+    400-499: auth       Auth/Security (RBAC, OAuth, API keys)
+    500-599: query      Query/Search (pathfinding, projections)
+    600-699: vocab      Vocabulary (relationships, grounding)
+    700-799: ui         Interfaces (CLI, web, FUSE, MCP)
+    800-899: ai         AI/Embeddings (providers, extraction)
+    900-999: meta       Meta/Process (docs, workflow, access)
+"""
+
+import argparse
+import re
+import sys
+from datetime import date
+from pathlib import Path
+from dataclasses import dataclass, field
+from typing import Optional
+
+# Check for PyYAML
+try:
+    import yaml
+except ImportError:
+    print("Error: PyYAML is required. Install with: pip install pyyaml", file=sys.stderr)
+    print("       Or system-wide: sudo apt install python3-yaml", file=sys.stderr)
+    sys.exit(1)
+
+# ============================================================================
+# Domain Configuration
+# ============================================================================
+
+DOMAINS = {
+    'infra': {
+        'range': (100, 199),
+        'name': 'Infrastructure',
+        'description': 'Containers, deployment, backup, storage, networking',
+        'folder': 'infrastructure',
+    },
+    'db': {
+        'range': (200, 299),
+        'name': 'Database/Schema',
+        'description': 'Apache AGE, migrations, schema design, PostgreSQL',
+        'folder': 'database-schema',
+    },
+    'ingest': {
+        'range': (300, 399),
+        'name': 'Ingestion',
+        'description': 'Content processing, jobs, extraction, deduplication',
+        'folder': 'ingestion-content',
+    },
+    'auth': {
+        'range': (400, 499),
+        'name': 'Auth/Security',
+        'description': 'RBAC, OAuth, API keys, endpoint security',
+        'folder': 'authentication-security',
+    },
+    'query': {
+        'range': (500, 599),
+        'name': 'Query/Search',
+        'description': 'Pathfinding, projections, diversity, search',
+        'folder': 'query-search',
+    },
+    'vocab': {
+        'range': (600, 699),
+        'name': 'Vocabulary',
+        'description': 'Relationships, grounding, categorization',
+        'folder': 'vocabulary-relationships',
+    },
+    'ui': {
+        'range': (700, 799),
+        'name': 'Interfaces',
+        'description': 'CLI, web, FUSE, MCP, visualization',
+        'folder': 'user-interfaces',
+    },
+    'ai': {
+        'range': (800, 899),
+        'name': 'AI/Embeddings',
+        'description': 'Providers, extraction, convergence, prompts',
+        'folder': 'ai-embeddings',
+    },
+    'meta': {
+        'range': (900, 999),
+        'name': 'Meta/Process',
+        'description': 'Documentation, workflow, access models',
+        'folder': 'access-workflow',
+    },
+}
+
+VALID_STATUSES = {'Draft', 'Proposed', 'Accepted', 'Superseded', 'Deprecated'}
+
+# ============================================================================
+# Data Classes
+# ============================================================================
+
+@dataclass
+class ADRInfo:
+    path: Path
+    number: Optional[str] = None
+    title: Optional[str] = None
+    status: Optional[str] = None
+    date: Optional[str] = None
+    deciders: list = field(default_factory=list)
+    related: list = field(default_factory=list)
+    domain: Optional[str] = None
+    issues: list = field(default_factory=list)
+
+@dataclass
+class Issue:
+    message: str
+    severity: str = 'warning'
+
+# ============================================================================
+# Parsing
+# ============================================================================
+
+TITLE_PATTERN = re.compile(r'^# ADR-(\d+(?:\.\d+)?): (.+)$')
+
+def parse_adr(path: Path) -> ADRInfo:
+    """Parse an ADR file and extract metadata."""
+    info = ADRInfo(path=path)
+
+    try:
+        content = path.read_text()
+    except Exception as e:
+        info.issues.append(Issue(f"Cannot read: {e}", 'error'))
+        return info
+
+    lines = content.split('\n')
+
+    # Parse YAML frontmatter
+    if lines and lines[0].strip() == '---':
+        end_idx = None
+        for i, line in enumerate(lines[1:], 1):
+            if line.strip() == '---':
+                end_idx = i
+                break
+
+        if end_idx:
+            yaml_content = '\n'.join(lines[1:end_idx])
+            try:
+                data = yaml.safe_load(yaml_content) or {}
+                info.status = data.get('status')
+                info.date = str(data.get('date', '')) if data.get('date') else None
+                deciders = data.get('deciders', [])
+                info.deciders = deciders if isinstance(deciders, list) else [deciders]
+                info.related = data.get('related', [])
+            except yaml.YAMLError as e:
+                info.issues.append(Issue(f"YAML error: {e}", 'error'))
+
+    # Find title
+    for line in lines:
+        match = TITLE_PATTERN.match(line)
+        if match:
+            info.number = match.group(1)
+            info.title = match.group(2)
+            break
+
+    # Determine domain from number
+    if info.number:
+        try:
+            base_num = int(info.number.split('.')[0])
+            for domain, config in DOMAINS.items():
+                if config['range'][0] <= base_num <= config['range'][1]:
+                    info.domain = domain
+                    break
+        except ValueError:
+            pass
+
+    # Validation
+    if not info.number:
+        info.issues.append(Issue("Missing ADR number in title", 'error'))
+    if not info.status:
+        info.issues.append(Issue("Missing status", 'error'))
+    elif info.status not in VALID_STATUSES:
+        info.issues.append(Issue(f"Invalid status: {info.status}", 'warning'))
+    if not info.date:
+        info.issues.append(Issue("Missing date", 'error'))
+    if not info.deciders:
+        info.issues.append(Issue("Missing deciders", 'warning'))
+
+    return info
+
+def find_adrs() -> list[Path]:
+    """Find all ADR files."""
+    docs_root = Path(__file__).parent.parent
+    arch_dir = docs_root / 'architecture'
+    return sorted(arch_dir.rglob("ADR-*.md"))
+
+def get_all_adrs() -> list[ADRInfo]:
+    """Parse all ADR files."""
+    return [parse_adr(p) for p in find_adrs()]
+
+# ============================================================================
+# Commands
+# ============================================================================
+
+def cmd_list(args):
+    """List all ADRs."""
+    adrs = get_all_adrs()
+
+    # Filter by domain
+    if args.domain:
+        adrs = [a for a in adrs if a.domain == args.domain]
+
+    # Filter by status
+    if args.status:
+        adrs = [a for a in adrs if a.status and a.status.lower() == args.status.lower()]
+
+    # Sort by number
+    def sort_key(adr):
+        if not adr.number:
+            return (9999, 0)
+        parts = adr.number.split('.')
+        return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+
+    adrs.sort(key=sort_key)
+
+    # Group by domain if not filtered
+    if not args.domain:
+        current_domain = None
+        for adr in adrs:
+            if adr.domain != current_domain:
+                current_domain = adr.domain
+                domain_info = DOMAINS.get(current_domain, {})
+                print(f"\n## {domain_info.get('name', 'Unknown')} ({current_domain or '???'})")
+                print("-" * 50)
+
+            status_icon = {
+                'Draft': '📝',
+                'Proposed': '💡',
+                'Accepted': '✅',
+                'Superseded': '📦',
+                'Deprecated': '🗑️'
+            }.get(adr.status, '❓')
+
+            print(f"  {status_icon} ADR-{adr.number or '???':8} {adr.title or '(no title)'}")
+    else:
+        for adr in adrs:
+            print(f"ADR-{adr.number}: {adr.title} [{adr.status}]")
+
+    print(f"\nTotal: {len(adrs)} ADRs")
+    return 0
+
+def cmd_new(args):
+    """Create a new ADR."""
+    domain = args.domain.lower()
+
+    if domain not in DOMAINS:
+        print(f"Error: Unknown domain '{domain}'", file=sys.stderr)
+        print(f"Valid domains: {', '.join(DOMAINS.keys())}", file=sys.stderr)
+        return 1
+
+    config = DOMAINS[domain]
+
+    # Find next available number in range
+    adrs = get_all_adrs()
+    used_numbers = set()
+    for adr in adrs:
+        if adr.number:
+            try:
+                used_numbers.add(int(adr.number.split('.')[0]))
+            except ValueError:
+                pass
+
+    next_num = None
+    for n in range(config['range'][0], config['range'][1] + 1):
+        if n not in used_numbers:
+            next_num = n
+            break
+
+    if next_num is None:
+        print(f"Error: No available numbers in {domain} range ({config['range'][0]}-{config['range'][1]})", file=sys.stderr)
+        return 1
+
+    # Generate slug from title
+    slug = re.sub(r'[^a-z0-9]+', '-', args.title.lower()).strip('-')
+
+    # Create file path
+    docs_root = Path(__file__).parent.parent
+    folder = docs_root / 'architecture' / config['folder']
+    filename = f"ADR-{next_num:03d}-{slug}.md"
+    filepath = folder / filename
+
+    if filepath.exists():
+        print(f"Error: File already exists: {filepath}", file=sys.stderr)
+        return 1
+
+    # Generate content
+    today = date.today().isoformat()
+    content = f'''---
+status: Draft
+date: {today}
+deciders:
+  - aaronsb
+  - claude
+related: []
+---
+
+# ADR-{next_num:03d}: {args.title}
+
+## Context
+
+[What is the issue that we're seeing that is motivating this decision or change?]
+
+## Decision
+
+[What is the change that we're proposing and/or doing?]
+
+## Consequences
+
+### Positive
+
+- [What becomes easier?]
+
+### Negative
+
+- [What becomes harder?]
+
+### Neutral
+
+- [What other changes does this enable or require?]
+
+## Alternatives Considered
+
+- [What other options were evaluated?]
+- [Why were they rejected?]
+'''
+
+    # Write file
+    folder.mkdir(parents=True, exist_ok=True)
+    filepath.write_text(content)
+
+    print(f"Created: {filepath.relative_to(Path.cwd())}")
+    print(f"  Domain: {config['name']} ({domain})")
+    print(f"  Number: ADR-{next_num:03d}")
+    return 0
+
+def cmd_lint(args):
+    """Lint ADR files for issues."""
+    if args.paths:
+        paths = [Path(p) for p in args.paths]
+        adrs = [parse_adr(p) for p in paths]
+    else:
+        adrs = get_all_adrs()
+
+    total_errors = 0
+    total_warnings = 0
+
+    # Status summary
+    status_counts = {}
+    for adr in adrs:
+        status = adr.status or 'Unknown'
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    print(f"\nScanned: {len(adrs)} ADRs")
+    print(f"\nStatus distribution:")
+    for status, count in sorted(status_counts.items()):
+        print(f"  {status}: {count}")
+
+    # Issues
+    files_with_issues = [adr for adr in adrs if adr.issues]
+
+    if files_with_issues:
+        print(f"\n{'─'*60}")
+        print(f"Issues found in {len(files_with_issues)} files:")
+        print(f"{'─'*60}")
+
+        for adr in files_with_issues:
+            try:
+                rel_path = adr.path.relative_to(Path.cwd())
+            except ValueError:
+                rel_path = adr.path
+            print(f"\n{rel_path}")
+
+            for issue in adr.issues:
+                icon = '❌' if issue.severity == 'error' else '⚠️'
+                print(f"  {icon} {issue.message}")
+
+                if issue.severity == 'error':
+                    total_errors += 1
+                else:
+                    total_warnings += 1
+
+    print(f"\n{'═'*60}")
+    print(f"Summary: {total_errors} errors, {total_warnings} warnings")
+    print(f"{'═'*60}\n")
+
+    if args.check and total_errors > 0:
+        return 1
+    return 0
+
+def cmd_index(args):
+    """Generate/update the ADR index file."""
+    adrs = get_all_adrs()
+
+    # Sort by number
+    def sort_key(adr):
+        if not adr.number:
+            return (9999, 0)
+        parts = adr.number.split('.')
+        return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+
+    adrs.sort(key=sort_key)
+
+    lines = [
+        "# Architecture Decision Records",
+        "",
+        "This index is auto-generated by `adr index`.",
+        "",
+    ]
+
+    # By domain
+    for domain, config in DOMAINS.items():
+        domain_adrs = [a for a in adrs if a.domain == domain]
+        if not domain_adrs:
+            continue
+
+        lines.append(f"## {config['name']}")
+        lines.append(f"_{config['description']}_")
+        lines.append("")
+        lines.append("| ADR | Title | Status |")
+        lines.append("|-----|-------|--------|")
+
+        for adr in domain_adrs:
+            folder = config['folder']
+            filename = adr.path.name
+            link = f"[ADR-{adr.number}](./{folder}/{filename})"
+            lines.append(f"| {link} | {adr.title or '?'} | {adr.status or '?'} |")
+
+        lines.append("")
+
+    # Uncategorized (old sequential numbers outside domain ranges)
+    uncategorized = [a for a in adrs if not a.domain]
+    if uncategorized:
+        lines.append("## Legacy (Pre-Domain Numbering)")
+        lines.append("")
+        lines.append("| ADR | Title | Status |")
+        lines.append("|-----|-------|--------|")
+
+        for adr in uncategorized:
+            rel_path = adr.path.relative_to(adr.path.parent.parent)
+            link = f"[ADR-{adr.number}](./{rel_path})"
+            lines.append(f"| {link} | {adr.title or '?'} | {adr.status or '?'} |")
+
+        lines.append("")
+
+    content = '\n'.join(lines)
+
+    # Write index
+    docs_root = Path(__file__).parent.parent
+    index_path = docs_root / 'architecture' / 'INDEX.md'
+    index_path.write_text(content)
+
+    print(f"Generated: {index_path.relative_to(Path.cwd())}")
+    print(f"  {len(adrs)} ADRs indexed across {len(DOMAINS)} domains")
+    return 0
+
+def cmd_domains(args):
+    """List available domains."""
+    print("\nADR Domain Number Series")
+    print("=" * 60)
+
+    for domain, config in DOMAINS.items():
+        r = config['range']
+        print(f"\n  {domain:8} ({r[0]:3}-{r[1]:3})  {config['name']}")
+        print(f"           {config['description']}")
+        print(f"           Folder: {config['folder']}/")
+
+    print()
+    return 0
+
+# ============================================================================
+# Main
+# ============================================================================
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='ADR - Architecture Decision Record CLI Tool',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    subparsers = parser.add_subparsers(dest='command', help='Command')
+
+    # list
+    p_list = subparsers.add_parser('list', aliases=['ls'], help='List ADRs')
+    p_list.add_argument('--domain', '-d', help='Filter by domain')
+    p_list.add_argument('--status', '-s', help='Filter by status')
+
+    # new
+    p_new = subparsers.add_parser('new', help='Create new ADR')
+    p_new.add_argument('domain', help='Domain (infra, db, ingest, auth, query, vocab, ui, ai, meta)')
+    p_new.add_argument('title', help='ADR title')
+
+    # lint
+    p_lint = subparsers.add_parser('lint', help='Lint ADR files')
+    p_lint.add_argument('paths', nargs='*', help='Specific files to lint')
+    p_lint.add_argument('--check', action='store_true', help='Exit 1 if errors (CI mode)')
+
+    # index
+    p_index = subparsers.add_parser('index', help='Generate ADR index')
+
+    # domains
+    p_domains = subparsers.add_parser('domains', help='List domain number series')
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 0
+
+    commands = {
+        'list': cmd_list,
+        'ls': cmd_list,
+        'new': cmd_new,
+        'lint': cmd_lint,
+        'index': cmd_index,
+        'domains': cmd_domains,
+    }
+
+    return commands[args.command](args)
+
+if __name__ == '__main__':
+    sys.exit(main())
