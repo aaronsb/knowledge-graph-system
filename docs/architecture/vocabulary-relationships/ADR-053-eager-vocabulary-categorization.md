@@ -1,6 +1,9 @@
 ---
 status: Accepted
 date: 2025-11-01
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-052
   - ADR-047

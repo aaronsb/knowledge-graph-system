@@ -1,6 +1,9 @@
 ---
 status: Proposed
 date: 2025-01-09
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-075: Postmodern Theme System

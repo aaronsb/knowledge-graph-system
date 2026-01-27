@@ -1,6 +1,9 @@
 ---
 status: Proposed
 date: 2025-10-12
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design

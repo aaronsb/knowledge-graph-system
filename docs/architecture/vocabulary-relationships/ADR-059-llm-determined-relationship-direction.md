@@ -1,5 +1,6 @@
 ---
 status: Proposed
+date: 2025-10-27
 deciders:
   - System Architects
 related:

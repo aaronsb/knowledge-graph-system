@@ -1,5 +1,9 @@
 ---
 status: Draft
+date: 2025-12-10
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-077: Vocabulary Explorers

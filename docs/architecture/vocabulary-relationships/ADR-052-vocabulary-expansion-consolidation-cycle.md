@@ -1,6 +1,9 @@
 ---
 status: Accepted
 date: 2025-10-31
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)

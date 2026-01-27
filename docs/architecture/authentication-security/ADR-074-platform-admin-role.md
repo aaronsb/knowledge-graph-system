@@ -1,6 +1,9 @@
 ---
 status: Proposed
 date: 2025-12-09
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-074: Platform Admin Role

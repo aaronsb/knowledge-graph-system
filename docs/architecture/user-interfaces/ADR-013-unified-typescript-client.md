@@ -1,5 +1,6 @@
 ---
 status: Accepted
+date: 2025-10-06
 deciders:
   - Development Team
 ---

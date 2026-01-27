@@ -1,6 +1,9 @@
 ---
 status: Draft
 date: 2025-12-04
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-072: Concept Matching Strategies and Configuration

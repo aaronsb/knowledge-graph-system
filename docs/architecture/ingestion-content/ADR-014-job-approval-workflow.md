@@ -1,5 +1,9 @@
 ---
 status: Draft
+date: 2025-10-07
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-014: Job Approval Workflow with Pre-Ingestion Analysis

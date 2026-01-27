@@ -1,6 +1,9 @@
 ---
 status: Accepted
 date: 2025-12-01
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-071: Parallel Graph Query Optimization

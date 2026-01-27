@@ -1,6 +1,9 @@
 ---
 status: Proposed
 date: 2025-10-11
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-028: Dynamic Role-Based Access Control (RBAC) System

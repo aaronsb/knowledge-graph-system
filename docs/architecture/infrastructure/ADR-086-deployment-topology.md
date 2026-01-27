@@ -1,5 +1,9 @@
 ---
 status: Draft
+date: 2026-01-17
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-086: Deployment Topology (Dev/Stable Split)

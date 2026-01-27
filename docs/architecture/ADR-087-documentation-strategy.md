@@ -1,5 +1,9 @@
 ---
 status: Draft
+date: 2026-01-17
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-087: Documentation Strategy and Audience Framework

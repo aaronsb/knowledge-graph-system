@@ -1,6 +1,9 @@
 ---
 status: Superseded
 date: 2025-10-11
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-024
   - ADR-054

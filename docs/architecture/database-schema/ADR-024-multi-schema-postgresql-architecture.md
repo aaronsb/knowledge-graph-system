@@ -1,6 +1,9 @@
 ---
 status: Proposed
 date: 2025-10-10
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-016
   - ADR-014
