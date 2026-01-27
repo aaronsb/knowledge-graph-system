@@ -1,7 +1,8 @@
 # Knowledge Graph Visualizer - Multi-stage Docker Build
 #
-# This Dockerfile will be referenced from the main docker-compose.yml
-# when the viz-app service is added (similar to how postgres uses apache/age image)
+# Build requirements:
+#   - Docker BuildKit enabled (for mount cache support)
+#   - Set DOCKER_BUILDKIT=1 or use docker-compose (BuildKit enabled by default)
 #
 # Runtime environment variables (no rebuild required):
 #   - VITE_API_URL
@@ -17,11 +18,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for layer caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with BuildKit cache for faster rebuilds
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy source code
 COPY . .
