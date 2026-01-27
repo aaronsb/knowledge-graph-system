@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-25
 **Authors:** System Architecture Team
-**Related:** ADR-032 (Automatic Edge Vocabulary Expansion), ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
+**Related ADRs:** ADR-032 (Automatic Edge Vocabulary Expansion), ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
 
 ## Overview
 

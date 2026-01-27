@@ -4,7 +4,7 @@
 **Date:** 2025-10-22
 **Implemented:** 2025-10-22
 **Deciders:** System Architects
-**Related:** ADR-039 (Local Embedding Service), ADR-041 (AI Extraction Config), ADR-025 (Dynamic Relationship Vocabulary)
+**Related ADRs:** ADR-039 (Local Embedding Service), ADR-041 (AI Extraction Config), ADR-025 (Dynamic Relationship Vocabulary)
 
 ## Overview
 

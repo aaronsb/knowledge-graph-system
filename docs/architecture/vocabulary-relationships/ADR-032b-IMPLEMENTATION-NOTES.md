@@ -2,7 +2,7 @@
 
 **Status:** Implementation Guide
 **Date:** 2025-10-15
-**Related:** ADR-032-automatic-edge-vocabulary-expansion.md
+**Related ADRs:** ADR-032-automatic-edge-vocabulary-expansion.md
 
 ## Critical Implementation Details
 

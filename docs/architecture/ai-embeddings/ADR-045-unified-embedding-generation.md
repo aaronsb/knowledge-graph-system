@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-25
 **Authors:** System Architecture Team
-**Related:** ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)
+**Related ADRs:** ADR-044 (Probabilistic Truth Convergence), ADR-046 (Grounding-Aware Vocabulary Management), ADR-039 (Embedding Configuration), ADR-032 (Vocabulary Expansion)
 
 ## Overview
 

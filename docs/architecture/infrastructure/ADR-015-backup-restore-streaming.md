@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-08
 **Deciders:** System Architecture
-**Related:** ADR-012 (API Server), ADR-013 (Unified Client)
+**Related ADRs:** ADR-012 (API Server), ADR-013 (Unified Client)
 
 ## Overview
 

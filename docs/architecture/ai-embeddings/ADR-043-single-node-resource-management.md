@@ -4,7 +4,7 @@
 **Date:** 2025-10-23
 **Implemented:** 2025-10-23
 **Deciders:** System Architects
-**Related:** ADR-039 (Local Embedding Service), ADR-042 (Local LLM Inference)
+**Related ADRs:** ADR-039 (Local Embedding Service), ADR-042 (Local LLM Inference)
 
 ## Overview
 

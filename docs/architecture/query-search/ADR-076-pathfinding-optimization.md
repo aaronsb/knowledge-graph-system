@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-12-09
 **Deciders:** System Architecture
-**Related:** ADR-016 (Apache AGE Migration)
+**Related ADRs:** ADR-016 (Apache AGE Migration)
 
 ## Context
 

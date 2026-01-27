@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-31
 **Author:** System Architecture
-**Related:** ADR-014 (Job Approval Workflow), ADR-044 (Probabilistic Truth Convergence), ADR-037 (Human-Guided Graph Editing)
+**Related ADRs:** ADR-014 (Job Approval Workflow), ADR-044 (Probabilistic Truth Convergence), ADR-037 (Human-Guided Graph Editing)
 
 ## Overview
 

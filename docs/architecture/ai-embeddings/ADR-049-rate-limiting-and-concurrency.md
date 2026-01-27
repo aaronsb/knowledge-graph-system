@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-28
 **Deciders:** Development Team
-**Related:** ADR-041 (AI Extraction Provider Configuration), ADR-042 (Local LLM Inference)
+**Related ADRs:** ADR-041 (AI Extraction Provider Configuration), ADR-042 (Local LLM Inference)
 
 ## Overview
 

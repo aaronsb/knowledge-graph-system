@@ -2,7 +2,7 @@
 
 **Status:** Reference Data
 **Date:** 2025-12-10
-**Related:** ADR-076 (Pathfinding Optimization)
+**Related ADRs:** ADR-076 (Pathfinding Optimization)
 
 ## Purpose
 

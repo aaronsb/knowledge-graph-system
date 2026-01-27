@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-16
 **Deciders:** Development Team
-**Related:** ADR-014 (Job Approval Workflow), ADR-015 (Smart Chunking), ADR-023 (Markdown Preprocessing)
+**Related ADRs:** ADR-014 (Job Approval Workflow), ADR-015 (Smart Chunking), ADR-023 (Markdown Preprocessing)
 
 ## Overview
 

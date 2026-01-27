@@ -1,6 +1,6 @@
 # ADR-038: Official Project Apparel Design Specifications
 
-**Status:** Proposed (but definitely happening)
+**Status:** Proposed
 **Date:** 2025-10-17
 **Deciders:** Solo developer with questionable fashion sense
 **Technical Story:** After discovering that literally nobody on GitHub is doing streaming entity resolution during LLM extraction with O(n) full-scan vector similarity, we need merchandise to celebrate this dubious achievement.

@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-28
 **Deciders:** Development Team
-**Related:** ADR-012 (API Server Architecture), ADR-014 (Job Approval Workflow), ADR-049 (Rate Limiting)
+**Related ADRs:** ADR-012 (API Server Architecture), ADR-014 (Job Approval Workflow), ADR-049 (Rate Limiting)
 
 ## Overview
 

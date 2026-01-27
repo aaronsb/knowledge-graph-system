@@ -1,10 +1,10 @@
 # ADR-048: Vocabulary Metadata as First-Class Graph
 
-**Status:** Implemented ✅ - All Phases Complete
+**Status:** Accepted
 **Date:** 2025-10-27
 **Completion Date:** 2025-10-27
 **Deciders:** System Architects
-**Related:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
+**Related ADRs:** ADR-047 (Probabilistic Categorization), ADR-032 (Vocabulary Expansion), ADR-046 (Grounding-Aware Management)
 
 **Implementation Status:**
 - ✅ **Phase 1 Complete** - GraphQueryFacade, query linter, CI integration

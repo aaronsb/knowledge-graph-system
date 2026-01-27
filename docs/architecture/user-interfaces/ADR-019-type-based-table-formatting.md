@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-09
 **Deciders:** Development Team
-**Related:** ADR-013 (Unified TypeScript Client), ADR-018 (Server-Sent Events Streaming)
+**Related ADRs:** ADR-013 (Unified TypeScript Client), ADR-018 (Server-Sent Events Streaming)
 
 ## Overview
 

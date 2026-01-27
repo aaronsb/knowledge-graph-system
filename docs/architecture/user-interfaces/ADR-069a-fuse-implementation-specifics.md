@@ -2,7 +2,7 @@
 
 **Status:** Implementation Plan
 **Date:** 2026-01-06
-**Related:** ADR-069 (Semantic FUSE Filesystem)
+**Related ADRs:** ADR-069 (Semantic FUSE Filesystem)
 
 ## Overview
 

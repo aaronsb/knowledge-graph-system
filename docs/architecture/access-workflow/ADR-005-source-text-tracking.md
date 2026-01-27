@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-08
 **Deciders:** System Architecture
-**Related:** ADR-004 (Pure Graph Design)
+**Related ADRs:** ADR-004 (Pure Graph Design)
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # ADR-078: Embedding Landscape Explorer
 
-**Status:** Accepted (Phase 1 implemented)
+**Status:** Accepted
 **Date:** 2025-12-11
 **Updated:** 2025-12-12
 **Deciders:** Engineering Team

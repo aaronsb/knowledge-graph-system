@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-17
 **Deciders:** Development Team
-**Related:** ADR-034 (Graph Visualization), ADR-035 (Explorer Methods), ADR-016 (Apache AGE Migration)
+**Related ADRs:** ADR-034 (Graph Visualization), ADR-035 (Explorer Methods), ADR-016 (Apache AGE Migration)
 
 ## Overview
 

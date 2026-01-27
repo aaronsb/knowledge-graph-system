@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2026-01-04
 **Deciders:** @aaronsb, @claude
-**Related:** ADR-084 (Document Search), ADR-044 (Probabilistic Truth Convergence), ADR-034 (Explorer Plugin Interface)
+**Related ADRs:** ADR-084 (Document Search), ADR-044 (Probabilistic Truth Convergence), ADR-034 (Explorer Plugin Interface)
 
 ## Context
 

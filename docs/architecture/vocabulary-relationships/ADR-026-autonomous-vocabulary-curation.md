@@ -1,9 +1,9 @@
 # ADR-026: Autonomous Vocabulary Curation and Ontology Management
 
-**Status:** Proposed (Theoretical Enhancement)
+**Status:** Proposed
 **Date:** 2025-10-10
 **Deciders:** System Architects
-**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-024 (Multi-Schema PostgreSQL)
+**Related ADRs:** ADR-025 (Dynamic Relationship Vocabulary), ADR-024 (Multi-Schema PostgreSQL)
 
 ## Overview
 

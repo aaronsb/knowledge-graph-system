@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-15
 **Deciders:** System Architects
-**Related:** ADR-022 (30-Type Taxonomy), ADR-025 (Dynamic Vocabulary), ADR-026 (Autonomous Curation)
+**Related ADRs:** ADR-022 (30-Type Taxonomy), ADR-025 (Dynamic Vocabulary), ADR-026 (Autonomous Curation)
 
 ## Overview
 

@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-08
 **Deciders:** System Architecture
-**Related:** ADR-001 (Multi-Tier Access), ADR-002 (Node Fitness Scoring)
+**Related ADRs:** ADR-001 (Multi-Tier Access), ADR-002 (Node Fitness Scoring)
 
 ## Overview
 

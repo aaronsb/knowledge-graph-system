@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-10
 **Deciders:** System Architects
-**Related:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-004 (Pure Graph Design)
+**Related ADRs:** ADR-024 (Multi-Schema PostgreSQL Architecture), ADR-004 (Pure Graph Design)
 
 ## Overview
 

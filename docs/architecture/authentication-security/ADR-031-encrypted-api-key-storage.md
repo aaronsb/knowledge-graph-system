@@ -1,10 +1,10 @@
 # ADR-031: Encrypted API Key Storage with Container Secrets
 
-**Status:** Implemented
+**Status:** Accepted
 **Date:** 2025-10-12
 **Updated:** 2025-10-13 (Added service token authorization and concurrency fixes)
 **Deciders:** Development Team
-**Related:** ADR-027 (User Management), ADR-024 (PostgreSQL Architecture), ADR-014 (Job Queue)
+**Related ADRs:** ADR-027 (User Management), ADR-024 (PostgreSQL Architecture), ADR-014 (Job Queue)
 
 ## Overview
 

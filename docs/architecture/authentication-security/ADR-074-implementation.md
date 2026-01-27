@@ -1,6 +1,6 @@
 # ADR-074 Implementation Checklist
 
-**Status:** Complete ✅
+**Status:** Accepted
 **Started:** 2025-12-09
 **Completed:** 2025-12-09
 **ADR:** [ADR-074: Platform Admin Role](./ADR-074-platform-admin-role.md)

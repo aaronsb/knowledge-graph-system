@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-09
 **Deciders:** Development Team
-**Related:** ADR-015 (Backup/Restore), ADR-016 (Apache AGE)
+**Related ADRs:** ADR-015 (Backup/Restore), ADR-016 (Apache AGE)
 
 ## Overview
 

@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-27 (Renumbered from ADR-049: 2025-11-04)
 **Deciders:** System Architects
-**Related:** ADR-047 (Probabilistic Categorization), ADR-048 (Vocabulary as Graph), ADR-022 (Semantic Taxonomy), ADR-025 (Dynamic Vocabulary)
+**Related ADRs:** ADR-047 (Probabilistic Categorization), ADR-048 (Vocabulary as Graph), ADR-022 (Semantic Taxonomy), ADR-025 (Dynamic Vocabulary)
 
 ## Overview
 

@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-21
 **Deciders:** Development Team
-**Related:** ADR-031 (Encrypted API Key Storage), ADR-039 (Local Embedding Service)
+**Related ADRs:** ADR-031 (Encrypted API Key Storage), ADR-039 (Local Embedding Service)
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # ADR-027: User Management API with Lightweight JWT Authentication
 
-**Status:** Superseded by ADR-054 (OAuth 2.0 Client Management)
+**Status:** Superseded
 **Date:** 2025-10-11
 **Superseded Date:** 2025-11-01
 **Author:** Aaron Bockelie

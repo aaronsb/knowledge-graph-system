@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-10
 **Supersedes:** Partial aspects of ADR-016 (schema organization)
-**Related:** ADR-016 (Apache AGE Migration), ADR-014 (Job Approval Workflow)
+**Related ADRs:** ADR-016 (Apache AGE Migration), ADR-014 (Job Approval Workflow)
 
 ## Overview
 

@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-09
 **Deciders:** Development Team
-**Related:** ADR-004 (Pure Graph Design), ADR-016 (Apache AGE Migration)
+**Related ADRs:** ADR-004 (Pure Graph Design), ADR-016 (Apache AGE Migration)
 
 ## Overview
 

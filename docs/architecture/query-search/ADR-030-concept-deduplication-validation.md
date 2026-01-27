@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-12
 **Author:** System Architecture
-**Related:** ADR-016 (Apache AGE), ADR-024 (PostgreSQL)
+**Related ADRs:** ADR-016 (Apache AGE), ADR-024 (PostgreSQL)
 
 ## Overview
 

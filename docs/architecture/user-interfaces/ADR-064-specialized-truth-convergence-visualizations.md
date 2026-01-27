@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-11-13
 **Deciders:** Development Team
-**Related:** ADR-034 (Graph Visualization Architecture), ADR-035 (Explorer Methods), ADR-044 (Probabilistic Truth Convergence), ADR-051 (Graph Provenance Tracking), ADR-063 (Semantic Diversity)
+**Related ADRs:** ADR-034 (Graph Visualization Architecture), ADR-035 (Explorer Methods), ADR-044 (Probabilistic Truth Convergence), ADR-051 (Graph Provenance Tracking), ADR-063 (Semantic Diversity)
 
 ## Overview
 

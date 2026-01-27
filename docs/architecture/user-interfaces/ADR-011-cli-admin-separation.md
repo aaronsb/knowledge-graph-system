@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2025-10-08
 **Deciders:** Development Team
-**Related:** ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
+**Related ADRs:** ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
 **Note:** This ADR predates the Apache AGE migration (ADR-016). References to Neo4j in this document are historical; the system now uses Apache AGE (PostgreSQL graph extension).
 
 ## Overview

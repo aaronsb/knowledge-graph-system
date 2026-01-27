@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-24 (Updated: 2025-11-04)
 **Authors:** System Architecture Team
-**Related:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management), **ADR-058 (Polarity Axis Triangulation - IMPLEMENTATION)**
+**Related ADRs:** ADR-025 (Dynamic Relationship Vocabulary), ADR-030 (Concept Deduplication), ADR-032 (Confidence Thresholds), **ADR-045 (Unified Embedding Generation - DEPENDENCY)**, ADR-046 (Grounding-Aware Vocabulary Management), **ADR-058 (Polarity Axis Triangulation - IMPLEMENTATION)**
 
 ## Overview
 

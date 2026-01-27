@@ -4,7 +4,7 @@
 **Date:** 2025-10-17
 **Last Updated:** 2025-10-17
 **Deciders:** Development Team
-**Related:** ADR-034 (Graph Visualization Architecture), ADR-037 (Human-Guided Graph Editing)
+**Related ADRs:** ADR-034 (Graph Visualization Architecture), ADR-037 (Human-Guided Graph Editing)
 
 ## Overview
 

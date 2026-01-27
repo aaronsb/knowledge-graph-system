@@ -1,6 +1,6 @@
 # ADR-075: Postmodern Theme System
 
-**Status:** In Progress
+**Status:** Proposed
 **Date:** 2025-01-09
 **Branch:** `feature/postmodern-theme`
 

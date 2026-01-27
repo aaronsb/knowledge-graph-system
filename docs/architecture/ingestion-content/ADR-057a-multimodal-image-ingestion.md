@@ -1,6 +1,6 @@
 # ADR-057: Multimodal Image Ingestion with Visual Context Injection
 
-**Status:** In Progress
+**Status:** Proposed
 **Date:** 2025-11-03
 **Updated:** 2025-11-04 (Migrated from MinIO to Garage)
 **Deciders:** System Architects

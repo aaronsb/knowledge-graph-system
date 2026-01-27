@@ -1,6 +1,6 @@
 # ADR-068 Source Text Embeddings - Implementation Plan
 
-**Status:** Planning Complete - Ready for Implementation
+**Status:** Proposed
 **Branch:** `feature/adr-068-source-embeddings`
 **Started:** 2025-11-27
 **Target:** Phase 1 completion

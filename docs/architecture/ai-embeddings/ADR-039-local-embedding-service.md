@@ -3,7 +3,7 @@
 **Status:** Proposed
 **Date:** 2025-10-18
 **Deciders:** System Architecture
-**Related:** ADR-012 (API Server), ADR-013 (Unified Client), ADR-016 (Apache AGE), ADR-034 (Graph Visualization)
+**Related ADRs:** ADR-012 (API Server), ADR-013 (Unified Client), ADR-016 (Apache AGE), ADR-034 (Graph Visualization)
 
 ## Overview
 

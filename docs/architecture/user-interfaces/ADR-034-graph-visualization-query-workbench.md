@@ -4,7 +4,7 @@
 **Date:** 2025-10-16
 **Last Updated:** 2025-10-16
 **Deciders:** Development Team
-**Related:** ADR-016 (Apache AGE Migration), ADR-029 (CLI Theory of Operation), ADR-033 (Multimodal Ingestion)
+**Related ADRs:** ADR-016 (Apache AGE Migration), ADR-029 (CLI Theory of Operation), ADR-033 (Multimodal Ingestion)
 
 ## Overview
 
