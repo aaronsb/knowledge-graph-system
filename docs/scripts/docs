@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""
+Documentation management tool using containerized MkDocs.
+
+Usage:
+    docs serve [--port PORT]    Serve documentation with hot-reload
+    docs build                  Build static site
+    docs clean                  Remove build artifacts
+    docs status                 Check what artifacts exist
+"""
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Find project root (parent of docs/)
+SCRIPT_DIR = Path(__file__).parent.resolve()
+DOCS_DIR = SCRIPT_DIR.parent
+PROJECT_ROOT = DOCS_DIR.parent
+
+# MkDocs Material image
+MKDOCS_IMAGE = "squidfunk/mkdocs-material:latest"
+
+# Additional plugins to install (not included in base image)
+EXTRA_PLUGINS = [
+    "mkdocs-include-dir-to-nav",
+    "mkdocs-swagger-ui-tag",
+]
+
+# Colors for terminal output
+class Colors:
+    GREEN = '\033[0;32m'
+    BLUE = '\033[0;34m'
+    YELLOW = '\033[1;33m'
+    RED = '\033[0;31m'
+    CYAN = '\033[0;36m'
+    NC = '\033[0m'  # No Color
+
+
+def run(cmd, **kwargs):
+    """Run a command, letting output stream to terminal."""
+    return subprocess.run(cmd, **kwargs)
+
+
+def check_docker():
+    """Check if Docker is available."""
+    try:
+        result = subprocess.run(
+            ["docker", "info"],
+            capture_output=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def get_dir_size(path: Path) -> str:
+    """Get human-readable directory size."""
+    try:
+        result = subprocess.run(
+            ["du", "-sh", str(path)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            return result.stdout.split()[0]
+    except:
+        pass
+    return "?"
+
+
+def banner(title: str, color: str = Colors.BLUE):
+    """Print a banner."""
+    line = "═" * 56
+    print(f"{color}{line}{Colors.NC}")
+    print(f"{color}  {title}{Colors.NC}")
+    print(f"{color}{line}{Colors.NC}")
+
+
+def cmd_serve(args):
+    """Serve documentation with hot-reload in a container."""
+    if not check_docker():
+        print(f"{Colors.RED}Error: Docker is not available{Colors.NC}")
+        print("Install Docker to use this tool.")
+        return 1
+
+    port = args.port
+
+    banner("MkDocs Documentation Server")
+    print()
+    print(f"{Colors.CYAN}Using containerized MkDocs Material{Colors.NC}")
+    print(f"  Image: {MKDOCS_IMAGE}")
+    print(f"  Port:  http://127.0.0.1:{port}")
+    print()
+    print(f"{Colors.YELLOW}Starting server (Ctrl+C to stop)...{Colors.NC}")
+    print()
+
+    # Build the docker command
+    # Mount project root at /docs (where mkdocs.yml lives)
+    # Install extra plugins, then serve
+    pip_install = " && ".join([f"pip install -q --root-user-action=ignore {p}" for p in EXTRA_PLUGINS])
+
+    # Use -it only when we have a TTY (interactive terminal)
+    docker_flags = ["--rm"]
+    if sys.stdin.isatty():
+        docker_flags.extend(["-i", "-t"])
+
+    # Run as current user to avoid root-owned files
+    uid_gid = f"{os.getuid()}:{os.getgid()}"
+
+    cmd = [
+        "docker", "run", *docker_flags,
+        "-u", uid_gid,
+        "-e", "HOME=/tmp",
+        "-p", f"{port}:8000",
+        "-v", f"{PROJECT_ROOT}:/docs",
+        "--name", "mkdocs-serve",
+        "--entrypoint", "sh",
+        MKDOCS_IMAGE,
+        "-c",
+        f"{pip_install} && mkdocs serve -a 0.0.0.0:8000"
+    ]
+
+    try:
+        run(cmd)
+    except KeyboardInterrupt:
+        print()
+        print(f"{Colors.GREEN}Server stopped.{Colors.NC}")
+
+    return 0
+
+
+def cmd_build(args):
+    """Build static documentation site."""
+    if not check_docker():
+        print(f"{Colors.RED}Error: Docker is not available{Colors.NC}")
+        return 1
+
+    banner("Building Documentation")
+    print()
+
+    pip_install = " && ".join([f"pip install -q --root-user-action=ignore {p}" for p in EXTRA_PLUGINS])
+
+    # Run as current user to avoid root-owned files
+    uid_gid = f"{os.getuid()}:{os.getgid()}"
+
+    cmd = [
+        "docker", "run", "--rm",
+        "-u", uid_gid,
+        "-e", "HOME=/tmp",
+        "-v", f"{PROJECT_ROOT}:/docs",
+        "--entrypoint", "sh",
+        MKDOCS_IMAGE,
+        "-c",
+        f"{pip_install} && mkdocs build"
+    ]
+
+    result = run(cmd)
+
+    if result.returncode == 0:
+        site_dir = PROJECT_ROOT / "site"
+        size = get_dir_size(site_dir)
+        print()
+        print(f"{Colors.GREEN}Build complete!{Colors.NC}")
+        print(f"  Output: {site_dir} ({size})")
+
+    return result.returncode
+
+
+def cmd_clean(args):
+    """Remove documentation build artifacts."""
+    banner("Documentation Cleanup")
+    print()
+
+    artifacts = [
+        (DOCS_DIR / ".venv", "docs/.venv", "Legacy Python venv"),
+        (PROJECT_ROOT / "site", "site/", "Built documentation"),
+        (PROJECT_ROOT / ".cache", ".cache/", "MkDocs cache"),
+    ]
+
+    found = []
+    for path, label, desc in artifacts:
+        if path.exists():
+            size = get_dir_size(path)
+            found.append((path, label, size))
+            print(f"  {Colors.RED}✗{Colors.NC} {label:<20} ({size}) - {desc}")
+
+    if not found:
+        print(f"{Colors.GREEN}Already clean - nothing to remove.{Colors.NC}")
+        return 0
+
+    print()
+
+    if not args.yes:
+        try:
+            response = input(f"{Colors.YELLOW}Remove these artifacts? [y/N]: {Colors.NC}")
+            if response.lower() != 'y':
+                print(f"{Colors.YELLOW}Aborted.{Colors.NC}")
+                return 0
+        except (KeyboardInterrupt, EOFError):
+            print()
+            print(f"{Colors.YELLOW}Aborted.{Colors.NC}")
+            return 0
+
+    print()
+    for path, label, _ in found:
+        print(f"{Colors.YELLOW}Removing {label}...{Colors.NC}")
+        shutil.rmtree(path)
+        print(f"{Colors.GREEN}✓ Removed{Colors.NC}")
+
+    print()
+    banner("Cleanup Complete", Colors.GREEN)
+    return 0
+
+
+def cmd_status(args):
+    """Show status of documentation artifacts."""
+    banner("Documentation Status")
+    print()
+
+    artifacts = [
+        (DOCS_DIR / ".venv", "docs/.venv", "Legacy Python venv"),
+        (PROJECT_ROOT / "site", "site/", "Built documentation"),
+        (PROJECT_ROOT / ".cache", ".cache/", "MkDocs cache"),
+    ]
+
+    print(f"{Colors.CYAN}Artifacts:{Colors.NC}")
+    for path, label, desc in artifacts:
+        if path.exists():
+            size = get_dir_size(path)
+            print(f"  {Colors.GREEN}●{Colors.NC} {label:<20} ({size})")
+        else:
+            print(f"  {Colors.YELLOW}○{Colors.NC} {label:<20} (not present)")
+
+    print()
+    print(f"{Colors.CYAN}Docker:{Colors.NC}")
+    if check_docker():
+        print(f"  {Colors.GREEN}●{Colors.NC} Docker available")
+        # Check if image is pulled
+        result = subprocess.run(
+            ["docker", "images", "-q", MKDOCS_IMAGE],
+            capture_output=True,
+            text=True
+        )
+        if result.stdout.strip():
+            print(f"  {Colors.GREEN}●{Colors.NC} {MKDOCS_IMAGE} cached")
+        else:
+            print(f"  {Colors.YELLOW}○{Colors.NC} {MKDOCS_IMAGE} (will be pulled on first use)")
+    else:
+        print(f"  {Colors.RED}●{Colors.NC} Docker not available")
+        print(f"    {Colors.YELLOW}Install Docker to use docs serve/build{Colors.NC}")
+
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Documentation management tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  docs serve              Start local server with hot-reload
+  docs serve --port 8080  Use custom port
+  docs build              Build static site to site/
+  docs clean              Remove build artifacts
+  docs clean -y           Clean without prompting
+  docs status             Show what artifacts exist
+"""
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # serve
+    serve_parser = subparsers.add_parser("serve", help="Serve docs with hot-reload")
+    serve_parser.add_argument(
+        "--port", "-p",
+        type=int,
+        default=8001,
+        help="Port to serve on (default: 8001)"
+    )
+
+    # build
+    subparsers.add_parser("build", help="Build static site")
+
+    # clean
+    clean_parser = subparsers.add_parser("clean", help="Remove build artifacts")
+    clean_parser.add_argument(
+        "-y", "--yes",
+        action="store_true",
+        help="Don't prompt for confirmation"
+    )
+
+    # status
+    subparsers.add_parser("status", help="Show artifact status")
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 0
+
+    commands = {
+        "serve": cmd_serve,
+        "build": cmd_build,
+        "clean": cmd_clean,
+        "status": cmd_status,
+    }
+
+    return commands[args.command](args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

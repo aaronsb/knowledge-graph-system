@@ -46,7 +46,7 @@ domains:
     range: [700, 799]
     name: Interfaces
     description: CLI, web, FUSE, MCP, visualization
-    folder: user-interfaces
+    folder: [user-interfaces, visualization]
 
   ai:
     range: [800, 899]
@@ -80,3 +80,7 @@ defaults:
 legacy:
   range: [1, 99]
   label: "Legacy (Pre-Domain Numbering)"
+
+# Viewer command for `adr view`
+# Use {file} as placeholder for the file path
+viewer: glow {file}
