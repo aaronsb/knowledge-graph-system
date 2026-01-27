@@ -1,9 +1,9 @@
-# ADR-023: Markdown Structured Content Preprocessing
+---
+status: Proposed
+date: 2025-10-10
+---
 
-**Status:** Proposed
-**Date:** 2025-10-10
-**Decision Makers:** System Architecture
-**Consulted:** Ingestion Pipeline, LLM Integration
+# ADR-023: Markdown Structured Content Preprocessing
 
 ## Overview
 

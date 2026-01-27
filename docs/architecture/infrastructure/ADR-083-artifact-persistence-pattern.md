@@ -1,9 +1,14 @@
-# ADR-083: Artifact Persistence Pattern
+---
+status: Accepted
+date: 2025-12-17
+deciders: @aaronsb, @claude
+related:
+  - ADR-079
+  - ADR-082
+  - ADR-014
+---
 
-**Status:** Accepted
-**Date:** 2025-12-17
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-079 (Projection Storage), ADR-082 (User Scoping), ADR-014 (Job Queue)
+# ADR-083: Artifact Persistence Pattern
 
 ## Context
 

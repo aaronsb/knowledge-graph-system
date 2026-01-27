@@ -1,9 +1,12 @@
-# ADR-030: Concept Deduplication Quality Validation
+---
+status: Accepted
+date: 2025-10-12
+related:
+  - ADR-016
+  - ADR-024
+---
 
-**Status:** Accepted
-**Date:** 2025-10-12
-**Author:** System Architecture
-**Related ADRs:** ADR-016 (Apache AGE), ADR-024 (PostgreSQL)
+# ADR-030: Concept Deduplication Quality Validation
 
 ## Overview
 

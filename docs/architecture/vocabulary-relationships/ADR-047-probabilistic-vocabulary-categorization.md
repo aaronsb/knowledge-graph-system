@@ -1,13 +1,16 @@
+---
+status: Accepted
+date: 2025-10-26
+deciders: System Architects
+related:
+  - ADR-044
+  - ADR-025
+  - ADR-022
+  - ADR-048
+---
+
 # ADR-047: Probabilistic Vocabulary Categorization
 
-**Status:** Accepted
-**Date:** 2025-10-26
-**Implementation Date:** 2025-10-27
-**Integration Date:** 2025-10-27
-**Deciders:** System Architects
-**Related ADRs:** ADR-044 (Probabilistic Truth Convergence), ADR-025 (Dynamic Relationship Vocabulary), ADR-022 (Semantic Relationship Taxonomy), ADR-048 (Vocabulary Metadata as Graph)
-
-**Implementation:**
 - Migration 015: Schema fields for category scoring
 - VocabularyCategorizer class: Core categorization logic
 - Integrated into ingestion pipeline: add_edge_type() auto-categorizes new types

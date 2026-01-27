@@ -1,8 +1,12 @@
-# ADR-069: Semantic FUSE Filesystem
+---
+status: Proposed
+date: 2025-11-28
+related:
+  - ADR-055
+  - ADR-048
+---
 
-**Status:** Proposed
-**Date:** 2025-11-28
-**Related ADRs:** ADR-055 (Sharding), ADR-048 (GraphQueryFacade)
+# ADR-069: Semantic FUSE Filesystem
 
 > "Everything is a file" - Traditional Unix Philosophy
 > "Everything is a file, but which file depends on what you're thinking about" - Semantic Unix Philosophy

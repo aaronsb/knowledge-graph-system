@@ -1,13 +1,9 @@
-# ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+---
+status: Accepted
+date: 2025-11-01
+---
 
-**Status:** Accepted
-**Date:** 2025-11-01
-**Supersedes:** ADR-027 (OAuth future work) - Now implements OAuth properly
-**Related ADRs:**
-- [ADR-027: User Management](./ADR-027-user-management-api.md) - User operations
-- [ADR-028: Dynamic RBAC](./ADR-028-dynamic-rbac-system.md) - Role-based access control
-- [ADR-024: Multi-Schema Architecture](../database-schema/ADR-024-multi-schema-postgresql-architecture.md) - Database schema
-- [ADR-060: API Endpoint Security Architecture](./ADR-060-endpoint-security-architecture.md) - Endpoint-level security implementation
+# ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
 
 ## Overview
 

@@ -1,16 +1,15 @@
+---
+status: Accepted
+date: 2025-01-15
+deciders: Engineering Team
+related:
+  - ADR-058
+  - ADR-052
+  - ADR-048
+  - ADR-044
+---
+
 # ADR-065: Vocabulary-Based Provenance Relationships
-
-**Status:** Accepted
-**Date:** 2025-01-15
-**Validated:** 2025-11-16 (see docs/VALIDATION-RESULTS.md)
-**Deciders:** Engineering Team
-**Related ADRs:**
-- ADR-058 (Polarity Axis Triangulation) - Pattern we're replicating
-- ADR-052 (Vocabulary Expansion-Consolidation Cycle) - Similarity-based clustering
-- ADR-048 (Query Safety via GraphQueryFacade) - Abstraction layer
-- ADR-044 (Probabilistic Truth Convergence) - Grounding calculation
-
-**Mathematical Foundation:** Hybrid symbolic-semantic architecture with vector operations (emergent, not prescribed)
 
 ## Overview
 

@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-018: Server-Sent Events for Real-Time Progress Streaming
 
 **Status**: Proposed

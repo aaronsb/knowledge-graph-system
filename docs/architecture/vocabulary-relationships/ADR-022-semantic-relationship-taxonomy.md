@@ -1,9 +1,13 @@
-# ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
+---
+status: Accepted
+date: 2025-10-09
+deciders: Development Team
+related:
+  - ADR-004
+  - ADR-016
+---
 
-**Status:** Accepted
-**Date:** 2025-10-09
-**Deciders:** Development Team
-**Related ADRs:** ADR-004 (Pure Graph Design), ADR-016 (Apache AGE Migration)
+# ADR-022: Semantically Sparse 30-Type Relationship Taxonomy
 
 ## Overview
 

@@ -1,9 +1,16 @@
-# ADR-064: Specialized Truth Convergence Visualizations
+---
+status: Proposed
+date: 2025-11-13
+deciders: Development Team
+related:
+  - ADR-034
+  - ADR-035
+  - ADR-044
+  - ADR-051
+  - ADR-063
+---
 
-**Status:** Proposed
-**Date:** 2025-11-13
-**Deciders:** Development Team
-**Related ADRs:** ADR-034 (Graph Visualization Architecture), ADR-035 (Explorer Methods), ADR-044 (Probabilistic Truth Convergence), ADR-051 (Graph Provenance Tracking), ADR-063 (Semantic Diversity)
+# ADR-064: Specialized Truth Convergence Visualizations
 
 ## Overview
 

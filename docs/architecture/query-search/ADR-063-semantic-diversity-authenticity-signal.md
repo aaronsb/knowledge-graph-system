@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-063: Semantic Diversity as Authenticity Signal
 
 **Status**: Proposed

@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-077: Vocabulary Explorers
 
 ## Status

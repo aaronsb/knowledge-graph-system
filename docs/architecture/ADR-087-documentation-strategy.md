@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-087: Documentation Strategy and Audience Framework
 
 Status: Proposed

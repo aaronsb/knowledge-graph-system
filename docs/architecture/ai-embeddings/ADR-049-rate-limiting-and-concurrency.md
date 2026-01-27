@@ -1,9 +1,13 @@
-# ADR-049: Rate Limiting and Per-Provider Concurrency Management
+---
+status: Accepted
+date: 2025-10-28
+deciders: Development Team
+related:
+  - ADR-041
+  - ADR-042
+---
 
-**Status:** Accepted
-**Date:** 2025-10-28
-**Deciders:** Development Team
-**Related ADRs:** ADR-041 (AI Extraction Provider Configuration), ADR-042 (Local LLM Inference)
+# ADR-049: Rate Limiting and Per-Provider Concurrency Management
 
 ## Overview
 

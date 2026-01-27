@@ -1,12 +1,15 @@
+---
+status: Proposed
+date: 2025-10-08
+deciders: System Architecture
+related:
+  - ADR-012
+  - ADR-013
+  - ADR-015
+---
+
 # ADR-016: Apache AGE Migration (Neo4j Replacement)
 
-**Status:** Proposed
-**Date:** 2025-10-08
-**Updated:** 2025-10-08
-**Deciders:** System Architecture
-**Related ADRs:** ADR-012 (API Server), ADR-013 (Unified Client), ADR-015 (Backup/Restore)
-
-**Implementation Progress:**
 - ✅ Tasks 01-04 Complete: Infrastructure, Schema, Python Client, API Routes
 - 🔄 Next: Task 05 (MCP Server), Task 07 (CLI), Task 08 (Ingestion) for functional parity
 - 📍 Current branch: `feature/apache-age-migration`

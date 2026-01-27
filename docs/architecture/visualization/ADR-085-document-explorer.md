@@ -1,9 +1,14 @@
-# ADR-085: Document Explorer with Radial Concept Visualization
+---
+status: Proposed
+date: 2026-01-04
+deciders: @aaronsb, @claude
+related:
+  - ADR-084
+  - ADR-044
+  - ADR-034
+---
 
-**Status:** Proposed
-**Date:** 2026-01-04
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-084 (Document Search), ADR-044 (Probabilistic Truth Convergence), ADR-034 (Explorer Plugin Interface)
+# ADR-085: Document Explorer with Radial Concept Visualization
 
 ## Context
 

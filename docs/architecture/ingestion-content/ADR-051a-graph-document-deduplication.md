@@ -1,9 +1,13 @@
-# ADR-051: Graph-Based Provenance Tracking
+---
+status: Proposed
+date: 2025-10-31
+related:
+  - ADR-014
+  - ADR-044
+  - ADR-037
+---
 
-**Status:** Proposed
-**Date:** 2025-10-31
-**Author:** System Architecture
-**Related ADRs:** ADR-014 (Job Approval Workflow), ADR-044 (Probabilistic Truth Convergence), ADR-037 (Human-Guided Graph Editing)
+# ADR-051: Graph-Based Provenance Tracking
 
 ## Overview
 

@@ -1,9 +1,13 @@
-# ADR-019: Type-Based Table Formatting System
+---
+status: Accepted
+date: 2025-10-09
+deciders: Development Team
+related:
+  - ADR-013
+  - ADR-018
+---
 
-**Status:** Accepted
-**Date:** 2025-10-09
-**Deciders:** Development Team
-**Related ADRs:** ADR-013 (Unified TypeScript Client), ADR-018 (Server-Sent Events Streaming)
+# ADR-019: Type-Based Table Formatting System
 
 ## Overview
 

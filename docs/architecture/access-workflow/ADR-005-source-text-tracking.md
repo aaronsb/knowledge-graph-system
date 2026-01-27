@@ -1,9 +1,12 @@
-# ADR-005: Source Text Tracking and Retrieval
+---
+status: Proposed
+date: 2025-10-08
+deciders: System Architecture
+related:
+  - ADR-004
+---
 
-**Status:** Proposed
-**Date:** 2025-10-08
-**Deciders:** System Architecture
-**Related ADRs:** ADR-004 (Pure Graph Design)
+# ADR-005: Source Text Tracking and Retrieval
 
 ## Overview
 

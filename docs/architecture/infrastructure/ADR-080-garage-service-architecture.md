@@ -1,10 +1,14 @@
-# ADR-080: Garage Service Architecture
+---
+status: Proposed
+date: 2025-12-14
+deciders: @aaronsb, @claude
+related:
+  - ADR-057
+  - ADR-079
+  - ADR-081
+---
 
-**Status:** Proposed
-**Date:** 2025-12-14
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-057 (Multimodal Image Ingestion), ADR-079 (Projection Artifact Storage), ADR-081 (Source Document Lifecycle)
-**Closes:** #175
+# ADR-080: Garage Service Architecture
 
 ## Context
 

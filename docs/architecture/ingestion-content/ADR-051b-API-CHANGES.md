@@ -1,7 +1,11 @@
-# ADR-051: API Changes for Graph-Based Document Deduplication
+---
+status: Draft
+date: 2025-10-31
+related:
+  - ADR-051
+---
 
-**Date:** 2025-10-31
-**Related ADRs:** ADR-051 (Graph-Based Document Deduplication)
+# ADR-051: API Changes for Graph-Based Document Deduplication
 
 ## Overview
 

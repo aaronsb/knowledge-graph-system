@@ -1,9 +1,13 @@
-# ADR-046: Grounding-Aware Vocabulary Management
+---
+status: Proposed
+date: 2025-10-25
+related:
+  - ADR-032
+  - ADR-044
+  - ADR-045
+---
 
-**Status:** Proposed
-**Date:** 2025-10-25
-**Authors:** System Architecture Team
-**Related ADRs:** ADR-032 (Automatic Edge Vocabulary Expansion), ADR-044 (Probabilistic Truth Convergence), ADR-045 (Unified Embedding Generation)
+# ADR-046: Grounding-Aware Vocabulary Management
 
 ## Overview
 

@@ -1,13 +1,10 @@
-# ADR-057: Multimodal Image Ingestion with Visual Context Injection
+---
+status: Proposed
+date: 2025-11-03
+deciders: System Architects
+---
 
-**Status:** Proposed
-**Date:** 2025-11-03
-**Updated:** 2025-11-04 (Migrated from MinIO to Garage)
-**Deciders:** System Architects
-**Related ADRs:**
-- [ADR-042: Ollama Local Inference Integration](../ai-embeddings/ADR-042-local-extraction-inference.md)
-- [ADR-043: Embedding Strategy and Resource Management](../ai-embeddings/ADR-043-single-node-resource-management.md)
-- [ADR-016: Apache AGE Migration](../database-schema/ADR-016-apache-age-migration.md) (Parallel vendor lock-in escape)
+# ADR-057: Multimodal Image Ingestion with Visual Context Injection
 
 ## Overview
 

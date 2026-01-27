@@ -1,10 +1,13 @@
-# ADR-011: CLI and Admin Tooling Separation
+---
+status: Accepted
+date: 2025-10-08
+deciders: Development Team
+related:
+  - ADR-012
+  - ADR-016
+---
 
-**Status:** Accepted
-**Date:** 2025-10-08
-**Deciders:** Development Team
-**Related ADRs:** ADR-012 (API Server Architecture), ADR-016 (Apache AGE Migration)
-**Note:** This ADR predates the Apache AGE migration (ADR-016). References to Neo4j in this document are historical; the system now uses Apache AGE (PostgreSQL graph extension).
+# ADR-011: CLI and Admin Tooling Separation
 
 ## Overview
 

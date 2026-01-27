@@ -1,9 +1,12 @@
-# ADR-076: Pathfinding Optimization for Apache AGE
+---
+status: Proposed
+date: 2025-12-09
+deciders: System Architecture
+related:
+  - ADR-016
+---
 
-**Status:** Proposed
-**Date:** 2025-12-09
-**Deciders:** System Architecture
-**Related ADRs:** ADR-016 (Apache AGE Migration)
+# ADR-076: Pathfinding Optimization for Apache AGE
 
 ## Context
 

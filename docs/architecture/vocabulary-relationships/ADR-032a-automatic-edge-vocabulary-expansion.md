@@ -1,9 +1,14 @@
-# ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
+---
+status: Proposed
+date: 2025-10-15
+deciders: System Architects
+related:
+  - ADR-022
+  - ADR-025
+  - ADR-026
+---
 
-**Status:** Proposed
-**Date:** 2025-10-15
-**Deciders:** System Architects
-**Related ADRs:** ADR-022 (30-Type Taxonomy), ADR-025 (Dynamic Vocabulary), ADR-026 (Autonomous Curation)
+# ADR-032: Automatic Edge Vocabulary Expansion with Intelligent Pruning
 
 ## Overview
 

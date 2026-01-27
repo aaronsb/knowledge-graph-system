@@ -1,9 +1,13 @@
-# ADR-015: Backup/Restore Streaming Architecture
+---
+status: Accepted
+date: 2025-10-08
+deciders: System Architecture
+related:
+  - ADR-012
+  - ADR-013
+---
 
-**Status:** Accepted
-**Date:** 2025-10-08
-**Deciders:** System Architecture
-**Related ADRs:** ADR-012 (API Server), ADR-013 (Unified Client)
+# ADR-015: Backup/Restore Streaming Architecture
 
 ## Overview
 

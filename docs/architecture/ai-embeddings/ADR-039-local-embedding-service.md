@@ -1,9 +1,15 @@
-# ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
+---
+status: Proposed
+date: 2025-10-18
+deciders: System Architecture
+related:
+  - ADR-012
+  - ADR-013
+  - ADR-016
+  - ADR-034
+---
 
-**Status:** Proposed
-**Date:** 2025-10-18
-**Deciders:** System Architecture
-**Related ADRs:** ADR-012 (API Server), ADR-013 (Unified Client), ADR-016 (Apache AGE), ADR-034 (Graph Visualization)
+# ADR-039: Local Embedding Service with Hybrid Client/Server Architecture
 
 ## Overview
 

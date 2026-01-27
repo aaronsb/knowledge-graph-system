@@ -1,9 +1,13 @@
-# ADR-079: Projection Artifact Storage in Garage
+---
+status: Accepted
+date: 2025-12-13
+deciders: @aaronsb, @claude
+related:
+  - ADR-057
+  - ADR-078
+---
 
-**Status:** Accepted
-**Date:** 2025-12-13
-**Deciders:** @aaronsb, @claude
-**Related ADRs:** ADR-057 (Multimodal Image Ingestion - Garage setup), ADR-078 (Embedding Landscape Explorer)
+# ADR-079: Projection Artifact Storage in Garage
 
 ## Context
 

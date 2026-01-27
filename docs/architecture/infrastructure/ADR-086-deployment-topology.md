@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-086: Deployment Topology (Dev/Stable Split)
 
 ## Status

@@ -1,9 +1,10 @@
-# ADR-062: MCP File Ingestion Security Model
+---
+status: Draft
+date: 2025-11-08
+deciders: System Architect
+---
 
-**Status:** Draft
-**Date:** 2025-11-08
-**Deciders:** System Architect
-**Tags:** #security #mcp #ingestion #file-access
+# ADR-062: MCP File Ingestion Security Model
 
 ## Overview
 

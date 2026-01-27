@@ -1,9 +1,14 @@
-# ADR-036: Universal Visual Query Builder
+---
+status: Proposed
+date: 2025-10-17
+deciders: Development Team
+related:
+  - ADR-034
+  - ADR-035
+  - ADR-016
+---
 
-**Status:** Proposed
-**Date:** 2025-10-17
-**Deciders:** Development Team
-**Related ADRs:** ADR-034 (Graph Visualization), ADR-035 (Explorer Methods), ADR-016 (Apache AGE Migration)
+# ADR-036: Universal Visual Query Builder
 
 ## Overview
 

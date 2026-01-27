@@ -1,8 +1,9 @@
-# ADR-074: Platform Admin Role
+---
+status: Proposed
+date: 2025-12-09
+---
 
-**Status:** Proposed
-**Date:** 2025-12-09
-**Extends:** [ADR-028: Dynamic RBAC System](./ADR-028-dynamic-rbac-system.md)
+# ADR-074: Platform Admin Role
 
 ## Context
 

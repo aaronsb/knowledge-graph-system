@@ -1,9 +1,13 @@
-# ADR-002: Node Fitness Scoring System
+---
+status: Proposed
+date: 2025-10-08
+deciders: System Architecture
+related:
+  - ADR-001
+  - ADR-004
+---
 
-**Status:** Proposed
-**Date:** 2025-10-08
-**Deciders:** System Architecture
-**Related ADRs:** ADR-001 (Multi-Tier Access), ADR-004 (Pure Graph Design)
+# ADR-002: Node Fitness Scoring System
 
 ## Overview
 

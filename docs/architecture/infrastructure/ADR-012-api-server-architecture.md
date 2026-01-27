@@ -1,9 +1,10 @@
-# ADR-012: API Server Architecture for Scalable Neo4j Access
+---
+status: Accepted
+date: 2025-10-06
+deciders: Development Team
+---
 
-**Status:** Accepted
-**Date:** 2025-10-06
-**Deciders:** Development Team
-**Context:** Phase 1 Implementation
+# ADR-012: API Server Architecture for Scalable Neo4j Access
 
 ## Overview
 

@@ -1,8 +1,9 @@
-# ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
+---
+status: Proposed
+date: 2025-10-12
+---
 
-**Status:** Proposed
-**Date:** 2025-10-12
-**Supersedes:** N/A - First formal CLI design specification
+# ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design
 
 ## Overview
 

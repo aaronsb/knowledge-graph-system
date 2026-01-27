@@ -1,9 +1,10 @@
-# ADR-040: Database Schema Migration Management
+---
+status: Proposed
+date: 2025-10-20
+deciders: Development Team
+---
 
-**Status:** Proposed
-**Date:** 2025-10-20
-**Deciders:** Development Team
-**Tags:** #database #schema #migrations #devops
+# ADR-040: Database Schema Migration Management
 
 ## Overview
 

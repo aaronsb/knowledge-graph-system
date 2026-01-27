@@ -1,3 +1,7 @@
+---
+status: Draft
+---
+
 # ADR-014: Job Approval Workflow with Pre-Ingestion Analysis
 
 ## Status

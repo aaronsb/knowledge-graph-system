@@ -1,8 +1,9 @@
-# ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)
+---
+status: Accepted
+date: 2025-10-31
+---
 
-**Status:** Accepted
-**Date:** 2025-10-31
-**Authors:** Aaron Bockelie (observation), Claude (documentation)
+# ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)
 
 ## Abstract
 
