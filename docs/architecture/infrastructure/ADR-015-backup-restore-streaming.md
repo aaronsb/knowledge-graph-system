@@ -1,7 +1,8 @@
 ---
 status: Accepted
 date: 2025-10-08
-deciders: System Architecture
+deciders:
+  - System Architecture
 related:
   - ADR-012
   - ADR-013

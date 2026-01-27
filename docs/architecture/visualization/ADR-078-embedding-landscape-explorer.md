@@ -2,7 +2,8 @@
 status: Accepted
 date: 2025-12-11
 updated: 2025-12-12
-deciders: Engineering Team
+deciders:
+  - Engineering Team
 related:
   - ADR-070
   - ADR-063

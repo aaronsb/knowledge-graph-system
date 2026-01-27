@@ -1,7 +1,9 @@
 ---
 status: Proposed
 date: 2025-12-14
-deciders: @aaronsb, @claude
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-057
   - ADR-079

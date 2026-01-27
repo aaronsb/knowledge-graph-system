@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-11-18
-deciders: Engineering Team
+deciders:
+  - Engineering Team
 related:
   - ADR-031
   - ADR-014

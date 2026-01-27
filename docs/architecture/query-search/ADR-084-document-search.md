@@ -1,7 +1,9 @@
 ---
 status: Proposed
 date: 2026-01-03
-deciders: @aaronsb, @claude
+deciders:
+  - aaronsb
+  - claude
 ---
 
 # ADR-084: Document-Level Search

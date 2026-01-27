@@ -1,7 +1,8 @@
 ---
 status: Accepted
 date: 2025-10-23
-deciders: System Architects
+deciders:
+  - System Architects
 related:
   - ADR-039
   - ADR-042

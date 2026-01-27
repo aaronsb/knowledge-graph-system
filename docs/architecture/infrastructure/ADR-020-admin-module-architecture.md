@@ -1,7 +1,8 @@
 ---
 status: Accepted
 date: 2025-10-09
-deciders: Development Team
+deciders:
+  - Development Team
 related:
   - ADR-015
   - ADR-016

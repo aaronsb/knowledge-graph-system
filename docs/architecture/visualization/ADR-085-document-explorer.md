@@ -1,7 +1,9 @@
 ---
 status: Proposed
 date: 2026-01-04
-deciders: @aaronsb, @claude
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-084
   - ADR-044

@@ -1,7 +1,8 @@
 ---
 status: Accepted
 date: 2025-10-28
-deciders: Development Team
+deciders:
+  - Development Team
 related:
   - ADR-041
   - ADR-042

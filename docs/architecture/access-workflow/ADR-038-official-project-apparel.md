@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-10-17
-deciders: Solo developer with questionable fashion sense
+deciders:
+  - Solo developer with questionable fashion sense
 ---
 
 # ADR-038: Official Project Apparel Design Specifications

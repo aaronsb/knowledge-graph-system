@@ -1,7 +1,8 @@
 ---
 status: Accepted
 date: 2025-11-04
-deciders: Engineering Team
+deciders:
+  - Engineering Team
 related:
   - ADR-044
   - ADR-045

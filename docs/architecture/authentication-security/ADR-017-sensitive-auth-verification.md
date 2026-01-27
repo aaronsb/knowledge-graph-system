@@ -1,10 +1,11 @@
-# Architecture Decision Record: Client-Initiated Token Revocation for Elevated Operations
+---
+status: Proposed
+date: 2025-10-09
+deciders:
+  - Engineering Team
+---
 
-**Status:** Proposed
-
-**Date:** 2025-10-09
-
-**Deciders:** [Engineering Team]
+# ADR-017: Client-Initiated Token Revocation for Elevated Operations
 
 **Technical Story:** Implement a secure authentication flow for destructive administrative operations (database wipe, restore, configuration changes) that balances security with operational robustness.
 

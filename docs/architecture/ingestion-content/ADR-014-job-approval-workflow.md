@@ -836,5 +836,5 @@ if estimated_cost < threshold:
 
 ## Authors
 
-- @aaronsb (user request and requirements)
+- aaronsb (user request and requirements)
 - @claude (ADR documentation and implementation design)

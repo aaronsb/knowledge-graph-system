@@ -1,7 +1,9 @@
 ---
 status: Accepted
 date: 2025-12-17
-deciders: @aaronsb, @claude
+deciders:
+  - aaronsb
+  - claude
 related:
   - ADR-028
   - ADR-079

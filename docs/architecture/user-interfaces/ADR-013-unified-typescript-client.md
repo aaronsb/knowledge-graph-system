@@ -1,6 +1,7 @@
 ---
 status: Accepted
-deciders: Development Team
+deciders:
+  - Development Team
 ---
 
 # ADR-013: Unified TypeScript Client (CLI + MCP Server)

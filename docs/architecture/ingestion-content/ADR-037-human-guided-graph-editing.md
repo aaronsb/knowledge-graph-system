@@ -1,7 +1,9 @@
 ---
 status: Proposed
 date: 2025-10-17
-deciders: Aaron Bockelie, Claude Code
+deciders:
+  - Aaron Bockelie
+  - Claude Code
 related:
   - ADR-014
   - ADR-016

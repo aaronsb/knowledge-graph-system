@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2026-01-17
-deciders: Engineering Team
+deciders:
+  - Engineering Team
 related:
   - ADR-044
   - ADR-044

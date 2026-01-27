@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-12-09
-deciders: System Architecture
+deciders:
+  - System Architecture
 related:
   - ADR-016
 ---

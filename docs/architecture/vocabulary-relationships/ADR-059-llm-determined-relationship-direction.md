@@ -1,6 +1,7 @@
 ---
 status: Proposed
-deciders: System Architects
+deciders:
+  - System Architects
 related:
   - ADR-047
   - ADR-048

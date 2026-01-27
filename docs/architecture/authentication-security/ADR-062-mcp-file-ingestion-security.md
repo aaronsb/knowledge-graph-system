@@ -1,7 +1,8 @@
 ---
 status: Draft
 date: 2025-11-08
-deciders: System Architect
+deciders:
+  - System Architect
 ---
 
 # ADR-062: MCP File Ingestion Security Model

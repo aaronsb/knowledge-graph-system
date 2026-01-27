@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-01-05
-deciders: Engineering Team
+deciders:
+  - Engineering Team
 ---
 
 # ADR-060: API Endpoint Security Architecture

@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-10-20
-deciders: Development Team
+deciders:
+  - Development Team
 ---
 
 # ADR-040: Database Schema Migration Management

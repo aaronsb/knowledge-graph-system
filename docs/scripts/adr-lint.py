@@ -52,7 +52,7 @@ STATUS_NORMALIZE = {
 }
 
 # Patterns for old markdown-style frontmatter
-TITLE_PATTERN = re.compile(r'^# ADR-(\d+): (.+)$')
+TITLE_PATTERN = re.compile(r'^# ADR-(\d+(?:\.\d+)?): (.+)$')
 OLD_STATUS_PATTERN = re.compile(r'^\*\*Status:\*\*\s*(.+)$')
 OLD_DATE_PATTERN = re.compile(r'^\*\*Date:\*\*\s*(\d{4}-\d{2}-\d{2})$')
 OLD_UPDATED_PATTERN = re.compile(r'^\*\*Updated:\*\*\s*(\d{4}-\d{2}-\d{2})$')
@@ -72,12 +72,12 @@ class Issue:
 @dataclass
 class ADRInfo:
     path: Path
-    number: Optional[int] = None
+    number: Optional[str] = None  # ADR number with optional suffix (e.g., "071", "071a")
     title: Optional[str] = None
     status: Optional[str] = None
     date: Optional[str] = None
     updated: Optional[str] = None
-    deciders: Optional[str] = None
+    deciders: list = field(default_factory=list)
     related: list = field(default_factory=list)
     has_yaml_frontmatter: bool = False
     has_old_frontmatter: bool = False
@@ -148,7 +148,7 @@ def parse_old_frontmatter(content: str) -> tuple[dict, list, int]:
         # Title
         match = TITLE_PATTERN.match(line)
         if match:
-            data['number'] = int(match.group(1))
+            data['number'] = match.group(1)  # Keep as string (e.g., "071", "071.1")
             data['title'] = match.group(2)
             continue
 
@@ -228,14 +228,20 @@ def lint_adr(path: Path) -> ADRInfo:
         info.status = yaml_data.get('status')
         info.date = yaml_data.get('date')
         info.updated = yaml_data.get('updated')
-        info.deciders = yaml_data.get('deciders')
+        # Handle deciders as list or string
+        deciders = yaml_data.get('deciders')
+        if isinstance(deciders, list):
+            info.deciders = deciders
+        elif isinstance(deciders, str):
+            # Split comma-separated string into list
+            info.deciders = [d.strip() for d in deciders.split(',') if d.strip()]
         info.related = yaml_data.get('related', [])
 
         # Find title after frontmatter
         for i, line in enumerate(lines[yaml_end:], yaml_end + 1):
             match = TITLE_PATTERN.match(line)
             if match:
-                info.number = int(match.group(1))
+                info.number = match.group(1)  # Keep as string (e.g., "071", "071.1")
                 info.title = match.group(2)
                 break
     else:
@@ -249,7 +255,10 @@ def lint_adr(path: Path) -> ADRInfo:
             info.status = old_data.get('status')
             info.date = old_data.get('date')
             info.updated = old_data.get('updated')
-            info.deciders = old_data.get('deciders')
+            # Convert comma-separated deciders string to list
+            deciders_str = old_data.get('deciders', '')
+            if deciders_str:
+                info.deciders = [d.strip() for d in deciders_str.split(',') if d.strip()]
             info.related = related
 
             info.issues.append(Issue(
@@ -288,7 +297,13 @@ def lint_adr(path: Path) -> ADRInfo:
 
     # Check filename matches ADR number
     if info.number:
-        expected_prefix = f"ADR-{info.number:03d}"
+        # Pad base number to 3 digits (e.g., "71" -> "071", "71.1" -> "071.1")
+        if '.' in info.number:
+            base, suffix = info.number.split('.', 1)
+            padded_number = f"{int(base):03d}.{suffix}"
+        else:
+            padded_number = f"{int(info.number):03d}"
+        expected_prefix = f"ADR-{padded_number}"
         if not path.name.startswith(expected_prefix):
             info.issues.append(Issue(
                 0,
@@ -315,9 +330,13 @@ def generate_yaml_frontmatter(info: ADRInfo) -> str:
     if info.updated and info.updated != info.date:
         lines.append(f'updated: {info.updated}')
 
-    # Deciders
+    # Deciders (as list)
     if info.deciders:
-        lines.append(f'deciders: {info.deciders}')
+        lines.append('deciders:')
+        for decider in info.deciders:
+            # Strip @ prefix if present (GitHub convention, not needed in YAML)
+            decider = decider.lstrip('@')
+            lines.append(f'  - {decider}')
 
     # Related ADRs
     if info.related:

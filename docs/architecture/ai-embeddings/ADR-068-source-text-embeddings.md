@@ -1,7 +1,8 @@
 ---
-status: Accepted - Partially Implemented (Phase 1-3, 5 complete, Phase 4 pending)
+status: Accepted
 date: 2025-11-27
-deciders: System Architect
+deciders:
+  - System Architect
 ---
 
 # ADR-068: Source Text Embeddings for Grounding Truth Retrieval

@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-10-28
-deciders: Development Team
+deciders:
+  - Development Team
 related:
   - ADR-012
   - ADR-014

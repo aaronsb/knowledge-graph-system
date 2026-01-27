@@ -1,7 +1,8 @@
 ---
 status: Proposed
 date: 2025-10-10
-deciders: System Architects
+deciders:
+  - System Architects
 related:
   - ADR-024
   - ADR-004
