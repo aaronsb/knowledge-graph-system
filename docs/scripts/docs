@@ -27,7 +27,7 @@ MKDOCS_IMAGE = "squidfunk/mkdocs-material:latest"
 
 # Additional plugins to install (not included in base image)
 EXTRA_PLUGINS = [
-    "mkdocs-include-dir-to-nav",
+    "mkdocs-awesome-pages-plugin",
     "mkdocs-swagger-ui-tag",
 ]
 

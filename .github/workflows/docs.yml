@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mkdocs-material mkdocs-include-dir-to-nav mkdocs-swagger-ui-tag
+          pip install mkdocs-material mkdocs-awesome-pages-plugin mkdocs-swagger-ui-tag
 
       - name: Build and deploy
         run: mkdocs gh-deploy --force
