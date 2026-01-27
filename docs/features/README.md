@@ -4,19 +4,19 @@ The Knowledge Graph System transforms documents into interconnected concept grap
 
 ## Knowledge Extraction
 
-**[Document Ingestion](../manual/01-getting-started/03-INGESTION.md)** — Feed the system research papers, notes, documentation. It extracts key concepts, finds relationships, and builds a queryable graph. Supports text, PDFs, and images with vision AI.
+**Document Ingestion** — Feed the system research papers, notes, documentation. It extracts key concepts, finds relationships, and builds a queryable graph. Supports text, PDFs, and images with vision AI.
 
 ## Search & Discovery
 
-**[Semantic Search](./semantic-search/)** — Find concepts by meaning, not keywords. Ask "what causes price increases" and find concepts about inflation, even without exact word matches.
+**Semantic Search** — Find concepts by meaning, not keywords. Ask "what causes price increases" and find concepts about inflation, even without exact word matches.
 
 **Path Finding** — Discover how concepts connect. Find the chain of relationships between "supply chain disruption" and "consumer prices" through your knowledge graph.
 
-**[Document Search](../reference/mcp/)** — Search at the document level. Find which sources discuss a topic, with highlighted passages showing where concepts were extracted.
+**Document Search** — Search at the document level. Find which sources discuss a topic, with highlighted passages showing where concepts were extracted.
 
 ## Analysis & Visualization
 
-**[Polarity Axis Analysis](./polarity-axis-analysis/)** — Map concepts onto semantic spectrums. See where "Agile" falls on Modern ↔ Traditional, or discover which concepts balance opposing viewpoints.
+**Polarity Axis Analysis** — Map concepts onto semantic spectrums. See where "Agile" falls on Modern ↔ Traditional, or discover which concepts balance opposing viewpoints.
 
 **Embedding Landscape** — Visualize your entire knowledge graph in 3D. See concept clusters, explore neighborhoods, identify gaps in coverage.
 
