@@ -73,4 +73,12 @@ VALUES
     ('platform_admin', 'jobs', 'delete', 'filter', '{"is_system": true}', TRUE)
 ON CONFLICT DO NOTHING;
 
+-- =============================================================================
+-- Record Migration (idempotent)
+-- =============================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (41, 'job_permissions')
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;
