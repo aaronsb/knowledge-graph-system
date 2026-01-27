@@ -1,110 +1,45 @@
 # Features
 
-The Knowledge Graph System transforms documents into interconnected concept graphs. Access the same powerful capabilities through whichever interface fits your workflow.
+The Knowledge Graph System transforms documents into interconnected concept graphs. Five interfaces give you access to the same powerful capabilities — choose the one that fits your workflow.
 
 ---
 
-## Web Workstation
+## Choose Your Interface
 
-Visual interface for exploration, analysis, and administration.
-
-### Explorers
-
-| Workspace | Description |
-|-----------|-------------|
-| **2D Force Graph** | Interactive force-directed visualization of concepts and relationships |
-| **3D Force Graph** | Immersive 3D exploration with spatial clustering |
-| **Document Explorer** | Radial view from document to extracted concepts |
-| **Polarity Explorer** | Map concepts onto bidirectional semantic spectrums |
-| **Embedding Landscape** | 3D t-SNE projection showing concept neighborhoods |
-| **Edge Explorer** | System-wide vocabulary and relationship analysis |
-| **Vocabulary Analysis** | Query-specific breakdown of relationship types |
-
-### Tools
-
-| Workspace | Description |
-|-----------|-------------|
-| **Flow Editor** | Visual query builder for complex graph traversals |
-| **Upload Content** | Drag-and-drop document and URL ingestion |
-| **Job Queue** | Monitor extraction jobs with cost estimates and approval |
-| **Data Export** | Tabular views and CSV/JSON exports |
-| **Graph Editor** | Manual creation and editing of concepts and edges |
-| **Administration** | User management, OAuth clients, system status |
+| If you want to... | Use |
+|-------------------|-----|
+| Explore visually, see clusters and relationships | [Web Workstation](web-workstation.md) |
+| Script batch operations, integrate with CI/CD | [CLI Tool](cli.md) |
+| Give AI assistants access to your knowledge | [MCP Server](mcp-server.md) |
+| Browse knowledge like files with `ls` and `grep` | [FUSE Driver](fuse-driver.md) |
+| Build custom applications | [REST API](rest-api.md) |
 
 ---
 
-## CLI Tool
+## What You Can Do
 
-Command-line interface for scripting and power users. Install with `cd cli && npm run build && ./install.sh`.
+### Build Knowledge Graphs
+Feed the system research papers, notes, documentation, images. It extracts key concepts, discovers relationships, and builds a queryable graph. Supports text, PDFs, and images with vision AI.
 
-### Knowledge Operations
+### Search Semantically
+Find concepts by meaning, not keywords. Ask "what causes price increases" and find concepts about inflation, supply chains, and monetary policy — even without exact word matches.
 
-| Command | Description |
-|---------|-------------|
-| `kg search <query>` | Semantic search across concepts, sources, or documents |
-| `kg ingest <path>` | Ingest files or directories into the graph |
-| `kg document` | List and retrieve ingested documents |
-| `kg source` | Access original source content and metadata |
-| `kg ontology` | Manage knowledge domains (list, info, delete) |
+### Discover Connections
+Find how concepts relate. Trace the path from "supply chain disruption" to "consumer prices" through your knowledge graph. Every relationship includes evidence from source documents.
 
-### Analysis
+### Analyze Dimensions
+Map concepts onto semantic spectrums. See where "Agile" falls between "Modern" and "Traditional". Discover which concepts balance opposing viewpoints.
 
-| Command | Description |
-|---------|-------------|
-| `kg polarity` | Run polarity axis analysis between concept poles |
-| `kg projection` | Manage embedding projections for visualization |
-| `kg vocabulary` | Review and consolidate relationship types |
-| `kg artifact` | Access stored computation results |
+### Validate Knowledge
+Every relationship has a grounding strength score based on evidence. See which connections are well-supported across multiple sources versus mentioned once.
 
-### System
-
-| Command | Description |
-|---------|-------------|
-| `kg job` | Monitor and manage extraction jobs |
-| `kg admin` | System administration and configuration |
-| `kg health` | Check API server status |
-| `kg login` / `kg logout` | Session authentication |
-
-### Unix-style Shortcuts
-
-| Command | Description |
-|---------|-------------|
-| `kg ls <resource>` | List resources (concepts, ontologies, jobs) |
-| `kg stat <resource> <id>` | Show detailed status or statistics |
-| `kg cat <resource> <id>` | Display resource details |
-| `kg rm <resource> <id>` | Remove or delete resources |
+### Curate and Refine
+Create, edit, and delete concepts directly. Correct extraction errors, merge duplicates, add domain expert knowledge that the AI missed.
 
 ---
 
-## MCP Server
+## Quick Links
 
-Model Context Protocol integration for AI assistants. Ten tools expose full graph capabilities.
-
-| Tool | Description |
-|------|-------------|
-| **search** | Semantic search for concepts, sources, or documents |
-| **concept** | Get details, find related concepts, discover connection paths |
-| **ontology** | List ontologies, get info, manage knowledge domains |
-| **ingest** | Submit text, files, or directories for extraction |
-| **job** | Monitor job status, approve, cancel, or delete jobs |
-| **document** | List documents, retrieve content, get extracted concepts |
-| **source** | Retrieve original source text or images |
-| **artifact** | Access saved search results and analysis |
-| **epistemic_status** | Vocabulary classification (affirmative, contested, contradictory) |
-| **analyze_polarity_axis** | Project concepts onto semantic spectrums |
-
----
-
-## REST API
-
-Full programmatic access at `http://localhost:8000`. OpenAPI documentation available at `/docs`.
-
-Key endpoints:
-
-- `POST /ingest/*` — Document ingestion (text, file, directory)
-- `GET /search` — Semantic concept search
-- `GET /concepts/{id}` — Concept details and relationships
-- `GET /documents` — Document listing and retrieval
-- `GET /ontologies` — Knowledge domain management
-- `GET /jobs` — Job queue monitoring
-- `POST /graph/*` — Direct graph manipulation (CRUD)
+- **Get Started**: [Deployment Guide](../deployment/README.md)
+- **Learn Concepts**: [Core Concepts](../concepts/README.md)
+- **Step-by-Step**: [User Guides](../guides/README.md)

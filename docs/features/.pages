@@ -1,0 +1,7 @@
+nav:
+  - README.md
+  - web-workstation.md
+  - cli.md
+  - mcp-server.md
+  - fuse-driver.md
+  - rest-api.md
