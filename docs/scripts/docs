@@ -5,6 +5,7 @@ Documentation management tool using containerized MkDocs.
 Usage:
     docs serve [--port PORT]    Serve documentation with hot-reload
     docs build                  Build static site
+    docs deploy                 Deploy to GitHub Pages
     docs clean                  Remove build artifacts
     docs status                 Check what artifacts exist
 """
@@ -257,6 +258,42 @@ def cmd_status(args):
     return 0
 
 
+def cmd_deploy(args):
+    """Deploy documentation to GitHub Pages."""
+    if not check_docker():
+        print(f"{Colors.RED}Error: Docker is not available{Colors.NC}")
+        return 1
+
+    banner("Deploying to GitHub Pages")
+    print()
+
+    pip_install = " && ".join([f"pip install -q --root-user-action=ignore {p}" for p in EXTRA_PLUGINS])
+
+    # gh-deploy needs git access, so we mount .git and set up git config
+    # Run as current user for proper git permissions
+    uid_gid = f"{os.getuid()}:{os.getgid()}"
+
+    cmd = [
+        "docker", "run", "--rm",
+        "-u", uid_gid,
+        "-e", "HOME=/tmp",
+        "-v", f"{PROJECT_ROOT}:/docs",
+        "--entrypoint", "sh",
+        MKDOCS_IMAGE,
+        "-c",
+        f"{pip_install} && git config --global --add safe.directory /docs && mkdocs gh-deploy --force"
+    ]
+
+    result = run(cmd)
+
+    if result.returncode == 0:
+        print()
+        print(f"{Colors.GREEN}Deployed to GitHub Pages!{Colors.NC}")
+        print(f"  URL: https://aaronsb.github.io/knowledge-graph-system/")
+
+    return result.returncode
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Documentation management tool",
@@ -266,6 +303,7 @@ Examples:
   docs serve              Start local server with hot-reload
   docs serve --port 8080  Use custom port
   docs build              Build static site to site/
+  docs deploy             Deploy to GitHub Pages
   docs clean              Remove build artifacts
   docs clean -y           Clean without prompting
   docs status             Show what artifacts exist
@@ -297,6 +335,9 @@ Examples:
     # status
     subparsers.add_parser("status", help="Show artifact status")
 
+    # deploy
+    subparsers.add_parser("deploy", help="Deploy to GitHub Pages")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -308,6 +349,7 @@ Examples:
         "build": cmd_build,
         "clean": cmd_clean,
         "status": cmd_status,
+        "deploy": cmd_deploy,
     }
 
     return commands[args.command](args)
