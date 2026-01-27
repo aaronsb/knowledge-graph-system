@@ -17,7 +17,9 @@ WIZARD_VERSION="0.6.6"
 #   5. MAIN             - Entry point
 #
 # USAGE:
-#   ./publish-wizard.sh              # Run interactive wizard
+#   ./publish-wizard.sh              # Show help (default)
+#   ./publish-wizard.sh --run        # Run interactive wizard
+#   ./publish-wizard.sh --status     # Review status without acting
 #   ./publish-wizard.sh --reset      # Clear saved preferences
 #   ./publish-wizard.sh --help       # Show help
 #
@@ -303,6 +305,60 @@ verify_auth() {
 # SECTION 4: WIZARD STEPS
 # ============================================================================
 
+show_status() {
+    # Show status without entering the wizard flow
+    show_wizard_art
+    log_step "Current Status"
+
+    # Get versions
+    local current_ver=$(cat "$PROJECT_ROOT/VERSION" 2>/dev/null | tr -d '[:space:]')
+    local cli_ver=$(node -p "require('$PROJECT_ROOT/cli/package.json').version" 2>/dev/null || echo "unknown")
+    local fuse_ver=$(grep -E "^version" "$PROJECT_ROOT/fuse/pyproject.toml" 2>/dev/null | cut -d'"' -f2 || echo "unknown")
+
+    # Get git state
+    local latest_tag=$(git -C "$PROJECT_ROOT" describe --tags --abbrev=0 2>/dev/null || echo "none")
+    local commits_since="0"
+    if [[ "$latest_tag" != "none" ]]; then
+        commits_since=$(git -C "$PROJECT_ROOT" rev-list "$latest_tag"..HEAD --count 2>/dev/null || echo "0")
+    else
+        commits_since=$(git -C "$PROJECT_ROOT" rev-list HEAD --count 2>/dev/null || echo "0")
+    fi
+    local branch=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+    echo ""
+    echo -e "  ${BOLD}Versions:${NC}"
+    echo -e "    Platform: ${BOLD}${current_ver}${NC}"
+    echo "    CLI:      $cli_ver"
+    echo "    FUSE:     $fuse_ver"
+    echo ""
+    echo -e "  ${BOLD}Git:${NC}"
+    echo "    Branch:   $branch"
+    echo "    Tag:      $latest_tag"
+    echo -e "    Commits:  ${YELLOW}${commits_since}${NC} since tag"
+    echo ""
+
+    # Show saved config if exists
+    if [[ -f "$CONFIG_FILE" ]]; then
+        log_step "Saved Preferences"
+        echo ""
+        # shellcheck disable=SC1090
+        source "$CONFIG_FILE"
+        echo "    Bump type:  $DEFAULT_BUMP_TYPE"
+        echo "    Images:     $PUBLISH_IMAGES"
+        echo "    CLI:        $PUBLISH_CLI"
+        echo "    FUSE:       $PUBLISH_FUSE"
+        echo "    Multi-arch: $USE_MULTI_ARCH"
+        echo ""
+        echo -e "  ${DIM}Config: $CONFIG_FILE${NC}"
+    else
+        echo -e "  ${DIM}No saved preferences (use --run to configure)${NC}"
+    fi
+
+    echo ""
+    echo -e "To start a release: ${BOLD}./publish-wizard.sh --run${NC}"
+    echo ""
+}
+
 step_load_state() {
     log_step "Loading current state"
 
@@ -319,10 +375,10 @@ step_load_state() {
         COMMITS_SINCE_TAG=$(git -C "$PROJECT_ROOT" rev-list HEAD --count 2>/dev/null || echo "0")
     fi
 
-    echo "  Platform version: ${BOLD}$CURRENT_VERSION${NC}"
+    echo -e "  Platform version: ${BOLD}${CURRENT_VERSION}${NC}"
     echo "  CLI version:      $CLI_VERSION"
     echo "  FUSE version:     $FUSE_VERSION"
-    echo "  Commits since $latest_tag: ${YELLOW}$COMMITS_SINCE_TAG${NC}"
+    echo -e "  Commits since $latest_tag: ${YELLOW}${COMMITS_SINCE_TAG}${NC}"
 }
 
 step_load_saved_config() {
@@ -353,7 +409,7 @@ step_select_version() {
     local minor_ver="$major.$((minor + 1)).0"
     local major_ver="$((major + 1)).0.0"
 
-    echo "  Current version: ${BOLD}$CURRENT_VERSION${NC}"
+    echo -e "  Current version: ${BOLD}${CURRENT_VERSION}${NC}"
     echo ""
 
     local choice=$(prompt_select "Select version bump:" \
@@ -408,7 +464,7 @@ step_select_artifacts() {
     log_step "Artifact Selection"
 
     # Show current publish status
-    echo "  ${DIM}(Artifacts already at latest version are pre-deselected)${NC}"
+    echo -e "  ${DIM}(Artifacts already at latest version are pre-deselected)${NC}"
     echo ""
 
     prompt_multiselect \
@@ -432,14 +488,14 @@ step_show_summary() {
     echo -e "  ${BOLD}Version:${NC}    $CURRENT_VERSION → ${GREEN}$NEW_VERSION${NC} ($BUMP_TYPE)"
     echo -e "  ${BOLD}Message:${NC}    ${DIM}$(echo "$RELEASE_MESSAGE" | head -1 | cut -c1-50)...${NC}"
     echo -e "  ${BOLD}Artifacts:${NC}"
-    [[ "$PUBLISH_IMAGES" == "true" ]] && echo "              • Images (api, web, operator) $([ "$USE_MULTI_ARCH" == "true" ] && echo "[amd64+arm64]" || echo "[host arch]")"
-    [[ "$PUBLISH_CLI" == "true" ]]    && echo "              • CLI (npm)"
-    [[ "$PUBLISH_FUSE" == "true" ]]   && echo "              • FUSE (pypi)"
+    [[ "$PUBLISH_IMAGES" == "true" ]] && echo -e "              • Images (api, web, operator) $([ "$USE_MULTI_ARCH" == "true" ] && echo "[amd64+arm64]" || echo "[host arch]")"
+    [[ "$PUBLISH_CLI" == "true" ]]    && echo -e "              • CLI (npm)"
+    [[ "$PUBLISH_FUSE" == "true" ]]   && echo -e "              • FUSE (pypi)"
     echo ""
     echo -e "  ${BOLD}Actions:${NC}"
     echo "    1. Bump VERSION file"
     echo "    2. Sync script versions"
-    echo "    3. Commit and tag v$NEW_VERSION"
+    echo -e "    3. Commit and tag ${GREEN}v$NEW_VERSION${NC}"
     echo "    4. Push to origin"
     [[ "$PUBLISH_IMAGES" == "true" ]] && echo "    5. Build and push images"
     [[ "$PUBLISH_CLI" == "true" ]]    && echo "    6. Build and publish CLI"
@@ -509,17 +565,46 @@ step_save_preferences() {
 # SECTION 5: MAIN
 # ============================================================================
 
+show_wizard_art() {
+    echo -e "${CYAN}"
+    cat << 'ART'
+             _,._
+ .||,       /_ _\\
+\.`',/      |'L'| |
+= ,. =      | -,| L
+/ || \    ,-'\"/,'`.
+  ||     ,'   `,,. `.
+  ,|____,' , ,;' \| |
+ (3|\    _/|/'   _| |
+  ||/,-''  | >-'' _,\\
+  ||'      ==\ ,-'  ,'
+  ||       |  V \ ,|
+  ||       |    |` |
+  ||       |    |   \
+  ||       |    \    \
+  ||       |     |    \
+  ||       |      \_,-'
+  ||       |___,,--")_\
+  ||         |_|   ccc/
+  ||        ccc/
+ART
+    echo -e "${NC}"
+}
+
 show_help() {
+    show_wizard_art
+    echo -e "${BOLD}Knowledge Graph Release Wizard${NC}"
+    echo ""
     cat << 'EOF'
-Usage: publish-wizard.sh [options]
+Usage: publish-wizard.sh [command]
 
-Interactive release wizard for Knowledge Graph System.
-
-Options:
+Commands:
+  --run      Run the interactive release wizard
+  --status   Review current status and config (no changes)
   --reset    Clear saved preferences
   --help     Show this help
 
-The wizard will guide you through:
+The wizard guides you through:
   1. Selecting version bump (patch/minor/major)
   2. Entering release message
   3. Choosing artifacts to publish
@@ -529,25 +614,10 @@ All actual operations are performed by publish.sh.
 EOF
 }
 
-main() {
-    # Parse arguments
-    case "${1:-}" in
-        --help|-h)
-            show_help
-            exit 0
-            ;;
-        --reset)
-            rm -f "$CONFIG_FILE"
-            log_success "Preferences cleared"
-            exit 0
-            ;;
-    esac
-
-    # Header
-    echo ""
-    echo -e "${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}║          Knowledge Graph Release Wizard v$WIZARD_VERSION            ║${NC}"
-    echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
+run_wizard() {
+    # Header with wizard art
+    show_wizard_art
+    echo -e "${BOLD}Knowledge Graph Release Wizard v$WIZARD_VERSION${NC}"
 
     # Run wizard steps
     step_load_state
@@ -579,6 +649,33 @@ main() {
     echo -e "${GREEN}  Release v$NEW_VERSION published successfully!${NC}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
+}
+
+main() {
+    # Parse arguments - show help by default
+    case "${1:-help}" in
+        --help|-h|help)
+            show_help
+            exit 0
+            ;;
+        --status|status)
+            show_status
+            exit 0
+            ;;
+        --reset|reset)
+            rm -f "$CONFIG_FILE"
+            log_success "Preferences cleared"
+            exit 0
+            ;;
+        --run|run)
+            run_wizard
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Use --help to see available options"
+            exit 1
+            ;;
+    esac
 }
 
 main "$@"
