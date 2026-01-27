@@ -10,17 +10,9 @@ Usage:
     adr lint [--check] [paths...]
     adr index
     adr domains
+    adr config
 
-Domain Number Series:
-    100-199: infra      Infrastructure (containers, deployment, backup)
-    200-299: db         Database/Schema (AGE, migrations, architecture)
-    300-399: ingest     Ingestion (content, jobs, extraction)
-    400-499: auth       Auth/Security (RBAC, OAuth, API keys)
-    500-599: query      Query/Search (pathfinding, projections)
-    600-699: vocab      Vocabulary (relationships, grounding)
-    700-799: ui         Interfaces (CLI, web, FUSE, MCP)
-    800-899: ai         AI/Embeddings (providers, extraction)
-    900-999: meta       Meta/Process (docs, workflow, access)
+Configuration is loaded from docs/architecture/adr.yaml
 """
 
 import argparse
@@ -40,67 +32,71 @@ except ImportError:
     sys.exit(1)
 
 # ============================================================================
-# Domain Configuration
+# Configuration
 # ============================================================================
 
-DOMAINS = {
-    'infra': {
-        'range': (100, 199),
-        'name': 'Infrastructure',
-        'description': 'Containers, deployment, backup, storage, networking',
-        'folder': 'infrastructure',
-    },
-    'db': {
-        'range': (200, 299),
-        'name': 'Database/Schema',
-        'description': 'Apache AGE, migrations, schema design, PostgreSQL',
-        'folder': 'database-schema',
-    },
-    'ingest': {
-        'range': (300, 399),
-        'name': 'Ingestion',
-        'description': 'Content processing, jobs, extraction, deduplication',
-        'folder': 'ingestion-content',
-    },
-    'auth': {
-        'range': (400, 499),
-        'name': 'Auth/Security',
-        'description': 'RBAC, OAuth, API keys, endpoint security',
-        'folder': 'authentication-security',
-    },
-    'query': {
-        'range': (500, 599),
-        'name': 'Query/Search',
-        'description': 'Pathfinding, projections, diversity, search',
-        'folder': 'query-search',
-    },
-    'vocab': {
-        'range': (600, 699),
-        'name': 'Vocabulary',
-        'description': 'Relationships, grounding, categorization',
-        'folder': 'vocabulary-relationships',
-    },
-    'ui': {
-        'range': (700, 799),
-        'name': 'Interfaces',
-        'description': 'CLI, web, FUSE, MCP, visualization',
-        'folder': 'user-interfaces',
-    },
-    'ai': {
-        'range': (800, 899),
-        'name': 'AI/Embeddings',
-        'description': 'Providers, extraction, convergence, prompts',
-        'folder': 'ai-embeddings',
-    },
-    'meta': {
-        'range': (900, 999),
-        'name': 'Meta/Process',
-        'description': 'Documentation, workflow, access models',
-        'folder': 'access-workflow',
-    },
-}
+def get_config_path() -> Path:
+    """Get path to adr.yaml config file."""
+    return Path(__file__).parent.parent / 'architecture' / 'adr.yaml'
 
-VALID_STATUSES = {'Draft', 'Proposed', 'Accepted', 'Superseded', 'Deprecated'}
+def load_config() -> dict:
+    """Load configuration from adr.yaml."""
+    config_path = get_config_path()
+
+    if not config_path.exists():
+        print(f"Error: Config not found: {config_path}", file=sys.stderr)
+        print("Run from project root or create docs/architecture/adr.yaml", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        print(f"Error: Invalid YAML in config: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Validate required fields
+    if 'domains' not in config:
+        print("Error: Config missing 'domains' section", file=sys.stderr)
+        sys.exit(1)
+
+    # Convert range lists to tuples for easier use
+    for domain, cfg in config.get('domains', {}).items():
+        if 'range' in cfg and isinstance(cfg['range'], list):
+            cfg['range'] = tuple(cfg['range'])
+
+    if 'legacy' in config and 'range' in config['legacy']:
+        if isinstance(config['legacy']['range'], list):
+            config['legacy']['range'] = tuple(config['legacy']['range'])
+
+    return config
+
+# Global config (loaded on first access)
+_config = None
+
+def get_config() -> dict:
+    """Get cached config."""
+    global _config
+    if _config is None:
+        _config = load_config()
+    return _config
+
+def get_domains() -> dict:
+    """Get domain configuration."""
+    return get_config().get('domains', {})
+
+def get_statuses() -> set:
+    """Get valid statuses."""
+    return set(get_config().get('statuses', ['Draft', 'Proposed', 'Accepted', 'Superseded', 'Deprecated']))
+
+def get_defaults() -> dict:
+    """Get default values for new ADRs."""
+    return get_config().get('defaults', {'deciders': [], 'status': 'Draft'})
+
+def get_legacy_range() -> tuple:
+    """Get legacy ADR number range."""
+    legacy = get_config().get('legacy', {})
+    return legacy.get('range', (1, 99))
 
 # ============================================================================
 # Data Classes
@@ -173,7 +169,7 @@ def parse_adr(path: Path) -> ADRInfo:
     if info.number:
         try:
             base_num = int(info.number.split('.')[0])
-            for domain, config in DOMAINS.items():
+            for domain, config in get_domains().items():
                 if config['range'][0] <= base_num <= config['range'][1]:
                     info.domain = domain
                     break
@@ -181,12 +177,13 @@ def parse_adr(path: Path) -> ADRInfo:
             pass
 
     # Validation
+    valid_statuses = get_statuses()
     if not info.number:
         info.issues.append(Issue("Missing ADR number in title", 'error'))
     if not info.status:
         info.issues.append(Issue("Missing status", 'error'))
-    elif info.status not in VALID_STATUSES:
-        info.issues.append(Issue(f"Invalid status: {info.status}", 'warning'))
+    elif info.status not in valid_statuses:
+        info.issues.append(Issue(f"Invalid status: {info.status} (valid: {', '.join(sorted(valid_statuses))})", 'warning'))
     if not info.date:
         info.issues.append(Issue("Missing date", 'error'))
     if not info.deciders:
@@ -211,6 +208,7 @@ def get_all_adrs() -> list[ADRInfo]:
 def cmd_list(args):
     """List all ADRs."""
     adrs = get_all_adrs()
+    domains = get_domains()
 
     # Filter by domain
     if args.domain:
@@ -235,8 +233,8 @@ def cmd_list(args):
         for adr in adrs:
             if adr.domain != current_domain:
                 current_domain = adr.domain
-                domain_info = DOMAINS.get(current_domain, {})
-                print(f"\n## {domain_info.get('name', 'Unknown')} ({current_domain or '???'})")
+                domain_info = domains.get(current_domain, {})
+                print(f"\n## {domain_info.get('name', 'Legacy')} ({current_domain or 'legacy'})")
                 print("-" * 50)
 
             status_icon = {
@@ -258,13 +256,15 @@ def cmd_list(args):
 def cmd_new(args):
     """Create a new ADR."""
     domain = args.domain.lower()
+    domains = get_domains()
+    defaults = get_defaults()
 
-    if domain not in DOMAINS:
+    if domain not in domains:
         print(f"Error: Unknown domain '{domain}'", file=sys.stderr)
-        print(f"Valid domains: {', '.join(DOMAINS.keys())}", file=sys.stderr)
+        print(f"Valid domains: {', '.join(domains.keys())}", file=sys.stderr)
         return 1
 
-    config = DOMAINS[domain]
+    config = domains[domain]
 
     # Find next available number in range
     adrs = get_all_adrs()
@@ -301,12 +301,16 @@ def cmd_new(args):
 
     # Generate content
     today = date.today().isoformat()
+    default_status = defaults.get('status', 'Draft')
+    default_deciders = defaults.get('deciders', [])
+
+    deciders_yaml = '\n'.join(f'  - {d}' for d in default_deciders) if default_deciders else '  - # add deciders'
+
     content = f'''---
-status: Draft
+status: {default_status}
 date: {today}
 deciders:
-  - aaronsb
-  - claude
+{deciders_yaml}
 related: []
 ---
 
@@ -406,6 +410,8 @@ def cmd_lint(args):
 def cmd_index(args):
     """Generate/update the ADR index file."""
     adrs = get_all_adrs()
+    domains = get_domains()
+    legacy_range = get_legacy_range()
 
     # Sort by number
     def sort_key(adr):
@@ -421,10 +427,12 @@ def cmd_index(args):
         "",
         "This index is auto-generated by `adr index`.",
         "",
+        f"Configuration: [`adr.yaml`](./adr.yaml)",
+        "",
     ]
 
     # By domain
-    for domain, config in DOMAINS.items():
+    for domain, config in domains.items():
         domain_adrs = [a for a in adrs if a.domain == domain]
         if not domain_adrs:
             continue
@@ -443,10 +451,11 @@ def cmd_index(args):
 
         lines.append("")
 
-    # Uncategorized (old sequential numbers outside domain ranges)
+    # Legacy (pre-domain numbering)
+    legacy_label = get_config().get('legacy', {}).get('label', 'Legacy')
     uncategorized = [a for a in adrs if not a.domain]
     if uncategorized:
-        lines.append("## Legacy (Pre-Domain Numbering)")
+        lines.append(f"## {legacy_label}")
         lines.append("")
         lines.append("| ADR | Title | Status |")
         lines.append("|-----|-------|--------|")
@@ -466,21 +475,45 @@ def cmd_index(args):
     index_path.write_text(content)
 
     print(f"Generated: {index_path.relative_to(Path.cwd())}")
-    print(f"  {len(adrs)} ADRs indexed across {len(DOMAINS)} domains")
+    print(f"  {len(adrs)} ADRs indexed across {len(domains)} domains")
     return 0
 
 def cmd_domains(args):
     """List available domains."""
+    domains = get_domains()
+
     print("\nADR Domain Number Series")
     print("=" * 60)
+    print(f"(from {get_config_path().relative_to(Path.cwd())})")
 
-    for domain, config in DOMAINS.items():
+    for domain, config in domains.items():
         r = config['range']
         print(f"\n  {domain:8} ({r[0]:3}-{r[1]:3})  {config['name']}")
         print(f"           {config['description']}")
         print(f"           Folder: {config['folder']}/")
 
+    # Show legacy range
+    legacy = get_config().get('legacy', {})
+    if legacy:
+        r = legacy.get('range', (1, 99))
+        print(f"\n  {'legacy':8} ({r[0]:3}-{r[1]:3})  {legacy.get('label', 'Legacy')}")
+
     print()
+    return 0
+
+def cmd_config(args):
+    """Show current configuration."""
+    config_path = get_config_path()
+
+    print(f"\nConfig file: {config_path}")
+    print("-" * 60)
+
+    try:
+        print(config_path.read_text())
+    except Exception as e:
+        print(f"Error reading config: {e}", file=sys.stderr)
+        return 1
+
     return 0
 
 # ============================================================================
@@ -502,7 +535,7 @@ def main():
 
     # new
     p_new = subparsers.add_parser('new', help='Create new ADR')
-    p_new.add_argument('domain', help='Domain (infra, db, ingest, auth, query, vocab, ui, ai, meta)')
+    p_new.add_argument('domain', help='Domain (see `adr domains` for list)')
     p_new.add_argument('title', help='ADR title')
 
     # lint
@@ -511,10 +544,13 @@ def main():
     p_lint.add_argument('--check', action='store_true', help='Exit 1 if errors (CI mode)')
 
     # index
-    p_index = subparsers.add_parser('index', help='Generate ADR index')
+    subparsers.add_parser('index', help='Generate ADR index')
 
     # domains
-    p_domains = subparsers.add_parser('domains', help='List domain number series')
+    subparsers.add_parser('domains', help='List domain number series')
+
+    # config
+    subparsers.add_parser('config', help='Show configuration')
 
     args = parser.parse_args()
 
@@ -529,6 +565,7 @@ def main():
         'lint': cmd_lint,
         'index': cmd_index,
         'domains': cmd_domains,
+        'config': cmd_config,
     }
 
     return commands[args.command](args)
