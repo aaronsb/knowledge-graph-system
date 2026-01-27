@@ -1,41 +1,110 @@
 # Features
 
-The Knowledge Graph System transforms documents into interconnected concept graphs. Here's what it can do.
+The Knowledge Graph System transforms documents into interconnected concept graphs. Access the same powerful capabilities through whichever interface fits your workflow.
 
-## Knowledge Extraction
+---
 
-**Document Ingestion** — Feed the system research papers, notes, documentation. It extracts key concepts, finds relationships, and builds a queryable graph. Supports text, PDFs, and images with vision AI.
+## Web Workstation
 
-## Search & Discovery
+Visual interface for exploration, analysis, and administration.
 
-**Semantic Search** — Find concepts by meaning, not keywords. Ask "what causes price increases" and find concepts about inflation, even without exact word matches.
+### Explorers
 
-**Path Finding** — Discover how concepts connect. Find the chain of relationships between "supply chain disruption" and "consumer prices" through your knowledge graph.
+| Workspace | Description |
+|-----------|-------------|
+| **2D Force Graph** | Interactive force-directed visualization of concepts and relationships |
+| **3D Force Graph** | Immersive 3D exploration with spatial clustering |
+| **Document Explorer** | Radial view from document to extracted concepts |
+| **Polarity Explorer** | Map concepts onto bidirectional semantic spectrums |
+| **Embedding Landscape** | 3D t-SNE projection showing concept neighborhoods |
+| **Edge Explorer** | System-wide vocabulary and relationship analysis |
+| **Vocabulary Analysis** | Query-specific breakdown of relationship types |
 
-**Document Search** — Search at the document level. Find which sources discuss a topic, with highlighted passages showing where concepts were extracted.
+### Tools
 
-## Analysis & Visualization
+| Workspace | Description |
+|-----------|-------------|
+| **Flow Editor** | Visual query builder for complex graph traversals |
+| **Upload Content** | Drag-and-drop document and URL ingestion |
+| **Job Queue** | Monitor extraction jobs with cost estimates and approval |
+| **Data Export** | Tabular views and CSV/JSON exports |
+| **Graph Editor** | Manual creation and editing of concepts and edges |
+| **Administration** | User management, OAuth clients, system status |
 
-**Polarity Axis Analysis** — Map concepts onto semantic spectrums. See where "Agile" falls on Modern ↔ Traditional, or discover which concepts balance opposing viewpoints.
+---
 
-**Embedding Landscape** — Visualize your entire knowledge graph in 3D. See concept clusters, explore neighborhoods, identify gaps in coverage.
+## CLI Tool
 
-**Grounding Strength** — Every relationship has an evidence score. See which connections are well-supported across multiple sources versus mentioned once.
+Command-line interface for scripting and power users. Install with `cd cli && npm run build && ./install.sh`.
 
-## Knowledge Management
+### Knowledge Operations
 
-**Vocabulary Control** — The system learns relationship types from your documents. Review, merge, or prune edge types to keep your graph clean and meaningful.
+| Command | Description |
+|---------|-------------|
+| `kg search <query>` | Semantic search across concepts, sources, or documents |
+| `kg ingest <path>` | Ingest files or directories into the graph |
+| `kg document` | List and retrieve ingested documents |
+| `kg source` | Access original source content and metadata |
+| `kg ontology` | Manage knowledge domains (list, info, delete) |
 
-**Ontology Organization** — Group documents into ontologies (knowledge domains). Search within a domain or across your entire collection.
+### Analysis
 
-**Concept CRUD** — Create, update, and delete concepts directly. Build graph structure manually or augment what the AI extracted.
+| Command | Description |
+|---------|-------------|
+| `kg polarity` | Run polarity axis analysis between concept poles |
+| `kg projection` | Manage embedding projections for visualization |
+| `kg vocabulary` | Review and consolidate relationship types |
+| `kg artifact` | Access stored computation results |
 
-## Integration
+### System
 
-**REST API** — Full programmatic access to all features. Build custom applications on top of your knowledge graph.
+| Command | Description |
+|---------|-------------|
+| `kg job` | Monitor and manage extraction jobs |
+| `kg admin` | System administration and configuration |
+| `kg health` | Check API server status |
+| `kg login` / `kg logout` | Session authentication |
 
-**CLI Tool** — Command-line interface for power users. Script ingestion workflows, run batch operations, manage the system.
+### Unix-style Shortcuts
 
-**MCP Server** — Model Context Protocol integration. Let AI assistants query your knowledge graph directly.
+| Command | Description |
+|---------|-------------|
+| `kg ls <resource>` | List resources (concepts, ontologies, jobs) |
+| `kg stat <resource> <id>` | Show detailed status or statistics |
+| `kg cat <resource> <id>` | Display resource details |
+| `kg rm <resource> <id>` | Remove or delete resources |
 
-**Web Interface** — Visual workspaces for exploration, ingestion, and administration.
+---
+
+## MCP Server
+
+Model Context Protocol integration for AI assistants. Ten tools expose full graph capabilities.
+
+| Tool | Description |
+|------|-------------|
+| **search** | Semantic search for concepts, sources, or documents |
+| **concept** | Get details, find related concepts, discover connection paths |
+| **ontology** | List ontologies, get info, manage knowledge domains |
+| **ingest** | Submit text, files, or directories for extraction |
+| **job** | Monitor job status, approve, cancel, or delete jobs |
+| **document** | List documents, retrieve content, get extracted concepts |
+| **source** | Retrieve original source text or images |
+| **artifact** | Access saved search results and analysis |
+| **epistemic_status** | Vocabulary classification (affirmative, contested, contradictory) |
+| **analyze_polarity_axis** | Project concepts onto semantic spectrums |
+
+---
+
+## REST API
+
+Full programmatic access at `http://localhost:8000`. OpenAPI documentation available at `/docs`.
+
+Key endpoints:
+
+- `POST /ingest/*` — Document ingestion (text, file, directory)
+- `GET /search` — Semantic concept search
+- `GET /concepts/{id}` — Concept details and relationships
+- `GET /documents` — Document listing and retrieval
+- `GET /ontologies` — Knowledge domain management
+- `GET /jobs` — Job queue monitoring
+- `POST /graph/*` — Direct graph manipulation (CRUD)
