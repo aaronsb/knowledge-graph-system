@@ -62,6 +62,7 @@ class JobQueue(ABC):
     def list_jobs(
         self,
         status: Optional[str] = None,
+        ontology: Optional[str] = None,
         user_id: Optional[int] = None,
         exclude_system: bool = False,
         limit: int = 50,
@@ -72,6 +73,7 @@ class JobQueue(ABC):
 
         Args:
             status: Filter by job status
+            ontology: Filter by ontology name
             user_id: Filter by owner user ID (for permission-based filtering)
             exclude_system: Exclude system/scheduled jobs
             limit: Maximum jobs to return
@@ -398,6 +400,7 @@ class PostgreSQLJobQueue(JobQueue):
     def list_jobs(
         self,
         status: Optional[str] = None,
+        ontology: Optional[str] = None,
         user_id: Optional[int] = None,
         exclude_system: bool = False,
         limit: int = 50,
@@ -408,6 +411,7 @@ class PostgreSQLJobQueue(JobQueue):
 
         Args:
             status: Filter by job status
+            ontology: Filter by ontology name
             user_id: Filter by owner user ID (for permission-based filtering)
             exclude_system: Exclude system/scheduled jobs (for non-platform-admin users)
             limit: Maximum number of jobs to return
@@ -422,6 +426,10 @@ class PostgreSQLJobQueue(JobQueue):
                 if status:
                     conditions.append("j.status = %s")
                     params.append(status)
+
+                if ontology:
+                    conditions.append("j.ontology = %s")
+                    params.append(ontology)
 
                 if user_id:
                     conditions.append("j.user_id = %s")

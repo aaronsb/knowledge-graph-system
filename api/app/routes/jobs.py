@@ -74,6 +74,10 @@ async def list_jobs(
         None,
         description="Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)"
     ),
+    ontology: Optional[str] = Query(
+        None,
+        description="Filter by ontology name"
+    ),
     limit: int = Query(50, ge=1, le=500, description="Maximum jobs to return"),
     offset: int = Query(0, ge=0, description="Number of jobs to skip (for pagination)")
 ):
@@ -103,6 +107,7 @@ async def list_jobs(
     # Apply permission filter
     jobs = queue.list_jobs(
         status=status,
+        ontology=ontology,
         user_id=perm_filter.get('user_id'),
         exclude_system=perm_filter.get('exclude_system', False),
         limit=limit,
