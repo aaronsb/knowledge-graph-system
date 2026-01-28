@@ -363,13 +363,29 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # Remove from store (also removes children)
         self.query_store.remove_query(ontology, query_path)
 
-        # Remove inode and any child inodes
-        for inode, entry in list(self._inodes.items()):
+        # Find all query inodes to remove (the target and any nested queries)
+        query_inodes_to_remove = set()
+        for inode, entry in self._inodes.items():
             if entry.entry_type == "query" and entry.ontology == ontology:
                 if entry.query_path == query_path or entry.query_path.startswith(query_path + "/"):
-                    del self._inodes[inode]
-                    self._free_inode(inode)
-                    self._invalidate_cache(inode)
+                    query_inodes_to_remove.add(inode)
+
+        # Recursively find all descendant inodes (concepts, meta_dir, meta_files, symlinks)
+        all_inodes_to_remove = set(query_inodes_to_remove)
+        changed = True
+        while changed:
+            changed = False
+            for inode, entry in self._inodes.items():
+                if inode not in all_inodes_to_remove and entry.parent in all_inodes_to_remove:
+                    all_inodes_to_remove.add(inode)
+                    changed = True
+
+        # Remove all identified inodes
+        for inode in all_inodes_to_remove:
+            if inode in self._inodes:
+                del self._inodes[inode]
+                self._free_inode(inode)
+                self._invalidate_cache(inode)
 
         # Invalidate parent cache
         self._invalidate_cache(parent_inode)
