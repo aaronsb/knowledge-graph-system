@@ -1,10 +1,12 @@
 """Unit tests for job visibility feature in FUSE filesystem."""
 
 import pytest
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from kg_fuse.config import JobsConfig, TagsConfig
 from kg_fuse.formatters import format_job
+from kg_fuse.job_tracker import JobTracker, TrackedJob, TERMINAL_JOB_STATUSES, STALE_JOB_TIMEOUT
 from kg_fuse.models import InodeEntry
 
 
@@ -97,6 +99,13 @@ class TestFormatJob:
         assert "failed" in result
         assert "LLM provider unavailable" in result
 
+    def test_format_job_none_data(self):
+        """Handle None job data gracefully."""
+        result = format_job(None)
+
+        assert "error" in result.lower()
+        assert "no job data" in result.lower()
+
 
 class TestInodeEntryJobFile:
     """Tests for job_file inode entry type."""
@@ -126,49 +135,165 @@ class TestTerminalJobStatuses:
 
     def test_terminal_statuses(self):
         """Check terminal status set contains expected values."""
-        # Import from filesystem module
-        from kg_fuse.filesystem import TERMINAL_JOB_STATUSES
-
         assert "completed" in TERMINAL_JOB_STATUSES
         assert "failed" in TERMINAL_JOB_STATUSES
         assert "cancelled" in TERMINAL_JOB_STATUSES
 
     def test_running_not_terminal(self):
         """Running status should not be terminal."""
-        from kg_fuse.filesystem import TERMINAL_JOB_STATUSES
-
         assert "running" not in TERMINAL_JOB_STATUSES
         assert "queued" not in TERMINAL_JOB_STATUSES
         assert "processing" not in TERMINAL_JOB_STATUSES
 
 
-class TestJobTracking:
-    """Tests for job tracking data structures."""
+class TestTrackedJob:
+    """Tests for TrackedJob dataclass."""
 
-    def test_tracked_job_structure(self):
-        """Tracked jobs should have required fields."""
-        tracked_job = {
-            "ontology": "Test Ontology",
-            "filename": "document.md",
-            "seen_complete": False,
-        }
+    def test_tracked_job_creation(self):
+        """TrackedJob should have all required fields."""
+        job = TrackedJob(
+            job_id="job_123",
+            ontology="Test Ontology",
+            filename="document.md",
+        )
+        assert job.job_id == "job_123"
+        assert job.ontology == "Test Ontology"
+        assert job.filename == "document.md"
+        assert job.seen_complete is False
+        assert job.marked_for_removal is False
 
-        assert "ontology" in tracked_job
-        assert "filename" in tracked_job
-        assert "seen_complete" in tracked_job
-        assert tracked_job["seen_complete"] is False
+    def test_tracked_job_staleness(self):
+        """TrackedJob.is_stale() should detect old jobs."""
+        job = TrackedJob(
+            job_id="job_123",
+            ontology="Test",
+            filename="test.md",
+            created_at=time.time() - STALE_JOB_TIMEOUT - 1,  # Over timeout
+        )
+        assert job.is_stale() is True
 
-    def test_seen_complete_flag(self):
-        """seen_complete flag should be mutable."""
-        tracked_job = {
-            "ontology": "Test",
-            "filename": "test.md",
-            "seen_complete": False,
-        }
+    def test_tracked_job_not_stale(self):
+        """Fresh jobs should not be stale."""
+        job = TrackedJob(
+            job_id="job_123",
+            ontology="Test",
+            filename="test.md",
+        )
+        assert job.is_stale() is False
 
-        # Simulate first read of completed job
-        tracked_job["seen_complete"] = True
-        assert tracked_job["seen_complete"] is True
+
+class TestJobTracker:
+    """Tests for JobTracker class."""
+
+    def test_track_job(self):
+        """Can track a new job."""
+        tracker = JobTracker()
+        tracker.track_job("job_123", "Test", "doc.md")
+
+        assert tracker.is_tracking("job_123")
+        assert tracker.job_count == 1
+
+    def test_get_jobs_for_ontology(self):
+        """Can filter jobs by ontology."""
+        tracker = JobTracker()
+        tracker.track_job("job_1", "Ontology A", "doc1.md")
+        tracker.track_job("job_2", "Ontology B", "doc2.md")
+        tracker.track_job("job_3", "Ontology A", "doc3.md")
+
+        jobs_a = tracker.get_jobs_for_ontology("Ontology A")
+        assert len(jobs_a) == 2
+        assert all(j.ontology == "Ontology A" for j in jobs_a)
+
+    def test_mark_job_status_first_completion(self):
+        """First completion marks seen_complete=True."""
+        tracker = JobTracker()
+        tracker.track_job("job_123", "Test", "doc.md")
+
+        tracker.mark_job_status("job_123", "completed")
+
+        job = tracker.get_job("job_123")
+        assert job.seen_complete is True
+        assert job.marked_for_removal is False
+
+    def test_mark_job_status_second_completion(self):
+        """Second completion marks for removal."""
+        tracker = JobTracker()
+        tracker.track_job("job_123", "Test", "doc.md")
+
+        tracker.mark_job_status("job_123", "completed")  # First
+        tracker.mark_job_status("job_123", "completed")  # Second
+
+        job = tracker.get_job("job_123")
+        assert job.seen_complete is True
+        assert job.marked_for_removal is True
+
+    def test_mark_job_not_found(self):
+        """mark_job_not_found marks for removal."""
+        tracker = JobTracker()
+        tracker.track_job("job_123", "Test", "doc.md")
+
+        tracker.mark_job_not_found("job_123")
+
+        job = tracker.get_job("job_123")
+        assert job.marked_for_removal is True
+
+    def test_atomic_cleanup_on_get_jobs(self):
+        """get_jobs_for_ontology atomically cleans up removed jobs."""
+        tracker = JobTracker()
+        tracker.track_job("job_1", "Test", "doc1.md")
+        tracker.track_job("job_2", "Test", "doc2.md")
+
+        # Mark job_1 for removal
+        tracker.mark_job_status("job_1", "completed")
+        tracker.mark_job_status("job_1", "completed")
+
+        # Get jobs should clean up job_1
+        jobs = tracker.get_jobs_for_ontology("Test")
+        assert len(jobs) == 1
+        assert jobs[0].job_id == "job_2"
+        assert tracker.job_count == 1
+
+    def test_stale_job_cleanup(self):
+        """Stale jobs are cleaned up on get_jobs_for_ontology."""
+        tracker = JobTracker()
+
+        # Add a stale job directly
+        stale_job = TrackedJob(
+            job_id="stale_job",
+            ontology="Test",
+            filename="old.md",
+            created_at=time.time() - STALE_JOB_TIMEOUT - 100,
+        )
+        tracker._jobs["stale_job"] = stale_job
+
+        # Add a fresh job
+        tracker.track_job("fresh_job", "Test", "new.md")
+
+        # Get jobs should clean up stale job
+        jobs = tracker.get_jobs_for_ontology("Test")
+        assert len(jobs) == 1
+        assert jobs[0].job_id == "fresh_job"
+
+    def test_clear(self):
+        """clear() removes all tracked jobs."""
+        tracker = JobTracker()
+        tracker.track_job("job_1", "Test", "doc1.md")
+        tracker.track_job("job_2", "Test", "doc2.md")
+
+        tracker.clear()
+
+        assert tracker.job_count == 0
+
+    def test_running_status_not_terminal(self):
+        """Running status doesn't mark for removal."""
+        tracker = JobTracker()
+        tracker.track_job("job_123", "Test", "doc.md")
+
+        tracker.mark_job_status("job_123", "running")
+
+        job = tracker.get_job("job_123")
+        assert job.seen_complete is False
+        assert job.marked_for_removal is False
 
 
 class TestJobsConfigFromToml:

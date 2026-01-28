@@ -163,16 +163,20 @@ def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
     return "\n".join(lines)
 
 
-def format_job(job_data: dict) -> str:
+def format_job(job_data: dict | None) -> str:
     """Format ingestion job data as a TOML-like readable file.
 
     Args:
         job_data: Job information from the API including job_id, status,
                   ontology, filename, created_at, and progress info.
+                  Can be None if API returned no data.
 
     Returns:
         Formatted string suitable for display in a virtual file.
     """
+    if job_data is None:
+        return "# Job Error\n\nerror = \"No job data returned from API\"\n"
+
     job_id = job_data.get("job_id", "unknown")
     status = job_data.get("status", "unknown")
     ontology = job_data.get("ontology", "unknown")

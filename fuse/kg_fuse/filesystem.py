@@ -39,6 +39,7 @@ import pyfuse3
 from .api_client import KnowledgeGraphClient
 from .config import TagsConfig, JobsConfig
 from .formatters import format_concept, format_document, format_job, render_meta_file
+from .job_tracker import JobTracker, TERMINAL_JOB_STATUSES
 from .models import InodeEntry, is_dir_type
 from .query_store import QueryStore
 
@@ -46,9 +47,6 @@ log = logging.getLogger(__name__)
 
 # Maximum file size for ingestion (50MB)
 MAX_INGESTION_SIZE = 50 * 1024 * 1024
-
-# Terminal job statuses (job file should be removed after showing final state)
-TERMINAL_JOB_STATUSES = frozenset({"completed", "failed", "cancelled"})
 
 
 class KnowledgeGraphFS(pyfuse3.Operations):
@@ -88,10 +86,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._write_buffers: dict[int, bytes] = {}  # inode -> content being written
         self._write_info: dict[int, dict] = {}  # inode -> {ontology, filename}
 
-        # Job tracking: lazy polling approach
-        # Jobs are added when ingested via FUSE, polled only when .job file is read
-        self._tracked_jobs: dict[str, dict] = {}  # job_id -> {ontology, filename, seen_complete}
-        self._jobs_to_remove: set[str] = set()  # job_ids that completed and were shown once
+        # Job tracking: lazy polling with automatic cleanup
+        self._job_tracker = JobTracker()
 
     def _make_attr(self, inode: int, is_dir: bool = False, size: int = 0, writable: bool = False) -> pyfuse3.EntryAttributes:
         """Create file attributes."""
@@ -538,12 +534,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         entries = []
 
-        # First, clean up any jobs marked for removal
-        for job_id in list(self._jobs_to_remove):
-            if job_id in self._tracked_jobs:
-                del self._tracked_jobs[job_id]
-            self._jobs_to_remove.discard(job_id)
-
         # Get documents from API
         try:
             data = await self._api.get("/documents", params={"ontology": ontology, "limit": 100})
@@ -561,14 +551,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             log.error(f"Failed to list documents for {ontology}: {e}")
 
         # Add tracked jobs for this ontology as virtual files (no API call!)
-        for job_id, job_info in self._tracked_jobs.items():
-            if job_info.get("ontology") == ontology:
-                job_filename = job_info.get("filename", "unknown")
-                virtual_name = self.jobs_config.format_job_filename(job_filename)
-                inode = self._get_or_create_job_inode(
-                    virtual_name, parent_inode, ontology, job_id
-                )
-                entries.append((inode, virtual_name))
+        # JobTracker handles atomic cleanup of completed/stale jobs
+        for job in self._job_tracker.get_jobs_for_ontology(ontology):
+            virtual_name = self.jobs_config.format_job_filename(job.filename)
+            inode = self._get_or_create_job_inode(
+                virtual_name, parent_inode, ontology, job.job_id
+            )
+            entries.append((inode, virtual_name))
 
         # Cache result
         self._dir_cache[parent_inode] = entries
@@ -1031,31 +1020,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         except Exception as e:
             # Job may have been deleted - mark for removal
             log.debug(f"Job {entry.job_id} not found, marking for removal: {e}")
-            self._jobs_to_remove.add(entry.job_id)
+            self._job_tracker.mark_job_not_found(entry.job_id)
             self._invalidate_cache(entry.parent)
             return f"# Job Not Found\n\njob_id = \"{entry.job_id}\"\nerror = \"Job no longer exists\"\n"
 
         status = data.get("status", "unknown")
 
-        # If job reached terminal status, mark for removal after showing final state
-        if status in TERMINAL_JOB_STATUSES:
-            job_info = self._tracked_jobs.get(entry.job_id, {})
-            if not job_info.get("seen_complete"):
-                # First time seeing completion - show it but mark as seen
-                log.info(f"Job {entry.job_id} completed with status: {status}")
-                if entry.job_id in self._tracked_jobs:
-                    self._tracked_jobs[entry.job_id]["seen_complete"] = True
-            else:
-                # Already shown completion once - now remove it
-                log.info(f"Job {entry.job_id} shown complete, marking for removal")
-                self._jobs_to_remove.add(entry.job_id)
-                # Invalidate parent cache so next listing refreshes
-                self._invalidate_cache(entry.parent)
-                # Also notify kernel so file managers refresh
-                try:
-                    pyfuse3.invalidate_inode(entry.parent, attr_only=False)
-                except Exception:
-                    pass  # Non-critical
+        # Update job tracker with status (handles seen_complete logic)
+        self._job_tracker.mark_job_status(entry.job_id, status)
+
+        # If job is now marked for removal, invalidate caches
+        job = self._job_tracker.get_job(entry.job_id)
+        if job and job.marked_for_removal:
+            self._invalidate_cache(entry.parent)
+            # Notify kernel so file managers refresh
+            try:
+                pyfuse3.invalidate_inode(entry.parent, attr_only=False)
+            except Exception:
+                pass  # Non-critical
 
         return format_job(data)
 
@@ -1414,15 +1396,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         result = await self._api.post("/ingest", data=data, files=files)
         log.info(f"Ingestion response: {result}")
 
-        # Track the job so it shows as a .job file until complete
+        # Track the job so it shows as a .ingesting file until complete
         job_id = result.get("job_id")
         if job_id:
-            self._tracked_jobs[job_id] = {
-                "ontology": ontology,
-                "filename": filename,
-                "seen_complete": False,
-            }
-            log.info(f"Tracking job {job_id} for {ontology}/{filename}")
+            self._job_tracker.track_job(job_id, ontology, filename)
 
         return result
 
@@ -1434,6 +1411,5 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._dir_cache.clear()
         self._cache_time.clear()
         self._write_buffers.clear()
-        self._tracked_jobs.clear()
-        self._jobs_to_remove.clear()
+        self._job_tracker.clear()
         self._write_info.clear()
