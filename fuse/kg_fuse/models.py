@@ -30,6 +30,7 @@ class InodeEntry:
     concept_id: Optional[str] = None  # For concepts
     symlink_target: Optional[str] = None  # For symlinks
     meta_key: Optional[str] = None  # For meta_file: which setting (limit, threshold, etc.)
+    job_id: Optional[str] = None  # For job_file: ingestion job ID
     size: int = 0
 
 
@@ -38,5 +39,9 @@ DIR_TYPES = frozenset({"root", "ontology_root", "ontology", "documents_dir", "qu
 
 
 def is_dir_type(entry_type: str) -> bool:
-    """Check if entry type is a directory."""
+    """Check if entry type is a directory.
+
+    Non-directory types include: document, concept, meta_file, ingestion_file,
+    symlink, job_file
+    """
     return entry_type in DIR_TYPES

@@ -163,6 +163,48 @@ def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
     return "\n".join(lines)
 
 
+def format_job(job_data: dict) -> str:
+    """Format ingestion job data as a TOML-like readable file.
+
+    Args:
+        job_data: Job information from the API including job_id, status,
+                  ontology, filename, created_at, and progress info.
+
+    Returns:
+        Formatted string suitable for display in a virtual file.
+    """
+    job_id = job_data.get("job_id", "unknown")
+    status = job_data.get("status", "unknown")
+    ontology = job_data.get("ontology", "unknown")
+    filename = job_data.get("filename", "unknown")
+    created_at = job_data.get("created_at", "unknown")
+
+    # Progress info (may not always be present)
+    progress = job_data.get("progress", {})
+    stage = progress.get("stage", status)
+    percent = progress.get("percent", 0)
+    items_processed = progress.get("items_processed", 0)
+
+    lines = [
+        f"# Ingestion Job: {job_id}",
+        f"# Status: {status}",
+        "",
+        "[job]",
+        f'job_id = "{job_id}"',
+        f'status = "{status}"',
+        f'ontology = "{ontology}"',
+        f'filename = "{filename}"',
+        f'created_at = "{created_at}"',
+        "",
+        "[progress]",
+        f'stage = "{stage}"',
+        f"percent = {percent}",
+        f"items_processed = {items_processed}",
+    ]
+
+    return "\n".join(lines) + "\n"
+
+
 def render_meta_file(meta_key: str, query: Optional[Query], ontology: Optional[str]) -> str:
     """Render content for a .meta virtual file."""
     if not query:

@@ -38,7 +38,7 @@ import pyfuse3
 
 from .api_client import KnowledgeGraphClient
 from .config import TagsConfig
-from .formatters import format_concept, format_document, render_meta_file
+from .formatters import format_concept, format_document, format_job, render_meta_file
 from .models import InodeEntry, is_dir_type
 from .query_store import QueryStore
 
@@ -46,6 +46,9 @@ log = logging.getLogger(__name__)
 
 # Maximum file size for ingestion (50MB)
 MAX_INGESTION_SIZE = 50 * 1024 * 1024
+
+# Terminal job statuses (job file should be removed after showing final state)
+TERMINAL_JOB_STATUSES = frozenset({"completed", "failed", "cancelled"})
 
 
 class KnowledgeGraphFS(pyfuse3.Operations):
@@ -83,6 +86,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._pending_ontologies: set[str] = set()  # Ontologies created but no documents yet
         self._write_buffers: dict[int, bytes] = {}  # inode -> content being written
         self._write_info: dict[int, dict] = {}  # inode -> {ontology, filename}
+
+        # Job tracking: lazy polling approach
+        # Jobs are added when ingested via FUSE, polled only when .job file is read
+        self._tracked_jobs: dict[str, dict] = {}  # job_id -> {ontology, filename, seen_complete}
+        self._jobs_to_remove: set[str] = set()  # job_ids that completed and were shown once
 
     def _make_attr(self, inode: int, is_dir: bool = False, size: int = 0, writable: bool = False) -> pyfuse3.EntryAttributes:
         """Create file attributes."""
@@ -517,13 +525,23 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return entries
 
     async def _list_documents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
-        """List document files inside an ontology's documents/ directory."""
+        """List document files inside an ontology's documents/ directory.
+
+        Also includes virtual job files (~{filename}.job) for jobs tracked locally.
+        Uses lazy polling: jobs are only polled when their .job file is read.
+        """
         # Check cache
         if parent_inode in self._dir_cache:
             if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
                 return self._dir_cache[parent_inode]
 
         entries = []
+
+        # First, clean up any jobs marked for removal
+        for job_id in list(self._jobs_to_remove):
+            if job_id in self._tracked_jobs:
+                del self._tracked_jobs[job_id]
+            self._jobs_to_remove.discard(job_id)
 
         # Get documents from API
         try:
@@ -540,6 +558,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         except Exception as e:
             log.error(f"Failed to list documents for {ontology}: {e}")
+
+        # Add tracked jobs for this ontology as virtual files (no API call!)
+        for job_id, job_info in self._tracked_jobs.items():
+            if job_info.get("ontology") == ontology:
+                job_filename = job_info.get("filename", "unknown")
+                virtual_name = f"~{job_filename}.job"
+                inode = self._get_or_create_job_inode(
+                    virtual_name, parent_inode, ontology, job_id
+                )
+                entries.append((inode, virtual_name))
 
         # Cache result
         self._dir_cache[parent_inode] = entries
@@ -770,6 +798,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         )
         return inode
 
+    def _find_documents_dir_inode(self, ontology: str) -> Optional[int]:
+        """Find the documents_dir inode for an ontology, if it exists."""
+        for inode, entry in self._inodes.items():
+            if entry.entry_type == "documents_dir" and entry.ontology == ontology:
+                return inode
+        return None
+
     def _get_or_create_document_inode(self, name: str, parent: int, ontology: str, document_id: str) -> int:
         """Get or create inode for a document file."""
         for inode, entry in self._inodes.items():
@@ -784,6 +819,23 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             ontology=ontology,
             document_id=document_id,
             size=4096,  # Placeholder size
+        )
+        return inode
+
+    def _get_or_create_job_inode(self, name: str, parent: int, ontology: str, job_id: str) -> int:
+        """Get or create inode for a job virtual file."""
+        for inode, entry in self._inodes.items():
+            if entry.entry_type == "job_file" and entry.job_id == job_id and entry.parent == parent:
+                return inode
+
+        inode = self._allocate_inode()
+        self._inodes[inode] = InodeEntry(
+            name=name,
+            entry_type="job_file",
+            parent=parent,
+            ontology=ontology,
+            job_id=job_id,
+            size=4096,  # Placeholder size, actual content fetched on read
         )
         return inode
 
@@ -895,7 +947,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
 
         entry = self._inodes[inode]
-        if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file"):
+        if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file", "job_file"):
             raise pyfuse3.FUSEError(errno.EISDIR)
 
         # Check write permissions for meta files
@@ -903,6 +955,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             # query.toml is read-only
             if entry.meta_key == "query.toml" and (flags & os.O_WRONLY or flags & os.O_RDWR):
                 raise pyfuse3.FUSEError(errno.EACCES)
+
+        # Job files are read-only
+        if entry.entry_type == "job_file" and (flags & os.O_WRONLY or flags & os.O_RDWR):
+            raise pyfuse3.FUSEError(errno.EACCES)
 
         return pyfuse3.FileInfo(fh=inode)
 
@@ -919,6 +975,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 content = await self._read_concept(entry)
             elif entry.entry_type == "meta_file":
                 content = self._render_meta_file(entry)
+            elif entry.entry_type == "job_file":
+                content = await self._read_job(entry)
             else:
                 content = "# Unknown file type\n"
 
@@ -954,6 +1012,46 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         data = await self._api.get(f"/query/concept/{entry.concept_id}")
         return self._format_concept(data)
+
+    async def _read_job(self, entry: InodeEntry) -> str:
+        """Read and format a job status file.
+
+        This is where lazy polling happens - we only fetch job status
+        when someone actually reads the .job file.
+
+        If the job is complete (terminal status), we mark it for removal
+        so the next directory listing won't show it.
+        """
+        if not entry.job_id:
+            return "# No job ID\n"
+
+        try:
+            data = await self._api.get(f"/jobs/{entry.job_id}")
+        except Exception as e:
+            # Job may have been deleted - mark for removal
+            log.debug(f"Job {entry.job_id} not found, marking for removal: {e}")
+            self._jobs_to_remove.add(entry.job_id)
+            self._invalidate_cache(entry.parent)
+            return f"# Job Not Found\n\njob_id = \"{entry.job_id}\"\nerror = \"Job no longer exists\"\n"
+
+        status = data.get("status", "unknown")
+
+        # If job reached terminal status, mark for removal after showing final state
+        if status in TERMINAL_JOB_STATUSES:
+            job_info = self._tracked_jobs.get(entry.job_id, {})
+            if not job_info.get("seen_complete"):
+                # First time seeing completion - show it but mark as seen
+                log.info(f"Job {entry.job_id} completed with status: {status}")
+                if entry.job_id in self._tracked_jobs:
+                    self._tracked_jobs[entry.job_id]["seen_complete"] = True
+            else:
+                # Already shown completion once - now remove it
+                log.info(f"Job {entry.job_id} shown complete, marking for removal")
+                self._jobs_to_remove.add(entry.job_id)
+                # Invalidate parent cache so next listing refreshes
+                self._invalidate_cache(entry.parent)
+
+        return format_job(data)
 
     def _format_document(self, data: dict, concepts: list = None) -> str:
         """Format document data as markdown with optional YAML frontmatter."""
@@ -1271,6 +1369,17 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                         self._pending_ontologies.discard(ontology)
                         log.info(f"Ontology {ontology} is no longer pending")
 
+                    # Notify kernel that the documents directory changed
+                    # This tells file managers like Dolphin to refresh
+                    docs_dir_inode = self._find_documents_dir_inode(ontology)
+                    if docs_dir_inode:
+                        try:
+                            # Invalidate the directory entry to trigger refresh
+                            pyfuse3.invalidate_entry_async(docs_dir_inode, filename.encode("utf-8"))
+                            log.debug(f"Notified kernel about directory change for {ontology}/documents/")
+                        except Exception as notify_err:
+                            log.debug(f"Kernel notification failed (non-critical): {notify_err}")
+
                 except Exception as e:
                     log.error(f"Ingestion failed for {filename}: {e}")
 
@@ -1284,7 +1393,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     self._invalidate_cache(parent_inode)
 
     async def _ingest_document(self, ontology: str, filename: str, content: bytes) -> dict:
-        """Submit document to ingestion API."""
+        """Submit document to ingestion API and track the job."""
         # Use multipart form upload
         files = {"file": (filename, content)}
         data = {
@@ -1294,6 +1403,17 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         result = await self._api.post("/ingest", data=data, files=files)
         log.info(f"Ingestion response: {result}")
+
+        # Track the job so it shows as a .job file until complete
+        job_id = result.get("job_id")
+        if job_id:
+            self._tracked_jobs[job_id] = {
+                "ontology": ontology,
+                "filename": filename,
+                "seen_complete": False,
+            }
+            log.info(f"Tracking job {job_id} for {ontology}/{filename}")
+
         return result
 
     async def destroy(self) -> None:
@@ -1304,4 +1424,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._dir_cache.clear()
         self._cache_time.clear()
         self._write_buffers.clear()
+        self._tracked_jobs.clear()
+        self._jobs_to_remove.clear()
         self._write_info.clear()
