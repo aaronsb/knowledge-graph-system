@@ -17,7 +17,7 @@ from importlib.metadata import version, PackageNotFoundError
 import pyfuse3
 import trio
 
-from .config import load_config, get_config_path, TagsConfig
+from .config import load_config, get_config_path, TagsConfig, JobsConfig
 from .filesystem import KnowledgeGraphFS
 
 
@@ -120,6 +120,7 @@ def main() -> None:
 
     # Get tags config (or use defaults)
     tags_config = config.tags if config else TagsConfig()
+    jobs_config = config.jobs if config else JobsConfig()
 
     # Create filesystem
     fs = KnowledgeGraphFS(
@@ -127,6 +128,7 @@ def main() -> None:
         client_id=client_id,
         client_secret=client_secret,
         tags_config=tags_config,
+        jobs_config=jobs_config,
     )
 
     # FUSE options

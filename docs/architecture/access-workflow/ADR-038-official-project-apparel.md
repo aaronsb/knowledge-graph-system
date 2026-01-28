@@ -440,3 +440,253 @@ If you're reading this ADR in the future and wondering "did they actually make t
 **Last Updated:** 2025-10-17
 **Likelihood of Implementation:** 30% (60% if we get more GitHub stars)
 **Regret Factor:** TBD (check back after first conference)
+
+---
+
+## Appendix C: Competitive Landscape Analysis (The "Why Is No One Else Doing This" Sequel)
+
+*Added 2026-01-28 after external review by Gemini 2.5 Pro, who was asked "why are we weird" and delivered a thesis*
+
+### The Emotional Journey, Part 2
+
+Following the discovery documented in this ADR (nobody else does streaming entity resolution), we asked an AI to explain *why* we're alone in this space. The answer was simultaneously validating and concerning.
+
+### The "Agent Memory" Market
+
+Apparently we exist in the same conceptual space as several "Agent Brain" projects. Here's why they're all wrong and we're right (copium levels: maximum):
+
+#### Zep: "A Very Efficient Secretary"
+
+Zep is built for scale and speed—designed for companies building chatbots that remember users across millions of sessions.
+
+```
+Zep's approach:
+if user.preference_changed:
+    old_fact.invalidate()
+    new_fact.store()
+    # Done in <200ms
+    # Whether it's TRUE is someone else's problem
+```
+
+**Their pitch:** "Fast retrieval for conversational AI!"
+**Our response:** "But is the retrieval *correct*?"
+**Their response:** "94.5% of the time!"
+**Our response:** *gestures at t-shirt*
+
+#### Mem0: "A Post-it Note Archive"
+
+Formerly known as EmbedChain. Focuses on "long-term memory for AI."
+
+**Architecture:** Essentially a fancy wrapper around a vector database that updates a user profile. Very flat. No epistemic depth.
+
+**Their approach:** Facts exist or they don't.
+**Our approach:** Facts exist with a grounding score of -1.0 to +1.0, semantic diversity metrics, evidence provenance, and a FUSE filesystem to browse them.
+
+**Who's overengineering?** *(points at mirror)*
+
+#### Microsoft GraphRAG: "A Corporate Wiki"
+
+The current titan of the space. Backed by Microsoft Research. Probably has more PhDs than we have commits.
+
+**Their approach:** Build massive global summaries, identify "communities" of ideas, then ask an LLM at query time "Hey, there's a conflict here, what do you think?"
+
+**Our approach:** Mathematically encode conflict into the graph structure itself. No post-hoc LLM arbitration required.
+
+**GraphRAG:** "We'll let the AI figure it out."
+**Us:** "We'll do math so the AI doesn't have to figure it out."
+
+*(One of these approaches scales to millions of users. The other one is correct.)*
+
+### The Comparison Matrix (Now With Vibes)
+
+| Feature | Our System | Zep | Mem0 | GraphRAG |
+|---------|------------|-----|------|----------|
+| **Primary Goal** | Epistemic Truth | Agent Latency | User Personalization | Global Comprehension |
+| **Conflict Handling** | Mathematical (-1 to +1) | Temporal Invalidation | Overwriting | "Ask LLM Later" |
+| **Filesystem Access** | Yes (FUSE) | No | No | No |
+| **Search Method** | Exact O(n) | ANN (HNSW) | ANN (Vector) | Graph + ANN |
+| **Recall** | 100% | 94.5% | ~95% | Variable |
+| **Speed** | 2 seconds | 200ms | 150ms | 500ms |
+| **ADRs Written** | 88+ | Unknown | Unknown | Probably reasonable |
+| **T-Shirt ADR** | You're reading it | No | No | Definitely not |
+| **Vibe (Aspiration)** | "Library of Alexandria" | "Efficient Secretary" | "Post-it Archive" | "Corporate Wiki" |
+| **Vibe (Reality)** | "Pepe Silvia Board" | Same | Same | Same |
+
+### The Uncomfortable Truth
+
+> "If a doctor is using a graph to find contradictions in medical papers, they don't want 'approximate' results (94.5% recall). They want 100% recall, even if it takes 2 seconds instead of 200ms."
+
+This is our justification. We're clinging to it.
+
+### Alternative T-Shirt Design 6: "The Competitive Analysis"
+
+**Front:**
+```
+OUR COMPETITORS:
+✓ Faster than us
+✓ More scalable than us
+✓ Better funded than us
+✓ More users than us
+
+US:
+✓ Correct
+```
+
+**Back:**
+```
+Recall comparison:
+• Zep (HNSW):     94.5%
+• Mem0 (Vector):  ~95%
+• GraphRAG:       ¯\_(ツ)_/¯
+• Us (O(n)):      100%
+
+The 5.5% we catch?
+That's the contradiction that matters.
+```
+
+### The "Solo Dev" Observation
+
+> "The fact that you have 88 ADRs and a FUSE filesystem makes your project more of a 'Semantic Operating System' than just a 'memory layer.' Zep is a tool you plug into an app; your system is an environment you live in to do research."
+
+**Accurate.** We didn't build a library; we built a research environment. Whether anyone else wants to live in it remains to be seen.
+
+---
+
+## Appendix D: The Wes Anderson Interpretation
+
+*Also from Gemini 2.5 Pro, who may understand this project better than we do*
+
+> "You've built the Wes Anderson version of graph memory."
+
+This is the most structurally accurate description of a software project ever written.
+
+If this project is the Wes Anderson version of graph memory, then ADR-038 isn't just a design document—it's a **costume department memo**. It explains why we have 88+ ADRs: Wes Anderson doesn't just "film a scene," he specifies the exact shade of saffron for the curtains and the kerning on the telegram.
+
+### Why the Analogy is Technically Perfect
+
+#### 1. The "Obsessive Planimetric" Detail
+
+Wes Anderson is famous for perfectly centered, symmetrical shots. Our O(n) full-scan is the computational version of that.
+
+| Approach | Camera Metaphor | Result |
+|----------|-----------------|--------|
+| HNSW (everyone else) | Hand-held, shaky but efficient | "Good enough" (94.5% recall) |
+| O(n) full-scan (us) | Stationary tripod, prime lens | Perfect focus across entire frame |
+
+We insist on setting up the shot correctly. It takes longer. The composition is perfect. No "stochastic" blur.
+
+#### 2. The Color Palette (Epistemic Grounding)
+
+While the rest of the AI world is a gritty, gray "vector space" of floating-point numbers, our system has a very specific chromatic logic:
+
+```
+GROUNDING SCORE COLOR PALETTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
++1.0  ████████  Soft Pastel Pink      (Supporting evidence)
+ 0.0  ████████  Neutral Cream         (Ungrounded)
+-1.0  ████████  Muted Mustard Yellow  (Contradictory evidence)
+
+SEMANTIC DIVERSITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+High  ████████  Deep Teal             (Fabrication detection)
+```
+
+We aren't just storing data; we're *color-grading the truth*.
+
+#### 3. The "Cross-Section" Set (FUSE Filesystem)
+
+The FUSE filesystem is the "Life Aquatic" / "Grand Budapest Hotel" cross-section shot. Instead of a black-box API, we've built a dollhouse where you can see every room (concept) by opening a "door" (directory) in the terminal.
+
+```bash
+$ ls /mnt/graph/concepts/the_bitter_lesson/evidence/
+  source_001.txt
+  source_002.txt
+  contradicting_paper.txt
+
+$ cat /mnt/graph/concepts/the_bitter_lesson/grounding_score
+  0.73
+```
+
+It turns "traversing a graph" into "walking through a meticulously curated set."
+
+**Normal database:** "Query the API to retrieve concept relationships."
+**Us:** "Open the filing cabinet. It's the third drawer."
+
+#### 4. The Meticulous Documentation
+
+88+ ADRs are the narrator's voice-over. They explain the history of a decision with a dry, slightly detached wit, ensuring that even if the "solo developer" is the only one who ever sees it, the provenance of the madness is preserved.
+
+*[Narrator voice]*: "The developer had written 88 Architecture Decision Records. Whether anyone would ever read them remained unclear. But they existed, and that was what mattered."
+
+### Alternative T-Shirt Design 7: "The Wes Anderson"
+
+**Front:**
+```
+┌─────────────────────────────────┐
+│                                 │
+│    THE KNOWLEDGE GRAPH SYSTEM   │
+│                                 │
+│    A Film by Solo Developer     │
+│                                 │
+│         Chapter 38:             │
+│    "The Full-Scan Decision"     │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Back:**
+```
+CAST OF CHARACTERS
+
+The Concept ............ Vector (1536-dimensional)
+The Evidence ........... Source Document
+The Grounding Score .... Float (-1.0 to +1.0)
+The FUSE Mount ......... /mnt/graph
+The ADRs ............... 88 and counting
+The Developer .......... Questionable decision-maker
+
+"Filmed on location in PostgreSQL"
+```
+
+**Design notes:**
+- Centered perfectly (obviously)
+- Futura font (the only acceptable choice)
+- Accompanied by a small, unnecessary handbook explaining the font choice
+- Heavyweight cotton (to represent the O(n) weight)
+
+### The French Dispatch Move
+
+The FUSE filesystem—mapping a complex graph topology into a flat, 2D filesystem hierarchy—is the ultimate "French Dispatch" production design choice for a database.
+
+- **Unnecessary?** Probably.
+- **Beautiful?** Definitely.
+- **Makes perfect sense once you understand the aesthetic?** Absolutely.
+
+```
+┌──────────────────────────────────────────────────┐
+│              THE KNOWLEDGE GRAPH                 │
+│              (Cross-Section View)                │
+├──────────┬──────────┬──────────┬────────────────┤
+│ /concepts│ /sources │ /evidence│ /relationships │
+├──────────┼──────────┼──────────┼────────────────┤
+│  idea_1/ │  doc_1/  │ inst_1/  │   SUPPORTS/    │
+│  idea_2/ │  doc_2/  │ inst_2/  │  CONTRADICTS/  │
+│  idea_3/ │  doc_3/  │ inst_3/  │    IMPLIES/    │
+└──────────┴──────────┴──────────┴────────────────┘
+```
+
+---
+
+## Appendix E: Closing Thoughts
+
+The addition of these appendices brings the total length of this ADR to approximately 800 lines. This is:
+
+1. **Entirely on brand** for a Wes Anderson production
+2. **Thoroughly documented** for future archaeologists
+3. **Probably unnecessary** but here we are
+
+---
+
+*"If you're doing something and nobody else is doing it, you're either a genius or an idiot. The 88 ADRs suggest we've at least documented which one."*
+
+*"The developer stared at the terminal. The FUSE mount was working. The concepts were browsable. The grounding scores were accurate to two decimal places. Nobody would ever use it. It was perfect."* — The Narrator, probably

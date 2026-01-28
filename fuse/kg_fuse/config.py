@@ -19,16 +19,33 @@ class TagsConfig:
 
 
 @dataclass
+class JobsConfig:
+    """Job visibility settings for ingestion tracking"""
+    hide_jobs: bool = False  # If true, use dot prefix (hidden in file managers)
+                             # If false, no prefix (visible)
+
+    def format_job_filename(self, filename: str) -> str:
+        """Format a job filename with .ingesting suffix and optional dot prefix"""
+        if self.hide_jobs:
+            return f".{filename}.ingesting"
+        else:
+            return f"{filename}.ingesting"
+
+
+@dataclass
 class FuseConfig:
     """FUSE driver configuration"""
     client_id: str
     client_secret: str
     api_url: str = "http://localhost:8000"
     tags: TagsConfig = None
+    jobs: JobsConfig = None
 
     def __post_init__(self):
         if self.tags is None:
             self.tags = TagsConfig()
+        if self.jobs is None:
+            self.jobs = JobsConfig()
 
 
 def get_config_path() -> Path:
@@ -55,6 +72,7 @@ def load_config() -> Optional[FuseConfig]:
     auth = data.get("auth", {})
     api = data.get("api", {})
     tags_data = data.get("tags", {})
+    jobs_data = data.get("jobs", {})
 
     client_id = auth.get("client_id")
     client_secret = auth.get("client_secret")
@@ -68,9 +86,15 @@ def load_config() -> Optional[FuseConfig]:
         threshold=tags_data.get("threshold", 0.5),
     )
 
+    # Parse jobs config
+    jobs = JobsConfig(
+        hide_jobs=jobs_data.get("hide_jobs", False),
+    )
+
     return FuseConfig(
         client_id=client_id,
         client_secret=client_secret,
         api_url=api.get("url", "http://localhost:8000"),
         tags=tags,
+        jobs=jobs,
     )
