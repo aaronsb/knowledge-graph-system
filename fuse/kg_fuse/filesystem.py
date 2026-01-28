@@ -1050,6 +1050,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 self._jobs_to_remove.add(entry.job_id)
                 # Invalidate parent cache so next listing refreshes
                 self._invalidate_cache(entry.parent)
+                # Also notify kernel so file managers refresh
+                try:
+                    pyfuse3.invalidate_inode(entry.parent, attr_only=False)
+                except Exception:
+                    pass  # Non-critical
 
         return format_job(data)
 
@@ -1374,9 +1379,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     docs_dir_inode = self._find_documents_dir_inode(ontology)
                     if docs_dir_inode:
                         try:
-                            # Invalidate the directory entry to trigger refresh
-                            pyfuse3.invalidate_entry_async(docs_dir_inode, filename.encode("utf-8"))
-                            log.debug(f"Notified kernel about directory change for {ontology}/documents/")
+                            # Invalidate the directory inode to force re-reading contents
+                            # attr_only=False means also invalidate cached directory listing
+                            pyfuse3.invalidate_inode(docs_dir_inode, attr_only=False)
+                            log.debug(f"Invalidated documents directory inode for {ontology}")
+                        except OSError as e:
+                            # ENOSYS means kernel doesn't support this (older kernels)
+                            log.debug(f"invalidate_inode not supported: {e}")
                         except Exception as notify_err:
                             log.debug(f"Kernel notification failed (non-critical): {notify_err}")
 
