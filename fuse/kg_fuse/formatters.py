@@ -202,6 +202,13 @@ def format_job(job_data: dict) -> str:
         f"items_processed = {items_processed}",
     ]
 
+    # Include error if present (for failed jobs)
+    error = job_data.get("error")
+    if error:
+        lines.append("")
+        lines.append("[error]")
+        lines.append(f'message = "{error}"')
+
     return "\n".join(lines) + "\n"
 
 

@@ -37,7 +37,7 @@ from typing import Optional
 import pyfuse3
 
 from .api_client import KnowledgeGraphClient
-from .config import TagsConfig
+from .config import TagsConfig, JobsConfig
 from .formatters import format_concept, format_document, format_job, render_meta_file
 from .models import InodeEntry, is_dir_type
 from .query_store import QueryStore
@@ -57,9 +57,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     ROOT_INODE = pyfuse3.ROOT_INODE  # 1
     ONTOLOGY_ROOT_INODE = 2  # Fixed inode for /ontology/
 
-    def __init__(self, api_url: str, client_id: str, client_secret: str, tags_config: TagsConfig = None):
+    def __init__(self, api_url: str, client_id: str, client_secret: str, tags_config: TagsConfig = None, jobs_config: JobsConfig = None):
         super().__init__()
         self.tags_config = tags_config or TagsConfig()
+        self.jobs_config = jobs_config or JobsConfig()
 
         # API client for graph operations
         self._api = KnowledgeGraphClient(api_url, client_id, client_secret)
@@ -527,7 +528,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     async def _list_documents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
         """List document files inside an ontology's documents/ directory.
 
-        Also includes virtual job files (~{filename}.job) for jobs tracked locally.
+        Also includes virtual job files ({filename}.ingesting) for jobs tracked locally.
         Uses lazy polling: jobs are only polled when their .job file is read.
         """
         # Check cache
@@ -563,7 +564,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         for job_id, job_info in self._tracked_jobs.items():
             if job_info.get("ontology") == ontology:
                 job_filename = job_info.get("filename", "unknown")
-                virtual_name = f"~{job_filename}.job"
+                virtual_name = self.jobs_config.format_job_filename(job_filename)
                 inode = self._get_or_create_job_inode(
                     virtual_name, parent_inode, ontology, job_id
                 )
