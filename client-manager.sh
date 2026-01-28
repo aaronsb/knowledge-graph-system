@@ -1203,7 +1203,7 @@ configure_cli() {
 }
 
 configure_fuse() {
-    # Configure FUSE mount directory and autostart
+    # Configure FUSE mount directory and autostart (OAuth credentials created separately)
     log_step "Configuring kg-fuse"
 
     # Set default mount directory if not specified
@@ -1220,8 +1220,36 @@ configure_fuse() {
         configure_autostart "$FUSE_MOUNT_DIR"
     fi
 
-    # Start FUSE
-    start_fuse "$FUSE_MOUNT_DIR"
+    # Note: FUSE OAuth credentials and startup happen after CLI authentication
+    # See configure_fuse_auth() which must run after configure_cli()
+}
+
+configure_fuse_auth() {
+    # Create OAuth credentials for FUSE driver
+    # This must run AFTER configure_cli() so CLI is authenticated
+    log_step "Creating FUSE OAuth credentials"
+
+    # Check if CLI is authenticated
+    if ! kg whoami &>/dev/null; then
+        log_warning "CLI not authenticated, skipping FUSE OAuth setup"
+        log_info "Run 'kg oauth create --for fuse' manually after logging in"
+        return 0
+    fi
+
+    # Create OAuth credentials for FUSE (writes to ~/.config/kg-fuse/config.toml)
+    log_info "Creating OAuth client for FUSE..."
+    if kg oauth create --for fuse; then
+        log_success "FUSE OAuth credentials created"
+    else
+        log_warning "Failed to create FUSE OAuth credentials"
+        log_info "Run 'kg oauth create --for fuse' manually"
+        return 0
+    fi
+
+    # Now start FUSE with valid credentials
+    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+        start_fuse "$FUSE_MOUNT_DIR"
+    fi
 }
 
 upgrade_kg_cli() {
@@ -1540,15 +1568,21 @@ run_install() {
     # Install kg CLI
     install_kg_cli
 
-    # Install FUSE if requested
+    # Install FUSE if requested (directory setup only - OAuth comes later)
     if [[ "$INSTALL_FUSE" == true ]]; then
         install_kg_fuse
         configure_fuse
     fi
 
-    # Configure CLI
+    # Configure CLI (sets API URL and authenticates)
     if [[ -n "$API_URL" ]]; then
         configure_cli
+    fi
+
+    # Create FUSE OAuth credentials AFTER CLI is authenticated
+    # This ensures FUSE config uses the same API URL as CLI
+    if [[ "$INSTALL_FUSE" == true ]]; then
+        configure_fuse_auth
     fi
 
     # Save config if requested
@@ -1558,6 +1592,67 @@ run_install() {
 
     # Show summary
     show_summary
+}
+
+check_fuse_config() {
+    # Check if FUSE config API URL matches CLI config
+    # Returns 0 if matched or no FUSE config, 1 if mismatched
+    local fuse_config="${XDG_CONFIG_HOME:-$HOME/.config}/kg-fuse/config.toml"
+
+    if [[ ! -f "$fuse_config" ]]; then
+        return 0  # No config to check
+    fi
+
+    # Get CLI API URL
+    local cli_url
+    cli_url=$(kg config get api_url 2>/dev/null || echo "")
+    if [[ -z "$cli_url" ]]; then
+        return 0  # Can't determine CLI URL
+    fi
+
+    # Get FUSE API URL from config.toml
+    local fuse_url
+    fuse_url=$(grep -E '^url\s*=' "$fuse_config" 2>/dev/null | sed 's/.*=\s*"\?\([^"]*\)"\?/\1/' || echo "")
+
+    if [[ -z "$fuse_url" ]]; then
+        return 0  # Can't determine FUSE URL
+    fi
+
+    # Compare (normalize by removing trailing slashes)
+    cli_url="${cli_url%/}"
+    fuse_url="${fuse_url%/}"
+
+    if [[ "$cli_url" != "$fuse_url" ]]; then
+        log_warning "FUSE config API URL mismatch"
+        log_info "  CLI:  $cli_url"
+        log_info "  FUSE: $fuse_url"
+        return 1
+    fi
+
+    return 0
+}
+
+sync_fuse_config() {
+    # Regenerate FUSE OAuth credentials to match CLI config
+    log_step "Syncing FUSE config with CLI"
+
+    # Stop FUSE if running
+    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+        stop_fuse "$FUSE_MOUNT_DIR"
+    fi
+
+    # Create new OAuth credentials (will use CLI's current API URL)
+    if kg oauth create --for fuse; then
+        log_success "FUSE config synced with CLI"
+    else
+        log_warning "Failed to sync FUSE config"
+        return 1
+    fi
+
+    # Restart FUSE if we have a mount dir
+    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+        start_fuse "$FUSE_MOUNT_DIR"
+    fi
 }
 
 run_upgrade() {
@@ -1572,6 +1667,17 @@ run_upgrade() {
     # Upgrade kg-fuse if installed
     if [[ -n "$DETECTED_FUSE_VERSION" ]]; then
         upgrade_kg_fuse
+
+        # Check if FUSE config matches CLI config
+        if ! check_fuse_config; then
+            if [[ "$INTERACTIVE" == true ]]; then
+                if prompt_bool "Regenerate FUSE credentials to match CLI API URL?" "y"; then
+                    sync_fuse_config
+                fi
+            else
+                log_info "Run 'kg oauth create --for fuse' to sync FUSE config"
+            fi
+        fi
     fi
 
     log_success "Upgrade complete"
