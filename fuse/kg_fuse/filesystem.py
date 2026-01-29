@@ -6,10 +6,13 @@ Hierarchy:
 - /ontology/                     - Fixed, system-managed ontology listing
 - /ontology/{name}/              - Ontology directories (from graph)
 - /ontology/{name}/documents/    - Source documents (read-only)
-- /ontology/{name}/documents/{doc}.md  - Document content
+- /ontology/{name}/documents/{doc}.md  - Text document content
+- /ontology/{name}/documents/{img}.png - Image: raw bytes from Garage S3
+- /ontology/{name}/documents/{img}.png.md - Image companion: prose + link
 - /ontology/{name}/{query}/      - User query scoped to ontology
 - /{user-query}/                 - User global query (all ontologies)
 - /{path}/*.concept.md           - Concept search results
+- /{path}/images/                - Image evidence from query concepts
 - /{query}/.meta/                - Query control plane (virtual)
 
 Query Control Plane (.meta):
@@ -39,6 +42,7 @@ import pyfuse3
 from .api_client import KnowledgeGraphClient
 from .config import TagsConfig, JobsConfig
 from .formatters import format_concept, format_document, format_job, render_meta_file
+from .image_handler import ImageHandler
 from .job_tracker import JobTracker, TERMINAL_JOB_STATUSES
 from .models import InodeEntry, is_dir_type
 from .query_store import QueryStore
@@ -47,6 +51,15 @@ log = logging.getLogger(__name__)
 
 # Maximum file size for ingestion (50MB)
 MAX_INGESTION_SIZE = 50 * 1024 * 1024
+
+# Supported image extensions (matches API's _is_image_file and CLI's isImageFile)
+IMAGE_EXTENSIONS = frozenset({'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'})
+
+
+def _is_image_file(filename: str) -> bool:
+    """Check if filename has a supported image extension."""
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in IMAGE_EXTENSIONS
 
 
 class KnowledgeGraphFS(pyfuse3.Operations):
@@ -88,6 +101,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         # Job tracking: lazy polling with automatic cleanup
         self._job_tracker = JobTracker()
+
+        # Image handler: reads, caches, ingests, and manages image inodes
+        self._image_handler = ImageHandler(
+            api=self._api,
+            tags_config=self.tags_config,
+            job_tracker=self._job_tracker,
+            inodes=self._inodes,
+            allocate_inode=self._allocate_inode,
+            sanitize_filename=self._sanitize_filename,
+        )
 
     def _make_attr(self, inode: int, is_dir: bool = False, size: int = 0, writable: bool = False) -> pyfuse3.EntryAttributes:
         """Create file attributes."""
@@ -231,7 +254,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 if doc_name == name_str:
                     return await self.getattr(inode, ctx)
 
-        # Query directory: .meta + concepts + nested queries
+        # Query directory: .meta + images + concepts + nested queries
         elif parent_entry.entry_type == "query":
             ontology = parent_entry.ontology  # Can be None for global queries
             parent_path = parent_entry.query_path
@@ -239,6 +262,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             # Check for .meta directory
             if name_str == ".meta":
                 inode = self._get_or_create_meta_dir_inode(ontology, parent_path, parent_inode)
+                return await self.getattr(inode, ctx)
+
+            # Check for images directory
+            if name_str == "images":
+                inode = self._image_handler.get_or_create_images_dir_inode(ontology, parent_path, parent_inode)
                 return await self.getattr(inode, ctx)
 
             nested_path = f"{parent_path}/{name_str}" if parent_path else name_str
@@ -250,6 +278,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
             # Check if it's a concept file (fetch results if needed)
             entries = await self._list_query_results(parent_inode, ontology, parent_path)
+            for inode, file_name in entries:
+                if file_name == name_str:
+                    return await self.getattr(inode, ctx)
+
+        # images directory: list image evidence files
+        elif parent_entry.entry_type == "images_dir":
+            entries = await self._image_handler.list_query_images(
+                parent_inode, parent_entry.ontology, parent_entry.query_path,
+                self._dir_cache, self._cache_time, self._cache_ttl
+            )
             for inode, file_name in entries:
                 if file_name == name_str:
                     return await self.getattr(inode, ctx)
@@ -430,6 +468,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             results = await self._list_query_results(fh, entry.ontology, entry.query_path)
             entries.extend(results)
 
+        elif entry.entry_type == "images_dir":
+            # images/: list image evidence from query concepts
+            entries = await self._image_handler.list_query_images(
+                fh, entry.ontology, entry.query_path,
+                self._dir_cache, self._cache_time, self._cache_ttl
+            )
+
         elif entry.entry_type == "meta_dir":
             # .meta/: list virtual config files
             for meta_key in self.META_FILES:
@@ -541,11 +586,27 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
             for doc in documents:
                 filename = doc.get("filename", doc.get("document_id", "unknown"))
-                inode = self._get_or_create_document_inode(
-                    filename, parent_inode, ontology,
-                    doc.get("document_id")
-                )
-                entries.append((inode, filename))
+                document_id = doc.get("document_id")
+                content_type = doc.get("content_type", "document")
+
+                if content_type == "image":
+                    # Image: two entries — raw image bytes + companion .md
+                    img_inode = self._image_handler.get_or_create_image_document_inode(
+                        filename, parent_inode, ontology, document_id
+                    )
+                    entries.append((img_inode, filename))
+
+                    prose_name = f"{filename}.md"
+                    prose_inode = self._image_handler.get_or_create_image_prose_inode(
+                        prose_name, parent_inode, ontology, document_id
+                    )
+                    entries.append((prose_inode, prose_name))
+                else:
+                    # Text document: single entry (unchanged)
+                    inode = self._get_or_create_document_inode(
+                        filename, parent_inode, ontology, document_id
+                    )
+                    entries.append((inode, filename))
 
         except Exception as e:
             log.error(f"Failed to list documents for {ontology}: {e}")
@@ -558,6 +619,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 virtual_name, parent_inode, ontology, job.job_id
             )
             entries.append((inode, virtual_name))
+
+            # For image jobs, also show companion .md as ingesting
+            if _is_image_file(job.filename):
+                md_virtual_name = self.jobs_config.format_job_filename(f"{job.filename}.md")
+                md_inode = self._get_or_create_job_inode(
+                    md_virtual_name, parent_inode, ontology, job.job_id
+                )
+                entries.append((md_inode, md_virtual_name))
 
         # Cache result
         self._dir_cache[parent_inode] = entries
@@ -615,6 +684,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         except Exception as e:
             log.error(f"Failed to execute search for {ontology}/{query_path}: {e}")
+
+        # Always include images/ directory (lazy-loaded on readdir)
+        images_dir_inode = self._image_handler.get_or_create_images_dir_inode(ontology, query_path, parent_inode)
+        entries.append((images_dir_inode, "images"))
 
         # Add child query directories
         child_queries = self.query_store.list_queries_under(ontology, query_path)
@@ -937,7 +1010,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
 
         entry = self._inodes[inode]
-        if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file", "job_file"):
+        if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file", "job_file",
+                                     "image_document", "image_prose", "image_evidence"):
             raise pyfuse3.FUSEError(errno.EISDIR)
 
         # Check write permissions for meta files
@@ -961,6 +1035,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         try:
             if entry.entry_type == "document":
                 content = await self._read_document(entry)
+            elif entry.entry_type == "image_document":
+                # Raw bytes — early return, bypass UTF-8 encode
+                content_bytes = await self._image_handler.read_image_bytes(entry)
+                return content_bytes[off:off + size]
+            elif entry.entry_type == "image_prose":
+                content = await self._image_handler.read_image_prose(entry)
+            elif entry.entry_type == "image_evidence":
+                # Raw bytes — early return, bypass UTF-8 encode
+                content_bytes = await self._image_handler.read_image_evidence(entry)
+                return content_bytes[off:off + size]
             elif entry.entry_type == "concept":
                 content = await self._read_concept(entry)
             elif entry.entry_type == "meta_file":
@@ -1349,7 +1433,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 log.info(f"Triggering ingestion: {filename} ({len(content)} bytes) into {ontology}")
 
                 try:
-                    await self._ingest_document(ontology, filename, content)
+                    if _is_image_file(filename):
+                        await self._image_handler.ingest_image(ontology, filename, content)
+                    else:
+                        await self._ingest_document(ontology, filename, content)
                     log.info(f"Ingestion submitted successfully: {filename}")
 
                     # Remove from pending ontologies if this was the first document
@@ -1413,3 +1500,4 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._write_buffers.clear()
         self._job_tracker.clear()
         self._write_info.clear()
+        self._image_handler.clear_cache()

@@ -69,7 +69,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --help           Show this help"
             echo ""
             echo "Available fixtures in $FIXTURES_DIR:"
-            ls "$FIXTURES_DIR"/*.md 2>/dev/null | xargs -n1 basename || echo "  (none found)"
+            ls "$FIXTURES_DIR"/*.md "$FIXTURES_DIR"/*.jpg "$FIXTURES_DIR"/*.png 2>/dev/null | xargs -n1 basename || echo "  (none found)"
             exit 0
             ;;
         *)
@@ -434,6 +434,222 @@ fi
 timer_end "job_cleanup"
 
 # ============================================================================
+# Test 8: Image ingestion and job tracking
+# ============================================================================
+
+timer_start "image_ingestion"
+log "Test 8: Testing image ingestion..."
+
+# Use the western town scene fixture (a real photograph with visual content
+# that the vision AI can describe, producing meaningful prose and concepts)
+IMAGE_FIXTURE="$FIXTURES_DIR/test_western_town.jpg"
+IMAGE_FILENAME="test_western_town_$(date +%s).jpg"
+IMAGE_FILE_PATH="$ONTOLOGY_DIR/$IMAGE_FILENAME"
+
+if [[ ! -f "$IMAGE_FIXTURE" ]]; then
+    fail "Image fixture not found: $IMAGE_FIXTURE"
+    log "Skipping image tests (no fixture available)"
+    IMAGE_JOB_FOUND=false
+    IMAGE_DOC_FOUND=false
+else
+    cp "$IMAGE_FIXTURE" "$IMAGE_FILE_PATH"
+    if [[ $? -eq 0 ]]; then
+        pass "Copied test image: $IMAGE_FILENAME ($(wc -c < "$IMAGE_FILE_PATH" | tr -d '[:space:]') bytes)"
+    else
+        fail "Failed to copy test image"
+    fi
+fi
+
+log_verbose "Image file size: $(wc -c < "$IMAGE_FILE_PATH" 2>/dev/null || echo 0) bytes"
+
+# Small delay for ingestion to start
+sleep 1
+
+# Check for job file appearance (image should also get .ingesting tracking)
+IMAGE_JOB_FILENAME="${IMAGE_FILENAME}.ingesting"
+IMAGE_JOB_FILE_PATH="$DOCS_DIR/$IMAGE_JOB_FILENAME"
+
+log "Polling for image job file ($MAX_POLL_ATTEMPTS attempts max)..."
+
+IMAGE_JOB_FOUND=false
+BACKOFF=$POLL_INTERVAL
+for i in $(seq 1 $MAX_POLL_ATTEMPTS); do
+    if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
+        IMAGE_JOB_FOUND=true
+        pass "Image job file appeared after $i poll(s)"
+
+        JOB_STATUS=$(cat "$IMAGE_JOB_FILE_PATH" 2>/dev/null || echo "")
+        echo "$JOB_STATUS" > "$LOG_DIR/image_job_status_$i.txt"
+        log_verbose "Image job status saved"
+        break
+    fi
+
+    log_verbose "Poll $i: image job file not found yet (waiting ${BACKOFF}s)"
+    sleep $BACKOFF
+    BACKOFF=$(echo "scale=1; if ($BACKOFF * 1.5 > 5) 5 else $BACKOFF * 1.5" | bc)
+done
+
+if ! $IMAGE_JOB_FOUND; then
+    # Job might have completed quickly, check for document
+    if [[ -f "$DOCS_DIR/$IMAGE_FILENAME" ]]; then
+        pass "Image job completed quickly (no job file seen, but image exists)"
+        IMAGE_JOB_FOUND=true
+    else
+        fail "Image job file never appeared"
+    fi
+fi
+
+timer_end "image_ingestion"
+
+# ============================================================================
+# Test 9: Image job completion - dual file pattern
+# ============================================================================
+
+timer_start "image_completion"
+log "Test 9: Waiting for image processing to complete..."
+
+IMAGE_DOC_FOUND=false
+BACKOFF=$POLL_INTERVAL
+for i in $(seq 1 $MAX_POLL_ATTEMPTS); do
+    if [[ -f "$DOCS_DIR/$IMAGE_FILENAME" ]]; then
+        IMAGE_DOC_FOUND=true
+        pass "Image file appeared in documents/ after $i poll(s)"
+        break
+    fi
+
+    # Read job file to trigger lazy polling
+    if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
+        cat "$IMAGE_JOB_FILE_PATH" > /dev/null 2>&1 || true
+    fi
+
+    log_verbose "Poll $i: waiting for image document (${BACKOFF}s)"
+    sleep $BACKOFF
+    BACKOFF=$(echo "scale=1; if ($BACKOFF * 1.5 > 5) 5 else $BACKOFF * 1.5" | bc)
+done
+
+if $IMAGE_DOC_FOUND; then
+    # Check for companion .md file (dual-file pattern)
+    IMAGE_PROSE_PATH="$DOCS_DIR/${IMAGE_FILENAME}.md"
+    if [[ -f "$IMAGE_PROSE_PATH" ]]; then
+        pass "Image companion .md file exists: ${IMAGE_FILENAME}.md"
+    else
+        fail "Image companion .md file not found: ${IMAGE_FILENAME}.md"
+    fi
+else
+    fail "Image never appeared in documents/ after $MAX_POLL_ATTEMPTS polls"
+fi
+
+timer_end "image_completion"
+
+# ============================================================================
+# Test 10: Image content verification
+# ============================================================================
+
+timer_start "image_content"
+log "Test 10: Verifying image content..."
+
+if $IMAGE_DOC_FOUND; then
+    # Verify image file is binary by checking magic bytes
+    # JPEG: FF D8 FF (3 bytes), PNG: 89 50 4E 47 (4 bytes)
+    IMAGE_MAGIC=$(xxd -l 4 -p "$DOCS_DIR/$IMAGE_FILENAME" 2>/dev/null || echo "")
+    if [[ "${IMAGE_MAGIC:0:6}" == "ffd8ff" ]]; then
+        pass "Image file contains valid JPEG data"
+    elif [[ "$IMAGE_MAGIC" == "89504e47" ]]; then
+        pass "Image file contains valid PNG data"
+    else
+        fail "Image file doesn't contain valid image magic bytes (got: $IMAGE_MAGIC)"
+    fi
+
+    # Verify file size matches original fixture (catches truncation bugs)
+    FIXTURE_SIZE=$(wc -c < "$IMAGE_FIXTURE" | tr -d '[:space:]')
+    SERVED_SIZE=$(wc -c < "$DOCS_DIR/$IMAGE_FILENAME" | tr -d '[:space:]')
+    if [[ "$SERVED_SIZE" -eq "$FIXTURE_SIZE" ]]; then
+        pass "Image file size matches fixture ($SERVED_SIZE bytes)"
+    else
+        fail "Image file size mismatch: fixture=$FIXTURE_SIZE, served=$SERVED_SIZE"
+    fi
+
+    # Verify companion .md has expected structure
+    IMAGE_PROSE_PATH="$DOCS_DIR/${IMAGE_FILENAME}.md"
+    if [[ -f "$IMAGE_PROSE_PATH" ]]; then
+        PROSE_CONTENT=$(cat "$IMAGE_PROSE_PATH" 2>/dev/null || echo "")
+        echo "$PROSE_CONTENT" > "$LOG_DIR/image_prose_content.txt"
+
+        # Check for YAML frontmatter
+        if echo "$PROSE_CONTENT" | head -1 | grep -q "^---"; then
+            pass "Image companion has YAML frontmatter"
+        else
+            fail "Image companion missing YAML frontmatter"
+        fi
+
+        # Check for content_type: image in frontmatter
+        if echo "$PROSE_CONTENT" | grep -q "content_type: image"; then
+            pass "Image companion has content_type: image"
+        else
+            fail "Image companion missing content_type marker"
+        fi
+
+        # Check for relative image link
+        if echo "$PROSE_CONTENT" | grep -q "\!\[${IMAGE_FILENAME}\](${IMAGE_FILENAME})"; then
+            pass "Image companion has relative image link"
+        else
+            fail "Image companion missing relative image link"
+            log_verbose "Prose preview: $(echo "$PROSE_CONTENT" | head -10)"
+        fi
+
+        # Check for description section (vision AI prose about western town scene)
+        if echo "$PROSE_CONTENT" | grep -qi "description"; then
+            pass "Image companion has Description section"
+            # Check for content from vision AI describing the scene
+            if echo "$PROSE_CONTENT" | grep -qi "building\|town\|western\|street\|wood\|structure\|sign"; then
+                pass "Image prose contains scene-relevant keywords"
+            else
+                log_verbose "Prose doesn't contain expected keywords (may vary by vision model)"
+            fi
+        else
+            log_verbose "No Description section found (vision processing may still be running)"
+        fi
+    fi
+else
+    log_verbose "Skipping content verification - image not found"
+fi
+
+timer_end "image_content"
+
+# ============================================================================
+# Test 11: Image job cleanup
+# ============================================================================
+
+timer_start "image_job_cleanup"
+log "Test 11: Verifying image job file cleanup..."
+
+sleep 1
+
+if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
+    cat "$IMAGE_JOB_FILE_PATH" > /dev/null 2>&1 || true
+    sleep 1
+fi
+
+# Also check for companion .md .ingesting file
+IMAGE_MD_JOB_FILE="$DOCS_DIR/${IMAGE_FILENAME}.md.ingesting"
+IMAGE_JOBS_REMAINING=0
+
+if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
+    ((++IMAGE_JOBS_REMAINING))
+fi
+if [[ -f "$IMAGE_MD_JOB_FILE" ]]; then
+    ((++IMAGE_JOBS_REMAINING))
+fi
+
+if [[ "$IMAGE_JOBS_REMAINING" -eq 0 ]]; then
+    pass "Image job files cleaned up"
+else
+    fail "Image job files not cleaned up ($IMAGE_JOBS_REMAINING remain)"
+fi
+
+timer_end "image_job_cleanup"
+
+# ============================================================================
 # Test 6: Query directories
 # ============================================================================
 
@@ -546,6 +762,21 @@ if [[ -f "$CONCEPT_QUERY_DIR/.meta/query.toml" ]]; then
     else
         fail "Query text not found in query.toml"
     fi
+fi
+
+# Check images/ directory exists in query results
+if [[ -d "$CONCEPT_QUERY_DIR/images" ]]; then
+    pass "Query has images/ directory"
+    IMAGE_EVIDENCE_COUNT=$(ls "$CONCEPT_QUERY_DIR/images" 2>/dev/null | wc -l | tr -d '[:space:]')
+    log_verbose "Found $IMAGE_EVIDENCE_COUNT image evidence file(s) in query images/"
+    if [[ "$IMAGE_EVIDENCE_COUNT" -gt 0 ]]; then
+        pass "Query images/ contains $IMAGE_EVIDENCE_COUNT evidence image(s)"
+        ls "$CONCEPT_QUERY_DIR/images" > "$LOG_DIR/query_images.txt" 2>/dev/null
+    else
+        log_verbose "No image evidence files (may be expected if image concepts don't match query)"
+    fi
+else
+    fail "Query missing images/ directory"
 fi
 
 # Clean up concept query
