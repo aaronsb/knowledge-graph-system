@@ -265,6 +265,37 @@ async def check_database_health():
     return DatabaseHealthResponse(**health)
 
 
+@router.get("/epoch")
+async def get_graph_epoch(
+    current_user: CurrentUser
+):
+    """
+    Get the current graph epoch (change counter) for cache invalidation.
+
+    Lightweight endpoint (~1ms) returning just the graph_change_counter.
+    Designed for polling by clients that need to detect graph changes
+    without the overhead of full counter queries.
+
+    Returns:
+        {"epoch": <integer>}
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT kg_api.get_graph_epoch()")
+                epoch = cur.fetchone()[0]
+            return {"epoch": epoch}
+        finally:
+            client.pool.putconn(conn)
+    except Exception as e:
+        logger.error(f"Failed to get graph epoch: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get graph epoch: {str(e)}")
+    finally:
+        client.close()
+
+
 @router.get("/counters")
 async def get_graph_counters(
     current_user: CurrentUser

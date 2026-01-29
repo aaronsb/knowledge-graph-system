@@ -17,7 +17,7 @@ from importlib.metadata import version, PackageNotFoundError
 import pyfuse3
 import trio
 
-from .config import load_config, get_config_path, TagsConfig, JobsConfig
+from .config import load_config, get_config_path, TagsConfig, JobsConfig, CacheConfig
 from .filesystem import KnowledgeGraphFS
 
 
@@ -118,9 +118,10 @@ def main() -> None:
         log.error(f"Config file location: {config_path}")
         sys.exit(1)
 
-    # Get tags config (or use defaults)
+    # Get configs (or use defaults)
     tags_config = config.tags if config else TagsConfig()
     jobs_config = config.jobs if config else JobsConfig()
+    cache_config = config.cache if config else CacheConfig()
 
     # Create filesystem
     fs = KnowledgeGraphFS(
@@ -129,6 +130,7 @@ def main() -> None:
         client_secret=client_secret,
         tags_config=tags_config,
         jobs_config=jobs_config,
+        cache_config=cache_config,
     )
 
     # FUSE options
@@ -142,8 +144,13 @@ def main() -> None:
 
     pyfuse3.init(fs, args.mountpoint, fuse_options)
 
+    async def _run():
+        async with trio.open_nursery() as nursery:
+            fs.set_nursery(nursery)
+            await pyfuse3.main()
+
     try:
-        trio.run(pyfuse3.main)
+        trio.run(_run)
     except KeyboardInterrupt:
         log.info("Interrupted, unmounting...")
     finally:

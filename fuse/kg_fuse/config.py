@@ -33,6 +33,14 @@ class JobsConfig:
 
 
 @dataclass
+class CacheConfig:
+    """Cache invalidation settings for epoch-gated caching"""
+    epoch_check_interval: float = 5.0   # Seconds between epoch API polls
+    dir_cache_ttl: float = 30.0         # Fallback TTL for directory listings (safety net)
+    content_cache_max: int = 50 * 1024 * 1024  # Content cache budget in bytes (50MB)
+
+
+@dataclass
 class FuseConfig:
     """FUSE driver configuration"""
     client_id: str
@@ -40,12 +48,15 @@ class FuseConfig:
     api_url: str = "http://localhost:8000"
     tags: TagsConfig = None
     jobs: JobsConfig = None
+    cache: CacheConfig = None
 
     def __post_init__(self):
         if self.tags is None:
             self.tags = TagsConfig()
         if self.jobs is None:
             self.jobs = JobsConfig()
+        if self.cache is None:
+            self.cache = CacheConfig()
 
 
 def get_config_path() -> Path:
@@ -73,6 +84,7 @@ def load_config() -> Optional[FuseConfig]:
     api = data.get("api", {})
     tags_data = data.get("tags", {})
     jobs_data = data.get("jobs", {})
+    cache_data = data.get("cache", {})
 
     client_id = auth.get("client_id")
     client_secret = auth.get("client_secret")
@@ -91,10 +103,18 @@ def load_config() -> Optional[FuseConfig]:
         hide_jobs=jobs_data.get("hide_jobs", False),
     )
 
+    # Parse cache config
+    cache = CacheConfig(
+        epoch_check_interval=cache_data.get("epoch_check_interval", 5.0),
+        dir_cache_ttl=cache_data.get("dir_cache_ttl", 30.0),
+        content_cache_max=cache_data.get("content_cache_max", 50 * 1024 * 1024),
+    )
+
     return FuseConfig(
         client_id=client_id,
         client_secret=client_secret,
         api_url=api.get("url", "http://localhost:8000"),
         tags=tags,
         jobs=jobs,
+        cache=cache,
     )
