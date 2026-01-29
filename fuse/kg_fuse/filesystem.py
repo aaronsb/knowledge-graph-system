@@ -40,7 +40,8 @@ from typing import Optional
 import pyfuse3
 
 from .api_client import KnowledgeGraphClient
-from .config import TagsConfig, JobsConfig
+from .config import TagsConfig, JobsConfig, CacheConfig
+from .epoch_cache import EpochCache
 from .formatters import format_concept, format_document, format_job, render_meta_file
 from .image_handler import ImageHandler
 from .job_tracker import JobTracker, TERMINAL_JOB_STATUSES
@@ -68,10 +69,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
     ROOT_INODE = pyfuse3.ROOT_INODE  # 1
     ONTOLOGY_ROOT_INODE = 2  # Fixed inode for /ontology/
 
-    def __init__(self, api_url: str, client_id: str, client_secret: str, tags_config: TagsConfig = None, jobs_config: JobsConfig = None):
+    def __init__(self, api_url: str, client_id: str, client_secret: str,
+                 tags_config: TagsConfig = None, jobs_config: JobsConfig = None,
+                 cache_config: CacheConfig = None):
         super().__init__()
         self.tags_config = tags_config or TagsConfig()
         self.jobs_config = jobs_config or JobsConfig()
+        self.cache_config = cache_config or CacheConfig()
 
         # API client for graph operations
         self._api = KnowledgeGraphClient(api_url, client_id, client_secret)
@@ -89,10 +93,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._next_inode = 100  # Dynamic inodes start here
         self._free_inodes: list[int] = []  # Recycled inodes for reuse
 
-        # Cache for directory listings and API responses
-        self._dir_cache: dict[int, list[tuple[int, str]]] = {}
-        self._cache_time: dict[int, float] = {}
-        self._cache_ttl = 30.0  # seconds
+        # Epoch-gated cache (directory listings + content + background refresh)
+        self._cache = EpochCache(self._api, self.cache_config)
 
         # Write support: pending ontologies and ingestion buffers
         self._pending_ontologies: set[str] = set()  # Ontologies created but no documents yet
@@ -286,7 +288,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         elif parent_entry.entry_type == "images_dir":
             entries = await self._image_handler.list_query_images(
                 parent_inode, parent_entry.ontology, parent_entry.query_path,
-                self._dir_cache, self._cache_time, self._cache_ttl
+                cache=self._cache
             )
             for inode, file_name in entries:
                 if file_name == name_str:
@@ -434,8 +436,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._invalidate_cache(parent_inode)
 
     async def readdir(self, fh: int, start_id: int, token: pyfuse3.ReaddirToken) -> None:
-        """Read directory contents."""
+        """Read directory contents with stale-while-revalidate.
+
+        If the epoch changed and we have cached directory listings, serves
+        stale data immediately and spawns a background refresh. The kernel
+        is notified via invalidate_inode when fresh data arrives.
+        """
         log.debug(f"readdir: fh={fh}, start_id={start_id}")
+
+        # Check graph epoch (does not invalidate — stale data survives)
+        await self._cache.check_epoch()
 
         entry = self._inodes.get(fh)
         if not entry:
@@ -444,42 +454,38 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         entries = []
 
         if entry.entry_type == "root":
-            # Root: "ontology" (fixed) + global user queries
             entries = await self._list_root_contents(fh)
 
         elif entry.entry_type == "ontology_root":
-            # ontology/: list actual ontologies from graph
             entries = await self._list_ontologies()
 
         elif entry.entry_type == "ontology":
-            # Ontology: "documents" (fixed) + user queries
             entries = await self._list_ontology_contents(fh, entry.ontology)
 
         elif entry.entry_type == "documents_dir":
-            # documents/: list source document files
             entries = await self._list_documents(fh, entry.ontology)
 
         elif entry.entry_type == "query":
-            # Query: .meta + execute search + list child queries
-            # Add .meta directory first
             meta_inode = self._get_or_create_meta_dir_inode(entry.ontology, entry.query_path, fh)
             entries.append((meta_inode, ".meta"))
-            # Add query results and child queries
             results = await self._list_query_results(fh, entry.ontology, entry.query_path)
             entries.extend(results)
 
         elif entry.entry_type == "images_dir":
-            # images/: list image evidence from query concepts
             entries = await self._image_handler.list_query_images(
                 fh, entry.ontology, entry.query_path,
-                self._dir_cache, self._cache_time, self._cache_ttl
+                cache=self._cache
             )
 
         elif entry.entry_type == "meta_dir":
-            # .meta/: list virtual config files
             for meta_key in self.META_FILES:
                 inode = self._get_or_create_meta_file_inode(meta_key, entry.ontology, entry.query_path, fh)
                 entries.append((inode, meta_key))
+
+        # Spawn background refresh if directory listing is stale
+        if (self._cache.get_dir(fh) is not None
+                and not self._cache.is_dir_fresh(fh)):
+            self._cache.spawn_dir_refresh(fh, lambda: self._refresh_dir(fh, entry))
 
         # Emit entries starting from start_id
         for idx, (inode, name) in enumerate(entries):
@@ -488,6 +494,36 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             attr = await self.getattr(inode, None)
             if not pyfuse3.readdir_reply(token, name.encode("utf-8"), attr, idx + 1):
                 break
+
+    async def _refresh_dir(self, fh: int, entry: InodeEntry) -> list[tuple[int, str]]:
+        """Fetch fresh directory listing for background refresh.
+
+        Invalidates the stale cache entry first so the _list_* methods
+        re-fetch from the API instead of returning stale data.
+        """
+        self._cache.invalidate_dir(fh)
+
+        if entry.entry_type == "root":
+            return await self._list_root_contents(fh)
+        elif entry.entry_type == "ontology_root":
+            return await self._list_ontologies()
+        elif entry.entry_type == "ontology":
+            return await self._list_ontology_contents(fh, entry.ontology)
+        elif entry.entry_type == "documents_dir":
+            return await self._list_documents(fh, entry.ontology)
+        elif entry.entry_type == "query":
+            entries = []
+            meta_inode = self._get_or_create_meta_dir_inode(entry.ontology, entry.query_path, fh)
+            entries.append((meta_inode, ".meta"))
+            results = await self._list_query_results(fh, entry.ontology, entry.query_path)
+            entries.extend(results)
+            return entries
+        elif entry.entry_type == "images_dir":
+            return await self._image_handler.list_query_images(
+                fh, entry.ontology, entry.query_path,
+                cache=self._cache
+            )
+        return []
 
     async def _list_root_contents(self, parent_inode: int) -> list[tuple[int, str]]:
         """List root directory contents: ontology/ + global user queries."""
@@ -506,11 +542,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     async def _list_ontologies(self) -> list[tuple[int, str]]:
         """List ontologies as directories under /ontology/."""
-        # Check cache
         cache_key = self.ONTOLOGY_ROOT_INODE
-        if cache_key in self._dir_cache:
-            if time.time() - self._cache_time.get(cache_key, 0) < self._cache_ttl:
-                return self._dir_cache[cache_key]
+        cached = self._cache.get_dir(cache_key)
+        if cached is not None:
+            return cached
 
         try:
             data = await self._api.get("/ontology/")
@@ -531,10 +566,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     inode = self._get_or_create_ontology_inode(pending_name)
                     entries.append((inode, pending_name))
 
-            # Cache result
-            self._dir_cache[cache_key] = entries
-            self._cache_time[cache_key] = time.time()
-
+            self._cache.put_dir(cache_key, entries)
             return entries
 
         except Exception as e:
@@ -543,10 +575,9 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     async def _list_ontology_contents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
         """List contents of an ontology directory: documents/ + user queries."""
-        # Check cache
-        if parent_inode in self._dir_cache:
-            if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
-                return self._dir_cache[parent_inode]
+        cached = self._cache.get_dir(parent_inode)
+        if cached is not None:
+            return cached
 
         entries = []
 
@@ -560,10 +591,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             inode = self._get_or_create_query_inode(ontology, query_name, parent_inode)
             entries.append((inode, query_name))
 
-        # Cache result
-        self._dir_cache[parent_inode] = entries
-        self._cache_time[parent_inode] = time.time()
-
+        self._cache.put_dir(parent_inode, entries)
         return entries
 
     async def _list_documents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
@@ -572,10 +600,9 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         Also includes virtual job files ({filename}.ingesting) for jobs tracked locally.
         Uses lazy polling: jobs are only polled when their .job file is read.
         """
-        # Check cache
-        if parent_inode in self._dir_cache:
-            if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
-                return self._dir_cache[parent_inode]
+        cached = self._cache.get_dir(parent_inode)
+        if cached is not None:
+            return cached
 
         entries = []
 
@@ -628,18 +655,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 )
                 entries.append((md_inode, md_virtual_name))
 
-        # Cache result
-        self._dir_cache[parent_inode] = entries
-        self._cache_time[parent_inode] = time.time()
-
+        self._cache.put_dir(parent_inode, entries)
         return entries
 
     async def _list_query_results(self, parent_inode: int, ontology: Optional[str], query_path: str) -> list[tuple[int, str]]:
         """Execute semantic search and list results + child queries + symlinks."""
-        # Check cache
-        if parent_inode in self._dir_cache:
-            if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
-                return self._dir_cache[parent_inode]
+        cached = self._cache.get_dir(parent_inode)
+        if cached is not None:
+            return cached
 
         entries = []
 
@@ -703,10 +726,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 inode = self._get_or_create_symlink_inode(linked_ont, linked_ont, query_path, target, parent_inode)
                 entries.append((inode, linked_ont))
 
-        # Cache result
-        self._dir_cache[parent_inode] = entries
-        self._cache_time[parent_inode] = time.time()
-
+        self._cache.put_dir(parent_inode, entries)
         return entries
 
     async def _execute_search(
@@ -999,10 +1019,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if inode >= 100:  # Don't recycle reserved inodes
             self._free_inodes.append(inode)
 
+    def set_nursery(self, nursery):
+        """Set the trio nursery for background tasks. Called by main.py."""
+        self._cache.set_nursery(nursery)
+
     def _invalidate_cache(self, inode: int):
         """Invalidate cache for an inode."""
-        self._dir_cache.pop(inode, None)
-        self._cache_time.pop(inode, None)
+        self._cache.invalidate_dir(inode)
+        self._cache.invalidate_content(inode)
 
     async def open(self, inode: int, flags: int, ctx: pyfuse3.RequestContext) -> pyfuse3.FileInfo:
         """Open a file."""
@@ -1034,39 +1058,70 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return fi
 
     async def read(self, fh: int, off: int, size: int) -> bytes:
-        """Read file contents."""
+        """Read file contents with stale-while-revalidate.
+
+        Cache flow:
+        1. Epoch unchanged + cached → serve fresh (zero API calls)
+        2. Epoch changed + cached → serve stale instantly, background refresh
+        3. No cache → block on first fetch (unavoidable)
+
+        Image bytes are handled by ImageHandler's immutable cache.
+        """
         entry = self._inodes.get(fh)
         if not entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
 
-        try:
-            if entry.entry_type == "document":
-                content = await self._read_document(entry)
-            elif entry.entry_type == "image_document":
-                # Raw bytes — early return, bypass UTF-8 encode
-                content_bytes = await self._image_handler.read_image_bytes(entry)
-                return content_bytes[off:off + size]
-            elif entry.entry_type == "image_prose":
-                content = await self._image_handler.read_image_prose(entry)
-            elif entry.entry_type == "image_evidence":
-                # Raw bytes — early return, bypass UTF-8 encode
-                content_bytes = await self._image_handler.read_image_evidence(entry)
-                return content_bytes[off:off + size]
-            elif entry.entry_type == "concept":
-                content = await self._read_concept(entry)
-            elif entry.entry_type == "meta_file":
-                content = self._render_meta_file(entry)
-            elif entry.entry_type == "job_file":
-                content = await self._read_job(entry)
-            else:
-                content = "# Unknown file type\n"
+        # Check graph epoch (throttled)
+        await self._cache.check_epoch()
 
-            content_bytes = content.encode("utf-8")
+        # Image types have their own immutable cache — skip content cache
+        if entry.entry_type == "image_document":
+            content_bytes = await self._image_handler.read_image_bytes(entry)
+            return content_bytes[off:off + size]
+        elif entry.entry_type == "image_evidence":
+            content_bytes = await self._image_handler.read_image_evidence(entry)
+            return content_bytes[off:off + size]
+
+        # For cacheable types: check content cache first
+        # (meta_file and job_file are dynamic/local — don't cache)
+        cacheable = entry.entry_type in ("document", "concept", "image_prose")
+
+        if cacheable:
+            cached = self._cache.get_content(fh)
+            if cached is not None:
+                if not self._cache.is_content_fresh(fh):
+                    # Stale — serve immediately, refresh in background
+                    self._cache.spawn_refresh(fh, lambda e=entry: self._fetch_content(e))
+                return cached[off:off + size]
+
+        # No cache — block on fetch
+        try:
+            content_bytes = await self._fetch_content(entry)
+
+            if cacheable:
+                self._cache.put_content(fh, content_bytes)
+
             return content_bytes[off:off + size]
 
         except Exception as e:
             log.error(f"Failed to read file: {e}")
             return f"# Error reading file: {e}\n".encode("utf-8")
+
+    async def _fetch_content(self, entry: InodeEntry) -> bytes:
+        """Fetch file content from API. Used by both sync reads and background refresh."""
+        if entry.entry_type == "document":
+            content = await self._read_document(entry)
+        elif entry.entry_type == "image_prose":
+            content = await self._image_handler.read_image_prose(entry)
+        elif entry.entry_type == "concept":
+            content = await self._read_concept(entry)
+        elif entry.entry_type == "meta_file":
+            content = self._render_meta_file(entry)
+        elif entry.entry_type == "job_file":
+            content = await self._read_job(entry)
+        else:
+            content = "# Unknown file type\n"
+        return content.encode("utf-8")
 
     async def _read_document(self, entry: InodeEntry) -> str:
         """Read and format a document file."""
@@ -1451,17 +1506,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                         self._pending_ontologies.discard(ontology)
                         log.info(f"Ontology {ontology} is no longer pending")
 
-                    # Notify kernel that the documents directory changed
-                    # This tells file managers like Dolphin to refresh
+                    # Invalidate documents dir so new job files show up.
+                    # Both internal cache (epoch-gated) and kernel cache.
                     docs_dir_inode = self._find_documents_dir_inode(ontology)
                     if docs_dir_inode:
+                        self._invalidate_cache(docs_dir_inode)
                         try:
-                            # Invalidate the directory inode to force re-reading contents
-                            # attr_only=False means also invalidate cached directory listing
                             pyfuse3.invalidate_inode(docs_dir_inode, attr_only=False)
-                            log.debug(f"Invalidated documents directory inode for {ontology}")
+                            log.debug(f"Invalidated documents directory for {ontology}")
                         except OSError as e:
-                            # ENOSYS means kernel doesn't support this (older kernels)
                             log.debug(f"invalidate_inode not supported: {e}")
                         except Exception as notify_err:
                             log.debug(f"Kernel notification failed (non-critical): {notify_err}")
@@ -1497,13 +1550,33 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         return result
 
+    # ── Extended attributes (hydration state) ───────────────────────────
+
+    _XATTR_PREFIX = b"user.kg."
+    _KNOWN_XATTRS = (b"user.kg.state", b"user.kg.epoch")
+
+    async def getxattr(self, inode: int, name: bytes, ctx: pyfuse3.RequestContext) -> bytes:
+        """Get extended attribute — exposes cache hydration state."""
+        if name == b"user.kg.state":
+            state = self._cache.hydration_state(inode)
+            return state.encode("utf-8")
+        elif name == b"user.kg.epoch":
+            return str(self._cache.graph_epoch).encode("utf-8")
+        raise pyfuse3.FUSEError(errno.ENODATA)
+
+    async def listxattrs(self, inode: int, ctx: pyfuse3.RequestContext) -> list[bytes]:
+        """List available extended attributes."""
+        if inode in self._inodes:
+            return list(self._KNOWN_XATTRS)
+        return []
+
+    # ── Lifecycle ─────────────────────────────────────────────────────
+
     async def destroy(self) -> None:
         """Clean up resources on unmount."""
         log.info("Destroying filesystem, cleaning up resources")
         await self._api.close()
-        # Clear caches and buffers
-        self._dir_cache.clear()
-        self._cache_time.clear()
+        self._cache.clear()
         self._write_buffers.clear()
         self._job_tracker.clear()
         self._write_info.clear()

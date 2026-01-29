@@ -8,7 +8,6 @@ creating image-related inodes, and routing image ingestion.
 import base64
 import logging
 import os
-import time
 from typing import Callable, Optional
 
 from .api_client import KnowledgeGraphClient
@@ -200,19 +199,18 @@ class ImageHandler:
         parent_inode: int,
         ontology: Optional[str],
         query_path: str,
-        dir_cache: dict[int, list],
-        cache_time: dict[int, float],
-        cache_ttl: float,
+        cache=None,
     ) -> list[tuple[int, str]]:
         """List image evidence files for query results.
 
         Fetches concept details for each concept in the parent query to find
         instances with image evidence. Deduplicates by source_id.
         """
-        # Check cache
-        if parent_inode in dir_cache:
-            if time.time() - cache_time.get(parent_inode, 0) < cache_ttl:
-                return dir_cache[parent_inode]
+        # Check cache (epoch-gated via EpochCache)
+        if cache is not None:
+            cached = cache.get_dir(parent_inode)
+            if cached is not None:
+                return cached
 
         entries = []
         seen_sources: set[str] = set()
@@ -263,8 +261,8 @@ class ImageHandler:
             except Exception as e:
                 log.error(f"Failed to fetch concept details for image evidence: {e}")
 
-        dir_cache[parent_inode] = entries
-        cache_time[parent_inode] = time.time()
+        if cache is not None:
+            cache.put_dir(parent_inode, entries)
 
         return entries
 

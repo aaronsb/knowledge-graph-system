@@ -91,6 +91,22 @@ class KnowledgeGraphClient:
         response.raise_for_status()
         return response.content
 
+    async def get_epoch(self) -> int:
+        """Fetch the current graph epoch (change counter).
+
+        Returns the graph_change_counter value, which changes when
+        the graph is modified. Used for cache invalidation.
+
+        Returns:
+            Integer epoch value, or -1 on error (forces cache invalidation).
+        """
+        try:
+            data = await self.get("/database/epoch")
+            return data.get("epoch", -1)
+        except Exception as e:
+            log.warning(f"Failed to fetch graph epoch: {e}")
+            return -1
+
     async def close(self) -> None:
         """Close the HTTP client."""
         if self._client is not None:
