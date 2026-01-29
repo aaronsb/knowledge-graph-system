@@ -228,53 +228,21 @@ async def check_storage_integrity(
         s3_keys = {obj["key"] for obj in s3_objects}
 
         # Get all graph references to S3 keys
+        # Each category stores its S3 key in a different Source node property
+        key_property = {"sources": "garage_key", "images": "object_key"}[category]
+
         age_client = AGEClient()
         try:
-            if category == "sources":
-                # Source nodes have garage_key property
-                if ontology:
-                    results = age_client._execute_cypher(
-                        """
-                        MATCH (s:Source)
-                        WHERE s.garage_key IS NOT NULL
-                          AND s.garage_key STARTS WITH $prefix
-                        RETURN s.garage_key as garage_key
-                        """,
-                        params={"prefix": s3_prefix}
-                    )
-                else:
-                    results = age_client._execute_cypher(
-                        """
-                        MATCH (s:Source)
-                        WHERE s.garage_key IS NOT NULL
-                          AND s.garage_key STARTS WITH 'sources/'
-                        RETURN s.garage_key as garage_key
-                        """
-                    )
-                graph_keys = {r["garage_key"] for r in (results or [])}
-
-            elif category == "images":
-                # Image sources have object_key property
-                if ontology:
-                    results = age_client._execute_cypher(
-                        """
-                        MATCH (s:Source)
-                        WHERE s.object_key IS NOT NULL
-                          AND s.object_key STARTS WITH $prefix
-                        RETURN s.object_key as object_key
-                        """,
-                        params={"prefix": s3_prefix}
-                    )
-                else:
-                    results = age_client._execute_cypher(
-                        """
-                        MATCH (s:Source)
-                        WHERE s.object_key IS NOT NULL
-                          AND s.object_key STARTS WITH 'images/'
-                        RETURN s.object_key as object_key
-                        """
-                    )
-                graph_keys = {r["object_key"] for r in (results or [])}
+            results = age_client._execute_cypher(
+                f"""
+                MATCH (s:Source)
+                WHERE s.{key_property} IS NOT NULL
+                  AND s.{key_property} STARTS WITH $prefix
+                RETURN s.{key_property} as key
+                """,
+                params={"prefix": s3_prefix}
+            )
+            graph_keys = {r["key"] for r in (results or [])}
 
         finally:
             age_client.close()
