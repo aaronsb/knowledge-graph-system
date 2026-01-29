@@ -549,17 +549,24 @@ timer_start "image_content"
 log "Test 10: Verifying image content..."
 
 if $IMAGE_DOC_FOUND; then
-    # Verify image file is binary (JPEG magic bytes: FF D8 FF)
-    IMAGE_MAGIC=$(xxd -l 3 -p "$DOCS_DIR/$IMAGE_FILENAME" 2>/dev/null || echo "")
-    if [[ "$IMAGE_MAGIC" == "ffd8ff" ]]; then
+    # Verify image file is binary by checking magic bytes
+    # JPEG: FF D8 FF (3 bytes), PNG: 89 50 4E 47 (4 bytes)
+    IMAGE_MAGIC=$(xxd -l 4 -p "$DOCS_DIR/$IMAGE_FILENAME" 2>/dev/null || echo "")
+    if [[ "${IMAGE_MAGIC:0:6}" == "ffd8ff" ]]; then
         pass "Image file contains valid JPEG data"
+    elif [[ "$IMAGE_MAGIC" == "89504e47" ]]; then
+        pass "Image file contains valid PNG data"
     else
-        # Also check for PNG in case fixture changes
-        if [[ "${IMAGE_MAGIC:0:8}" == "89504e47" ]]; then
-            pass "Image file contains valid PNG data"
-        else
-            fail "Image file doesn't contain valid image magic bytes (got: $IMAGE_MAGIC)"
-        fi
+        fail "Image file doesn't contain valid image magic bytes (got: $IMAGE_MAGIC)"
+    fi
+
+    # Verify file size matches original fixture (catches truncation bugs)
+    FIXTURE_SIZE=$(wc -c < "$IMAGE_FIXTURE" | tr -d '[:space:]')
+    SERVED_SIZE=$(wc -c < "$DOCS_DIR/$IMAGE_FILENAME" | tr -d '[:space:]')
+    if [[ "$SERVED_SIZE" -eq "$FIXTURE_SIZE" ]]; then
+        pass "Image file size matches fixture ($SERVED_SIZE bytes)"
+    else
+        fail "Image file size mismatch: fixture=$FIXTURE_SIZE, served=$SERVED_SIZE"
     fi
 
     # Verify companion .md has expected structure

@@ -30,8 +30,9 @@ class InodeEntry:
     parent: Optional[int]
     ontology: Optional[str] = None  # Which ontology this belongs to
     query_path: Optional[str] = None  # For query dirs and meta: path under ontology
-    document_id: Optional[str] = None  # For documents; also stores source_id for image_evidence
+    document_id: Optional[str] = None  # For documents and image documents
     concept_id: Optional[str] = None  # For concepts
+    source_id: Optional[str] = None  # For image_evidence entries (source node ID)
     symlink_target: Optional[str] = None  # For symlinks
     meta_key: Optional[str] = None  # For meta_file: which setting (limit, threshold, etc.)
     job_id: Optional[str] = None  # For job_file: ingestion job ID

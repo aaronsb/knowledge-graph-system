@@ -41,7 +41,8 @@ import pyfuse3
 
 from .api_client import KnowledgeGraphClient
 from .config import TagsConfig, JobsConfig
-from .formatters import format_concept, format_document, format_image_prose, format_job, render_meta_file
+from .formatters import format_concept, format_document, format_job, render_meta_file
+from .image_handler import ImageHandler
 from .job_tracker import JobTracker, TERMINAL_JOB_STATUSES
 from .models import InodeEntry, is_dir_type
 from .query_store import QueryStore
@@ -101,10 +102,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # Job tracking: lazy polling with automatic cleanup
         self._job_tracker = JobTracker()
 
-        # Image cache: images are immutable (content-addressed), cache aggressively
-        self._image_cache: dict[str, bytes] = {}  # cache_key -> raw image bytes
-        self._image_cache_total = 0  # Total bytes in cache
-        self._image_cache_max = 100 * 1024 * 1024  # 100MB budget
+        # Image handler: reads, caches, ingests, and manages image inodes
+        self._image_handler = ImageHandler(
+            api=self._api,
+            tags_config=self.tags_config,
+            job_tracker=self._job_tracker,
+            inodes=self._inodes,
+            allocate_inode=self._allocate_inode,
+            sanitize_filename=self._sanitize_filename,
+        )
 
     def _make_attr(self, inode: int, is_dir: bool = False, size: int = 0, writable: bool = False) -> pyfuse3.EntryAttributes:
         """Create file attributes."""
@@ -260,7 +266,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
             # Check for images directory
             if name_str == "images":
-                inode = self._get_or_create_images_dir_inode(ontology, parent_path, parent_inode)
+                inode = self._image_handler.get_or_create_images_dir_inode(ontology, parent_path, parent_inode)
                 return await self.getattr(inode, ctx)
 
             nested_path = f"{parent_path}/{name_str}" if parent_path else name_str
@@ -278,7 +284,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         # images directory: list image evidence files
         elif parent_entry.entry_type == "images_dir":
-            entries = await self._list_query_images(parent_inode, parent_entry.ontology, parent_entry.query_path)
+            entries = await self._image_handler.list_query_images(
+                parent_inode, parent_entry.ontology, parent_entry.query_path,
+                self._dir_cache, self._cache_time, self._cache_ttl
+            )
             for inode, file_name in entries:
                 if file_name == name_str:
                     return await self.getattr(inode, ctx)
@@ -461,7 +470,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         elif entry.entry_type == "images_dir":
             # images/: list image evidence from query concepts
-            entries = await self._list_query_images(fh, entry.ontology, entry.query_path)
+            entries = await self._image_handler.list_query_images(
+                fh, entry.ontology, entry.query_path,
+                self._dir_cache, self._cache_time, self._cache_ttl
+            )
 
         elif entry.entry_type == "meta_dir":
             # .meta/: list virtual config files
@@ -579,13 +591,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
                 if content_type == "image":
                     # Image: two entries — raw image bytes + companion .md
-                    img_inode = self._get_or_create_image_document_inode(
+                    img_inode = self._image_handler.get_or_create_image_document_inode(
                         filename, parent_inode, ontology, document_id
                     )
                     entries.append((img_inode, filename))
 
                     prose_name = f"{filename}.md"
-                    prose_inode = self._get_or_create_image_prose_inode(
+                    prose_inode = self._image_handler.get_or_create_image_prose_inode(
                         prose_name, parent_inode, ontology, document_id
                     )
                     entries.append((prose_inode, prose_name))
@@ -674,7 +686,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             log.error(f"Failed to execute search for {ontology}/{query_path}: {e}")
 
         # Always include images/ directory (lazy-loaded on readdir)
-        images_dir_inode = self._get_or_create_images_dir_inode(ontology, query_path, parent_inode)
+        images_dir_inode = self._image_handler.get_or_create_images_dir_inode(ontology, query_path, parent_inode)
         entries.append((images_dir_inode, "images"))
 
         # Add child query directories
@@ -873,42 +885,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         )
         return inode
 
-    def _get_or_create_image_document_inode(self, name: str, parent: int, ontology: str, document_id: str) -> int:
-        """Get or create inode for an image document file (raw bytes)."""
-        for inode, entry in self._inodes.items():
-            if entry.entry_type == "image_document" and entry.name == name and entry.parent == parent:
-                return inode
-
-        inode = self._allocate_inode()
-        self._inodes[inode] = InodeEntry(
-            name=name,
-            entry_type="image_document",
-            parent=parent,
-            ontology=ontology,
-            document_id=document_id,
-            content_type="image",
-            size=0,  # Unknown until first read
-        )
-        return inode
-
-    def _get_or_create_image_prose_inode(self, name: str, parent: int, ontology: str, document_id: str) -> int:
-        """Get or create inode for an image companion markdown file."""
-        for inode, entry in self._inodes.items():
-            if entry.entry_type == "image_prose" and entry.name == name and entry.parent == parent:
-                return inode
-
-        inode = self._allocate_inode()
-        self._inodes[inode] = InodeEntry(
-            name=name,
-            entry_type="image_prose",
-            parent=parent,
-            ontology=ontology,
-            document_id=document_id,
-            content_type="image",
-            size=4096,  # Placeholder
-        )
-        return inode
-
     def _get_or_create_job_inode(self, name: str, parent: int, ontology: str, job_id: str) -> int:
         """Get or create inode for a job virtual file."""
         for inode, entry in self._inodes.items():
@@ -1061,13 +1037,13 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 content = await self._read_document(entry)
             elif entry.entry_type == "image_document":
                 # Raw bytes — early return, bypass UTF-8 encode
-                content_bytes = await self._read_image_bytes(entry)
+                content_bytes = await self._image_handler.read_image_bytes(entry)
                 return content_bytes[off:off + size]
             elif entry.entry_type == "image_prose":
-                content = await self._read_image_prose(entry)
+                content = await self._image_handler.read_image_prose(entry)
             elif entry.entry_type == "image_evidence":
                 # Raw bytes — early return, bypass UTF-8 encode
-                content_bytes = await self._read_image_evidence(entry)
+                content_bytes = await self._image_handler.read_image_evidence(entry)
                 return content_bytes[off:off + size]
             elif entry.entry_type == "concept":
                 content = await self._read_concept(entry)
@@ -1102,60 +1078,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 log.debug(f"Could not fetch concepts for document: {e}")
 
         return self._format_document(data, concepts)
-
-    async def _read_image_bytes(self, entry: InodeEntry) -> bytes:
-        """Read raw image bytes from Garage via API."""
-        if not entry.document_id:
-            return b""
-
-        cache_key = f"doc:{entry.document_id}"
-        if cache_key in self._image_cache:
-            return self._image_cache[cache_key]
-
-        import base64
-        data = await self._api.get(f"/documents/{entry.document_id}/content")
-        content = data.get("content", {})
-
-        if content.get("image"):
-            image_bytes = base64.b64decode(content["image"])
-            entry.size = len(image_bytes)
-            self._cache_image(cache_key, image_bytes)
-            return image_bytes
-
-        return b""
-
-    async def _read_image_prose(self, entry: InodeEntry) -> str:
-        """Read image companion markdown with frontmatter + prose."""
-        if not entry.document_id:
-            return "# No document ID\n"
-
-        data = await self._api.get(f"/documents/{entry.document_id}/content")
-
-        # Extract the original image filename from the .md name
-        image_filename = entry.name[:-3]  # strip ".md" suffix
-
-        return format_image_prose(data, image_filename, self.tags_config)
-
-    async def _read_image_evidence(self, entry: InodeEntry) -> bytes:
-        """Read raw image bytes for query image evidence."""
-        source_id = entry.document_id  # We store source_id in document_id field
-        if not source_id:
-            return b""
-
-        cache_key = f"evidence:{source_id}"
-        if cache_key in self._image_cache:
-            return self._image_cache[cache_key]
-
-        image_bytes = await self._api.get_bytes(f"/sources/{source_id}/image")
-        entry.size = len(image_bytes)
-        self._cache_image(cache_key, image_bytes)
-        return image_bytes
-
-    def _cache_image(self, key: str, data: bytes) -> None:
-        """Cache image bytes if within budget."""
-        if self._image_cache_total + len(data) < self._image_cache_max:
-            self._image_cache[key] = data
-            self._image_cache_total += len(data)
 
     async def _read_concept(self, entry: InodeEntry) -> str:
         """Read and format a concept file."""
@@ -1453,110 +1375,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         )
         return inode
 
-    def _get_or_create_images_dir_inode(self, ontology: Optional[str], query_path: str, parent: int) -> int:
-        """Get or create inode for the images/ directory inside a query."""
-        for inode, entry in self._inodes.items():
-            if (entry.entry_type == "images_dir" and
-                entry.ontology == ontology and
-                entry.query_path == query_path):
-                return inode
-
-        inode = self._allocate_inode()
-        self._inodes[inode] = InodeEntry(
-            name="images",
-            entry_type="images_dir",
-            parent=parent,
-            ontology=ontology,
-            query_path=query_path,
-        )
-        return inode
-
-    def _get_or_create_image_evidence_inode(self, name: str, parent: int, ontology: Optional[str], query_path: str, source_id: str) -> int:
-        """Get or create inode for an image evidence file in query images/ dir."""
-        for inode, entry in self._inodes.items():
-            if (entry.entry_type == "image_evidence" and
-                entry.name == name and
-                entry.parent == parent):
-                return inode
-
-        inode = self._allocate_inode()
-        self._inodes[inode] = InodeEntry(
-            name=name,
-            entry_type="image_evidence",
-            parent=parent,
-            ontology=ontology,
-            query_path=query_path,
-            document_id=source_id,  # Store source_id in document_id field
-            content_type="image",
-            size=0,
-        )
-        return inode
-
-    async def _list_query_images(self, parent_inode: int, ontology: Optional[str], query_path: str) -> list[tuple[int, str]]:
-        """List image evidence files for query results.
-
-        Fetches concept details for each concept in the parent query to find
-        instances with image evidence. Deduplicates by source_id.
-        """
-        # Check cache
-        if parent_inode in self._dir_cache:
-            if time.time() - self._cache_time.get(parent_inode, 0) < self._cache_ttl:
-                return self._dir_cache[parent_inode]
-
-        entries = []
-        seen_sources: set[str] = set()
-        used_names: set[str] = set()
-
-        # Find concept inodes under the parent query directory
-        parent_entry = self._inodes.get(parent_inode)
-        if not parent_entry:
-            return entries
-
-        query_parent_inode = parent_entry.parent
-        concept_entries = [
-            entry for entry in self._inodes.values()
-            if entry.parent == query_parent_inode and entry.entry_type == "concept"
-        ]
-
-        for concept_entry in concept_entries:
-            if not concept_entry.concept_id:
-                continue
-
-            try:
-                data = await self._api.get(f"/query/concept/{concept_entry.concept_id}")
-                instances = data.get("instances", [])
-
-                for inst in instances:
-                    if inst.get("has_image") and inst.get("source_id"):
-                        source_id = inst["source_id"]
-                        if source_id in seen_sources:
-                            continue
-                        seen_sources.add(source_id)
-
-                        filename = inst.get("filename") or f"{source_id}.jpg"
-                        safe_name = self._sanitize_filename(filename)
-
-                        # Handle filename collisions
-                        if safe_name in used_names:
-                            base, ext = os.path.splitext(safe_name)
-                            counter = 1
-                            while f"{base}-{counter}{ext}" in used_names:
-                                counter += 1
-                            safe_name = f"{base}-{counter}{ext}"
-                        used_names.add(safe_name)
-
-                        inode = self._get_or_create_image_evidence_inode(
-                            safe_name, parent_inode, ontology, query_path, source_id
-                        )
-                        entries.append((inode, safe_name))
-            except Exception as e:
-                log.error(f"Failed to fetch concept details for image evidence: {e}")
-
-        self._dir_cache[parent_inode] = entries
-        self._cache_time[parent_inode] = time.time()
-
-        return entries
-
     async def create(self, parent_inode: int, name: bytes, mode: int, flags: int, ctx: pyfuse3.RequestContext) -> tuple[pyfuse3.FileInfo, pyfuse3.EntryAttributes]:
         """Create a file for ingestion (black hole - file gets ingested on release)."""
         name_str = name.decode("utf-8")
@@ -1616,7 +1434,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
                 try:
                     if _is_image_file(filename):
-                        await self._ingest_image(ontology, filename, content)
+                        await self._image_handler.ingest_image(ontology, filename, content)
                     else:
                         await self._ingest_document(ontology, filename, content)
                     log.info(f"Ingestion submitted successfully: {filename}")
@@ -1672,24 +1490,6 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         return result
 
-    async def _ingest_image(self, ontology: str, filename: str, content: bytes) -> dict:
-        """Submit image to dedicated image ingestion API (ADR-057) and track the job."""
-        files = {"file": (filename, content)}
-        data = {
-            "ontology": ontology,
-            "auto_approve": "true",
-            "source_type": "file",
-        }
-
-        result = await self._api.post("/ingest/image", data=data, files=files)
-        log.info(f"Image ingestion response: {result}")
-
-        job_id = result.get("job_id")
-        if job_id:
-            self._job_tracker.track_job(job_id, ontology, filename)
-
-        return result
-
     async def destroy(self) -> None:
         """Clean up resources on unmount."""
         log.info("Destroying filesystem, cleaning up resources")
@@ -1700,5 +1500,4 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._write_buffers.clear()
         self._job_tracker.clear()
         self._write_info.clear()
-        self._image_cache.clear()
-        self._image_cache_total = 0
+        self._image_handler.clear_cache()
