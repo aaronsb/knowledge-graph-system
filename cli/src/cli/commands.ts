@@ -27,6 +27,7 @@ import { queryDefCommand } from './query-def';
 import { conceptCommand } from './concept';
 import { edgeCommand } from './edge';
 import { batchCommand } from './batch';
+import { storageCommand } from './storage';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -119,6 +120,7 @@ export async function registerCommands(program: Command) {
     artifactCommand,
     groupCommand,
     queryDefCommand,
+    storageCommand,
   ];
 
   subcommands.forEach(cmd => {
