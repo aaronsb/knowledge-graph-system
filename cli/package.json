@@ -1,6 +1,6 @@
 {
   "name": "@aaronsb/kg-cli",
-  "version": "0.6.6",
+  "version": "0.7.0",
   "description": "Knowledge Graph CLI and MCP server - interact with knowledge graph systems",
   "main": "dist/index.js",
   "bin": {

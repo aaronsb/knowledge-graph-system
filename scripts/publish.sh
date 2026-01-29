@@ -99,19 +99,27 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        status|bump|sync-scripts|release|images|cli|fuse|all)
+        status|bump|sync-scripts|release|images|all)
             COMMAND="$1"
+            shift
+            ;;
+        cli|fuse)
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$1"
+            elif [ "$COMMAND" = "bump" ]; then
+                BUMP_TARGET="$1"
+            else
+                TARGETS+=("$1")
+            fi
             shift
             ;;
         major|minor|patch)
             BUMP_TYPE="$1"
             shift
             ;;
-        platform|cli|fuse)
+        platform)
             if [ "$COMMAND" = "bump" ]; then
                 BUMP_TARGET="$1"
-            else
-                TARGETS+=("$1")
             fi
             shift
             ;;
