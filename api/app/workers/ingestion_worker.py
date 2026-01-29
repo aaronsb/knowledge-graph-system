@@ -395,7 +395,10 @@ def run_ingestion_worker(
                 hostname=job_data.get("source_hostname"),      # Hostname where ingested
                 source_ids=source_ids,
                 # ADR-081: Link to source document in Garage
-                garage_key=job_data.get("source_garage_key")
+                garage_key=job_data.get("source_garage_key"),
+                content_type=job_data.get("content_type", "document"),
+                # ADR-057: Image binary location in Garage
+                storage_key=job_data.get("storage_key"),
             )
             logger.info(f"✓ Created DocumentMeta node: {job_data['content_hash'][:16]}... ({stats.sources_created} sources)")
         except Exception as e:

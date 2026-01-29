@@ -2421,7 +2421,9 @@ class AGEClient:
         ingested_at: Optional[str] = None,
         source_ids: Optional[List[str]] = None,
         # ADR-081: Source document lifecycle
-        garage_key: Optional[str] = None
+        garage_key: Optional[str] = None,
+        content_type: str = "document",
+        storage_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a DocumentMeta node and link it to Source nodes (ADR-051, ADR-081).
@@ -2443,6 +2445,8 @@ class AGEClient:
             ingested_at: ISO timestamp (optional, defaults to now())
             source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
             garage_key: Garage object key for source document (ADR-081)
+            content_type: "document" or "image" (default: "document")
+            storage_key: Garage object key for image binary (ADR-057, images only)
 
         Returns:
             Created DocumentMeta node properties
@@ -2478,6 +2482,10 @@ class AGEClient:
             "job_id": job_id
         }
 
+        # Content type (document or image)
+        if content_type != "document":
+            properties["content_type"] = content_type
+
         # Add optional provenance metadata (best-effort)
         if filename:
             properties["filename"] = filename
@@ -2490,6 +2498,9 @@ class AGEClient:
         # ADR-081: Link to source document in Garage
         if garage_key:
             properties["garage_key"] = garage_key
+        # ADR-057: Image binary location in Garage
+        if storage_key:
+            properties["storage_key"] = storage_key
 
         # Add timestamp (default to now if not provided)
         if ingested_at:
