@@ -1024,7 +1024,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if entry.entry_type == "job_file" and (flags & os.O_WRONLY or flags & os.O_RDWR):
             raise pyfuse3.FUSEError(errno.EACCES)
 
-        return pyfuse3.FileInfo(fh=inode)
+        fi = pyfuse3.FileInfo(fh=inode)
+
+        # Image entries have unknown size until first read — use direct_io
+        # to bypass kernel page cache so reads aren't limited by st_size
+        if entry.entry_type in ("image_document", "image_evidence"):
+            fi.direct_io = True
+
+        return fi
 
     async def read(self, fh: int, off: int, size: int) -> bytes:
         """Read file contents."""

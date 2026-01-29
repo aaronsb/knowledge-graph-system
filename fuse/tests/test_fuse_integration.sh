@@ -561,8 +561,10 @@ if $IMAGE_DOC_FOUND; then
     fi
 
     # Verify file size matches original fixture (catches truncation bugs)
+    # Use cat|wc -c to read actual content bytes, not fstat (which returns
+    # the FUSE placeholder size until the kernel re-fetches attributes)
     FIXTURE_SIZE=$(wc -c < "$IMAGE_FIXTURE" | tr -d '[:space:]')
-    SERVED_SIZE=$(wc -c < "$DOCS_DIR/$IMAGE_FILENAME" | tr -d '[:space:]')
+    SERVED_SIZE=$(cat "$DOCS_DIR/$IMAGE_FILENAME" | wc -c | tr -d '[:space:]')
     if [[ "$SERVED_SIZE" -eq "$FIXTURE_SIZE" ]]; then
         pass "Image file size matches fixture ($SERVED_SIZE bytes)"
     else
@@ -590,7 +592,7 @@ if $IMAGE_DOC_FOUND; then
         fi
 
         # Check for relative image link
-        if echo "$PROSE_CONTENT" | grep -q "\!\[${IMAGE_FILENAME}\](${IMAGE_FILENAME})"; then
+        if echo "$PROSE_CONTENT" | grep -qF "![${IMAGE_FILENAME}](${IMAGE_FILENAME})"; then
             pass "Image companion has relative image link"
         else
             fail "Image companion missing relative image link"
@@ -623,12 +625,15 @@ timer_end "image_content"
 timer_start "image_job_cleanup"
 log "Test 11: Verifying image job file cleanup..."
 
-sleep 1
-
-if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
-    cat "$IMAGE_JOB_FILE_PATH" > /dev/null 2>&1 || true
-    sleep 1
-fi
+# Read job files to trigger completion detection, then wait for cleanup
+for attempt in 1 2 3 4 5; do
+    if [[ -f "$IMAGE_JOB_FILE_PATH" ]]; then
+        cat "$IMAGE_JOB_FILE_PATH" > /dev/null 2>&1 || true
+    fi
+    # Force a directory listing to trigger cache refresh and cleanup
+    ls "$DOCS_DIR" > /dev/null 2>&1 || true
+    sleep 2
+done
 
 # Also check for companion .md .ingesting file
 IMAGE_MD_JOB_FILE="$DOCS_DIR/${IMAGE_FILENAME}.md.ingesting"
