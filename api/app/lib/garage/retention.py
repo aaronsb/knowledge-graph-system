@@ -202,7 +202,8 @@ class RetentionPolicyManager:
         categories = {
             'images': 'images/',
             'projections': 'projections/',
-            'sources': 'sources/'
+            'sources': 'sources/',
+            'artifacts': 'artifacts/'
         }
 
         for category, prefix in categories.items():

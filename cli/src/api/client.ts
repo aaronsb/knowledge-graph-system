@@ -2014,6 +2014,56 @@ export class KnowledgeGraphClient {
   async deleteQueryDefinition(definitionId: number): Promise<void> {
     await this.client.delete(`/query-definitions/${definitionId}`);
   }
+
+  // ========== Storage Admin ==========
+
+  /**
+   * Check storage backend health
+   */
+  async getStorageHealth(): Promise<any> {
+    const response = await this.client.get('/admin/storage/health');
+    return response.data;
+  }
+
+  /**
+   * Get storage usage statistics by category
+   */
+  async getStorageStats(): Promise<any> {
+    const response = await this.client.get('/admin/storage/stats');
+    return response.data;
+  }
+
+  /**
+   * List objects in storage with optional prefix filter
+   */
+  async listStorageObjects(params?: { prefix?: string; limit?: number; offset?: number }): Promise<any> {
+    const response = await this.client.get('/admin/storage/objects', { params });
+    return response.data;
+  }
+
+  /**
+   * Get metadata for a single storage object
+   */
+  async getStorageObjectMetadata(key: string): Promise<any> {
+    const response = await this.client.get('/admin/storage/objects/metadata', { params: { key } });
+    return response.data;
+  }
+
+  /**
+   * Check storage integrity (S3 vs graph cross-reference)
+   */
+  async checkStorageIntegrity(params?: { ontology?: string; category?: string }): Promise<any> {
+    const response = await this.client.get('/admin/storage/integrity', { params });
+    return response.data;
+  }
+
+  /**
+   * Get retention policy configuration
+   */
+  async getStorageRetention(): Promise<any> {
+    const response = await this.client.get('/admin/storage/retention');
+    return response.data;
+  }
 }
 
 /**
