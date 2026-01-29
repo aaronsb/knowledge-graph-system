@@ -51,6 +51,58 @@ def format_document(data: dict, concepts: list = None, tags_config: TagsConfig =
     return "\n".join(lines)
 
 
+def format_image_prose(data: dict, image_filename: str, tags_config: TagsConfig = None) -> str:
+    """Format image companion markdown with frontmatter, relative image link, and prose.
+
+    Args:
+        data: Document content response from GET /documents/{id}/content
+        image_filename: Original image filename (e.g., "diagram.png")
+        tags_config: Tag configuration for optional concept tags
+    """
+    tags_config = tags_config or TagsConfig()
+    content = data.get("content", {})
+    lines = []
+
+    # YAML frontmatter
+    lines.append("---")
+    lines.append(f"document_id: {data.get('document_id', 'unknown')}")
+    lines.append("content_type: image")
+    ontology = data.get("ontology")
+    if ontology:
+        lines.append(f"ontology: {ontology}")
+    lines.append("---")
+    lines.append("")
+
+    # Header
+    lines.append(f"# {image_filename}")
+    lines.append("")
+
+    # Relative image link (sibling file in same directory)
+    lines.append(f"![{image_filename}]({image_filename})")
+    lines.append("")
+
+    # Prose description from vision AI
+    prose = content.get("prose", "")
+    if prose:
+        lines.append("## Description")
+        lines.append("")
+        lines.append(prose)
+        lines.append("")
+
+    # Source chunks (for grounding context)
+    chunks = data.get("chunks", [])
+    if chunks:
+        lines.append("## Source Chunks")
+        lines.append("")
+        for chunk in chunks:
+            text = chunk.get("full_text", "")
+            if text:
+                lines.append(f"> {text[:500]}{'...' if len(text) > 500 else ''}")
+                lines.append("")
+
+    return "\n".join(lines)
+
+
 def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
     """Format concept data as markdown with YAML frontmatter."""
     tags_config = tags_config or TagsConfig()
@@ -148,6 +200,13 @@ def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
                 lines.append(f"### Instance {i} from {doc} (para {para})\n")
             else:
                 lines.append(f"### Instance {i} (para {para})\n")
+
+            # Image evidence reference
+            if inst.get("has_image"):
+                img_name = inst.get("filename") or f"{inst.get('source_id', 'image')}.jpg"
+                safe_name = img_name.replace("/", "-")
+                lines.append(f"![{safe_name}](./images/{safe_name})\n")
+
             lines.append(f"> {text[:500]}{'...' if len(text) > 500 else ''}\n")
             lines.append("")
 
