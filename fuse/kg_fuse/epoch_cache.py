@@ -104,10 +104,18 @@ class EpochCache:
     # ── Directory listing cache ──────────────────────────────────────────
 
     def get_dir(self, inode: int) -> Optional[list[tuple[int, str]]]:
-        """Get cached directory listing, or None if stale/missing."""
+        """Get cached directory listing, or None if stale/missing.
+
+        Primary invalidation is epoch-driven (check_epoch clears all).
+        TTL only applies as fallback when epoch tracking hasn't initialized
+        (API unreachable, epoch still -1).
+        """
         if inode not in self._dir_cache:
             return None
-        # TTL as fallback safety net (primary invalidation is epoch-driven)
+        # If we have a valid epoch, trust epoch-driven invalidation
+        if self._graph_epoch != -1:
+            return self._dir_cache[inode]
+        # No epoch yet — fall back to TTL
         age = time.time() - self._dir_cache_time.get(inode, 0)
         if age > self._dir_cache_ttl:
             return None
