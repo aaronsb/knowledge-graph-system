@@ -24,7 +24,13 @@ log = logging.getLogger(__name__)
 
 
 class EpochCache:
-    """Graph-epoch-aware cache with stale-while-revalidate semantics."""
+    """Graph-epoch-aware cache with stale-while-revalidate semantics.
+
+    Caches survive epoch changes so stale data can be served immediately
+    while background refreshes fetch fresh data. Per-entry epoch tracking
+    distinguishes fresh (fetched at current epoch) from stale (fetched at
+    a previous epoch).
+    """
 
     def __init__(self, api: KnowledgeGraphClient, config: CacheConfig = None):
         config = config or CacheConfig()
@@ -36,13 +42,15 @@ class EpochCache:
         self._graph_epoch: int = -1           # Last known epoch (-1 = unknown)
         self._epoch_check_time: float = 0.0   # When we last polled
 
-        # Directory listing cache
+        # Directory listing cache + per-entry epoch
         self._dir_cache: dict[int, list[tuple[int, str]]] = {}
         self._dir_cache_time: dict[int, float] = {}
+        self._dir_cache_epoch: dict[int, int] = {}   # epoch when entry was cached
         self._dir_cache_ttl: float = config.dir_cache_ttl
 
-        # Content cache (rendered file bytes, epoch-gated)
+        # Content cache (rendered file bytes) + per-entry epoch
         self._content: dict[int, bytes] = {}
+        self._content_epoch: dict[int, int] = {}      # epoch when entry was cached
         self._content_total: int = 0
         self._content_max: int = config.content_cache_max
 
@@ -65,7 +73,11 @@ class EpochCache:
     async def check_epoch(self) -> bool:
         """Check if graph epoch changed. Throttled to one API call per interval.
 
-        Returns True if epoch changed (caches were invalidated).
+        Does NOT invalidate caches — stale entries survive so callers can
+        serve them immediately while spawning background refreshes.
+        Per-entry epoch tracking lets callers distinguish fresh from stale.
+
+        Returns True if epoch changed.
         """
         now = time.time()
         if now - self._epoch_check_time < self._epoch_check_interval:
@@ -84,8 +96,7 @@ class EpochCache:
             log.info(f"Epoch cache: initial epoch {new_epoch}")
             return False
 
-        log.info(f"Epoch cache: {old_epoch} -> {new_epoch}, invalidating all caches")
-        self.invalidate_all()
+        log.info(f"Epoch cache: epoch changed {old_epoch} -> {new_epoch}")
         return True
 
     async def _periodic_epoch_sweep(self):
@@ -104,15 +115,15 @@ class EpochCache:
     # ── Directory listing cache ──────────────────────────────────────────
 
     def get_dir(self, inode: int) -> Optional[list[tuple[int, str]]]:
-        """Get cached directory listing, or None if stale/missing.
+        """Get cached directory listing, or None if missing.
 
-        Primary invalidation is epoch-driven (check_epoch clears all).
-        TTL only applies as fallback when epoch tracking hasn't initialized
-        (API unreachable, epoch still -1).
+        Returns cached data regardless of staleness — callers use
+        is_dir_fresh() to decide whether to spawn background refresh.
+        TTL only applies when epoch tracking hasn't initialized.
         """
         if inode not in self._dir_cache:
             return None
-        # If we have a valid epoch, trust epoch-driven invalidation
+        # If we have a valid epoch, return cached (fresh or stale)
         if self._graph_epoch != -1:
             return self._dir_cache[inode]
         # No epoch yet — fall back to TTL
@@ -121,15 +132,21 @@ class EpochCache:
             return None
         return self._dir_cache[inode]
 
+    def is_dir_fresh(self, inode: int) -> bool:
+        """Check if cached directory listing was fetched at current epoch."""
+        return self._dir_cache_epoch.get(inode) == self._graph_epoch
+
     def put_dir(self, inode: int, entries: list[tuple[int, str]]):
-        """Cache a directory listing."""
+        """Cache a directory listing at the current epoch."""
         self._dir_cache[inode] = entries
         self._dir_cache_time[inode] = time.time()
+        self._dir_cache_epoch[inode] = self._graph_epoch
 
     def invalidate_dir(self, inode: int):
         """Invalidate a single directory's cache."""
         self._dir_cache.pop(inode, None)
         self._dir_cache_time.pop(inode, None)
+        self._dir_cache_epoch.pop(inode, None)
 
     # ── Content cache ────────────────────────────────────────────────────
 
@@ -137,22 +154,29 @@ class EpochCache:
         """Get cached file content, or None if not cached."""
         return self._content.get(inode)
 
+    def is_content_fresh(self, inode: int) -> bool:
+        """Check if cached content was fetched at current epoch."""
+        return self._content_epoch.get(inode) == self._graph_epoch
+
     def put_content(self, inode: int, data: bytes):
-        """Cache file content with LRU eviction on budget overflow."""
+        """Cache file content at current epoch with LRU eviction."""
         # Evict oldest entries if needed
         while self._content and self._content_total + len(data) > self._content_max:
             evict_inode = next(iter(self._content))
             evicted = self._content.pop(evict_inode)
             self._content_total -= len(evicted)
+            self._content_epoch.pop(evict_inode, None)
 
         self._content[inode] = data
         self._content_total += len(data)
+        self._content_epoch[inode] = self._graph_epoch
 
     def invalidate_content(self, inode: int):
         """Invalidate a single file's cached content."""
         evicted = self._content.pop(inode, None)
         if evicted:
             self._content_total -= len(evicted)
+        self._content_epoch.pop(inode, None)
 
     # ── Hydration state ──────────────────────────────────────────────────
 
@@ -160,11 +184,21 @@ class EpochCache:
         return inode in self._refreshing
 
     def hydration_state(self, inode: int) -> str:
-        """Get hydration state for xattr reporting."""
+        """Get hydration state for xattr reporting.
+
+        States: fresh (current epoch), stale (older epoch, awaiting refresh),
+        refreshing (background fetch in progress), pending (never cached).
+        """
         if inode in self._refreshing:
             return "refreshing"
-        if inode in self._content or inode in self._dir_cache:
-            return "fresh"
+        if inode in self._content:
+            if self._content_epoch.get(inode) == self._graph_epoch:
+                return "fresh"
+            return "stale"
+        if inode in self._dir_cache:
+            if self._dir_cache_epoch.get(inode) == self._graph_epoch:
+                return "fresh"
+            return "stale"
         return "pending"
 
     # ── Background refresh ───────────────────────────────────────────────
@@ -222,10 +256,12 @@ class EpochCache:
     # ── Bulk operations ──────────────────────────────────────────────────
 
     def invalidate_all(self):
-        """Invalidate all non-immutable caches (epoch changed)."""
+        """Force-clear all caches. Used for explicit invalidation and unmount."""
         self._dir_cache.clear()
         self._dir_cache_time.clear()
+        self._dir_cache_epoch.clear()
         self._content.clear()
+        self._content_epoch.clear()
         self._content_total = 0
 
     def clear(self):

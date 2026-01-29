@@ -436,10 +436,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         self._invalidate_cache(parent_inode)
 
     async def readdir(self, fh: int, start_id: int, token: pyfuse3.ReaddirToken) -> None:
-        """Read directory contents."""
+        """Read directory contents with stale-while-revalidate.
+
+        If the epoch changed and we have cached directory listings, serves
+        stale data immediately and spawns a background refresh. The kernel
+        is notified via invalidate_inode when fresh data arrives.
+        """
         log.debug(f"readdir: fh={fh}, start_id={start_id}")
 
-        # Check graph epoch — invalidates caches if graph changed
+        # Check graph epoch (does not invalidate — stale data survives)
         await self._cache.check_epoch()
 
         entry = self._inodes.get(fh)
@@ -449,42 +454,38 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         entries = []
 
         if entry.entry_type == "root":
-            # Root: "ontology" (fixed) + global user queries
             entries = await self._list_root_contents(fh)
 
         elif entry.entry_type == "ontology_root":
-            # ontology/: list actual ontologies from graph
             entries = await self._list_ontologies()
 
         elif entry.entry_type == "ontology":
-            # Ontology: "documents" (fixed) + user queries
             entries = await self._list_ontology_contents(fh, entry.ontology)
 
         elif entry.entry_type == "documents_dir":
-            # documents/: list source document files
             entries = await self._list_documents(fh, entry.ontology)
 
         elif entry.entry_type == "query":
-            # Query: .meta + execute search + list child queries
-            # Add .meta directory first
             meta_inode = self._get_or_create_meta_dir_inode(entry.ontology, entry.query_path, fh)
             entries.append((meta_inode, ".meta"))
-            # Add query results and child queries
             results = await self._list_query_results(fh, entry.ontology, entry.query_path)
             entries.extend(results)
 
         elif entry.entry_type == "images_dir":
-            # images/: list image evidence from query concepts
             entries = await self._image_handler.list_query_images(
                 fh, entry.ontology, entry.query_path,
                 cache=self._cache
             )
 
         elif entry.entry_type == "meta_dir":
-            # .meta/: list virtual config files
             for meta_key in self.META_FILES:
                 inode = self._get_or_create_meta_file_inode(meta_key, entry.ontology, entry.query_path, fh)
                 entries.append((inode, meta_key))
+
+        # Spawn background refresh if directory listing is stale
+        if (self._cache.get_dir(fh) is not None
+                and not self._cache.is_dir_fresh(fh)):
+            self._cache.spawn_dir_refresh(fh, lambda: self._refresh_dir(fh, entry))
 
         # Emit entries starting from start_id
         for idx, (inode, name) in enumerate(entries):
@@ -493,6 +494,36 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             attr = await self.getattr(inode, None)
             if not pyfuse3.readdir_reply(token, name.encode("utf-8"), attr, idx + 1):
                 break
+
+    async def _refresh_dir(self, fh: int, entry: InodeEntry) -> list[tuple[int, str]]:
+        """Fetch fresh directory listing for background refresh.
+
+        Invalidates the stale cache entry first so the _list_* methods
+        re-fetch from the API instead of returning stale data.
+        """
+        self._cache.invalidate_dir(fh)
+
+        if entry.entry_type == "root":
+            return await self._list_root_contents(fh)
+        elif entry.entry_type == "ontology_root":
+            return await self._list_ontologies()
+        elif entry.entry_type == "ontology":
+            return await self._list_ontology_contents(fh, entry.ontology)
+        elif entry.entry_type == "documents_dir":
+            return await self._list_documents(fh, entry.ontology)
+        elif entry.entry_type == "query":
+            entries = []
+            meta_inode = self._get_or_create_meta_dir_inode(entry.ontology, entry.query_path, fh)
+            entries.append((meta_inode, ".meta"))
+            results = await self._list_query_results(fh, entry.ontology, entry.query_path)
+            entries.extend(results)
+            return entries
+        elif entry.entry_type == "images_dir":
+            return await self._image_handler.list_query_images(
+                fh, entry.ontology, entry.query_path,
+                cache=self._cache
+            )
+        return []
 
     async def _list_root_contents(self, parent_inode: int) -> list[tuple[int, str]]:
         """List root directory contents: ontology/ + global user queries."""
@@ -1027,18 +1058,21 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return fi
 
     async def read(self, fh: int, off: int, size: int) -> bytes:
-        """Read file contents.
+        """Read file contents with stale-while-revalidate.
 
-        Uses epoch-gated content cache: if graph hasn't changed,
-        serve cached content immediately. Image bytes are handled
-        by ImageHandler's own immutable cache.
+        Cache flow:
+        1. Epoch unchanged + cached → serve fresh (zero API calls)
+        2. Epoch changed + cached → serve stale instantly, background refresh
+        3. No cache → block on first fetch (unavoidable)
+
+        Image bytes are handled by ImageHandler's immutable cache.
         """
         entry = self._inodes.get(fh)
         if not entry:
             raise pyfuse3.FUSEError(errno.ENOENT)
 
         # Check graph epoch (throttled)
-        epoch_changed = await self._cache.check_epoch()
+        await self._cache.check_epoch()
 
         # Image types have their own immutable cache — skip content cache
         if entry.entry_type == "image_document":
@@ -1052,28 +1086,18 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # (meta_file and job_file are dynamic/local — don't cache)
         cacheable = entry.entry_type in ("document", "concept", "image_prose")
 
-        if cacheable and not epoch_changed:
+        if cacheable:
             cached = self._cache.get_content(fh)
             if cached is not None:
+                if not self._cache.is_content_fresh(fh):
+                    # Stale — serve immediately, refresh in background
+                    self._cache.spawn_refresh(fh, lambda e=entry: self._fetch_content(e))
                 return cached[off:off + size]
 
+        # No cache — block on fetch
         try:
-            if entry.entry_type == "document":
-                content = await self._read_document(entry)
-            elif entry.entry_type == "image_prose":
-                content = await self._image_handler.read_image_prose(entry)
-            elif entry.entry_type == "concept":
-                content = await self._read_concept(entry)
-            elif entry.entry_type == "meta_file":
-                content = self._render_meta_file(entry)
-            elif entry.entry_type == "job_file":
-                content = await self._read_job(entry)
-            else:
-                content = "# Unknown file type\n"
+            content_bytes = await self._fetch_content(entry)
 
-            content_bytes = content.encode("utf-8")
-
-            # Cache rendered content for cacheable types
             if cacheable:
                 self._cache.put_content(fh, content_bytes)
 
@@ -1082,6 +1106,22 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         except Exception as e:
             log.error(f"Failed to read file: {e}")
             return f"# Error reading file: {e}\n".encode("utf-8")
+
+    async def _fetch_content(self, entry: InodeEntry) -> bytes:
+        """Fetch file content from API. Used by both sync reads and background refresh."""
+        if entry.entry_type == "document":
+            content = await self._read_document(entry)
+        elif entry.entry_type == "image_prose":
+            content = await self._image_handler.read_image_prose(entry)
+        elif entry.entry_type == "concept":
+            content = await self._read_concept(entry)
+        elif entry.entry_type == "meta_file":
+            content = self._render_meta_file(entry)
+        elif entry.entry_type == "job_file":
+            content = await self._read_job(entry)
+        else:
+            content = "# Unknown file type\n"
+        return content.encode("utf-8")
 
     async def _read_document(self, entry: InodeEntry) -> str:
         """Read and format a document file."""
@@ -1466,17 +1506,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                         self._pending_ontologies.discard(ontology)
                         log.info(f"Ontology {ontology} is no longer pending")
 
-                    # Notify kernel that the documents directory changed
-                    # This tells file managers like Dolphin to refresh
+                    # Invalidate documents dir so new job files show up.
+                    # Both internal cache (epoch-gated) and kernel cache.
                     docs_dir_inode = self._find_documents_dir_inode(ontology)
                     if docs_dir_inode:
+                        self._invalidate_cache(docs_dir_inode)
                         try:
-                            # Invalidate the directory inode to force re-reading contents
-                            # attr_only=False means also invalidate cached directory listing
                             pyfuse3.invalidate_inode(docs_dir_inode, attr_only=False)
-                            log.debug(f"Invalidated documents directory inode for {ontology}")
+                            log.debug(f"Invalidated documents directory for {ontology}")
                         except OSError as e:
-                            # ENOSYS means kernel doesn't support this (older kernels)
                             log.debug(f"invalidate_inode not supported: {e}")
                         except Exception as notify_err:
                             log.debug(f"Kernel notification failed (non-critical): {notify_err}")
