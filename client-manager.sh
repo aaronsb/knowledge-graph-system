@@ -505,6 +505,72 @@ linux_stop_fuse() {
     fi
 }
 
+detect_fuse_mounts() {
+    # Find active kg-fuse mount points from /proc/mounts
+    # kg-fuse (via pyfuse3) mounts show as fstype "fuse.pyfuse3"
+    if [[ -f /proc/mounts ]]; then
+        awk '$3 == "fuse.pyfuse3" { print $2 }' /proc/mounts
+    fi
+}
+
+fuse_libs_available() {
+    # Check if FUSE3 userspace tools are installed
+    command -v fusermount3 &>/dev/null || command -v fusermount &>/dev/null
+}
+
+stop_fuse_all() {
+    # Stop all running kg-fuse processes and unmount all mounts
+    # Returns the list of previously-mounted directories (space-separated) on stdout
+    local mounts
+    mounts=$(detect_fuse_mounts)
+
+    # Phase 1: Unmount all detected FUSE mounts
+    if [[ -n "$mounts" ]]; then
+        log_info "Detected active FUSE mounts:"
+        while IFS= read -r mount_dir; do
+            log_info "  $mount_dir"
+            if command -v fusermount3 &>/dev/null; then
+                fusermount3 -u "$mount_dir" 2>/dev/null || true
+            elif command -v fusermount &>/dev/null; then
+                fusermount -u "$mount_dir" 2>/dev/null || true
+            else
+                umount "$mount_dir" 2>/dev/null || true
+            fi
+        done <<< "$mounts"
+    fi
+
+    # Phase 2: Kill any lingering kg-fuse processes
+    local pids
+    pids=$(pgrep -f 'kg-fuse' 2>/dev/null || true)
+    if [[ -n "$pids" ]]; then
+        log_info "Stopping kg-fuse processes: $pids"
+        kill $pids 2>/dev/null || true
+        # Wait briefly for graceful shutdown
+        sleep 2
+        # Force-kill any survivors
+        local remaining
+        remaining=$(pgrep -f 'kg-fuse' 2>/dev/null || true)
+        if [[ -n "$remaining" ]]; then
+            log_warning "Force-killing kg-fuse processes: $remaining"
+            kill -9 $remaining 2>/dev/null || true
+            sleep 1
+        fi
+    fi
+
+    # Phase 3: Verify all mounts are gone
+    local leftover
+    leftover=$(detect_fuse_mounts)
+    if [[ -n "$leftover" ]]; then
+        log_warning "Some FUSE mounts remain after cleanup:"
+        echo "$leftover" | while IFS= read -r m; do log_warning "  $m"; done
+    else
+        [[ -n "$mounts" ]] && log_success "All FUSE mounts stopped"
+    fi
+
+    # Return the original mount list for restart
+    echo "$mounts"
+}
+
 linux_start_fuse() {
     # Start FUSE filesystem on Linux
     # Args: $1 = mount directory
@@ -819,6 +885,28 @@ remove_autostart() {
     fi
 }
 
+fuse_supported() {
+    # Check if FUSE driver is supported on this platform
+    # Returns 0 if supported, 1 otherwise (with informational message)
+    case "$PLATFORM_FAMILY" in
+        linux)
+            return 0
+            ;;
+        macos)
+            log_warning "FUSE driver not yet supported on macOS (requires macFUSE)"
+            log_info "  macOS support is planned for a future release"
+            return 1
+            ;;
+        *)
+            log_warning "FUSE driver not supported on this platform"
+            log_info "  Linux: supported (FUSE3/libfuse3)"
+            log_info "  macOS: planned (macFUSE)"
+            log_info "  Windows: planned (WinFSP)"
+            return 1
+            ;;
+    esac
+}
+
 
 # ============================================================================
 # SECTION 10: DETECTION & VERIFICATION
@@ -1094,24 +1182,12 @@ ensure_prerequisites() {
         fi
     fi
 
-    # FUSE libraries (only if installing FUSE)
+    # FUSE libraries (only if installing FUSE on a supported platform)
     if [[ "$INSTALL_FUSE" == true ]]; then
-        # Check if FUSE is available (platform-specific check)
-        local fuse_available=false
-
-        if [[ "$PLATFORM_FAMILY" == "linux" ]]; then
-            # Check for fusermount or fusermount3
-            if command -v fusermount3 &>/dev/null || command -v fusermount &>/dev/null; then
-                fuse_available=true
-            fi
-        elif [[ "$PLATFORM_FAMILY" == "macos" ]]; then
-            # Check for macFUSE
-            if [[ -d "/Library/Frameworks/macFUSE.framework" ]]; then
-                fuse_available=true
-            fi
-        fi
-
-        if [[ "$fuse_available" != true ]]; then
+        if ! fuse_supported; then
+            log_warning "Skipping FUSE installation (unsupported platform)"
+            INSTALL_FUSE=false
+        elif ! fuse_libs_available; then
             log_info "FUSE libraries required for kg-fuse"
             install_fuse_libs
         fi
@@ -1170,6 +1246,10 @@ install_kg_fuse() {
     # Install kg-fuse via pipx
     log_step "Installing kg-fuse"
 
+    if ! fuse_supported; then
+        return 1
+    fi
+
     log_info "Installing $PYPI_PACKAGE via pipx..."
     pipx install "$PYPI_PACKAGE"
 
@@ -1206,6 +1286,10 @@ configure_fuse() {
     # Configure FUSE mount directory and autostart (OAuth credentials created separately)
     log_step "Configuring kg-fuse"
 
+    if ! fuse_supported; then
+        return 1
+    fi
+
     # Set default mount directory if not specified
     if [[ -z "$FUSE_MOUNT_DIR" ]]; then
         FUSE_MOUNT_DIR="$HOME/Knowledge"
@@ -1228,6 +1312,10 @@ configure_fuse_auth() {
     # Create OAuth credentials for FUSE driver
     # This must run AFTER configure_cli() so CLI is authenticated
     log_step "Creating FUSE OAuth credentials"
+
+    if ! fuse_supported; then
+        return 1
+    fi
 
     # Check if CLI is authenticated
     if ! kg whoami &>/dev/null; then
@@ -1268,13 +1356,27 @@ upgrade_kg_cli() {
 
 upgrade_kg_fuse() {
     # Upgrade kg-fuse to latest version
+    # Robustly discovers running mounts, stops them, upgrades, and restarts
     log_step "Upgrading kg-fuse"
 
-    # Stop FUSE first if running
-    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+    if ! fuse_supported; then
+        return 1
+    fi
+
+    # Discover active mounts from /proc/mounts (ground truth)
+    local previous_mounts
+    previous_mounts=$(detect_fuse_mounts)
+
+    # Stop all FUSE processes and unmount
+    if [[ -n "$previous_mounts" ]]; then
+        stop_fuse_all > /dev/null  # stdout is mount list, suppress
+    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
+        # No active mounts detected, but config knows a mount dir
+        # Try stopping in case process is in a bad state
         stop_fuse "$FUSE_MOUNT_DIR"
     fi
 
+    # Upgrade the package
     log_info "Upgrading $PYPI_PACKAGE..."
     pipx upgrade "$PYPI_PACKAGE"
 
@@ -1284,8 +1386,19 @@ upgrade_kg_fuse() {
         log_success "kg-fuse upgraded: $DETECTED_FUSE_VERSION"
     fi
 
-    # Restart FUSE if it was running
-    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+    # Verify FUSE libraries before restarting
+    if ! fuse_libs_available; then
+        log_warning "FUSE userspace tools (fusermount3/fusermount) not found"
+        log_info "Install FUSE3 libraries before starting: fuse3 (apt/pacman/dnf)"
+        return 0
+    fi
+
+    # Restart on previously-active mounts
+    if [[ -n "$previous_mounts" ]]; then
+        while IFS= read -r mount_dir; do
+            start_fuse "$mount_dir"
+        done <<< "$previous_mounts"
+    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
         start_fuse "$FUSE_MOUNT_DIR"
     fi
 }
@@ -1309,8 +1422,12 @@ uninstall_kg_fuse() {
     # Uninstall kg-fuse
     log_step "Uninstalling kg-fuse"
 
-    # Stop FUSE first
-    if [[ -n "$FUSE_MOUNT_DIR" ]]; then
+    # Stop all FUSE mounts and processes
+    local active_mounts
+    active_mounts=$(detect_fuse_mounts)
+    if [[ -n "$active_mounts" ]]; then
+        stop_fuse_all > /dev/null
+    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
         stop_fuse "$FUSE_MOUNT_DIR"
     fi
 
@@ -1508,6 +1625,23 @@ show_status() {
     echo -e "${BOLD}Client Tools:${NC}"
     echo "  kg CLI: ${DETECTED_KG_VERSION:-not installed}"
     echo "  kg-fuse: ${DETECTED_FUSE_VERSION:-not installed}"
+    echo "  FUSE platform: $(fuse_supported 2>/dev/null && echo "supported" || echo "not supported")"
+    if fuse_libs_available 2>/dev/null; then
+        echo "  FUSE libraries: available"
+    elif [[ -n "$DETECTED_FUSE_VERSION" ]]; then
+        echo "  FUSE libraries: NOT FOUND (fusermount3/fusermount missing)"
+    fi
+
+    # Show active FUSE mounts
+    local active_mounts
+    active_mounts=$(detect_fuse_mounts 2>/dev/null)
+    if [[ -n "$active_mounts" ]]; then
+        echo ""
+        echo -e "${BOLD}Active FUSE Mounts:${NC}"
+        while IFS= read -r m; do
+            echo "  $m"
+        done <<< "$active_mounts"
+    fi
 
     echo ""
     echo -e "${BOLD}Configuration:${NC}"
@@ -1751,12 +1885,14 @@ run_interactive() {
             fi
             PASSWORD=$(prompt_password "Password")
 
-            # Ask about FUSE
-            if prompt_bool "Install FUSE filesystem driver?" "n"; then
-                INSTALL_FUSE=true
-                FUSE_MOUNT_DIR=$(prompt_value "Mount directory" "$HOME/Knowledge")
-                if prompt_bool "Start FUSE on login?" "n"; then
-                    FUSE_AUTOSTART=true
+            # Ask about FUSE (only on supported platforms)
+            if fuse_supported 2>/dev/null; then
+                if prompt_bool "Install FUSE filesystem driver?" "n"; then
+                    INSTALL_FUSE=true
+                    FUSE_MOUNT_DIR=$(prompt_value "Mount directory" "$HOME/Knowledge")
+                    if prompt_bool "Start FUSE on login?" "n"; then
+                        FUSE_AUTOSTART=true
+                    fi
                 fi
             fi
 
