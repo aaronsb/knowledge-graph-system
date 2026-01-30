@@ -7714,10 +7714,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#existing-api-endpoints-sufficient-for-mvp" class="md-nav__link">
+  <a href="#existing-api-endpoints-adr-200-foundation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Existing API endpoints (sufficient for MVP)
+        Existing API endpoints (ADR-200 foundation)
       
     </span>
   </a>
@@ -7911,6 +7911,17 @@
   
     <nav class="md-nav" aria-label="Implementation Notes">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#foundation-adr-200-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foundation: ADR-200 (Implemented)
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#phase-1-overview-detail-mvp" class="md-nav__link">
@@ -9484,10 +9495,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#existing-api-endpoints-sufficient-for-mvp" class="md-nav__link">
+  <a href="#existing-api-endpoints-adr-200-foundation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Existing API endpoints (sufficient for MVP)
+        Existing API endpoints (ADR-200 foundation)
       
     </span>
   </a>
@@ -9683,6 +9694,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#foundation-adr-200-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foundation: ADR-200 (Implemented)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#phase-1-overview-detail-mvp" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9825,8 +9847,9 @@
 <li><strong>Bubble pack</strong> — Circles with area proportional to content, colored by a chosen metric (document count, concept density, recency of updates).</li>
 </ul>
 <p>Each ontology node shows:
-- Name
+- Name, ontology ID, lifecycle state (ADR-200 graph node properties)
 - Document count, concept count, relationship count
+- Creation epoch, embedding status
 - Last modified / last ingested timestamp
 - Owner (if resource-scoped via ADR-082 grants)</p>
 <p>Clicking an ontology transitions to the Detail View.</p>
@@ -9876,7 +9899,7 @@
 <tr>
 <td>Create new ontology</td>
 <td><code>curator</code></td>
-<td>(new) <code>POST /ontology/</code></td>
+<td><code>POST /ontology/</code></td>
 </tr>
 <tr>
 <td>Rename ontology</td>
@@ -9902,13 +9925,16 @@
 - <strong>Drag-to-reorganize</strong> (future): Move documents between ontologies by dragging from one detail view to another. This requires a new API endpoint for document reassignment.</p>
 <p>Actions that exceed the user's permissions are hidden or disabled, not shown-then-rejected. The <code>authStore.hasPermission()</code> check drives UI visibility.</p>
 <h3 id="3-data-requirements">3. Data Requirements</h3>
-<h4 id="existing-api-endpoints-sufficient-for-mvp">Existing API endpoints (sufficient for MVP)</h4>
+<h4 id="existing-api-endpoints-adr-200-foundation">Existing API endpoints (ADR-200 foundation)</h4>
+<p>Ontologies are first-class graph nodes with properties (<code>ontology_id</code>, <code>lifecycle_state</code>, <code>creation_epoch</code>, <code>embedding</code>, <code>search_terms</code>). ADR-200 established this architecture and exposed it across API, CLI, MCP, and web types.</p>
 <ul>
-<li><code>GET /ontology/</code> — List all with summary stats</li>
-<li><code>GET /ontology/{name}</code> — Detail stats + file list</li>
-<li><code>GET /ontology/{name}/files</code> — Per-file breakdown</li>
-<li><code>POST /ontology/{name}/rename</code> — Rename</li>
-<li><code>DELETE /ontology/{name}</code> — Delete with cascade</li>
+<li><code>GET /ontology/</code> — List all ontologies with graph node properties and source stats. Graph nodes are source of truth (includes empty ontologies from directed growth).</li>
+<li><code>GET /ontology/{name}</code> — Detail stats + file list + <code>node</code> object with full graph node properties.</li>
+<li><code>GET /ontology/{name}/node</code> — Graph node properties only (ADR-200).</li>
+<li><code>GET /ontology/{name}/files</code> — Per-file breakdown.</li>
+<li><code>POST /ontology/</code> — Create ontology explicitly (directed growth). Generates name-based embedding. (ADR-200)</li>
+<li><code>POST /ontology/{name}/rename</code> — Rename (updates graph node + source properties).</li>
+<li><code>DELETE /ontology/{name}</code> — Delete with cascade (removes graph node + SCOPED_BY edges).</li>
 </ul>
 <h4 id="new-api-endpoints-needed">New API endpoints needed</h4>
 <table>
@@ -9931,10 +9957,6 @@
 <td><code>GET /ontology/bridges</code></td>
 <td>Cross-ontology shared concept summary. Returns pairs of ontologies with shared concept count and top bridging concepts. Optional filter by specific ontology names.</td>
 </tr>
-<tr>
-<td><code>POST /ontology/</code></td>
-<td>Create an empty ontology (name + optional description). Currently ontologies are created implicitly on first ingestion; explicit creation allows pre-organizing before ingestion.</td>
-</tr>
 </tbody>
 </table>
 <h4 id="data-shape">Data Shape</h4>
@@ -9956,25 +9978,31 @@
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">OntologyNode</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="nx">documentCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nx">conceptCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="nx">relationshipCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="nx">sourceCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span><span class="nx">lastModified?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span><span class="nx">owner?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">}</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">OntologyBridge</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">  </span><span class="nx">from</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// Ontology name</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">  </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">             </span><span class="c1">// Ontology name</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">  </span><span class="nx">sharedConceptCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">  </span><span class="nx">topBridgingConcepts</span><span class="o">:</span><span class="w"> </span><span class="kt">Array</span><span class="o">&lt;</span><span class="p">{</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">    </span><span class="nx">conceptId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">    </span><span class="nx">groundingInFrom</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">    </span><span class="nx">groundingInTo</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">  </span><span class="p">}</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="p">}</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="nx">ontologyId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// ADR-200 graph node UUID</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nx">lifecycleState</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">       </span><span class="c1">// ADR-200: &#39;active&#39; | &#39;pinned&#39; | &#39;frozen&#39;</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="nx">creationEpoch</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">        </span><span class="c1">// ADR-200: epoch at creation</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="nx">hasEmbedding</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span><span class="w">        </span><span class="c1">// ADR-200: whether embedding vector exists</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span><span class="nx">description?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">         </span><span class="c1">// ADR-200: domain description</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span><span class="nx">searchTerms?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span><span class="w">       </span><span class="c1">// ADR-200: alternative search terms</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">  </span><span class="nx">documentCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span><span class="nx">conceptCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span><span class="nx">relationshipCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">  </span><span class="nx">sourceCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">  </span><span class="nx">lastModified?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">  </span><span class="nx">owner?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="p">}</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">OntologyBridge</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">  </span><span class="nx">from</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// Ontology name</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">  </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">             </span><span class="c1">// Ontology name</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">  </span><span class="nx">sharedConceptCount</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">  </span><span class="nx">topBridgingConcepts</span><span class="o">:</span><span class="w"> </span><span class="kt">Array</span><span class="o">&lt;</span><span class="p">{</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">    </span><span class="nx">conceptId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">    </span><span class="nx">groundingInFrom</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">    </span><span class="nx">groundingInTo</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">  </span><span class="p">}</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="4-plugin-integration">4. Plugin Integration</h3>
 <p>Follows the established pattern:</p>
@@ -10048,7 +10076,7 @@
 </ul>
 <h3 id="negative">Negative</h3>
 <ul>
-<li>New API endpoints add surface area (<code>/concepts</code>, <code>/subgraph</code>, <code>/bridges</code>, <code>POST /</code>)</li>
+<li>New API endpoints add surface area (<code>/concepts</code>, <code>/subgraph</code>, <code>/bridges</code>)</li>
 <li>The bridge computation (<code>/ontology/bridges</code>) could be expensive for large graphs — may need caching or pre-computation</li>
 <li>Three sub-views (overview/detail/bridge) make this a more complex explorer than existing ones</li>
 <li>The hybrid data shape doesn't map neatly to the existing <code>DataShape</code> enum; may need extension</li>
@@ -10058,7 +10086,7 @@
 <li>Requires extending <code>VisualizationType</code> with <code>'ontology'</code></li>
 <li>The detail view's internal subgraph reuses existing <code>SubgraphResponse</code> format and could delegate rendering to <code>ForceGraph2D</code> internals</li>
 <li>Document reassignment (drag between ontologies) is deferred to a future iteration</li>
-<li>The <code>POST /ontology/</code> endpoint changes ontology creation from implicit (first ingestion) to optionally explicit</li>
+<li><code>POST /ontology/</code> already exists (ADR-200) — ontology creation is now explicit via directed growth</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="a-enhance-the-embedding-landscape-explorer">A. Enhance the Embedding Landscape Explorer</h3>
@@ -10074,13 +10102,21 @@
 <p>The document explorer already shows documents. We could add an ontology grouping layer above the document level.</p>
 <p><strong>Rejected because:</strong> The document explorer is designed for single-document concept radiation (radial tidy tree). Adding a parent ontology layer changes its metaphor from "explore one document's impact" to "browse a collection." These are distinct user intents.</p>
 <h2 id="implementation-notes">Implementation Notes</h2>
+<h3 id="foundation-adr-200-implemented">Foundation: ADR-200 (Implemented)</h3>
+<p>ADR-200 "Breathing Ontologies" provides the data model foundation for this explorer:
+- <code>:Ontology</code> graph nodes with properties (<code>ontology_id</code>, <code>lifecycle_state</code>, <code>creation_epoch</code>, <code>embedding</code>, <code>search_terms</code>)
+- <code>:SCOPED_BY</code> edges linking Sources to Ontologies
+- <code>POST /ontology/</code> for directed growth (explicit creation before ingest)
+- <code>GET /ontology/{name}/node</code> for graph node properties
+- Enriched list and info responses with graph node data
+- CLI <code>kg ontology create</code>, MCP <code>create</code>/<code>rename</code> actions
+- Web types updated (<code>OntologyItem</code> with graph node fields)</p>
 <h3 id="phase-1-overview-detail-mvp">Phase 1: Overview + Detail (MVP)</h3>
 <ul>
 <li>Register <code>OntologyExplorerPlugin</code></li>
-<li>Implement overview (treemap with existing stats from <code>GET /ontology/</code>)</li>
+<li>Implement overview (treemap with enriched stats from <code>GET /ontology/</code> — includes lifecycle state, embedding status)</li>
 <li>Implement detail view (document list + top concepts from new <code>GET /ontology/{name}/concepts</code>)</li>
-<li>Wire up existing management actions (rename, delete) with permission gating</li>
-<li>Add <code>POST /ontology/</code> for explicit creation</li>
+<li>Wire up existing management actions (create, rename, delete) with permission gating</li>
 </ul>
 <h3 id="phase-2-bridge-view">Phase 2: Bridge View</h3>
 <ul>
@@ -10109,6 +10145,7 @@
 <li><strong>ADR-083</strong> — Artifact persistence (could cache expensive bridge computations)</li>
 <li><strong>ADR-084</strong> — Document-level search (complementary document discovery)</li>
 <li><strong>ADR-089</strong> — Deterministic graph editing (ontology-scoped concept creation)</li>
+<li><strong>ADR-200</strong> — Breathing Ontologies (graph node architecture, directed growth, lifecycle states — data model foundation for this explorer)</li>
 </ul>
 
 

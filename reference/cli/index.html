@@ -3904,6 +3904,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#create_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#rename" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10483,6 +10494,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#create_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#rename" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10533,7 +10555,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from CLI source code.
-Last updated: 2026-01-26</p>
+Last updated: 2026-01-30</p>
 </blockquote>
 <hr />
 <h2 id="commands">Commands</h2>
@@ -12059,6 +12081,7 @@ Last updated: 2026-01-26</p>
 <li><code>list</code> - List all ontologies in the knowledge graph. Shows a table with ontology name, file count, chunk count, and concept count. Use this to get a bird's-eye view of all knowledge domains, verify ingestion results, and understand how knowledge is distributed.</li>
 <li><code>info</code> - Get detailed information about a specific ontology. Shows statistics (files, chunks, concepts, evidence, relationships) and lists all source files. Use this to understand ontology composition, verify expected files are present, and troubleshoot ingestion issues.</li>
 <li><code>files</code> - List files in a specific ontology with per-file statistics (chunks and concepts). Shows which files contributed most concepts and helps identify files that may need re-ingestion. Original file paths are preserved, though temporary paths may appear for text-based ingestion.</li>
+<li><code>create</code> - Create an ontology before ingesting any documents (ADR-200: directed growth). This pre-creates the Ontology graph node with an embedding, making the ontology discoverable in the vector space immediately. Useful for planning knowledge domains before populating them.</li>
 <li><code>rename</code> - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</li>
 <li><code>delete</code> - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</li>
 </ul>
@@ -12086,10 +12109,36 @@ Last updated: 2026-01-26</p>
 <ul>
 <li><code>&lt;name&gt;</code> - Ontology name</li>
 </ul>
+<h3 id="create_1">create</h3>
+<p>Create an ontology before ingesting any documents (ADR-200: directed growth). This pre-creates the Ontology graph node with an embedding, making the ontology discoverable in the vector space immediately. Useful for planning knowledge domains before populating them.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-d, --description &lt;text&gt;</code></td>
+<td>What this knowledge domain covers</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h3 id="rename">rename</h3>
 <p>Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kg<span class="w"> </span>rename<span class="w"> </span>&lt;old-name&gt;<span class="w"> </span>&lt;new-name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -12116,7 +12165,7 @@ Last updated: 2026-01-26</p>
 <h3 id="delete_2">delete</h3>
 <p>Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>

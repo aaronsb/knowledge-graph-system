@@ -9347,7 +9347,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2026-01-26</p>
+Last updated: 2026-01-30</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -9542,9 +9542,11 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <p>Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "delete" (remove)</li>
-<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>delete</code></li>
-<li><code>ontology_name</code> (<code>string</code>) - Ontology name (required for info, files, delete)</li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove)</li>
+<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>create</code>, <code>rename</code>, <code>delete</code></li>
+<li><code>ontology_name</code> (<code>string</code>) - Ontology name (required for info, files, create, rename, delete)</li>
+<li><code>description</code> (<code>string</code>) - What this knowledge domain covers (for create action)</li>
+<li><code>new_name</code> (<code>string</code>) - New ontology name (required for rename action)</li>
 <li><code>force</code> (<code>boolean</code>) - Confirm deletion (required for delete)</li>
 <li>Default: <code>false</code></li>
 </ul>
