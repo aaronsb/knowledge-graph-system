@@ -45,6 +45,36 @@ The distinction is operational, not ontological. This means:
 - Concepts should be **promotable** to ontologies when they accumulate sufficient structure
 - Ontologies should be **demotable** when they fail to earn their status
 
+### Formal Positioning: TBox/ABox Collapse
+
+In traditional knowledge engineering (RDF/OWL), the **TBox** (terminological box) defines the schema — classes, properties, constraints — and the **ABox** (assertion box) contains the data — instances, relationships, facts. The two are kept strictly separate. An ontology (TBox) dictates rules; concepts (ABox) obey them.
+
+This ADR deliberately collapses the TBox/ABox distinction. An ontology here is not a logical schema that validates or constrains its members. It is a **context cluster** — a dynamic viewport that organizes information retrieval, not a rule engine that enforces logical consistency. We are not doing OWL reasoning; we are doing dynamic graph partitioning.
+
+In Semantic Web terminology, what this ADR proposes is a combination of:
+
+- **Punning** — treating what would be a Class (ontology) as also an Instance (graph node). OWL 2 permits this; purists avoid it.
+- **Schema induction** / **Ontology learning** — extracting organizational structure from data patterns rather than pre-defining it.
+- **Concept reification** — elevating a data-level entity (concept) into a schema-level organizing frame (ontology) when it accumulates sufficient structure.
+
+This is a valid approach for dynamic knowledge graphs where schema evolves with data. It sacrifices the formal guarantees of strict TBox/ABox separation (logical validation, consistency checking) in exchange for adaptivity, self-organization, and reduced maintenance burden. This system does not need OWL-style reasoning — it needs navigable, self-maintaining structure.
+
+### Terminology Map
+
+This ADR uses metaphorical language for mental models. The formal equivalents:
+
+| ADR Term | Formal Equivalent | Notes |
+|----------|-------------------|-------|
+| Breathing ontologies | Dynamic graph partitioning / Evolutionary ontology maintenance | The expansion-contraction cycles are hysteresis loops |
+| Concept → Ontology promotion | Schema induction / Concept reification | Elevating a data node to a schematic container |
+| "Ontology is a heavy concept" | Metamodeling / Punning | Collapsing TBox/ABox — valid in OWL 2, heresy in strict OWL |
+| Mass | Degree centrality / Node salience | Standard graph theory |
+| Coherence | Modularity / Clustering coefficient | "Internal density vs external sparsity" |
+| Ecological ratio | Resolution limit / Cluster granularity | Louvain's resolution parameter controls this |
+| Primordial pool | Root partition / Unclustered graph | Starting state before differentiation |
+| Attractor | Vector space centroid | Standard embedding space behavior |
+| Nucleus vs crossroads | High-modularity hub vs bridging node | Community detection distinguishes these |
+
 ### Research Support
 
 **Community detection** (Girvan-Newman, Louvain modularity) identifies clusters through edge betweenness centrality, modularity (internal vs external edge density), and local clustering coefficient. These are precisely the signals that indicate ontology candidates and boundaries. Community structure can be detected algorithmically — we don't need humans to draw boundaries (Girvan & Newman, 2002; Blondel et al., 2008).
@@ -136,6 +166,7 @@ For each candidate, analyze the first-order neighborhood using the diversity ana
 
 - **Nucleus**: Neighbors are semantically aligned — low diversity score (neighbors are similar to each other), coherent directional cluster on polarity axes. This concept anchors a domain.
 - **Crossroads**: Neighbors are semantically scattered — high diversity score, spread across polarity space. This concept bridges domains. Valuable as a concept, not a promotion candidate.
+- **Abstract anchor**: A special case — high connectivity AND high diversity, but the concept represents a broad organizing term (e.g., "Management," "Security," "Infrastructure"). These are often exactly what users want as navigation ontologies, even though their neighborhoods are semantically diverse. The promotion function should not automatically penalize diversity for concepts above a high-mass threshold. Abstract terms that attract connections from many subdomains may warrant promotion as **umbrella ontologies** — their children would then be candidates for sub-ontology promotion in later breathing cycles, creating hierarchical depth rather than flat partitioning.
 
 ```
 mass = degree_centrality(concept)
@@ -152,6 +183,8 @@ On promotion:
 2. Link: `(:Ontology)-[:ANCHORED_BY]->(:Concept)`.
 3. Reassign first-order concepts: their sources get `:SCOPED_BY` edges to the new ontology. `s.document` updated for denormalization.
 4. Second-order and beyond stay in their current ontology unless their own edge affinity pulls them (evaluated in subsequent breathing cycles).
+
+**Reassignment cost**: If a promoted concept has thousands of first-order neighbors, each with multiple Source chunks, the `:SCOPED_BY` edge creation and `s.document` updates become a large write operation. This must be an **eventually consistent background process** — batched writes executed by the breathing worker over multiple transactions, not a single atomic operation. During reassignment, sources may temporarily have stale `s.document` values; the `:SCOPED_BY` edge is the source of truth, and `s.document` catches up. This is the same eventual-consistency model used by the vocabulary consolidation worker when merging edge types across thousands of edges.
 
 ### 6. Self-Correcting Attractor Model
 
@@ -206,6 +239,19 @@ Where:
 
 **Stable vs Failed**: Both have high exposure. The difference is mass AND coherence. A stable ontology has high internal edge density and sharp boundaries. A failed ontology has its concepts more connected to other ontologies than to each other. The mass component of the protection function must include coherence (boundary sharpness, internal grounding) not just concept count.
 
+#### Hysteresis: Separate Promotion and Demotion Thresholds
+
+A concept hovering near the promotion threshold must not flicker between concept and ontology status across breathing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a **hysteresis band**:
+
+```
+promotion_threshold = 0.8   (high bar to become an ontology)
+demotion_threshold  = 0.5   (lower bar to remain one)
+```
+
+Once promoted, an ontology has a stability margin — it must deteriorate substantially before demotion is considered, not just dip below the level that triggered promotion. This is standard practice in control systems (Schmitt triggers) and community detection (resolution hysteresis in Louvain).
+
+The hysteresis band width is itself configurable — wider bands favor stability (fewer transitions), narrower bands favor responsiveness (faster adaptation). The Bezier curve infrastructure can model both thresholds as separate curves if non-linear hysteresis is desired.
+
 ### 8. Demotion
 
 When `protection_score` drops below the demotion threshold, the ontology's concepts are reassigned based on edge affinity:
@@ -218,9 +264,9 @@ When `protection_score` drops below the demotion threshold, the ontology's conce
 
 **No deletion, only movement.** Concepts never disappear; they relocate. The demoted ontology node is removed, but its anchor concept survives — it was a concept before the ontology existed and remains one after.
 
-### 9. The Ecological Ratio
+### 9. Resolution Limit (Ecological Ratio)
 
-The system maintains a target ratio of ontologies to concepts, analogous to how `vocab_min`/`vocab_max` govern vocabulary size:
+The system maintains a target cluster granularity — the ratio of ontologies to concepts — analogous to how `vocab_min`/`vocab_max` govern vocabulary size and how Louvain's resolution parameter controls cluster count:
 
 - Too few ontologies → hairball (no navigable structure)
 - Too many ontologies → fragmentation (trivial groupings)
