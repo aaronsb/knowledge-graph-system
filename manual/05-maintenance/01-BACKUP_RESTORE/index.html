@@ -6151,7 +6151,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -9839,7 +9839,7 @@
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>Ontology: Ontology A
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>✗ Critical Issues:
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>  • 0 orphaned concepts (no APPEARS_IN relationship)
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>  • 0 orphaned concepts (no APPEARS relationship)
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>⚠ Warnings:
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>  • 4 relationships to concepts in other ontologies
@@ -9912,7 +9912,7 @@
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;Ontology A&quot;</span><span class="w"> </span>--repair
 </code></pre></div>
 <p><strong>What gets repaired:</strong>
-- Orphaned concepts → APPEARS_IN relationships recreated
+- Orphaned concepts → APPEARS relationships recreated
 - Missing concept-source links → Derived from instances</p>
 <p><strong>What doesn't get repaired:</strong>
 - External relationship targets (concepts in other ontologies)
@@ -10058,7 +10058,7 @@
 2. Accept dangling refs (queries will skip them)
 3. Remove external relationships before backup</p>
 <h3 id="issue-orphaned-concepts-after-restore">Issue: "Orphaned concepts after restore"</h3>
-<p><strong>Cause:</strong> APPEARS_IN relationships weren't created during restore.</p>
+<p><strong>Cause:</strong> APPEARS relationships weren't created during restore.</p>
 <p><strong>Solution:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>python<span class="w"> </span>-m<span class="w"> </span>src.admin.check_integrity<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>--repair
 </code></pre></div></p>

@@ -3947,6 +3947,83 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score-all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        candidates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        affinity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reassign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reassign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dissolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dissolve
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6577,7 +6654,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -10548,6 +10625,83 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score-all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        candidates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        affinity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reassign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reassign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dissolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dissolve
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12107,6 +12261,13 @@ Last updated: 2026-01-30</p>
 <li><code>lifecycle</code> - Change ontology lifecycle state (ADR-200 Phase 2). States: active (normal), pinned (immune to demotion), frozen (read-only — rejects ingest and rename).</li>
 <li><code>rename</code> - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</li>
 <li><code>delete</code> - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</li>
+<li><code>scores</code> - Show cached breathing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.</li>
+<li><code>score</code> - Recompute breathing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.</li>
+<li><code>score-all</code> - Recompute breathing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.</li>
+<li><code>candidates</code> - Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.</li>
+<li><code>affinity</code> - Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.</li>
+<li><code>reassign</code> - Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.</li>
+<li><code>dissolve</code> - Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.</li>
 </ul>
 <hr />
 <h3 id="list_2">list</h3>
@@ -12217,6 +12378,138 @@ Last updated: 2026-01-30</p>
 <tr>
 <td><code>-f, --force</code></td>
 <td>Skip confirmation and force deletion</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="scores">scores</h3>
+<p>Show cached breathing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kg<span class="w"> </span>scores<span class="w"> </span><span class="o">[</span>name<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name (omit for all)</li>
+</ul>
+<h3 id="score">score</h3>
+<p>Recompute breathing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kg<span class="w"> </span>score<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name</li>
+</ul>
+<h3 id="score-all">score-all</h3>
+<p>Recompute breathing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kg<span class="w"> </span>score-all<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h3 id="candidates">candidates</h3>
+<p>Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kg<span class="w"> </span>candidates<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-l, --limit &lt;n&gt;</code></td>
+<td>Max concepts</td>
+<td><code>"20"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="affinity">affinity</h3>
+<p>Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kg<span class="w"> </span>affinity<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-l, --limit &lt;n&gt;</code></td>
+<td>Max ontologies</td>
+<td><code>"10"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="reassign">reassign</h3>
+<p>Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kg<span class="w"> </span>reassign<span class="w"> </span>&lt;from&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;from&gt;</code> - Source ontology name</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--to &lt;target&gt;</code></td>
+<td>Target ontology name</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--source-ids &lt;ids...&gt;</code></td>
+<td>Source IDs to move</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dissolve">dissolve</h3>
+<p>Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kg<span class="w"> </span>dissolve<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology to dissolve</li>
+</ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--into &lt;target&gt;</code></td>
+<td>Target ontology to receive sources</td>
 <td>-</td>
 </tr>
 </tbody>

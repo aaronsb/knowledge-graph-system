@@ -6312,7 +6312,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -10243,7 +10243,7 @@
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>  └─ quote                Exact quote from source
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
 <a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>Relationships:
-<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>  (:Concept)-[:APPEARS_IN]-&gt;(:Source)        Concept found in source
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>  (:Concept)-[:APPEARS]-&gt;(:Source)        Concept found in source
 <a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>  (:Concept)-[:EVIDENCED_BY]-&gt;(:Instance)    Evidence for concept
 <a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>  (:Instance)-[:FROM_SOURCE]-&gt;(:Source)      Instance from source
 <a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>  (:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS|...]-&gt;(:Concept)
@@ -10257,8 +10257,8 @@
 </ul>
 <p><strong>Critical</strong>: Embeddings MUST be preserved in backups - they're expensive to regenerate.</p>
 <h3 id="ontology-boundaries">Ontology Boundaries</h3>
-<p>Concepts are tagged with their ontology via the <code>APPEARS_IN</code> relationship:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Alan Watts Lectures&quot;</span><span class="p">})</span>
+<p>Concepts are tagged with their ontology via the <code>APPEARS</code> relationship:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Alan Watts Lectures&quot;</span><span class="p">})</span>
 </code></pre></div>
 <p>This enables:
 - Filtering queries by ontology
