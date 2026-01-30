@@ -49,6 +49,16 @@ CREATE CONSTRAINT instance_id_unique IF NOT EXISTS
 FOR (i:Instance)
 REQUIRE i.instance_id IS UNIQUE;
 
+// Ontology nodes: Each ontology must have a unique identifier (ADR-200)
+CREATE CONSTRAINT ontology_id_unique IF NOT EXISTS
+FOR (o:Ontology)
+REQUIRE o.ontology_id IS UNIQUE;
+
+// Ontology nodes: Each ontology name must be unique
+CREATE CONSTRAINT ontology_name_unique IF NOT EXISTS
+FOR (o:Ontology)
+REQUIRE o.name IS UNIQUE;
+
 // ----------------------------------------------------------------------------
 // PROPERTY INDEXES
 // ----------------------------------------------------------------------------
@@ -79,6 +89,11 @@ CREATE INDEX instance_text_index IF NOT EXISTS
 FOR (i:Instance)
 ON (i.text);
 
+// Index on Ontology name for fast ontology lookups (ADR-200)
+CREATE INDEX ontology_name_index IF NOT EXISTS
+FOR (o:Ontology)
+ON (o.name);
+
 // ----------------------------------------------------------------------------
 // VECTOR INDEX
 // ----------------------------------------------------------------------------
@@ -89,6 +104,18 @@ ON (i.text);
 CREATE VECTOR INDEX `concept-embeddings` IF NOT EXISTS
 FOR (c:Concept)
 ON (c.embedding)
+OPTIONS {
+  indexConfig: {
+    `vector.dimensions`: 1536,
+    `vector.similarity_function`: 'cosine'
+  }
+};
+
+// Ontology embeddings — same vector space as concepts (ADR-200)
+// Enables cosine similarity between ontologies and concepts
+CREATE VECTOR INDEX `ontology-embeddings` IF NOT EXISTS
+FOR (o:Ontology)
+ON (o.embedding)
 OPTIONS {
   indexConfig: {
     `vector.dimensions`: 1536,
@@ -111,6 +138,30 @@ ON EACH [i.quote];
 CREATE FULLTEXT INDEX concept_fulltext IF NOT EXISTS
 FOR (c:Concept)
 ON EACH [c.label, c.search_terms];
+
+// ----------------------------------------------------------------------------
+// ONTOLOGY NODE SCHEMA (ADR-200)
+// ----------------------------------------------------------------------------
+// Ontology nodes are first-class graph entities in the same embedding space
+// as concepts. They represent knowledge domains that organize Source nodes
+// via :SCOPED_BY edges. See ADR-200 for the full data model.
+//
+// Properties:
+//   - ontology_id: unique identifier (ont_<uuid>)
+//   - name: ontology name (matches s.document on Source nodes)
+//   - description: what this knowledge domain covers
+//   - embedding: 1536-dim vector in the SAME space as concepts
+//   - search_terms: alternative names for similarity matching
+//   - creation_epoch: global epoch when created
+//   - lifecycle_state: 'active' | 'pinned' | 'frozen'
+//
+// Edges:
+//   (:Source)-[:SCOPED_BY]->(:Ontology)  — source membership
+//
+// Future (Phase 2+):
+//   (:Ontology)-[:ANCHORED_BY]->(:Concept)  — promoted from concept
+//   (:Ontology)-[*]->(:Ontology)  — inter-ontology edges
+// ----------------------------------------------------------------------------
 
 // ============================================================================
 // Schema initialization complete
