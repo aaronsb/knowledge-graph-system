@@ -32,6 +32,7 @@ import {
   OntologyFilesResponse,
   OntologyDeleteResponse,
   OntologyRenameResponse,
+  OntologyNodeResponse,
   SystemStatusResponse,
   BackupRequest,
   BackupResponse,
@@ -933,6 +934,25 @@ export class KnowledgeGraphClient {
     const response = await this.client.delete(`/ontology/${encodeURIComponent(ontologyName)}`, {
       params: { force }
     });
+    return response.data;
+  }
+
+  /**
+   * Create an ontology (ADR-200: directed growth)
+   */
+  async createOntology(
+    name: string,
+    description: string = ''
+  ): Promise<OntologyNodeResponse> {
+    const response = await this.client.post('/ontology/', { name, description });
+    return response.data;
+  }
+
+  /**
+   * Get ontology graph node properties (ADR-200)
+   */
+  async getOntologyNode(ontologyName: string): Promise<OntologyNodeResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/node`);
     return response.data;
   }
 

@@ -21,7 +21,9 @@ from ..models.ontology import (
     OntologyDeleteRequest,
     OntologyDeleteResponse,
     OntologyRenameRequest,
-    OntologyRenameResponse
+    OntologyRenameResponse,
+    OntologyNodeResponse,
+    OntologyCreateRequest,
 )
 from api.app.lib.age_client import AGEClient
 
@@ -32,6 +34,117 @@ router = APIRouter(prefix="/ontology", tags=["ontology"])
 def get_age_client() -> AGEClient:
     """Get AGE client instance"""
     return AGEClient()
+
+
+@router.post("/", response_model=OntologyNodeResponse, status_code=201)
+async def create_ontology(
+    request: OntologyCreateRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "create"))
+):
+    """
+    Create an ontology explicitly (ADR-200: directed growth).
+
+    Creates an Ontology graph node before any documents are ingested.
+    Generates an embedding from the name (and description if provided)
+    so the ontology is immediately discoverable in the vector space.
+
+    **Authorization:** Requires `ontologies:create` permission
+
+    Args:
+        request: OntologyCreateRequest with name and optional description
+
+    Returns:
+        OntologyNodeResponse with the created node's properties
+
+    Raises:
+        409: If an ontology with that name already exists
+
+    Example:
+        POST /ontology/
+        {"name": "Distributed Systems", "description": "CAP theorem, consensus, replication"}
+    """
+    import uuid
+
+    client = get_age_client()
+    try:
+        # Check if already exists
+        existing = client.get_ontology_node(request.name)
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Ontology '{request.name}' already exists"
+            )
+
+        # Also check if sources exist with this name (legacy ontology)
+        source_check = client._execute_cypher(
+            f"MATCH (s:Source {{document: '{request.name}'}}) RETURN count(s) as c",
+            fetch_one=True
+        )
+        if source_check and source_check.get('c', 0) > 0:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Ontology '{request.name}' already exists (has source data)"
+            )
+
+        # Get creation epoch
+        creation_epoch = 0
+        try:
+            conn = client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'")
+                    row = cur.fetchone()
+                    if row:
+                        creation_epoch = row[0] or 0
+            finally:
+                client.pool.putconn(conn)
+        except Exception:
+            pass
+
+        ontology_id = f"ont_{uuid.uuid4()}"
+        node = client.create_ontology_node(
+            ontology_id=ontology_id,
+            name=request.name,
+            description=request.description,
+            lifecycle_state="active",
+            creation_epoch=creation_epoch,
+        )
+
+        # Generate embedding
+        has_embedding = False
+        try:
+            from ..lib.ai_providers import get_provider
+            provider = get_provider()
+            if provider:
+                embed_text = request.name
+                if request.description:
+                    embed_text = f"{request.name}: {request.description}"
+                emb_result = provider.generate_embedding(embed_text)
+                emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
+                if emb_vector:
+                    client.update_ontology_embedding(request.name, emb_vector)
+                    has_embedding = True
+        except Exception as e:
+            logger.warning(f"Failed to generate embedding for new ontology '{request.name}': {e}")
+
+        return OntologyNodeResponse(
+            ontology_id=node.get('ontology_id', ontology_id),
+            name=request.name,
+            description=request.description,
+            lifecycle_state=node.get('lifecycle_state', 'active'),
+            creation_epoch=node.get('creation_epoch', creation_epoch),
+            has_embedding=has_embedding,
+            search_terms=node.get('search_terms', []),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create ontology: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create ontology: {str(e)}")
+    finally:
+        client.close()
 
 
 @router.get("/", response_model=OntologyListResponse)
@@ -55,6 +168,7 @@ async def list_ontologies(
     """
     client = get_age_client()
     try:
+        # ADR-200: Source stats by ontology name
         result = client._execute_cypher("""
             MATCH (s:Source)
             WITH DISTINCT s.document as ontology
@@ -68,15 +182,48 @@ async def list_ontologies(
             ORDER BY ontology
         """)
 
-        ontologies = [
-            OntologyItem(
-                ontology=record['ontology'],
-                source_count=record['source_count'],
-                file_count=record['file_count'],
-                concept_count=record['concept_count']
-            )
-            for record in (result or [])
-        ]
+        stats_map = {}
+        for record in (result or []):
+            stats_map[record['ontology']] = record
+
+        # ADR-200: Ontology graph nodes are the source of truth.
+        # This includes empty ontologies created via directed growth.
+        node_map = {}
+        try:
+            nodes = client.list_ontology_nodes()
+            for n in nodes:
+                node_map[n['name']] = n
+        except Exception as e:
+            logger.warning(f"Failed to fetch Ontology nodes: {e}")
+
+        # Merge: all graph nodes + any source-only ontologies without nodes
+        seen = set()
+        ontologies = []
+
+        # Graph nodes first (source of truth)
+        for name, node in sorted(node_map.items()):
+            seen.add(name)
+            stats = stats_map.get(name)
+            ontologies.append(OntologyItem(
+                ontology=name,
+                source_count=stats['source_count'] if stats else 0,
+                file_count=stats['file_count'] if stats else 0,
+                concept_count=stats['concept_count'] if stats else 0,
+                ontology_id=node.get('ontology_id'),
+                lifecycle_state=node.get('lifecycle_state'),
+                creation_epoch=node.get('creation_epoch'),
+                has_embedding=node.get('embedding') is not None,
+            ))
+
+        # Source-only ontologies (legacy — no graph node yet)
+        for name, stats in sorted(stats_map.items()):
+            if name not in seen:
+                ontologies.append(OntologyItem(
+                    ontology=name,
+                    source_count=stats['source_count'],
+                    file_count=stats['file_count'],
+                    concept_count=stats['concept_count'],
+                ))
 
         return OntologyListResponse(
             count=len(ontologies),
@@ -157,10 +304,28 @@ async def get_ontology_info(
         # Filter out None values from files list
         files = [f for f in stats['files'] if f is not None]
 
+        # ADR-200: Fetch graph node properties
+        node_response = None
+        try:
+            node = client.get_ontology_node(ontology_name)
+            if node:
+                node_response = OntologyNodeResponse(
+                    ontology_id=node.get('ontology_id', ''),
+                    name=node.get('name', ontology_name),
+                    description=node.get('description', ''),
+                    lifecycle_state=node.get('lifecycle_state', 'active'),
+                    creation_epoch=node.get('creation_epoch', 0),
+                    has_embedding=node.get('embedding') is not None,
+                    search_terms=node.get('search_terms', []),
+                )
+        except Exception as e:
+            logger.warning(f"Failed to fetch Ontology node for '{ontology_name}': {e}")
+
         return OntologyInfoResponse(
             ontology=ontology_name,
             statistics=statistics,
-            files=files
+            files=files,
+            node=node_response,
         )
 
     except HTTPException:
@@ -168,6 +333,60 @@ async def get_ontology_info(
     except Exception as e:
         logger.error(f"Failed to get ontology info: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get ontology info: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.get("/{ontology_name}/node", response_model=OntologyNodeResponse)
+async def get_ontology_node(
+    ontology_name: str,
+    current_user: CurrentUser
+):
+    """
+    Get Ontology graph node properties (ADR-200).
+
+    Returns the graph node's properties including lifecycle state,
+    creation epoch, embedding status, and search terms.
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `ontologies:read` permission
+
+    Args:
+        ontology_name: Name of the ontology
+
+    Returns:
+        OntologyNodeResponse with all node properties
+
+    Raises:
+        404: If ontology node not found
+
+    Example:
+        GET /ontology/Research%20Papers/node
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology node '{ontology_name}' not found"
+            )
+
+        return OntologyNodeResponse(
+            ontology_id=node.get('ontology_id', ''),
+            name=node.get('name', ontology_name),
+            description=node.get('description', ''),
+            lifecycle_state=node.get('lifecycle_state', 'active'),
+            creation_epoch=node.get('creation_epoch', 0),
+            has_embedding=node.get('embedding') is not None,
+            search_terms=node.get('search_terms', []),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ontology node: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get ontology node: {str(e)}")
     finally:
         client.close()
 

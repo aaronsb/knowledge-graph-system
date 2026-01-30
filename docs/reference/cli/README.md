@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-01-26
+> Last updated: 2026-01-30
 
 ---
 
@@ -1025,6 +1025,7 @@ kg ontology [options]
 - `list` - List all ontologies in the knowledge graph. Shows a table with ontology name, file count, chunk count, and concept count. Use this to get a bird's-eye view of all knowledge domains, verify ingestion results, and understand how knowledge is distributed.
 - `info` - Get detailed information about a specific ontology. Shows statistics (files, chunks, concepts, evidence, relationships) and lists all source files. Use this to understand ontology composition, verify expected files are present, and troubleshoot ingestion issues.
 - `files` - List files in a specific ontology with per-file statistics (chunks and concepts). Shows which files contributed most concepts and helps identify files that may need re-ingestion. Original file paths are preserved, though temporary paths may appear for text-based ingestion.
+- `create` - Create an ontology before ingesting any documents (ADR-200: directed growth). This pre-creates the Ontology graph node with an embedding, making the ontology discoverable in the vector space immediately. Useful for planning knowledge domains before populating them.
 - `rename` - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.
 - `delete` - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).
 
@@ -1064,6 +1065,25 @@ kg files <name>
 **Arguments:**
 
 - `<name>` - Ontology name
+
+### create
+
+Create an ontology before ingesting any documents (ADR-200: directed growth). This pre-creates the Ontology graph node with an embedding, making the ontology discoverable in the vector space immediately. Useful for planning knowledge domains before populating them.
+
+**Usage:**
+```bash
+kg create <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-d, --description <text>` | What this knowledge domain covers | - |
 
 ### rename
 
