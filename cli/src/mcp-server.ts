@@ -420,8 +420,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'reassign', 'dissolve'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion)',
             },
             ontology_name: {
               type: 'string',
@@ -444,6 +444,19 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
               type: 'boolean',
               description: 'Confirm deletion (required for delete)',
               default: false,
+            },
+            target_ontology: {
+              type: 'string',
+              description: 'Target ontology for reassign/dissolve actions',
+            },
+            source_ids: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Source IDs to move (for reassign action)',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max results for candidates/affinity (default: 20/10)',
             },
           },
           required: ['action'],
@@ -1414,6 +1427,70 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const result = await client.deleteOntology(
               toolArgs.ontology_name as string,
               toolArgs.force as boolean || false
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          // ADR-200 Phase 3a: Scoring & Breathing Control Surface
+
+          case 'scores': {
+            const result = await client.getOntologyScores(toolArgs.ontology_name as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'score': {
+            const result = await client.computeOntologyScores(toolArgs.ontology_name as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'score_all': {
+            const result = await client.computeAllOntologyScores();
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'candidates': {
+            const result = await client.getOntologyCandidates(
+              toolArgs.ontology_name as string,
+              (toolArgs.limit as number) || 20
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'affinity': {
+            const result = await client.getOntologyAffinity(
+              toolArgs.ontology_name as string,
+              (toolArgs.limit as number) || 10
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'reassign': {
+            const result = await client.reassignSources(
+              toolArgs.ontology_name as string,
+              toolArgs.target_ontology as string,
+              toolArgs.source_ids as string[]
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'dissolve': {
+            const result = await client.dissolveOntology(
+              toolArgs.ontology_name as string,
+              toolArgs.target_ontology as string
             );
             return {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

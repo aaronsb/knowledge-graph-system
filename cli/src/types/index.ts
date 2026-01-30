@@ -470,6 +470,78 @@ export interface OntologyRenameResponse {
   error?: string;
 }
 
+// ADR-200 Phase 3a: Scoring & Breathing Control Surface
+
+export interface OntologyStats {
+  ontology: string;
+  concept_count: number;
+  source_count: number;
+  file_count: number;
+  evidence_count: number;
+  internal_relationship_count: number;
+  cross_ontology_relationship_count: number;
+}
+
+export interface OntologyScores {
+  ontology: string;
+  mass_score: number;
+  coherence_score: number;
+  raw_exposure: number;
+  weighted_exposure: number;
+  protection_score: number;
+  last_evaluated_epoch: number;
+}
+
+export interface OntologyScoresResponse {
+  count: number;
+  global_epoch: number;
+  scores: OntologyScores[];
+}
+
+export interface ConceptDegreeRanking {
+  concept_id: string;
+  label: string;
+  degree: number;
+  in_degree: number;
+  out_degree: number;
+}
+
+export interface ConceptDegreeResponse {
+  ontology: string;
+  count: number;
+  concepts: ConceptDegreeRanking[];
+}
+
+export interface AffinityResult {
+  other_ontology: string;
+  shared_concept_count: number;
+  total_concepts: number;
+  affinity_score: number;
+}
+
+export interface AffinityResponse {
+  ontology: string;
+  count: number;
+  affinities: AffinityResult[];
+}
+
+export interface ReassignResponse {
+  from_ontology: string;
+  to_ontology: string;
+  sources_reassigned: number;
+  success: boolean;
+  error?: string;
+}
+
+export interface DissolveResponse {
+  dissolved_ontology: string;
+  sources_reassigned: number;
+  ontology_node_deleted: boolean;
+  reassignment_targets: string[];
+  success: boolean;
+  error?: string;
+}
+
 // ========== Admin Types ==========
 
 export interface DockerStatus {

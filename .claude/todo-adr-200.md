@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** next: `adr-200-phase-3`
+**Branch:** `adr-200-phase-3a`
 **Started:** 2026-01-29
-**Status:** Phases 1-2 complete (PR #237, #238, #239). Phase 3 next.
+**Status:** Phases 1-2 complete (PR #237, #238, #239). Phase 3a implemented, pending PR.
 
 ---
 
@@ -248,81 +248,133 @@ Concepts are **global** (not scoped to ontologies). Freezing protects the ontolo
 
 ---
 
-## Phase 3: Breathing Worker (Scoring & Proposals)
+## Phase 3a: Breathing Control Surface (Scoring & Manual Controls)
 
-**Branch:** `adr-200-phase-3`
+**Branch:** `adr-200-phase-3a`
 **Depends on:** Phases 1-2 (all plumbing and controls available)
+**Approach:** Build controls first, prove manually, then automate. The breathing worker is just automation of a manual process.
+
+### Scoring Algorithms — COMPLETE
+
+- [x] **Mass scoring** — Michaelis-Menten saturation of ontology statistics
+  - `api/app/lib/ontology_scorer.py:calculate_mass()` — composite/50 normalization, k=2.0
+  - Output: mass_score 0.0–1.0 on Ontology node
+
+- [x] **Coherence scoring** — mean pairwise cosine similarity of concept embeddings
+  - `api/app/lib/ontology_scorer.py:calculate_coherence()` — Gini-Simpson pattern from ADR-063
+  - Sampled to 100 concepts for large ontologies
+  - Output: coherence_score 0.0–1.0 on Ontology node
+
+- [x] **Exposure calculation** — epoch delta with adjacency weighting
+  - `api/app/lib/ontology_scorer.py:calculate_exposure()` — half-life 50 epochs + affinity weighting
+  - Output: raw_exposure, weighted_exposure on Ontology node
+
+- [x] **Protection scoring** — composite: sigmoid(mass × coherence) - exposure pressure
+  - `api/app/lib/ontology_scorer.py:calculate_protection()` — can go negative for severely failing
+  - Output: protection_score on Ontology node
+
+### Read Controls — COMPLETE
+
+- [x] `get_ontology_stats(name)` — concept/source/file/evidence/relationship counts
+- [x] `get_concept_degree_ranking(name, limit)` — top concepts by degree centrality
+- [x] `get_cross_ontology_affinity(name, limit)` — shared concept overlap between ontologies
+- [x] `get_all_ontology_scores()` — cached scores from all Ontology nodes
+- [x] `get_current_epoch()` — global epoch from graph_metrics
+- [x] `get_ontology_concept_embeddings(name, limit)` — for coherence calculation
+
+### Write Controls — COMPLETE
+
+- [x] `update_ontology_scores(name, mass, coherence, protection, epoch)` — cache scores on node
+- [x] `reassign_sources(source_ids, from, to)` — THE key primitive for demotion
+  - Updates s.document, deletes old SCOPED_BY, creates new SCOPED_BY
+  - Batched in chunks of 50, refuses frozen source ontology
+- [x] `dissolve_ontology(name, target)` — non-destructive demotion (move then remove node)
+  - Refuses pinned or frozen, moves all sources first
+- [x] `batch_create_scoped_by_edges(source_ids, ontology_name)` — bulk SCOPED_BY creation
+
+### API Routes — COMPLETE (7 endpoints)
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/ontology/{name}/scores` | CurrentUser |
+| POST | `/ontology/{name}/scores` | ontologies:write |
+| POST | `/ontology/scores` | ontologies:write |
+| GET | `/ontology/{name}/candidates` | CurrentUser |
+| GET | `/ontology/{name}/affinity` | CurrentUser |
+| POST | `/ontology/{name}/reassign` | ontologies:write |
+| POST | `/ontology/{name}/dissolve` | ontologies:write |
+
+### CLI — COMPLETE (7 subcommands)
+
+- [x] `kg ontology scores [name]` — show cached scores (one or all)
+- [x] `kg ontology score <name>` — recompute scores for one
+- [x] `kg ontology score-all` — recompute all scores
+- [x] `kg ontology candidates <name>` — top concepts by degree
+- [x] `kg ontology affinity <name>` — cross-ontology overlap
+- [x] `kg ontology reassign <from> --to <target> --source-ids <ids...>`
+- [x] `kg ontology dissolve <name> --into <target>`
+
+### MCP — COMPLETE (7 actions)
+
+- [x] `scores`, `score`, `score_all`, `candidates`, `affinity`, `reassign`, `dissolve`
+
+### Tests — 115 passed (58 existing + 57 new)
+
+- [x] Unit: OntologyScorer — mass, coherence, exposure, protection, cosine similarity
+- [x] Unit: AGE client — stats, ranking, affinity, cached scores, update scores, reassign, dissolve
+- [x] Route: GET/POST scores (200, 404), POST score-all, candidates (200, 404), affinity
+- [x] Route: reassign (200, 403 frozen, 404), dissolve (200, 403 pinned, 404)
+
+### Files
+
+| File | Change |
+|------|--------|
+| `api/app/lib/ontology_scorer.py` | **NEW** — scoring algorithms |
+| `api/app/lib/age_client.py` | +12 methods (6 read, 4 write, 2 helper) |
+| `api/app/models/ontology.py` | +11 models |
+| `api/app/routes/ontology.py` | +7 endpoints |
+| `cli/src/types/index.ts` | +8 interfaces |
+| `cli/src/api/client.ts` | +7 client methods |
+| `cli/src/cli/ontology.ts` | +7 subcommands |
+| `cli/src/mcp-server.ts` | +7 actions |
+| `tests/unit/lib/test_ontology_scorer.py` | **NEW** — 29 tests |
+| `tests/unit/lib/test_age_client_ontology.py` | +15 test classes |
+| `tests/api/test_ontology_routes.py` | +7 test classes |
+
+---
+
+## Phase 3b: Breathing Worker (Proposals & Automation)
+
+**Branch:** `adr-200-phase-3b`
+**Depends on:** Phase 3a (all controls available and manually proven)
 **Pattern:** Same as `kg vocab consolidate` — graph traversal → scoring → LLM judgment → proposals
 
-The worker automates what can already be done manually via API/MCP. Everything it does is a series of graph queries, math, and LLM calls. No new graph primitives needed — Phases 1-2 provide all the controls.
+The worker automates what can now be done manually via the Phase 3a control surface.
 
 ### Worker Architecture
 
 - [ ] **Background job registration** — register `ontology_breathing_worker` in job system
   - Heartbeat tied to epoch counter (graph_metrics), not wall-clock time
   - Configurable trigger: run after every N ingestion events
-  - Similar architecture to ingestion_worker and vocab consolidation worker
-
-### Scoring Algorithms
-
-- [ ] **Mass scoring** — per-ontology degree centrality aggregation
-  - Count: concepts, sources, evidence, relationships scoped to ontology
-  - Transform raw counts via Michaelis-Menten saturation curve (reuse ADR-044 confidence pattern)
-  - Output: mass_score 0.0–1.0 on Ontology node
-
-- [ ] **Coherence scoring** — internal semantic density
-  - Reuse diversity analyzer (ADR-063) with ontology's concepts as the neighborhood
-  - `coherence = 1 - diversity_score(concepts_in_ontology)`
-  - Distinguishes nuclei (promotion candidates) from crossroads (bridging concepts)
-  - Output: coherence_score 0.0–1.0 on Ontology node
-
-- [ ] **Exposure calculation** — opportunity cost in graph activity
-  - `raw_exposure = global_epoch - ontology.creation_epoch`
-  - `weighted_exposure = Σ (ingest_events × adjacency_score)` — adjacent ontology ingests count more
-  - Adjacency from embedding similarity between Ontology nodes
-  - Output: last_evaluated_epoch on Ontology node
 
 ### Candidate Identification
 
 - [ ] **Promotion candidates** — high-mass concepts not yet ontologies
-  - Rank concepts by degree centrality within each ontology
-  - Evaluate top-N: `promotion_score = sigmoid(mass × coherence) - exposure_pressure`
+  - Uses Phase 3a: `get_concept_degree_ranking()` + `score_ontology()`
   - LLM evaluates borderline: "nucleus (should promote) or crossroads (should stay)?"
-  - Threshold: 0.8 (high bar to become an ontology)
 
 - [ ] **Demotion candidates** — low-protection ontologies
-  - `protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)`
-  - Threshold: 0.5 (lower bar to remain — hysteresis prevents flickering)
-  - Pre-compute reassignment affinity per candidate (cross-ontology concept overlap query)
+  - Uses Phase 3a: `score_all_ontologies()` + `get_cross_ontology_affinity()`
   - Skip pinned and frozen ontologies
 
 ### Proposal System
 
 - [ ] **Proposal storage** — structured recommendations, not auto-executed
-  - Type: promotion | demotion | absorb
-  - Scores, reasoning (LLM), suggested actions
-  - Epoch stamped, reviewable via CLI/MCP/web
+- [ ] **Review interface** — CLI: `kg ontology proposals` / `approve` / `reject`
 
-- [ ] **Review interface**
-  - CLI: `kg ontology proposals` — list pending proposals
-  - CLI: `kg ontology approve <proposal_id>` / `kg ontology reject <proposal_id>`
-  - MCP: `ontology` tool `proposals` / `approve` / `reject` actions
+### Deferred Items
 
-### Deferred Items (Available for Phase 3)
-
-- [ ] Centroid recomputation — update Ontology embedding as centroid of member concept embeddings (after ingest completes)
-
-### Files (estimated)
-
-| File | Change |
-|------|--------|
-| `api/app/workers/ontology_breathing_worker.py` | **NEW** — main worker |
-| `api/app/lib/ontology_scorer.py` | **NEW** — mass, coherence, exposure algorithms |
-| `api/app/models/ontology.py` | Proposal models |
-| `api/app/routes/ontology.py` | Proposal endpoints (list, approve, reject) |
-| `api/app/lib/age_client.py` | Scoring queries, proposal storage |
-| `cli/src/cli/ontology.ts` | Proposal subcommands |
-| `cli/src/mcp-server.ts` | Proposal actions |
+- [ ] Centroid recomputation — update Ontology embedding as centroid of member concept embeddings
 
 ---
 
@@ -434,3 +486,7 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | Fallback principle for frozen ontologies | If pipeline ever needs to create within a frozen ontology, fall back to requesting (active) ontology rather than failing |
 | 2026-01-30 | AGEClient try/finally in ingest routes (code review) | Pre-existing resource leak pattern; fixed in our code with try/finally + close() |
 | 2026-01-30 | Migration 045 updates `available_actions` array | Code review caught missing UPDATE to `kg_auth.resources` — added idempotent SET |
+| 2026-01-30 | Phase 3 split into 3a (controls) + 3b (automation) | Build controls first, prove manually, then automate — same approach as vocab consolidate |
+| 2026-01-30 | Coherence = mean similarity (not 1-diversity) | High coherence = tight domain. Plan said 1-diversity but mean similarity is more intuitive |
+| 2026-01-30 | Exposure half-life 50 epochs | Balances new vs old ontologies — after 50 ingestions, exposure = 0.5 |
+| 2026-01-30 | Reassign batched in 50s, frozen check on source | Key primitive for demotion; refuses moving FROM frozen ontologies |
