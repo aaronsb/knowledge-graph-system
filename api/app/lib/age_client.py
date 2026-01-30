@@ -2406,7 +2406,7 @@ class AGEClient:
         # System relationship types - internal use only, not user-facing vocabulary
         SYSTEM_TYPES = {
             'APPEARS', 'EVIDENCED_BY', 'FROM_SOURCE', 'IN_CATEGORY',
-            'LOAD', 'SET', 'APPEARS'  # LOAD/SET may appear from SQL parsing artifacts
+            'SCOPED_BY', 'LOAD', 'SET',  # LOAD/SET may appear from SQL parsing artifacts
         }
 
         try:

@@ -268,8 +268,9 @@ async def get_ontology_info(
         # ADR-200: Check existence via graph node first, then sources
         has_sources = False
         exists_check = client._execute_cypher(
-            f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as ontology_exists",
-            fetch_one=True
+            "MATCH (s:Source {document: $name}) RETURN count(s) > 0 as ontology_exists",
+            params={"name": ontology_name},
+            fetch_one=True,
         )
         if exists_check and exists_check['ontology_exists']:
             has_sources = True
