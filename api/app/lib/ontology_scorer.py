@@ -6,7 +6,7 @@ Pure computation — takes AGE client, returns scores.
 
 Scoring algorithms:
 - Mass: Michaelis-Menten saturation of ontology statistics (reuses ADR-044 pattern)
-- Coherence: 1 - mean pairwise cosine similarity of concept embeddings (Gini-Simpson)
+- Coherence: mean pairwise cosine similarity of concept embeddings
 - Exposure: epoch delta with adjacency weighting
 - Protection: mass × coherence minus exposure pressure
 
@@ -78,13 +78,13 @@ class OntologyScorer:
 
     def calculate_coherence(self, ontology_name: str) -> float:
         """
-        Calculate coherence as 1 - mean pairwise cosine similarity.
+        Calculate coherence as mean pairwise cosine similarity.
 
         High coherence = concepts are semantically similar (tight domain).
         Low coherence = concepts are diverse (broad/unfocused domain).
 
-        Uses the Gini-Simpson diversity pattern from DiversityAnalyzer (ADR-063),
-        inverted: coherence = 1 - diversity.
+        Samples up to 100 concept embeddings and computes the average pairwise
+        cosine similarity. Inspired by the diversity patterns in ADR-063.
 
         Args:
             ontology_name: Ontology name

@@ -957,7 +957,7 @@ async def compute_all_ontology_scores(
 async def get_ontology_candidates(
     ontology_name: str,
     current_user: CurrentUser,
-    limit: int = QueryParam(20, description="Max concepts to return"),
+    limit: int = QueryParam(20, ge=1, le=100, description="Max concepts to return"),
 ):
     """
     Get top concepts by degree centrality within an ontology (ADR-200 Phase 3a).
@@ -1000,7 +1000,7 @@ async def get_ontology_candidates(
 async def get_ontology_affinity(
     ontology_name: str,
     current_user: CurrentUser,
-    limit: int = QueryParam(10, description="Max other ontologies to return"),
+    limit: int = QueryParam(10, ge=1, le=100, description="Max other ontologies to return"),
 ):
     """
     Get cross-ontology concept overlap (ADR-200 Phase 3a).

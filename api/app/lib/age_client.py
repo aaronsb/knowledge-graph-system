@@ -1679,7 +1679,7 @@ class AGEClient:
 
             # Concept count: concepts that appear in sources scoped to this ontology
             concept_query = """
-            MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $name})
+            MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
             RETURN count(DISTINCT c) as concept_count
             """
             result = self._execute_cypher(
@@ -1701,10 +1701,10 @@ class AGEClient:
 
             # Internal relationships: both endpoints appear in this ontology's sources
             internal_query = """
-            MATCH (c1:Concept)-[:APPEARS_IN]->(s1:Source {document: $name})
+            MATCH (c1:Concept)-[:APPEARS]->(s1:Source {document: $name})
             MATCH (c1)-[r]->(c2:Concept)
-            WHERE type(r) <> 'APPEARS_IN' AND type(r) <> 'EVIDENCED_BY'
-            MATCH (c2)-[:APPEARS_IN]->(s2:Source {document: $name})
+            WHERE type(r) <> 'APPEARS' AND type(r) <> 'EVIDENCED_BY'
+            MATCH (c2)-[:APPEARS]->(s2:Source {document: $name})
             RETURN count(DISTINCT r) as internal_count
             """
             result = self._execute_cypher(
@@ -1717,10 +1717,10 @@ class AGEClient:
 
             # Cross-ontology relationships: one endpoint in this ontology, other in different
             cross_query = """
-            MATCH (c1:Concept)-[:APPEARS_IN]->(s1:Source {document: $name})
+            MATCH (c1:Concept)-[:APPEARS]->(s1:Source {document: $name})
             MATCH (c1)-[r]->(c2:Concept)
-            WHERE type(r) <> 'APPEARS_IN' AND type(r) <> 'EVIDENCED_BY'
-            MATCH (c2)-[:APPEARS_IN]->(s2:Source)
+            WHERE type(r) <> 'APPEARS' AND type(r) <> 'EVIDENCED_BY'
+            MATCH (c2)-[:APPEARS]->(s2:Source)
             WHERE s2.document <> $name
             RETURN count(DISTINCT r) as cross_count
             """
@@ -1751,11 +1751,11 @@ class AGEClient:
             List of {concept_id, label, degree, in_degree, out_degree}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $name})
+        MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
         OPTIONAL MATCH (c)-[r_out]->(:Concept)
-        WHERE type(r_out) <> 'APPEARS_IN' AND type(r_out) <> 'EVIDENCED_BY'
+        WHERE type(r_out) <> 'APPEARS' AND type(r_out) <> 'EVIDENCED_BY'
         OPTIONAL MATCH (:Concept)-[r_in]->(c)
-        WHERE type(r_in) <> 'APPEARS_IN' AND type(r_in) <> 'EVIDENCED_BY'
+        WHERE type(r_in) <> 'APPEARS' AND type(r_in) <> 'EVIDENCED_BY'
         WITH c,
              count(DISTINCT r_out) as out_degree,
              count(DISTINCT r_in) as in_degree
@@ -1764,7 +1764,7 @@ class AGEClient:
                out_degree + in_degree as degree,
                in_degree,
                out_degree
-        ORDER BY degree DESC
+        ORDER BY out_degree + in_degree DESC
         LIMIT $limit
         """
 
@@ -1805,10 +1805,10 @@ class AGEClient:
             List of {other_ontology, shared_concept_count, total_concepts, affinity_score}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS_IN]->(s1:Source {document: $name})
+        MATCH (c:Concept)-[:APPEARS]->(s1:Source {document: $name})
         WITH collect(DISTINCT c) as my_concepts, count(DISTINCT c) as my_total
         UNWIND my_concepts as c
-        MATCH (c)-[:APPEARS_IN]->(s2:Source)
+        MATCH (c)-[:APPEARS]->(s2:Source)
         WHERE s2.document <> $name
         WITH s2.document as other_ontology,
              count(DISTINCT c) as shared_count,
@@ -1817,7 +1817,7 @@ class AGEClient:
                shared_count as shared_concept_count,
                my_total as total_concepts,
                toFloat(shared_count) / toFloat(my_total) as affinity_score
-        ORDER BY affinity_score DESC
+        ORDER BY toFloat(shared_count) / toFloat(my_total) DESC
         LIMIT $limit
         """
 
@@ -1929,7 +1929,7 @@ class AGEClient:
             List of {concept_id, label, embedding}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: $name})
+        MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
         WHERE c.embedding IS NOT NULL
         RETURN DISTINCT c.concept_id as concept_id,
                c.label as label,
@@ -2408,7 +2408,7 @@ class AGEClient:
 
         # System relationship types - internal use only, not user-facing vocabulary
         SYSTEM_TYPES = {
-            'APPEARS_IN', 'EVIDENCED_BY', 'FROM_SOURCE', 'IN_CATEGORY',
+            'APPEARS', 'EVIDENCED_BY', 'FROM_SOURCE', 'IN_CATEGORY',
             'LOAD', 'SET', 'APPEARS'  # LOAD/SET may appear from SQL parsing artifacts
         }
 
