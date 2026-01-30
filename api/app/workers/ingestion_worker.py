@@ -472,6 +472,19 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
 
+        # Increment document ingestion epoch (ADR-200: breathing lifecycle)
+        try:
+            conn = age_client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT increment_counter('document_ingestion_counter')")
+                conn.commit()
+                logger.debug(f"[{job_id}] Incremented document ingestion epoch")
+            finally:
+                age_client.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"[{job_id}] Failed to increment ingestion epoch: {e}")
+
         # Close AGE connection
         age_client.close()
 
