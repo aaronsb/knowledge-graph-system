@@ -90,7 +90,7 @@ Garage object storage is organized into namespaces by content type:
         │   - instance_id, quote              │
         │                                     │
         │ Relationships                       │
-        │   - APPEARS_IN, EVIDENCED_BY        │
+        │   - APPEARS, EVIDENCED_BY        │
         │   - IMPLIES, SUPPORTS, CONTRADICTS  │
         └─────────────────────────────────────┘
 ```

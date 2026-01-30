@@ -35,6 +35,12 @@ import {
   OntologyNodeResponse,
   OntologyLifecycleResponse,
   LifecycleState,
+  OntologyScores,
+  OntologyScoresResponse,
+  ConceptDegreeResponse,
+  AffinityResponse,
+  ReassignResponse,
+  DissolveResponse,
   SystemStatusResponse,
   BackupRequest,
   BackupResponse,
@@ -980,6 +986,59 @@ export class KnowledgeGraphClient {
   ): Promise<OntologyRenameResponse> {
     const response = await this.client.post(`/ontology/${encodeURIComponent(oldName)}/rename`, {
       new_name: newName
+    });
+    return response.data;
+  }
+
+  // ADR-200 Phase 3a: Scoring & Breathing Control Surface
+
+  async getOntologyScores(ontologyName: string): Promise<OntologyScores> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/scores`);
+    return response.data;
+  }
+
+  async computeOntologyScores(ontologyName: string): Promise<OntologyScores> {
+    const response = await this.client.post(`/ontology/${encodeURIComponent(ontologyName)}/scores`);
+    return response.data;
+  }
+
+  async computeAllOntologyScores(): Promise<OntologyScoresResponse> {
+    const response = await this.client.post('/ontology/scores');
+    return response.data;
+  }
+
+  async getOntologyCandidates(ontologyName: string, limit: number = 20): Promise<ConceptDegreeResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/candidates`, {
+      params: { limit }
+    });
+    return response.data;
+  }
+
+  async getOntologyAffinity(ontologyName: string, limit: number = 10): Promise<AffinityResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/affinity`, {
+      params: { limit }
+    });
+    return response.data;
+  }
+
+  async reassignSources(
+    fromOntology: string,
+    targetOntology: string,
+    sourceIds: string[]
+  ): Promise<ReassignResponse> {
+    const response = await this.client.post(`/ontology/${encodeURIComponent(fromOntology)}/reassign`, {
+      target_ontology: targetOntology,
+      source_ids: sourceIds
+    });
+    return response.data;
+  }
+
+  async dissolveOntology(
+    ontologyName: string,
+    targetOntology: string
+  ): Promise<DissolveResponse> {
+    const response = await this.client.post(`/ontology/${encodeURIComponent(ontologyName)}/dissolve`, {
+      target_ontology: targetOntology
     });
     return response.data;
   }

@@ -26,6 +26,16 @@ from ..models.ontology import (
     OntologyCreateRequest,
     OntologyLifecycleRequest,
     OntologyLifecycleResponse,
+    OntologyScores,
+    OntologyScoresResponse,
+    ConceptDegreeResponse,
+    ConceptDegreeRanking,
+    AffinityResponse,
+    AffinityResult,
+    ReassignRequest,
+    ReassignResponse,
+    DissolveRequest,
+    DissolveResponse,
 )
 from api.app.lib.age_client import AGEClient
 
@@ -258,8 +268,9 @@ async def get_ontology_info(
         # ADR-200: Check existence via graph node first, then sources
         has_sources = False
         exists_check = client._execute_cypher(
-            f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as ontology_exists",
-            fetch_one=True
+            "MATCH (s:Source {document: $name}) RETURN count(s) > 0 as ontology_exists",
+            params={"name": ontology_name},
+            fetch_one=True,
         )
         if exists_check and exists_check['ontology_exists']:
             has_sources = True
@@ -811,5 +822,323 @@ async def rename_ontology(
     except Exception as e:
         logger.error(f"Failed to rename ontology: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to rename ontology: {str(e)}")
+    finally:
+        client.close()
+
+
+# =========================================================================
+# ADR-200 Phase 3a: Scoring & Breathing Control Surface
+# =========================================================================
+
+
+@router.get("/{ontology_name}/scores", response_model=OntologyScores)
+async def get_ontology_scores(
+    ontology_name: str,
+    current_user: CurrentUser,
+):
+    """
+    Get cached breathing scores for an ontology (ADR-200 Phase 3a).
+
+    Returns mass, coherence, exposure, and protection scores
+    from the last scoring evaluation. Returns zeros if never scored.
+
+    **Authentication:** Requires valid OAuth token
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found",
+            )
+
+        return OntologyScores(
+            ontology=ontology_name,
+            mass_score=float(node.get("mass_score") or 0),
+            coherence_score=float(node.get("coherence_score") or 0),
+            raw_exposure=float(node.get("raw_exposure") or 0),
+            weighted_exposure=float(node.get("weighted_exposure") or 0),
+            protection_score=float(node.get("protection_score") or 0),
+            last_evaluated_epoch=int(node.get("last_evaluated_epoch") or 0),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ontology scores: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get ontology scores: {str(e)}"
+        )
+    finally:
+        client.close()
+
+
+@router.post("/{ontology_name}/scores", response_model=OntologyScores)
+async def compute_ontology_scores(
+    ontology_name: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Recompute and cache breathing scores for an ontology (ADR-200 Phase 3a).
+
+    Runs the full scoring pipeline: mass, coherence, exposure, protection.
+    Results are cached on the Ontology node for subsequent GET requests.
+
+    **Authorization:** Requires `ontologies:write` permission
+    """
+    client = get_age_client()
+    try:
+        from ..lib.ontology_scorer import OntologyScorer
+
+        scorer = OntologyScorer(client)
+        scores = scorer.score_ontology(ontology_name)
+
+        if scores is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found",
+            )
+
+        return OntologyScores(**scores)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to compute ontology scores: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to compute ontology scores: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.post("/scores", response_model=OntologyScoresResponse)
+async def compute_all_ontology_scores(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Recompute and cache breathing scores for all ontologies (ADR-200 Phase 3a).
+
+    Iterates through all ontologies, computing mass, coherence, exposure,
+    and protection for each. Results cached on Ontology nodes.
+
+    **Authorization:** Requires `ontologies:write` permission
+    """
+    client = get_age_client()
+    try:
+        from ..lib.ontology_scorer import OntologyScorer
+
+        scorer = OntologyScorer(client)
+        all_scores = scorer.score_all_ontologies()
+        global_epoch = client.get_current_epoch()
+
+        return OntologyScoresResponse(
+            count=len(all_scores),
+            global_epoch=global_epoch,
+            scores=[OntologyScores(**s) for s in all_scores],
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Failed to compute all ontology scores: {e}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to compute all ontology scores: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.get("/{ontology_name}/candidates", response_model=ConceptDegreeResponse)
+async def get_ontology_candidates(
+    ontology_name: str,
+    current_user: CurrentUser,
+    limit: int = QueryParam(20, ge=1, le=100, description="Max concepts to return"),
+):
+    """
+    Get top concepts by degree centrality within an ontology (ADR-200 Phase 3a).
+
+    High-degree concepts are potential promotion candidates — they have
+    many relationships and may warrant their own ontology.
+
+    **Authentication:** Requires valid OAuth token
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found",
+            )
+
+        concepts = client.get_concept_degree_ranking(ontology_name, limit=limit)
+
+        return ConceptDegreeResponse(
+            ontology=ontology_name,
+            count=len(concepts),
+            concepts=[ConceptDegreeRanking(**c) for c in concepts],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ontology candidates: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get ontology candidates: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.get("/{ontology_name}/affinity", response_model=AffinityResponse)
+async def get_ontology_affinity(
+    ontology_name: str,
+    current_user: CurrentUser,
+    limit: int = QueryParam(10, ge=1, le=100, description="Max other ontologies to return"),
+):
+    """
+    Get cross-ontology concept overlap (ADR-200 Phase 3a).
+
+    Shows which other ontologies share concepts with this one,
+    ranked by affinity score (shared / total).
+
+    **Authentication:** Requires valid OAuth token
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found",
+            )
+
+        affinities = client.get_cross_ontology_affinity(
+            ontology_name, limit=limit
+        )
+
+        return AffinityResponse(
+            ontology=ontology_name,
+            count=len(affinities),
+            affinities=[AffinityResult(**a) for a in affinities],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ontology affinity: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get ontology affinity: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.post("/{ontology_name}/reassign", response_model=ReassignResponse)
+async def reassign_sources(
+    ontology_name: str,
+    request: ReassignRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Move sources from this ontology to another (ADR-200 Phase 3a).
+
+    Reassigns specified source IDs: updates s.document and SCOPED_BY edges.
+    Refuses if source ontology is frozen.
+
+    **Authorization:** Requires `ontologies:write` permission
+    """
+    client = get_age_client()
+    try:
+        result = client.reassign_sources(
+            source_ids=request.source_ids,
+            from_ontology=ontology_name,
+            to_ontology=request.target_ontology,
+        )
+
+        if not result.get("success"):
+            error = result.get("error", "Unknown error")
+            if "not found" in error:
+                raise HTTPException(status_code=404, detail=error)
+            elif "frozen" in error:
+                raise HTTPException(status_code=403, detail=error)
+            else:
+                raise HTTPException(status_code=500, detail=error)
+
+        return ReassignResponse(
+            from_ontology=ontology_name,
+            to_ontology=request.target_ontology,
+            sources_reassigned=result["sources_reassigned"],
+            success=True,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reassign sources: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to reassign sources: {str(e)}"
+        )
+    finally:
+        client.close()
+
+
+@router.post("/{ontology_name}/dissolve", response_model=DissolveResponse)
+async def dissolve_ontology(
+    ontology_name: str,
+    request: DissolveRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Dissolve an ontology non-destructively (ADR-200 Phase 3a).
+
+    Moves all sources to the target ontology, then removes the Ontology node.
+    Unlike delete, this preserves all data by reassigning it.
+
+    Refuses if ontology is pinned or frozen.
+
+    **Authorization:** Requires `ontologies:write` permission
+    """
+    client = get_age_client()
+    try:
+        result = client.dissolve_ontology(
+            name=ontology_name,
+            target_ontology=request.target_ontology,
+        )
+
+        if not result.get("success"):
+            error = result.get("error", "Unknown error")
+            if "not found" in error:
+                raise HTTPException(status_code=404, detail=error)
+            elif "pinned" in error or "frozen" in error:
+                raise HTTPException(status_code=403, detail=error)
+            else:
+                raise HTTPException(status_code=500, detail=error)
+
+        return DissolveResponse(
+            dissolved_ontology=ontology_name,
+            sources_reassigned=result["sources_reassigned"],
+            ontology_node_deleted=result["ontology_node_deleted"],
+            reassignment_targets=result["reassignment_targets"],
+            success=True,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to dissolve ontology: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to dissolve ontology: {str(e)}"
+        )
     finally:
         client.close()

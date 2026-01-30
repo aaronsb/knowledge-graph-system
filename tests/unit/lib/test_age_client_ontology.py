@@ -510,3 +510,277 @@ class TestIsOntologyFrozen:
         })
 
         assert mock_age_client.is_ontology_frozen('pinned-one') is False
+
+
+# =========================================================================
+# ADR-200 Phase 3a: Scoring & Breathing Control Surface
+# =========================================================================
+
+
+@pytest.mark.unit
+class TestGetOntologyStats:
+    """Tests for get_ontology_stats() (ADR-200 Phase 3a)."""
+
+    def test_returns_stats_for_existing_ontology(self, mock_age_client):
+        """Returns stat counts for an existing ontology."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'name': 'test-onto', 'lifecycle_state': 'active'
+        })
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            {'source_count': 10, 'file_count': 3},   # source query
+            {'concept_count': 25},                     # concept query
+            {'evidence_count': 50},                    # evidence query
+            {'internal_count': 15},                    # internal rels
+            {'cross_count': 5},                        # cross-ontology rels
+        ])
+
+        result = mock_age_client.get_ontology_stats('test-onto')
+
+        assert result is not None
+        assert result['ontology'] == 'test-onto'
+        assert result['source_count'] == 10
+        assert result['concept_count'] == 25
+        assert result['evidence_count'] == 50
+        assert result['internal_relationship_count'] == 15
+        assert result['cross_ontology_relationship_count'] == 5
+
+    def test_returns_none_for_nonexistent(self, mock_age_client):
+        """Returns None if ontology doesn't exist."""
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+
+        result = mock_age_client.get_ontology_stats('ghost')
+
+        assert result is None
+
+    def test_returns_zeros_on_error(self, mock_age_client):
+        """Returns partial stats with zeros on query errors."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'name': 'error-onto', 'lifecycle_state': 'active'
+        })
+        mock_age_client._execute_cypher = MagicMock(side_effect=Exception("db error"))
+
+        result = mock_age_client.get_ontology_stats('error-onto')
+
+        assert result is not None
+        assert result['concept_count'] == 0
+        assert result['source_count'] == 0
+
+
+@pytest.mark.unit
+class TestGetConceptDegreeRanking:
+    """Tests for get_concept_degree_ranking() (ADR-200 Phase 3a)."""
+
+    def test_returns_ranked_concepts(self, mock_age_client):
+        """Returns concepts ranked by degree."""
+        mock_age_client._execute_cypher = MagicMock(return_value=[
+            {'concept_id': 'c_1', 'label': 'Top', 'degree': 10, 'in_degree': 6, 'out_degree': 4},
+            {'concept_id': 'c_2', 'label': 'Second', 'degree': 5, 'in_degree': 3, 'out_degree': 2},
+        ])
+
+        result = mock_age_client.get_concept_degree_ranking('test-onto', limit=5)
+
+        assert len(result) == 2
+        assert result[0]['label'] == 'Top'
+        assert result[0]['degree'] == 10
+
+    def test_returns_empty_on_error(self, mock_age_client):
+        """Returns empty list on database error."""
+        mock_age_client._execute_cypher = MagicMock(side_effect=Exception("fail"))
+
+        result = mock_age_client.get_concept_degree_ranking('test-onto')
+
+        assert result == []
+
+
+@pytest.mark.unit
+class TestGetCrossOntologyAffinity:
+    """Tests for get_cross_ontology_affinity() (ADR-200 Phase 3a)."""
+
+    def test_returns_affinity_scores(self, mock_age_client):
+        """Returns other ontologies with shared concept counts."""
+        mock_age_client._execute_cypher = MagicMock(return_value=[
+            {'other_ontology': 'related', 'shared_concept_count': 10, 'total_concepts': 50, 'affinity_score': 0.2},
+        ])
+
+        result = mock_age_client.get_cross_ontology_affinity('test-onto')
+
+        assert len(result) == 1
+        assert result[0]['other_ontology'] == 'related'
+        assert result[0]['affinity_score'] == 0.2
+
+
+@pytest.mark.unit
+class TestGetAllOntologyScores:
+    """Tests for get_all_ontology_scores() (ADR-200 Phase 3a)."""
+
+    def test_returns_cached_scores(self, mock_age_client):
+        """Returns cached score properties from Ontology nodes."""
+        mock_age_client._execute_cypher = MagicMock(return_value=[
+            {
+                'ontology': 'onto-1',
+                'mass_score': 0.75,
+                'coherence_score': 0.6,
+                'raw_exposure': 0.3,
+                'weighted_exposure': 0.35,
+                'protection_score': 0.42,
+                'last_evaluated_epoch': 10,
+            }
+        ])
+
+        result = mock_age_client.get_all_ontology_scores()
+
+        assert len(result) == 1
+        assert result[0]['mass_score'] == 0.75
+        assert result[0]['protection_score'] == 0.42
+
+    def test_handles_null_scores(self, mock_age_client):
+        """Null scores (never evaluated) default to 0."""
+        mock_age_client._execute_cypher = MagicMock(return_value=[
+            {
+                'ontology': 'unscored',
+                'mass_score': None,
+                'coherence_score': None,
+                'raw_exposure': None,
+                'weighted_exposure': None,
+                'protection_score': None,
+                'last_evaluated_epoch': None,
+            }
+        ])
+
+        result = mock_age_client.get_all_ontology_scores()
+
+        assert result[0]['mass_score'] == 0.0
+        assert result[0]['last_evaluated_epoch'] == 0
+
+
+@pytest.mark.unit
+class TestUpdateOntologyScores:
+    """Tests for update_ontology_scores() (ADR-200 Phase 3a)."""
+
+    def test_update_returns_true(self, mock_age_client):
+        """Updating scores on existing ontology returns True."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            'ontology_id': 'ont_scored'
+        })
+
+        result = mock_age_client.update_ontology_scores(
+            'test-onto', mass=0.5, coherence=0.6, protection=0.3, epoch=10
+        )
+
+        assert result is True
+
+    def test_update_not_found_returns_false(self, mock_age_client):
+        """Updating scores on nonexistent ontology returns False."""
+        mock_age_client._execute_cypher = MagicMock(return_value=None)
+
+        result = mock_age_client.update_ontology_scores(
+            'ghost', mass=0.5, coherence=0.6, protection=0.3, epoch=10
+        )
+
+        assert result is False
+
+
+@pytest.mark.unit
+class TestReassignSources:
+    """Tests for reassign_sources() (ADR-200 Phase 3a)."""
+
+    def test_reassign_success(self, mock_age_client):
+        """Successfully moves sources between ontologies."""
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'from-onto', 'lifecycle_state': 'active'},  # from
+            {'name': 'to-onto', 'lifecycle_state': 'active'},    # to
+        ])
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            {'updated': 2},    # update document
+            {'deleted': 2},    # delete old edges
+            {'created': 2},    # create new edges
+        ])
+
+        result = mock_age_client.reassign_sources(
+            ['s1', 's2'], 'from-onto', 'to-onto'
+        )
+
+        assert result['success'] is True
+        assert result['sources_reassigned'] == 2
+
+    def test_reassign_frozen_source_rejected(self, mock_age_client):
+        """Cannot reassign from a frozen ontology."""
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'frozen-onto', 'lifecycle_state': 'frozen'},
+            {'name': 'to-onto', 'lifecycle_state': 'active'},
+        ])
+
+        result = mock_age_client.reassign_sources(
+            ['s1'], 'frozen-onto', 'to-onto'
+        )
+
+        assert result['success'] is False
+        assert 'frozen' in result['error']
+
+    def test_reassign_source_not_found(self, mock_age_client):
+        """Rejects if source ontology doesn't exist."""
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+
+        result = mock_age_client.reassign_sources(
+            ['s1'], 'ghost', 'to-onto'
+        )
+
+        assert result['success'] is False
+        assert 'not found' in result['error']
+
+
+@pytest.mark.unit
+class TestDissolveOntology:
+    """Tests for dissolve_ontology() (ADR-200 Phase 3a)."""
+
+    def test_dissolve_success(self, mock_age_client):
+        """Successfully dissolves an active ontology."""
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'dissolve-me', 'lifecycle_state': 'active'},  # dissolve check
+            {'name': 'dissolve-me', 'lifecycle_state': 'active'},  # reassign from
+            {'name': 'target', 'lifecycle_state': 'active'},       # reassign to
+        ])
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            [{'source_id': 's1'}, {'source_id': 's2'}],  # get source IDs
+            {'updated': 2},   # update document
+            {'deleted': 2},   # delete old edges
+            {'created': 2},   # create new edges
+        ])
+        mock_age_client.delete_ontology_node = MagicMock(return_value=True)
+
+        result = mock_age_client.dissolve_ontology('dissolve-me', 'target')
+
+        assert result['success'] is True
+        assert result['sources_reassigned'] == 2
+        assert result['ontology_node_deleted'] is True
+
+    def test_dissolve_pinned_rejected(self, mock_age_client):
+        """Cannot dissolve a pinned ontology."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'name': 'pinned-onto', 'lifecycle_state': 'pinned'
+        })
+
+        result = mock_age_client.dissolve_ontology('pinned-onto', 'target')
+
+        assert result['success'] is False
+        assert 'pinned' in result['error']
+
+    def test_dissolve_frozen_rejected(self, mock_age_client):
+        """Cannot dissolve a frozen ontology."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'name': 'frozen-onto', 'lifecycle_state': 'frozen'
+        })
+
+        result = mock_age_client.dissolve_ontology('frozen-onto', 'target')
+
+        assert result['success'] is False
+        assert 'frozen' in result['error']
+
+    def test_dissolve_not_found(self, mock_age_client):
+        """Cannot dissolve nonexistent ontology."""
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+
+        result = mock_age_client.dissolve_ontology('ghost', 'target')
+
+        assert result['success'] is False
+        assert 'not found' in result['error']

@@ -169,7 +169,7 @@ See [ADR-013](user-interfaces/ADR-013-unified-typescript-client.md) for detailed
 **Relationships:**
 
 *Structural Relationships* (link concepts to evidence):
-- `APPEARS_IN` - Concept → Source
+- `APPEARS` - Concept → Source
 - `EVIDENCED_BY` - Concept → Instance
 - `FROM_SOURCE` - Instance → Source
 

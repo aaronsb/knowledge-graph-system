@@ -20,6 +20,13 @@ kg ontology [options]
 - `lifecycle` - Change ontology lifecycle state (ADR-200 Phase 2). States: active (normal), pinned (immune to demotion), frozen (read-only — rejects ingest and rename).
 - `rename` - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.
 - `delete` - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).
+- `scores` - Show cached breathing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.
+- `score` - Recompute breathing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.
+- `score-all` - Recompute breathing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.
+- `candidates` - Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.
+- `affinity` - Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.
+- `reassign` - Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.
+- `dissolve` - Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.
 
 ---
 
@@ -129,3 +136,115 @@ kg delete <name>
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-f, --force` | Skip confirmation and force deletion | - |
+
+### scores
+
+Show cached breathing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.
+
+**Usage:**
+```bash
+kg scores [name]
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name (omit for all)
+
+### score
+
+Recompute breathing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.
+
+**Usage:**
+```bash
+kg score <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name
+
+### score-all
+
+Recompute breathing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.
+
+**Usage:**
+```bash
+kg score-all [options]
+```
+
+### candidates
+
+Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.
+
+**Usage:**
+```bash
+kg candidates <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-l, --limit <n>` | Max concepts | `"20"` |
+
+### affinity
+
+Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.
+
+**Usage:**
+```bash
+kg affinity <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-l, --limit <n>` | Max ontologies | `"10"` |
+
+### reassign
+
+Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.
+
+**Usage:**
+```bash
+kg reassign <from>
+```
+
+**Arguments:**
+
+- `<from>` - Source ontology name
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--to <target>` | Target ontology name | - |
+| `--source-ids <ids...>` | Source IDs to move | - |
+
+### dissolve
+
+Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.
+
+**Usage:**
+```bash
+kg dissolve <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology to dissolve
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--into <target>` | Target ontology to receive sources | - |

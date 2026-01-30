@@ -372,10 +372,23 @@ async def root():
         # Queue type is always PostgreSQL now (ADR-050: SQLite removed)
         queue_type_name = "postgresql"
 
+        # Get epoch from graph_metrics (ADR-200)
+        epoch = 0
+        try:
+            from .lib.age_client import AGEClient
+            client = AGEClient()
+            try:
+                epoch = client.get_current_epoch()
+            finally:
+                client.close()
+        except Exception:
+            pass  # epoch stays 0 if unavailable
+
         return {
             "service": "Knowledge Graph API",
             "version": "0.1.0 (ADR-024: PostgreSQL Job Queue)",
             "status": "healthy",
+            "epoch": epoch,
             "queue": {
                 "type": queue_type_name,
                 "pending": len(pending),

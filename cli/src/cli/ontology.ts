@@ -309,4 +309,251 @@ export const ontologyCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  // ADR-200 Phase 3a: Scoring & Breathing Control Surface
+  .addCommand(
+    new Command('scores')
+      .description('Show cached breathing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.')
+      .showHelpAfterError()
+      .argument('[name]', 'Ontology name (omit for all)')
+      .action(async (name) => {
+        try {
+          const client = createClientFromEnv();
+
+          if (name) {
+            const scores = await client.getOntologyScores(name);
+            console.log('\n' + separator());
+            console.log(colors.ui.title(`📊 Scores: ${name}`));
+            console.log(separator());
+            console.log(`  ${colors.stats.label('Mass:')} ${scores.mass_score.toFixed(4)}`);
+            console.log(`  ${colors.stats.label('Coherence:')} ${scores.coherence_score.toFixed(4)}`);
+            console.log(`  ${colors.stats.label('Raw Exposure:')} ${scores.raw_exposure.toFixed(4)}`);
+            console.log(`  ${colors.stats.label('Weighted Exposure:')} ${scores.weighted_exposure.toFixed(4)}`);
+            console.log(`  ${colors.stats.label('Protection:')} ${scores.protection_score.toFixed(4)}`);
+            console.log(`  ${colors.stats.label('Last Evaluated:')} epoch ${scores.last_evaluated_epoch}`);
+            console.log(separator());
+          } else {
+            const result = await client.computeAllOntologyScores();
+            console.log('\n' + colors.ui.title(`📊 All Ontology Scores (epoch ${result.global_epoch})`));
+
+            if (result.count === 0) {
+              console.log(colors.status.warning('\n⚠ No ontologies found'));
+              return;
+            }
+
+            const table = new Table({
+              columns: [
+                { header: 'Ontology', field: 'ontology', type: 'heading', width: 'flex', priority: 3 },
+                { header: 'Mass', field: 'mass_score', type: 'text', width: 8, align: 'right' },
+                { header: 'Cohere', field: 'coherence_score', type: 'text', width: 8, align: 'right' },
+                { header: 'Exposure', field: 'weighted_exposure', type: 'text', width: 10, align: 'right' },
+                { header: 'Protect', field: 'protection_score', type: 'text', width: 10, align: 'right' },
+                { header: 'Epoch', field: 'last_evaluated_epoch', type: 'count', width: 8, align: 'right' },
+              ]
+            });
+
+            table.print(result.scores.map(s => ({
+              ...s,
+              mass_score: s.mass_score.toFixed(3),
+              coherence_score: s.coherence_score.toFixed(3),
+              weighted_exposure: s.weighted_exposure.toFixed(3),
+              protection_score: s.protection_score.toFixed(3),
+            })));
+          }
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to get ontology scores'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('score')
+      .description('Recompute breathing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .action(async (name) => {
+        try {
+          const client = createClientFromEnv();
+          const scores = await client.computeOntologyScores(name);
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Scored ontology "${name}"`));
+          console.log(separator());
+          console.log(`  ${colors.stats.label('Mass:')} ${scores.mass_score.toFixed(4)}`);
+          console.log(`  ${colors.stats.label('Coherence:')} ${scores.coherence_score.toFixed(4)}`);
+          console.log(`  ${colors.stats.label('Raw Exposure:')} ${scores.raw_exposure.toFixed(4)}`);
+          console.log(`  ${colors.stats.label('Weighted Exposure:')} ${scores.weighted_exposure.toFixed(4)}`);
+          console.log(`  ${colors.stats.label('Protection:')} ${scores.protection_score.toFixed(4)}`);
+          console.log(`  ${colors.stats.label('Evaluated at:')} epoch ${scores.last_evaluated_epoch}`);
+          console.log(separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to score ontology'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('score-all')
+      .description('Recompute breathing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.')
+      .showHelpAfterError()
+      .action(async () => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.computeAllOntologyScores();
+
+          console.log('\n' + colors.status.success(`✓ Scored ${result.count} ontologies (epoch ${result.global_epoch})`));
+
+          if (result.count > 0) {
+            const table = new Table({
+              columns: [
+                { header: 'Ontology', field: 'ontology', type: 'heading', width: 'flex', priority: 3 },
+                { header: 'Mass', field: 'mass_score', type: 'text', width: 8, align: 'right' },
+                { header: 'Cohere', field: 'coherence_score', type: 'text', width: 8, align: 'right' },
+                { header: 'Exposure', field: 'weighted_exposure', type: 'text', width: 10, align: 'right' },
+                { header: 'Protect', field: 'protection_score', type: 'text', width: 10, align: 'right' },
+              ]
+            });
+
+            table.print(result.scores.map(s => ({
+              ...s,
+              mass_score: s.mass_score.toFixed(3),
+              coherence_score: s.coherence_score.toFixed(3),
+              weighted_exposure: s.weighted_exposure.toFixed(3),
+              protection_score: s.protection_score.toFixed(3),
+            })));
+          }
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to score all ontologies'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('candidates')
+      .description('Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .option('-l, --limit <n>', 'Max concepts', '20')
+      .action(async (name, options) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.getOntologyCandidates(name, parseInt(options.limit));
+
+          console.log('\n' + colors.ui.title(`🎯 Promotion Candidates: ${name}`));
+
+          if (result.count === 0) {
+            console.log(colors.status.warning('\n⚠ No concepts found'));
+            return;
+          }
+
+          const table = new Table({
+            columns: [
+              { header: 'Concept', field: 'label', type: 'heading', width: 'flex', priority: 3 },
+              { header: 'Degree', field: 'degree', type: 'count', width: 10, align: 'right' },
+              { header: 'In', field: 'in_degree', type: 'count', width: 8, align: 'right' },
+              { header: 'Out', field: 'out_degree', type: 'count', width: 8, align: 'right' },
+            ]
+          });
+
+          table.print(result.concepts);
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to get candidates'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('affinity')
+      .description('Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .option('-l, --limit <n>', 'Max ontologies', '10')
+      .action(async (name, options) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.getOntologyAffinity(name, parseInt(options.limit));
+
+          console.log('\n' + colors.ui.title(`🔗 Cross-Ontology Affinity: ${name}`));
+
+          if (result.count === 0) {
+            console.log(colors.status.warning('\n⚠ No cross-ontology connections found'));
+            return;
+          }
+
+          const table = new Table({
+            columns: [
+              { header: 'Other Ontology', field: 'other_ontology', type: 'heading', width: 'flex', priority: 3 },
+              { header: 'Shared', field: 'shared_concept_count', type: 'count', width: 10, align: 'right' },
+              { header: 'Total', field: 'total_concepts', type: 'count', width: 10, align: 'right' },
+              { header: 'Affinity', field: 'affinity_score', type: 'text', width: 10, align: 'right' },
+            ]
+          });
+
+          table.print(result.affinities.map(a => ({
+            ...a,
+            affinity_score: (a.affinity_score * 100).toFixed(1) + '%',
+          })));
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to get affinity'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('reassign')
+      .description('Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.')
+      .showHelpAfterError()
+      .argument('<from>', 'Source ontology name')
+      .requiredOption('--to <target>', 'Target ontology name')
+      .requiredOption('--source-ids <ids...>', 'Source IDs to move')
+      .action(async (from, options) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.reassignSources(from, options.to, options.sourceIds);
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Reassigned ${result.sources_reassigned} sources`));
+          console.log(separator());
+          console.log(`  ${colors.stats.label('From:')} ${result.from_ontology}`);
+          console.log(`  ${colors.stats.label('To:')} ${result.to_ontology}`);
+          console.log(`  ${colors.stats.label('Sources moved:')} ${coloredCount(result.sources_reassigned)}`);
+          console.log(separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to reassign sources'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('dissolve')
+      .description('Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology to dissolve')
+      .requiredOption('--into <target>', 'Target ontology to receive sources')
+      .action(async (name, options) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.dissolveOntology(name, options.into);
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Dissolved ontology "${name}"`));
+          console.log(separator());
+          console.log(`  ${colors.stats.label('Sources reassigned:')} ${coloredCount(result.sources_reassigned)}`);
+          console.log(`  ${colors.stats.label('Node deleted:')} ${result.ontology_node_deleted ? colors.status.success('yes') : colors.status.dim('no')}`);
+          if (result.reassignment_targets.length > 0) {
+            console.log(`  ${colors.stats.label('Targets:')} ${result.reassignment_targets.join(', ')}`);
+          }
+          console.log(separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to dissolve ontology'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
   );

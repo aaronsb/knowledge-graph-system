@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: Accepted
 date: 2026-01-29
 deciders:
   - aaronsb
@@ -388,46 +388,267 @@ Store ontology metadata (name, description, creation date) in a relational table
 
 ## Implementation Notes
 
-### Phase 1: Ontology Nodes (Foundation)
+### Phase 1: Ontology Nodes (Foundation) — Complete
 
-- Add `:Ontology` node type to Apache AGE schema
-- Migration: create `:Ontology` nodes from distinct `s.document` values in existing graph
-- Add `:SCOPED_BY` edges from all Source nodes to their corresponding Ontology node
-- Generate embeddings for ontology nodes (from name + description, or centroid of member concept embeddings)
-- Keep `s.document` string for backward compatibility
-- API: extend `GET /ontology/` to return ontology node properties alongside existing statistics
+PR #237, merged 2026-01-30.
 
-### Phase 2: Lifecycle States and Directed Growth
+- `:Ontology` node type in Apache AGE schema (migration 044)
+- `:SCOPED_BY` edges from all Source nodes to their corresponding Ontology node
+- AGE client methods: create, get, list, delete, rename, ensure_ontology_exists
+- Name-based embeddings at creation time (centroid recomputation deferred to Phase 3)
+- `s.document` string retained as denormalized cache
+- API: existing responses unchanged — internal box only
 
-- Add `lifecycle_state` property to `:Ontology` nodes (`active` | `pinned` | `frozen`)
-- API: `PUT /ontology/{name}/lifecycle` to set state (pin, freeze, activate)
-- Frozen ontologies reject new `:SCOPED_BY` edges during ingestion
-- Pinned ontologies tracked for exposure calculation but exempt from demotion
+### Phase 1b: Client Exposure — Complete
 
-### Phase 3: Breathing Worker
+PR #238, merged 2026-01-30.
 
-- New background worker: `ontology_breathing_worker`
-- Per-ontology evaluation: compute mass (degree, edge density, grounding), coherence (diversity of internal concepts), exposure (weighted epoch delta)
-- Rank concepts by degree within each ontology
-- Evaluate promotion candidates: mass × coherence against sigmoid threshold
-- Generate proposals (promote / demote / absorb) — stored as recommendations, not auto-executed initially
-- Human-in-the-loop approval via web UI (ADR-700 Ontology Explorer) or CLI
+- Graph nodes as source of truth for `GET /ontology/` (empty ontologies now visible)
+- `POST /ontology/` for directed growth (create before ingest)
+- `GET /ontology/{name}/node` for graph node properties
+- CLI: `kg ontology create`, info shows graph node section, list shows State column
+- MCP: `create` and `rename` actions on ontology tool
+- Web/FUSE: type updates, no functional changes needed
 
-### Phase 4: Automated Promotion and Demotion
+### Phase 2: Lifecycle States, Frozen Enforcement & Owner Provenance — Complete
 
-- Execute approved promotions: create `:Ontology` node, link anchor concept, reassign first-order sources
-- Execute approved demotions: reassign concepts by edge affinity, remove `:Ontology` node
-- Track ecological ratio: ontology count vs concept count target
-- Bezier curve profiles for promotion/demotion pressure (reuse vocabulary aggressiveness infrastructure)
-- Graduated automation: HITL → AITL → autonomous (mirroring vocabulary consolidation progression)
+PR #239, merged 2026-01-30.
 
-### Phase 5: Ontology-to-Ontology Edges
+- `PUT /ontology/{name}/lifecycle` with `ontologies:write` RBAC (migration 045)
+- `lifecycle_state`: `active | pinned | frozen` — frozen rejects ingest and rename
+- Two-layer frozen enforcement: route-level 403 (fail fast) + worker-level (defense in depth)
+- Frozen = source boundary protection. Concepts are global; freezing blocks new Sources scoped to the ontology, not cross-ontology edges pointing at its concepts
+- `created_by` provenance on Ontology nodes (route passes username, worker passes job username)
+- CLI: `kg ontology lifecycle <name> <state>`, MCP: `lifecycle` action
+- 58 tests (35 existing + 23 new)
 
-- Derive inter-ontology edges from cross-ontology concept bridge analysis
-- Compute: shared concept count, edge density between ontology pairs, vocabulary overlap
-- Create derived edges: OVERLAPS, SPECIALIZES, GENERALIZES
-- Allow explicit override edges from humans/AI
-- Integrate with Ontology Explorer bridge view (ADR-700)
+### Operational Foundation (Phases 1-2 Retrospective)
+
+With Phases 1-2 complete, the system has all the **plumbing and controls** needed for active management:
+
+| Capability | Available Since | Used By |
+|------------|----------------|---------|
+| `:Ontology` nodes with embeddings | Phase 1 | Scoring (mass, coherence) |
+| `:SCOPED_BY` edges | Phase 1 | Boundary computation |
+| `creation_epoch` on Ontology | Phase 1 | Exposure calculation |
+| `ensure_ontology_exists()` | Phase 1 | Promotion execution |
+| `lifecycle_state` enforcement | Phase 2 | Protection (pin/freeze) |
+| `created_by` provenance | Phase 2 | Audit trail for automated actions |
+| `ontologies:write` RBAC | Phase 2 | Worker needs permission to mutate |
+
+What's missing is the **driver** — the intelligence that observes the graph, scores what it sees, and proposes structural changes. This is conceptually identical to `kg vocab consolidate`: a series of graph traversals, scoring, ranking, then feeding to an LLM to make determinations that impact graph structure. In that case, vocabulary type merging/splitting. In this case, concept→ontology promotion (mitosis) and ontology→concept collapse (demotion).
+
+**Manual viability.** Everything the worker will do can be done manually today. A human (or Claude via MCP) could:
+1. Query each ontology's concept count, edge density, and cross-ontology bridges
+2. Compute mass and coherence scores from the results
+3. Identify promotion candidates (high-mass, high-coherence concepts)
+4. Use `POST /ontology/` to create the new ontology
+5. Reassign sources by updating `:SCOPED_BY` edges
+6. Identify demotion candidates (low-mass ontologies with high exposure)
+7. Compute affinity to decide where demoted sources go
+8. Execute reassignment
+
+The worker automates this loop on a heartbeat, interacting with the epoch counter to decide *when* to evaluate, and delegating the *judgment* calls to an LLM.
+
+### Phase 3: Breathing Worker (Scoring & Proposals)
+
+The breathing worker is a background job — similar in architecture to the ingestion worker and vocabulary consolidation worker. It runs on a heartbeat tied to the epoch counter: after N ingestion events (not wall-clock time), it evaluates the graph and generates proposals.
+
+#### Worker Architecture
+
+```
+epoch counter (graph_metrics) → threshold check → breathing cycle
+    ↓
+per-ontology scoring (mass, coherence, exposure)
+    ↓
+promotion candidate identification (high-mass concepts)
+    ↓
+demotion candidate identification (low-protection ontologies)
+    ↓
+LLM judgment on borderline cases
+    ↓
+proposals stored as recommendations (not auto-executed)
+```
+
+The worker does NOT execute proposals in Phase 3. It produces scored recommendations for human review (HITL). This mirrors the vocabulary consolidation progression: observe first, automate later.
+
+#### Scoring Algorithms
+
+**Mass** — degree centrality aggregated per ontology:
+
+```cypher
+-- Per-ontology mass: count of concepts, sources, evidence, relationships
+MATCH (o:Ontology {name: $name})
+OPTIONAL MATCH (s:Source)-[:SCOPED_BY]->(o)
+OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s)
+OPTIONAL MATCH (c)-[r]->()
+RETURN count(DISTINCT s) AS sources,
+       count(DISTINCT c) AS concepts,
+       count(r) AS relationships
+```
+
+Mass is a composite score, not a single count. The existing confidence scoring infrastructure (ADR-044) uses a Michaelis-Menten saturation curve for concept-level confidence — the same curve shape applies here: mass saturates as an ontology grows, so raw counts are transformed to a 0-1 scale.
+
+**Coherence** — internal semantic density vs external scatter:
+
+The diversity analyzer (ADR-063) computes Gini-Simpson index of pairwise embedding similarity in an N-hop neighborhood. For ontology coherence, the "neighborhood" is all concepts scoped to the ontology. High coherence (low diversity) means concepts are semantically clustered. Low coherence (high diversity) means the ontology is a grab-bag.
+
+```
+coherence = 1 - diversity_score(concepts_in_ontology)
+```
+
+Coherence distinguishes nuclei (promotion candidates) from crossroads (bridging concepts that serve a structural role but shouldn't be ontologies).
+
+**Exposure** — opportunity cost measured in graph activity:
+
+```
+raw_exposure = global_epoch - ontology.creation_epoch
+weighted_exposure = Σ (ingest_events_into_adjacent_ontologies × adjacency_score)
+```
+
+Adjacency is computable from embedding similarity between ontology nodes. An ingest into a neighboring ontology counts more than an ingest into something unrelated. This prevents penalizing an ontology for irrelevant graph activity while holding it accountable when nearby content flows past without connecting.
+
+#### Promotion Candidate Identification
+
+The worker ranks all concepts within each ontology by degree centrality, then evaluates the top-N:
+
+```
+promotion_score = sigmoid(mass × coherence) - exposure_pressure(epoch_delta)
+```
+
+Concepts above the promotion threshold become proposals. The LLM evaluates borderline cases — "Is this concept a nucleus (should be an ontology) or a crossroads (valuable connector, should stay a concept)?"
+
+#### Demotion Candidate Identification
+
+The worker evaluates each non-pinned ontology's protection score:
+
+```
+protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)
+```
+
+Ontologies below the demotion threshold become demotion proposals. The hysteresis band (promotion_threshold=0.8, demotion_threshold=0.5) prevents flickering.
+
+For each demotion candidate, the worker pre-computes **reassignment affinity** — where would the sources go?
+
+```cypher
+-- Cross-ontology affinity: which ontology shares the most concepts?
+MATCH (s:Source)-[:SCOPED_BY]->(dying:Ontology {name: $name})
+MATCH (c:Concept)-[:APPEARS_IN]->(s)
+MATCH (c)-[:APPEARS_IN]->(other_s:Source)-[:SCOPED_BY]->(candidate:Ontology)
+WHERE candidate <> dying
+RETURN candidate.name, count(DISTINCT c) AS shared_concepts
+ORDER BY shared_concepts DESC
+```
+
+This query works without materialized ontology-to-ontology edges — it computes affinity from the existing graph structure. Phase 5 materializes this as cached edges for performance.
+
+#### Proposal Storage
+
+Proposals are stored as structured recommendations (likely in the job queue or a dedicated table):
+
+```json
+{
+  "type": "promotion",
+  "concept_id": "c_abc123",
+  "concept_label": "Incident Response",
+  "source_ontology": "ITSM",
+  "scores": { "mass": 0.87, "coherence": 0.92, "promotion_score": 0.85 },
+  "suggested_name": "Incident Response",
+  "suggested_description": "...",
+  "reasoning": "LLM explanation of why this concept warrants promotion",
+  "epoch": 5420
+}
+```
+
+Proposals can be approved/rejected via CLI (`kg ontology promote <concept>`), MCP, or web UI (ADR-700).
+
+### Phase 5: Ontology-to-Ontology Edges (Materialized Relationships)
+
+**Resequenced: Phase 5 before Phase 4.** The scoring worker (Phase 3) traverses cross-ontology bridges as part of its evaluation. Phase 5 materializes what scoring discovers — the worker emits ontology-to-ontology edges as a side effect of its analysis. Phase 4 then uses these materialized edges for routing during automated execution.
+
+Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology data is already traversable. But running Phase 5 between scoring and execution means Phase 4's demotion logic has a precomputed affinity map instead of recomputing it per-operation.
+
+#### Derived Edges
+
+As the breathing worker scores ontologies, it observes cross-ontology concept bridges. These are materialized as ontology-level edges:
+
+- **OVERLAPS** — significant percentage of A's concepts also appear in B's sources
+- **SPECIALIZES** — A's concepts are a coherent subset of B's concept space (A is more specific)
+- **GENERALIZES** — inverse of SPECIALIZES
+
+```cypher
+-- Derive OVERLAPS from shared concept count
+MATCH (a:Ontology), (b:Ontology)
+WHERE a <> b
+MATCH (s_a:Source)-[:SCOPED_BY]->(a)
+MATCH (c:Concept)-[:APPEARS_IN]->(s_a)
+MATCH (c)-[:APPEARS_IN]->(s_b:Source)-[:SCOPED_BY]->(b)
+WITH a, b, count(DISTINCT c) AS shared,
+     [(s:Source)-[:SCOPED_BY]->(a) | s] AS a_sources
+WITH a, b, shared, size(a_sources) AS a_total
+WHERE toFloat(shared) / a_total > 0.3  -- threshold for OVERLAPS
+MERGE (a)-[:OVERLAPS {shared_concepts: shared, ratio: toFloat(shared)/a_total}]->(b)
+```
+
+#### Explicit Override Edges
+
+Humans or AI can declare relationships that override or supplement derived edges:
+
+```cypher
+MERGE (a:Ontology {name: 'Security Engineering'})-[:SPECIALIZES {source: 'manual'}]->(b:Ontology {name: 'Infrastructure'})
+```
+
+Derived edges carry `source: 'breathing_worker'`; explicit edges carry `source: 'manual'` or `source: 'ai'`. Explicit edges take precedence when they conflict with derived edges.
+
+#### Integration
+
+- Ontology Explorer (ADR-700) bridge view consumes these edges for visualization
+- Phase 4 uses OVERLAPS/SPECIALIZES for demotion routing
+- Future: inter-ontology edges inform ontology search and navigation
+
+### Phase 4: Automated Promotion & Demotion (Execution)
+
+Phase 4 converts the worker from proposal-only (Phase 3) to proposal-and-execute. This follows the graduated automation pattern from vocabulary consolidation: HITL → AITL → autonomous.
+
+#### Promotion Execution
+
+On approved promotion:
+
+1. `create_ontology_node()` with name derived from anchor concept, embedding from concept embedding
+2. `(:Ontology)-[:ANCHORED_BY]->(:Concept)` edge links the new ontology to its founding concept
+3. Reassign first-order concepts' sources: create `:SCOPED_BY` edges to new ontology, update `s.document`
+4. This is an **eventually consistent background process** — batched writes over multiple transactions (same pattern as vocabulary consolidation merging edge types across thousands of edges)
+5. `created_by: 'breathing_worker'` for provenance
+
+#### Demotion Execution
+
+On approved demotion:
+
+1. Compute reassignment targets using Phase 5's materialized OVERLAPS edges (fast lookup) or fall back to the affinity query (slower, traversal-based)
+2. For each source in the dying ontology, reassign `:SCOPED_BY` to the highest-affinity candidate
+3. Sources with no clear affinity go to the primordial pool ("everything else")
+4. Remove the `:Ontology` node — the anchor concept survives (it was a concept before, it remains one after)
+5. **No deletion, only movement** — concepts and sources relocate, nothing disappears
+
+#### Ecological Ratio Tracking
+
+The system maintains a target cluster granularity — the ratio of ontologies to concepts:
+
+```
+target_ontology_count = f(total_concepts, desired_concepts_per_ontology)
+```
+
+When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046) drives this — same mechanism, different domain.
+
+#### Graduated Automation
+
+| Level | Behavior | Trigger |
+|-------|----------|---------|
+| HITL | Worker proposes, human approves | Phase 3 (default) |
+| AITL | Worker proposes, LLM evaluates, human reviews exceptions | Configurable |
+| Autonomous | Worker proposes and executes within safety bounds | High-confidence proposals only |
+
+Safety bounds for autonomous mode: only promote concepts above a high-confidence threshold, only demote ontologies that have been candidates for multiple consecutive cycles, never demote pinned or frozen ontologies.
 
 ## Open Questions
 

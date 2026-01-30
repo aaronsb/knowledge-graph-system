@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** `adr-200-phase-2` (prev: `adr-200-client-exposure` → merged PR #238)
+**Branch:** `adr-200-phase-3a`
 **Started:** 2026-01-29
-**Status:** Phase 1 complete (PR #237, #238). Phase 2 in progress.
+**Status:** Phases 1-2 complete (PR #237, #238, #239). Phase 3a implemented, pending PR.
 
 ---
 
@@ -248,30 +248,202 @@ Concepts are **global** (not scoped to ontologies). Freezing protects the ontolo
 
 ---
 
-## Later Phases (Not This Branch)
+## Phase 3a: Breathing Control Surface (Scoring & Manual Controls)
 
-Tracked here for awareness. Each gets its own branch + todo.
+**Branch:** `adr-200-phase-3a`
+**Depends on:** Phases 1-2 (all plumbing and controls available)
+**Approach:** Build controls first, prove manually, then automate. The breathing worker is just automation of a manual process.
 
-### Phase 3: Breathing Worker
-- New background worker: `ontology_breathing_worker`
-- Mass scoring (degree centrality aggregation)
-- Coherence scoring (diversity of internal concepts)
-- Exposure calculation (weighted epoch delta)
-- Promotion candidate ranking
-- Proposal generation (stored as recommendations)
+### Scoring Algorithms — COMPLETE
 
-### Phase 4: Automated Promotion & Demotion
-- Execute approved promotions (create Ontology, link anchor, reassign sources)
-- Execute approved demotions (reassign by edge affinity, remove Ontology)
-- Ecological ratio tracking
-- Bezier curve profiles for promotion/demotion pressure
-- Graduated automation: HITL → AITL → autonomous
+- [x] **Mass scoring** — Michaelis-Menten saturation of ontology statistics
+  - `api/app/lib/ontology_scorer.py:calculate_mass()` — composite/50 normalization, k=2.0
+  - Output: mass_score 0.0–1.0 on Ontology node
 
-### Phase 5: Ontology-to-Ontology Edges
-- Derive inter-ontology edges from cross-ontology bridges
-- OVERLAPS, SPECIALIZES, GENERALIZES edge types
-- Explicit override edges
-- Bridge view integration (ADR-700)
+- [x] **Coherence scoring** — mean pairwise cosine similarity of concept embeddings
+  - `api/app/lib/ontology_scorer.py:calculate_coherence()` — Gini-Simpson pattern from ADR-063
+  - Sampled to 100 concepts for large ontologies
+  - Output: coherence_score 0.0–1.0 on Ontology node
+
+- [x] **Exposure calculation** — epoch delta with adjacency weighting
+  - `api/app/lib/ontology_scorer.py:calculate_exposure()` — half-life 50 epochs + affinity weighting
+  - Output: raw_exposure, weighted_exposure on Ontology node
+
+- [x] **Protection scoring** — composite: sigmoid(mass × coherence) - exposure pressure
+  - `api/app/lib/ontology_scorer.py:calculate_protection()` — can go negative for severely failing
+  - Output: protection_score on Ontology node
+
+### Read Controls — COMPLETE
+
+- [x] `get_ontology_stats(name)` — concept/source/file/evidence/relationship counts
+- [x] `get_concept_degree_ranking(name, limit)` — top concepts by degree centrality
+- [x] `get_cross_ontology_affinity(name, limit)` — shared concept overlap between ontologies
+- [x] `get_all_ontology_scores()` — cached scores from all Ontology nodes
+- [x] `get_current_epoch()` — global epoch from graph_metrics
+- [x] `get_ontology_concept_embeddings(name, limit)` — for coherence calculation
+
+### Write Controls — COMPLETE
+
+- [x] `update_ontology_scores(name, mass, coherence, protection, epoch)` — cache scores on node
+- [x] `reassign_sources(source_ids, from, to)` — THE key primitive for demotion
+  - Updates s.document, deletes old SCOPED_BY, creates new SCOPED_BY
+  - Batched in chunks of 50, refuses frozen source ontology
+- [x] `dissolve_ontology(name, target)` — non-destructive demotion (move then remove node)
+  - Refuses pinned or frozen, moves all sources first
+- [x] `batch_create_scoped_by_edges(source_ids, ontology_name)` — bulk SCOPED_BY creation
+
+### API Routes — COMPLETE (7 endpoints)
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/ontology/{name}/scores` | CurrentUser |
+| POST | `/ontology/{name}/scores` | ontologies:write |
+| POST | `/ontology/scores` | ontologies:write |
+| GET | `/ontology/{name}/candidates` | CurrentUser |
+| GET | `/ontology/{name}/affinity` | CurrentUser |
+| POST | `/ontology/{name}/reassign` | ontologies:write |
+| POST | `/ontology/{name}/dissolve` | ontologies:write |
+
+### CLI — COMPLETE (7 subcommands)
+
+- [x] `kg ontology scores [name]` — show cached scores (one or all)
+- [x] `kg ontology score <name>` — recompute scores for one
+- [x] `kg ontology score-all` — recompute all scores
+- [x] `kg ontology candidates <name>` — top concepts by degree
+- [x] `kg ontology affinity <name>` — cross-ontology overlap
+- [x] `kg ontology reassign <from> --to <target> --source-ids <ids...>`
+- [x] `kg ontology dissolve <name> --into <target>`
+
+### MCP — COMPLETE (7 actions)
+
+- [x] `scores`, `score`, `score_all`, `candidates`, `affinity`, `reassign`, `dissolve`
+
+### Tests — 115 passed (58 existing + 57 new)
+
+- [x] Unit: OntologyScorer — mass, coherence, exposure, protection, cosine similarity
+- [x] Unit: AGE client — stats, ranking, affinity, cached scores, update scores, reassign, dissolve
+- [x] Route: GET/POST scores (200, 404), POST score-all, candidates (200, 404), affinity
+- [x] Route: reassign (200, 403 frozen, 404), dissolve (200, 403 pinned, 404)
+
+### Files
+
+| File | Change |
+|------|--------|
+| `api/app/lib/ontology_scorer.py` | **NEW** — scoring algorithms |
+| `api/app/lib/age_client.py` | +12 methods (6 read, 4 write, 2 helper) |
+| `api/app/models/ontology.py` | +11 models |
+| `api/app/routes/ontology.py` | +7 endpoints |
+| `cli/src/types/index.ts` | +8 interfaces |
+| `cli/src/api/client.ts` | +7 client methods |
+| `cli/src/cli/ontology.ts` | +7 subcommands |
+| `cli/src/mcp-server.ts` | +7 actions |
+| `tests/unit/lib/test_ontology_scorer.py` | **NEW** — 29 tests |
+| `tests/unit/lib/test_age_client_ontology.py` | +15 test classes |
+| `tests/api/test_ontology_routes.py` | +7 test classes |
+
+---
+
+## Phase 3b: Breathing Worker (Proposals & Automation)
+
+**Branch:** `adr-200-phase-3b`
+**Depends on:** Phase 3a (all controls available and manually proven)
+**Pattern:** Same as `kg vocab consolidate` — graph traversal → scoring → LLM judgment → proposals
+
+The worker automates what can now be done manually via the Phase 3a control surface.
+
+### Worker Architecture
+
+- [ ] **Background job registration** — register `ontology_breathing_worker` in job system
+  - Heartbeat tied to epoch counter (graph_metrics), not wall-clock time
+  - Configurable trigger: run after every N ingestion events
+
+### Candidate Identification
+
+- [ ] **Promotion candidates** — high-mass concepts not yet ontologies
+  - Uses Phase 3a: `get_concept_degree_ranking()` + `score_ontology()`
+  - LLM evaluates borderline: "nucleus (should promote) or crossroads (should stay)?"
+
+- [ ] **Demotion candidates** — low-protection ontologies
+  - Uses Phase 3a: `score_all_ontologies()` + `get_cross_ontology_affinity()`
+  - Skip pinned and frozen ontologies
+
+### Proposal System
+
+- [ ] **Proposal storage** — structured recommendations, not auto-executed
+- [ ] **Review interface** — CLI: `kg ontology proposals` / `approve` / `reject`
+
+### Deferred Items
+
+- [ ] Centroid recomputation — update Ontology embedding as centroid of member concept embeddings
+
+---
+
+## Phase 5: Ontology-to-Ontology Edges (Materialized Relationships)
+
+**Branch:** `adr-200-phase-5`
+**Depends on:** Phase 3 (scoring discovers what this phase materializes)
+**Resequenced:** Phase 5 runs before Phase 4 because scoring (Phase 3) traverses cross-ontology bridges as part of its analysis. This phase materializes what scoring discovers into persistent edges. Phase 4's automated execution then uses these edges for routing.
+
+Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology affinity data is already traversable from existing `:SCOPED_BY` infrastructure edges (not vocabulary). But materializing it gives Phase 4 a precomputed map.
+
+- [ ] **Derived edges** — breathing worker emits as side effect of scoring
+  - OVERLAPS: significant % of A's concepts also appear in B's sources
+  - SPECIALIZES: A's concepts are a coherent subset of B's concept space
+  - GENERALIZES: inverse of SPECIALIZES
+  - Source property: `source: 'breathing_worker'`, epoch stamped
+
+- [ ] **Explicit override edges** — human/AI declared
+  - Same edge types, `source: 'manual'` or `source: 'ai'`
+  - Explicit edges take precedence over derived when conflicting
+
+- [ ] **Edge refresh** — recalculated each breathing cycle
+  - Stale derived edges removed if no longer supported by concept data
+  - Explicit edges persist unless manually removed
+
+- [ ] **Integration** — ADR-700 Ontology Explorer bridge view, Phase 4 demotion routing
+
+---
+
+## Phase 4: Automated Promotion & Demotion (Execution)
+
+**Branch:** `adr-200-phase-4`
+**Depends on:** Phase 3 (proposals) + Phase 5 (materialized edges for routing)
+**Pattern:** Graduated automation — HITL → AITL → autonomous
+
+Converts worker from proposal-only (Phase 3) to proposal-and-execute.
+
+- [ ] **Promotion execution** — on approved proposal
+  - `create_ontology_node()` with anchor concept's name/embedding
+  - `(:Ontology)-[:ANCHORED_BY]->(:Concept)` edge
+  - Reassign first-order concept sources: batch `:SCOPED_BY` + `s.document` updates
+  - Eventually consistent (same pattern as vocab consolidation merge)
+  - `created_by: 'breathing_worker'`
+
+- [ ] **Demotion execution** — on approved proposal
+  - Route sources to highest-affinity candidate (Phase 5 OVERLAPS edges, or affinity query fallback)
+  - Sources with no clear affinity → primordial pool
+  - Remove `:Ontology` node; anchor concept survives
+  - **No deletion, only movement**
+
+- [ ] **Ecological ratio tracking**
+  - Target: `ontology_count = f(total_concepts, desired_concepts_per_ontology)`
+  - When primordial pool too large → increase promotion pressure
+  - When ontologies too small → increase absorption pressure
+  - Bezier curve profiles (reuse ADR-046 aggressiveness infrastructure)
+
+- [ ] **Graduated automation levels**
+  - HITL: worker proposes, human approves (Phase 3 default)
+  - AITL: worker proposes, LLM evaluates, human reviews exceptions
+  - Autonomous: high-confidence proposals auto-execute within safety bounds
+  - Safety: never auto-demote pinned/frozen, require multiple consecutive cycles for demotion
+
+---
+
+## Deferred (Not Phased Yet)
+
+- [ ] Web UI: display lifecycle state in ontology views (primitive UI, low priority)
+- [ ] Web UI: create ontology (deferred to ADR-700 Ontology Explorer)
+- [ ] Meta-ontologies: can ontologies group into higher-order structures? (open question in ADR)
 
 ---
 
@@ -314,3 +486,7 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | Fallback principle for frozen ontologies | If pipeline ever needs to create within a frozen ontology, fall back to requesting (active) ontology rather than failing |
 | 2026-01-30 | AGEClient try/finally in ingest routes (code review) | Pre-existing resource leak pattern; fixed in our code with try/finally + close() |
 | 2026-01-30 | Migration 045 updates `available_actions` array | Code review caught missing UPDATE to `kg_auth.resources` — added idempotent SET |
+| 2026-01-30 | Phase 3 split into 3a (controls) + 3b (automation) | Build controls first, prove manually, then automate — same approach as vocab consolidate |
+| 2026-01-30 | Coherence = mean similarity (not 1-diversity) | High coherence = tight domain. Plan said 1-diversity but mean similarity is more intuitive |
+| 2026-01-30 | Exposure half-life 50 epochs | Balances new vs old ontologies — after 50 ingestions, exposure = 0.5 |
+| 2026-01-30 | Reassign batched in 50s, frozen check on source | Key primitive for demotion; refuses moving FROM frozen ontologies |

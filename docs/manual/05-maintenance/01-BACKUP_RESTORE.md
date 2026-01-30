@@ -151,7 +151,7 @@ Database Integrity Check
 Ontology: Ontology A
 
 ✗ Critical Issues:
-  • 0 orphaned concepts (no APPEARS_IN relationship)
+  • 0 orphaned concepts (no APPEARS relationship)
 
 ⚠ Warnings:
   • 4 relationships to concepts in other ontologies
@@ -245,7 +245,7 @@ python -m src.admin.check_integrity --ontology "Ontology A" --repair
 ```
 
 **What gets repaired:**
-- Orphaned concepts → APPEARS_IN relationships recreated
+- Orphaned concepts → APPEARS relationships recreated
 - Missing concept-source links → Derived from instances
 
 **What doesn't get repaired:**
@@ -424,7 +424,7 @@ git add .gitattributes backups/
 
 ### Issue: "Orphaned concepts after restore"
 
-**Cause:** APPEARS_IN relationships weren't created during restore.
+**Cause:** APPEARS relationships weren't created during restore.
 
 **Solution:**
 ```bash

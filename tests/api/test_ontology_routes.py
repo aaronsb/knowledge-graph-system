@@ -563,3 +563,313 @@ class TestFrozenEnforcement:
 
         assert response.status_code == 200
         assert response.json()["created_by"] == "admin"
+
+
+# =========================================================================
+# ADR-200 Phase 3a: Scoring & Breathing Control Surface Route Tests
+# =========================================================================
+
+
+class TestScoresRoute:
+    """Tests for GET/POST /ontology/{name}/scores."""
+
+    def test_get_cached_scores(self, api_client, auth_headers_user):
+        """GET scores returns cached values from Ontology node."""
+        client = mock_age_client(
+            get_ontology_node={
+                'name': 'scored-onto',
+                'lifecycle_state': 'active',
+                'mass_score': 0.75,
+                'coherence_score': 0.6,
+                'raw_exposure': 0.3,
+                'weighted_exposure': 0.35,
+                'protection_score': 0.42,
+                'last_evaluated_epoch': 10,
+            }
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/scored-onto/scores",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data['ontology'] == 'scored-onto'
+        assert data['mass_score'] == 0.75
+        assert data['protection_score'] == 0.42
+
+    def test_get_scores_not_found(self, api_client, auth_headers_user):
+        """GET scores for nonexistent ontology returns 404."""
+        client = mock_age_client()
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/ghost/scores",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 404
+
+    def test_compute_scores(self, api_client, auth_headers_admin):
+        """POST scores recomputes and returns new values."""
+        client = mock_age_client()
+
+        mock_scorer = MagicMock()
+        mock_scorer.score_ontology.return_value = {
+            'ontology': 'test-onto',
+            'mass_score': 0.5,
+            'coherence_score': 0.4,
+            'raw_exposure': 0.1,
+            'weighted_exposure': 0.15,
+            'protection_score': 0.3,
+            'last_evaluated_epoch': 5,
+        }
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            with patch('api.app.lib.ontology_scorer.OntologyScorer', return_value=mock_scorer):
+                response = api_client.post(
+                    "/ontology/test-onto/scores",
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 200
+        assert response.json()['mass_score'] == 0.5
+
+    def test_compute_scores_not_found(self, api_client, auth_headers_admin):
+        """POST scores for nonexistent ontology returns 404."""
+        client = mock_age_client()
+
+        mock_scorer = MagicMock()
+        mock_scorer.score_ontology.return_value = None
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            with patch('api.app.lib.ontology_scorer.OntologyScorer', return_value=mock_scorer):
+                response = api_client.post(
+                    "/ontology/ghost/scores",
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 404
+
+
+class TestScoreAllRoute:
+    """Tests for POST /ontology/scores."""
+
+    def test_compute_all_scores(self, api_client, auth_headers_admin):
+        """POST /ontology/scores recomputes all ontologies."""
+        client = mock_age_client()
+        client.get_current_epoch = MagicMock(return_value=42)
+
+        mock_scorer = MagicMock()
+        mock_scorer.score_all_ontologies.return_value = [
+            {'ontology': 'a', 'mass_score': 0.5, 'coherence_score': 0.4,
+             'raw_exposure': 0.1, 'weighted_exposure': 0.15,
+             'protection_score': 0.3, 'last_evaluated_epoch': 42},
+        ]
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            with patch('api.app.lib.ontology_scorer.OntologyScorer', return_value=mock_scorer):
+                response = api_client.post(
+                    "/ontology/scores",
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data['count'] == 1
+        assert data['global_epoch'] == 42
+
+
+class TestCandidatesRoute:
+    """Tests for GET /ontology/{name}/candidates."""
+
+    def test_get_candidates(self, api_client, auth_headers_user):
+        """GET candidates returns ranked concepts."""
+        client = mock_age_client(
+            get_ontology_node={
+                'name': 'test-onto', 'lifecycle_state': 'active',
+            }
+        )
+        client.get_concept_degree_ranking = MagicMock(return_value=[
+            {'concept_id': 'c1', 'label': 'Top', 'degree': 10, 'in_degree': 6, 'out_degree': 4},
+        ])
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/test-onto/candidates",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data['count'] == 1
+        assert data['concepts'][0]['label'] == 'Top'
+
+    def test_candidates_not_found(self, api_client, auth_headers_user):
+        """GET candidates for nonexistent ontology returns 404."""
+        client = mock_age_client()
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/ghost/candidates",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 404
+
+
+class TestAffinityRoute:
+    """Tests for GET /ontology/{name}/affinity."""
+
+    def test_get_affinity(self, api_client, auth_headers_user):
+        """GET affinity returns cross-ontology overlap."""
+        client = mock_age_client(
+            get_ontology_node={
+                'name': 'test-onto', 'lifecycle_state': 'active',
+            }
+        )
+        client.get_cross_ontology_affinity = MagicMock(return_value=[
+            {'other_ontology': 'related', 'shared_concept_count': 5, 'total_concepts': 50, 'affinity_score': 0.1},
+        ])
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/test-onto/affinity",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data['count'] == 1
+        assert data['affinities'][0]['affinity_score'] == 0.1
+
+
+class TestReassignRoute:
+    """Tests for POST /ontology/{name}/reassign."""
+
+    def test_reassign_success(self, api_client, auth_headers_admin):
+        """POST reassign moves sources."""
+        client = mock_age_client()
+        client.reassign_sources = MagicMock(return_value={
+            'sources_reassigned': 3,
+            'success': True,
+            'error': None,
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/from-onto/reassign",
+                json={"target_ontology": "to-onto", "source_ids": ["s1", "s2", "s3"]},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        assert response.json()['sources_reassigned'] == 3
+
+    def test_reassign_frozen_rejected(self, api_client, auth_headers_admin):
+        """POST reassign from frozen ontology returns 403."""
+        client = mock_age_client()
+        client.reassign_sources = MagicMock(return_value={
+            'sources_reassigned': 0,
+            'success': False,
+            'error': "Source ontology 'frozen-onto' is frozen",
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/frozen-onto/reassign",
+                json={"target_ontology": "to-onto", "source_ids": ["s1"]},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 403
+
+    def test_reassign_not_found(self, api_client, auth_headers_admin):
+        """POST reassign with nonexistent ontology returns 404."""
+        client = mock_age_client()
+        client.reassign_sources = MagicMock(return_value={
+            'sources_reassigned': 0,
+            'success': False,
+            'error': "Source ontology 'ghost' not found",
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/ghost/reassign",
+                json={"target_ontology": "to-onto", "source_ids": ["s1"]},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 404
+
+
+class TestDissolveRoute:
+    """Tests for POST /ontology/{name}/dissolve."""
+
+    def test_dissolve_success(self, api_client, auth_headers_admin):
+        """POST dissolve moves sources and removes node."""
+        client = mock_age_client()
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'old-onto',
+            'sources_reassigned': 5,
+            'ontology_node_deleted': True,
+            'reassignment_targets': ['target-onto'],
+            'success': True,
+            'error': None,
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-onto/dissolve",
+                json={"target_ontology": "target-onto"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data['sources_reassigned'] == 5
+        assert data['ontology_node_deleted'] is True
+
+    def test_dissolve_pinned_rejected(self, api_client, auth_headers_admin):
+        """POST dissolve pinned ontology returns 403."""
+        client = mock_age_client()
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'pinned-onto',
+            'sources_reassigned': 0,
+            'ontology_node_deleted': False,
+            'reassignment_targets': [],
+            'success': False,
+            'error': "Ontology 'pinned-onto' is pinned — cannot dissolve",
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/pinned-onto/dissolve",
+                json={"target_ontology": "target"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 403
+
+    def test_dissolve_not_found(self, api_client, auth_headers_admin):
+        """POST dissolve nonexistent ontology returns 404."""
+        client = mock_age_client()
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'ghost',
+            'sources_reassigned': 0,
+            'ontology_node_deleted': False,
+            'reassignment_targets': [],
+            'success': False,
+            'error': "Ontology 'ghost' not found",
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/ghost/dissolve",
+                json={"target_ontology": "target"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 404
