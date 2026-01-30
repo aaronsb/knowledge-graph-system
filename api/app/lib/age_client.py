@@ -1666,7 +1666,7 @@ class AGEClient:
         try:
             # Source and file counts
             source_query = """
-            MATCH (s:Source {document: $name})
+            MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
             RETURN count(s) as source_count,
                    count(DISTINCT s.file_path) as file_count
             """
@@ -1677,9 +1677,9 @@ class AGEClient:
                 stats["source_count"] = int(str(result.get("source_count", 0)))
                 stats["file_count"] = int(str(result.get("file_count", 0)))
 
-            # Concept count: concepts that appear in sources scoped to this ontology
+            # Concept count: concepts connected to sources scoped to this ontology
             concept_query = """
-            MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
+            MATCH (c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
             RETURN count(DISTINCT c) as concept_count
             """
             result = self._execute_cypher(
@@ -1690,7 +1690,7 @@ class AGEClient:
 
             # Evidence count: instances from sources in this ontology
             evidence_query = """
-            MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: $name})
+            MATCH (i:Instance)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
             RETURN count(i) as evidence_count
             """
             result = self._execute_cypher(
@@ -1699,12 +1699,11 @@ class AGEClient:
             if result:
                 stats["evidence_count"] = int(str(result.get("evidence_count", 0)))
 
-            # Internal relationships: both endpoints appear in this ontology's sources
+            # Internal relationships: both endpoints in this ontology's sources
             internal_query = """
-            MATCH (c1:Concept)-[:APPEARS]->(s1:Source {document: $name})
+            MATCH (c1:Concept)-->(s1:Source)-[:SCOPED_BY]->(o1:Ontology {name: $name})
             MATCH (c1)-[r]->(c2:Concept)
-            WHERE type(r) <> 'APPEARS' AND type(r) <> 'EVIDENCED_BY'
-            MATCH (c2)-[:APPEARS]->(s2:Source {document: $name})
+            MATCH (c2)-->(s2:Source)-[:SCOPED_BY]->(o2:Ontology {name: $name})
             RETURN count(DISTINCT r) as internal_count
             """
             result = self._execute_cypher(
@@ -1717,11 +1716,10 @@ class AGEClient:
 
             # Cross-ontology relationships: one endpoint in this ontology, other in different
             cross_query = """
-            MATCH (c1:Concept)-[:APPEARS]->(s1:Source {document: $name})
+            MATCH (c1:Concept)-->(s1:Source)-[:SCOPED_BY]->(o1:Ontology {name: $name})
             MATCH (c1)-[r]->(c2:Concept)
-            WHERE type(r) <> 'APPEARS' AND type(r) <> 'EVIDENCED_BY'
-            MATCH (c2)-[:APPEARS]->(s2:Source)
-            WHERE s2.document <> $name
+            MATCH (c2)-->(s2:Source)-[:SCOPED_BY]->(o2:Ontology)
+            WHERE o2.name <> $name
             RETURN count(DISTINCT r) as cross_count
             """
             result = self._execute_cypher(
@@ -1751,11 +1749,10 @@ class AGEClient:
             List of {concept_id, label, degree, in_degree, out_degree}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
+        MATCH (c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
+        WITH DISTINCT c
         OPTIONAL MATCH (c)-[r_out]->(:Concept)
-        WHERE type(r_out) <> 'APPEARS' AND type(r_out) <> 'EVIDENCED_BY'
         OPTIONAL MATCH (:Concept)-[r_in]->(c)
-        WHERE type(r_in) <> 'APPEARS' AND type(r_in) <> 'EVIDENCED_BY'
         WITH c,
              count(DISTINCT r_out) as out_degree,
              count(DISTINCT r_in) as in_degree
@@ -1805,12 +1802,12 @@ class AGEClient:
             List of {other_ontology, shared_concept_count, total_concepts, affinity_score}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS]->(s1:Source {document: $name})
+        MATCH (c:Concept)-->(s1:Source)-[:SCOPED_BY]->(o1:Ontology {name: $name})
         WITH collect(DISTINCT c) as my_concepts, count(DISTINCT c) as my_total
         UNWIND my_concepts as c
-        MATCH (c)-[:APPEARS]->(s2:Source)
-        WHERE s2.document <> $name
-        WITH s2.document as other_ontology,
+        MATCH (c)-->(s2:Source)-[:SCOPED_BY]->(o2:Ontology)
+        WHERE o2.name <> $name
+        WITH o2.name as other_ontology,
              count(DISTINCT c) as shared_count,
              my_total
         RETURN other_ontology,
@@ -1929,7 +1926,7 @@ class AGEClient:
             List of {concept_id, label, embedding}
         """
         query = """
-        MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
+        MATCH (c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
         WHERE c.embedding IS NOT NULL
         RETURN DISTINCT c.concept_id as concept_id,
                c.label as label,
@@ -2177,7 +2174,7 @@ class AGEClient:
 
         # Get all source IDs in this ontology
         source_query = """
-        MATCH (s:Source {document: $name})
+        MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
         RETURN s.source_id as source_id
         """
         try:

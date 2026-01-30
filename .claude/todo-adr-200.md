@@ -384,7 +384,7 @@ The worker automates what can now be done manually via the Phase 3a control surf
 **Depends on:** Phase 3 (scoring discovers what this phase materializes)
 **Resequenced:** Phase 5 runs before Phase 4 because scoring (Phase 3) traverses cross-ontology bridges as part of its analysis. This phase materializes what scoring discovers into persistent edges. Phase 4's automated execution then uses these edges for routing.
 
-Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology affinity data is already traversable from existing `:APPEARS_IN` and `:SCOPED_BY` edges. But materializing it gives Phase 4 a precomputed map.
+Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology affinity data is already traversable from existing `:SCOPED_BY` infrastructure edges (not vocabulary). But materializing it gives Phase 4 a precomputed map.
 
 - [ ] **Derived edges** — breathing worker emits as side effect of scoring
   - OVERLAPS: significant % of A's concepts also appear in B's sources
