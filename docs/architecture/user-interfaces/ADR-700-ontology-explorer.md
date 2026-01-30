@@ -4,7 +4,7 @@ date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [82, 83, 84, 89]
+related: [82, 83, 84, 89, 200]
 ---
 
 # ADR-700: Ontology Explorer
@@ -47,8 +47,9 @@ A high-level map of all ontologies the user can access. Visualization options:
 - **Bubble pack** — Circles with area proportional to content, colored by a chosen metric (document count, concept density, recency of updates).
 
 Each ontology node shows:
-- Name
+- Name, ontology ID, lifecycle state (ADR-200 graph node properties)
 - Document count, concept count, relationship count
+- Creation epoch, embedding status
 - Last modified / last ingested timestamp
 - Owner (if resource-scoped via ADR-082 grants)
 
@@ -84,7 +85,7 @@ The Ontology Explorer is not view-only. It supports management actions gated by 
 | View ontology list & stats | `read_only` | `GET /ontology/` |
 | View ontology details | `read_only` | `GET /ontology/{name}` |
 | View ontology files | `read_only` | `GET /ontology/{name}/files` |
-| Create new ontology | `curator` | (new) `POST /ontology/` |
+| Create new ontology | `curator` | `POST /ontology/` |
 | Rename ontology | `curator` | `POST /ontology/{name}/rename` |
 | Delete ontology | `admin` | `DELETE /ontology/{name}` |
 | Re-ingest documents | `contributor` | `POST /ingest` (existing) |
@@ -99,13 +100,17 @@ Actions that exceed the user's permissions are hidden or disabled, not shown-the
 
 ### 3. Data Requirements
 
-#### Existing API endpoints (sufficient for MVP)
+#### Existing API endpoints (ADR-200 foundation)
 
-- `GET /ontology/` — List all with summary stats
-- `GET /ontology/{name}` — Detail stats + file list
-- `GET /ontology/{name}/files` — Per-file breakdown
-- `POST /ontology/{name}/rename` — Rename
-- `DELETE /ontology/{name}` — Delete with cascade
+Ontologies are first-class graph nodes with properties (`ontology_id`, `lifecycle_state`, `creation_epoch`, `embedding`, `search_terms`). ADR-200 established this architecture and exposed it across API, CLI, MCP, and web types.
+
+- `GET /ontology/` — List all ontologies with graph node properties and source stats. Graph nodes are source of truth (includes empty ontologies from directed growth).
+- `GET /ontology/{name}` — Detail stats + file list + `node` object with full graph node properties.
+- `GET /ontology/{name}/node` — Graph node properties only (ADR-200).
+- `GET /ontology/{name}/files` — Per-file breakdown.
+- `POST /ontology/` — Create ontology explicitly (directed growth). Generates name-based embedding. (ADR-200)
+- `POST /ontology/{name}/rename` — Rename (updates graph node + source properties).
+- `DELETE /ontology/{name}` — Delete with cascade (removes graph node + SCOPED_BY edges).
 
 #### New API endpoints needed
 
@@ -114,7 +119,6 @@ Actions that exceed the user's permissions are hidden or disabled, not shown-the
 | `GET /ontology/{name}/concepts` | List concepts extracted from this ontology, with stats (evidence count, grounding, relationship count). Paginated. |
 | `GET /ontology/{name}/subgraph` | Return the internal concept graph for this ontology (nodes + edges where at least one endpoint has evidence in the ontology). Reuses `SubgraphResponse` format. |
 | `GET /ontology/bridges` | Cross-ontology shared concept summary. Returns pairs of ontologies with shared concept count and top bridging concepts. Optional filter by specific ontology names. |
-| `POST /ontology/` | Create an empty ontology (name + optional description). Currently ontologies are created implicitly on first ingestion; explicit creation allows pre-organizing before ingestion. |
 
 #### Data Shape
 
@@ -138,6 +142,12 @@ interface OntologyExplorerData {
 
 interface OntologyNode {
   name: string;
+  ontologyId: string;           // ADR-200 graph node UUID
+  lifecycleState: string;       // ADR-200: 'active' | 'pinned' | 'frozen'
+  creationEpoch: number;        // ADR-200: epoch at creation
+  hasEmbedding: boolean;        // ADR-200: whether embedding vector exists
+  description?: string;         // ADR-200: domain description
+  searchTerms?: string[];       // ADR-200: alternative search terms
   documentCount: number;
   conceptCount: number;
   relationshipCount: number;
@@ -244,7 +254,7 @@ For resource-scoped actions (e.g., rename a specific ontology), the UI can optim
 
 ### Negative
 
-- New API endpoints add surface area (`/concepts`, `/subgraph`, `/bridges`, `POST /`)
+- New API endpoints add surface area (`/concepts`, `/subgraph`, `/bridges`)
 - The bridge computation (`/ontology/bridges`) could be expensive for large graphs — may need caching or pre-computation
 - Three sub-views (overview/detail/bridge) make this a more complex explorer than existing ones
 - The hybrid data shape doesn't map neatly to the existing `DataShape` enum; may need extension
@@ -254,7 +264,7 @@ For resource-scoped actions (e.g., rename a specific ontology), the UI can optim
 - Requires extending `VisualizationType` with `'ontology'`
 - The detail view's internal subgraph reuses existing `SubgraphResponse` format and could delegate rendering to `ForceGraph2D` internals
 - Document reassignment (drag between ontologies) is deferred to a future iteration
-- The `POST /ontology/` endpoint changes ontology creation from implicit (first ingestion) to optionally explicit
+- `POST /ontology/` already exists (ADR-200) — ontology creation is now explicit via directed growth
 
 ## Alternatives Considered
 
@@ -284,13 +294,23 @@ The document explorer already shows documents. We could add an ontology grouping
 
 ## Implementation Notes
 
+### Foundation: ADR-200 (Implemented)
+
+ADR-200 "Breathing Ontologies" provides the data model foundation for this explorer:
+- `:Ontology` graph nodes with properties (`ontology_id`, `lifecycle_state`, `creation_epoch`, `embedding`, `search_terms`)
+- `:SCOPED_BY` edges linking Sources to Ontologies
+- `POST /ontology/` for directed growth (explicit creation before ingest)
+- `GET /ontology/{name}/node` for graph node properties
+- Enriched list and info responses with graph node data
+- CLI `kg ontology create`, MCP `create`/`rename` actions
+- Web types updated (`OntologyItem` with graph node fields)
+
 ### Phase 1: Overview + Detail (MVP)
 
 - Register `OntologyExplorerPlugin`
-- Implement overview (treemap with existing stats from `GET /ontology/`)
+- Implement overview (treemap with enriched stats from `GET /ontology/` — includes lifecycle state, embedding status)
 - Implement detail view (document list + top concepts from new `GET /ontology/{name}/concepts`)
-- Wire up existing management actions (rename, delete) with permission gating
-- Add `POST /ontology/` for explicit creation
+- Wire up existing management actions (create, rename, delete) with permission gating
 
 ### Phase 2: Bridge View
 
@@ -319,3 +339,4 @@ The document explorer already shows documents. We could add an ontology grouping
 - **ADR-083** — Artifact persistence (could cache expensive bridge computations)
 - **ADR-084** — Document-level search (complementary document discovery)
 - **ADR-089** — Deterministic graph editing (ontology-scoped concept creation)
+- **ADR-200** — Breathing Ontologies (graph node architecture, directed growth, lifecycle states — data model foundation for this explorer)

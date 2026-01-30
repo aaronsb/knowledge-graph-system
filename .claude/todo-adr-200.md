@@ -139,6 +139,14 @@ Key files: `api/app/models/ontology.py` (6 models), `api/app/routes/ontology.py`
 - [x] FUSE lists ontologies as directories using only the `ontology` name field
 - [x] New graph node properties are available but not consumed by the filesystem layer
 
+### RBAC Permissions
+
+- [x] Verified: `ontologies` resource already has `read`, `create`, `delete` actions (migration 028)
+- [x] `POST /ontology/` uses `ontologies:create` — already granted to curator+
+- [x] GET endpoints use `CurrentUser` only — no permission check needed
+- [x] No new migration required for client exposure phase
+- [ ] Phase 2: may need `write`/`update` action for `PUT /ontology/{name}/lifecycle`
+
 ---
 
 ## Later Phases (Not This Branch)
