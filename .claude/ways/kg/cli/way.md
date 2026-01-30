@@ -1,6 +1,6 @@
 ---
 match: regex
-pattern: \bkg\b|\bcli\b|mcp.*tool|MCP.*server
+pattern: kg\s+(cli|command|tool)|\bcli\b.*kg|mcp.*tool|MCP.*server|knowledge.?graph.*cli
 commands: kg\s
 ---
 # CLI & MCP Way

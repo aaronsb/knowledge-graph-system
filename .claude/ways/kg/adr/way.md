@@ -5,17 +5,25 @@ files: docs/architecture/ADR
 ---
 # KG ADR Supplement
 
-## ADR Location
+## Domain Numbering
 
-```
-docs/architecture/
-├── ARCHITECTURE_DECISIONS.md   # Master index (update when adding ADRs)
-├── ADR-001-*.md
-├── ADR-002-*.md
-└── ...
-```
+This project uses domain-based ADR numbering managed by `docs/scripts/adr`.
+Run `docs/scripts/adr domains` for the full series. Key domains:
 
-## Key ADRs for This Project
+| Domain | Range | Area |
+|--------|-------|------|
+| infra | 100-199 | Containers, deployment, storage |
+| db | 200-299 | Apache AGE, migrations, schema |
+| ingest | 300-399 | Content processing, extraction |
+| auth | 400-499 | RBAC, OAuth, API keys |
+| query | 500-599 | Pathfinding, search |
+| ui | 700-799 | CLI, web, MCP, visualization |
+| ai | 800-899 | Embeddings, extraction, prompts |
+| meta | 900-999 | Docs, workflow, ADR system |
+
+Legacy ADRs (1-99) predate the domain system.
+
+## Key ADRs
 
 | ADR | Topic |
 |-----|-------|
@@ -25,9 +33,3 @@ docs/architecture/
 | ADR-061 | Operator architecture |
 | ADR-082 | User scoping & groups |
 | ADR-083 | Artifact persistence pattern |
-
-## When Adding ADRs
-
-1. Create `docs/architecture/ADR-NNN-descriptive-name.md`
-2. **Update `ARCHITECTURE_DECISIONS.md`** with entry in index table
-3. Link from related ADRs using "Related ADRs" section

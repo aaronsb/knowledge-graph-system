@@ -58,8 +58,9 @@ configure.py api-key <name>      # Store API key
 Or directly:
 ```bash
 ./operator.sh admin              # Manage admin user
-./operator.sh ai-provider        # Configure AI
-./operator.sh api-key            # Store keys
+./operator.sh ai-provider        # Configure AI extraction
+./operator.sh embedding          # Configure embeddings
+./operator.sh api-key            # Store API keys
 ```
 
 ## Database
@@ -67,6 +68,14 @@ Or directly:
 ```bash
 ./operator.sh query 'SELECT ...' # Run SQL (no TTY needed)
 ./operator.sh pg                 # Alias for query
+```
+
+## Infrastructure
+
+```bash
+./operator.sh garage status      # Garage storage health
+./operator.sh garage init        # Initialize Garage buckets
+./operator.sh garage repair      # Repair Garage state
 ```
 
 ## Teardown
