@@ -78,7 +78,8 @@ async def create_ontology(
 
         # Also check if sources exist with this name (legacy ontology)
         source_check = client._execute_cypher(
-            f"MATCH (s:Source {{document: '{request.name}'}}) RETURN count(s) as c",
+            "MATCH (s:Source {document: $name}) RETURN count(s) as c",
+            params={'name': request.name},
             fetch_one=True
         )
         if source_check and source_check.get('c', 0) > 0:
@@ -269,45 +270,60 @@ async def get_ontology_info(
     """
     client = get_age_client()
     try:
-        # Check if ontology exists
+        # ADR-200: Check existence via graph node first, then sources
+        has_sources = False
         exists_check = client._execute_cypher(
             f"MATCH (s:Source {{document: '{ontology_name}'}}) RETURN count(s) > 0 as ontology_exists",
             fetch_one=True
         )
+        if exists_check and exists_check['ontology_exists']:
+            has_sources = True
 
-        if not exists_check or not exists_check['ontology_exists']:
+        # Also check for Ontology graph node (directed growth — may have no sources)
+        graph_node = client.get_ontology_node(ontology_name)
+
+        if not has_sources and not graph_node:
             raise HTTPException(status_code=404, detail=f"Ontology '{ontology_name}' not found")
 
-        # Get statistics
-        stats = client._execute_cypher(f"""
-            MATCH (s:Source {{document: '{ontology_name}'}})
-            WITH count(DISTINCT s) as source_count,
-                 count(DISTINCT s.file_path) as file_count,
-                 collect(DISTINCT s.file_path) as files
-            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(src:Source {{document: '{ontology_name}'}})
-            WITH source_count, file_count, files, count(DISTINCT c) as concept_count
-            OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
-            WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
-            OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS]->(:Source {{document: '{ontology_name}'}})
-            OPTIONAL MATCH (ontology_concept)-[r]->(other:Concept)
-            RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
-        """, fetch_one=True)
-
+        # Get statistics (all zeros if no sources yet)
         statistics = {
-            "source_count": stats['source_count'],
-            "file_count": stats['file_count'],
-            "concept_count": stats['concept_count'],
-            "instance_count": stats['instance_count'],
-            "relationship_count": stats['relationship_count']
+            "source_count": 0,
+            "file_count": 0,
+            "concept_count": 0,
+            "instance_count": 0,
+            "relationship_count": 0,
         }
+        files = []
 
-        # Filter out None values from files list
-        files = [f for f in stats['files'] if f is not None]
+        if has_sources:
+            stats = client._execute_cypher(f"""
+                MATCH (s:Source {{document: '{ontology_name}'}})
+                WITH count(DISTINCT s) as source_count,
+                     count(DISTINCT s.file_path) as file_count,
+                     collect(DISTINCT s.file_path) as files
+                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(src:Source {{document: '{ontology_name}'}})
+                WITH source_count, file_count, files, count(DISTINCT c) as concept_count
+                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
+                WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
+                OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS]->(:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (ontology_concept)-[r]->(other:Concept)
+                RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
+            """, fetch_one=True)
 
-        # ADR-200: Fetch graph node properties
+            if stats:
+                statistics = {
+                    "source_count": stats['source_count'],
+                    "file_count": stats['file_count'],
+                    "concept_count": stats['concept_count'],
+                    "instance_count": stats['instance_count'],
+                    "relationship_count": stats['relationship_count']
+                }
+                files = [f for f in stats['files'] if f is not None]
+
+        # ADR-200: Build graph node response
         node_response = None
         try:
-            node = client.get_ontology_node(ontology_name)
+            node = graph_node
             if node:
                 node_response = OntologyNodeResponse(
                     ontology_id=node.get('ontology_id', ''),
