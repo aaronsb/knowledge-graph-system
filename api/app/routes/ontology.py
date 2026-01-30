@@ -412,6 +412,13 @@ async def delete_ontology(
 
         orphaned_count = orphaned_result['orphaned_count'] if orphaned_result else 0
 
+        # ADR-200: Delete Ontology node and its edges (SCOPED_BY, etc)
+        try:
+            if client.delete_ontology_node(ontology_name):
+                logger.info(f"Deleted Ontology node for '{ontology_name}'")
+        except Exception as e:
+            logger.warning(f"Failed to delete Ontology node for '{ontology_name}': {e}")
+
         # Delete job records for this ontology to allow clean re-ingestion
         jobs_deleted = queue.delete_jobs_by_ontology(ontology_name)
         if jobs_deleted > 0:
@@ -470,6 +477,13 @@ async def rename_ontology(
         # Perform rename via AGE client
         try:
             result = client.rename_ontology(ontology_name, request.new_name)
+
+            # ADR-200: Also rename the Ontology graph node
+            try:
+                client.rename_ontology_node(ontology_name, request.new_name)
+            except Exception as e:
+                logger.warning(f"Failed to rename Ontology node: {e}")
+                # Non-fatal: Source nodes are already renamed
 
             return OntologyRenameResponse(
                 old_name=ontology_name,

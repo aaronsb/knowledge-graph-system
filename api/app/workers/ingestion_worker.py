@@ -299,6 +299,29 @@ def run_ingestion_worker(
         # Initialize AGE client
         age_client = AGEClient()
 
+        # ADR-200: Ensure Ontology node exists before creating Source nodes
+        try:
+            ont_node = age_client.ensure_ontology_exists(ontology)
+            logger.debug(f"Ontology node ensured for '{ontology}'")
+
+            # Generate embedding for ontology node if missing
+            if ont_node and not ont_node.get("embedding") and provider:
+                try:
+                    ont_text = ontology
+                    desc = ont_node.get("description")
+                    if desc:
+                        ont_text = f"{ontology}: {desc}"
+                    emb_result = provider.generate_embedding(ont_text)
+                    emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
+                    if emb_vector:
+                        age_client.update_ontology_embedding(ontology, emb_vector)
+                        logger.info(f"Generated embedding for Ontology '{ontology}'")
+                except Exception as e:
+                    logger.debug(f"Skipped ontology embedding: {e}")
+        except Exception as e:
+            logger.warning(f"Failed to ensure Ontology node for '{ontology}': {e}")
+            # Non-fatal: s.document on Source nodes still works without Ontology node
+
         # Get existing concepts for context
         existing_concepts, has_empty_warnings = age_client.get_document_concepts(
             document_name=ontology,
@@ -405,6 +428,18 @@ def run_ingestion_worker(
             # Log but don't fail the job - graph metadata is nice-to-have
             logger.warning(f"Failed to create DocumentMeta node: {e}")
             # Job still succeeds - metadata creation failure shouldn't kill the ingestion
+
+        # ADR-200: Create SCOPED_BY edges from Source nodes to Ontology node
+        try:
+            scoped_count = 0
+            for sid in source_ids:
+                if age_client.create_scoped_by_edge(sid, ontology):
+                    scoped_count += 1
+            if scoped_count > 0:
+                logger.info(f"✓ Created {scoped_count} SCOPED_BY edges → '{ontology}'")
+        except Exception as e:
+            logger.warning(f"Failed to create SCOPED_BY edges: {e}")
+            # Non-fatal: s.document on Source nodes still provides ontology membership
 
         # Sync any new vocabulary types (ADR-077)
         # Edge types may be used in the graph during ingestion but not registered
