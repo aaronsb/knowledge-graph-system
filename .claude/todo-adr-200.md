@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** `adr-200-phase-2` (prev: `adr-200-client-exposure` → merged PR #238)
+**Branch:** next: `adr-200-phase-3`
 **Started:** 2026-01-29
-**Status:** Phase 1 complete (PR #237, #238). Phase 2 in progress.
+**Status:** Phases 1-2 complete (PR #237, #238, #239). Phase 3 next.
 
 ---
 
@@ -248,30 +248,150 @@ Concepts are **global** (not scoped to ontologies). Freezing protects the ontolo
 
 ---
 
-## Later Phases (Not This Branch)
+## Phase 3: Breathing Worker (Scoring & Proposals)
 
-Tracked here for awareness. Each gets its own branch + todo.
+**Branch:** `adr-200-phase-3`
+**Depends on:** Phases 1-2 (all plumbing and controls available)
+**Pattern:** Same as `kg vocab consolidate` — graph traversal → scoring → LLM judgment → proposals
 
-### Phase 3: Breathing Worker
-- New background worker: `ontology_breathing_worker`
-- Mass scoring (degree centrality aggregation)
-- Coherence scoring (diversity of internal concepts)
-- Exposure calculation (weighted epoch delta)
-- Promotion candidate ranking
-- Proposal generation (stored as recommendations)
+The worker automates what can already be done manually via API/MCP. Everything it does is a series of graph queries, math, and LLM calls. No new graph primitives needed — Phases 1-2 provide all the controls.
 
-### Phase 4: Automated Promotion & Demotion
-- Execute approved promotions (create Ontology, link anchor, reassign sources)
-- Execute approved demotions (reassign by edge affinity, remove Ontology)
-- Ecological ratio tracking
-- Bezier curve profiles for promotion/demotion pressure
-- Graduated automation: HITL → AITL → autonomous
+### Worker Architecture
 
-### Phase 5: Ontology-to-Ontology Edges
-- Derive inter-ontology edges from cross-ontology bridges
-- OVERLAPS, SPECIALIZES, GENERALIZES edge types
-- Explicit override edges
-- Bridge view integration (ADR-700)
+- [ ] **Background job registration** — register `ontology_breathing_worker` in job system
+  - Heartbeat tied to epoch counter (graph_metrics), not wall-clock time
+  - Configurable trigger: run after every N ingestion events
+  - Similar architecture to ingestion_worker and vocab consolidation worker
+
+### Scoring Algorithms
+
+- [ ] **Mass scoring** — per-ontology degree centrality aggregation
+  - Count: concepts, sources, evidence, relationships scoped to ontology
+  - Transform raw counts via Michaelis-Menten saturation curve (reuse ADR-044 confidence pattern)
+  - Output: mass_score 0.0–1.0 on Ontology node
+
+- [ ] **Coherence scoring** — internal semantic density
+  - Reuse diversity analyzer (ADR-063) with ontology's concepts as the neighborhood
+  - `coherence = 1 - diversity_score(concepts_in_ontology)`
+  - Distinguishes nuclei (promotion candidates) from crossroads (bridging concepts)
+  - Output: coherence_score 0.0–1.0 on Ontology node
+
+- [ ] **Exposure calculation** — opportunity cost in graph activity
+  - `raw_exposure = global_epoch - ontology.creation_epoch`
+  - `weighted_exposure = Σ (ingest_events × adjacency_score)` — adjacent ontology ingests count more
+  - Adjacency from embedding similarity between Ontology nodes
+  - Output: last_evaluated_epoch on Ontology node
+
+### Candidate Identification
+
+- [ ] **Promotion candidates** — high-mass concepts not yet ontologies
+  - Rank concepts by degree centrality within each ontology
+  - Evaluate top-N: `promotion_score = sigmoid(mass × coherence) - exposure_pressure`
+  - LLM evaluates borderline: "nucleus (should promote) or crossroads (should stay)?"
+  - Threshold: 0.8 (high bar to become an ontology)
+
+- [ ] **Demotion candidates** — low-protection ontologies
+  - `protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)`
+  - Threshold: 0.5 (lower bar to remain — hysteresis prevents flickering)
+  - Pre-compute reassignment affinity per candidate (cross-ontology concept overlap query)
+  - Skip pinned and frozen ontologies
+
+### Proposal System
+
+- [ ] **Proposal storage** — structured recommendations, not auto-executed
+  - Type: promotion | demotion | absorb
+  - Scores, reasoning (LLM), suggested actions
+  - Epoch stamped, reviewable via CLI/MCP/web
+
+- [ ] **Review interface**
+  - CLI: `kg ontology proposals` — list pending proposals
+  - CLI: `kg ontology approve <proposal_id>` / `kg ontology reject <proposal_id>`
+  - MCP: `ontology` tool `proposals` / `approve` / `reject` actions
+
+### Deferred Items (Available for Phase 3)
+
+- [ ] Centroid recomputation — update Ontology embedding as centroid of member concept embeddings (after ingest completes)
+
+### Files (estimated)
+
+| File | Change |
+|------|--------|
+| `api/app/workers/ontology_breathing_worker.py` | **NEW** — main worker |
+| `api/app/lib/ontology_scorer.py` | **NEW** — mass, coherence, exposure algorithms |
+| `api/app/models/ontology.py` | Proposal models |
+| `api/app/routes/ontology.py` | Proposal endpoints (list, approve, reject) |
+| `api/app/lib/age_client.py` | Scoring queries, proposal storage |
+| `cli/src/cli/ontology.ts` | Proposal subcommands |
+| `cli/src/mcp-server.ts` | Proposal actions |
+
+---
+
+## Phase 5: Ontology-to-Ontology Edges (Materialized Relationships)
+
+**Branch:** `adr-200-phase-5`
+**Depends on:** Phase 3 (scoring discovers what this phase materializes)
+**Resequenced:** Phase 5 runs before Phase 4 because scoring (Phase 3) traverses cross-ontology bridges as part of its analysis. This phase materializes what scoring discovers into persistent edges. Phase 4's automated execution then uses these edges for routing.
+
+Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology affinity data is already traversable from existing `:APPEARS_IN` and `:SCOPED_BY` edges. But materializing it gives Phase 4 a precomputed map.
+
+- [ ] **Derived edges** — breathing worker emits as side effect of scoring
+  - OVERLAPS: significant % of A's concepts also appear in B's sources
+  - SPECIALIZES: A's concepts are a coherent subset of B's concept space
+  - GENERALIZES: inverse of SPECIALIZES
+  - Source property: `source: 'breathing_worker'`, epoch stamped
+
+- [ ] **Explicit override edges** — human/AI declared
+  - Same edge types, `source: 'manual'` or `source: 'ai'`
+  - Explicit edges take precedence over derived when conflicting
+
+- [ ] **Edge refresh** — recalculated each breathing cycle
+  - Stale derived edges removed if no longer supported by concept data
+  - Explicit edges persist unless manually removed
+
+- [ ] **Integration** — ADR-700 Ontology Explorer bridge view, Phase 4 demotion routing
+
+---
+
+## Phase 4: Automated Promotion & Demotion (Execution)
+
+**Branch:** `adr-200-phase-4`
+**Depends on:** Phase 3 (proposals) + Phase 5 (materialized edges for routing)
+**Pattern:** Graduated automation — HITL → AITL → autonomous
+
+Converts worker from proposal-only (Phase 3) to proposal-and-execute.
+
+- [ ] **Promotion execution** — on approved proposal
+  - `create_ontology_node()` with anchor concept's name/embedding
+  - `(:Ontology)-[:ANCHORED_BY]->(:Concept)` edge
+  - Reassign first-order concept sources: batch `:SCOPED_BY` + `s.document` updates
+  - Eventually consistent (same pattern as vocab consolidation merge)
+  - `created_by: 'breathing_worker'`
+
+- [ ] **Demotion execution** — on approved proposal
+  - Route sources to highest-affinity candidate (Phase 5 OVERLAPS edges, or affinity query fallback)
+  - Sources with no clear affinity → primordial pool
+  - Remove `:Ontology` node; anchor concept survives
+  - **No deletion, only movement**
+
+- [ ] **Ecological ratio tracking**
+  - Target: `ontology_count = f(total_concepts, desired_concepts_per_ontology)`
+  - When primordial pool too large → increase promotion pressure
+  - When ontologies too small → increase absorption pressure
+  - Bezier curve profiles (reuse ADR-046 aggressiveness infrastructure)
+
+- [ ] **Graduated automation levels**
+  - HITL: worker proposes, human approves (Phase 3 default)
+  - AITL: worker proposes, LLM evaluates, human reviews exceptions
+  - Autonomous: high-confidence proposals auto-execute within safety bounds
+  - Safety: never auto-demote pinned/frozen, require multiple consecutive cycles for demotion
+
+---
+
+## Deferred (Not Phased Yet)
+
+- [ ] Web UI: display lifecycle state in ontology views (primitive UI, low priority)
+- [ ] Web UI: create ontology (deferred to ADR-700 Ontology Explorer)
+- [ ] Meta-ontologies: can ontologies group into higher-order structures? (open question in ADR)
 
 ---
 
