@@ -430,6 +430,8 @@ def run_ingestion_worker(
             # Job still succeeds - metadata creation failure shouldn't kill the ingestion
 
         # ADR-200: Create SCOPED_BY edges from Source nodes to Ontology node
+        # TODO(ADR-200 Phase 4): This is N+1 — one DB round-trip per source.
+        # Batch into a single Cypher query when implementing batch reassignment.
         try:
             scoped_count = 0
             for sid in source_ids:

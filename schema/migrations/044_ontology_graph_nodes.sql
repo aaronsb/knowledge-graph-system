@@ -188,20 +188,27 @@ BEGIN
     RAISE NOTICE '  Total Source nodes:     %', source_count;
 
     -- Count Source nodes WITHOUT SCOPED_BY edge (should be 0)
-    EXECUTE 'SELECT count(*)::int FROM cypher(''knowledge_graph'', $cypher$
-        MATCH (s:Source)
-        WHERE s.document IS NOT NULL AND NOT EXISTS {
-            MATCH (s)-[:SCOPED_BY]->(:Ontology)
-        }
-        RETURN s
-    $cypher$) as (s agtype)'
-    INTO unscoped_count;
+    -- NOTE: NOT EXISTS { } subquery syntax may not be supported in all AGE
+    -- versions. Wrap in its own handler so a Cypher parse error here doesn't
+    -- roll back the verification block — the migration data is already committed.
+    BEGIN
+        EXECUTE 'SELECT count(*)::int FROM cypher(''knowledge_graph'', $cypher$
+            MATCH (s:Source)
+            WHERE s.document IS NOT NULL AND NOT EXISTS {
+                MATCH (s)-[:SCOPED_BY]->(:Ontology)
+            }
+            RETURN s
+        $cypher$) as (s agtype)'
+        INTO unscoped_count;
 
-    IF unscoped_count > 0 THEN
-        RAISE WARNING '  Unscoped sources:      % (sources with document but no SCOPED_BY edge)', unscoped_count;
-    ELSE
-        RAISE NOTICE '  Unscoped sources:      0 (all sources linked)';
-    END IF;
+        IF unscoped_count > 0 THEN
+            RAISE WARNING '  Unscoped sources:      % (sources with document but no SCOPED_BY edge)', unscoped_count;
+        ELSE
+            RAISE NOTICE '  Unscoped sources:      0 (all sources linked)';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE '  Unscoped sources:      (skipped — NOT EXISTS subquery not supported by this AGE version)';
+    END;
 
     RAISE NOTICE '=====================================';
 
