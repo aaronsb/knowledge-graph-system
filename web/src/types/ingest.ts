@@ -80,6 +80,11 @@ export interface OntologyItem {
   source_count: number;
   file_count: number;
   concept_count: number;
+  // ADR-200: Graph node properties
+  ontology_id?: string;
+  lifecycle_state?: string;
+  creation_epoch?: number;
+  has_embedding?: boolean;
 }
 
 export interface OntologyListResponse {

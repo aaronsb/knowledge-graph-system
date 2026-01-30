@@ -420,12 +420,20 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'delete'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "delete" (remove)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove)',
             },
             ontology_name: {
               type: 'string',
-              description: 'Ontology name (required for info, files, delete)',
+              description: 'Ontology name (required for info, files, create, rename, delete)',
+            },
+            description: {
+              type: 'string',
+              description: 'What this knowledge domain covers (for create action)',
+            },
+            new_name: {
+              type: 'string',
+              description: 'New ontology name (required for rename action)',
             },
             force: {
               type: 'boolean',
@@ -1362,6 +1370,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           case 'files': {
             const result = await client.getOntologyFiles(toolArgs.ontology_name as string);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'create': {
+            const result = await client.createOntology(
+              toolArgs.ontology_name as string,
+              (toolArgs.description as string) || ''
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'rename': {
+            const result = await client.renameOntology(
+              toolArgs.ontology_name as string,
+              toolArgs.new_name as string
+            );
             return {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
             };

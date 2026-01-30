@@ -391,11 +391,27 @@ export interface OntologyItem {
   source_count: number;
   file_count: number;
   concept_count: number;
+  // ADR-200: Graph node properties
+  ontology_id?: string;
+  lifecycle_state?: string;
+  creation_epoch?: number;
+  has_embedding?: boolean;
 }
 
 export interface OntologyListResponse {
   count: number;
   ontologies: OntologyItem[];
+}
+
+// ADR-200: Ontology graph node response
+export interface OntologyNodeResponse {
+  ontology_id: string;
+  name: string;
+  description: string;
+  lifecycle_state: string;
+  creation_epoch: number;
+  has_embedding: boolean;
+  search_terms: string[];
 }
 
 export interface OntologyInfoResponse {
@@ -408,6 +424,8 @@ export interface OntologyInfoResponse {
     relationship_count: number;
   };
   files: string[];
+  // ADR-200: Graph node properties
+  node?: OntologyNodeResponse;
 }
 
 export interface OntologyFileInfo {

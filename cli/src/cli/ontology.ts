@@ -43,6 +43,13 @@ export const ontologyCommand = setCommandHelp(
                 priority: 3
               },
               {
+                header: 'State',
+                field: 'lifecycle_state',
+                type: 'text',
+                width: 8,
+                align: 'left'
+              },
+              {
                 header: 'Files',
                 field: 'file_count',
                 type: 'count',
@@ -66,7 +73,10 @@ export const ontologyCommand = setCommandHelp(
             ]
           });
 
-          table.print(result.ontologies);
+          table.print(result.ontologies.map(o => ({
+            ...o,
+            lifecycle_state: o.lifecycle_state ?? '—',
+          })));
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to list ontologies'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
@@ -94,6 +104,21 @@ export const ontologyCommand = setCommandHelp(
           console.log(`  ${colors.stats.label('Concepts:')} ${coloredCount(info.statistics.concept_count)}`);
           console.log(`  ${colors.stats.label('Evidence:')} ${coloredCount(info.statistics.instance_count)}`);
           console.log(`  ${colors.stats.label('Relationships:')} ${coloredCount(info.statistics.relationship_count)}`);
+
+          // ADR-200: Node properties
+          if (info.node) {
+            console.log('\n' + colors.stats.section('Graph Node'));
+            console.log(`  ${colors.stats.label('ID:')} ${info.node.ontology_id}`);
+            console.log(`  ${colors.stats.label('State:')} ${info.node.lifecycle_state}`);
+            console.log(`  ${colors.stats.label('Epoch:')} ${coloredCount(info.node.creation_epoch)}`);
+            console.log(`  ${colors.stats.label('Embedding:')} ${info.node.has_embedding ? colors.status.success('yes') : colors.status.dim('no')}`);
+            if (info.node.description) {
+              console.log(`  ${colors.stats.label('Description:')} ${info.node.description}`);
+            }
+            if (info.node.search_terms.length > 0) {
+              console.log(`  ${colors.stats.label('Search terms:')} ${info.node.search_terms.join(', ')}`);
+            }
+          }
 
           if (info.files.length > 0) {
             console.log('\n' + colors.ui.header('Files'));
@@ -135,6 +160,40 @@ export const ontologyCommand = setCommandHelp(
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to get ontology files'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('create')
+      .description('Create an ontology before ingesting any documents (ADR-200: directed growth). This pre-creates the Ontology graph node with an embedding, making the ontology discoverable in the vector space immediately. Useful for planning knowledge domains before populating them.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .option('-d, --description <text>', 'What this knowledge domain covers')
+      .action(async (name, options) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.createOntology(name, options.description || '');
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Created ontology "${result.name}"`));
+          console.log(separator());
+          console.log(`  ${colors.ui.key('ID:')} ${result.ontology_id}`);
+          console.log(`  ${colors.ui.key('State:')} ${result.lifecycle_state}`);
+          console.log(`  ${colors.ui.key('Embedding:')} ${result.has_embedding ? colors.status.success('generated') : colors.status.dim('none')}`);
+          if (result.description) {
+            console.log(`  ${colors.ui.key('Description:')} ${result.description}`);
+          }
+          console.log('\n' + separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to create ontology'));
+          const detail = error.response?.data?.detail || error.message;
+          console.error(colors.status.error(detail));
+
+          if (detail.includes('already exists')) {
+            console.error(colors.status.dim('\n  Hint: Use "kg ontology info ' + name + '" to see the existing ontology'));
+          }
+
           process.exit(1);
         }
       })

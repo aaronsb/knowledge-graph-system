@@ -24,6 +24,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-015](./infrastructure/ADR-015-backup-restore-streaming.md) | Backup/Restore Streaming Architecture | Accepted |
 | [ADR-018](./infrastructure/ADR-018-server-sent-events-streaming.md) | Server-Sent Events for Real-Time Progress Streaming | Draft |
 | [ADR-020](./infrastructure/ADR-020-admin-module-architecture.md) | Admin Module Architecture Pattern | Accepted |
+| [ADR-021](./infrastructure/ADR-021-live-man-switch-ai-safety.md) | Live Man Switch - AI Safety for Critical Operations | Superseded |
 | [ADR-050](./infrastructure/ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed |
 | [ADR-055](./infrastructure/ADR-055-cdn-serverless-deployment-model.md) | CDN and Serverless Deployment Model | Proposed |
 | [ADR-056](./infrastructure/ADR-056-timezone-aware-datetime-utilities.md) | Timezone-Aware Datetime Utilities | Accepted |
@@ -42,6 +43,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-024](./database-schema/ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL Architecture | Proposed |
 | [ADR-040](./database-schema/ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed |
 | [ADR-061](./database-schema/ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
+| [ADR-200](./database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md) | Breathing Ontologies — Self-Organizing Knowledge Graph Structure | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
@@ -127,6 +129,8 @@ _CLI, web, FUSE, MCP, visualization_
 | [ADR-075](./user-interfaces/ADR-075-postmodern-theme.md) | Postmodern Theme System | Proposed |
 | [ADR-078](./visualization/ADR-078-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Accepted |
 | [ADR-085](./visualization/ADR-085-document-explorer.md) | Document Explorer with Radial Concept Visualization | Proposed |
+| [ADR-700](./user-interfaces/ADR-700-ontology-explorer.md) | Ontology Explorer | Draft |
+| [ADR-701](./user-interfaces/ADR-701-vocabulary-administration-interface.md) | Vocabulary Administration Interface | Draft |
 
 ## AI/Embeddings
 _Providers, extraction, convergence, prompts_

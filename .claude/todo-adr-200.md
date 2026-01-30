@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** `adr-200-phase-1`
+**Branch:** `adr-200-client-exposure` (prev: `adr-200-phase-1` → merged PR #237)
 **Started:** 2026-01-29
-**Status:** Phase 1 Internal Box complete, validated
+**Status:** Phase 1 Internal Box merged. Client Exposure in progress.
 
 ---
 
@@ -78,47 +78,74 @@ The goal: `:Ontology` nodes and `:SCOPED_BY` edges exist in the graph, maintaine
 
 ## Phase 1: Client Exposure (Surface New Data to Consumers)
 
-After the internal box is solid, expose the richer data model. Each client can be updated independently.
+After the internal box is solid, expose the richer data model. Full commit to graph-node architecture — no fallback to string-only ontologies.
+
+### Existing Surface Area (pre-ADR-200)
+
+Discovered during codebase exploration:
+
+| Component | list | info | files | delete | rename | create |
+|-----------|------|------|-------|--------|--------|--------|
+| API routes | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| CLI (`kg ontology`) | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| TS API client | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| MCP tool | ✅ | ✅ | ✅ | ✅ | ❌ gap | — |
+| Web frontend | ✅ | — | — | — | — | — |
+| FUSE driver | (dirs) | — | — | — | — | — |
+
+Key files: `api/app/models/ontology.py` (6 models), `api/app/routes/ontology.py` (5 endpoints), `cli/src/cli/ontology.ts` (5 subcommands), `cli/src/mcp-server.ts` (ontology tool, 4 actions), `cli/src/types/index.ts` (TS types), `web/src/types/ingest.ts` + `web/src/api/client.ts`
 
 ### API (additive changes only)
 
-- [ ] **Models** — `api/app/models/ontology.py`
-  - [ ] Add optional fields to `OntologyItem`: `ontology_id`, `lifecycle_state`, `creation_epoch`, `has_embedding`
-  - [ ] Add `OntologyNodeResponse` model for the new graph-node endpoint
+- [x] **Models** — `api/app/models/ontology.py`
+  - [x] Add fields to `OntologyItem`: `ontology_id`, `lifecycle_state`, `creation_epoch`, `has_embedding`
+  - [x] Add `OntologyNodeResponse` model for graph-node endpoint
+  - [x] Add `OntologyCreateRequest` model (name, description)
 
-- [ ] **New endpoints** — `api/app/routes/ontology.py`
-  - [ ] `POST /ontology/` — create ontology explicitly (directed growth, before any ingest)
-  - [ ] `GET /ontology/{name}/node` — return Ontology graph node properties
-  - [ ] Wire into facade if needed (ADR-048 query safety)
+- [x] **New endpoints** — `api/app/routes/ontology.py`
+  - [x] `POST /ontology/` — create ontology explicitly (directed growth, before any ingest)
+  - [x] `GET /ontology/{name}/node` — return Ontology graph node properties
+  - [x] No facade wiring needed — routes follow existing pattern
 
-- [ ] **Extended existing responses**
-  - [ ] `GET /ontology/` — add ontology node properties alongside existing stats
-  - [ ] `GET /ontology/{name}` — include node details
+- [x] **Extended existing responses**
+  - [x] `GET /ontology/` — graph nodes are source of truth, includes empty ontologies (directed growth)
+  - [x] `GET /ontology/{name}` — includes `node` object with full graph node properties
 
 ### CLI
 
-- [ ] `kg ontology list` — show `lifecycle_state` column
-- [ ] `kg ontology info <name>` — show node properties section
-- [ ] `kg ontology create <name> [--description]` — new subcommand
-- [ ] Update TypeScript types in `cli/src/api/client.ts`
+- [x] Update TypeScript types in `cli/src/types/index.ts` (`OntologyNodeResponse` + enriched `OntologyItem`)
+- [x] Add client methods in `cli/src/api/client.ts` (`createOntology`, `getOntologyNode`)
+- [x] `kg ontology list` — shows `State` column (lifecycle_state)
+- [x] `kg ontology info <name>` — shows `Graph Node` section (ID, state, epoch, embedding, description, search terms)
+- [x] `kg ontology create <name> [--description]` — new subcommand
 
 ### MCP Server
 
-- [ ] `ontology` tool — pass through new response fields
-- [ ] Add `create` action to ontology tool
-- [ ] Update tool description with new capabilities
+- [x] `ontology` tool — new response fields pass through (JSON)
+- [x] Add `create` action to ontology tool
+- [x] Add `rename` action (fixed pre-existing gap)
+- [x] Updated tool description with new action enum
 
 ### Web Frontend
 
-- [ ] Ontology list view — display lifecycle state, creation epoch
-- [ ] Ontology detail view — show node properties
-- [ ] Create ontology UI (may defer to ADR-700 Ontology Explorer)
+- [x] Update `OntologyItem` type in `web/src/types/ingest.ts` (optional fields for backward compat)
+- [x] Web API client unchanged — enriched response flows through `listOntologies()`
+- [ ] Ontology list/selector views — display lifecycle state where shown (deferred — UI is primitive)
+- [ ] Create ontology UI deferred to ADR-700 Ontology Explorer
 
 ### FUSE Driver
 
-- [ ] Review `fuse/kg_fuse/filesystem.py` for ontology assumptions
-- [ ] Update if FUSE exposes ontology metadata to the filesystem
-- [ ] Likely minimal — FUSE reads concepts, not ontology management
+- [x] Reviewed `fuse/kg_fuse/filesystem.py` — no changes needed
+- [x] FUSE lists ontologies as directories using only the `ontology` name field
+- [x] New graph node properties are available but not consumed by the filesystem layer
+
+### RBAC Permissions
+
+- [x] Verified: `ontologies` resource already has `read`, `create`, `delete` actions (migration 028)
+- [x] `POST /ontology/` uses `ontologies:create` — already granted to curator+
+- [x] GET endpoints use `CurrentUser` only — no permission check needed
+- [x] No new migration required for client exposure phase
+- [ ] Phase 2: may need `write`/`update` action for `PUT /ontology/{name}/lifecycle`
 
 ---
 
@@ -186,3 +213,7 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | Ontology embedding: name-based at creation, centroid deferred | New ontologies have no concepts yet; centroid needs data |
 | 2026-01-30 | All ADR-200 additions are non-fatal (try/except with warning) | s.document path remains functional if Ontology node ops fail |
 | 2026-01-30 | Added `update_ontology_embedding` method (not in original plan) | Needed separate from create — embedding generated after node exists |
+| 2026-01-30 | Full commit to graph-node architecture — no string fallback | User directive: no "fallback" to string-only ontologies |
+| 2026-01-30 | MCP rename action is a pre-existing gap to fix | Discovered during codebase exploration — CLI has it, MCP doesn't |
+| 2026-01-30 | List endpoint: graph nodes are source of truth | Empty ontologies (directed growth) now appear in list — Source-only ontologies still included as fallback |
+| 2026-01-30 | FUSE needs no changes for client exposure | FUSE only uses ontology name for directory listing — ignores graph node properties |

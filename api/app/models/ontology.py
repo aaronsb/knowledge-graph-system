@@ -10,6 +10,11 @@ class OntologyItem(BaseModel):
     source_count: int
     file_count: int
     concept_count: int
+    # ADR-200: Graph node properties (always present — no source-only fallback)
+    ontology_id: str
+    lifecycle_state: str
+    creation_epoch: int
+    has_embedding: bool
 
 
 class OntologyListResponse(BaseModel):
@@ -18,11 +23,30 @@ class OntologyListResponse(BaseModel):
     ontologies: List[OntologyItem]
 
 
+class OntologyNodeResponse(BaseModel):
+    """Ontology graph node properties (ADR-200)"""
+    ontology_id: str
+    name: str
+    description: str = ""
+    lifecycle_state: str = "active"
+    creation_epoch: int = 0
+    has_embedding: bool = False
+    search_terms: List[str] = []
+
+
+class OntologyCreateRequest(BaseModel):
+    """Request to create an ontology (ADR-200: directed growth)"""
+    name: str = Field(..., description="Ontology name", min_length=1)
+    description: str = Field("", description="What this knowledge domain covers")
+
+
 class OntologyInfoResponse(BaseModel):
     """Detailed ontology information"""
     ontology: str
     statistics: dict  # Contains source_count, file_count, concept_count, instance_count, relationship_count
     files: List[str]
+    # ADR-200: Graph node properties
+    node: Optional[OntologyNodeResponse] = None
 
 
 class OntologyFileInfo(BaseModel):
