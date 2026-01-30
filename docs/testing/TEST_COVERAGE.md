@@ -580,7 +580,7 @@ CREATE (:Source {source_id, document, paragraph, full_text})
 CREATE (:Instance {instance_id, quote})
 
 -- Relationships
-(:Concept)-[:APPEARS_IN]->(:Source)
+(:Concept)-[:APPEARS]->(:Source)
 (:Concept)-[:EVIDENCED_BY]->(:Instance)
 (:Instance)-[:FROM_SOURCE]->(:Source)
 (:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS]->(:Concept)

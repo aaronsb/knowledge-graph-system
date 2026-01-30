@@ -264,7 +264,7 @@ Apache AGE (A Graph Extension) is a PostgreSQL extension that provides graph dat
   └─ quote                Exact quote from source
 
 Relationships:
-  (:Concept)-[:APPEARS_IN]->(:Source)        Concept found in source
+  (:Concept)-[:APPEARS]->(:Source)        Concept found in source
   (:Concept)-[:EVIDENCED_BY]->(:Instance)    Evidence for concept
   (:Instance)-[:FROM_SOURCE]->(:Source)      Instance from source
   (:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS|...]->(:Concept)
@@ -282,10 +282,10 @@ Every concept has a 1536-dimensional embedding from OpenAI's `text-embedding-3-s
 
 ### Ontology Boundaries
 
-Concepts are tagged with their ontology via the `APPEARS_IN` relationship:
+Concepts are tagged with their ontology via the `APPEARS` relationship:
 
 ```cypher
-(:Concept)-[:APPEARS_IN]->(:Source {document: "Alan Watts Lectures"})
+(:Concept)-[:APPEARS]->(:Source {document: "Alan Watts Lectures"})
 ```
 
 This enables:

@@ -61,7 +61,7 @@ ORDER BY ontology
 ### List all concepts from a specific ontology
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: "WattsTest"})
+MATCH (c:Concept)-[:APPEARS]->(s:Source {document: "WattsTest"})
 RETURN DISTINCT c.label, c.search_terms
 ORDER BY c.label
 ```
@@ -112,7 +112,7 @@ RETURN i.quote
 ### Concepts appearing in multiple sources
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept)-[:APPEARS]->(s:Source)
 WITH c, count(DISTINCT s) as source_count
 WHERE source_count > 1
 RETURN c.label, source_count
@@ -127,7 +127,7 @@ LIMIT 10
 ### Concepts appearing in multiple documents
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept)-[:APPEARS]->(s:Source)
 WITH c, collect(DISTINCT s.document) as documents
 WHERE size(documents) > 1
 RETURN c.label, documents, size(documents) as doc_count
@@ -137,7 +137,7 @@ ORDER BY doc_count DESC
 ### Compare concept coverage across two documents
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept)-[:APPEARS]->(s:Source)
 WHERE s.document IN ["Variety as a fulcrum", "Alan Watts Lecture"]
 WITH c.label as concept,
      collect(DISTINCT s.document) as docs
@@ -150,7 +150,7 @@ ORDER BY appears_in DESC, concept
 ### Unique concepts per document
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept)-[:APPEARS]->(s:Source)
 WITH c, collect(DISTINCT s.document) as documents
 WHERE size(documents) = 1
 WITH documents[0] as document, count(c) as unique_concepts
@@ -163,9 +163,9 @@ ORDER BY unique_concepts DESC
 ```cypher
 MATCH (s1:Source), (s2:Source)
 WHERE s1.document < s2.document
-MATCH (c:Concept)-[:APPEARS_IN]->(s1)
+MATCH (c:Concept)-[:APPEARS]->(s1)
 WITH s1, s2, collect(c) as concepts1
-MATCH (c:Concept)-[:APPEARS_IN]->(s2)
+MATCH (c:Concept)-[:APPEARS]->(s2)
 WITH s1.document as doc1,
      s2.document as doc2,
      concepts1,
@@ -314,7 +314,7 @@ LIMIT 50
 ### Concepts from specific ontology with relationships
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source {document: "WattsTest"})
+MATCH (c:Concept)-[:APPEARS]->(s:Source {document: "WattsTest"})
 WITH DISTINCT c
 OPTIONAL MATCH path = (c)-[r]-(c2:Concept)
 RETURN c, path
@@ -356,7 +356,7 @@ LIMIT 10
 ### Multi-hop evidence path
 
 ```cypher
-MATCH path = (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH path = (c:Concept)-[:APPEARS]->(s:Source)
              <-[:FROM_SOURCE]-(i:Instance)
              <-[:EVIDENCED_BY]-(c)
 RETURN path
@@ -495,10 +495,10 @@ LIMIT 50
 ### Cross-document bridge concepts
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s1:Source),
-      (c)-[:APPEARS_IN]->(s2:Source)
+MATCH (c:Concept)-[:APPEARS]->(s1:Source),
+      (c)-[:APPEARS]->(s2:Source)
 WHERE s1.document <> s2.document
-MATCH path = (s1)<-[:APPEARS_IN]-(c)-[:APPEARS_IN]->(s2)
+MATCH path = (s1)<-[:APPEARS]-(c)-[:APPEARS]->(s2)
 RETURN path
 LIMIT 20
 ```
@@ -532,7 +532,7 @@ RETURN total_concepts,
 ### Sources per concept (chunking effectiveness)
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept)-[:APPEARS]->(s:Source)
 WITH c, count(DISTINCT s) as source_count
 RETURN source_count as chunks_per_concept,
        count(*) as num_concepts
@@ -568,7 +568,7 @@ LIMIT 10
 ```cypher
 MATCH (s:Source)
 WITH s.document as doc, count(DISTINCT s) as chunks
-MATCH (c:Concept)-[:APPEARS_IN]->(s2:Source {document: doc})
+MATCH (c:Concept)-[:APPEARS]->(s2:Source {document: doc})
 WITH doc, chunks, count(DISTINCT c) as concepts
 MATCH (i:Instance)-[:FROM_SOURCE]->(s3:Source {document: doc})
 RETURN doc,
@@ -585,8 +585,8 @@ ORDER BY concepts DESC
 ### Find concepts bridging two documents
 
 ```cypher
-MATCH (c:Concept)-[:APPEARS_IN]->(s1:Source {document: "Document A"})
-MATCH (c)-[:APPEARS_IN]->(s2:Source {document: "Document B"})
+MATCH (c:Concept)-[:APPEARS]->(s1:Source {document: "Document A"})
+MATCH (c)-[:APPEARS]->(s2:Source {document: "Document B"})
 MATCH (c)-[:EVIDENCED_BY]->(i1:Instance)-[:FROM_SOURCE]->(s1)
 MATCH (c)-[:EVIDENCED_BY]->(i2:Instance)-[:FROM_SOURCE]->(s2)
 RETURN c.label as bridging_concept,
@@ -597,7 +597,7 @@ RETURN c.label as bridging_concept,
 ### Concept evolution across document chunks
 
 ```cypher
-MATCH (c:Concept {label: "Human Variety"})-[:APPEARS_IN]->(s:Source)
+MATCH (c:Concept {label: "Human Variety"})-[:APPEARS]->(s:Source)
 MATCH (c)-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s)
 RETURN c.label,
        s.document,
@@ -703,7 +703,7 @@ RETURN c
 **Relationships:**
 - `(Concept)-[:EVIDENCED_BY]->(Instance)`
 - `(Instance)-[:FROM_SOURCE]->(Source)`
-- `(Concept)-[:APPEARS_IN]->(Source)`
+- `(Concept)-[:APPEARS]->(Source)`
 - `(Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS {confidence: float}]->(Concept)`
 
 **Indexes:**

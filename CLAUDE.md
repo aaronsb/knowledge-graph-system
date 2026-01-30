@@ -102,7 +102,7 @@ Ways are in `.claude/ways/kg/`.
 ### Graph Data Model
 
 ```cypher
-(:Concept)-[:APPEARS_IN]->(:Source)
+(:Concept)-[:APPEARS]->(:Source)
 (:Concept)-[:EVIDENCED_BY]->(:Instance)
 (:Instance)-[:FROM_SOURCE]->(:Source)
 (:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS]->(:Concept)
