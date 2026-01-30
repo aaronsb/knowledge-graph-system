@@ -435,10 +435,10 @@ async def get_ontology_files(
             WITH DISTINCT s.file_path as file_path
             WHERE file_path IS NOT NULL
             MATCH (src:Source {{document: '{ontology_name}', file_path: file_path}})
-            WITH file_path, count(src) as chunk_count
-            OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: '{ontology_name}', file_path: file_path}})
-            WITH file_path, chunk_count, count(DISTINCT c) as concept_count
-            RETURN file_path, chunk_count, concept_count
+            WITH file_path, count(src) as chunk_count, collect(src.source_id) as source_ids
+            OPTIONAL MATCH (c:Concept)-->(s:Source {{document: '{ontology_name}', file_path: file_path}})
+            WITH file_path, chunk_count, source_ids, count(DISTINCT c) as concept_count
+            RETURN file_path, chunk_count, concept_count, source_ids
             ORDER BY file_path
         """)
 
@@ -446,7 +446,8 @@ async def get_ontology_files(
             OntologyFileInfo(
                 file_path=record['file_path'],
                 chunk_count=record['chunk_count'],
-                concept_count=record['concept_count']
+                concept_count=record['concept_count'],
+                source_ids=record.get('source_ids', []) or []
             )
             for record in (result or [])
         ]

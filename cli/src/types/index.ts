@@ -446,6 +446,7 @@ export interface OntologyFileInfo {
   file_path: string;
   chunk_count: number;
   concept_count: number;
+  source_ids: string[];
 }
 
 export interface OntologyFilesResponse {

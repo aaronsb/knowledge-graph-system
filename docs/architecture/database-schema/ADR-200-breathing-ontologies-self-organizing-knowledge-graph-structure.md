@@ -510,6 +510,31 @@ weighted_exposure = Σ (ingest_events_into_adjacent_ontologies × adjacency_scor
 
 Adjacency is computable from embedding similarity between ontology nodes. An ingest into a neighboring ontology counts more than an ingest into something unrelated. This prevents penalizing an ontology for irrelevant graph activity while holding it accountable when nearby content flows past without connecting.
 
+#### Centroid Recomputation (Weighted Top-K)
+
+After scoring, the breathing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.
+
+**Algorithm:**
+
+1. **Select Elders.** Fetch top-K concepts (K=20-50) by degree centrality within the ontology. These are the load-bearing concepts that define the domain. Uses existing `get_concept_degree_ranking()`.
+
+2. **Compute weighted centroid.** Average the Elder embeddings, weighted by degree (or grounding strength). Uses existing `get_ontology_concept_embeddings()`.
+
+   ```
+   E_ontology = Σ(v_i × M_i) / Σ(M_i)
+   ```
+   where `v_i` is the Elder's embedding and `M_i` is its mass (degree centrality).
+
+3. **Hysteresis check.** Compute cosine similarity between old and new centroids. Only write if drift exceeds threshold (similarity < 0.99). Prevents unnecessary index churn.
+
+4. **Update.** Call existing `update_ontology_embedding()` with the new centroid.
+
+**Why top-K, not all concepts:** A mean of all concepts drifts toward the center of the embedding space as coverage broadens — a "democratic center of gravity" vulnerable to noise. The mass-weighted top-K produces a "meritocratic center of gravity" anchored by the ontology's most established members. At 20-50 vectors, the computation is trivial.
+
+**Bootstrapping:** First call replaces the name-based embedding. Subsequent calls refine. No special first-run path needed.
+
+**Future enhancement:** ADR-070 polarity projection could filter Elders by axis alignment, discarding high-mass "crossroads" concepts that are orthogonal to the domain direction. Not needed for MVP — the naive weighted centroid is sufficient, and crossroads filtering is an optimization to add if drift toward generic concepts is observed in practice.
+
 #### Promotion Candidate Identification
 
 The worker ranks all concepts within each ontology by degree centrality, then evaluates the top-N:

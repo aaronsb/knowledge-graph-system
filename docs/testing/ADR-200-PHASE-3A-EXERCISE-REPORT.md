@@ -13,6 +13,22 @@ Two ontologies created with intentional thematic overlap:
 
 Bridging concepts expected: replication, consistency, WAL, LSM-trees, CockroachDB, Raft consensus.
 
+## Operations Log (Chronological)
+
+1. Created ontologies: `distributed-systems`, `database-architecture` via `kg ontology create`
+2. Ingested 3 seed documents into each ontology (consensus protocols, fault tolerance, distributed storage / storage engines, query optimization, replication) via MCP `ingest` tool with `action="text"` (MCP file allowlist not yet configured)
+3. Scored both ontologies → **Round 1 at epoch 0** (3 docs each, ~21 concepts each)
+4. Ingested 4 more documents into distributed-systems (eventual consistency, service discovery, network partitions, vector clocks) and 3 into database-architecture (indexing, vacuum/bloat, distributed databases)
+5. Scored both → **Round 2 at epoch 7** (7/6 docs, ~44/40 concepts)
+6. Discovered epoch counter bug: `document_ingestion_counter` never incremented by ingestion worker. Fixed by adding `increment_counter('document_ingestion_counter')` call at job completion in `ingestion_worker.py`
+7. Ingested 3 ADR documents into each ontology (ADR-072, ADR-014, ADR-200 into distributed-systems; ADR-016, ADR-024, ADR-040 into database-architecture) — again via `action="text"` workaround
+8. Scored both → **Round 3 at epoch 13** (10/9 docs, ~64/63 concepts)
+9. Configured MCP file allowlist: `kg mcp-config init-allowlist` + `kg mcp-config allow-dir` for project directory
+10. **Reassign:** moved 3 ADR sources (ADR-072, ADR-014, ADR-200) from distributed-systems → database-architecture. Required raw SQL to discover source IDs (gap #245). Re-scored both.
+11. **Split:** created `consensus-theory` ontology, reassigned 2 consensus-related sources from distributed-systems. Scored the new ontology.
+12. **Dissolve:** dissolved `consensus-theory` back into distributed-systems. Verified scores returned to pre-split values.
+13. Checked cross-ontology affinity at each round (3 → 4 → 5 shared concepts)
+
 ## Scoring Progression
 
 ### distributed-systems

@@ -157,6 +157,9 @@ export const ontologyCommand = setCommandHelp(
             console.log(colors.evidence.document(file.file_path));
             console.log(`  ${colors.ui.key('Chunks:')} ${coloredCount(file.chunk_count)}`);
             console.log(`  ${colors.ui.key('Concepts:')} ${coloredCount(file.concept_count)}`);
+            if (file.source_ids?.length) {
+              console.log(`  ${colors.ui.key('Source IDs:')} ${file.source_ids.join(', ')}`);
+            }
             console.log();
           });
           console.log(separator());

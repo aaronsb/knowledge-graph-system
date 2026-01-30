@@ -77,6 +77,7 @@ class OntologyFileInfo(BaseModel):
     file_path: str
     chunk_count: int
     concept_count: int
+    source_ids: List[str] = []
 
 
 class OntologyFilesResponse(BaseModel):
