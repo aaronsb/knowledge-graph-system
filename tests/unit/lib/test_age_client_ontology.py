@@ -349,6 +349,27 @@ class TestEnsureOntologyExists:
             ontology_id = call_args.args[0]
         assert ontology_id.startswith('ont_')
 
+    def test_race_condition_returns_winner(self, mock_age_client):
+        """Concurrent create race returns the winner's node instead of failing."""
+        winner_node = {
+            'ontology_id': 'ont_winner',
+            'name': 'contested',
+            'lifecycle_state': 'active'
+        }
+        # First get returns None (not exists), create raises (race loser),
+        # second get returns the winner's node
+        mock_age_client.get_ontology_node = MagicMock(
+            side_effect=[None, winner_node]
+        )
+        mock_age_client.create_ontology_node = MagicMock(
+            side_effect=Exception("unique constraint violation")
+        )
+
+        result = mock_age_client.ensure_ontology_exists('contested')
+
+        assert result == winner_node
+        assert mock_age_client.get_ontology_node.call_count == 2
+
 
 @pytest.mark.unit
 class TestUpdateOntologyEmbedding:

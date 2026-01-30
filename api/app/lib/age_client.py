@@ -1515,13 +1515,21 @@ class AGEClient:
         except Exception:
             pass  # Default to 0 if metrics unavailable
 
-        return self.create_ontology_node(
-            ontology_id=ontology_id,
-            name=name,
-            description=description,
-            lifecycle_state="active",
-            creation_epoch=creation_epoch
-        )
+        try:
+            return self.create_ontology_node(
+                ontology_id=ontology_id,
+                name=name,
+                description=description,
+                lifecycle_state="active",
+                creation_epoch=creation_epoch
+            )
+        except Exception:
+            # Race condition: another worker created it between our check and create.
+            # Re-fetch the winner's node (same pattern as vocabulary sync races).
+            existing = self.get_ontology_node(name)
+            if existing:
+                return existing
+            raise  # Re-raise if it's a genuine failure, not a race
 
     def update_ontology_embedding(
         self,
