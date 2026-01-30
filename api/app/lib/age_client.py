@@ -1270,7 +1270,8 @@ class AGEClient:
         embedding: Optional[List[float]] = None,
         search_terms: Optional[List[str]] = None,
         lifecycle_state: str = "active",
-        creation_epoch: int = 0
+        creation_epoch: int = 0,
+        created_by: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create an Ontology node in the graph.
@@ -1283,6 +1284,7 @@ class AGEClient:
             search_terms: Alternative names for similarity matching
             lifecycle_state: 'active' | 'pinned' | 'frozen'
             creation_epoch: Global epoch when created
+            created_by: Username of the creating user (ADR-200 Phase 2)
 
         Returns:
             Dictionary with created node properties
@@ -1298,7 +1300,8 @@ class AGEClient:
             embedding: $embedding,
             search_terms: $search_terms,
             lifecycle_state: $lifecycle_state,
-            creation_epoch: $creation_epoch
+            creation_epoch: $creation_epoch,
+            created_by: $created_by
         })
         RETURN o
         """
@@ -1313,7 +1316,8 @@ class AGEClient:
                     "embedding": embedding,
                     "search_terms": search_terms if search_terms else [],
                     "lifecycle_state": lifecycle_state,
-                    "creation_epoch": creation_epoch
+                    "creation_epoch": creation_epoch,
+                    "created_by": created_by
                 },
                 fetch_one=True
             )
@@ -1477,7 +1481,7 @@ class AGEClient:
             logger.warning(f"Failed to create SCOPED_BY edge {source_id} -> {ontology_name}: {e}")
             return False
 
-    def ensure_ontology_exists(self, name: str, description: str = "") -> Dict[str, Any]:
+    def ensure_ontology_exists(self, name: str, description: str = "", created_by: Optional[str] = None) -> Dict[str, Any]:
         """
         Get or create an Ontology node. Used by ingestion pipeline to ensure
         the target ontology exists before creating Source nodes.
@@ -1485,6 +1489,7 @@ class AGEClient:
         Args:
             name: Ontology name
             description: Optional description for new ontologies
+            created_by: Username of the creating user (ADR-200 Phase 2)
 
         Returns:
             Dictionary with ontology node properties
@@ -1521,7 +1526,8 @@ class AGEClient:
                 name=name,
                 description=description,
                 lifecycle_state="active",
-                creation_epoch=creation_epoch
+                creation_epoch=creation_epoch,
+                created_by=created_by
             )
         except Exception:
             # Race condition: another worker created it between our check and create.
@@ -1530,6 +1536,68 @@ class AGEClient:
             if existing:
                 return existing
             raise  # Re-raise if it's a genuine failure, not a race
+
+    def update_ontology_lifecycle(
+        self,
+        name: str,
+        new_state: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update the lifecycle_state of an Ontology node.
+
+        Args:
+            name: Ontology name
+            new_state: Target state ('active', 'pinned', or 'frozen')
+
+        Returns:
+            Dictionary with updated node properties, or None if not found
+
+        Raises:
+            ValueError: If new_state is not a valid lifecycle state
+        """
+        valid_states = {"active", "pinned", "frozen"}
+        if new_state not in valid_states:
+            raise ValueError(f"Invalid lifecycle state '{new_state}'. Must be one of: {valid_states}")
+
+        query = """
+        MATCH (o:Ontology {name: $name})
+        SET o.lifecycle_state = $new_state
+        RETURN o
+        """
+
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"name": name, "new_state": new_state},
+                fetch_one=True
+            )
+            if result:
+                agtype_result = result.get('o')
+                parsed = self._parse_agtype(agtype_result)
+                return parsed.get('properties', {}) if isinstance(parsed, dict) else None
+            return None
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to update Ontology lifecycle for {name}: {e}")
+            return None
+
+    def is_ontology_frozen(self, name: str) -> bool:
+        """
+        Check if an ontology is in the 'frozen' lifecycle state.
+
+        Returns False for nonexistent ontologies (they have no protection).
+
+        Args:
+            name: Ontology name
+
+        Returns:
+            True if the ontology exists and is frozen, False otherwise
+        """
+        node = self.get_ontology_node(name)
+        if node is None:
+            return False
+        return node.get("lifecycle_state") == "frozen"
 
     def update_ontology_embedding(
         self,

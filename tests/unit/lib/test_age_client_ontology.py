@@ -108,6 +108,23 @@ class TestCreateOntologyNode:
         assert params['search_terms'] == []
         assert params['lifecycle_state'] == 'active'
         assert params['creation_epoch'] == 0
+        assert params['created_by'] is None
+
+    def test_create_with_created_by(self, mock_age_client):
+        """created_by parameter is passed to the Cypher query."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            'o': {'properties': {'created_by': 'testuser'}}
+        })
+
+        mock_age_client.create_ontology_node(
+            ontology_id='ont_prov',
+            name='provenance-test',
+            created_by='testuser'
+        )
+
+        call_args = mock_age_client._execute_cypher.call_args
+        params = call_args.kwargs.get('params') or call_args[1].get('params')
+        assert params['created_by'] == 'testuser'
 
     def test_create_failure_raises(self, mock_age_client):
         """Database error raises exception with ontology name."""
@@ -410,3 +427,86 @@ class TestUpdateOntologyEmbedding:
         params = call_args.kwargs.get('params') or call_args[1].get('params')
         assert params['embedding'] == embedding
         assert params['name'] == 'test'
+
+
+@pytest.mark.unit
+class TestUpdateOntologyLifecycle:
+    """Tests for update_ontology_lifecycle() (ADR-200 Phase 2)."""
+
+    def test_update_returns_properties(self, mock_age_client):
+        """Updating lifecycle returns updated node properties."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            'o': {
+                'properties': {
+                    'ontology_id': 'ont_lc',
+                    'name': 'test-ontology',
+                    'lifecycle_state': 'frozen',
+                }
+            }
+        })
+
+        result = mock_age_client.update_ontology_lifecycle('test-ontology', 'frozen')
+
+        assert result is not None
+        assert result['lifecycle_state'] == 'frozen'
+
+    def test_update_not_found_returns_none(self, mock_age_client):
+        """Updating nonexistent ontology returns None."""
+        mock_age_client._execute_cypher = MagicMock(return_value=None)
+
+        result = mock_age_client.update_ontology_lifecycle('ghost', 'frozen')
+
+        assert result is None
+
+    def test_update_invalid_state_raises(self, mock_age_client):
+        """Invalid lifecycle state raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid lifecycle state"):
+            mock_age_client.update_ontology_lifecycle('test', 'invalid_state')
+
+    def test_update_passes_params(self, mock_age_client):
+        """Name and new_state are passed to query."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            'o': {'properties': {}}
+        })
+
+        mock_age_client.update_ontology_lifecycle('my-onto', 'pinned')
+
+        call_args = mock_age_client._execute_cypher.call_args
+        params = call_args.kwargs.get('params') or call_args[1].get('params')
+        assert params['name'] == 'my-onto'
+        assert params['new_state'] == 'pinned'
+
+
+@pytest.mark.unit
+class TestIsOntologyFrozen:
+    """Tests for is_ontology_frozen() (ADR-200 Phase 2)."""
+
+    def test_frozen_returns_true(self, mock_age_client):
+        """Frozen ontology returns True."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'lifecycle_state': 'frozen'
+        })
+
+        assert mock_age_client.is_ontology_frozen('frozen-one') is True
+
+    def test_active_returns_false(self, mock_age_client):
+        """Active ontology returns False."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'lifecycle_state': 'active'
+        })
+
+        assert mock_age_client.is_ontology_frozen('active-one') is False
+
+    def test_nonexistent_returns_false(self, mock_age_client):
+        """Nonexistent ontology returns False (no protection)."""
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+
+        assert mock_age_client.is_ontology_frozen('no-such') is False
+
+    def test_pinned_returns_false(self, mock_age_client):
+        """Pinned ontology returns False (not frozen)."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'lifecycle_state': 'pinned'
+        })
+
+        assert mock_age_client.is_ontology_frozen('pinned-one') is False

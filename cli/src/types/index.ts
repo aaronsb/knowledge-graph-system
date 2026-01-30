@@ -386,6 +386,10 @@ export interface DatabaseHealthResponse {
 }
 
 // Ontology types
+
+// ADR-200 Phase 2: Ontology lifecycle states
+export type LifecycleState = 'active' | 'pinned' | 'frozen';
+
 export interface OntologyItem {
   ontology: string;
   source_count: number;
@@ -396,6 +400,7 @@ export interface OntologyItem {
   lifecycle_state?: string;
   creation_epoch?: number;
   has_embedding?: boolean;
+  created_by?: string;
 }
 
 export interface OntologyListResponse {
@@ -412,6 +417,15 @@ export interface OntologyNodeResponse {
   creation_epoch: number;
   has_embedding: boolean;
   search_terms: string[];
+  created_by?: string;
+}
+
+// ADR-200 Phase 2: Lifecycle state change
+export interface OntologyLifecycleResponse {
+  ontology: string;
+  previous_state: string;
+  new_state: string;
+  success: boolean;
 }
 
 export interface OntologyInfoResponse {

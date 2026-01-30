@@ -24,6 +24,8 @@ from ..models.ontology import (
     OntologyRenameResponse,
     OntologyNodeResponse,
     OntologyCreateRequest,
+    OntologyLifecycleRequest,
+    OntologyLifecycleResponse,
 )
 from api.app.lib.age_client import AGEClient
 
@@ -110,6 +112,7 @@ async def create_ontology(
             description=request.description,
             lifecycle_state="active",
             creation_epoch=creation_epoch,
+            created_by=current_user.username,
         )
 
         # Generate embedding
@@ -137,6 +140,7 @@ async def create_ontology(
             creation_epoch=node.get('creation_epoch', creation_epoch),
             has_embedding=has_embedding,
             search_terms=node.get('search_terms', []),
+            created_by=node.get('created_by'),
         )
 
     except HTTPException:
@@ -204,6 +208,7 @@ async def list_ontologies(
                 lifecycle_state=node.get('lifecycle_state'),
                 creation_epoch=node.get('creation_epoch'),
                 has_embedding=node.get('embedding') is not None,
+                created_by=node.get('created_by'),
             ))
 
         return OntologyListResponse(
@@ -313,6 +318,7 @@ async def get_ontology_info(
                     creation_epoch=node.get('creation_epoch', 0),
                     has_embedding=node.get('embedding') is not None,
                     search_terms=node.get('search_terms', []),
+                    created_by=node.get('created_by'),
                 )
         except Exception as e:
             logger.warning(f"Failed to fetch Ontology node for '{ontology_name}': {e}")
@@ -376,6 +382,7 @@ async def get_ontology_node(
             creation_epoch=node.get('creation_epoch', 0),
             has_embedding=node.get('embedding') is not None,
             search_terms=node.get('search_terms', []),
+            created_by=node.get('created_by'),
         )
 
     except HTTPException:
@@ -450,6 +457,81 @@ async def get_ontology_files(
     except Exception as e:
         logger.error(f"Failed to get ontology files: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get ontology files: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.put("/{ontology_name}/lifecycle", response_model=OntologyLifecycleResponse)
+async def update_ontology_lifecycle(
+    ontology_name: str,
+    request: OntologyLifecycleRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write"))
+):
+    """
+    Update ontology lifecycle state (ADR-200 Phase 2).
+
+    States:
+    - **active**: Normal operation — ingest, rename, delete all allowed
+    - **pinned**: Immune to automated demotion (Phase 3+), otherwise same as active
+    - **frozen**: Read-only — rejects ingest and rename, delete still allowed
+
+    Idempotent: setting a state that's already current returns success (no-op).
+
+    **Authorization:** Requires `ontologies:write` permission
+
+    Args:
+        ontology_name: Name of the ontology
+        request: OntologyLifecycleRequest with target state
+
+    Returns:
+        OntologyLifecycleResponse with previous and new state
+
+    Raises:
+        404: If ontology not found
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found"
+            )
+
+        previous_state = node.get("lifecycle_state", "active")
+        new_state = request.state.value
+
+        # Idempotent: no-op if already in target state
+        if previous_state == new_state:
+            return OntologyLifecycleResponse(
+                ontology=ontology_name,
+                previous_state=previous_state,
+                new_state=new_state,
+                success=True,
+            )
+
+        updated = client.update_ontology_lifecycle(ontology_name, new_state)
+        if not updated:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to update lifecycle state for '{ontology_name}'"
+            )
+
+        logger.info(f"Ontology '{ontology_name}' lifecycle: {previous_state} -> {new_state} (by {current_user.username})")
+
+        return OntologyLifecycleResponse(
+            ontology=ontology_name,
+            previous_state=previous_state,
+            new_state=new_state,
+            success=True,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update ontology lifecycle: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update ontology lifecycle: {str(e)}")
     finally:
         client.close()
 
@@ -689,6 +771,13 @@ async def rename_ontology(
     """
     client = get_age_client()
     try:
+        # ADR-200 Phase 2: Frozen ontologies cannot be renamed
+        if client.is_ontology_frozen(ontology_name):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Ontology '{ontology_name}' is frozen (read-only). Set lifecycle state to 'active' before renaming."
+            )
+
         # Perform rename via AGE client
         try:
             result = client.rename_ontology(ontology_name, request.new_name)

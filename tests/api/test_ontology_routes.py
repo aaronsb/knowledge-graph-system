@@ -366,3 +366,200 @@ class TestGetOntologyInfoRoute:
             )
 
         assert response.status_code == 404
+
+
+# ==========================================================================
+# PUT /ontology/{name}/lifecycle — Lifecycle state changes (ADR-200 Phase 2)
+# ==========================================================================
+
+@pytest.mark.unit
+class TestUpdateOntologyLifecycleRoute:
+    """Tests for PUT /ontology/{name}/lifecycle endpoint."""
+
+    def test_freeze_returns_200(self, api_client, auth_headers_admin):
+        """Freezing an ontology returns 200 with state transition."""
+        client = mock_age_client(
+            get_ontology_node={
+                'ontology_id': 'ont_lc',
+                'name': 'my-domain',
+                'lifecycle_state': 'active',
+            },
+            update_ontology_lifecycle={
+                'ontology_id': 'ont_lc',
+                'name': 'my-domain',
+                'lifecycle_state': 'frozen',
+            }
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.put(
+                "/ontology/my-domain/lifecycle",
+                json={"state": "frozen"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["previous_state"] == "active"
+        assert data["new_state"] == "frozen"
+        assert data["success"] is True
+
+    def test_not_found_returns_404(self, api_client, auth_headers_admin):
+        """Lifecycle change on nonexistent ontology returns 404."""
+        client = mock_age_client()
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.put(
+                "/ontology/ghost/lifecycle",
+                json={"state": "frozen"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 404
+
+    def test_invalid_state_returns_422(self, api_client, auth_headers_admin):
+        """Invalid lifecycle state returns 422 validation error."""
+        client = mock_age_client(
+            get_ontology_node={'ontology_id': 'ont_x', 'lifecycle_state': 'active'}
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.put(
+                "/ontology/test/lifecycle",
+                json={"state": "invalid"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 422
+
+    def test_noop_same_state(self, api_client, auth_headers_admin):
+        """Setting the same state is a no-op (idempotent)."""
+        client = mock_age_client(
+            get_ontology_node={
+                'ontology_id': 'ont_same',
+                'name': 'already-frozen',
+                'lifecycle_state': 'frozen',
+            }
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.put(
+                "/ontology/already-frozen/lifecycle",
+                json={"state": "frozen"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["previous_state"] == "frozen"
+        assert data["new_state"] == "frozen"
+        # update_ontology_lifecycle should not have been called
+        client.update_ontology_lifecycle.assert_not_called()
+
+    def test_requires_auth(self, api_client):
+        """Lifecycle change requires authentication."""
+        response = api_client.put(
+            "/ontology/test/lifecycle",
+            json={"state": "frozen"},
+        )
+        assert response.status_code == 401
+
+
+# ==========================================================================
+# Frozen enforcement (ADR-200 Phase 2)
+# ==========================================================================
+
+@pytest.mark.unit
+class TestFrozenEnforcement:
+    """Tests for frozen ontology enforcement."""
+
+    def test_frozen_rename_rejected(self, api_client, auth_headers_admin):
+        """Renaming a frozen ontology returns 403."""
+        client = mock_age_client()
+        client.is_ontology_frozen = MagicMock(return_value=True)
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/frozen-domain/rename",
+                json={"new_name": "new-name"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 403
+        assert "frozen" in response.json()["detail"].lower()
+
+    def test_active_rename_allowed(self, api_client, auth_headers_admin):
+        """Renaming an active ontology is allowed."""
+        client = mock_age_client()
+        client.is_ontology_frozen = MagicMock(return_value=False)
+        client.rename_ontology = MagicMock(return_value={"sources_updated": 3})
+        client.rename_ontology_node = MagicMock(return_value=True)
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/active-domain/rename",
+                json={"new_name": "new-name"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+
+    def test_frozen_ingest_text_rejected(self, api_client, auth_headers_admin):
+        """Ingesting text into a frozen ontology returns 403."""
+        client = MagicMock()
+        client.is_ontology_frozen = MagicMock(return_value=True)
+        client.close = MagicMock()
+
+        with patch('api.app.lib.age_client.AGEClient', return_value=client):
+            with patch('api.app.routes.ingest.get_job_queue', return_value=MagicMock()):
+                response = api_client.post(
+                    "/ingest/text",
+                    data={"text": "test content", "ontology": "frozen-domain"},
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 403
+        assert "frozen" in response.json()["detail"].lower()
+        client.close.assert_called_once()
+
+    def test_frozen_ingest_file_rejected(self, api_client, auth_headers_admin):
+        """Uploading a file to a frozen ontology returns 403."""
+        client = MagicMock()
+        client.is_ontology_frozen = MagicMock(return_value=True)
+        client.close = MagicMock()
+
+        with patch('api.app.lib.age_client.AGEClient', return_value=client):
+            with patch('api.app.routes.ingest.get_job_queue', return_value=MagicMock()):
+                response = api_client.post(
+                    "/ingest",
+                    data={"ontology": "frozen-domain"},
+                    files={"file": ("test.txt", b"test content", "text/plain")},
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 403
+        assert "frozen" in response.json()["detail"].lower()
+        client.close.assert_called_once()
+
+    def test_created_by_in_node_response(self, api_client, auth_headers_user):
+        """Node response includes created_by field."""
+        client = mock_age_client(
+            get_ontology_node={
+                'ontology_id': 'ont_prov',
+                'name': 'provenance-test',
+                'lifecycle_state': 'active',
+                'creation_epoch': 0,
+                'embedding': None,
+                'search_terms': [],
+                'created_by': 'admin',
+            }
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/provenance-test/node",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        assert response.json()["created_by"] == "admin"

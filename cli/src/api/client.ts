@@ -33,6 +33,8 @@ import {
   OntologyDeleteResponse,
   OntologyRenameResponse,
   OntologyNodeResponse,
+  OntologyLifecycleResponse,
+  LifecycleState,
   SystemStatusResponse,
   BackupRequest,
   BackupResponse,
@@ -953,6 +955,19 @@ export class KnowledgeGraphClient {
    */
   async getOntologyNode(ontologyName: string): Promise<OntologyNodeResponse> {
     const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/node`);
+    return response.data;
+  }
+
+  /**
+   * Update ontology lifecycle state (ADR-200 Phase 2)
+   */
+  async updateOntologyLifecycle(
+    name: string,
+    state: LifecycleState
+  ): Promise<OntologyLifecycleResponse> {
+    const response = await this.client.put(`/ontology/${encodeURIComponent(name)}/lifecycle`, {
+      state,
+    });
     return response.data;
   }
 
