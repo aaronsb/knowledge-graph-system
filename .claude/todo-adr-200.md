@@ -490,3 +490,6 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | Coherence = mean similarity (not 1-diversity) | High coherence = tight domain. Plan said 1-diversity but mean similarity is more intuitive |
 | 2026-01-30 | Exposure half-life 50 epochs | Balances new vs old ontologies — after 50 ingestions, exposure = 0.5 |
 | 2026-01-30 | Reassign batched in 50s, frozen check on source | Key primitive for demotion; refuses moving FROM frozen ontologies |
+| 2026-01-30 | Edge-agnostic SCOPED_BY queries for lifecycle | Phase 3a queries use `(c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)` — lifecycle depends only on the SCOPED_BY infrastructure edge, not on vocabulary or ingestion plumbing edge names like APPEARS |
+| 2026-01-30 | SCOPED_BY added to SYSTEM_TYPES exclusion set | Infrastructure edges should not appear in vocabulary discovery or epistemic measurement |
+| 2026-01-30 | Structural edge misuse tracked as future work (#241) | LLMs could generate SCOPED_BY as vocabulary — detection in integrity checker, healing via SIMILAR_TO replacement at low confidence |
