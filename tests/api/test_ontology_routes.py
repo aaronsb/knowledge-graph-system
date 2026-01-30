@@ -504,6 +504,43 @@ class TestFrozenEnforcement:
 
         assert response.status_code == 200
 
+    def test_frozen_ingest_text_rejected(self, api_client, auth_headers_admin):
+        """Ingesting text into a frozen ontology returns 403."""
+        client = MagicMock()
+        client.is_ontology_frozen = MagicMock(return_value=True)
+        client.close = MagicMock()
+
+        with patch('api.app.lib.age_client.AGEClient', return_value=client):
+            with patch('api.app.routes.ingest.get_job_queue', return_value=MagicMock()):
+                response = api_client.post(
+                    "/ingest/text",
+                    data={"text": "test content", "ontology": "frozen-domain"},
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 403
+        assert "frozen" in response.json()["detail"].lower()
+        client.close.assert_called_once()
+
+    def test_frozen_ingest_file_rejected(self, api_client, auth_headers_admin):
+        """Uploading a file to a frozen ontology returns 403."""
+        client = MagicMock()
+        client.is_ontology_frozen = MagicMock(return_value=True)
+        client.close = MagicMock()
+
+        with patch('api.app.lib.age_client.AGEClient', return_value=client):
+            with patch('api.app.routes.ingest.get_job_queue', return_value=MagicMock()):
+                response = api_client.post(
+                    "/ingest",
+                    data={"ontology": "frozen-domain"},
+                    files={"file": ("test.txt", b"test content", "text/plain")},
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 403
+        assert "frozen" in response.json()["detail"].lower()
+        client.close.assert_called_once()
+
     def test_created_by_in_node_response(self, api_client, auth_headers_user):
         """Node response includes created_by field."""
         client = mock_age_client(

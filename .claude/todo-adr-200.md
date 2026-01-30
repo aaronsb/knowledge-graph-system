@@ -211,9 +211,10 @@ Concepts are **global** (not scoped to ontologies). Freezing protects the ontolo
   - [x] CLI: `kg ontology lifecycle <name> <state>` subcommand, `Created By` in info
   - [x] MCP: `lifecycle` action on ontology tool
 
-- [x] **Tests** — 56 passed (35 existing + 21 new)
+- [x] **Tests** — 58 passed (35 existing + 23 new)
   - [x] Unit: `TestUpdateOntologyLifecycle`, `TestIsOntologyFrozen`, `created_by` in create
   - [x] Route: lifecycle 200/404/422/no-op/401, frozen rename 403, created_by in node response
+  - [x] Route: frozen ingest text 403, frozen ingest file 403 (+ AGEClient.close() assertion)
 
 ### Implementation order & dependencies
 
@@ -311,3 +312,5 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | FUSE needs no changes for client exposure | FUSE only uses ontology name for directory listing — ignores graph node properties |
 | 2026-01-30 | Frozen = source boundary protection, not concept isolation | Concepts are global; freezing blocks new Sources scoped to the ontology, not cross-ontology edges pointing at its concepts |
 | 2026-01-30 | Fallback principle for frozen ontologies | If pipeline ever needs to create within a frozen ontology, fall back to requesting (active) ontology rather than failing |
+| 2026-01-30 | AGEClient try/finally in ingest routes (code review) | Pre-existing resource leak pattern; fixed in our code with try/finally + close() |
+| 2026-01-30 | Migration 045 updates `available_actions` array | Code review caught missing UPDATE to `kg_auth.resources` — added idempotent SET |

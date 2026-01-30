@@ -7,6 +7,11 @@
 
 BEGIN;
 
+-- Update ontologies resource to include 'write' action (idempotent - sets the value)
+UPDATE kg_auth.resources
+SET available_actions = ARRAY['read', 'create', 'delete', 'write']
+WHERE resource_type = 'ontologies';
+
 -- Curator role: can change ontology lifecycle state
 INSERT INTO kg_auth.role_permissions (role_name, resource_type, action, scope_type, granted)
 SELECT 'curator', 'ontologies', 'write', 'global', TRUE

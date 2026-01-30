@@ -182,115 +182,118 @@ async def ingest_document(
 
     queue = get_job_queue()
     age_client = AGEClient()
-    hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
+    try:
+        hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
-    # ADR-200 Phase 2: Frozen ontologies reject ingestion
-    if age_client.is_ontology_frozen(ontology):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
+        # ADR-200 Phase 2: Frozen ontologies reject ingestion
+        if age_client.is_ontology_frozen(ontology):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
+            )
+
+        # Read file content
+        content = await file.read()
+
+        # ADR-033: Multimodal image ingestion
+        # If this is an image, use vision AI to describe it, then process description as text
+        if _is_image_file(file.filename):
+            from ..lib.ai_providers import get_provider, IMAGE_DESCRIPTION_PROMPT
+
+            logger.info(f"Detected image file: {file.filename}. Using vision AI for description...")
+
+            try:
+                provider = get_provider()
+                description_response = provider.describe_image(
+                    image_data=content,
+                    prompt=IMAGE_DESCRIPTION_PROMPT
+                )
+
+                # Replace image bytes with text description
+                original_size = len(content)
+                content = description_response["text"].encode('utf-8')
+                vision_tokens = description_response.get("tokens", 0)
+
+                logger.info(
+                    f"Image described successfully: {original_size} bytes → "
+                    f"{len(content)} bytes description ({vision_tokens} tokens)"
+                )
+
+                # TODO Phase 2: Store vision_tokens for cost tracking in job analysis
+                # For now, vision tokens will be counted in the extraction phase
+
+            except Exception as e:
+                logger.error(f"Failed to describe image: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Image description failed: {str(e)}"
+                )
+
+        # Hash content for deduplication
+        content_hash = hasher.hash_content(content)
+
+        # Check for duplicates
+        existing_job = hasher.check_duplicate(content_hash, ontology)
+
+        if existing_job:
+            allowed, reason = hasher.should_allow_reingestion(existing_job, force)
+
+            if not allowed:
+                # Return duplicate info
+                duplicate_info = hasher.get_duplicate_info(existing_job)
+                return JSONResponse(
+                    status_code=200,  # Not an error, just informational
+                    content=duplicate_info
+                )
+
+        # Prepare job data
+        use_filename = filename or file.filename or "uploaded_document"
+
+        # Build options
+        options = IngestionOptions(
+            target_words=target_words,
+            min_words=min_words,
+            max_words=max_words,
+            overlap_words=overlap_words
         )
 
-    # Read file content
-    content = await file.read()
+        job_data = {
+            "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
+            "content_hash": content_hash,
+            "ontology": ontology,
+            "filename": use_filename,
+            "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
+            "username": current_user.username,  # For Garage metadata (FUSE support)
+            "processing_mode": processing_mode,
+            "options": {
+                "target_words": options.target_words,
+                "min_words": options.get_min_words(),
+                "max_words": options.get_max_words(),
+                "overlap_words": options.overlap_words
+            },
+            # ADR-051: Source metadata (optional, best-effort provenance)
+            "source_type": source_type,
+            "source_path": source_path,
+            "source_hostname": source_hostname
+        }
 
-    # ADR-033: Multimodal image ingestion
-    # If this is an image, use vision AI to describe it, then process description as text
-    if _is_image_file(file.filename):
-        from ..lib.ai_providers import get_provider, IMAGE_DESCRIPTION_PROMPT
+        # Enqueue job (status: "pending")
+        job_id = queue.enqueue("ingestion", job_data)
 
-        logger.info(f"Detected image file: {file.filename}. Using vision AI for description...")
+        # ADR-014: Trigger analysis instead of immediate execution
+        background_tasks.add_task(run_job_analysis, job_id, auto_approve)
 
-        try:
-            provider = get_provider()
-            description_response = provider.describe_image(
-                image_data=content,
-                prompt=IMAGE_DESCRIPTION_PROMPT
-            )
-
-            # Replace image bytes with text description
-            original_size = len(content)
-            content = description_response["text"].encode('utf-8')
-            vision_tokens = description_response.get("tokens", 0)
-
-            logger.info(
-                f"Image described successfully: {original_size} bytes → "
-                f"{len(content)} bytes description ({vision_tokens} tokens)"
-            )
-
-            # TODO Phase 2: Store vision_tokens for cost tracking in job analysis
-            # For now, vision tokens will be counted in the extraction phase
-
-        except Exception as e:
-            logger.error(f"Failed to describe image: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Image description failed: {str(e)}"
-            )
-
-    # Hash content for deduplication
-    content_hash = hasher.hash_content(content)
-
-    # Check for duplicates
-    existing_job = hasher.check_duplicate(content_hash, ontology)
-
-    if existing_job:
-        allowed, reason = hasher.should_allow_reingestion(existing_job, force)
-
-        if not allowed:
-            # Return duplicate info
-            duplicate_info = hasher.get_duplicate_info(existing_job)
-            return JSONResponse(
-                status_code=200,  # Not an error, just informational
-                content=duplicate_info
-            )
-
-    # Prepare job data
-    use_filename = filename or file.filename or "uploaded_document"
-
-    # Build options
-    options = IngestionOptions(
-        target_words=target_words,
-        min_words=min_words,
-        max_words=max_words,
-        overlap_words=overlap_words
-    )
-
-    job_data = {
-        "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
-        "content_hash": content_hash,
-        "ontology": ontology,
-        "filename": use_filename,
-        "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
-        "username": current_user.username,  # For Garage metadata (FUSE support)
-        "processing_mode": processing_mode,
-        "options": {
-            "target_words": options.target_words,
-            "min_words": options.get_min_words(),
-            "max_words": options.get_max_words(),
-            "overlap_words": options.overlap_words
-        },
-        # ADR-051: Source metadata (optional, best-effort provenance)
-        "source_type": source_type,
-        "source_path": source_path,
-        "source_hostname": source_hostname
-    }
-
-    # Enqueue job (status: "pending")
-    job_id = queue.enqueue("ingestion", job_data)
-
-    # ADR-014: Trigger analysis instead of immediate execution
-    background_tasks.add_task(run_job_analysis, job_id, auto_approve)
-
-    # Return job info
-    status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
-    return JobSubmitResponse(
-        job_id=job_id,
-        status=status_msg,
-        content_hash=content_hash,
-        position=None,  # Phase 1: no queue position tracking
-        message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
-    )
+        # Return job info
+        status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
+        return JobSubmitResponse(
+            job_id=job_id,
+            status=status_msg,
+            content_hash=content_hash,
+            position=None,  # Phase 1: no queue position tracking
+            message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
+        )
+    finally:
+        age_client.close()
 
 
 @router.post(
@@ -358,69 +361,72 @@ async def ingest_text(
 
     queue = get_job_queue()
     age_client = AGEClient()
-    hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
+    try:
+        hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
-    # ADR-200 Phase 2: Frozen ontologies reject ingestion
-    if age_client.is_ontology_frozen(ontology):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
-        )
-
-    # Convert text to bytes
-    content = text.encode('utf-8')
-
-    # Hash for deduplication
-    content_hash = hasher.hash_content(content)
-
-    # Check duplicates
-    existing_job = hasher.check_duplicate(content_hash, ontology)
-
-    if existing_job:
-        allowed, reason = hasher.should_allow_reingestion(existing_job, force)
-
-        if not allowed:
-            duplicate_info = hasher.get_duplicate_info(existing_job)
-            return JSONResponse(
-                status_code=200,
-                content=duplicate_info
+        # ADR-200 Phase 2: Frozen ontologies reject ingestion
+        if age_client.is_ontology_frozen(ontology):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
             )
 
-    # Prepare job
-    use_filename = filename or "text_input"
+        # Convert text to bytes
+        content = text.encode('utf-8')
 
-    job_data = {
-        "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
-        "content_hash": content_hash,
-        "ontology": ontology,
-        "filename": use_filename,
-        "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
-        "username": current_user.username,  # For Garage metadata (FUSE support)
-        "processing_mode": processing_mode,
-        "options": {
-            "target_words": target_words,
-            "min_words": int(target_words * 0.8),
-            "max_words": int(target_words * 1.5),
-            "overlap_words": overlap_words
-        },
-        # ADR-051: Source metadata (optional, best-effort provenance)
-        "source_type": source_type,
-        "source_path": source_path,
-        "source_hostname": source_hostname
-    }
+        # Hash for deduplication
+        content_hash = hasher.hash_content(content)
 
-    # Enqueue job (status: "pending")
-    job_id = queue.enqueue("ingestion", job_data)
+        # Check duplicates
+        existing_job = hasher.check_duplicate(content_hash, ontology)
 
-    # ADR-014: Trigger analysis instead of immediate execution
-    background_tasks.add_task(run_job_analysis, job_id, auto_approve)
+        if existing_job:
+            allowed, reason = hasher.should_allow_reingestion(existing_job, force)
 
-    # Return job info
-    status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
-    return JobSubmitResponse(
-        job_id=job_id,
-        status=status_msg,
-        content_hash=content_hash,
-        position=None,
-        message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
-    )
+            if not allowed:
+                duplicate_info = hasher.get_duplicate_info(existing_job)
+                return JSONResponse(
+                    status_code=200,
+                    content=duplicate_info
+                )
+
+        # Prepare job
+        use_filename = filename or "text_input"
+
+        job_data = {
+            "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
+            "content_hash": content_hash,
+            "ontology": ontology,
+            "filename": use_filename,
+            "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
+            "username": current_user.username,  # For Garage metadata (FUSE support)
+            "processing_mode": processing_mode,
+            "options": {
+                "target_words": target_words,
+                "min_words": int(target_words * 0.8),
+                "max_words": int(target_words * 1.5),
+                "overlap_words": overlap_words
+            },
+            # ADR-051: Source metadata (optional, best-effort provenance)
+            "source_type": source_type,
+            "source_path": source_path,
+            "source_hostname": source_hostname
+        }
+
+        # Enqueue job (status: "pending")
+        job_id = queue.enqueue("ingestion", job_data)
+
+        # ADR-014: Trigger analysis instead of immediate execution
+        background_tasks.add_task(run_job_analysis, job_id, auto_approve)
+
+        # Return job info
+        status_msg = "pending (analyzing)" if not auto_approve else "pending (analyzing, will auto-approve)"
+        return JobSubmitResponse(
+            job_id=job_id,
+            status=status_msg,
+            content_hash=content_hash,
+            position=None,
+            message="Job queued. Analysis running. Poll /jobs/{job_id} for status and cost estimates."
+        )
+    finally:
+        age_client.close()
