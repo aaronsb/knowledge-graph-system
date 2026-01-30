@@ -188,22 +188,12 @@ async def list_ontologies(
             stats_map[record['ontology']] = record
 
         # ADR-200: Ontology graph nodes are the source of truth.
-        # This includes empty ontologies created via directed growth.
-        node_map = {}
-        try:
-            nodes = client.list_ontology_nodes()
-            for n in nodes:
-                node_map[n['name']] = n
-        except Exception as e:
-            logger.warning(f"Failed to fetch Ontology nodes: {e}")
+        # No fallback to source-only ontologies — all ontologies have graph nodes.
+        nodes = client.list_ontology_nodes()
 
-        # Merge: all graph nodes + any source-only ontologies without nodes
-        seen = set()
         ontologies = []
-
-        # Graph nodes first (source of truth)
-        for name, node in sorted(node_map.items()):
-            seen.add(name)
+        for node in sorted(nodes, key=lambda n: n['name']):
+            name = node['name']
             stats = stats_map.get(name)
             ontologies.append(OntologyItem(
                 ontology=name,
@@ -215,16 +205,6 @@ async def list_ontologies(
                 creation_epoch=node.get('creation_epoch'),
                 has_embedding=node.get('embedding') is not None,
             ))
-
-        # Source-only ontologies (legacy — no graph node yet)
-        for name, stats in sorted(stats_map.items()):
-            if name not in seen:
-                ontologies.append(OntologyItem(
-                    ontology=name,
-                    source_count=stats['source_count'],
-                    file_count=stats['file_count'],
-                    concept_count=stats['concept_count'],
-                ))
 
         return OntologyListResponse(
             count=len(ontologies),

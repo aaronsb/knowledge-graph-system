@@ -10,11 +10,11 @@ class OntologyItem(BaseModel):
     source_count: int
     file_count: int
     concept_count: int
-    # ADR-200: Graph node properties
-    ontology_id: Optional[str] = None
-    lifecycle_state: Optional[str] = None
-    creation_epoch: Optional[int] = None
-    has_embedding: Optional[bool] = None
+    # ADR-200: Graph node properties (always present — no source-only fallback)
+    ontology_id: str
+    lifecycle_state: str
+    creation_epoch: int
+    has_embedding: bool
 
 
 class OntologyListResponse(BaseModel):
