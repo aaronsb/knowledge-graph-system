@@ -112,6 +112,9 @@ export const ontologyCommand = setCommandHelp(
             console.log(`  ${colors.stats.label('State:')} ${info.node.lifecycle_state}`);
             console.log(`  ${colors.stats.label('Epoch:')} ${coloredCount(info.node.creation_epoch)}`);
             console.log(`  ${colors.stats.label('Embedding:')} ${info.node.has_embedding ? colors.status.success('yes') : colors.status.dim('no')}`);
+            if (info.node.created_by) {
+              console.log(`  ${colors.stats.label('Created By:')} ${info.node.created_by}`);
+            }
             if (info.node.description) {
               console.log(`  ${colors.stats.label('Description:')} ${info.node.description}`);
             }
@@ -194,6 +197,37 @@ export const ontologyCommand = setCommandHelp(
             console.error(colors.status.dim('\n  Hint: Use "kg ontology info ' + name + '" to see the existing ontology'));
           }
 
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('lifecycle')
+      .description('Change ontology lifecycle state (ADR-200 Phase 2). States: active (normal), pinned (immune to demotion), frozen (read-only — rejects ingest and rename).')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .argument('<state>', 'Target state: active, pinned, or frozen')
+      .action(async (name, state) => {
+        const validStates = ['active', 'pinned', 'frozen'];
+        if (!validStates.includes(state)) {
+          console.error(colors.status.error(`✗ Invalid state "${state}". Must be one of: ${validStates.join(', ')}`));
+          process.exit(1);
+        }
+
+        try {
+          const client = createClientFromEnv();
+          const result = await client.updateOntologyLifecycle(name, state as any);
+
+          console.log('\n' + separator());
+          if (result.previous_state === result.new_state) {
+            console.log(colors.status.dim(`  Ontology "${name}" is already ${result.new_state} (no-op)`));
+          } else {
+            console.log(colors.status.success(`✓ Ontology "${name}" lifecycle: ${result.previous_state} → ${result.new_state}`));
+          }
+          console.log(separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to update ontology lifecycle'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }
       })

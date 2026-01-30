@@ -420,8 +420,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'create', 'rename', 'delete'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state)',
             },
             ontology_name: {
               type: 'string',
@@ -434,6 +434,11 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
             new_name: {
               type: 'string',
               description: 'New ontology name (required for rename action)',
+            },
+            lifecycle_state: {
+              type: 'string',
+              enum: ['active', 'pinned', 'frozen'],
+              description: 'Target lifecycle state (required for lifecycle action)',
             },
             force: {
               type: 'boolean',
@@ -1389,6 +1394,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const result = await client.renameOntology(
               toolArgs.ontology_name as string,
               toolArgs.new_name as string
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'lifecycle': {
+            const result = await client.updateOntologyLifecycle(
+              toolArgs.ontology_name as string,
+              toolArgs.lifecycle_state as any
             );
             return {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

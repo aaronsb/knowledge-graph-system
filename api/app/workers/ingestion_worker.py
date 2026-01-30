@@ -301,8 +301,12 @@ def run_ingestion_worker(
 
         # ADR-200: Ensure Ontology node exists before creating Source nodes
         try:
-            ont_node = age_client.ensure_ontology_exists(ontology)
+            ont_node = age_client.ensure_ontology_exists(ontology, created_by=job_data.get("username"))
             logger.debug(f"Ontology node ensured for '{ontology}'")
+
+            # ADR-200 Phase 2: Defense-in-depth — reject if frozen between submission and execution
+            if ont_node and ont_node.get("lifecycle_state") == "frozen":
+                raise Exception(f"Ontology '{ontology}' is frozen (read-only). Job rejected. Set lifecycle state to 'active' before ingesting.")
 
             # Generate embedding for ontology node if missing
             if ont_node and not ont_node.get("embedding") and provider:

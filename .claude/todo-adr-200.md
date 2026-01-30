@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** `adr-200-client-exposure` (prev: `adr-200-phase-1` → merged PR #237)
+**Branch:** `adr-200-phase-2` (prev: `adr-200-client-exposure` → merged PR #238)
 **Started:** 2026-01-29
-**Status:** Phase 1 Internal Box merged. Client Exposure in progress.
+**Status:** Phase 1 complete (PR #237, #238). Phase 2 in progress.
 
 ---
 
@@ -145,19 +145,111 @@ Key files: `api/app/models/ontology.py` (6 models), `api/app/routes/ontology.py`
 - [x] `POST /ontology/` uses `ontologies:create` — already granted to curator+
 - [x] GET endpoints use `CurrentUser` only — no permission check needed
 - [x] No new migration required for client exposure phase
-- [ ] Phase 2: may need `write`/`update` action for `PUT /ontology/{name}/lifecycle`
+- [x] Phase 2: `ontologies:write` action added in migration 045 for `PUT /ontology/{name}/lifecycle`
+
+---
+
+## Phase 2: Lifecycle States, Write-Access Control & Owner Provenance
+
+**Branch:** `adr-200-phase-2`
+**Plan:** `~/.claude/plans/enumerated-booping-whistle.md`
+
+### Lifecycle state semantics
+
+| State | Ingest | Rename | Delete | Demotion (Phase 3+) |
+|-------|--------|--------|--------|---------------------|
+| `active` | yes | yes | yes | eligible |
+| `pinned` | yes | yes | yes | **immune** |
+| `frozen` | **no** | **no** | yes | immune |
+
+`pinned` has no enforcement in Phase 2 — marker for Phase 3's breathing worker.
+
+### Frozen semantics — source boundary protection
+
+Concepts are **global** (not scoped to ontologies). Freezing protects the ontology's *source boundary*, not concepts themselves.
+
+- **Blocked:** ingesting INTO frozen ontology (new Sources), renaming it
+- **Not blocked:** cross-ontology edges pointing at concepts in frozen ontologies, concept-level relationships (IMPLIES/SUPPORTS/CONTRADICTS), reads/queries
+- **Fallback principle:** if future pipeline logic ever needs to create a concept within a frozen ontology, fall back to the requesting (active) ontology instead of failing
+
+### Tasks
+
+- [x] **Migration 045** — `schema/migrations/045_ontology_lifecycle_permissions.sql`
+  - [x] Add `write` to `ontologies` resource `available_actions` array
+  - [x] Grant `ontologies:write` to curator, admin, platform_admin
+  - [x] Follow migration 040 pattern (WHERE NOT EXISTS idempotency)
+
+- [x] **AGE client lifecycle methods** — `api/app/lib/age_client.py`
+  - [x] `update_ontology_lifecycle(name, new_state)` — SET lifecycle_state, validate {active, pinned, frozen}
+  - [x] `is_ontology_frozen(name)` — convenience check, False for nonexistent
+
+- [x] **Owner provenance** — `created_by` on Ontology nodes
+  - [x] `created_by: Optional[str]` param on `create_ontology_node()` + `ensure_ontology_exists()`
+  - [x] Route: `POST /ontology/` passes `current_user.username`
+  - [x] Worker: passes `job_data.get('username')`
+  - [x] Models: `created_by` field on `OntologyNodeResponse`, `OntologyItem`
+
+- [x] **Pydantic models** — `api/app/models/ontology.py`
+  - [x] `LifecycleState` enum: active | pinned | frozen
+  - [x] `OntologyLifecycleRequest(state: LifecycleState)`
+  - [x] `OntologyLifecycleResponse(ontology, previous_state, new_state, success)`
+
+- [x] **PUT /ontology/{name}/lifecycle route** — `api/app/routes/ontology.py`
+  - [x] `require_permission("ontologies", "write")`
+  - [x] 404 if not found, idempotent no-op if already in target state
+  - [x] Log transition with username
+
+- [x] **Frozen enforcement** — two-layer
+  - [x] Layer 1 (routes): `POST /ingest` + `POST /ingest/text` check target ontology → 403
+  - [x] Layer 2 (worker): after `ensure_ontology_exists()`, check lifecycle → fail job
+  - [x] Rename: check lifecycle before proceeding → 403
+  - [x] Cross-ontology concept matching UNAFFECTED by frozen state
+
+- [x] **CLI & MCP**
+  - [x] Types: `LifecycleState`, `OntologyLifecycleResponse`, `created_by` fields
+  - [x] Client: `updateOntologyLifecycle(name, state)` method
+  - [x] CLI: `kg ontology lifecycle <name> <state>` subcommand, `Created By` in info
+  - [x] MCP: `lifecycle` action on ontology tool
+
+- [x] **Tests** — 56 passed (35 existing + 21 new)
+  - [x] Unit: `TestUpdateOntologyLifecycle`, `TestIsOntologyFrozen`, `created_by` in create
+  - [x] Route: lifecycle 200/404/422/no-op/401, frozen rename 403, created_by in node response
+
+### Implementation order & dependencies
+
+```
+1. Migration 045          (standalone)        ─┐
+2. AGE client methods     (standalone)        ─┤
+3. Owner provenance       (depends on 2)       │
+4. Pydantic models        (standalone)        ─┤─→ 9. Update tracker (final)
+5. PUT lifecycle route    (depends on 2, 4)    │
+6. Frozen enforcement     (depends on 2)       │
+7. CLI & MCP              (depends on 5)       │
+8. Tests                  (alongside each)    ─┘
+```
+
+### Files touched
+
+| File | Change |
+|------|--------|
+| `schema/migrations/045_ontology_lifecycle_permissions.sql` | **NEW** |
+| `api/app/lib/age_client.py` | +2 methods, `created_by` param |
+| `api/app/models/ontology.py` | enum + 2 models + `created_by` fields |
+| `api/app/routes/ontology.py` | PUT endpoint + frozen check in rename |
+| `api/app/routes/ingest.py` | frozen checks (2 spots) |
+| `api/app/workers/ingestion_worker.py` | frozen check + `created_by` passthrough |
+| `cli/src/types/index.ts` | types |
+| `cli/src/api/client.ts` | client method |
+| `cli/src/cli/ontology.ts` | subcommand + info display |
+| `cli/src/mcp-server.ts` | lifecycle action |
+| `tests/unit/lib/test_age_client_ontology.py` | ~55 lines |
+| `tests/api/test_ontology_routes.py` | ~70 lines |
 
 ---
 
 ## Later Phases (Not This Branch)
 
 Tracked here for awareness. Each gets its own branch + todo.
-
-### Phase 2: Lifecycle States & Directed Growth
-- `lifecycle_state` property: active | pinned | frozen
-- `PUT /ontology/{name}/lifecycle` endpoint
-- Frozen ontologies reject new SCOPED_BY during ingestion
-- Pinned ontologies exempt from demotion
 
 ### Phase 3: Breathing Worker
 - New background worker: `ontology_breathing_worker`
@@ -217,3 +309,5 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | MCP rename action is a pre-existing gap to fix | Discovered during codebase exploration — CLI has it, MCP doesn't |
 | 2026-01-30 | List endpoint: graph nodes are source of truth | Empty ontologies (directed growth) now appear in list — Source-only ontologies still included as fallback |
 | 2026-01-30 | FUSE needs no changes for client exposure | FUSE only uses ontology name for directory listing — ignores graph node properties |
+| 2026-01-30 | Frozen = source boundary protection, not concept isolation | Concepts are global; freezing blocks new Sources scoped to the ontology, not cross-ontology edges pointing at its concepts |
+| 2026-01-30 | Fallback principle for frozen ontologies | If pipeline ever needs to create within a frozen ontology, fall back to requesting (active) ontology rather than failing |

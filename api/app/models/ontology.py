@@ -1,7 +1,15 @@
 """Pydantic models for ontology operations"""
 
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional
+
+
+class LifecycleState(str, Enum):
+    """Ontology lifecycle states (ADR-200 Phase 2)"""
+    active = "active"
+    pinned = "pinned"
+    frozen = "frozen"
 
 
 class OntologyItem(BaseModel):
@@ -15,6 +23,7 @@ class OntologyItem(BaseModel):
     lifecycle_state: str
     creation_epoch: int
     has_embedding: bool
+    created_by: Optional[str] = None
 
 
 class OntologyListResponse(BaseModel):
@@ -32,6 +41,20 @@ class OntologyNodeResponse(BaseModel):
     creation_epoch: int = 0
     has_embedding: bool = False
     search_terms: List[str] = []
+    created_by: Optional[str] = None
+
+
+class OntologyLifecycleRequest(BaseModel):
+    """Request to change ontology lifecycle state (ADR-200 Phase 2)"""
+    state: LifecycleState = Field(..., description="Target lifecycle state")
+
+
+class OntologyLifecycleResponse(BaseModel):
+    """Response from lifecycle state change"""
+    ontology: str
+    previous_state: str
+    new_state: str
+    success: bool
 
 
 class OntologyCreateRequest(BaseModel):

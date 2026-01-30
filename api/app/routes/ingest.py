@@ -184,6 +184,13 @@ async def ingest_document(
     age_client = AGEClient()
     hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
 
+    # ADR-200 Phase 2: Frozen ontologies reject ingestion
+    if age_client.is_ontology_frozen(ontology):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
+        )
+
     # Read file content
     content = await file.read()
 
@@ -352,6 +359,13 @@ async def ingest_text(
     queue = get_job_queue()
     age_client = AGEClient()
     hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
+
+    # ADR-200 Phase 2: Frozen ontologies reject ingestion
+    if age_client.is_ontology_frozen(ontology):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
+        )
 
     # Convert text to bytes
     content = text.encode('utf-8')
