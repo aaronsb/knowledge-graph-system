@@ -293,6 +293,115 @@ class OntologyScorer:
         return all_scores
 
     # =========================================================================
+    # Centroid Recomputation
+    # See ADR-200 §Phase 3 "Centroid Recomputation (Weighted Top-K)"
+    # =========================================================================
+
+    def recompute_centroid(
+        self,
+        ontology_name: str,
+        top_k: int = 30,
+        drift_threshold: float = 0.99,
+    ) -> bool:
+        """
+        Recompute ontology embedding as mass-weighted centroid of top-K concepts.
+
+        Replaces the initial name-based embedding with one reflecting the
+        ontology's actual semantic position. Only writes if the centroid has
+        drifted beyond the threshold (hysteresis check).
+
+        Args:
+            ontology_name: Ontology to recompute
+            top_k: Number of top concepts by degree to use
+            drift_threshold: Cosine similarity threshold — skip write if above
+
+        Returns:
+            True if embedding was updated, False if skipped or insufficient data
+        """
+        # 1. Get top concepts by degree (Elder selection)
+        ranking = self.client.get_concept_degree_ranking(ontology_name, limit=top_k)
+        if not ranking or len(ranking) < 2:
+            logger.debug(f"Centroid skip for {ontology_name}: insufficient concepts")
+            return False
+
+        # 2. Get their embeddings
+        elder_ids = {r["concept_id"] for r in ranking}
+        all_embeddings = self.client.get_ontology_concept_embeddings(
+            ontology_name, limit=top_k * 2  # fetch extra in case of filter
+        )
+
+        # Match embeddings to ranked concepts
+        elders = []
+        for emb_data in all_embeddings:
+            if emb_data["concept_id"] in elder_ids:
+                embedding = emb_data.get("embedding")
+                if embedding is not None:
+                    # Find the degree for weighting
+                    degree = next(
+                        (r["degree"] for r in ranking
+                         if r["concept_id"] == emb_data["concept_id"]),
+                        1
+                    )
+                    elders.append((np.array(embedding, dtype=np.float64), degree))
+
+        if len(elders) < 2:
+            logger.debug(f"Centroid skip for {ontology_name}: insufficient embeddings")
+            return False
+
+        # 3. Weighted average by degree
+        weighted_sum = np.zeros(len(elders[0][0]), dtype=np.float64)
+        total_weight = 0.0
+
+        for embedding, degree in elders:
+            weight = float(max(degree, 1))
+            weighted_sum += embedding * weight
+            total_weight += weight
+
+        new_centroid = weighted_sum / total_weight
+        norm = np.linalg.norm(new_centroid)
+        if norm > 0:
+            new_centroid = new_centroid / norm
+
+        # 4. Hysteresis: check drift from current embedding
+        current_node = self.client.get_ontology_node(ontology_name)
+        if current_node:
+            current_emb = current_node.get("embedding")
+            if current_emb is not None:
+                current_vec = np.array(current_emb, dtype=np.float64)
+                similarity = float(np.dot(current_vec, new_centroid))
+                if similarity > drift_threshold:
+                    logger.debug(
+                        f"Centroid skip for {ontology_name}: "
+                        f"drift {1-similarity:.6f} below threshold"
+                    )
+                    return False
+
+        # 5. Update
+        self.client.update_ontology_embedding(ontology_name, new_centroid.tolist())
+        logger.info(f"Centroid updated for '{ontology_name}' from {len(elders)} concepts")
+        return True
+
+    def recompute_all_centroids(self, top_k: int = 30) -> int:
+        """
+        Recompute centroids for all active ontologies.
+
+        Returns:
+            Number of ontologies whose centroids were updated
+        """
+        nodes = self.client.list_ontology_nodes()
+        updated = 0
+        for node in nodes:
+            name = node.get("name")
+            if not name:
+                continue
+            try:
+                if self.recompute_centroid(name, top_k=top_k):
+                    updated += 1
+            except Exception as e:
+                logger.error(f"Centroid recomputation failed for {name}: {e}")
+        return updated
+
+    # =========================================================================
     # Helpers
     # =========================================================================
 
