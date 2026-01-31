@@ -13,8 +13,7 @@ from fastapi.responses import Response
 from typing import Optional
 
 from ..lib.age_client import AGEClient
-from ..lib.garage_client import get_garage_client
-from ..lib.garage import get_source_storage
+from ..lib.garage import get_image_storage, get_source_storage
 from ..dependencies.auth import get_current_active_user
 from ..models.auth import UserInDB
 
@@ -232,8 +231,8 @@ async def get_source_image(
 
     # Step 3: Download image from Garage
     try:
-        garage_client = get_garage_client()
-        image_bytes = garage_client.download_image(storage_key)
+        images = get_image_storage()
+        image_bytes = images.download(storage_key)
 
         logger.info(f"Retrieved image for {source_id}: {len(image_bytes)} bytes")
 

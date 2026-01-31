@@ -1,11 +1,11 @@
 """
 Garage projection storage tests (ADR-079).
 
-Tests for projection storage operations in GarageClient:
-- store_projection
-- get_projection
-- get_projection_history
-- delete_projection
+Tests for ProjectionStorageService:
+- store
+- get
+- get_history
+- delete
 """
 
 import pytest
@@ -53,58 +53,60 @@ def mock_s3_client():
 
 
 @pytest.fixture
-def mock_garage_client(mock_s3_client):
-    """Provide GarageClient with mocked S3 client."""
-    with patch('api.app.lib.garage_client._get_garage_credentials') as mock_creds:
+def projection_service(mock_s3_client):
+    """Provide ProjectionStorageService with mocked S3 client."""
+    with patch('api.app.lib.garage.base._get_garage_credentials') as mock_creds:
         mock_creds.return_value = ('test_access_key', 'test_secret_key')
 
         with patch('boto3.client') as mock_boto:
             mock_boto.return_value = mock_s3_client
 
-            from api.app.lib.garage_client import GarageClient
-            client = GarageClient(
+            from api.app.lib.garage.base import GarageBaseClient
+            from api.app.lib.garage.projection_storage import ProjectionStorageService
+
+            base = GarageBaseClient(
                 endpoint="http://test:3900",
                 bucket_name="test-bucket"
             )
-            client.client = mock_s3_client
-            return client
+            base.client = mock_s3_client
+            return ProjectionStorageService(base)
 
 
 class TestBuildProjectionKey:
-    """Tests for _build_projection_key method."""
+    """Tests for _build_key method."""
 
-    def test_latest_key_format(self, mock_garage_client):
+    def test_latest_key_format(self, projection_service):
         """Test that latest key is formatted correctly."""
-        key = mock_garage_client._build_projection_key("TestOntology", "concepts")
+        key = projection_service._build_key("TestOntology", "concepts")
         assert key == "projections/TestOntology/concepts/latest.json"
 
-    def test_timestamped_key_format(self, mock_garage_client):
+    def test_timestamped_key_format(self, projection_service):
         """Test that timestamped key is formatted correctly."""
-        key = mock_garage_client._build_projection_key(
+        key = projection_service._build_key(
             "TestOntology",
             "concepts",
             "2025-12-13T22:00:00Z"
         )
         assert key == "projections/TestOntology/concepts/2025-12-13T22:00:00Z.json"
 
-    def test_sanitizes_ontology_name(self, mock_garage_client):
+    def test_sanitizes_ontology_name(self, projection_service):
         """Test that ontology names with spaces/slashes are sanitized."""
-        key = mock_garage_client._build_projection_key("Test Ontology/Sub", "concepts")
+        key = projection_service._build_key("Test Ontology/Sub", "concepts")
         assert key == "projections/Test_Ontology_Sub/concepts/latest.json"
 
-    def test_different_embedding_sources(self, mock_garage_client):
+    def test_different_embedding_sources(self, projection_service):
         """Test different embedding source types."""
         for source in ["concepts", "sources", "vocabulary", "combined"]:
-            key = mock_garage_client._build_projection_key("Test", source)
+            key = projection_service._build_key("Test", source)
             assert source in key
 
 
 class TestStoreProjection:
-    """Tests for store_projection method."""
+    """Tests for store method."""
 
-    def test_stores_latest_and_historical(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_stores_latest_and_historical(self, projection_service, sample_projection, mock_s3_client):
         """Test that both latest and historical snapshots are stored."""
-        mock_garage_client.store_projection(
+        projection_service.store(
             ontology="TestOntology",
             embedding_source="concepts",
             projection_data=sample_projection,
@@ -120,9 +122,9 @@ class TestStoreProjection:
 
         assert any('latest.json' in k for k in keys)
 
-    def test_stores_only_latest_when_history_disabled(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_stores_only_latest_when_history_disabled(self, projection_service, sample_projection, mock_s3_client):
         """Test that only latest is stored when keep_history=False."""
-        mock_garage_client.store_projection(
+        projection_service.store(
             ontology="TestOntology",
             embedding_source="concepts",
             projection_data=sample_projection,
@@ -132,9 +134,9 @@ class TestStoreProjection:
         # Should call put_object once (latest only)
         assert mock_s3_client.put_object.call_count == 1
 
-    def test_returns_storage_key(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_returns_storage_key(self, projection_service, sample_projection, mock_s3_client):
         """Test that storage key is returned."""
-        key = mock_garage_client.store_projection(
+        key = projection_service.store(
             ontology="TestOntology",
             embedding_source="concepts",
             projection_data=sample_projection
@@ -144,9 +146,9 @@ class TestStoreProjection:
         assert "TestOntology" in key
         assert "latest.json" in key
 
-    def test_content_type_is_json(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_content_type_is_json(self, projection_service, sample_projection, mock_s3_client):
         """Test that content type is set to application/json."""
-        mock_garage_client.store_projection(
+        projection_service.store(
             ontology="TestOntology",
             embedding_source="concepts",
             projection_data=sample_projection
@@ -157,23 +159,23 @@ class TestStoreProjection:
 
 
 class TestGetProjection:
-    """Tests for get_projection method."""
+    """Tests for get method."""
 
-    def test_returns_projection_data(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_returns_projection_data(self, projection_service, sample_projection, mock_s3_client):
         """Test that projection data is returned correctly."""
         # Mock get_object response
         mock_body = MagicMock()
         mock_body.read.return_value = json.dumps(sample_projection).encode('utf-8')
         mock_s3_client.get_object.return_value = {'Body': mock_body}
 
-        result = mock_garage_client.get_projection("TestOntology", "concepts")
+        result = projection_service.get("TestOntology", "concepts")
 
         assert result is not None
         assert result["ontology"] == "TestOntology"
         assert result["algorithm"] == "tsne"
         assert len(result["concepts"]) == 1
 
-    def test_returns_none_when_not_found(self, mock_garage_client, mock_s3_client):
+    def test_returns_none_when_not_found(self, projection_service, mock_s3_client):
         """Test that None is returned when projection doesn't exist."""
         from botocore.exceptions import ClientError
 
@@ -182,71 +184,77 @@ class TestGetProjection:
             'GetObject'
         )
 
-        result = mock_garage_client.get_projection("NonExistent", "concepts")
+        result = projection_service.get("NonExistent", "concepts")
 
         assert result is None
 
-    def test_uses_correct_key(self, mock_garage_client, sample_projection, mock_s3_client):
+    def test_uses_correct_key(self, projection_service, sample_projection, mock_s3_client):
         """Test that correct S3 key is used."""
         mock_body = MagicMock()
         mock_body.read.return_value = json.dumps(sample_projection).encode('utf-8')
         mock_s3_client.get_object.return_value = {'Body': mock_body}
 
-        mock_garage_client.get_projection("TestOntology", "concepts")
+        projection_service.get("TestOntology", "concepts")
 
         call_kwargs = mock_s3_client.get_object.call_args.kwargs
         assert "projections/TestOntology/concepts/latest.json" == call_kwargs['Key']
 
 
 class TestGetProjectionHistory:
-    """Tests for get_projection_history method."""
+    """Tests for get_history method."""
 
-    def test_returns_historical_snapshots(self, mock_garage_client, mock_s3_client):
+    def _mock_paginator(self, mock_s3_client, pages):
+        """Helper to mock the list_objects_v2 paginator."""
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = pages
+        mock_s3_client.get_paginator.return_value = mock_paginator
+
+    def test_returns_historical_snapshots(self, projection_service, mock_s3_client):
         """Test that historical snapshots are listed."""
-        mock_s3_client.list_objects_v2.return_value = {
+        self._mock_paginator(mock_s3_client, [{
             'Contents': [
-                {'Key': 'projections/Test/concepts/2025-12-13T22:00:00Z.json', 'Size': 1000, 'LastModified': datetime.now()},
-                {'Key': 'projections/Test/concepts/2025-12-13T23:00:00Z.json', 'Size': 1100, 'LastModified': datetime.now()},
-                {'Key': 'projections/Test/concepts/latest.json', 'Size': 1100, 'LastModified': datetime.now()},
+                {'Key': 'projections/Test/concepts/2025-12-13T22:00:00Z.json', 'Size': 1000, 'LastModified': datetime.now(), 'ETag': '"abc"'},
+                {'Key': 'projections/Test/concepts/2025-12-13T23:00:00Z.json', 'Size': 1100, 'LastModified': datetime.now(), 'ETag': '"def"'},
+                {'Key': 'projections/Test/concepts/latest.json', 'Size': 1100, 'LastModified': datetime.now(), 'ETag': '"ghi"'},
             ]
-        }
+        }])
 
-        history = mock_garage_client.get_projection_history("Test", "concepts", limit=10)
+        history = projection_service.get_history("Test", "concepts", limit=10)
 
         # Should exclude latest.json
         assert len(history) == 2
         assert all('latest' not in h['key'] for h in history)
 
-    def test_respects_limit(self, mock_garage_client, mock_s3_client):
+    def test_respects_limit(self, projection_service, mock_s3_client):
         """Test that limit parameter is respected."""
-        mock_s3_client.list_objects_v2.return_value = {
+        self._mock_paginator(mock_s3_client, [{
             'Contents': [
-                {'Key': f'projections/Test/concepts/2025-12-{i:02d}T00:00:00Z.json', 'Size': 1000, 'LastModified': datetime.now()}
+                {'Key': f'projections/Test/concepts/2025-12-{i:02d}T00:00:00Z.json', 'Size': 1000, 'LastModified': datetime.now(), 'ETag': f'"{i}"'}
                 for i in range(1, 11)
             ]
-        }
+        }])
 
-        history = mock_garage_client.get_projection_history("Test", "concepts", limit=5)
+        history = projection_service.get_history("Test", "concepts", limit=5)
 
         assert len(history) <= 5
 
-    def test_returns_empty_list_when_no_history(self, mock_garage_client, mock_s3_client):
+    def test_returns_empty_list_when_no_history(self, projection_service, mock_s3_client):
         """Test that empty list is returned when no history exists."""
-        mock_s3_client.list_objects_v2.return_value = {}
+        self._mock_paginator(mock_s3_client, [{}])
 
-        history = mock_garage_client.get_projection_history("Test", "concepts")
+        history = projection_service.get_history("Test", "concepts")
 
         assert history == []
 
 
 class TestDeleteProjection:
-    """Tests for delete_projection method."""
+    """Tests for delete method."""
 
-    def test_deletes_latest_projection(self, mock_garage_client, mock_s3_client):
+    def test_deletes_latest_projection(self, projection_service, mock_s3_client):
         """Test that latest projection is deleted."""
         mock_s3_client.delete_object.return_value = {}
 
-        result = mock_garage_client.delete_projection("Test", "concepts")
+        result = projection_service.delete("Test", "concepts")
 
         assert result is True
         mock_s3_client.delete_object.assert_called_once()
@@ -254,8 +262,8 @@ class TestDeleteProjection:
         call_kwargs = mock_s3_client.delete_object.call_args.kwargs
         assert "latest.json" in call_kwargs['Key']
 
-    def test_returns_false_on_error(self, mock_garage_client, mock_s3_client):
-        """Test that False is returned on deletion error."""
+    def test_raises_on_server_error(self, projection_service, mock_s3_client):
+        """Test that non-404 errors are raised."""
         from botocore.exceptions import ClientError
 
         mock_s3_client.delete_object.side_effect = ClientError(
@@ -263,6 +271,18 @@ class TestDeleteProjection:
             'DeleteObject'
         )
 
-        result = mock_garage_client.delete_projection("Test", "concepts")
+        with pytest.raises(ClientError):
+            projection_service.delete("Test", "concepts")
+
+    def test_returns_false_when_not_found(self, projection_service, mock_s3_client):
+        """Test that False is returned when projection doesn't exist."""
+        from botocore.exceptions import ClientError
+
+        mock_s3_client.delete_object.side_effect = ClientError(
+            {'Error': {'Code': 'NoSuchKey', 'Message': 'Not Found'}},
+            'DeleteObject'
+        )
+
+        result = projection_service.delete("Test", "concepts")
 
         assert result is False

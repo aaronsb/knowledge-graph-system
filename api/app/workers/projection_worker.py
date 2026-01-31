@@ -232,10 +232,10 @@ def _store_projection(ontology: str, embedding_source: str, dataset: Dict[str, A
         Object key of stored projection, or None if storage failed
     """
     try:
-        from api.app.lib.garage_client import get_garage_client
+        from api.app.lib.garage import get_projection_storage
 
-        garage = get_garage_client()
-        storage_key = garage.store_projection(
+        projections = get_projection_storage()
+        storage_key = projections.store(
             ontology=ontology,
             embedding_source=embedding_source,
             projection_data=dataset,
@@ -263,10 +263,10 @@ def get_cached_projection(ontology: str, embedding_source: str = "concepts") -> 
         Projection dataset dict or None if not cached
     """
     try:
-        from api.app.lib.garage_client import get_garage_client
+        from api.app.lib.garage import get_projection_storage
 
-        garage = get_garage_client()
-        return garage.get_projection(ontology, embedding_source)
+        projections = get_projection_storage()
+        return projections.get(ontology, embedding_source)
 
     except Exception as e:
         logger.warning(f"Failed to get cached projection from Garage for {ontology}: {e}")
@@ -287,10 +287,10 @@ def invalidate_cached_projection(ontology: str, embedding_source: str = "concept
         True if cache was deleted, False if not found
     """
     try:
-        from api.app.lib.garage_client import get_garage_client
+        from api.app.lib.garage import get_projection_storage
 
-        garage = get_garage_client()
-        return garage.delete_projection(ontology, embedding_source)
+        projections = get_projection_storage()
+        return projections.delete(ontology, embedding_source)
 
     except Exception as e:
         logger.warning(f"Failed to invalidate projection cache for {ontology}: {e}")
@@ -310,10 +310,10 @@ def get_projection_history(ontology: str, embedding_source: str = "concepts", li
         List of snapshot metadata dicts (sorted newest first)
     """
     try:
-        from api.app.lib.garage_client import get_garage_client
+        from api.app.lib.garage import get_projection_storage
 
-        garage = get_garage_client()
-        return garage.get_projection_history(ontology, embedding_source, limit)
+        projections = get_projection_storage()
+        return projections.get_history(ontology, embedding_source, limit)
 
     except Exception as e:
         logger.warning(f"Failed to get projection history from Garage for {ontology}: {e}")

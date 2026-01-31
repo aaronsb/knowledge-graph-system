@@ -871,8 +871,7 @@ async def delete_ontology(
         # ADR-057/ADR-081: Clean up ALL Garage objects before deleting sources
         # This includes: images, source documents, and projections
         try:
-            from ..lib.garage_client import get_garage_client
-            garage_client = get_garage_client()
+            from ..lib.garage import get_image_storage, get_source_storage, get_projection_storage
 
             # 1. Delete images (via storage_key on Source nodes)
             storage_objects_result = client._execute_cypher(f"""
@@ -883,10 +882,11 @@ async def delete_ontology(
 
             if storage_objects_result:
                 image_deleted_count = 0
+                images = get_image_storage()
                 for row in storage_objects_result:
                     if row.get('storage_key'):
                         try:
-                            garage_client.delete_image(row['storage_key'])
+                            images.delete(row['storage_key'])
                             image_deleted_count += 1
                         except Exception as e:
                             logger.warning(f"Failed to delete Garage image {row['storage_key']}: {e}")
@@ -895,7 +895,6 @@ async def delete_ontology(
 
             # 2. Delete source documents (ADR-081)
             try:
-                from ..lib.garage import get_source_storage
                 source_storage = get_source_storage()
                 source_docs_deleted = source_storage.delete_by_ontology(ontology_name)
                 if source_docs_deleted:
@@ -905,7 +904,8 @@ async def delete_ontology(
 
             # 3. Delete projections (ADR-079)
             try:
-                projections_deleted = garage_client.delete_all_projections(ontology_name)
+                projections = get_projection_storage()
+                projections_deleted = projections.delete_all(ontology_name)
                 if projections_deleted > 0:
                     logger.info(f"Deleted {projections_deleted} projections from Garage for ontology '{ontology_name}'")
             except Exception as e:
