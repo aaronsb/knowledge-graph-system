@@ -145,7 +145,7 @@ export function formatOntologyEdges(data: OntologyEdgesResponse): string {
   let output = `# Ontology Edges: ${data.ontology}\n\n`;
 
   if (data.count === 0) {
-    output += `No edges found. Edges are derived during breathing cycles when ontologies share concepts.\n`;
+    output += `No edges found. Edges are derived during annealing cycles when ontologies share concepts.\n`;
     return output;
   }
 
@@ -216,9 +216,9 @@ export function formatOntologyAffinity(data: OntologyAffinityResponse): string {
   return output;
 }
 
-// ========== Breathing Proposals (ADR-200 Phase 3b/4) ==========
+// ========== Annealing Proposals (ADR-200 Phase 3b/4) ==========
 
-interface BreathingProposal {
+interface AnnealingProposal {
   id: number;
   proposal_type: string;
   ontology_name: string;
@@ -241,7 +241,7 @@ interface BreathingProposal {
 }
 
 interface ProposalListResponse {
-  proposals: BreathingProposal[];
+  proposals: AnnealingProposal[];
   count: number;
 }
 
@@ -258,7 +258,7 @@ function formatStatus(status: string): string {
   return icons[status] || `[${status.toUpperCase()}]`;
 }
 
-function formatScores(p: BreathingProposal): string {
+function formatScores(p: AnnealingProposal): string {
   const parts: string[] = [];
   if (p.mass_score != null) parts.push(`mass: ${p.mass_score.toFixed(3)}`);
   if (p.coherence_score != null) parts.push(`coherence: ${p.coherence_score.toFixed(3)}`);
@@ -267,10 +267,10 @@ function formatScores(p: BreathingProposal): string {
 }
 
 /**
- * Format a list of breathing proposals
+ * Format a list of annealing proposals
  */
 export function formatProposalList(data: ProposalListResponse): string {
-  let output = `# Breathing Proposals\n\n`;
+  let output = `# Annealing Proposals\n\n`;
 
   if (data.count === 0) {
     output += `No proposals found.\n`;
@@ -316,7 +316,7 @@ export function formatProposalList(data: ProposalListResponse): string {
 /**
  * Format a single proposal (detail view or review result)
  */
-export function formatProposalDetail(p: BreathingProposal): string {
+export function formatProposalDetail(p: AnnealingProposal): string {
   const typeIcon = p.proposal_type === 'promotion' ? 'PROMOTE' : 'DEMOTE';
   let output = `# Proposal #${p.id}: ${typeIcon} ${p.ontology_name}\n\n`;
   output += `**Status:** ${formatStatus(p.status)}\n\n`;
@@ -367,11 +367,11 @@ export function formatProposalDetail(p: BreathingProposal): string {
 }
 
 /**
- * Format a breathing cycle result
+ * Format a annealing cycle result
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function formatBreathingCycleResult(data: any): string {
-  let output = `# Breathing Cycle Result\n\n`;
+export function formatAnnealingCycleResult(data: any): string {
+  let output = `# Annealing Cycle Result\n\n`;
 
   if (data.dry_run) output += `**Mode:** Dry run (no proposals stored)\n\n`;
 

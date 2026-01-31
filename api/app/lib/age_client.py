@@ -1669,7 +1669,7 @@ class AGEClient:
             return False
 
     # =========================================================================
-    # Ontology Scoring & Breathing Controls (ADR-200 Phase 3a)
+    # Ontology Scoring & Annealing Controls (ADR-200 Phase 3a)
     # =========================================================================
 
     def get_ontology_stats(self, name: str) -> Optional[Dict[str, Any]]:
@@ -1998,7 +1998,7 @@ class AGEClient:
             return []
 
     # -------------------------------------------------------------------------
-    # Ontology Breathing Write Controls (ADR-200 Phase 3a)
+    # Ontology Annealing Write Controls (ADR-200 Phase 3a)
     # -------------------------------------------------------------------------
 
     def update_ontology_scores(
@@ -2175,7 +2175,7 @@ class AGEClient:
         """
         Non-destructive ontology demotion: move all sources to target, then remove node.
 
-        This is the key primitive for ontology demotion in the breathing cycle.
+        This is the key primitive for ontology demotion in the annealing cycle.
         Unlike delete_ontology (which cascade-deletes sources), dissolve preserves
         all data by moving it first.
 
@@ -2413,7 +2413,7 @@ class AGEClient:
     # =========================================================================
 
     VALID_ONTOLOGY_EDGE_TYPES = ("OVERLAPS", "SPECIALIZES", "GENERALIZES")
-    VALID_ONTOLOGY_EDGE_SOURCES = ("breathing_worker", "manual")
+    VALID_ONTOLOGY_EDGE_SOURCES = ("annealing_worker", "manual")
 
     def upsert_ontology_edge(
         self,
@@ -2423,7 +2423,7 @@ class AGEClient:
         score: float,
         shared_concept_count: int,
         epoch: int,
-        source: str = "breathing_worker",
+        source: str = "annealing_worker",
     ) -> bool:
         """
         Create or update an edge between two Ontology nodes.
@@ -2437,7 +2437,7 @@ class AGEClient:
             score: Affinity strength (0.0-1.0)
             shared_concept_count: Number of shared concepts
             epoch: Global epoch when computed
-            source: 'breathing_worker' or 'manual'
+            source: 'annealing_worker' or 'manual'
 
         Returns:
             True if edge was upserted successfully
@@ -2548,7 +2548,7 @@ class AGEClient:
         self, ontology_name: str, edge_type: str = None
     ) -> int:
         """
-        Delete derived (breathing_worker) ontology edges. Manual edges are preserved.
+        Delete derived (annealing_worker) ontology edges. Manual edges are preserved.
 
         Args:
             ontology_name: Ontology name
@@ -2569,14 +2569,14 @@ class AGEClient:
             # Outgoing
             out_query = f"""
             MATCH (o:Ontology {{name: $name}})-[r:{etype}]->(other:Ontology)
-            WHERE r.source = 'breathing_worker'
+            WHERE r.source = 'annealing_worker'
             DELETE r
             RETURN count(r) as deleted
             """
             # Incoming
             in_query = f"""
             MATCH (other:Ontology)-[r:{etype}]->(o:Ontology {{name: $name}})
-            WHERE r.source = 'breathing_worker'
+            WHERE r.source = 'annealing_worker'
             DELETE r
             RETURN count(r) as deleted
             """
@@ -2600,7 +2600,7 @@ class AGEClient:
         """
         Delete ALL derived ontology-to-ontology edges across the graph.
 
-        Called at the start of a breathing cycle to refresh edges from scratch.
+        Called at the start of a annealing cycle to refresh edges from scratch.
 
         Returns:
             Number of edges deleted
@@ -2609,7 +2609,7 @@ class AGEClient:
         for etype in self.VALID_ONTOLOGY_EDGE_TYPES:
             query = f"""
             MATCH (:Ontology)-[r:{etype}]->(:Ontology)
-            WHERE r.source = 'breathing_worker'
+            WHERE r.source = 'annealing_worker'
             DELETE r
             RETURN count(r) as deleted
             """

@@ -243,8 +243,8 @@ Manage ontologies (knowledge domains/collections): list all, get info, list file
 
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)
-  - Allowed values: `list`, `info`, `files`, `create`, `rename`, `delete`, `lifecycle`, `scores`, `score`, `score_all`, `candidates`, `affinity`, `edges`, `reassign`, `dissolve`, `proposals`, `proposal_review`, `breathing_cycle`
+- `action` (`string`) **(required)** - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list annealing proposals), "proposal_review" (approve/reject proposal), "annealing_cycle" (trigger annealing cycle)
+  - Allowed values: `list`, `info`, `files`, `create`, `rename`, `delete`, `lifecycle`, `scores`, `score`, `score_all`, `candidates`, `affinity`, `edges`, `reassign`, `dissolve`, `proposals`, `proposal_review`, `annealing_cycle`
 - `ontology_name` (`string`) - Ontology name (required for info, files, create, rename, delete)
 - `description` (`string`) - What this knowledge domain covers (for create action)
 - `new_name` (`string`) - New ontology name (required for rename action)
@@ -261,11 +261,11 @@ Manage ontologies (knowledge domains/collections): list all, get info, list file
 - `proposal_type` (`string`) - Filter proposals by type
   - Allowed values: `promotion`, `demotion`
 - `notes` (`string`) - Review notes (for proposal_review action)
-- `dry_run` (`boolean`) - Preview candidates without proposals (for breathing_cycle)
+- `dry_run` (`boolean`) - Preview candidates without proposals (for annealing_cycle)
   - Default: `false`
 - `demotion_threshold` (`number`) - Protection score below which to consider demotion (default: 0.15)
 - `promotion_min_degree` (`number`) - Minimum concept degree for promotion candidacy (default: 10)
-- `max_proposals` (`number`) - Maximum proposals per breathing cycle (default: 5)
+- `max_proposals` (`number`) - Maximum proposals per annealing cycle (default: 5)
 
 ---
 

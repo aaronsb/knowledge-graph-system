@@ -2,7 +2,7 @@
 -- Migration 044: Ontology Graph Nodes (ADR-200 Phase 1)
 -- ===========================================================================
 -- Date: 2026-01-29
--- Related: ADR-200 (Breathing Ontologies)
+-- Related: ADR-200 (Annealing Ontologies)
 --
 -- Promotes ontologies from string properties to first-class graph nodes.
 -- Creates :Ontology nodes from existing s.document values on Source nodes,

@@ -163,7 +163,7 @@ ON EACH [c.label, c.search_terms];
 //   (:Ontology)-[:GENERALIZES]->(:Ontology)    — superset relationship (Phase 5)
 //
 // Edge properties (OVERLAPS, SPECIALIZES, GENERALIZES):
-//   source: 'breathing_worker' | 'manual'
+//   source: 'annealing_worker' | 'manual'
 //   score: affinity strength (0.0-1.0)
 //   shared_concept_count: concepts in common
 //   computed_at_epoch: global epoch when derived

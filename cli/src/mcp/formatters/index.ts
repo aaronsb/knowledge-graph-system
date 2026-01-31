@@ -76,5 +76,5 @@ export {
   formatOntologyAffinity,
   formatProposalList,
   formatProposalDetail,
-  formatBreathingCycleResult,
+  formatAnnealingCycleResult,
 } from './ontology.js';

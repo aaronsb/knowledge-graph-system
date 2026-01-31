@@ -1,4 +1,4 @@
-# ADR-200 Phase 3a: Breathing Controls Exercise Report
+# ADR-200 Phase 3a: Annealing Controls Exercise Report
 
 **Date:** 2026-01-30
 **Epoch range:** 0 → 13
@@ -61,7 +61,7 @@ Working as designed. Mass climbs steeply in the early phase (0.32 → 0.50 on do
 
 Gradual decline with growth: 0.604 → 0.590 → 0.565. This correctly reflects that broader topic coverage dilutes semantic focus. An ontology covering "consensus protocols" alone is tighter than one also covering "network partitions" and "service discovery." The decline is gentle, not catastrophic — the topics are related enough to maintain reasonable coherence.
 
-Notably, the small consensus-theory ontology (2 sources, split off then dissolved) scored 0.663 coherence — the highest observed. Small + focused = high coherence. This is the signal a breathing worker would use to identify "nuclei" vs "crossroads."
+Notably, the small consensus-theory ontology (2 sources, split off then dissolved) scored 0.663 coherence — the highest observed. Small + focused = high coherence. This is the signal a annealing worker would use to identify "nuclei" vs "crossroads."
 
 ### Exposure (epoch-based pressure)
 
@@ -87,7 +87,7 @@ Affinity tracked shared concepts accurately:
 
 Absolute overlap grew (3 → 5 shared concepts), but proportional affinity declined as ontologies accumulated more distinct content. This is the expected behavior — casual overlap becomes proportionally smaller relative to domain-specific content.
 
-The BreathingTest ontologies from earlier testing also appeared at 1.6% affinity after ADR-200 was ingested — the breathing ontologies ADR created a tiny bridge.
+The AnnealingTest ontologies from earlier testing also appeared at 1.6% affinity after ADR-200 was ingested — the annealing ontologies ADR created a tiny bridge.
 
 ## Operations Exercised
 
@@ -107,7 +107,7 @@ Created `consensus-theory`, moved 2 consensus-related sources into it:
 - **consensus-theory**: mass 0.225, coherence 0.663, protection 0.188
 - Highest coherence observed — small + focused ontologies are semantically tight
 
-This is exactly the signal Phase 3b's breathing worker would look for: high coherence suggests a natural cluster, but low mass and protection make it a demotion candidate unless it grows.
+This is exactly the signal Phase 3b's annealing worker would look for: high coherence suggests a natural cluster, but low mass and protection make it a demotion candidate unless it grows.
 
 ### Dissolve (non-destructive absorption)
 
@@ -129,6 +129,6 @@ Dissolved consensus-theory back into distributed-systems. Scores returned to pre
 
 ## Conclusions
 
-The Phase 3a breathing controls work as designed. Scoring responds to real structural changes. Reassignment and dissolution are clean operations with predictable score impacts. The tools are ready for Phase 3b automation — the manual controls prove the primitives are sound.
+The Phase 3a annealing controls work as designed. Scoring responds to real structural changes. Reassignment and dissolution are clean operations with predictable score impacts. The tools are ready for Phase 3b automation — the manual controls prove the primitives are sound.
 
 Key validation: the system correctly distinguishes focused clusters (high coherence, low mass) from broad collections (lower coherence, high mass). This is the foundation for automated promotion/demotion decisions.

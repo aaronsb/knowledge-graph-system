@@ -513,7 +513,7 @@ class TestIsOntologyFrozen:
 
 
 # =========================================================================
-# ADR-200 Phase 3a: Scoring & Breathing Control Surface
+# ADR-200 Phase 3a: Scoring & Annealing Control Surface
 # =========================================================================
 
 
@@ -806,7 +806,7 @@ class TestUpsertOntologyEdge:
             score=0.5,
             shared_concept_count=10,
             epoch=5,
-            source="breathing_worker",
+            source="annealing_worker",
         )
 
         assert result is True
@@ -874,7 +874,7 @@ class TestGetOntologyEdges:
                     "score": 0.5,
                     "shared_concept_count": 10,
                     "computed_at_epoch": 5,
-                    "source": "breathing_worker",
+                    "source": "annealing_worker",
                     "direction": "outgoing",
                 },
                 {
@@ -884,7 +884,7 @@ class TestGetOntologyEdges:
                     "score": 0.8,
                     "shared_concept_count": 15,
                     "computed_at_epoch": 5,
-                    "source": "breathing_worker",
+                    "source": "annealing_worker",
                     "direction": "incoming",
                 },
             ]
@@ -908,7 +908,7 @@ class TestGetOntologyEdges:
                     "score": 0.5,
                     "shared_concept_count": 10,
                     "computed_at_epoch": 5,
-                    "source": "breathing_worker",
+                    "source": "annealing_worker",
                     "direction": "outgoing",
                 },
             ]
@@ -1053,8 +1053,8 @@ class TestUpsertOntologyEdgeSourceValidation:
                 source="unknown_source",
             )
 
-    def test_upsert_accepts_breathing_worker(self, mock_age_client):
-        """Default source 'breathing_worker' is accepted."""
+    def test_upsert_accepts_annealing_worker(self, mock_age_client):
+        """Default source 'annealing_worker' is accepted."""
         mock_age_client._execute_cypher = MagicMock(return_value={"type": "OVERLAPS"})
 
         result = mock_age_client.upsert_ontology_edge(

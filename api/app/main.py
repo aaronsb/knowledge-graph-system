@@ -37,9 +37,9 @@ from .workers.source_embedding_worker import run_source_embedding_worker
 from .workers.projection_worker import run_projection_worker
 from .workers.polarity_worker import run_polarity_worker
 from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
-from .workers.breathing_worker import run_breathing_worker
+from .workers.annealing_worker import run_annealing_worker
 from .workers.proposal_execution_worker import run_proposal_execution_worker
-from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, BreathingLauncher
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
@@ -160,9 +160,9 @@ async def startup_event():
     queue.register_worker("projection", run_projection_worker)  # ADR-078: Embedding landscape
     queue.register_worker("polarity", run_polarity_worker)  # ADR-070+083: Polarity with artifact support
     queue.register_worker("artifact_cleanup", run_artifact_cleanup_worker)  # ADR-083: Cleanup expired artifacts
-    queue.register_worker("ontology_breathing", run_breathing_worker)  # ADR-200: Breathing cycle
+    queue.register_worker("ontology_annealing", run_annealing_worker)  # ADR-200: Annealing cycle
     queue.register_worker("proposal_execution", run_proposal_execution_worker)  # ADR-200 Phase 4: Execute approved proposals
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection, polarity, artifact_cleanup, ontology_breathing, proposal_execution")
+    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection, polarity, artifact_cleanup, ontology_annealing, proposal_execution")
 
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
@@ -294,7 +294,7 @@ async def startup_event():
         'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
         'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
         'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
-        'BreathingLauncher': BreathingLauncher,  # ADR-200: Ontology breathing cycle
+        'AnnealingLauncher': AnnealingLauncher,  # ADR-200: Ontology annealing cycle
     }
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()

@@ -1,5 +1,5 @@
 """
-Breathing Manager — orchestrates ontology breathing cycles (ADR-200 Phase 3b).
+Annealing Manager — orchestrates ontology annealing cycles (ADR-200 Phase 3b).
 
 Follows the vocabulary consolidation pattern:
 score all → identify candidates → LLM judgment → store proposals.
@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 from api.app.lib.ontology_scorer import OntologyScorer
-from api.app.lib.breathing_evaluator import (
+from api.app.lib.annealing_evaluator import (
     llm_evaluate_promotion,
     llm_evaluate_demotion,
     PromotionDecision,
@@ -22,9 +22,9 @@ from api.app.lib.breathing_evaluator import (
 logger = logging.getLogger(__name__)
 
 
-class BreathingManager:
+class AnnealingManager:
     """
-    Runs breathing cycles: score, identify candidates, evaluate, propose.
+    Runs annealing cycles: score, identify candidates, evaluate, propose.
 
     Does NOT execute proposals — that's Phase 4.
     """
@@ -34,7 +34,7 @@ class BreathingManager:
         self.scorer = scorer
         self.ai_provider = ai_provider
 
-    async def run_breathing_cycle(
+    async def run_annealing_cycle(
         self,
         demotion_threshold: float = 0.15,
         promotion_min_degree: int = 10,
@@ -45,7 +45,7 @@ class BreathingManager:
         specializes_threshold: float = 0.3,
     ) -> Dict[str, Any]:
         """
-        Run a full breathing cycle.
+        Run a full annealing cycle.
 
         1. Score all ontologies
         2. Recompute centroids
@@ -65,7 +65,7 @@ class BreathingManager:
             Cycle result summary
         """
         global_epoch = self.client.get_current_epoch()
-        logger.info(f"Breathing cycle starting at epoch {global_epoch}")
+        logger.info(f"Annealing cycle starting at epoch {global_epoch}")
 
         # 1. Score all ontologies
         all_scores = self.scorer.score_all_ontologies()
@@ -155,7 +155,7 @@ class BreathingManager:
                     break
 
         logger.info(
-            f"Breathing cycle complete: {proposals_generated} proposals, "
+            f"Annealing cycle complete: {proposals_generated} proposals, "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
             f"{edge_result.get('edges_created', 0)} edges"
         )
@@ -379,13 +379,13 @@ class BreathingManager:
         suggested_name: Optional[str] = None,
         suggested_description: Optional[str] = None,
     ) -> Optional[int]:
-        """Store a proposal in the breathing_proposals table. Returns proposal ID."""
+        """Store a proposal in the annealing_proposals table. Returns proposal ID."""
         try:
             conn = self.client.pool.getconn()
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        INSERT INTO kg_api.breathing_proposals
+                        INSERT INTO kg_api.annealing_proposals
                         (proposal_type, ontology_name, anchor_concept_id,
                          target_ontology, reasoning, mass_score, coherence_score,
                          protection_score, created_at_epoch,
@@ -420,7 +420,7 @@ class BreathingManager:
         self, all_scores: List[Dict]
     ) -> Dict[str, Any]:
         """
-        Compute ecological ratio metrics for the breathing cycle.
+        Compute ecological ratio metrics for the annealing cycle.
 
         Observational only — logged and returned but does not yet adjust
         promotion/demotion thresholds. Threshold feedback is deferred (#249).

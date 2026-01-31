@@ -1,7 +1,7 @@
 """
 Proposal Execution Worker (ADR-200 Phase 4).
 
-Executes approved breathing proposals as background jobs.
+Executes approved annealing proposals as background jobs.
 Follows the worker pattern: run_<type>_worker(job_data, job_id, job_queue) -> Dict
 """
 
@@ -26,7 +26,7 @@ def run_proposal_execution_worker(
     Args:
         job_data:
             - proposal_id: int — the proposal to execute
-            - triggered_by: str — username or 'breathing_worker'
+            - triggered_by: str — username or 'annealing_worker'
         job_id: Job ID for progress tracking
         job_queue: Queue instance for progress updates
 
@@ -136,7 +136,7 @@ def run_proposal_execution_worker(
 
 
 def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
-    """Load a proposal from the breathing_proposals table."""
+    """Load a proposal from the annealing_proposals table."""
     from psycopg2.extras import RealDictCursor
     conn = age_client.pool.getconn()
     try:
@@ -147,7 +147,7 @@ def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
                        target_ontology, reasoning, mass_score, coherence_score,
                        protection_score, status, suggested_name,
                        suggested_description
-                FROM kg_api.breathing_proposals
+                FROM kg_api.annealing_proposals
                 WHERE id = %s
                 """,
                 (proposal_id,),
@@ -183,7 +183,7 @@ def _claim_proposal(age_client, proposal_id: int) -> bool:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                UPDATE kg_api.breathing_proposals
+                UPDATE kg_api.annealing_proposals
                 SET status = 'executing'
                 WHERE id = %s AND status = 'approved'
                 RETURNING id
@@ -214,7 +214,7 @@ def _update_proposal_status(
             if status in ("executed", "failed"):
                 cur.execute(
                     """
-                    UPDATE kg_api.breathing_proposals
+                    UPDATE kg_api.annealing_proposals
                     SET status = %s, executed_at = NOW(), execution_result = %s
                     WHERE id = %s
                     RETURNING id
@@ -228,7 +228,7 @@ def _update_proposal_status(
             else:
                 cur.execute(
                     """
-                    UPDATE kg_api.breathing_proposals
+                    UPDATE kg_api.annealing_proposals
                     SET status = %s
                     WHERE id = %s
                     RETURNING id

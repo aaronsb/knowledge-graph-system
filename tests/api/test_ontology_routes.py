@@ -566,7 +566,7 @@ class TestFrozenEnforcement:
 
 
 # =========================================================================
-# ADR-200 Phase 3a: Scoring & Breathing Control Surface Route Tests
+# ADR-200 Phase 3a: Scoring & Annealing Control Surface Route Tests
 # =========================================================================
 
 
@@ -876,7 +876,7 @@ class TestDissolveRoute:
 
 
 # ==========================================================================
-# GET /ontology/proposals — List breathing proposals (ADR-200 Phase 3b)
+# GET /ontology/proposals — List annealing proposals (ADR-200 Phase 3b)
 # ==========================================================================
 
 def mock_proposals_cursor(proposals):
@@ -1128,7 +1128,7 @@ class TestGetOntologyEdgesRoute:
                     "score": 0.5,
                     "shared_concept_count": 10,
                     "computed_at_epoch": 5,
-                    "source": "breathing_worker",
+                    "source": "annealing_worker",
                     "direction": "outgoing",
                 },
             ],

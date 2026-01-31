@@ -7,7 +7,7 @@ deciders:
 related: [22, 25, 44, 46, 63, 65, 68, 70, 700, 701]
 ---
 
-# ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+# ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
 
 ## Context
 
@@ -65,7 +65,7 @@ This ADR uses metaphorical language for mental models. The formal equivalents:
 
 | ADR Term | Formal Equivalent | Notes |
 |----------|-------------------|-------|
-| Breathing ontologies | Dynamic graph partitioning / Evolutionary ontology maintenance | The expansion-contraction cycles are hysteresis loops |
+| Annealing ontologies | Dynamic graph partitioning / Evolutionary ontology maintenance | The expansion-contraction cycles are hysteresis loops |
 | Concept → Ontology promotion | Schema induction / Concept reification | Elevating a data node to a schematic container |
 | "Ontology is a heavy concept" | Metamodeling / Punning | Collapsing TBox/ABox — valid in OWL 2, heresy in strict OWL |
 | Mass | Degree centrality / Node salience | Standard graph theory |
@@ -118,7 +118,7 @@ Introduce `:Ontology` nodes in the Apache AGE graph with the same core propertie
   protection_score,     -- cached, recomputed by background job
   mass_score,           -- cached composite of internal metrics
   coherence_score,      -- cached neighborhood coherence (1 - diversity)
-  last_evaluated_epoch  -- when the breathing job last assessed this
+  last_evaluated_epoch  -- when the annealing job last assessed this
 })
 ```
 
@@ -166,7 +166,7 @@ For each candidate, analyze the first-order neighborhood using the diversity ana
 
 - **Nucleus**: Neighbors are semantically aligned — low diversity score (neighbors are similar to each other), coherent directional cluster on polarity axes. This concept anchors a domain.
 - **Crossroads**: Neighbors are semantically scattered — high diversity score, spread across polarity space. This concept bridges domains. Valuable as a concept, not a promotion candidate.
-- **Abstract anchor**: A special case — high connectivity AND high diversity, but the concept represents a broad organizing term (e.g., "Management," "Security," "Infrastructure"). These are often exactly what users want as navigation ontologies, even though their neighborhoods are semantically diverse. The promotion function should not automatically penalize diversity for concepts above a high-mass threshold. Abstract terms that attract connections from many subdomains may warrant promotion as **umbrella ontologies** — their children would then be candidates for sub-ontology promotion in later breathing cycles, creating hierarchical depth rather than flat partitioning.
+- **Abstract anchor**: A special case — high connectivity AND high diversity, but the concept represents a broad organizing term (e.g., "Management," "Security," "Infrastructure"). These are often exactly what users want as navigation ontologies, even though their neighborhoods are semantically diverse. The promotion function should not automatically penalize diversity for concepts above a high-mass threshold. Abstract terms that attract connections from many subdomains may warrant promotion as **umbrella ontologies** — their children would then be candidates for sub-ontology promotion in later annealing cycles, creating hierarchical depth rather than flat partitioning.
 
 ```
 mass = degree_centrality(concept)
@@ -182,9 +182,9 @@ On promotion:
 1. Create `:Ontology` node with name derived from anchor concept label, description from anchor concept description, embedding from anchor concept embedding.
 2. Link: `(:Ontology)-[:ANCHORED_BY]->(:Concept)`.
 3. Reassign first-order concepts: their sources get `:SCOPED_BY` edges to the new ontology. `s.document` updated for denormalization.
-4. Second-order and beyond stay in their current ontology unless their own edge affinity pulls them (evaluated in subsequent breathing cycles).
+4. Second-order and beyond stay in their current ontology unless their own edge affinity pulls them (evaluated in subsequent annealing cycles).
 
-**Reassignment cost**: If a promoted concept has thousands of first-order neighbors, each with multiple Source chunks, the `:SCOPED_BY` edge creation and `s.document` updates become a large write operation. This must be an **eventually consistent background process** — batched writes executed by the breathing worker over multiple transactions, not a single atomic operation. During reassignment, sources may temporarily have stale `s.document` values; the `:SCOPED_BY` edge is the source of truth, and `s.document` catches up. This is the same eventual-consistency model used by the vocabulary consolidation worker when merging edge types across thousands of edges.
+**Reassignment cost**: If a promoted concept has thousands of first-order neighbors, each with multiple Source chunks, the `:SCOPED_BY` edge creation and `s.document` updates become a large write operation. This must be an **eventually consistent background process** — batched writes executed by the annealing worker over multiple transactions, not a single atomic operation. During reassignment, sources may temporarily have stale `s.document` values; the `:SCOPED_BY` edge is the source of truth, and `s.document` catches up. This is the same eventual-consistency model used by the vocabulary consolidation worker when merging edge types across thousands of edges.
 
 ### 6. Self-Correcting Attractor Model
 
@@ -241,7 +241,7 @@ Where:
 
 #### Hysteresis: Separate Promotion and Demotion Thresholds
 
-A concept hovering near the promotion threshold must not flicker between concept and ontology status across breathing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a **hysteresis band**:
+A concept hovering near the promotion threshold must not flicker between concept and ontology status across annealing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a **hysteresis band**:
 
 ```
 promotion_threshold = 0.8   (high bar to become an ontology)
@@ -305,7 +305,7 @@ The epistemic status measurement (ADR-065) can be extended to run per-ontology, 
 
 ### 12. Graph Lifecycle Interaction
 
-The breathing process is not fully autonomous. Humans and AIs interact with the lifecycle deliberately:
+The annealing process is not fully autonomous. Humans and AIs interact with the lifecycle deliberately:
 
 | Action | Effect | Use Case |
 |--------|--------|----------|
@@ -333,7 +333,7 @@ These interventions are expected and deliberate. The graph provides proposals; o
 
 ### Negative
 
-- Adds a new node type (`:Ontology`) with lifecycle management — the breathing worker is a new background service that must run reliably
+- Adds a new node type (`:Ontology`) with lifecycle management — the annealing worker is a new background service that must run reliably
 - Promotion and demotion are graph mutations — they change Source node edges and properties, which could affect concurrent queries. Transaction isolation needed.
 - The promotion function involves computing degree centrality across all concepts in an ontology plus diversity analysis of candidates' neighborhoods — this is O(N) per ontology per evaluation cycle. Background job, not request-path.
 - Sigmoid threshold calibration requires empirical tuning — the first promotion in a new graph has no baseline for "highly connected relative to peers"
@@ -360,7 +360,7 @@ These interventions are expected and deliberate. The graph provides proposals; o
 
 5. **Human-machine collaboration.** Humans assert hypotheses (create ontologies). The graph tests them. Weak hypotheses get absorbed. Strong patterns get elevated. Neither party works alone.
 
-6. **Edge-agnostic lifecycle.** Breathing controls depend only on the `:SCOPED_BY` infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like `:APPEARS`. Queries traverse `(c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)` where `-->` means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.
+6. **Edge-agnostic lifecycle.** Annealing controls depend only on the `:SCOPED_BY` infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like `:APPEARS`. Queries traverse `(c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)` where `-->` means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.
 
 ## Alternatives Considered
 
@@ -452,14 +452,14 @@ What's missing is the **driver** — the intelligence that observes the graph, s
 
 The worker automates this loop on a heartbeat, interacting with the epoch counter to decide *when* to evaluate, and delegating the *judgment* calls to an LLM.
 
-### Phase 3: Breathing Worker (Scoring & Proposals)
+### Phase 3: Annealing Worker (Scoring & Proposals)
 
-The breathing worker is a background job — similar in architecture to the ingestion worker and vocabulary consolidation worker. It runs on a heartbeat tied to the epoch counter: after N ingestion events (not wall-clock time), it evaluates the graph and generates proposals.
+The annealing worker is a background job — similar in architecture to the ingestion worker and vocabulary consolidation worker. It runs on a heartbeat tied to the epoch counter: after N ingestion events (not wall-clock time), it evaluates the graph and generates proposals.
 
 #### Worker Architecture
 
 ```
-epoch counter (graph_metrics) → threshold check → breathing cycle
+epoch counter (graph_metrics) → threshold check → annealing cycle
     ↓
 per-ontology scoring (mass, coherence, exposure)
     ↓
@@ -512,7 +512,7 @@ Adjacency is computable from embedding similarity between ontology nodes. An ing
 
 #### Centroid Recomputation (Weighted Top-K)
 
-After scoring, the breathing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.
+After scoring, the annealing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.
 
 **Algorithm:**
 
@@ -597,7 +597,7 @@ Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology data is alr
 
 #### Derived Edges
 
-As the breathing worker scores ontologies, it observes cross-ontology concept bridges. These are materialized as ontology-level edges:
+As the annealing worker scores ontologies, it observes cross-ontology concept bridges. These are materialized as ontology-level edges:
 
 - **OVERLAPS** — significant percentage of A's concepts also appear in B's sources
 - **SPECIALIZES** — A's concepts are a coherent subset of B's concept space (A is more specific)
@@ -625,7 +625,7 @@ Humans or AI can declare relationships that override or supplement derived edges
 MERGE (a:Ontology {name: 'Security Engineering'})-[:SPECIALIZES {source: 'manual'}]->(b:Ontology {name: 'Infrastructure'})
 ```
 
-Derived edges carry `source: 'breathing_worker'`; explicit edges carry `source: 'manual'` or `source: 'ai'`. Explicit edges take precedence when they conflict with derived edges.
+Derived edges carry `source: 'annealing_worker'`; explicit edges carry `source: 'manual'` or `source: 'ai'`. Explicit edges take precedence when they conflict with derived edges.
 
 #### Integration
 
@@ -645,7 +645,7 @@ On approved promotion:
 2. `(:Ontology)-[:ANCHORED_BY]->(:Concept)` edge links the new ontology to its founding concept
 3. Reassign first-order concepts' sources: create `:SCOPED_BY` edges to new ontology, update `s.document`
 4. This is an **eventually consistent background process** — batched writes over multiple transactions (same pattern as vocabulary consolidation merging edge types across thousands of edges)
-5. `created_by: 'breathing_worker'` for provenance
+5. `created_by: 'annealing_worker'` for provenance
 
 #### Demotion Execution
 

@@ -15,7 +15,7 @@ from .vocab_consolidation import VocabConsolidationLauncher
 from .epistemic_remeasurement import EpistemicRemeasurementLauncher
 from .projection import ProjectionLauncher
 from .artifact_cleanup import ArtifactCleanupLauncher
-from .breathing import BreathingLauncher
+from .annealing import AnnealingLauncher
 
 __all__ = [
     "JobLauncher",
@@ -24,5 +24,5 @@ __all__ = [
     "EpistemicRemeasurementLauncher",
     "ProjectionLauncher",
     "ArtifactCleanupLauncher",
-    "BreathingLauncher",
+    "AnnealingLauncher",
 ]
