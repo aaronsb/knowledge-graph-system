@@ -86,14 +86,15 @@ export function formatOntologyInfo(data: any): string {
 export function formatOntologyScores(data: any): string {
   // Single ontology score
   if (data.ontology && data.mass_score !== undefined) {
+    const fmt = (v: number | null | undefined) => v != null ? v.toFixed(4) : '-';
     let output = `# Ontology Scores: ${data.ontology}\n\n`;
     output += `| Metric | Value |\n|--------|-------|\n`;
-    output += `| Mass | ${data.mass_score.toFixed(4)} |\n`;
-    output += `| Coherence | ${data.coherence_score!.toFixed(4)} |\n`;
-    output += `| Raw exposure | ${data.raw_exposure!.toFixed(4)} |\n`;
-    output += `| Weighted exposure | ${data.weighted_exposure!.toFixed(4)} |\n`;
-    output += `| **Protection** | **${data.protection_score!.toFixed(4)}** |\n`;
-    output += `| Epoch | ${data.last_evaluated_epoch} |\n`;
+    output += `| Mass | ${fmt(data.mass_score)} |\n`;
+    output += `| Coherence | ${fmt(data.coherence_score)} |\n`;
+    output += `| Raw exposure | ${fmt(data.raw_exposure)} |\n`;
+    output += `| Weighted exposure | ${fmt(data.weighted_exposure)} |\n`;
+    output += `| **Protection** | **${fmt(data.protection_score)}** |\n`;
+    output += `| Epoch | ${data.last_evaluated_epoch ?? '-'} |\n`;
     return output;
   }
 
@@ -110,8 +111,9 @@ export function formatOntologyScores(data: any): string {
   output += `| Ontology | Mass | Coherence | Exposure | Protection | Epoch |\n`;
   output += `|----------|------|-----------|----------|------------|-------|\n`;
 
+  const fmt3 = (v: number | null | undefined) => v != null ? v.toFixed(3) : '-';
   for (const s of scores) {
-    output += `| **${s.ontology}** | ${s.mass_score.toFixed(3)} | ${s.coherence_score.toFixed(3)} | ${s.weighted_exposure.toFixed(3)} | ${s.protection_score.toFixed(3)} | ${s.last_evaluated_epoch} |\n`;
+    output += `| **${s.ontology}** | ${fmt3(s.mass_score)} | ${fmt3(s.coherence_score)} | ${fmt3(s.weighted_exposure)} | ${fmt3(s.protection_score)} | ${s.last_evaluated_epoch ?? '-'} |\n`;
   }
 
   return output;

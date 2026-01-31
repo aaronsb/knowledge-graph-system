@@ -430,14 +430,8 @@ class BreathingManager:
         """
         total_ontologies = len(all_scores)
 
-        # Sum concept counts from scores (each entry has mass_score-derived info)
-        total_concepts = 0
-        for s in all_scores:
-            try:
-                stats = self.client.get_ontology_stats(s.get("ontology", ""))
-                total_concepts += stats.get("concept_count", 0) if stats else 0
-            except Exception:
-                continue
+        # Sum concept counts already carried in scores (from scorer's stats fetch)
+        total_concepts = sum(s.get("concept_count", 0) for s in all_scores)
 
         avg = total_concepts / total_ontologies if total_ontologies > 0 else 0
 

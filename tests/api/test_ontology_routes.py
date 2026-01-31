@@ -893,41 +893,49 @@ def mock_proposals_cursor(proposals):
     return client
 
 
-SAMPLE_PROPOSAL_ROW = (
-    1,                                      # id
-    "demotion",                             # proposal_type
-    "test-ontology",                        # ontology_name
-    None,                                   # anchor_concept_id
-    "parent-ontology",                      # target_ontology
-    "Low mass, should be absorbed",         # reasoning
-    0.05,                                   # mass_score (Decimal)
-    0.30,                                   # coherence_score
-    -0.10,                                  # protection_score
-    "pending",                              # status
-    "2026-01-30T18:00:00+00:00",           # created_at
-    13,                                     # created_at_epoch
-    None,                                   # reviewed_at
-    None,                                   # reviewed_by
-    None,                                   # reviewer_notes
-)
+SAMPLE_PROPOSAL_ROW = {
+    "id": 1,
+    "proposal_type": "demotion",
+    "ontology_name": "test-ontology",
+    "anchor_concept_id": None,
+    "target_ontology": "parent-ontology",
+    "reasoning": "Low mass, should be absorbed",
+    "mass_score": 0.05,
+    "coherence_score": 0.30,
+    "protection_score": -0.10,
+    "status": "pending",
+    "created_at": "2026-01-30T18:00:00+00:00",
+    "created_at_epoch": 13,
+    "reviewed_at": None,
+    "reviewed_by": None,
+    "reviewer_notes": None,
+    "executed_at": None,
+    "execution_result": None,
+    "suggested_name": None,
+    "suggested_description": None,
+}
 
-SAMPLE_PROMOTION_ROW = (
-    2,                                      # id
-    "promotion",                            # proposal_type
-    "big-domain",                           # ontology_name
-    "c_abc123",                             # anchor_concept_id
-    None,                                   # target_ontology
-    "PostgreSQL is a natural nucleus",      # reasoning
-    None,                                   # mass_score
-    None,                                   # coherence_score
-    None,                                   # protection_score
-    "pending",                              # status
-    "2026-01-30T18:01:00+00:00",           # created_at
-    13,                                     # created_at_epoch
-    None,                                   # reviewed_at
-    None,                                   # reviewed_by
-    None,                                   # reviewer_notes
-)
+SAMPLE_PROMOTION_ROW = {
+    "id": 2,
+    "proposal_type": "promotion",
+    "ontology_name": "big-domain",
+    "anchor_concept_id": "c_abc123",
+    "target_ontology": None,
+    "reasoning": "PostgreSQL is a natural nucleus",
+    "mass_score": None,
+    "coherence_score": None,
+    "protection_score": None,
+    "status": "pending",
+    "created_at": "2026-01-30T18:01:00+00:00",
+    "created_at_epoch": 13,
+    "reviewed_at": None,
+    "reviewed_by": None,
+    "reviewer_notes": None,
+    "executed_at": None,
+    "execution_result": None,
+    "suggested_name": None,
+    "suggested_description": None,
+}
 
 
 @pytest.mark.unit
@@ -1017,17 +1025,17 @@ class TestReviewProposalRoute:
     def test_approve_proposal(self, api_client, auth_headers_admin):
         """Approving a pending proposal returns updated proposal."""
         # First fetchone returns pending status, second returns updated row
-        reviewed_row = list(SAMPLE_PROPOSAL_ROW)
-        reviewed_row[9] = "approved"  # status
-        reviewed_row[12] = "2026-01-30T19:00:00+00:00"  # reviewed_at
-        reviewed_row[13] = "admin"  # reviewed_by
-        reviewed_row[14] = "Looks good"  # reviewer_notes
+        reviewed_row = dict(SAMPLE_PROPOSAL_ROW)
+        reviewed_row["status"] = "approved"
+        reviewed_row["reviewed_at"] = "2026-01-30T19:00:00+00:00"
+        reviewed_row["reviewed_by"] = "admin"
+        reviewed_row["reviewer_notes"] = "Looks good"
 
         client = mock_age_client()
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         # First call: check status; second call: update and return
-        mock_cursor.fetchone.side_effect = [("pending",), tuple(reviewed_row)]
+        mock_cursor.fetchone.side_effect = [{"status": "pending"}, reviewed_row]
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
         client.pool = MagicMock()
@@ -1046,13 +1054,13 @@ class TestReviewProposalRoute:
 
     def test_reject_proposal(self, api_client, auth_headers_admin):
         """Rejecting a pending proposal returns updated proposal."""
-        reviewed_row = list(SAMPLE_PROPOSAL_ROW)
-        reviewed_row[9] = "rejected"
+        reviewed_row = dict(SAMPLE_PROPOSAL_ROW)
+        reviewed_row["status"] = "rejected"
 
         client = mock_age_client()
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_cursor.fetchone.side_effect = [("pending",), tuple(reviewed_row)]
+        mock_cursor.fetchone.side_effect = [{"status": "pending"}, reviewed_row]
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
         client.pool = MagicMock()
@@ -1072,7 +1080,7 @@ class TestReviewProposalRoute:
         client = mock_age_client()
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = ("approved",)  # Already approved
+        mock_cursor.fetchone.return_value = {"status": "approved"}  # Already approved
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
         client.pool = MagicMock()

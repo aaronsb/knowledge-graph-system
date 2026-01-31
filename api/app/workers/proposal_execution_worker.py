@@ -57,19 +57,13 @@ def run_proposal_execution_worker(
         if not proposal:
             return {"status": "failed", "error": f"Proposal {proposal_id} not found"}
 
-        # 2. Guard: must be approved (prevents double-execution)
-        if proposal["status"] != "approved":
-            return {
-                "status": "skipped",
-                "reason": f"Proposal is '{proposal['status']}', not 'approved'",
-            }
-
-        # 3. Claim: set status='executing' atomically
-        claimed = _update_proposal_status(age_client, proposal_id, "executing")
+        # 2. Atomic claim: set status='executing' only if currently 'approved'
+        #    Single UPDATE with WHERE guard prevents race between concurrent workers.
+        claimed = _claim_proposal(age_client, proposal_id)
         if not claimed:
             return {
                 "status": "skipped",
-                "reason": "Failed to claim proposal (concurrent execution?)",
+                "reason": f"Proposal not claimable (status='{proposal['status']}')",
             }
 
         job_queue.update_job(job_id, {
@@ -143,9 +137,10 @@ def run_proposal_execution_worker(
 
 def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
     """Load a proposal from the breathing_proposals table."""
+    from psycopg2.extras import RealDictCursor
     conn = age_client.pool.getconn()
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """
                 SELECT id, proposal_type, ontology_name, anchor_concept_id,
@@ -161,19 +156,47 @@ def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
             if not row:
                 return None
             return {
-                "id": row[0],
-                "proposal_type": row[1],
-                "ontology_name": row[2],
-                "anchor_concept_id": row[3],
-                "target_ontology": row[4],
-                "reasoning": row[5],
-                "mass_score": float(row[6]) if row[6] is not None else None,
-                "coherence_score": float(row[7]) if row[7] is not None else None,
-                "protection_score": float(row[8]) if row[8] is not None else None,
-                "status": row[9],
-                "suggested_name": row[10],
-                "suggested_description": row[11],
+                "id": row["id"],
+                "proposal_type": row["proposal_type"],
+                "ontology_name": row["ontology_name"],
+                "anchor_concept_id": row.get("anchor_concept_id"),
+                "target_ontology": row.get("target_ontology"),
+                "reasoning": row["reasoning"],
+                "mass_score": float(row["mass_score"]) if row.get("mass_score") is not None else None,
+                "coherence_score": float(row["coherence_score"]) if row.get("coherence_score") is not None else None,
+                "protection_score": float(row["protection_score"]) if row.get("protection_score") is not None else None,
+                "status": row["status"],
+                "suggested_name": row.get("suggested_name"),
+                "suggested_description": row.get("suggested_description"),
             }
+    finally:
+        age_client.pool.putconn(conn)
+
+
+def _claim_proposal(age_client, proposal_id: int) -> bool:
+    """Atomically claim a proposal by setting status='executing' only if 'approved'.
+
+    Returns True if the row was updated (i.e., we won the claim).
+    """
+    conn = age_client.pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE kg_api.breathing_proposals
+                SET status = 'executing'
+                WHERE id = %s AND status = 'approved'
+                RETURNING id
+                """,
+                (proposal_id,),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return row is not None
+    except Exception as e:
+        logger.error(f"Failed to claim proposal {proposal_id}: {e}")
+        conn.rollback()
+        return False
     finally:
         age_client.pool.putconn(conn)
 

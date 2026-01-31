@@ -254,6 +254,7 @@ class OntologyScorer:
             "weighted_exposure": exposure["weighted_exposure"],
             "protection_score": protection,
             "last_evaluated_epoch": global_epoch,
+            "concept_count": stats.get("concept_count", 0),
         }
 
         # Cache scores on the Ontology node
