@@ -160,7 +160,7 @@ def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
             target_label = rel.get("to_label", rel.get("to_id", "unknown"))
             target_id = rel.get("to_id", "unknown")
             lines.append(f"  - type: {rel_type}")
-            lines.append(f'    target: "[[{target_label}]]"')
+            lines.append(f'    target: "[[{target_label}.concept]]"')
             lines.append(f"    target_id: {target_id}")
 
     # Tags for tool integration (Obsidian, Logseq, etc.)
@@ -223,7 +223,7 @@ def format_concept(data: dict, tags_config: TagsConfig = None) -> str:
         for rel in relationships:
             rel_type = rel.get("rel_type", "RELATED_TO")
             target = rel.get("to_label", rel.get("to_id", "unknown"))
-            lines.append(f"- **{rel_type}** → [[{target}]]")
+            lines.append(f"- **{rel_type}** → [[{target}.concept]]")
         lines.append("")
 
     return "\n".join(lines)
