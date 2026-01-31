@@ -51,6 +51,7 @@ import {
   formatGraphEdgeList,
   formatGraphBatchResult,
   formatGraphQueueResult,
+  formatOntologyEdges,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -1516,7 +1517,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               toolArgs.ontology_name as string
             );
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyEdges(result) }],
             };
           }
 

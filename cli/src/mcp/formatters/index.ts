@@ -66,3 +66,6 @@ export {
   formatGraphBatchResult,
   formatGraphQueueResult,
 } from './graph.js';
+
+// Ontology formatters (ADR-200)
+export { formatOntologyEdges } from './ontology.js';
