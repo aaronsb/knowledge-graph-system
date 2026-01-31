@@ -52,8 +52,8 @@ class BreathingManager:
         3. Derive ontology-to-ontology edges (Phase 5)
         4. Identify demotion candidates (low protection)
         5. Identify promotion candidates (high-degree concepts)
-        5. LLM evaluation (unless dry_run)
-        6. Store proposals
+        6. LLM evaluation (unless dry_run)
+        7. Store proposals
 
         Args:
             demotion_threshold: Protection score below which to consider demotion
@@ -77,7 +77,7 @@ class BreathingManager:
 
         # 3. Derive ontology-to-ontology edges (ADR-200 Phase 5)
         edge_result = {"edges_created": 0, "edges_deleted": 0}
-        if derive_edges:
+        if derive_edges and not dry_run:
             try:
                 edge_result = self.scorer.derive_ontology_edges(
                     overlap_threshold=overlap_threshold,
@@ -125,7 +125,7 @@ class BreathingManager:
                 },
             }
 
-        # 5. Evaluate and store proposals
+        # 6. Evaluate and store proposals
         proposals_generated = 0
         remaining = max_proposals
 

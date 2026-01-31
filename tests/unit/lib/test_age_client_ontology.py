@@ -1000,3 +1000,80 @@ class TestDeleteAllDerivedOntologyEdges:
         result = mock_age_client.delete_all_derived_ontology_edges()
 
         assert result == 0
+
+
+@pytest.mark.unit
+class TestDeleteOntologyEdge:
+    """Tests for delete_ontology_edge()."""
+
+    def test_delete_returns_count(self, mock_age_client):
+        """Deleting a specific edge returns 1."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"deleted": 1})
+
+        result = mock_age_client.delete_ontology_edge("a", "b", "OVERLAPS")
+
+        assert result == 1
+        mock_age_client._execute_cypher.assert_called_once()
+
+    def test_delete_nonexistent_returns_zero(self, mock_age_client):
+        """Deleting a nonexistent edge returns 0."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"deleted": 0})
+
+        result = mock_age_client.delete_ontology_edge("a", "b", "OVERLAPS")
+
+        assert result == 0
+
+    def test_delete_rejects_invalid_edge_type(self, mock_age_client):
+        """Invalid edge type raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid ontology edge type"):
+            mock_age_client.delete_ontology_edge("a", "b", "BOGUS")
+
+    def test_delete_error_returns_zero(self, mock_age_client):
+        """Database error returns 0."""
+        mock_age_client._execute_cypher = MagicMock(
+            side_effect=Exception("connection lost")
+        )
+
+        result = mock_age_client.delete_ontology_edge("a", "b", "OVERLAPS")
+
+        assert result == 0
+
+
+@pytest.mark.unit
+class TestUpsertOntologyEdgeSourceValidation:
+    """Tests for source parameter validation on upsert_ontology_edge()."""
+
+    def test_upsert_rejects_invalid_source(self, mock_age_client):
+        """Invalid source raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid ontology edge source"):
+            mock_age_client.upsert_ontology_edge(
+                from_name="a", to_name="b",
+                edge_type="OVERLAPS",
+                score=0.5, shared_concept_count=0, epoch=0,
+                source="unknown_source",
+            )
+
+    def test_upsert_accepts_breathing_worker(self, mock_age_client):
+        """Default source 'breathing_worker' is accepted."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"type": "OVERLAPS"})
+
+        result = mock_age_client.upsert_ontology_edge(
+            from_name="a", to_name="b",
+            edge_type="OVERLAPS",
+            score=0.5, shared_concept_count=0, epoch=0,
+        )
+
+        assert result is True
+
+    def test_upsert_accepts_manual(self, mock_age_client):
+        """Source 'manual' is accepted."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"type": "OVERLAPS"})
+
+        result = mock_age_client.upsert_ontology_edge(
+            from_name="a", to_name="b",
+            edge_type="OVERLAPS",
+            score=0.5, shared_concept_count=0, epoch=0,
+            source="manual",
+        )
+
+        assert result is True

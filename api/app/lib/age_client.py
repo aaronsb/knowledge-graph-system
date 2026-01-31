@@ -2309,6 +2309,7 @@ class AGEClient:
     # =========================================================================
 
     VALID_ONTOLOGY_EDGE_TYPES = ("OVERLAPS", "SPECIALIZES", "GENERALIZES")
+    VALID_ONTOLOGY_EDGE_SOURCES = ("breathing_worker", "manual")
 
     def upsert_ontology_edge(
         self,
@@ -2341,6 +2342,11 @@ class AGEClient:
             raise ValueError(
                 f"Invalid ontology edge type: {edge_type!r}. "
                 f"Must be one of {self.VALID_ONTOLOGY_EDGE_TYPES}"
+            )
+        if source not in self.VALID_ONTOLOGY_EDGE_SOURCES:
+            raise ValueError(
+                f"Invalid ontology edge source: {source!r}. "
+                f"Must be one of {self.VALID_ONTOLOGY_EDGE_SOURCES}"
             )
 
         query = f"""
@@ -2511,6 +2517,45 @@ class AGEClient:
                 logger.error(f"Failed to delete all derived {etype} edges: {e}")
 
         return total_deleted
+
+    def delete_ontology_edge(
+        self, from_name: str, to_name: str, edge_type: str
+    ) -> int:
+        """
+        Delete a specific ontology-to-ontology edge (any source).
+
+        Args:
+            from_name: Source ontology name
+            to_name: Target ontology name
+            edge_type: OVERLAPS, SPECIALIZES, or GENERALIZES
+
+        Returns:
+            Number of edges deleted (0 or 1)
+        """
+        if edge_type not in self.VALID_ONTOLOGY_EDGE_TYPES:
+            raise ValueError(
+                f"Invalid ontology edge type: {edge_type!r}. "
+                f"Must be one of {self.VALID_ONTOLOGY_EDGE_TYPES}"
+            )
+
+        query = f"""
+        MATCH (a:Ontology {{name: $from_name}})-[r:{edge_type}]->(b:Ontology {{name: $to_name}})
+        DELETE r
+        RETURN count(r) as deleted
+        """
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"from_name": from_name, "to_name": to_name},
+                fetch_one=True,
+            )
+            return int(str(result.get("deleted", 0))) if result else 0
+        except Exception as e:
+            logger.error(
+                f"Failed to delete {edge_type} edge "
+                f"{from_name} -> {to_name}: {e}"
+            )
+            return 0
 
     # =========================================================================
     # Vocabulary Management Methods (ADR-032)

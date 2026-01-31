@@ -1453,19 +1453,8 @@ async def delete_ontology_edge(
 
     client = get_age_client()
     try:
-        # Delete the specific edge
-        query = f"""
-        MATCH (a:Ontology {{name: $from_name}})-[r:{edge_type}]->(b:Ontology {{name: $to_name}})
-        DELETE r
-        RETURN count(r) as deleted
-        """
-        result = client._execute_cypher(
-            query,
-            params={"from_name": ontology_name, "to_name": to_ontology},
-            fetch_one=True,
-        )
+        deleted = client.delete_ontology_edge(ontology_name, to_ontology, edge_type)
 
-        deleted = result.get("deleted", 0) if result else 0
         if deleted == 0:
             raise HTTPException(
                 status_code=404,

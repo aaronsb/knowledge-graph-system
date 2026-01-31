@@ -380,16 +380,15 @@ class TestBreathingCycleEdgeDerivation:
         )
 
     @pytest.mark.asyncio
-    async def test_dry_run_includes_edge_counts(self, manager, mock_scorer, mock_client):
-        """Dry run also reports edge counts."""
+    async def test_dry_run_skips_edge_derivation(self, manager, mock_scorer, mock_client):
+        """Dry run does not perform edge derivation (no write side effects)."""
         mock_scorer.score_all_ontologies.return_value = []
         mock_scorer.recompute_all_centroids.return_value = 0
-        mock_scorer.derive_ontology_edges.return_value = {
-            "edges_created": 2, "edges_deleted": 0
-        }
         mock_client.get_concept_degree_ranking.return_value = []
 
         result = await manager.run_breathing_cycle(dry_run=True)
 
-        assert result["edges_created"] == 2
+        mock_scorer.derive_ontology_edges.assert_not_called()
+        assert result["edges_created"] == 0
+        assert result["edges_deleted"] == 0
         assert result["dry_run"] is True

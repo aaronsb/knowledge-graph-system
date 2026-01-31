@@ -1269,7 +1269,7 @@ class TestDeleteOntologyEdgeRoute:
     def test_delete_edge(self, api_client, auth_headers_admin):
         """Deleting an existing edge returns success."""
         client = mock_age_client()
-        client._execute_cypher = MagicMock(return_value={"deleted": 1})
+        client.delete_ontology_edge = MagicMock(return_value=1)
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
             response = api_client.delete(
@@ -1280,11 +1280,14 @@ class TestDeleteOntologyEdgeRoute:
         assert response.status_code == 200
         data = response.json()
         assert data["deleted"] == 1
+        client.delete_ontology_edge.assert_called_once_with(
+            "from-domain", "to-domain", "OVERLAPS"
+        )
 
     def test_delete_nonexistent_edge_returns_404(self, api_client, auth_headers_admin):
         """Deleting a nonexistent edge returns 404."""
         client = mock_age_client()
-        client._execute_cypher = MagicMock(return_value={"deleted": 0})
+        client.delete_ontology_edge = MagicMock(return_value=0)
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
             response = api_client.delete(
