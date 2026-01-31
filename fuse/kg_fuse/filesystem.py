@@ -788,7 +788,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                 results = await search_single_term(query_terms[0], symlinked_ontologies)
                 for r in results:
                     cid = r.get("concept_id")
-                    if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                    if cid not in concept_data or r.get("score", 0) > concept_data[cid].get("score", 0):
                         concept_data[cid] = r
                 base_ids = set(concept_data.keys())
             else:
@@ -800,7 +800,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     for r in results:
                         cid = r.get("concept_id")
                         concept_ids.add(cid)
-                        if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                        if cid not in concept_data or r.get("score", 0) > concept_data[cid].get("score", 0):
                             concept_data[cid] = r
                     result_sets.append(concept_ids)
 
@@ -818,7 +818,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     for r in results:
                         cid = r.get("concept_id")
                         base_ids.add(cid)  # Add to result set
-                        if cid not in concept_data or r.get("similarity", 0) > concept_data[cid].get("similarity", 0):
+                        if cid not in concept_data or r.get("score", 0) > concept_data[cid].get("score", 0):
                             concept_data[cid] = r
 
             # Step 3: Apply exclude terms (semantic NOT - filter results)
@@ -833,7 +833,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
             # Step 4: Build final results, sorted by similarity
             matched = [concept_data[cid] for cid in base_ids if cid in concept_data]
-            matched.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+            matched.sort(key=lambda x: x.get("score", 0), reverse=True)
             return matched[:limit]
 
         except Exception as e:
