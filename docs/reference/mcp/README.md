@@ -535,9 +535,9 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 - `from_label` (`string`) - Source concept by label (semantic resolution)
 - `to_label` (`string`) - Target concept by label (semantic resolution)
 - `relationship_type` (`string`) - Edge relationship type (e.g., IMPLIES, SUPPORTS, CONTRADICTS)
-- `category` (`string`) - Semantic category of the relationship (default: logical_truth)
-  - Allowed values: `logical_truth`, `empirical_claim`, `value_judgment`, `conceptual`, `temporal_sequence`, `causal`, `other`
-  - Default: `"logical_truth"`
+- `category` (`string`) - Semantic category of the relationship (default: structural)
+  - Allowed values: `logical_truth`, `causal`, `structural`, `temporal`, `comparative`, `functional`, `definitional`
+  - Default: `"structural"`
 - `confidence` (`number`) - Edge confidence 0.0-1.0 (default: 1.0)
   - Default: `1`
 - `concept_id` (`string`) - Concept ID (for edit/delete concept)

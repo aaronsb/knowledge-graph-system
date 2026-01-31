@@ -7,8 +7,24 @@ well-documented query building.
 
 from typing import List, Dict, Optional, Any
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+# Valid Cypher relationship type: uppercase letters, digits, underscores
+_VALID_REL_TYPE_RE = re.compile(r'^[A-Z][A-Z0-9_]*$')
+
+
+def _validate_rel_types(types: List[str]) -> List[str]:
+    """Validate relationship type names for safe Cypher interpolation.
+
+    Relationship types are interpolated into Cypher patterns ([:TYPE1|TYPE2])
+    which cannot use $param syntax. This ensures only valid identifiers are used.
+    """
+    for t in types:
+        if not _VALID_REL_TYPE_RE.match(t):
+            raise ValueError(f"Invalid relationship type name: {t!r}")
+    return types
 
 
 class QueryService:
@@ -118,6 +134,7 @@ class QueryService:
         # Build relationship type filter
         rel_filter = ""
         if relationship_types:
+            _validate_rel_types(relationship_types)
             # Join types with | for Cypher union syntax: [:TYPE1|TYPE2|TYPE3]
             rel_types = "|".join(relationship_types)
             rel_filter = f":{rel_types}"
@@ -182,6 +199,7 @@ class QueryService:
         """
         # Build relationship pattern with type filtering if needed
         if allowed_rel_types and len(allowed_rel_types) > 0:
+            _validate_rel_types(allowed_rel_types)
             # Build OR-based type filter for variable-length path
             type_pattern = "|".join(allowed_rel_types)
             rel_pattern = f"[:{type_pattern}*1..{max_hops}]"

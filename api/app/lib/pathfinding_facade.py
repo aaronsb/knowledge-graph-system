@@ -41,8 +41,19 @@ Usage:
 
 from typing import List, Dict, Optional, Any, Set, Tuple
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+# Valid Cypher relationship type: uppercase letters, digits, underscores
+_VALID_REL_TYPE_RE = re.compile(r'^[A-Z][A-Z0-9_]*$')
+
+
+def _validate_rel_types(types: List[str]) -> None:
+    """Validate relationship type names for safe Cypher interpolation."""
+    for t in types:
+        if not _VALID_REL_TYPE_RE.match(t):
+            raise ValueError(f"Invalid relationship type name: {t!r}")
 
 
 class PathfindingFacade:
@@ -290,6 +301,7 @@ class PathfindingFacade:
         # Build relationship type filter
         rel_filter = ""
         if allowed_rel_types and len(allowed_rel_types) > 0:
+            _validate_rel_types(allowed_rel_types)
             type_list = ", ".join([f"'{t}'" for t in allowed_rel_types])
             rel_filter = f"AND type(r) IN [{type_list}]"
 
@@ -416,24 +428,24 @@ class PathfindingFacade:
 
     def _get_concept_data(self, concept_id: str) -> Optional[Dict[str, Any]]:
         """Fetch concept node data."""
-        query = f"""
-            MATCH (c:Concept {{concept_id: '{concept_id}'}})
+        query = """
+            MATCH (c:Concept {concept_id: $cid})
             RETURN c.concept_id as concept_id, c.label as label, c.description as description
         """
         try:
-            results = self.db._execute_cypher(query, fetch_one=True)
+            results = self.db._execute_cypher(query, params={"cid": concept_id}, fetch_one=True)
             return results if results else None
         except Exception:
             return None
 
     def _concept_exists(self, concept_id: str) -> bool:
         """Check if concept exists."""
-        query = f"""
-            MATCH (c:Concept {{concept_id: '{concept_id}'}})
+        query = """
+            MATCH (c:Concept {concept_id: $cid})
             RETURN count(c) as cnt
         """
         try:
-            result = self.db._execute_cypher(query, fetch_one=True)
+            result = self.db._execute_cypher(query, params={"cid": concept_id}, fetch_one=True)
             return result and result.get('cnt', 0) > 0
         except Exception:
             return False
@@ -580,19 +592,25 @@ class PathfindingFacade:
         # Build relationship filter
         rel_filter = ""
         if allowed_rel_types and len(allowed_rel_types) > 0:
+            _validate_rel_types(allowed_rel_types)
             type_pattern = "|".join(allowed_rel_types)
             rel_filter = f":{type_pattern}"
 
+        # Parameterize concept IDs; rel_filter and integers can't use $params
+        # in Cypher pattern syntax but are validated above
+        result_limit = max_paths + 5
         query = f"""
-            MATCH path = (from:Concept {{concept_id: '{from_id}'}})-[{rel_filter}*1..{max_hops}]-(to:Concept {{concept_id: '{to_id}'}})
+            MATCH path = (from:Concept {{concept_id: $from_id}})-[{rel_filter}*1..{max_hops}]-(to:Concept {{concept_id: $to_id}})
             WITH path, length(path) as hops
             RETURN nodes(path) as path_nodes, relationships(path) as path_rels, hops
             ORDER BY hops ASC
-            LIMIT {max_paths + 5}
+            LIMIT {result_limit}
         """
 
         try:
-            results = self.db._execute_cypher(query)
+            results = self.db._execute_cypher(
+                query, params={"from_id": from_id, "to_id": to_id}
+            )
         except Exception as e:
             logger.warning(f"Additional paths query failed: {e}")
             return []
