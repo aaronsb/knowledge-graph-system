@@ -28,3 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_breathing_proposals_status
     ON kg_api.breathing_proposals(status);
 CREATE INDEX IF NOT EXISTS idx_breathing_proposals_ontology
     ON kg_api.breathing_proposals(ontology_name);
+
+-- Record migration
+INSERT INTO public.schema_migrations (version, name)
+VALUES (46, 'breathing_proposals')
+ON CONFLICT (version) DO NOTHING;

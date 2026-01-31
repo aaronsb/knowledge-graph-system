@@ -279,9 +279,12 @@ async def list_proposals(
                 conditions = []
                 params = []
 
+                # Hide expired proposals unless explicitly requested
                 if status:
                     conditions.append("status = %s")
                     params.append(status)
+                else:
+                    conditions.append("(expires_at IS NULL OR expires_at > NOW())")
                 if proposal_type:
                     conditions.append("proposal_type = %s")
                     params.append(proposal_type)
@@ -387,6 +390,10 @@ async def review_proposal(
                         status_code=409,
                         detail=f"Proposal {proposal_id} is already {row[0]}"
                     )
+
+                # Belt-and-suspenders: Pydantic validates via regex, but guard here too
+                if request.status not in ("approved", "rejected"):
+                    raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
 
                 # Update proposal
                 reviewer = current_user.username if current_user else "unknown"
