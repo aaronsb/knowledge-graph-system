@@ -412,7 +412,8 @@ class AGEClient:
         label: str,
         embedding: List[float],
         search_terms: List[str],
-        description: str = ""
+        description: str = "",
+        created_at_epoch: int = 0
     ) -> Dict[str, Any]:
         """
         Create a Concept node in the graph.
@@ -423,6 +424,7 @@ class AGEClient:
             embedding: Vector embedding for similarity search
             search_terms: Alternative terms/phrases for the concept
             description: Factual 1-2 sentence definition of the concept (optional)
+            created_at_epoch: Global epoch at creation time (ADR-200 provenance)
 
         Returns:
             Dictionary with created node properties
@@ -436,7 +438,10 @@ class AGEClient:
             label: $label,
             description: $description,
             embedding: $embedding,
-            search_terms: $search_terms
+            search_terms: $search_terms,
+            created_at_epoch: $created_at_epoch,
+            last_seen_epoch: $created_at_epoch,
+            seen_count: 1
         })
         RETURN c
         """
@@ -449,7 +454,8 @@ class AGEClient:
                     "label": label,
                     "description": description,
                     "embedding": embedding,
-                    "search_terms": search_terms
+                    "search_terms": search_terms,
+                    "created_at_epoch": created_at_epoch
                 },
                 fetch_one=True
             )
@@ -460,6 +466,37 @@ class AGEClient:
             return {}
         except Exception as e:
             raise Exception(f"Failed to create Concept node {concept_id}: {e}")
+
+    def update_concept_epoch(self, concept_id: str, epoch: int) -> bool:
+        """
+        Update a concept's last_seen_epoch and increment seen_count.
+
+        Called when a concept is matched (reused) during ingestion.
+        ADR-200: epoch provenance for concept vitality tracking.
+
+        Args:
+            concept_id: The concept to update
+            epoch: Current global epoch
+
+        Returns:
+            True if the concept was found and updated
+        """
+        query = """
+        MATCH (c:Concept {concept_id: $concept_id})
+        SET c.last_seen_epoch = $epoch,
+            c.seen_count = COALESCE(c.seen_count, 0) + 1
+        RETURN c.concept_id as concept_id
+        """
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"concept_id": concept_id, "epoch": epoch},
+                fetch_one=True
+            )
+            return result is not None
+        except Exception as e:
+            logger.warning(f"Failed to update concept epoch for {concept_id}: {e}")
+            return False
 
     def find_instance_by_quote_and_source(
         self,

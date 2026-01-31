@@ -296,6 +296,9 @@ def process_chunk(
 
     # Step 3: Process each concept
 
+    # ADR-200: Get epoch once per chunk for concept provenance
+    current_epoch = age_client.get_current_epoch()
+
     # Track concept processing results for summary
     new_concepts = []
     matched_concepts = []
@@ -382,6 +385,7 @@ def process_chunk(
                     })
 
                     age_client.link_concept_to_source(actual_concept_id, source_id)
+                    age_client.update_concept_epoch(actual_concept_id, current_epoch)
                     stats.concepts_linked += 1
 
                     # Map LLM ID to actual ID for relationships
@@ -396,7 +400,8 @@ def process_chunk(
                     label=label,
                     embedding=embedding,
                     search_terms=search_terms,
-                    description=description
+                    description=description,
+                    created_at_epoch=current_epoch
                 )
                 age_client.link_concept_to_source(actual_concept_id, source_id)
                 stats.concepts_created += 1
