@@ -291,7 +291,8 @@ async def startup_event():
         'VocabConsolidationLauncher': VocabConsolidationLauncher,
         'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
         'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
-        'ArtifactCleanupLauncher': ArtifactCleanupLauncher  # ADR-083: Artifact cleanup
+        'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
+        'BreathingLauncher': BreathingLauncher,  # ADR-200: Ontology breathing cycle
     }
     scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
     await scheduled_jobs_manager.start()

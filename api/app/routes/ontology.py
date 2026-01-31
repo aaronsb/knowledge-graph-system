@@ -105,19 +105,7 @@ async def create_ontology(
             )
 
         # Get creation epoch
-        creation_epoch = 0
-        try:
-            conn = client.pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'")
-                    row = cur.fetchone()
-                    if row:
-                        creation_epoch = row[0] or 0
-            finally:
-                client.pool.putconn(conn)
-        except Exception:
-            pass
+        creation_epoch = client.get_current_epoch()
 
         ontology_id = f"ont_{uuid.uuid4()}"
         node = client.create_ontology_node(
