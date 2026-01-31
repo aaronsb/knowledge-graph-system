@@ -21,6 +21,9 @@ def mock_client():
     client = MagicMock()
     client.get_current_epoch.return_value = 20
 
+    # Default: ecological snapshot needs real dict from get_ontology_stats
+    client.get_ontology_stats.return_value = {"concept_count": 10}
+
     # Default: connection pool mock for _store_proposal
     mock_conn = MagicMock()
     mock_cursor = MagicMock()

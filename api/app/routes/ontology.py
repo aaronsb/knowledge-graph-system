@@ -241,8 +241,19 @@ def _row_to_proposal(row) -> BreathingProposal:
         id, proposal_type, ontology_name, anchor_concept_id,
         target_ontology, reasoning, mass_score, coherence_score,
         protection_score, status, created_at, created_at_epoch,
-        reviewed_at, reviewed_by, reviewer_notes
+        reviewed_at, reviewed_by, reviewer_notes,
+        executed_at, execution_result,
+        suggested_name, suggested_description
     """
+    import json as _json
+
+    execution_result_raw = row[16] if len(row) > 16 else None
+    if isinstance(execution_result_raw, str):
+        try:
+            execution_result_raw = _json.loads(execution_result_raw)
+        except (ValueError, TypeError):
+            pass
+
     return BreathingProposal(
         id=row[0],
         proposal_type=row[1],
@@ -259,6 +270,10 @@ def _row_to_proposal(row) -> BreathingProposal:
         reviewed_at=row[12],
         reviewed_by=row[13],
         reviewer_notes=row[14],
+        executed_at=row[15] if len(row) > 15 else None,
+        execution_result=execution_result_raw,
+        suggested_name=row[17] if len(row) > 17 else None,
+        suggested_description=row[18] if len(row) > 18 else None,
     )
 
 @router.get("/proposals", response_model=BreathingProposalListResponse)
@@ -302,7 +317,9 @@ async def list_proposals(
                     SELECT id, proposal_type, ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
-                           reviewed_at, reviewed_by, reviewer_notes
+                           reviewed_at, reviewed_by, reviewer_notes,
+                           executed_at, execution_result,
+                           suggested_name, suggested_description
                     FROM kg_api.breathing_proposals
                     {where}
                     ORDER BY created_at DESC
@@ -339,7 +356,9 @@ async def get_proposal(
                     SELECT id, proposal_type, ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
-                           reviewed_at, reviewed_by, reviewer_notes
+                           reviewed_at, reviewed_by, reviewer_notes,
+                           executed_at, execution_result,
+                           suggested_name, suggested_description
                     FROM kg_api.breathing_proposals
                     WHERE id = %s
                 """, (proposal_id,))
@@ -368,10 +387,11 @@ async def review_proposal(
     _: None = Depends(require_permission("ontologies", "write")),
 ):
     """
-    Approve or reject a breathing proposal (ADR-200 Phase 3b).
+    Approve or reject a breathing proposal (ADR-200 Phase 3b + Phase 4).
 
-    Phase 3b is proposal-only — approved proposals are stored but not executed.
-    Phase 4 will add automatic execution of approved proposals.
+    On approval, a proposal_execution job is dispatched to execute the
+    proposal asynchronously. The proposal status will progress through:
+    approved → executing → executed (or failed).
 
     **Authorization:** Requires `ontologies:write` permission
     """
@@ -407,15 +427,49 @@ async def review_proposal(
                     RETURNING id, proposal_type, ontology_name, anchor_concept_id,
                               target_ontology, reasoning, mass_score, coherence_score,
                               protection_score, status, created_at, created_at_epoch,
-                              reviewed_at, reviewed_by, reviewer_notes
+                              reviewed_at, reviewed_by, reviewer_notes,
+                              executed_at, execution_result,
+                              suggested_name, suggested_description
                 """, (request.status, reviewer, request.notes, proposal_id))
 
                 row = cur.fetchone()
                 conn.commit()
 
-                return _row_to_proposal(row)
+                proposal = _row_to_proposal(row)
         finally:
             client.pool.putconn(conn)
+
+        # Phase 4: dispatch execution job for approved proposals
+        if request.status == "approved":
+            try:
+                from api.app.services.job_queue import get_job_queue
+                queue = get_job_queue()
+                reviewer = current_user.username if current_user else "unknown"
+                exec_job_id = queue.enqueue(
+                    job_type="proposal_execution",
+                    job_data={
+                        "proposal_id": proposal_id,
+                        "triggered_by": reviewer,
+                    },
+                )
+                queue.update_job(exec_job_id, {
+                    "status": "approved",
+                    "approved_by": reviewer,
+                })
+                queue.execute_job_async(exec_job_id)
+                logger.info(
+                    f"Dispatched execution job {exec_job_id} for "
+                    f"proposal {proposal_id}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to dispatch execution for proposal "
+                    f"{proposal_id}: {e}",
+                    exc_info=True,
+                )
+
+        return proposal
+
     except HTTPException:
         raise
     except Exception as e:

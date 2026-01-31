@@ -2305,6 +2305,110 @@ class AGEClient:
             return 0
 
     # =========================================================================
+    # Proposal Execution Primitives (ADR-200 Phase 4)
+    # =========================================================================
+
+    def get_concept_node(self, concept_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a Concept node's properties by ID.
+
+        Args:
+            concept_id: Concept ID
+
+        Returns:
+            Dict with concept_id, label, description, embedding or None
+        """
+        query = """
+        MATCH (c:Concept {concept_id: $cid})
+        RETURN c.concept_id as concept_id, c.label as label,
+               c.description as description, c.embedding as embedding
+        """
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"cid": concept_id},
+                fetch_one=True,
+            )
+            return result if result else None
+        except Exception as e:
+            logger.error(f"Failed to get concept node {concept_id}: {e}")
+            return None
+
+    def create_anchored_by_edge(
+        self, ontology_name: str, concept_id: str
+    ) -> bool:
+        """
+        Create (:Ontology)-[:ANCHORED_BY]->(:Concept) edge.
+
+        Links a promoted ontology to its founding concept.
+        The concept survives independently — it existed before and continues after.
+
+        Args:
+            ontology_name: The ontology's name
+            concept_id: The anchor concept ID
+
+        Returns:
+            True if edge created, False on failure
+        """
+        query = """
+        MATCH (o:Ontology {name: $name}), (c:Concept {concept_id: $cid})
+        MERGE (o)-[:ANCHORED_BY]->(c)
+        RETURN o.name as name
+        """
+        try:
+            result = self._execute_cypher(
+                query,
+                params={"name": ontology_name, "cid": concept_id},
+                fetch_one=True,
+            )
+            return result is not None
+        except Exception as e:
+            logger.error(
+                f"Failed to create ANCHORED_BY edge "
+                f"{ontology_name} -> {concept_id}: {e}"
+            )
+            return False
+
+    def get_first_order_source_ids(
+        self, concept_id: str, ontology_name: str
+    ) -> List[str]:
+        """
+        Get source IDs from a concept and its first-order neighbors within an ontology.
+
+        Used during promotion execution to find which sources to reassign.
+        Follows any edge type between the anchor concept and its neighbor concepts,
+        then finds sources of those neighbors scoped to the given ontology.
+
+        Args:
+            concept_id: The anchor concept ID
+            ontology_name: Only return sources scoped to this ontology
+
+        Returns:
+            List of source_id strings
+        """
+        query = """
+        MATCH (anchor:Concept {concept_id: $cid})-[]-(neighbor:Concept)
+        MATCH (neighbor)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $ontology})
+        WITH collect(DISTINCT s.source_id) as neighbor_sources
+        OPTIONAL MATCH (anchor2:Concept {concept_id: $cid})-->(s2:Source)-[:SCOPED_BY]->(o2:Ontology {name: $ontology})
+        WITH neighbor_sources + collect(DISTINCT s2.source_id) as all_sources
+        UNWIND all_sources as sid
+        RETURN DISTINCT sid as source_id
+        """
+        try:
+            rows = self._execute_cypher(
+                query,
+                params={"cid": concept_id, "ontology": ontology_name},
+            )
+            return [row["source_id"] for row in (rows or []) if row.get("source_id")]
+        except Exception as e:
+            logger.error(
+                f"Failed to get first-order source IDs for "
+                f"{concept_id} in {ontology_name}: {e}"
+            )
+            return []
+
+    # =========================================================================
     # Ontology-to-Ontology Edge Methods (ADR-200 Phase 5)
     # =========================================================================
 

@@ -630,7 +630,9 @@ export const ontologyCommand = setCommandHelp(
             const typeIcon = p.proposal_type === 'promotion' ? '⬆' : '⬇';
             const statusColor = p.status === 'pending' ? colors.status.warning
               : p.status === 'approved' ? colors.status.success
+              : p.status === 'executed' ? colors.status.success
               : p.status === 'rejected' ? colors.status.error
+              : p.status === 'failed' ? colors.status.error
               : colors.status.dim;
 
             console.log(`  ${colors.ui.key(`#${p.id}`)} ${typeIcon} ${colors.evidence.document(p.ontology_name)} ${statusColor(`[${p.status}]`)}`);
@@ -687,7 +689,9 @@ export const ontologyCommand = setCommandHelp(
           const typeIcon = p.proposal_type === 'promotion' ? '⬆ Promotion' : '⬇ Demotion';
           const statusColor = p.status === 'pending' ? colors.status.warning
             : p.status === 'approved' ? colors.status.success
+            : p.status === 'executed' ? colors.status.success
             : p.status === 'rejected' ? colors.status.error
+            : p.status === 'failed' ? colors.status.error
             : colors.status.dim;
 
           console.log('\n' + colors.ui.title(`📋 Proposal #${p.id}: ${typeIcon}`));
@@ -721,6 +725,33 @@ export const ontologyCommand = setCommandHelp(
           }
           if (p.reviewer_notes) {
             console.log(`  ${colors.stats.label('Notes:')} ${p.reviewer_notes}`);
+          }
+
+          if (p.suggested_name) {
+            console.log(`  ${colors.stats.label('Suggested Name:')} ${p.suggested_name}`);
+          }
+          if (p.suggested_description) {
+            console.log(`  ${colors.stats.label('Suggested Description:')} ${p.suggested_description}`);
+          }
+
+          // Phase 4: execution details
+          if (p.executed_at) {
+            console.log(`  ${colors.stats.label('Executed:')} ${new Date(p.executed_at).toLocaleString()}`);
+          }
+          if (p.execution_result) {
+            const r = p.execution_result as Record<string, unknown>;
+            if (r.ontology_created) {
+              console.log(`  ${colors.stats.label('Created Ontology:')} ${colors.evidence.document(String(r.ontology_created))}`);
+            }
+            if (r.absorbed_into) {
+              console.log(`  ${colors.stats.label('Absorbed Into:')} ${colors.evidence.document(String(r.absorbed_into))}`);
+            }
+            if (r.sources_reassigned !== undefined) {
+              console.log(`  ${colors.stats.label('Sources Reassigned:')} ${r.sources_reassigned}`);
+            }
+            if (r.error) {
+              console.log(`  ${colors.status.error('Error:')} ${r.error}`);
+            }
           }
 
           console.log(separator());
