@@ -14,7 +14,7 @@ from typing import Optional
 @dataclass
 class TagsConfig:
     """Tag generation settings for YAML frontmatter (Obsidian, Logseq, etc.)"""
-    enabled: bool = False
+    enabled: bool = True
     threshold: float = 0.5  # Min similarity for related concepts to include as tags
 
 
