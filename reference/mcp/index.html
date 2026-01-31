@@ -9818,9 +9818,9 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <li><code>from_label</code> (<code>string</code>) - Source concept by label (semantic resolution)</li>
 <li><code>to_label</code> (<code>string</code>) - Target concept by label (semantic resolution)</li>
 <li><code>relationship_type</code> (<code>string</code>) - Edge relationship type (e.g., IMPLIES, SUPPORTS, CONTRADICTS)</li>
-<li><code>category</code> (<code>string</code>) - Semantic category of the relationship (default: logical_truth)</li>
-<li>Allowed values: <code>logical_truth</code>, <code>empirical_claim</code>, <code>value_judgment</code>, <code>conceptual</code>, <code>temporal_sequence</code>, <code>causal</code>, <code>other</code></li>
-<li>Default: <code>"logical_truth"</code></li>
+<li><code>category</code> (<code>string</code>) - Semantic category of the relationship (default: structural)</li>
+<li>Allowed values: <code>logical_truth</code>, <code>causal</code>, <code>structural</code>, <code>temporal</code>, <code>comparative</code>, <code>functional</code>, <code>definitional</code></li>
+<li>Default: <code>"structural"</code></li>
 <li><code>confidence</code> (<code>number</code>) - Edge confidence 0.0-1.0 (default: 1.0)</li>
 <li>Default: <code>1</code></li>
 <li><code>concept_id</code> (<code>string</code>) - Concept ID (for edit/delete concept)</li>
