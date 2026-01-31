@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure - Knowledge Graph System</title>
+        <title>ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-200-breathing-ontologies-self-organizing-knowledge-graph-structure" class="md-skip">
+        <a href="#adr-200-annealing-ontologies-self-organizing-knowledge-graph-structure" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+              ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
             
           </span>
         </div>
@@ -5765,7 +5765,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+    ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
   
 
     
@@ -5790,7 +5790,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+    ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
   
 
     
@@ -6322,15 +6322,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-breathing-worker-scoring-proposals" class="md-nav__link">
+  <a href="#phase-3-annealing-worker-scoring-proposals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: Breathing Worker (Scoring &amp; Proposals)
+        Phase 3: Annealing Worker (Scoring &amp; Proposals)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 3: Breathing Worker (Scoring &amp; Proposals)">
+    <nav class="md-nav" aria-label="Phase 3: Annealing Worker (Scoring &amp; Proposals)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -9548,7 +9548,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200 Phase 3a: Breathing Controls Exercise Report
+    ADR-200 Phase 3a: Annealing Controls Exercise Report
   
 
     
@@ -10291,15 +10291,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-breathing-worker-scoring-proposals" class="md-nav__link">
+  <a href="#phase-3-annealing-worker-scoring-proposals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: Breathing Worker (Scoring &amp; Proposals)
+        Phase 3: Annealing Worker (Scoring &amp; Proposals)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Phase 3: Breathing Worker (Scoring &amp; Proposals)">
+    <nav class="md-nav" aria-label="Phase 3: Annealing Worker (Scoring &amp; Proposals)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -10542,7 +10542,7 @@
   
 
 
-<h1 id="adr-200-breathing-ontologies-self-organizing-knowledge-graph-structure">ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure</h1>
+<h1 id="adr-200-annealing-ontologies-self-organizing-knowledge-graph-structure">ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure</h1>
 <h2 id="context">Context</h2>
 <h3 id="the-current-model">The Current Model</h3>
 <p>Ontologies in this system are a string property (<code>document</code>) on Source nodes. When a document is ingested into ontology "ITSM," each Source chunk carries <code>document = 'ITSM'</code>. Concepts extracted from those sources are global — they merge across ontologies via embedding similarity (ADR-068). The ontology is a label, not an entity.</p>
@@ -10631,7 +10631,7 @@
 </thead>
 <tbody>
 <tr>
-<td>Breathing ontologies</td>
+<td>Annealing ontologies</td>
 <td>Dynamic graph partitioning / Evolutionary ontology maintenance</td>
 <td>The expansion-contraction cycles are hysteresis loops</td>
 </tr>
@@ -10750,7 +10750,7 @@
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="n">protection_score</span><span class="p">,</span><span class="w">     </span><span class="err">--</span><span class="w"> </span><span class="n">cached</span><span class="p">,</span><span class="w"> </span><span class="n">recomputed</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">background</span><span class="w"> </span><span class="n">job</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="n">mass_score</span><span class="p">,</span><span class="w">           </span><span class="err">--</span><span class="w"> </span><span class="n">cached</span><span class="w"> </span><span class="n">composite</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">internal</span><span class="w"> </span><span class="n">metrics</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="n">coherence_score</span><span class="p">,</span><span class="w">      </span><span class="err">--</span><span class="w"> </span><span class="n">cached</span><span class="w"> </span><span class="n">neighborhood</span><span class="w"> </span><span class="n">coherence</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="w"> </span><span class="err">-</span><span class="w"> </span><span class="n">diversity</span><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="n">last_evaluated_epoch</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="k">when</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">breathing</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">last</span><span class="w"> </span><span class="n">assessed</span><span class="w"> </span><span class="n">this</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="n">last_evaluated_epoch</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="k">when</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">annealing</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">last</span><span class="w"> </span><span class="n">assessed</span><span class="w"> </span><span class="n">this</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">})</span>
 </code></pre></div>
 <p><strong>Same embedding space</strong> as concepts. Ontology-to-concept similarity is a cosine similarity query. Membership becomes a gradient, not a binary. New content naturally matches to ontologies by embedding proximity — ontologies act as <strong>attractors</strong> in the vector space.</p>
@@ -10778,7 +10778,7 @@
 <ul>
 <li><strong>Nucleus</strong>: Neighbors are semantically aligned — low diversity score (neighbors are similar to each other), coherent directional cluster on polarity axes. This concept anchors a domain.</li>
 <li><strong>Crossroads</strong>: Neighbors are semantically scattered — high diversity score, spread across polarity space. This concept bridges domains. Valuable as a concept, not a promotion candidate.</li>
-<li><strong>Abstract anchor</strong>: A special case — high connectivity AND high diversity, but the concept represents a broad organizing term (e.g., "Management," "Security," "Infrastructure"). These are often exactly what users want as navigation ontologies, even though their neighborhoods are semantically diverse. The promotion function should not automatically penalize diversity for concepts above a high-mass threshold. Abstract terms that attract connections from many subdomains may warrant promotion as <strong>umbrella ontologies</strong> — their children would then be candidates for sub-ontology promotion in later breathing cycles, creating hierarchical depth rather than flat partitioning.</li>
+<li><strong>Abstract anchor</strong>: A special case — high connectivity AND high diversity, but the concept represents a broad organizing term (e.g., "Management," "Security," "Infrastructure"). These are often exactly what users want as navigation ontologies, even though their neighborhoods are semantically diverse. The promotion function should not automatically penalize diversity for concepts above a high-mass threshold. Abstract terms that attract connections from many subdomains may warrant promotion as <strong>umbrella ontologies</strong> — their children would then be candidates for sub-ontology promotion in later annealing cycles, creating hierarchical depth rather than flat partitioning.</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mass = degree_centrality(concept)
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>coherence = 1 - diversity_score(first_order_neighbors)
@@ -10790,8 +10790,8 @@
 1. Create <code>:Ontology</code> node with name derived from anchor concept label, description from anchor concept description, embedding from anchor concept embedding.
 2. Link: <code>(:Ontology)-[:ANCHORED_BY]-&gt;(:Concept)</code>.
 3. Reassign first-order concepts: their sources get <code>:SCOPED_BY</code> edges to the new ontology. <code>s.document</code> updated for denormalization.
-4. Second-order and beyond stay in their current ontology unless their own edge affinity pulls them (evaluated in subsequent breathing cycles).</p>
-<p><strong>Reassignment cost</strong>: If a promoted concept has thousands of first-order neighbors, each with multiple Source chunks, the <code>:SCOPED_BY</code> edge creation and <code>s.document</code> updates become a large write operation. This must be an <strong>eventually consistent background process</strong> — batched writes executed by the breathing worker over multiple transactions, not a single atomic operation. During reassignment, sources may temporarily have stale <code>s.document</code> values; the <code>:SCOPED_BY</code> edge is the source of truth, and <code>s.document</code> catches up. This is the same eventual-consistency model used by the vocabulary consolidation worker when merging edge types across thousands of edges.</p>
+4. Second-order and beyond stay in their current ontology unless their own edge affinity pulls them (evaluated in subsequent annealing cycles).</p>
+<p><strong>Reassignment cost</strong>: If a promoted concept has thousands of first-order neighbors, each with multiple Source chunks, the <code>:SCOPED_BY</code> edge creation and <code>s.document</code> updates become a large write operation. This must be an <strong>eventually consistent background process</strong> — batched writes executed by the annealing worker over multiple transactions, not a single atomic operation. During reassignment, sources may temporarily have stale <code>s.document</code> values; the <code>:SCOPED_BY</code> edge is the source of truth, and <code>s.document</code> catches up. This is the same eventual-consistency model used by the vocabulary consolidation worker when merging edge types across thousands of edges.</p>
 <h3 id="6-self-correcting-attractor-model">6. Self-Correcting Attractor Model</h3>
 <p>A promoted ontology has an embedding in the shared vector space. New concepts ingested into the system compute cosine similarity against all ontologies. If the promotion was meaningful, the ontology's embedding occupies a region that attracts related content — it becomes a <strong>seed crystal</strong> that either:</p>
 <ul>
@@ -10867,7 +10867,7 @@
 </table>
 <p><strong>Stable vs Failed</strong>: Both have high exposure. The difference is mass AND coherence. A stable ontology has high internal edge density and sharp boundaries. A failed ontology has its concepts more connected to other ontologies than to each other. The mass component of the protection function must include coherence (boundary sharpness, internal grounding) not just concept count.</p>
 <h4 id="hysteresis-separate-promotion-and-demotion-thresholds">Hysteresis: Separate Promotion and Demotion Thresholds</h4>
-<p>A concept hovering near the promotion threshold must not flicker between concept and ontology status across breathing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a <strong>hysteresis band</strong>:</p>
+<p>A concept hovering near the promotion threshold must not flicker between concept and ontology status across annealing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a <strong>hysteresis band</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>promotion_threshold = 0.8   (high bar to become an ontology)
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>demotion_threshold  = 0.5   (lower bar to remain one)
 </code></pre></div>
@@ -10955,7 +10955,7 @@
 </table>
 <p>The epistemic status measurement (ADR-065) can be extended to run per-ontology, providing aggregate grounding scores, vocabulary distribution analysis, boundary coherence metrics, and merger/split recommendations.</p>
 <h3 id="12-graph-lifecycle-interaction">12. Graph Lifecycle Interaction</h3>
-<p>The breathing process is not fully autonomous. Humans and AIs interact with the lifecycle deliberately:</p>
+<p>The annealing process is not fully autonomous. Humans and AIs interact with the lifecycle deliberately:</p>
 <table>
 <thead>
 <tr>
@@ -11008,7 +11008,7 @@
 </ul>
 <h3 id="negative">Negative</h3>
 <ul>
-<li>Adds a new node type (<code>:Ontology</code>) with lifecycle management — the breathing worker is a new background service that must run reliably</li>
+<li>Adds a new node type (<code>:Ontology</code>) with lifecycle management — the annealing worker is a new background service that must run reliably</li>
 <li>Promotion and demotion are graph mutations — they change Source node edges and properties, which could affect concurrent queries. Transaction isolation needed.</li>
 <li>The promotion function involves computing degree centrality across all concepts in an ontology plus diversity analysis of candidates' neighborhoods — this is O(N) per ontology per evaluation cycle. Background job, not request-path.</li>
 <li>Sigmoid threshold calibration requires empirical tuning — the first promotion in a new graph has no baseline for "highly connected relative to peers"</li>
@@ -11041,7 +11041,7 @@
 <p><strong>Human-machine collaboration.</strong> Humans assert hypotheses (create ontologies). The graph tests them. Weak hypotheses get absorbed. Strong patterns get elevated. Neither party works alone.</p>
 </li>
 <li>
-<p><strong>Edge-agnostic lifecycle.</strong> Breathing controls depend only on the <code>:SCOPED_BY</code> infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like <code>:APPEARS</code>. Queries traverse <code>(c:Concept)--&gt;(s:Source)-[:SCOPED_BY]-&gt;(o:Ontology)</code> where <code>--&gt;</code> means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.</p>
+<p><strong>Edge-agnostic lifecycle.</strong> Annealing controls depend only on the <code>:SCOPED_BY</code> infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like <code>:APPEARS</code>. Queries traverse <code>(c:Concept)--&gt;(s:Source)-[:SCOPED_BY]-&gt;(o:Ontology)</code> where <code>--&gt;</code> means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.</p>
 </li>
 </ol>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
@@ -11148,10 +11148,10 @@
 7. Compute affinity to decide where demoted sources go
 8. Execute reassignment</p>
 <p>The worker automates this loop on a heartbeat, interacting with the epoch counter to decide <em>when</em> to evaluate, and delegating the <em>judgment</em> calls to an LLM.</p>
-<h3 id="phase-3-breathing-worker-scoring-proposals">Phase 3: Breathing Worker (Scoring &amp; Proposals)</h3>
-<p>The breathing worker is a background job — similar in architecture to the ingestion worker and vocabulary consolidation worker. It runs on a heartbeat tied to the epoch counter: after N ingestion events (not wall-clock time), it evaluates the graph and generates proposals.</p>
+<h3 id="phase-3-annealing-worker-scoring-proposals">Phase 3: Annealing Worker (Scoring &amp; Proposals)</h3>
+<p>The annealing worker is a background job — similar in architecture to the ingestion worker and vocabulary consolidation worker. It runs on a heartbeat tied to the epoch counter: after N ingestion events (not wall-clock time), it evaluates the graph and generates proposals.</p>
 <h4 id="worker-architecture">Worker Architecture</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>epoch counter (graph_metrics) → threshold check → breathing cycle
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>epoch counter (graph_metrics) → threshold check → annealing cycle
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    ↓
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>per-ontology scoring (mass, coherence, exposure)
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    ↓
@@ -11187,7 +11187,7 @@
 </code></pre></div>
 <p>Adjacency is computable from embedding similarity between ontology nodes. An ingest into a neighboring ontology counts more than an ingest into something unrelated. This prevents penalizing an ontology for irrelevant graph activity while holding it accountable when nearby content flows past without connecting.</p>
 <h4 id="centroid-recomputation-weighted-top-k">Centroid Recomputation (Weighted Top-K)</h4>
-<p>After scoring, the breathing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.</p>
+<p>After scoring, the annealing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.</p>
 <p><strong>Algorithm:</strong></p>
 <ol>
 <li>
@@ -11250,7 +11250,7 @@
 <p><strong>Resequenced: Phase 5 before Phase 4.</strong> The scoring worker (Phase 3) traverses cross-ontology bridges as part of its evaluation. Phase 5 materializes what scoring discovers — the worker emits ontology-to-ontology edges as a side effect of its analysis. Phase 4 then uses these materialized edges for routing during automated execution.</p>
 <p>Phase 5 is NOT a prerequisite for Phase 3 — the raw cross-ontology data is already traversable. But running Phase 5 between scoring and execution means Phase 4's demotion logic has a precomputed affinity map instead of recomputing it per-operation.</p>
 <h4 id="derived-edges">Derived Edges</h4>
-<p>As the breathing worker scores ontologies, it observes cross-ontology concept bridges. These are materialized as ontology-level edges:</p>
+<p>As the annealing worker scores ontologies, it observes cross-ontology concept bridges. These are materialized as ontology-level edges:</p>
 <ul>
 <li><strong>OVERLAPS</strong> — significant percentage of A's concepts also appear in B's sources</li>
 <li><strong>SPECIALIZES</strong> — A's concepts are a coherent subset of B's concept space (A is more specific)</li>
@@ -11272,7 +11272,7 @@
 <p>Humans or AI can declare relationships that override or supplement derived edges:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Security Engineering&#39;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">SPECIALIZES</span><span class="w"> </span><span class="p">{</span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;manual&#39;</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Infrastructure&#39;</span><span class="p">})</span>
 </code></pre></div>
-<p>Derived edges carry <code>source: 'breathing_worker'</code>; explicit edges carry <code>source: 'manual'</code> or <code>source: 'ai'</code>. Explicit edges take precedence when they conflict with derived edges.</p>
+<p>Derived edges carry <code>source: 'annealing_worker'</code>; explicit edges carry <code>source: 'manual'</code> or <code>source: 'ai'</code>. Explicit edges take precedence when they conflict with derived edges.</p>
 <h4 id="integration">Integration</h4>
 <ul>
 <li>Ontology Explorer (ADR-700) bridge view consumes these edges for visualization</li>
@@ -11288,7 +11288,7 @@
 <li><code>(:Ontology)-[:ANCHORED_BY]-&gt;(:Concept)</code> edge links the new ontology to its founding concept</li>
 <li>Reassign first-order concepts' sources: create <code>:SCOPED_BY</code> edges to new ontology, update <code>s.document</code></li>
 <li>This is an <strong>eventually consistent background process</strong> — batched writes over multiple transactions (same pattern as vocabulary consolidation merging edge types across thousands of edges)</li>
-<li><code>created_by: 'breathing_worker'</code> for provenance</li>
+<li><code>created_by: 'annealing_worker'</code> for provenance</li>
 </ol>
 <h4 id="demotion-execution">Demotion Execution</h4>
 <p>On approved demotion:</p>

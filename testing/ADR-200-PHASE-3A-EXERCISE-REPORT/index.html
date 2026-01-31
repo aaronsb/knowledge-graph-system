@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-200 Phase 3a: Breathing Controls Exercise Report - Knowledge Graph System</title>
+        <title>ADR-200 Phase 3a: Annealing Controls Exercise Report - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-200-phase-3a-breathing-controls-exercise-report" class="md-skip">
+        <a href="#adr-200-phase-3a-annealing-controls-exercise-report" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-200 Phase 3a: Breathing Controls Exercise Report
+              ADR-200 Phase 3a: Annealing Controls Exercise Report
             
           </span>
         </div>
@@ -5745,14 +5745,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+    ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
   
 
     
@@ -8770,7 +8770,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200 Phase 3a: Breathing Controls Exercise Report
+    ADR-200 Phase 3a: Annealing Controls Exercise Report
   
 
     
@@ -8788,7 +8788,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200 Phase 3a: Breathing Controls Exercise Report
+    ADR-200 Phase 3a: Annealing Controls Exercise Report
   
 
     
@@ -9503,7 +9503,7 @@
   
 
 
-<h1 id="adr-200-phase-3a-breathing-controls-exercise-report">ADR-200 Phase 3a: Breathing Controls Exercise Report</h1>
+<h1 id="adr-200-phase-3a-annealing-controls-exercise-report">ADR-200 Phase 3a: Annealing Controls Exercise Report</h1>
 <p><strong>Date:</strong> 2026-01-30
 <strong>Epoch range:</strong> 0 → 13
 <strong>Ontologies tested:</strong> distributed-systems, database-architecture, consensus-theory (created and dissolved)</p>
@@ -9634,7 +9634,7 @@
 <p>Working as designed. Mass climbs steeply in the early phase (0.32 → 0.50 on doubling content), then begins to saturate (0.50 → 0.58 on another ~50% increase). The curve flattens as ontologies grow, which is the intended behavior — raw size matters less as substance accumulates.</p>
 <h3 id="coherence-mean-pairwise-cosine-similarity">Coherence (mean pairwise cosine similarity)</h3>
 <p>Gradual decline with growth: 0.604 → 0.590 → 0.565. This correctly reflects that broader topic coverage dilutes semantic focus. An ontology covering "consensus protocols" alone is tighter than one also covering "network partitions" and "service discovery." The decline is gentle, not catastrophic — the topics are related enough to maintain reasonable coherence.</p>
-<p>Notably, the small consensus-theory ontology (2 sources, split off then dissolved) scored 0.663 coherence — the highest observed. Small + focused = high coherence. This is the signal a breathing worker would use to identify "nuclei" vs "crossroads."</p>
+<p>Notably, the small consensus-theory ontology (2 sources, split off then dissolved) scored 0.663 coherence — the highest observed. Small + focused = high coherence. This is the signal a annealing worker would use to identify "nuclei" vs "crossroads."</p>
 <h3 id="exposure-epoch-based-pressure">Exposure (epoch-based pressure)</h3>
 <p>Appeared once the epoch counter started incrementing (fixed during this session — ingestion worker wasn't calling <code>increment_counter</code>). At epoch 13, both ontologies show ~0.21 raw exposure. With a half-life of 50 epochs, this is still in the gentle ramp-up phase. The formula is working but needs more epoch depth to see meaningful pressure differentiation.</p>
 <h3 id="protection-composite-score">Protection (composite score)</h3>
@@ -9674,7 +9674,7 @@
 </tbody>
 </table>
 <p>Absolute overlap grew (3 → 5 shared concepts), but proportional affinity declined as ontologies accumulated more distinct content. This is the expected behavior — casual overlap becomes proportionally smaller relative to domain-specific content.</p>
-<p>The BreathingTest ontologies from earlier testing also appeared at 1.6% affinity after ADR-200 was ingested — the breathing ontologies ADR created a tiny bridge.</p>
+<p>The AnnealingTest ontologies from earlier testing also appeared at 1.6% affinity after ADR-200 was ingested — the annealing ontologies ADR created a tiny bridge.</p>
 <h2 id="operations-exercised">Operations Exercised</h2>
 <h3 id="reassign-sources-between-ontologies">Reassign (sources between ontologies)</h3>
 <p>Moved 3 ADR sources from distributed-systems to database-architecture. Results:</p>
@@ -9689,7 +9689,7 @@
 <li><strong>consensus-theory</strong>: mass 0.225, coherence 0.663, protection 0.188</li>
 <li>Highest coherence observed — small + focused ontologies are semantically tight</li>
 </ul>
-<p>This is exactly the signal Phase 3b's breathing worker would look for: high coherence suggests a natural cluster, but low mass and protection make it a demotion candidate unless it grows.</p>
+<p>This is exactly the signal Phase 3b's annealing worker would look for: high coherence suggests a natural cluster, but low mass and protection make it a demotion candidate unless it grows.</p>
 <h3 id="dissolve-non-destructive-absorption">Dissolve (non-destructive absorption)</h3>
 <p>Dissolved consensus-theory back into distributed-systems. Scores returned to pre-split values exactly. The round-trip is clean — no data lost, no score artifacts.</p>
 <h2 id="bugs-found-and-fixed">Bugs Found and Fixed</h2>
@@ -9714,7 +9714,7 @@
 </li>
 </ol>
 <h2 id="conclusions">Conclusions</h2>
-<p>The Phase 3a breathing controls work as designed. Scoring responds to real structural changes. Reassignment and dissolution are clean operations with predictable score impacts. The tools are ready for Phase 3b automation — the manual controls prove the primitives are sound.</p>
+<p>The Phase 3a annealing controls work as designed. Scoring responds to real structural changes. Reassignment and dissolution are clean operations with predictable score impacts. The tools are ready for Phase 3b automation — the manual controls prove the primitives are sound.</p>
 <p>Key validation: the system correctly distinguishes focused clusters (high coherence, low mass) from broad collections (lower coherence, high mass). This is the foundation for automated promotion/demotion decisions.</p>
 
 

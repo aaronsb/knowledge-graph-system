@@ -5945,14 +5945,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ADR-200: Breathing Ontologies — Self-Organizing Knowledge Graph Structure
+    ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure
   
 
     
@@ -8959,7 +8959,7 @@
   <span class="md-ellipsis">
     
   
-    ADR-200 Phase 3a: Breathing Controls Exercise Report
+    ADR-200 Phase 3a: Annealing Controls Exercise Report
   
 
     
@@ -9570,8 +9570,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <p>Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)</li>
-<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>create</code>, <code>rename</code>, <code>delete</code>, <code>lifecycle</code>, <code>scores</code>, <code>score</code>, <code>score_all</code>, <code>candidates</code>, <code>affinity</code>, <code>edges</code>, <code>reassign</code>, <code>dissolve</code>, <code>proposals</code>, <code>proposal_review</code>, <code>breathing_cycle</code></li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list annealing proposals), "proposal_review" (approve/reject proposal), "annealing_cycle" (trigger annealing cycle)</li>
+<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>create</code>, <code>rename</code>, <code>delete</code>, <code>lifecycle</code>, <code>scores</code>, <code>score</code>, <code>score_all</code>, <code>candidates</code>, <code>affinity</code>, <code>edges</code>, <code>reassign</code>, <code>dissolve</code>, <code>proposals</code>, <code>proposal_review</code>, <code>annealing_cycle</code></li>
 <li><code>ontology_name</code> (<code>string</code>) - Ontology name (required for info, files, create, rename, delete)</li>
 <li><code>description</code> (<code>string</code>) - What this knowledge domain covers (for create action)</li>
 <li><code>new_name</code> (<code>string</code>) - New ontology name (required for rename action)</li>
@@ -9588,11 +9588,11 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <li><code>proposal_type</code> (<code>string</code>) - Filter proposals by type</li>
 <li>Allowed values: <code>promotion</code>, <code>demotion</code></li>
 <li><code>notes</code> (<code>string</code>) - Review notes (for proposal_review action)</li>
-<li><code>dry_run</code> (<code>boolean</code>) - Preview candidates without proposals (for breathing_cycle)</li>
+<li><code>dry_run</code> (<code>boolean</code>) - Preview candidates without proposals (for annealing_cycle)</li>
 <li>Default: <code>false</code></li>
 <li><code>demotion_threshold</code> (<code>number</code>) - Protection score below which to consider demotion (default: 0.15)</li>
 <li><code>promotion_min_degree</code> (<code>number</code>) - Minimum concept degree for promotion candidacy (default: 10)</li>
-<li><code>max_proposals</code> (<code>number</code>) - Maximum proposals per breathing cycle (default: 5)</li>
+<li><code>max_proposals</code> (<code>number</code>) - Maximum proposals per annealing cycle (default: 5)</li>
 </ul>
 <hr />
 <h3 id="job">job</h3>
