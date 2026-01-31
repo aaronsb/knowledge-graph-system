@@ -360,6 +360,8 @@ These interventions are expected and deliberate. The graph provides proposals; o
 
 5. **Human-machine collaboration.** Humans assert hypotheses (create ontologies). The graph tests them. Weak hypotheses get absorbed. Strong patterns get elevated. Neither party works alone.
 
+6. **Edge-agnostic lifecycle.** Breathing controls depend only on the `:SCOPED_BY` infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like `:APPEARS`. Queries traverse `(c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)` where `-->` means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.
+
 ## Alternatives Considered
 
 ### A. Keep Ontologies as String Properties
@@ -480,7 +482,7 @@ The worker does NOT execute proposals in Phase 3. It produces scored recommendat
 -- Per-ontology mass: count of concepts, sources, evidence, relationships
 MATCH (o:Ontology {name: $name})
 OPTIONAL MATCH (s:Source)-[:SCOPED_BY]->(o)
-OPTIONAL MATCH (c:Concept)-[:APPEARS_IN]->(s)
+OPTIONAL MATCH (c:Concept)-->(s)
 OPTIONAL MATCH (c)-[r]->()
 RETURN count(DISTINCT s) AS sources,
        count(DISTINCT c) AS concepts,
@@ -508,6 +510,31 @@ weighted_exposure = Σ (ingest_events_into_adjacent_ontologies × adjacency_scor
 
 Adjacency is computable from embedding similarity between ontology nodes. An ingest into a neighboring ontology counts more than an ingest into something unrelated. This prevents penalizing an ontology for irrelevant graph activity while holding it accountable when nearby content flows past without connecting.
 
+#### Centroid Recomputation (Weighted Top-K)
+
+After scoring, the breathing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.
+
+**Algorithm:**
+
+1. **Select Elders.** Fetch top-K concepts (K=20-50) by degree centrality within the ontology. These are the load-bearing concepts that define the domain. Uses existing `get_concept_degree_ranking()`.
+
+2. **Compute weighted centroid.** Average the Elder embeddings, weighted by degree (or grounding strength). Uses existing `get_ontology_concept_embeddings()`.
+
+   ```
+   E_ontology = Σ(v_i × M_i) / Σ(M_i)
+   ```
+   where `v_i` is the Elder's embedding and `M_i` is its mass (degree centrality).
+
+3. **Hysteresis check.** Compute cosine similarity between old and new centroids. Only write if drift exceeds threshold (similarity < 0.99). Prevents unnecessary index churn.
+
+4. **Update.** Call existing `update_ontology_embedding()` with the new centroid.
+
+**Why top-K, not all concepts:** A mean of all concepts drifts toward the center of the embedding space as coverage broadens — a "democratic center of gravity" vulnerable to noise. The mass-weighted top-K produces a "meritocratic center of gravity" anchored by the ontology's most established members. At 20-50 vectors, the computation is trivial.
+
+**Bootstrapping:** First call replaces the name-based embedding. Subsequent calls refine. No special first-run path needed.
+
+**Future enhancement:** ADR-070 polarity projection could filter Elders by axis alignment, discarding high-mass "crossroads" concepts that are orthogonal to the domain direction. Not needed for MVP — the naive weighted centroid is sufficient, and crossroads filtering is an optimization to add if drift toward generic concepts is observed in practice.
+
 #### Promotion Candidate Identification
 
 The worker ranks all concepts within each ontology by degree centrality, then evaluates the top-N:
@@ -533,8 +560,8 @@ For each demotion candidate, the worker pre-computes **reassignment affinity** �
 ```cypher
 -- Cross-ontology affinity: which ontology shares the most concepts?
 MATCH (s:Source)-[:SCOPED_BY]->(dying:Ontology {name: $name})
-MATCH (c:Concept)-[:APPEARS_IN]->(s)
-MATCH (c)-[:APPEARS_IN]->(other_s:Source)-[:SCOPED_BY]->(candidate:Ontology)
+MATCH (c:Concept)-->(s)
+MATCH (c)-->(other_s:Source)-[:SCOPED_BY]->(candidate:Ontology)
 WHERE candidate <> dying
 RETURN candidate.name, count(DISTINCT c) AS shared_concepts
 ORDER BY shared_concepts DESC
@@ -581,8 +608,8 @@ As the breathing worker scores ontologies, it observes cross-ontology concept br
 MATCH (a:Ontology), (b:Ontology)
 WHERE a <> b
 MATCH (s_a:Source)-[:SCOPED_BY]->(a)
-MATCH (c:Concept)-[:APPEARS_IN]->(s_a)
-MATCH (c)-[:APPEARS_IN]->(s_b:Source)-[:SCOPED_BY]->(b)
+MATCH (c:Concept)-->(s_a)
+MATCH (c)-->(s_b:Source)-[:SCOPED_BY]->(b)
 WITH a, b, count(DISTINCT c) AS shared,
      [(s:Source)-[:SCOPED_BY]->(a) | s] AS a_sources
 WITH a, b, shared, size(a_sources) AS a_total

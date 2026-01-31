@@ -873,3 +873,227 @@ class TestDissolveRoute:
             )
 
         assert response.status_code == 404
+
+
+# ==========================================================================
+# GET /ontology/proposals — List breathing proposals (ADR-200 Phase 3b)
+# ==========================================================================
+
+def mock_proposals_cursor(proposals):
+    """Create a mock cursor that returns proposal rows."""
+    client = mock_age_client()
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = proposals
+    mock_cursor.fetchone.return_value = proposals[0] if proposals else None
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+    client.pool = MagicMock()
+    client.pool.getconn.return_value = mock_conn
+    return client
+
+
+SAMPLE_PROPOSAL_ROW = (
+    1,                                      # id
+    "demotion",                             # proposal_type
+    "test-ontology",                        # ontology_name
+    None,                                   # anchor_concept_id
+    "parent-ontology",                      # target_ontology
+    "Low mass, should be absorbed",         # reasoning
+    0.05,                                   # mass_score (Decimal)
+    0.30,                                   # coherence_score
+    -0.10,                                  # protection_score
+    "pending",                              # status
+    "2026-01-30T18:00:00+00:00",           # created_at
+    13,                                     # created_at_epoch
+    None,                                   # reviewed_at
+    None,                                   # reviewed_by
+    None,                                   # reviewer_notes
+)
+
+SAMPLE_PROMOTION_ROW = (
+    2,                                      # id
+    "promotion",                            # proposal_type
+    "big-domain",                           # ontology_name
+    "c_abc123",                             # anchor_concept_id
+    None,                                   # target_ontology
+    "PostgreSQL is a natural nucleus",      # reasoning
+    None,                                   # mass_score
+    None,                                   # coherence_score
+    None,                                   # protection_score
+    "pending",                              # status
+    "2026-01-30T18:01:00+00:00",           # created_at
+    13,                                     # created_at_epoch
+    None,                                   # reviewed_at
+    None,                                   # reviewed_by
+    None,                                   # reviewer_notes
+)
+
+
+@pytest.mark.unit
+class TestListProposalsRoute:
+    """Tests for GET /ontology/proposals endpoint."""
+
+    def test_list_empty(self, api_client, auth_headers_user):
+        """Empty proposal list returns count=0."""
+        client = mock_proposals_cursor([])
+        client.pool.getconn.return_value.cursor.return_value.__enter__.return_value.fetchall.return_value = []
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get("/ontology/proposals", headers=auth_headers_user)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert data["proposals"] == []
+
+    def test_list_with_proposals(self, api_client, auth_headers_user):
+        """List returns proposal data."""
+        client = mock_proposals_cursor([SAMPLE_PROPOSAL_ROW, SAMPLE_PROMOTION_ROW])
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get("/ontology/proposals", headers=auth_headers_user)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 2
+        assert data["proposals"][0]["proposal_type"] == "demotion"
+        assert data["proposals"][1]["proposal_type"] == "promotion"
+
+    def test_list_filter_by_status(self, api_client, auth_headers_user):
+        """Status filter is passed to query."""
+        client = mock_proposals_cursor([])
+        client.pool.getconn.return_value.cursor.return_value.__enter__.return_value.fetchall.return_value = []
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/proposals?status=pending",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+
+
+@pytest.mark.unit
+class TestGetProposalRoute:
+    """Tests for GET /ontology/proposals/{id} endpoint."""
+
+    def test_get_existing_proposal(self, api_client, auth_headers_user):
+        """Get proposal by ID returns full details."""
+        client = mock_proposals_cursor([SAMPLE_PROPOSAL_ROW])
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get("/ontology/proposals/1", headers=auth_headers_user)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == 1
+        assert data["proposal_type"] == "demotion"
+        assert data["ontology_name"] == "test-ontology"
+        assert data["target_ontology"] == "parent-ontology"
+        assert data["status"] == "pending"
+
+    def test_get_nonexistent_proposal(self, api_client, auth_headers_user):
+        """Get nonexistent proposal returns 404."""
+        client = mock_age_client()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        client.pool = MagicMock()
+        client.pool.getconn.return_value = mock_conn
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get("/ontology/proposals/999", headers=auth_headers_user)
+
+        assert response.status_code == 404
+
+
+@pytest.mark.unit
+class TestReviewProposalRoute:
+    """Tests for POST /ontology/proposals/{id}/review endpoint."""
+
+    def test_approve_proposal(self, api_client, auth_headers_admin):
+        """Approving a pending proposal returns updated proposal."""
+        # First fetchone returns pending status, second returns updated row
+        reviewed_row = list(SAMPLE_PROPOSAL_ROW)
+        reviewed_row[9] = "approved"  # status
+        reviewed_row[12] = "2026-01-30T19:00:00+00:00"  # reviewed_at
+        reviewed_row[13] = "admin"  # reviewed_by
+        reviewed_row[14] = "Looks good"  # reviewer_notes
+
+        client = mock_age_client()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        # First call: check status; second call: update and return
+        mock_cursor.fetchone.side_effect = [("pending",), tuple(reviewed_row)]
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        client.pool = MagicMock()
+        client.pool.getconn.return_value = mock_conn
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/proposals/1/review",
+                json={"status": "approved", "notes": "Looks good"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "approved"
+
+    def test_reject_proposal(self, api_client, auth_headers_admin):
+        """Rejecting a pending proposal returns updated proposal."""
+        reviewed_row = list(SAMPLE_PROPOSAL_ROW)
+        reviewed_row[9] = "rejected"
+
+        client = mock_age_client()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.side_effect = [("pending",), tuple(reviewed_row)]
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        client.pool = MagicMock()
+        client.pool.getconn.return_value = mock_conn
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/proposals/1/review",
+                json={"status": "rejected"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+
+    def test_review_already_reviewed_returns_409(self, api_client, auth_headers_admin):
+        """Reviewing an already-reviewed proposal returns 409 Conflict."""
+        client = mock_age_client()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = ("approved",)  # Already approved
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        client.pool = MagicMock()
+        client.pool.getconn.return_value = mock_conn
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/proposals/1/review",
+                json={"status": "rejected"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 409
+
+    def test_review_invalid_status_returns_422(self, api_client, auth_headers_admin):
+        """Invalid review status returns 422."""
+        with patch('api.app.routes.ontology.get_age_client', return_value=mock_age_client()):
+            response = api_client.post(
+                "/ontology/proposals/1/review",
+                json={"status": "invalid_status"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 422

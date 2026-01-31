@@ -124,13 +124,15 @@ class ConceptService:
             user_id=user_id
         )
 
-        # Create concept node
+        # Create concept node (ADR-200: epoch provenance)
+        current_epoch = self.age_client.get_current_epoch()
         self.age_client.create_concept_node(
             concept_id=concept_id,
             label=request.label,
             embedding=embedding,
             search_terms=request.search_terms or [],
-            description=request.description or ""
+            description=request.description or "",
+            created_at_epoch=current_epoch
         )
 
         # Link concept to source

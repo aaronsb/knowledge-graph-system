@@ -239,6 +239,9 @@ class BatchService:
         """
         label_to_id = {}
 
+        # ADR-200: Get epoch once per batch for concept provenance
+        current_epoch = self.age_client.get_current_epoch()
+
         for concept in request.concepts:
             try:
                 embedding = embeddings.get(concept.label)
@@ -289,7 +292,8 @@ class BatchService:
                     embedding=embedding,
                     search_terms=concept.search_terms or [],
                     ontology=request.ontology,
-                    creation_method=request.creation_method.value
+                    creation_method=request.creation_method.value,
+                    created_at_epoch=current_epoch
                 )
 
                 # Link concept to source
@@ -483,7 +487,8 @@ class BatchService:
         embedding: List[float],
         search_terms: List[str],
         ontology: str,
-        creation_method: str
+        creation_method: str,
+        created_at_epoch: int = 0
     ) -> None:
         """Create concept node in graph."""
         escaped_label = _escape_cypher_string(label)
@@ -504,7 +509,10 @@ class BatchService:
                     search_terms: {search_terms_str},
                     ontology: '{escaped_ontology}',
                     creation_method: '{escaped_method}',
-                    created_at: '{timestamp}'
+                    created_at: '{timestamp}',
+                    created_at_epoch: {created_at_epoch},
+                    last_seen_epoch: {created_at_epoch},
+                    seen_count: 1
                 }})
                 RETURN c.concept_id as concept_id
             $$) as (concept_id agtype);

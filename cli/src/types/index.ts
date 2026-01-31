@@ -446,6 +446,7 @@ export interface OntologyFileInfo {
   file_path: string;
   chunk_count: number;
   concept_count: number;
+  source_ids: string[];
 }
 
 export interface OntologyFilesResponse {
@@ -540,6 +541,41 @@ export interface DissolveResponse {
   reassignment_targets: string[];
   success: boolean;
   error?: string;
+}
+
+// ========== ADR-200 Phase 3b: Breathing Proposals ==========
+
+export interface BreathingProposal {
+  id: number;
+  proposal_type: string;
+  ontology_name: string;
+  anchor_concept_id?: string;
+  target_ontology?: string;
+  reasoning: string;
+  mass_score?: number;
+  coherence_score?: number;
+  protection_score?: number;
+  status: string;
+  created_at: string;
+  created_at_epoch: number;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  reviewer_notes?: string;
+}
+
+export interface BreathingProposalListResponse {
+  proposals: BreathingProposal[];
+  count: number;
+}
+
+export interface BreathingCycleResult {
+  proposals_generated: number;
+  demotion_candidates: number;
+  promotion_candidates: number;
+  scores_updated: number;
+  centroids_updated: number;
+  cycle_epoch: number;
+  dry_run: boolean;
 }
 
 // ========== Admin Types ==========

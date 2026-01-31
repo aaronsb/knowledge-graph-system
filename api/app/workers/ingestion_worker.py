@@ -472,6 +472,30 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
 
+        # Increment document ingestion epoch (ADR-200: breathing lifecycle)
+        try:
+            conn = age_client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT increment_counter('document_ingestion_counter')")
+                conn.commit()
+                logger.debug(f"[{job_id}] Incremented document ingestion epoch")
+            finally:
+                age_client.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"[{job_id}] Failed to increment ingestion epoch: {e}")
+
+        # ADR-200 Phase 3b: Check if breathing cycle should run
+        # Launcher self-manages epoch interval — just ask it to check
+        try:
+            from api.app.launchers.breathing import BreathingLauncher
+            from api.app.services.job_queue import get_job_queue
+            breathing_job_id = BreathingLauncher(get_job_queue()).launch()
+            if breathing_job_id:
+                logger.info(f"[{job_id}] Breathing cycle launched: {breathing_job_id}")
+        except Exception as e:
+            logger.warning(f"[{job_id}] Breathing launcher check failed: {e}")
+
         # Close AGE connection
         age_client.close()
 
