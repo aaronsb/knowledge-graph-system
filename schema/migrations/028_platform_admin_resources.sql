@@ -118,7 +118,9 @@ VALUES
     -- Vocabulary config: read only
     ('admin', 'vocabulary_config', 'read', 'global', TRUE),
     -- Database: read only
-    ('admin', 'database', 'read', 'global', TRUE)
+    ('admin', 'database', 'read', 'global', TRUE),
+    -- Ontologies: delete (admins manage ontology lifecycle)
+    ('admin', 'ontologies', 'delete', 'global', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================

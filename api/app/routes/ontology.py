@@ -556,19 +556,19 @@ async def get_ontology_info(
         files = []
 
         if has_sources:
-            stats = client._execute_cypher(f"""
-                MATCH (s:Source {{document: '{ontology_name}'}})
+            stats = client._execute_cypher("""
+                MATCH (s:Source {document: $name})
                 WITH count(DISTINCT s) as source_count,
                      count(DISTINCT s.file_path) as file_count,
                      collect(DISTINCT s.file_path) as files
-                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(src:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(src:Source {document: $name})
                 WITH source_count, file_count, files, count(DISTINCT c) as concept_count
-                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (i:Instance)-[:FROM_SOURCE]->(src:Source {document: $name})
                 WITH source_count, file_count, files, concept_count, count(DISTINCT i) as instance_count
-                OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS]->(:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (ontology_concept:Concept)-[:APPEARS]->(:Source {document: $name})
                 OPTIONAL MATCH (ontology_concept)-[r]->(other:Concept)
                 RETURN source_count, file_count, files, concept_count, instance_count, count(r) as relationship_count
-            """, fetch_one=True)
+            """, params={"name": ontology_name}, fetch_one=True)
 
             if stats:
                 statistics = {
@@ -694,17 +694,17 @@ async def get_ontology_files(
     """
     client = get_age_client()
     try:
-        result = client._execute_cypher(f"""
-            MATCH (s:Source {{document: '{ontology_name}'}})
+        result = client._execute_cypher("""
+            MATCH (s:Source {document: $name})
             WITH DISTINCT s.file_path as file_path
             WHERE file_path IS NOT NULL
-            MATCH (src:Source {{document: '{ontology_name}', file_path: file_path}})
+            MATCH (src:Source {document: $name, file_path: file_path})
             WITH file_path, count(src) as chunk_count, collect(src.source_id) as source_ids
-            OPTIONAL MATCH (c:Concept)-->(s:Source {{document: '{ontology_name}', file_path: file_path}})
+            OPTIONAL MATCH (c:Concept)-->(s:Source {document: $name, file_path: file_path})
             WITH file_path, chunk_count, source_ids, count(DISTINCT c) as concept_count
             RETURN file_path, chunk_count, concept_count, source_ids
             ORDER BY file_path
-        """)
+        """, params={"name": ontology_name})
 
         files = [
             OntologyFileInfo(
@@ -855,12 +855,12 @@ async def delete_ontology(
     try:
         # Check if ontology exists
         if not force:
-            check = client._execute_cypher(f"""
-                MATCH (s:Source {{document: '{ontology_name}'}})
+            check = client._execute_cypher("""
+                MATCH (s:Source {document: $name})
                 WITH count(s) as source_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {{document: '{ontology_name}'}})
+                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
                 RETURN source_count, count(DISTINCT c) as concept_count
-            """, fetch_one=True)
+            """, params={"name": ontology_name}, fetch_one=True)
 
             if not check or check['source_count'] == 0:
                 raise HTTPException(
@@ -871,22 +871,22 @@ async def delete_ontology(
         # ADR-057/ADR-081: Clean up ALL Garage objects before deleting sources
         # This includes: images, source documents, and projections
         try:
-            from ..lib.garage_client import get_garage_client
-            garage_client = get_garage_client()
+            from ..lib.garage import get_image_storage, get_source_storage, get_projection_storage
 
             # 1. Delete images (via storage_key on Source nodes)
-            storage_objects_result = client._execute_cypher(f"""
-                MATCH (s:Source {{document: '{ontology_name}'}})
+            storage_objects_result = client._execute_cypher("""
+                MATCH (s:Source {document: $name})
                 WHERE s.storage_key IS NOT NULL
                 RETURN s.storage_key as storage_key
-            """)
+            """, params={"name": ontology_name})
 
             if storage_objects_result:
                 image_deleted_count = 0
+                images = get_image_storage()
                 for row in storage_objects_result:
                     if row.get('storage_key'):
                         try:
-                            garage_client.delete_image(row['storage_key'])
+                            images.delete(row['storage_key'])
                             image_deleted_count += 1
                         except Exception as e:
                             logger.warning(f"Failed to delete Garage image {row['storage_key']}: {e}")
@@ -895,7 +895,6 @@ async def delete_ontology(
 
             # 2. Delete source documents (ADR-081)
             try:
-                from ..lib.garage import get_source_storage
                 source_storage = get_source_storage()
                 source_docs_deleted = source_storage.delete_by_ontology(ontology_name)
                 if source_docs_deleted:
@@ -905,7 +904,8 @@ async def delete_ontology(
 
             # 3. Delete projections (ADR-079)
             try:
-                projections_deleted = garage_client.delete_all_projections(ontology_name)
+                projections = get_projection_storage()
+                projections_deleted = projections.delete_all(ontology_name)
                 if projections_deleted > 0:
                     logger.info(f"Deleted {projections_deleted} projections from Garage for ontology '{ontology_name}'")
             except Exception as e:
@@ -915,27 +915,27 @@ async def delete_ontology(
             logger.warning(f"Failed to initialize Garage client for cleanup: {e}")
 
         # Delete instances linked to sources in this ontology
-        client._execute_cypher(f"""
-            MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {{document: '{ontology_name}'}})
+        client._execute_cypher("""
+            MATCH (i:Instance)-[:FROM_SOURCE]->(s:Source {document: $name})
             DETACH DELETE i
-        """)
+        """, params={"name": ontology_name})
 
         # IMPORTANT: Capture source_ids BEFORE cascade deleting from graph.
         # After graph nodes are deleted, we lose the ability to know which source_ids
         # belonged to this ontology - they're just opaque hashes in the relational table.
         # This pattern: capture references → cascade delete → cleanup related tables.
-        source_ids_result = client._execute_cypher(f"""
-            MATCH (s:Source {{document: '{ontology_name}'}})
+        source_ids_result = client._execute_cypher("""
+            MATCH (s:Source {document: $name})
             RETURN s.source_id as source_id
-        """)
+        """, params={"name": ontology_name})
         source_ids = [row['source_id'] for row in (source_ids_result or []) if row.get('source_id')]
 
         # Delete sources from graph
-        result = client._execute_cypher(f"""
-            MATCH (s:Source {{document: '{ontology_name}'}})
+        result = client._execute_cypher("""
+            MATCH (s:Source {document: $name})
             DETACH DELETE s
             RETURN count(s) as deleted_count
-        """, fetch_one=True)
+        """, params={"name": ontology_name}, fetch_one=True)
 
         sources_deleted = result['deleted_count'] if result else 0
 
@@ -962,11 +962,11 @@ async def delete_ontology(
 
         # ADR-051: Delete DocumentMeta nodes for this ontology
         # This ensures cascade deletion of provenance metadata
-        doc_meta_result = client._execute_cypher(f"""
-            MATCH (d:DocumentMeta {{ontology: '{ontology_name}'}})
+        doc_meta_result = client._execute_cypher("""
+            MATCH (d:DocumentMeta {ontology: $name})
             DETACH DELETE d
             RETURN count(d) as deleted_count
-        """, fetch_one=True)
+        """, params={"name": ontology_name}, fetch_one=True)
 
         doc_meta_deleted = doc_meta_result['deleted_count'] if doc_meta_result else 0
         if doc_meta_deleted > 0:

@@ -108,16 +108,26 @@ def resolve_epistemic_filters_to_rel_types(
     if not include_epistemic_status and not exclude_epistemic_status:
         return None
 
+    # Validate against known epistemic statuses to prevent injection
+    VALID_STATUSES = {"AFFIRMATIVE", "CONTESTED", "CONTRADICTORY", "HISTORICAL", "INSUFFICIENT_DATA", "UNCLASSIFIED"}
+
     # Build filter conditions for VocabType query
     status_filters = []
 
     if include_epistemic_status:
-        status_list = ", ".join([f"'{s}'" for s in include_epistemic_status])
-        status_filters.append(f"v.epistemic_status IN [{status_list}]")
+        validated = [s for s in include_epistemic_status if s in VALID_STATUSES]
+        if validated:
+            status_list = ", ".join([f"'{s}'" for s in validated])
+            status_filters.append(f"v.epistemic_status IN [{status_list}]")
 
     if exclude_epistemic_status:
-        status_list = ", ".join([f"'{s}'" for s in exclude_epistemic_status])
-        status_filters.append(f"NOT v.epistemic_status IN [{status_list}]")
+        validated = [s for s in exclude_epistemic_status if s in VALID_STATUSES]
+        if validated:
+            status_list = ", ".join([f"'{s}'" for s in validated])
+            status_filters.append(f"NOT v.epistemic_status IN [{status_list}]")
+
+    if not status_filters:
+        return None
 
     # Query VocabType nodes matching the filters
     vocab_query = f"""
@@ -408,19 +418,22 @@ async def search_concepts(
                 # Filter by ontology if specified
                 if request.ontology:
                     ontology_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}}) RETURN c.ontology as ontology",
+                        "MATCH (c:Concept {concept_id: $cid}) RETURN c.ontology as ontology",
+                        params={"cid": concept_id},
                         fetch_one=True
                     )
                     concept_ontology = ontology_query.get('ontology') if ontology_query else None
                     if concept_ontology != request.ontology:
                         continue
                 docs_query = client._execute_cypher(
-                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc"
+                    "MATCH (c:Concept {concept_id: $cid})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc",
+                    params={"cid": concept_id}
                 )
                 documents = [r['doc'] for r in (docs_query or [])]
 
                 evidence_query = client._execute_cypher(
-                    f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                    "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                    params={"cid": concept_id},
                     fetch_one=True
                 )
                 evidence_count = evidence_query['evidence_count'] if evidence_query else 0
@@ -464,13 +477,14 @@ async def search_concepts(
                 sample_evidence = None
                 if request.include_evidence:
                     evidence_instances_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
-                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        f"s.content_type as content_type, s.storage_key as storage_key, "
-                        f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
-                        f"ORDER BY s.document, s.paragraph "
-                        f"LIMIT 3"  # Sample first 3 instances
+                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        "OPTIONAL MATCH (d:DocumentMeta {ontology: s.document}) WHERE s.source_id IN d.source_ids "
+                        "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        "s.content_type as content_type, s.storage_key as storage_key, "
+                        "d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
+                        "ORDER BY s.document, s.paragraph "
+                        "LIMIT 3",  # Sample first 3 instances
+                        params={"cid": concept_id}
                     )
                     if evidence_instances_query:
                         # Dedupe evidence due to Instance->multiple Source data issue
@@ -540,12 +554,14 @@ async def search_concepts(
                     # Get documents and evidence for top match
                     top_concept_id = top_match_data['concept_id']
                     top_docs_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc"
+                        "MATCH (c:Concept {concept_id: $cid})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc",
+                        params={"cid": top_concept_id}
                     )
                     top_documents = [r['doc'] for r in (top_docs_query or [])]
 
                     top_evidence_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance) RETURN count(i) as evidence_count",
+                        params={"cid": top_concept_id},
                         fetch_one=True
                     )
                     top_evidence_count = top_evidence_query['evidence_count'] if top_evidence_query else 0
@@ -587,13 +603,14 @@ async def search_concepts(
                     top_sample_evidence = None
                     if request.include_evidence:
                         top_evidence_instances_query = client._execute_cypher(
-                            f"MATCH (c:Concept {{concept_id: '{top_concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                            f"OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}}) WHERE s.source_id IN d.source_ids "
-                            f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                            f"s.content_type as content_type, s.storage_key as storage_key, "
-                            f"d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
-                            f"ORDER BY s.document, s.paragraph "
-                            f"LIMIT 3"
+                            "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                            "OPTIONAL MATCH (d:DocumentMeta {ontology: s.document}) WHERE s.source_id IN d.source_ids "
+                            "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                            "s.content_type as content_type, s.storage_key as storage_key, "
+                            "d.filename as filename, d.source_type as source_type, d.file_path as source_path, d.hostname as source_hostname "
+                            "ORDER BY s.document, s.paragraph "
+                            "LIMIT 3",
+                            params={"cid": top_concept_id}
                         )
                         if top_evidence_instances_query:
                             # Dedupe evidence due to Instance->multiple Source data issue
@@ -826,12 +843,13 @@ async def get_concept_details(
     try:
         # Get concept and documents
         concept_result = client._execute_cypher(
-            f"""
-            MATCH (c:Concept {{concept_id: '{concept_id}'}})
+            """
+            MATCH (c:Concept {concept_id: $cid})
             OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
             WITH c, collect(DISTINCT s.document) as documents
             RETURN c, documents
             """,
+            params={"cid": concept_id},
             fetch_one=True
         )
 
@@ -842,10 +860,10 @@ async def get_concept_details(
         documents = concept_result['documents']
 
         # Get instances (ADR-057: include image metadata, ADR-051: include provenance from DocumentMeta)
-        instances_result = client._execute_cypher(f"""
-            MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)
+        instances_result = client._execute_cypher("""
+            MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)
             MATCH (i)-[:FROM_SOURCE]->(s:Source)
-            OPTIONAL MATCH (d:DocumentMeta {{ontology: s.document}})
+            OPTIONAL MATCH (d:DocumentMeta {ontology: s.document})
             WHERE s.source_id IN d.source_ids
             RETURN
                 i.quote as quote,
@@ -860,7 +878,7 @@ async def get_concept_details(
                 d.file_path as source_path,
                 d.hostname as source_hostname
             ORDER BY s.document, s.paragraph
-        """)
+        """, params={"cid": concept_id})
 
         # Build instances list first
         instances_raw = instances_result or []
@@ -905,9 +923,9 @@ async def get_concept_details(
 
         # Get relationships with ADR-051 edge provenance metadata and ADR-065 vocabulary epistemic status
         # ADR-048: Read category via :IN_CATEGORY relationship (not property)
-        relationships_result = client._execute_cypher(f"""
-            MATCH (c:Concept {{concept_id: '{concept_id}'}})-[r]->(related:Concept)
-            OPTIONAL MATCH (v:VocabType {{name: type(r)}})-[:IN_CATEGORY]->(cat:VocabCategory)
+        relationships_result = client._execute_cypher("""
+            MATCH (c:Concept {concept_id: $cid})-[r]->(related:Concept)
+            OPTIONAL MATCH (v:VocabType {name: type(r)})-[:IN_CATEGORY]->(cat:VocabCategory)
             RETURN
                 related.concept_id as to_id,
                 related.label as to_label,
@@ -916,7 +934,7 @@ async def get_concept_details(
                 cat.name as vocab_category,
                 v.epistemic_status as vocab_epistemic_status,
                 v.epistemic_stats as vocab_epistemic_stats
-        """)
+        """, params={"cid": concept_id})
 
         relationships = []
         for record in (relationships_result or []):
@@ -996,8 +1014,8 @@ async def get_concept_details(
             from ..models.queries import ConceptProvenance, ProvenanceDocument
 
             # Query for source documents via DocumentMeta nodes
-            provenance_result = client._execute_cypher(f"""
-                MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:APPEARS]->(s:Source)
+            provenance_result = client._execute_cypher("""
+                MATCH (c:Concept {concept_id: $cid})-[:APPEARS]->(s:Source)
                 MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s)
                 RETURN DISTINCT
                     d.document_id as document_id,
@@ -1009,7 +1027,7 @@ async def get_concept_details(
                     d.created_at as ingested_at,
                     d.job_id as job_id,
                     d.source_count as source_count
-            """)
+            """, params={"cid": concept_id})
 
             if provenance_result and len(provenance_result) > 0:
                 # Build provenance documents list
@@ -1136,7 +1154,7 @@ async def find_related_concepts(
         )
 
         records = client._execute_cypher(
-            query.replace("$concept_id", f"'{request.concept_id}'")
+            query, params={"concept_id": request.concept_id}
         )
 
         results = [
@@ -1252,11 +1270,12 @@ async def find_connection(
                 sample_evidence = None
                 if request.include_evidence and concept_id:
                     evidence_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        f"s.content_type as content_type, s.storage_key as storage_key "
-                        f"ORDER BY s.document, s.paragraph "
-                        f"LIMIT 3"
+                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        "s.content_type as content_type, s.storage_key as storage_key "
+                        "ORDER BY s.document, s.paragraph "
+                        "LIMIT 3",
+                        params={"cid": concept_id}
                     )
                     if evidence_query:
                         # Dedupe evidence due to Instance->multiple Source data issue
@@ -1472,11 +1491,12 @@ async def find_connection_by_search(
                 sample_evidence = None
                 if request.include_evidence and concept_id:
                     evidence_query = client._execute_cypher(
-                        f"MATCH (c:Concept {{concept_id: '{concept_id}'}})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        f"RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        f"s.content_type as content_type, s.storage_key as storage_key "
-                        f"ORDER BY s.document, s.paragraph "
-                        f"LIMIT 3"
+                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                        "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                        "s.content_type as content_type, s.storage_key as storage_key "
+                        "ORDER BY s.document, s.paragraph "
+                        "LIMIT 3",
+                        params={"cid": concept_id}
                     )
                     if evidence_query:
                         # Dedupe evidence due to Instance->multiple Source data issue

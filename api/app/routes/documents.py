@@ -220,24 +220,33 @@ def _get_document_metadata_for_sources(
         return {}
 
     # Build query: Source <- HAS_SOURCE - DocumentMeta
-    where_clause = "s.source_id IN $source_ids"
     params = {"source_ids": source_ids}
 
     if ontology_filter:
-        where_clause += " AND d.ontology =~ $ontology_pattern"
         params["ontology_pattern"] = f"(?i).*{ontology_filter}.*"
-
-    query = f"""
-    MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)
-    WHERE {where_clause}
-    RETURN s.source_id as source_id,
-           d.document_id as document_id,
-           d.filename as filename,
-           d.ontology as ontology,
-           d.content_type as content_type,
-           d.garage_key as garage_key,
-           d.storage_key as storage_key
-    """
+        query = """
+        MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)
+        WHERE s.source_id IN $source_ids AND d.ontology =~ $ontology_pattern
+        RETURN s.source_id as source_id,
+               d.document_id as document_id,
+               d.filename as filename,
+               d.ontology as ontology,
+               d.content_type as content_type,
+               d.garage_key as garage_key,
+               d.storage_key as storage_key
+        """
+    else:
+        query = """
+        MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)
+        WHERE s.source_id IN $source_ids
+        RETURN s.source_id as source_id,
+               d.document_id as document_id,
+               d.filename as filename,
+               d.ontology as ontology,
+               d.content_type as content_type,
+               d.garage_key as garage_key,
+               d.storage_key as storage_key
+        """
 
     results = client._execute_cypher(query, params=params)
 
@@ -637,36 +646,50 @@ async def list_documents(
 
     try:
         # Build query with optional filter
-        where_clause = ""
         params = {"limit": limit, "offset": offset}
 
         if ontology:
-            where_clause = "WHERE d.ontology =~ $ontology_pattern"
             params["ontology_pattern"] = f"(?i).*{ontology}.*"
-
-        # Main query with counts
-        query = f"""
-        MATCH (d:DocumentMeta)
-        {where_clause}
-        OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
-        OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
-        WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
-        RETURN d.document_id as document_id,
-               d.filename as filename,
-               d.ontology as ontology,
-               d.content_type as content_type,
-               source_count,
-               concept_count
-        ORDER BY d.ontology, d.filename
-        SKIP $offset LIMIT $limit
-        """
-
-        # Count query
-        count_query = f"""
-        MATCH (d:DocumentMeta)
-        {where_clause}
-        RETURN count(d) as total
-        """
+            # Main query with counts
+            query = """
+            MATCH (d:DocumentMeta)
+            WHERE d.ontology =~ $ontology_pattern
+            OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
+            OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
+            WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
+            RETURN d.document_id as document_id,
+                   d.filename as filename,
+                   d.ontology as ontology,
+                   d.content_type as content_type,
+                   source_count,
+                   concept_count
+            ORDER BY d.ontology, d.filename
+            SKIP $offset LIMIT $limit
+            """
+            count_query = """
+            MATCH (d:DocumentMeta)
+            WHERE d.ontology =~ $ontology_pattern
+            RETURN count(d) as total
+            """
+        else:
+            query = """
+            MATCH (d:DocumentMeta)
+            OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
+            OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
+            WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
+            RETURN d.document_id as document_id,
+                   d.filename as filename,
+                   d.ontology as ontology,
+                   d.content_type as content_type,
+                   source_count,
+                   concept_count
+            ORDER BY d.ontology, d.filename
+            SKIP $offset LIMIT $limit
+            """
+            count_query = """
+            MATCH (d:DocumentMeta)
+            RETURN count(d) as total
+            """
 
         results = client._execute_cypher(query, params=params)
         count_result = client._execute_cypher(

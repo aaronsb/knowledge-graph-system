@@ -20,12 +20,12 @@ import type {
  */
 const VALID_CATEGORIES = [
   'logical_truth',
-  'empirical_claim',
-  'value_judgment',
-  'conceptual',
-  'temporal_sequence',
   'causal',
-  'other',
+  'structural',
+  'temporal',
+  'comparative',
+  'functional',
+  'definitional',
 ] as const;
 
 /**

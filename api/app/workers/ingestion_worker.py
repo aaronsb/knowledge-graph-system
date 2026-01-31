@@ -105,17 +105,17 @@ def run_ingestion_worker(
 
         # Step 3: Upload image to Garage
         logger.info("Uploading image to Garage...")
-        from api.app.lib.garage_client import get_garage_client
+        from api.app.lib.garage import get_image_storage
         from api.app.lib.datetime_utils import timedelta_from_now, to_iso
         import uuid
 
         try:
-            garage_client = get_garage_client()
+            images = get_image_storage()
 
             # Generate temporary source_id (will be replaced with actual source_id during graph upsert)
             temp_source_id = f"src_{uuid.uuid4().hex[:12]}"
 
-            storage_key = garage_client.upload_image(
+            storage_key = images.upload(
                 ontology=ontology,
                 source_id=temp_source_id,
                 image_bytes=image_bytes,

@@ -1217,12 +1217,14 @@ async def list_epistemic_status(
         
         # Build where clause
         where_clauses = ["v.epistemic_status IS NOT NULL"]
+        params = {}
         if status_filter:
-            where_clauses.append(f"v.epistemic_status = '{status_filter}'")
-        
+            where_clauses.append("v.epistemic_status = $status")
+            params["status"] = status_filter
+
         where = " AND ".join(where_clauses)
-        
-        vocab_types = client.facade.match_vocab_types(where=where, limit=1000)
+
+        vocab_types = client.facade.match_vocab_types(where=where, params=params, limit=1000)
         
         types_info = []
         for vt in vocab_types:
@@ -1309,7 +1311,8 @@ async def get_epistemic_status(
         client = AGEClient()
         
         vocab_types = client.facade.match_vocab_types(
-            where=f"v.name = '{relationship_type}'",
+            where="v.name = $name",
+            params={"name": relationship_type},
             limit=1
         )
         
