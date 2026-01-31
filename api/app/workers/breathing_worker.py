@@ -54,19 +54,20 @@ def run_breathing_worker(
         "progress": {"stage": "initializing", "percent": 0}
     })
 
-    age_client = AGEClient()
-    scorer = OntologyScorer(age_client)
-
-    # Get AI provider for LLM evaluation (optional — falls back to score-based)
+    age_client = None
     try:
-        ai_provider = get_provider()
-    except Exception:
-        ai_provider = None
-        logger.info("No AI provider available — using score-based decisions")
+        age_client = AGEClient()
+        scorer = OntologyScorer(age_client)
 
-    manager = BreathingManager(age_client, scorer, ai_provider=ai_provider)
+        # Get AI provider for LLM evaluation (optional — falls back to score-based)
+        try:
+            ai_provider = get_provider()
+        except Exception:
+            ai_provider = None
+            logger.info("No AI provider available — using score-based decisions")
 
-    try:
+        manager = BreathingManager(age_client, scorer, ai_provider=ai_provider)
+
         job_queue.update_job(job_id, {
             "progress": {"stage": "scoring", "percent": 10}
         })
@@ -95,4 +96,5 @@ def run_breathing_worker(
         }
 
     finally:
-        age_client.close()
+        if age_client:
+            age_client.close()

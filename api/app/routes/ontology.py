@@ -230,6 +230,34 @@ async def list_ontologies(
 # These routes MUST be defined before /{ontology_name} to avoid path conflicts
 # =========================================================================
 
+
+def _row_to_proposal(row) -> BreathingProposal:
+    """Map a positional SQL row to a BreathingProposal model.
+
+    Column order must match:
+        id, proposal_type, ontology_name, anchor_concept_id,
+        target_ontology, reasoning, mass_score, coherence_score,
+        protection_score, status, created_at, created_at_epoch,
+        reviewed_at, reviewed_by, reviewer_notes
+    """
+    return BreathingProposal(
+        id=row[0],
+        proposal_type=row[1],
+        ontology_name=row[2],
+        anchor_concept_id=row[3],
+        target_ontology=row[4],
+        reasoning=row[5],
+        mass_score=float(row[6]) if row[6] is not None else None,
+        coherence_score=float(row[7]) if row[7] is not None else None,
+        protection_score=float(row[8]) if row[8] is not None else None,
+        status=row[9],
+        created_at=row[10],
+        created_at_epoch=row[11],
+        reviewed_at=row[12],
+        reviewed_by=row[13],
+        reviewer_notes=row[14],
+    )
+
 @router.get("/proposals", response_model=BreathingProposalListResponse)
 async def list_proposals(
     status: str = QueryParam(None, description="Filter by status: pending, approved, rejected, expired"),
@@ -275,25 +303,7 @@ async def list_proposals(
                     LIMIT %s
                 """, params)
 
-                proposals = []
-                for row in cur.fetchall():
-                    proposals.append(BreathingProposal(
-                        id=row[0],
-                        proposal_type=row[1],
-                        ontology_name=row[2],
-                        anchor_concept_id=row[3],
-                        target_ontology=row[4],
-                        reasoning=row[5],
-                        mass_score=float(row[6]) if row[6] is not None else None,
-                        coherence_score=float(row[7]) if row[7] is not None else None,
-                        protection_score=float(row[8]) if row[8] is not None else None,
-                        status=row[9],
-                        created_at=row[10],
-                        created_at_epoch=row[11],
-                        reviewed_at=row[12],
-                        reviewed_by=row[13],
-                        reviewer_notes=row[14],
-                    ))
+                proposals = [_row_to_proposal(row) for row in cur.fetchall()]
 
                 return BreathingProposalListResponse(
                     proposals=proposals,
@@ -332,23 +342,7 @@ async def get_proposal(
                 if not row:
                     raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found")
 
-                return BreathingProposal(
-                    id=row[0],
-                    proposal_type=row[1],
-                    ontology_name=row[2],
-                    anchor_concept_id=row[3],
-                    target_ontology=row[4],
-                    reasoning=row[5],
-                    mass_score=float(row[6]) if row[6] is not None else None,
-                    coherence_score=float(row[7]) if row[7] is not None else None,
-                    protection_score=float(row[8]) if row[8] is not None else None,
-                    status=row[9],
-                    created_at=row[10],
-                    created_at_epoch=row[11],
-                    reviewed_at=row[12],
-                    reviewed_by=row[13],
-                    reviewer_notes=row[14],
-                )
+                return _row_to_proposal(row)
         finally:
             client.pool.putconn(conn)
     except HTTPException:
@@ -409,23 +403,7 @@ async def review_proposal(
                 row = cur.fetchone()
                 conn.commit()
 
-                return BreathingProposal(
-                    id=row[0],
-                    proposal_type=row[1],
-                    ontology_name=row[2],
-                    anchor_concept_id=row[3],
-                    target_ontology=row[4],
-                    reasoning=row[5],
-                    mass_score=float(row[6]) if row[6] is not None else None,
-                    coherence_score=float(row[7]) if row[7] is not None else None,
-                    protection_score=float(row[8]) if row[8] is not None else None,
-                    status=row[9],
-                    created_at=row[10],
-                    created_at_epoch=row[11],
-                    reviewed_at=row[12],
-                    reviewed_by=row[13],
-                    reviewer_notes=row[14],
-                )
+                return _row_to_proposal(row)
         finally:
             client.pool.putconn(conn)
     except HTTPException:

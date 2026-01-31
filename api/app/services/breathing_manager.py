@@ -285,6 +285,21 @@ class BreathingManager:
         except Exception:
             ontology_concept_count = 0
 
+        # Get neighbor labels so the LLM can assess coherence
+        try:
+            neighbor_rows = self.client._execute_cypher(
+                """
+                MATCH (c:Concept {concept_id: $cid})-[r]-(n:Concept)
+                RETURN DISTINCT n.label as label, count(r) as rel_count
+                ORDER BY rel_count DESC
+                LIMIT 10
+                """,
+                params={"cid": candidate["concept_id"]},
+            )
+            top_neighbors = [row["label"] for row in (neighbor_rows or [])]
+        except Exception:
+            top_neighbors = []
+
         if self.ai_provider:
             decision = await llm_evaluate_promotion(
                 concept_label=candidate["label"],
@@ -292,7 +307,7 @@ class BreathingManager:
                 degree=candidate["degree"],
                 ontology_name=ontology_name,
                 ontology_concept_count=ontology_concept_count,
-                top_neighbors=[],  # Could be populated from graph traversal
+                top_neighbors=top_neighbors,
                 affinity_targets=affinities,
                 ai_provider=self.ai_provider,
             )
