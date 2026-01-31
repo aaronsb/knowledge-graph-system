@@ -52,6 +52,7 @@ import {
   formatGraphBatchResult,
   formatGraphQueueResult,
   formatOntologyEdges,
+  formatOntologyAffinity,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -1508,7 +1509,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               (toolArgs.limit as number) || 10
             );
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyAffinity(result) }],
             };
           }
 

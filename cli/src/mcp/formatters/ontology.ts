@@ -1,7 +1,7 @@
 /**
  * Ontology formatters (ADR-200 Phase 5)
  *
- * Formats ontology-to-ontology edge responses as markdown for AI agents.
+ * Formats ontology responses as markdown for AI agents.
  */
 
 interface OntologyEdge {
@@ -60,6 +60,40 @@ export function formatOntologyEdges(data: OntologyEdgesResponse): string {
       output += `\n`;
     }
     output += `\n`;
+  }
+
+  return output;
+}
+
+interface OntologyAffinity {
+  other_ontology: string;
+  shared_concept_count: number;
+  total_concepts: number;
+  affinity_score: number;
+}
+
+interface OntologyAffinityResponse {
+  ontology: string;
+  count: number;
+  affinities: OntologyAffinity[];
+}
+
+/**
+ * Format ontology affinity (cross-ontology concept overlap)
+ */
+export function formatOntologyAffinity(data: OntologyAffinityResponse): string {
+  let output = `# Ontology Affinity: ${data.ontology}\n\n`;
+
+  if (data.count === 0) {
+    output += `No shared concepts with other ontologies.\n`;
+    return output;
+  }
+
+  output += `**Compared against:** ${data.count} ontologies\n\n`;
+
+  for (const aff of data.affinities) {
+    const scorePercent = (aff.affinity_score * 100).toFixed(1);
+    output += `- **${aff.other_ontology}** | ${scorePercent}% affinity | ${aff.shared_concept_count} shared of ${aff.total_concepts} total\n`;
   }
 
   return output;
