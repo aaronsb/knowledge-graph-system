@@ -58,21 +58,25 @@ class BreathingLauncher(JobLauncher):
     - Post-ingestion hook (ingestion_worker, after epoch increment)
     - Manual API call (POST /ontology/breathing-cycle)
 
-    The epoch delta check in check_conditions() gates all triggers,
-    so multiple trigger sources cannot cause redundant runs.
+    check_conditions() uses an atomic UPDATE to both verify the epoch
+    delta AND claim the epoch window in one statement. This prevents
+    concurrent triggers from both passing the check.
 
     Parameters are read from kg_api.breathing_options at launch time.
     """
 
     def __init__(self, job_queue, max_retries: int = 5):
         super().__init__(job_queue, max_retries=max_retries)
+        self._cached_options = None
+        self._cached_epoch = None
 
     def check_conditions(self) -> bool:
         """
-        Check if breathing is enabled and enough epochs have passed.
+        Atomically check epoch delta and claim the window.
 
-        Reads configuration from kg_api.breathing_options and epoch state
-        from public.graph_metrics (same table as all other epoch counters).
+        Uses UPDATE ... WHERE to combine the condition check and epoch
+        stamp into a single statement, preventing TOCTOU races when
+        multiple triggers fire concurrently.
         """
         client = AGEClient()
         try:
@@ -85,27 +89,33 @@ class BreathingLauncher(JobLauncher):
                     return False
 
                 current_epoch = client.get_current_epoch()
+                epoch_interval = options["epoch_interval"]
 
+                # Atomic check-and-claim: UPDATE only succeeds if delta is sufficient
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT counter FROM public.graph_metrics "
-                        "WHERE metric_name = 'last_breathing_epoch'"
+                        "UPDATE public.graph_metrics "
+                        "SET counter = %s, updated_at = CURRENT_TIMESTAMP "
+                        "WHERE metric_name = 'last_breathing_epoch' "
+                        "AND %s - counter >= %s "
+                        "RETURNING counter",
+                        (current_epoch, current_epoch, epoch_interval)
                     )
                     row = cur.fetchone()
-                    last_epoch = row[0] if row else 0
+                conn.commit()
 
-                epoch_interval = options["epoch_interval"]
-                delta = current_epoch - last_epoch
-
-                if delta >= epoch_interval:
+                if row:
+                    self._cached_options = options
+                    self._cached_epoch = current_epoch
                     logger.info(
-                        f"BreathingLauncher: epoch delta {delta} >= {epoch_interval}, "
-                        f"triggering cycle (current={current_epoch}, last={last_epoch})"
+                        f"BreathingLauncher: claimed epoch {current_epoch} "
+                        f"(interval={epoch_interval}), triggering cycle"
                     )
                     return True
 
                 logger.debug(
-                    f"BreathingLauncher: epoch delta {delta} < {epoch_interval}, skipping"
+                    f"BreathingLauncher: epoch delta < {epoch_interval} "
+                    f"or already claimed, skipping"
                 )
                 return False
 
@@ -117,42 +127,22 @@ class BreathingLauncher(JobLauncher):
 
     def prepare_job_data(self) -> Dict:
         """
-        Prepare breathing cycle parameters from database options.
+        Prepare breathing cycle parameters.
 
-        Also stamps last_breathing_epoch in graph_metrics to prevent
-        re-triggering while the cycle runs.
+        Uses values cached by check_conditions() to avoid a second
+        database round-trip and stay within the same atomic window.
         """
-        client = AGEClient()
-        try:
-            conn = client.pool.getconn()
-            try:
-                options = _read_options(conn)
-                current_epoch = client.get_current_epoch()
+        options = self._cached_options or DEFAULTS
+        current_epoch = self._cached_epoch or 0
 
-                # Stamp last_breathing_epoch to claim this epoch window
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "UPDATE public.graph_metrics "
-                        "SET counter = %s, updated_at = CURRENT_TIMESTAMP "
-                        "WHERE metric_name = 'last_breathing_epoch'",
-                        (current_epoch,)
-                    )
-                conn.commit()
-
-                return {
-                    "demotion_threshold": options["demotion_threshold"],
-                    "promotion_min_degree": options["promotion_min_degree"],
-                    "max_proposals": options["max_proposals"],
-                    "dry_run": False,
-                    "triggered_at_epoch": current_epoch,
-                    "description": f"Breathing cycle at epoch {current_epoch}",
-                }
-
-            finally:
-                client.pool.putconn(conn)
-
-        finally:
-            client.close()
+        return {
+            "demotion_threshold": options["demotion_threshold"],
+            "promotion_min_degree": options["promotion_min_degree"],
+            "max_proposals": options["max_proposals"],
+            "dry_run": False,
+            "triggered_at_epoch": current_epoch,
+            "description": f"Breathing cycle at epoch {current_epoch}",
+        }
 
     def get_job_type(self) -> str:
         return "ontology_breathing"
