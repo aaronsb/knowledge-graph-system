@@ -2,9 +2,122 @@
  * Ontology formatters (ADR-200)
  *
  * Formats ontology responses as markdown for AI agents.
+ * - Core: Ontology list, info, scores
  * - Phase 3b/4: Proposal list, proposal details, proposal review
  * - Phase 5: Ontology edges, affinity
  */
+
+// ========== Core Ontology Formatters ==========
+
+/**
+ * Format ontology list
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatOntologyList(data: any): string {
+  let output = `# Ontologies\n\n`;
+  output += `**Total:** ${data.count}\n\n`;
+
+  if (data.count === 0) {
+    output += `No ontologies found.\n`;
+    return output;
+  }
+
+  output += `| Ontology | Concepts | Sources | Lifecycle | Epoch |\n`;
+  output += `|----------|----------|---------|-----------|-------|\n`;
+
+  for (const o of data.ontologies) {
+    const lifecycle = o.lifecycle_state || 'active';
+    const epoch = o.creation_epoch ?? '-';
+    output += `| **${o.ontology}** | ${o.concept_count} | ${o.source_count} | ${lifecycle} | ${epoch} |\n`;
+  }
+
+  return output;
+}
+
+/**
+ * Format ontology info (detail view)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatOntologyInfo(data: any): string {
+  let output = `# Ontology: ${data.ontology}\n\n`;
+
+  if (!data.node) {
+    output += `**Warning:** Ontology node not found in graph. Sources may exist with this document name but no Ontology node is registered.\n\n`;
+  } else {
+    output += `| Property | Value |\n|----------|-------|\n`;
+    output += `| ID | \`${data.node.ontology_id}\` |\n`;
+    if (data.node.description) {
+      output += `| Description | ${data.node.description} |\n`;
+    }
+    output += `| Lifecycle | ${data.node.lifecycle_state} |\n`;
+    output += `| Creation epoch | ${data.node.creation_epoch} |\n`;
+    output += `| Has embedding | ${data.node.has_embedding} |\n`;
+    if (data.node.created_by) {
+      output += `| Created by | ${data.node.created_by} |\n`;
+    }
+    if (data.node.search_terms && data.node.search_terms.length > 0) {
+      output += `| Search terms | ${data.node.search_terms.join(', ')} |\n`;
+    }
+    output += `\n`;
+  }
+
+  output += `## Statistics\n\n`;
+  output += `| Metric | Count |\n|--------|-------|\n`;
+  output += `| Concepts | ${data.statistics.concept_count} |\n`;
+  output += `| Sources | ${data.statistics.source_count} |\n`;
+  output += `| Files | ${data.statistics.file_count} |\n`;
+  output += `| Instances | ${data.statistics.instance_count} |\n`;
+  output += `| Relationships | ${data.statistics.relationship_count} |\n`;
+
+  if (data.files.length > 0) {
+    output += `\n## Files (${data.files.length})\n\n`;
+    for (const f of data.files) {
+      output += `- ${f}\n`;
+    }
+  }
+
+  return output;
+}
+
+/**
+ * Format ontology scores (single or all)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatOntologyScores(data: any): string {
+  // Single ontology score
+  if (data.ontology && data.mass_score !== undefined) {
+    let output = `# Ontology Scores: ${data.ontology}\n\n`;
+    output += `| Metric | Value |\n|--------|-------|\n`;
+    output += `| Mass | ${data.mass_score.toFixed(4)} |\n`;
+    output += `| Coherence | ${data.coherence_score!.toFixed(4)} |\n`;
+    output += `| Raw exposure | ${data.raw_exposure!.toFixed(4)} |\n`;
+    output += `| Weighted exposure | ${data.weighted_exposure!.toFixed(4)} |\n`;
+    output += `| **Protection** | **${data.protection_score!.toFixed(4)}** |\n`;
+    output += `| Epoch | ${data.last_evaluated_epoch} |\n`;
+    return output;
+  }
+
+  // All ontology scores
+  let output = `# Ontology Scores\n\n`;
+  output += `**Epoch:** ${data.global_epoch ?? '-'} | **Count:** ${data.count ?? 0}\n\n`;
+
+  const scores = data.scores || [];
+  if (scores.length === 0) {
+    output += `No scores available.\n`;
+    return output;
+  }
+
+  output += `| Ontology | Mass | Coherence | Exposure | Protection | Epoch |\n`;
+  output += `|----------|------|-----------|----------|------------|-------|\n`;
+
+  for (const s of scores) {
+    output += `| **${s.ontology}** | ${s.mass_score.toFixed(3)} | ${s.coherence_score.toFixed(3)} | ${s.weighted_exposure.toFixed(3)} | ${s.protection_score.toFixed(3)} | ${s.last_evaluated_epoch} |\n`;
+  }
+
+  return output;
+}
+
+// ========== Ontology Edge Formatters (ADR-200 Phase 5) ==========
 
 interface OntologyEdge {
   from_ontology: string;

@@ -69,6 +69,9 @@ export {
 
 // Ontology formatters (ADR-200)
 export {
+  formatOntologyList,
+  formatOntologyInfo,
+  formatOntologyScores,
   formatOntologyEdges,
   formatOntologyAffinity,
   formatProposalList,

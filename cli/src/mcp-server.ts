@@ -51,6 +51,9 @@ import {
   formatGraphEdgeList,
   formatGraphBatchResult,
   formatGraphQueueResult,
+  formatOntologyList,
+  formatOntologyInfo,
+  formatOntologyScores,
   formatOntologyEdges,
   formatOntologyAffinity,
   formatProposalList,
@@ -1415,14 +1418,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'list': {
             const result = await client.listOntologies();
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyList(result) }],
             };
           }
 
           case 'info': {
             const result = await client.getOntologyInfo(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyInfo(result) }],
             };
           }
 
@@ -1478,21 +1481,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'scores': {
             const result = await client.getOntologyScores(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
           case 'score': {
             const result = await client.computeOntologyScores(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
           case 'score_all': {
             const result = await client.computeAllOntologyScores();
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
