@@ -420,8 +420,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'reassign', 'dissolve'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'reassign', 'dissolve', 'proposals', 'proposal_review', 'breathing_cycle'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)',
             },
             ontology_name: {
               type: 'string',
@@ -457,6 +457,41 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
             limit: {
               type: 'number',
               description: 'Max results for candidates/affinity (default: 20/10)',
+            },
+            proposal_id: {
+              type: 'number',
+              description: 'Proposal ID (for proposal_review action)',
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'rejected'],
+              description: 'Filter proposals by status, or review status (approved/rejected)',
+            },
+            proposal_type: {
+              type: 'string',
+              enum: ['promotion', 'demotion'],
+              description: 'Filter proposals by type',
+            },
+            notes: {
+              type: 'string',
+              description: 'Review notes (for proposal_review action)',
+            },
+            dry_run: {
+              type: 'boolean',
+              description: 'Preview candidates without proposals (for breathing_cycle)',
+              default: false,
+            },
+            demotion_threshold: {
+              type: 'number',
+              description: 'Protection score below which to consider demotion (default: 0.15)',
+            },
+            promotion_min_degree: {
+              type: 'number',
+              description: 'Minimum concept degree for promotion candidacy (default: 10)',
+            },
+            max_proposals: {
+              type: 'number',
+              description: 'Maximum proposals per breathing cycle (default: 5)',
             },
           },
           required: ['action'],
@@ -1492,6 +1527,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               toolArgs.ontology_name as string,
               toolArgs.target_ontology as string
             );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'proposals': {
+            const result = await client.listProposals({
+              status: toolArgs.status as string | undefined,
+              proposal_type: toolArgs.proposal_type as string | undefined,
+              ontology: toolArgs.ontology_name as string | undefined,
+              limit: toolArgs.limit as number | undefined,
+            });
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'proposal_review': {
+            const reviewStatus = toolArgs.status as 'approved' | 'rejected';
+            if (!reviewStatus || !['approved', 'rejected'].includes(reviewStatus)) {
+              throw new Error('proposal_review requires status: "approved" or "rejected"');
+            }
+            const result = await client.reviewProposal(
+              toolArgs.proposal_id as number,
+              reviewStatus,
+              toolArgs.notes as string | undefined,
+            );
+            return {
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            };
+          }
+
+          case 'breathing_cycle': {
+            const result = await client.triggerBreathingCycle({
+              dry_run: toolArgs.dry_run as boolean | undefined,
+              demotion_threshold: toolArgs.demotion_threshold as number | undefined,
+              promotion_min_degree: toolArgs.promotion_min_degree as number | undefined,
+              max_proposals: toolArgs.max_proposals as number | undefined,
+            });
             return {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
             };

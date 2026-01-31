@@ -485,6 +485,17 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to increment ingestion epoch: {e}")
 
+        # ADR-200 Phase 3b: Check if breathing cycle should run
+        try:
+            from api.app.launchers.breathing import BreathingLauncher
+            from api.app.services.job_queue import get_job_queue
+            launcher = BreathingLauncher(get_job_queue(), epoch_interval=5)
+            breathing_job_id = launcher.launch()
+            if breathing_job_id:
+                logger.info(f"[{job_id}] Breathing cycle launched: {breathing_job_id}")
+        except Exception as e:
+            logger.warning(f"[{job_id}] Breathing launcher check failed: {e}")
+
         # Close AGE connection
         age_client.close()
 

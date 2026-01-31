@@ -1043,6 +1043,57 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  // ========== Breathing Proposals (ADR-200 Phase 3b) ==========
+
+  async listProposals(options?: {
+    status?: string;
+    proposal_type?: string;
+    ontology?: string;
+    limit?: number;
+  }): Promise<import('../types').BreathingProposalListResponse> {
+    const params = new URLSearchParams();
+    if (options?.status) params.set('status', options.status);
+    if (options?.proposal_type) params.set('proposal_type', options.proposal_type);
+    if (options?.ontology) params.set('ontology', options.ontology);
+    if (options?.limit) params.set('limit', String(options.limit));
+    const query = params.toString();
+    const response = await this.client.get(`/ontology/proposals${query ? '?' + query : ''}`);
+    return response.data;
+  }
+
+  async getProposal(proposalId: number): Promise<import('../types').BreathingProposal> {
+    const response = await this.client.get(`/ontology/proposals/${proposalId}`);
+    return response.data;
+  }
+
+  async reviewProposal(
+    proposalId: number,
+    status: 'approved' | 'rejected',
+    notes?: string
+  ): Promise<import('../types').BreathingProposal> {
+    const response = await this.client.post(`/ontology/proposals/${proposalId}/review`, {
+      status,
+      notes,
+    });
+    return response.data;
+  }
+
+  async triggerBreathingCycle(options?: {
+    dry_run?: boolean;
+    demotion_threshold?: number;
+    promotion_min_degree?: number;
+    max_proposals?: number;
+  }): Promise<import('../types').BreathingCycleResult> {
+    const params = new URLSearchParams();
+    if (options?.dry_run !== undefined) params.set('dry_run', String(options.dry_run));
+    if (options?.demotion_threshold !== undefined) params.set('demotion_threshold', String(options.demotion_threshold));
+    if (options?.promotion_min_degree !== undefined) params.set('promotion_min_degree', String(options.promotion_min_degree));
+    if (options?.max_proposals !== undefined) params.set('max_proposals', String(options.max_proposals));
+    const query = params.toString();
+    const response = await this.client.post(`/ontology/breathing-cycle${query ? '?' + query : ''}`);
+    return response.data;
+  }
+
   // ========== Admin Methods ==========
 
   /**
