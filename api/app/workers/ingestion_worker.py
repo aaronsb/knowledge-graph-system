@@ -472,7 +472,7 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
 
-        # Increment document ingestion epoch (ADR-200: breathing lifecycle)
+        # Increment document ingestion epoch (ADR-200: annealing lifecycle)
         try:
             conn = age_client.pool.getconn()
             try:
@@ -485,16 +485,16 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Failed to increment ingestion epoch: {e}")
 
-        # ADR-200 Phase 3b: Check if breathing cycle should run
+        # ADR-200 Phase 3b: Check if annealing cycle should run
         # Launcher self-manages epoch interval — just ask it to check
         try:
-            from api.app.launchers.breathing import BreathingLauncher
+            from api.app.launchers.annealing import AnnealingLauncher
             from api.app.services.job_queue import get_job_queue
-            breathing_job_id = BreathingLauncher(get_job_queue()).launch()
-            if breathing_job_id:
-                logger.info(f"[{job_id}] Breathing cycle launched: {breathing_job_id}")
+            annealing_job_id = AnnealingLauncher(get_job_queue()).launch()
+            if annealing_job_id:
+                logger.info(f"[{job_id}] Annealing cycle launched: {annealing_job_id}")
         except Exception as e:
-            logger.warning(f"[{job_id}] Breathing launcher check failed: {e}")
+            logger.warning(f"[{job_id}] Annealing launcher check failed: {e}")
 
         # Close AGE connection
         age_client.close()

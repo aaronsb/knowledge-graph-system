@@ -1,5 +1,5 @@
 """
-Unit tests for Breathing Evaluator (ADR-200 Phase 3b).
+Unit tests for Annealing Evaluator (ADR-200 Phase 3b).
 
 Tests LLM evaluation for ontology promotion and demotion decisions.
 """
@@ -8,7 +8,7 @@ import json
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from api.app.lib.breathing_evaluator import (
+from api.app.lib.annealing_evaluator import (
     llm_evaluate_promotion,
     llm_evaluate_demotion,
     PromotionDecision,

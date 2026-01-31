@@ -1,5 +1,5 @@
 """
-Proposal Executor — executes approved breathing proposals (ADR-200 Phase 4).
+Proposal Executor — executes approved annealing proposals (ADR-200 Phase 4).
 
 Wires together existing primitives:
 - create_ontology_node()      → promotion: create new ontology
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProposalExecutor:
-    """Executes approved breathing proposals against the graph."""
+    """Executes approved annealing proposals against the graph."""
 
     def __init__(self, age_client):
         self.client = age_client
@@ -40,7 +40,7 @@ class ProposalExecutor:
             6. reassign_sources() from parent ontology to new one
 
         Args:
-            proposal: Dict with proposal fields from breathing_proposals table
+            proposal: Dict with proposal fields from annealing_proposals table
 
         Returns:
             {success, ontology_created, sources_reassigned, ...}
@@ -92,7 +92,7 @@ class ProposalExecutor:
             description=description,
             embedding=embedding,
             lifecycle_state="active",
-            created_by="breathing_worker",
+            created_by="annealing_worker",
         )
 
         if not create_result:
@@ -173,7 +173,7 @@ class ProposalExecutor:
             3. dissolve_ontology() → reassign sources + remove node
 
         Args:
-            proposal: Dict with proposal fields from breathing_proposals table
+            proposal: Dict with proposal fields from annealing_proposals table
 
         Returns:
             {success, absorbed_into, sources_reassigned, ...}
@@ -224,7 +224,7 @@ class ProposalExecutor:
                     name=target,
                     description="Default pool for unroutable sources",
                     lifecycle_state="active",
-                    created_by="breathing_worker",
+                    created_by="annealing_worker",
                 )
                 logger.info(f"Auto-created primordial pool '{target}'")
             else:
@@ -268,7 +268,7 @@ class ProposalExecutor:
             1. Proposal's target_ontology (LLM-suggested)
             2. Highest OVERLAPS edge score (Phase 5 materialized)
             3. Highest affinity from traversal query
-            4. Primordial pool name from breathing_options
+            4. Primordial pool name from annealing_options
         """
         # 1. Use proposal's suggestion if the target still exists
         if proposed_target:
@@ -321,13 +321,13 @@ class ProposalExecutor:
         return self._get_primordial_pool_name()
 
     def _get_primordial_pool_name(self) -> str:
-        """Read primordial pool name from breathing_options, default 'primordial'."""
+        """Read primordial pool name from annealing_options, default 'primordial'."""
         try:
             conn = self.client.pool.getconn()
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT value FROM kg_api.breathing_options "
+                        "SELECT value FROM kg_api.annealing_options "
                         "WHERE key = 'primordial_pool_name'"
                     )
                     row = cur.fetchone()

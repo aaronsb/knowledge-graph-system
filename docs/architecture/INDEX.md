@@ -43,7 +43,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-024](./database-schema/ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL Architecture | Proposed |
 | [ADR-040](./database-schema/ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed |
 | [ADR-061](./database-schema/ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
-| [ADR-200](./database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md) | Breathing Ontologies — Self-Organizing Knowledge Graph Structure | Draft |
+| [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_

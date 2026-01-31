@@ -1,5 +1,5 @@
 """
-Breathing Evaluator — LLM judgment for ontology promotion/demotion (ADR-200 Phase 3b).
+Annealing Evaluator — LLM judgment for ontology promotion/demotion (ADR-200 Phase 3b).
 
 Follows the same pattern as pruning_strategies.llm_evaluate_merge():
 structured prompt → JSON response → parsed decision dataclass.

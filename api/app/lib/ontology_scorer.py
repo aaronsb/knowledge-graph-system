@@ -11,7 +11,7 @@ Scoring algorithms:
 - Protection: mass × coherence minus exposure pressure
 
 References:
-    - ADR-200: Breathing Ontologies
+    - ADR-200: Annealing Ontologies
     - ADR-044: Dynamic Grounding (Michaelis-Menten saturation)
     - ADR-063: Semantic Diversity (Gini-Simpson index)
 """
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class OntologyScorer:
     """
-    Computes breathing scores for ontologies.
+    Computes annealing scores for ontologies.
 
     All scoring methods are deterministic given the same inputs.
     The AGE client is used only for data retrieval, not mutation.

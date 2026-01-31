@@ -1,11 +1,11 @@
 """
-Breathing Cycle Launcher (ADR-200 Phase 3b).
+Annealing Cycle Launcher (ADR-200 Phase 3b).
 
-Triggers ontology breathing cycles based on epoch interval.
+Triggers ontology annealing cycles based on epoch interval.
 Dual-trigger: runs on cron schedule AND after ingestion.
 The epoch delta check prevents redundant runs regardless of trigger source.
 
-All tunable parameters are read from kg_api.breathing_options at launch time.
+All tunable parameters are read from kg_api.annealing_options at launch time.
 Code defaults apply when a key is absent from the table.
 """
 
@@ -16,7 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Code defaults — overridden by kg_api.breathing_options rows
+# Code defaults — overridden by kg_api.annealing_options rows
 DEFAULTS = {
     "epoch_interval": 5,
     "demotion_threshold": 0.15,
@@ -27,11 +27,11 @@ DEFAULTS = {
 
 
 def _read_options(conn) -> Dict:
-    """Read breathing_options from database, falling back to code defaults."""
+    """Read annealing_options from database, falling back to code defaults."""
     options = dict(DEFAULTS)
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT key, value FROM kg_api.breathing_options")
+            cur.execute("SELECT key, value FROM kg_api.annealing_options")
             for key, value in cur.fetchall():
                 if key in ("enabled", "derive_edges"):
                     options[key] = value.lower() in ("true", "1", "yes")
@@ -42,27 +42,27 @@ def _read_options(conn) -> Dict:
                 else:
                     options[key] = value
     except Exception as e:
-        logger.warning(f"BreathingLauncher: could not read breathing_options, using defaults: {e}")
+        logger.warning(f"AnnealingLauncher: could not read annealing_options, using defaults: {e}")
     return options
 
 
-class BreathingLauncher(JobLauncher):
+class AnnealingLauncher(JobLauncher):
     """
-    Trigger breathing cycles based on epoch interval.
+    Trigger annealing cycles based on epoch interval.
 
-    Condition: current_epoch - last_breathing_epoch >= epoch_interval
-    Worker: breathing_worker (ontology_breathing)
+    Condition: current_epoch - last_annealing_epoch >= epoch_interval
+    Worker: annealing_worker (ontology_annealing)
 
     Triggered from:
     - Cron schedule (every 6 hours, via scheduled_jobs_manager)
     - Post-ingestion hook (ingestion_worker, after epoch increment)
-    - Manual API call (POST /ontology/breathing-cycle)
+    - Manual API call (POST /ontology/annealing-cycle)
 
     check_conditions() uses an atomic UPDATE to both verify the epoch
     delta AND claim the epoch window in one statement. This prevents
     concurrent triggers from both passing the check.
 
-    Parameters are read from kg_api.breathing_options at launch time.
+    Parameters are read from kg_api.annealing_options at launch time.
     """
 
     def __init__(self, job_queue, max_retries: int = 5):
@@ -85,7 +85,7 @@ class BreathingLauncher(JobLauncher):
                 options = _read_options(conn)
 
                 if not options["enabled"]:
-                    logger.info("BreathingLauncher: disabled via breathing_options")
+                    logger.info("AnnealingLauncher: disabled via annealing_options")
                     return False
 
                 current_epoch = client.get_current_epoch()
@@ -96,7 +96,7 @@ class BreathingLauncher(JobLauncher):
                     cur.execute(
                         "UPDATE public.graph_metrics "
                         "SET counter = %s, updated_at = CURRENT_TIMESTAMP "
-                        "WHERE metric_name = 'last_breathing_epoch' "
+                        "WHERE metric_name = 'last_annealing_epoch' "
                         "AND %s - counter >= %s "
                         "RETURNING counter",
                         (current_epoch, current_epoch, epoch_interval)
@@ -108,13 +108,13 @@ class BreathingLauncher(JobLauncher):
                     self._cached_options = options
                     self._cached_epoch = current_epoch
                     logger.info(
-                        f"BreathingLauncher: claimed epoch {current_epoch} "
+                        f"AnnealingLauncher: claimed epoch {current_epoch} "
                         f"(interval={epoch_interval}), triggering cycle"
                     )
                     return True
 
                 logger.debug(
-                    f"BreathingLauncher: epoch delta < {epoch_interval} "
+                    f"AnnealingLauncher: epoch delta < {epoch_interval} "
                     f"or already claimed, skipping"
                 )
                 return False
@@ -127,7 +127,7 @@ class BreathingLauncher(JobLauncher):
 
     def prepare_job_data(self) -> Dict:
         """
-        Prepare breathing cycle parameters.
+        Prepare annealing cycle parameters.
 
         Uses values cached by check_conditions() to avoid a second
         database round-trip and stay within the same atomic window.
@@ -144,8 +144,8 @@ class BreathingLauncher(JobLauncher):
             "specializes_threshold": options.get("specializes_threshold", 0.3),
             "dry_run": False,
             "triggered_at_epoch": current_epoch,
-            "description": f"Breathing cycle at epoch {current_epoch}",
+            "description": f"Annealing cycle at epoch {current_epoch}",
         }
 
     def get_job_type(self) -> str:
-        return "ontology_breathing"
+        return "ontology_annealing"

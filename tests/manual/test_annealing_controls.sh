@@ -1,27 +1,27 @@
 #!/bin/bash
-# Ontology Breathing Controls Integration Test (ADR-200 Phase 3a)
+# Ontology Annealing Controls Integration Test (ADR-200 Phase 3a)
 #
-# Tests the full breathing control surface against a live graph:
+# Tests the full annealing control surface against a live graph:
 #   score, score-all, scores, candidates, affinity,
 #   reassign, dissolve, lifecycle enforcement
 #
 # Requires: running platform (./operator.sh start), kg CLI
 #
 # Usage:
-#   ./test_breathing_controls.sh                # Run all tests
-#   ./test_breathing_controls.sh --keep         # Don't clean up test ontologies
-#   ./test_breathing_controls.sh --verbose      # Show detailed output
-#   ./test_breathing_controls.sh --skip-ingest  # Use existing ontology (set TEST_ONTOLOGY)
+#   ./test_annealing_controls.sh                # Run all tests
+#   ./test_annealing_controls.sh --keep         # Don't clean up test ontologies
+#   ./test_annealing_controls.sh --verbose      # Show detailed output
+#   ./test_annealing_controls.sh --skip-ingest  # Use existing ontology (set TEST_ONTOLOGY)
 
 set -euo pipefail
 
 # Defaults
-TEST_ONTOLOGY="BreathingTest_$$"
-TEST_TARGET="BreathingTarget_$$"
+TEST_ONTOLOGY="AnnealingTest_$$"
+TEST_TARGET="AnnealingTarget_$$"
 KEEP_TEST_DATA=false
 VERBOSE=false
 SKIP_INGEST=false
-LOG_DIR="/tmp/breathing-test-$$"
+LOG_DIR="/tmp/annealing-test-$$"
 
 # Timing
 declare -A TIMINGS
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --help|-h)
-            echo "Ontology Breathing Controls Integration Test (ADR-200 Phase 3a)"
+            echo "Ontology Annealing Controls Integration Test (ADR-200 Phase 3a)"
             echo ""
             echo "Usage: $0 [options]"
             echo ""
@@ -190,7 +190,7 @@ trap cleanup EXIT
 # Pre-flight checks
 # ============================================================================
 
-log "Starting Breathing Controls Integration Tests"
+log "Starting Annealing Controls Integration Tests"
 log "Test ontology: $TEST_ONTOLOGY"
 log "Target ontology: $TEST_TARGET"
 log "Log directory: $LOG_DIR"
@@ -231,7 +231,7 @@ log "Test 1: Setting up test ontology with content..."
 
 if ! $SKIP_INGEST; then
     # Create ontology
-    if run_kg "create_ontology" 0 ontology create "$TEST_ONTOLOGY" --description "Breathing controls integration test"; then
+    if run_kg "create_ontology" 0 ontology create "$TEST_ONTOLOGY" --description "Annealing controls integration test"; then
         pass "Created test ontology: $TEST_ONTOLOGY"
     else
         fail "Failed to create test ontology"
@@ -242,7 +242,7 @@ if ! $SKIP_INGEST; then
     TEST_TEXT="Knowledge graphs are a structured representation of information that connects entities through relationships. They enable semantic search, reasoning, and discovery across interconnected data. Apache AGE provides a graph extension for PostgreSQL, allowing Cypher queries alongside traditional SQL. Ontologies organize knowledge into domains, providing navigational structure and semantic context for concept discovery. Graph databases store data as nodes and edges, enabling traversal queries that relational databases struggle with. Embeddings transform concepts into vector space for similarity computation."
 
     log "Ingesting test content (waiting for completion)..."
-    if run_kg "ingest_text" 0 ingest text "$TEST_TEXT" -o "$TEST_ONTOLOGY" --wait --filename "breathing_test.txt"; then
+    if run_kg "ingest_text" 0 ingest text "$TEST_TEXT" -o "$TEST_ONTOLOGY" --wait --filename "annealing_test.txt"; then
         pass "Ingested test content"
     else
         fail "Failed to ingest test content"
@@ -490,7 +490,7 @@ if [[ "$BEFORE_CHUNKS" -gt 0 ]]; then
 
     # Test dissolve instead (moves ALL sources, doesn't need source IDs)
     # First, create a disposable ontology with content
-    DISSOLVE_TEST="BreathingDissolve_$$"
+    DISSOLVE_TEST="AnnealingDissolve_$$"
     kg ontology create "$DISSOLVE_TEST" --description "Dissolve test source" 2>/dev/null || true
 
     # Ingest content into the disposable ontology

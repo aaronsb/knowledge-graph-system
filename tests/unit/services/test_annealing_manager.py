@@ -1,7 +1,7 @@
 """
-Unit tests for BreathingManager (ADR-200 Phase 3b).
+Unit tests for AnnealingManager (ADR-200 Phase 3b).
 
-Tests the breathing cycle orchestration:
+Tests the annealing cycle orchestration:
 - Candidate identification (demotion, promotion)
 - Threshold filtering and lifecycle exclusion
 - Dry-run vs full cycle behavior
@@ -11,8 +11,8 @@ Tests the breathing cycle orchestration:
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from api.app.services.breathing_manager import BreathingManager
-from api.app.lib.breathing_evaluator import PromotionDecision, DemotionDecision
+from api.app.services.annealing_manager import AnnealingManager
+from api.app.lib.annealing_evaluator import PromotionDecision, DemotionDecision
 
 
 @pytest.fixture
@@ -48,8 +48,8 @@ def mock_scorer():
 
 @pytest.fixture
 def manager(mock_client, mock_scorer):
-    """Create a BreathingManager with mocked dependencies."""
-    return BreathingManager(mock_client, mock_scorer, ai_provider=None)
+    """Create a AnnealingManager with mocked dependencies."""
+    return AnnealingManager(mock_client, mock_scorer, ai_provider=None)
 
 
 @pytest.mark.unit
@@ -176,8 +176,8 @@ class TestFindPromotionCandidates:
 
 
 @pytest.mark.unit
-class TestBreathingCycleDryRun:
-    """Tests for run_breathing_cycle in dry-run mode."""
+class TestAnnealingCycleDryRun:
+    """Tests for run_annealing_cycle in dry-run mode."""
 
     @pytest.mark.asyncio
     async def test_dry_run_returns_candidates_without_proposals(self, manager, mock_scorer, mock_client):
@@ -190,7 +190,7 @@ class TestBreathingCycleDryRun:
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle(dry_run=True)
+        result = await manager.run_annealing_cycle(dry_run=True)
 
         assert result["dry_run"] is True
         assert result["proposals_generated"] == 0
@@ -208,7 +208,7 @@ class TestBreathingCycleDryRun:
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle(dry_run=True)
+        result = await manager.run_annealing_cycle(dry_run=True)
 
         assert "candidates" in result
         assert len(result["candidates"]["demotions"]) == 1
@@ -216,8 +216,8 @@ class TestBreathingCycleDryRun:
 
 
 @pytest.mark.unit
-class TestBreathingCycleFull:
-    """Tests for run_breathing_cycle in full (non-dry-run) mode."""
+class TestAnnealingCycleFull:
+    """Tests for run_annealing_cycle in full (non-dry-run) mode."""
 
     @pytest.mark.asyncio
     async def test_full_cycle_with_no_candidates(self, manager, mock_scorer, mock_client):
@@ -229,7 +229,7 @@ class TestBreathingCycleFull:
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle()
+        result = await manager.run_annealing_cycle()
 
         assert result["dry_run"] is False
         assert result["proposals_generated"] == 0
@@ -250,7 +250,7 @@ class TestBreathingCycleFull:
         mock_client.get_cross_ontology_affinity.return_value = []
         mock_client.get_ontology_stats.return_value = {"concept_count": 5}
 
-        result = await manager.run_breathing_cycle(
+        result = await manager.run_annealing_cycle(
             demotion_threshold=0.15,
             max_proposals=2,
         )
@@ -309,12 +309,12 @@ class TestStoreProposal:
 
 
 @pytest.mark.unit
-class TestBreathingCycleEdgeDerivation:
-    """Tests for edge derivation step in breathing cycle."""
+class TestAnnealingCycleEdgeDerivation:
+    """Tests for edge derivation step in annealing cycle."""
 
     @pytest.mark.asyncio
     async def test_cycle_includes_edge_counts(self, manager, mock_scorer, mock_client):
-        """Breathing cycle result includes edge creation/deletion counts."""
+        """Annealing cycle result includes edge creation/deletion counts."""
         mock_scorer.score_all_ontologies.return_value = []
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_scorer.derive_ontology_edges.return_value = {
@@ -322,7 +322,7 @@ class TestBreathingCycleEdgeDerivation:
         }
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle()
+        result = await manager.run_annealing_cycle()
 
         assert result["edges_created"] == 3
         assert result["edges_deleted"] == 1
@@ -334,7 +334,7 @@ class TestBreathingCycleEdgeDerivation:
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_concept_degree_ranking.return_value = []
 
-        await manager.run_breathing_cycle(derive_edges=True)
+        await manager.run_annealing_cycle(derive_edges=True)
 
         mock_scorer.derive_ontology_edges.assert_called_once()
 
@@ -345,7 +345,7 @@ class TestBreathingCycleEdgeDerivation:
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle(derive_edges=False)
+        result = await manager.run_annealing_cycle(derive_edges=False)
 
         mock_scorer.derive_ontology_edges.assert_not_called()
         assert result["edges_created"] == 0
@@ -353,13 +353,13 @@ class TestBreathingCycleEdgeDerivation:
 
     @pytest.mark.asyncio
     async def test_edge_derivation_failure_is_non_fatal(self, manager, mock_scorer, mock_client):
-        """Edge derivation failure doesn't abort the breathing cycle."""
+        """Edge derivation failure doesn't abort the annealing cycle."""
         mock_scorer.score_all_ontologies.return_value = []
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_scorer.derive_ontology_edges.side_effect = Exception("edge derivation failed")
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle()
+        result = await manager.run_annealing_cycle()
 
         # Cycle should still complete
         assert result["proposals_generated"] == 0
@@ -372,7 +372,7 @@ class TestBreathingCycleEdgeDerivation:
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_concept_degree_ranking.return_value = []
 
-        await manager.run_breathing_cycle(
+        await manager.run_annealing_cycle(
             overlap_threshold=0.2,
             specializes_threshold=0.4,
         )
@@ -389,7 +389,7 @@ class TestBreathingCycleEdgeDerivation:
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_concept_degree_ranking.return_value = []
 
-        result = await manager.run_breathing_cycle(dry_run=True)
+        result = await manager.run_annealing_cycle(dry_run=True)
 
         mock_scorer.derive_ontology_edges.assert_not_called()
         assert result["edges_created"] == 0

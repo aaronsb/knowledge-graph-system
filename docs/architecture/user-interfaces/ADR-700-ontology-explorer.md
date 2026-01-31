@@ -296,7 +296,7 @@ The document explorer already shows documents. We could add an ontology grouping
 
 ### Foundation: ADR-200 (Implemented)
 
-ADR-200 "Breathing Ontologies" provides the data model foundation for this explorer:
+ADR-200 "Annealing Ontologies" provides the data model foundation for this explorer:
 - `:Ontology` graph nodes with properties (`ontology_id`, `lifecycle_state`, `creation_epoch`, `embedding`, `search_terms`)
 - `:SCOPED_BY` edges linking Sources to Ontologies
 - `POST /ontology/` for directed growth (explicit creation before ingest)
@@ -339,4 +339,4 @@ ADR-200 "Breathing Ontologies" provides the data model foundation for this explo
 - **ADR-083** — Artifact persistence (could cache expensive bridge computations)
 - **ADR-084** — Document-level search (complementary document discovery)
 - **ADR-089** — Deterministic graph editing (ontology-scoped concept creation)
-- **ADR-200** — Breathing Ontologies (graph node architecture, directed growth, lifecycle states — data model foundation for this explorer)
+- **ADR-200** — Annealing Ontologies (graph node architecture, directed growth, lifecycle states — data model foundation for this explorer)

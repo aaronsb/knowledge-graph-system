@@ -2,7 +2,7 @@
 -- Migration 048: Ontology-to-Ontology Edge Types (ADR-200 Phase 5)
 -- ===========================================================================
 -- Date: 2026-01-31
--- Related: ADR-200 (Breathing Ontologies, Phase 5)
+-- Related: ADR-200 (Annealing Ontologies, Phase 5)
 --
 -- Introduces three edge types between Ontology nodes:
 --   OVERLAPS:     bidirectional — significant concept overlap between domains
@@ -10,12 +10,12 @@
 --   GENERALIZES:  directional  — A is a superset of B (inverse of SPECIALIZES)
 --
 -- Edge properties:
---   source:               'breathing_worker' | 'manual'
+--   source:               'annealing_worker' | 'manual'
 --   score:                affinity strength (0.0-1.0)
 --   shared_concept_count: number of concepts in common
 --   computed_at_epoch:    global epoch when computed
 --
--- Derived edges (source='breathing_worker') are refreshed each breathing
+-- Derived edges (source='annealing_worker') are refreshed each annealing
 -- cycle — stale edges are removed if affinity drops below threshold.
 -- Manual edges (source='manual') persist unless explicitly deleted.
 --
@@ -29,11 +29,11 @@ INSERT INTO public.graph_metrics (metric_name, counter, last_measured_counter, n
 VALUES ('ontology_edge_refresh_counter', 0, 0, 'Number of ontology edge refresh cycles completed')
 ON CONFLICT (metric_name) DO NOTHING;
 
--- Add breathing option for edge derivation thresholds
-INSERT INTO kg_api.breathing_options (key, value, description) VALUES
+-- Add annealing option for edge derivation thresholds
+INSERT INTO kg_api.annealing_options (key, value, description) VALUES
     ('overlap_threshold',     '0.1',  'Minimum affinity score to create an OVERLAPS edge'),
     ('specializes_threshold', '0.3',  'Minimum asymmetry ratio for SPECIALIZES/GENERALIZES edges'),
-    ('derive_edges',          'true', 'Whether breathing cycles should derive ontology-to-ontology edges')
+    ('derive_edges',          'true', 'Whether annealing cycles should derive ontology-to-ontology edges')
 ON CONFLICT (key) DO NOTHING;
 
 -- ===========================================================================
@@ -49,7 +49,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (
-        SELECT FROM kg_api.breathing_options WHERE key = 'overlap_threshold'
+        SELECT FROM kg_api.annealing_options WHERE key = 'overlap_threshold'
     ) THEN
         RAISE EXCEPTION 'Migration failed: edge threshold options not seeded';
     END IF;

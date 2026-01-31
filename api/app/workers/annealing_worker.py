@@ -1,7 +1,7 @@
 """
-Breathing cycle worker (ADR-200 Phase 3b).
+Annealing cycle worker (ADR-200 Phase 3b).
 
-Runs ontology breathing cycle as a background job:
+Runs ontology annealing cycle as a background job:
 score all → recompute centroids → identify candidates → LLM judgment → store proposals.
 
 Phase 3b is proposal-only (HITL). Phase 4 adds execution.
@@ -14,18 +14,18 @@ from typing import Dict, Any
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ontology_scorer import OntologyScorer
 from api.app.lib.ai_providers import get_provider
-from api.app.services.breathing_manager import BreathingManager
+from api.app.services.annealing_manager import AnnealingManager
 
 logger = logging.getLogger(__name__)
 
 
-def run_breathing_worker(
+def run_annealing_worker(
     job_data: Dict[str, Any],
     job_id: str,
     job_queue
 ) -> Dict[str, Any]:
     """
-    Execute a breathing cycle as a background job.
+    Execute a annealing cycle as a background job.
 
     Args:
         job_data: Job parameters
@@ -48,7 +48,7 @@ def run_breathing_worker(
     specializes_threshold = job_data.get("specializes_threshold", 0.3)
 
     logger.info(
-        f"Breathing worker starting (job {job_id}): "
+        f"Annealing worker starting (job {job_id}): "
         f"threshold={demotion_threshold}, min_degree={promotion_min_degree}, "
         f"max_proposals={max_proposals}, dry_run={dry_run}"
     )
@@ -69,13 +69,13 @@ def run_breathing_worker(
             ai_provider = None
             logger.info("No AI provider available — using score-based decisions")
 
-        manager = BreathingManager(age_client, scorer, ai_provider=ai_provider)
+        manager = AnnealingManager(age_client, scorer, ai_provider=ai_provider)
 
         job_queue.update_job(job_id, {
             "progress": {"stage": "scoring", "percent": 10}
         })
 
-        result = asyncio.run(manager.run_breathing_cycle(
+        result = asyncio.run(manager.run_annealing_cycle(
             demotion_threshold=demotion_threshold,
             promotion_min_degree=promotion_min_degree,
             max_proposals=max_proposals,
@@ -90,7 +90,7 @@ def run_breathing_worker(
         })
 
         logger.info(
-            f"Breathing worker complete (job {job_id}): "
+            f"Annealing worker complete (job {job_id}): "
             f"{result.get('proposals_generated', 0)} proposals, "
             f"{result.get('scores_updated', 0)} scored, "
             f"{result.get('centroids_updated', 0)} centroids"

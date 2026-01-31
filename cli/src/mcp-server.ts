@@ -58,7 +58,7 @@ import {
   formatOntologyAffinity,
   formatProposalList,
   formatProposalDetail,
-  formatBreathingCycleResult,
+  formatAnnealingCycleResult,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -428,8 +428,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'edges', 'reassign', 'dissolve', 'proposals', 'proposal_review', 'breathing_cycle'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'edges', 'reassign', 'dissolve', 'proposals', 'proposal_review', 'annealing_cycle'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list annealing proposals), "proposal_review" (approve/reject proposal), "annealing_cycle" (trigger annealing cycle)',
             },
             ontology_name: {
               type: 'string',
@@ -486,7 +486,7 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
             },
             dry_run: {
               type: 'boolean',
-              description: 'Preview candidates without proposals (for breathing_cycle)',
+              description: 'Preview candidates without proposals (for annealing_cycle)',
               default: false,
             },
             demotion_threshold: {
@@ -499,7 +499,7 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
             },
             max_proposals: {
               type: 'number',
-              description: 'Maximum proposals per breathing cycle (default: 5)',
+              description: 'Maximum proposals per annealing cycle (default: 5)',
             },
           },
           required: ['action'],
@@ -1476,7 +1476,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
           }
 
-          // ADR-200 Phase 3a: Scoring & Breathing Control Surface
+          // ADR-200 Phase 3a: Scoring & Annealing Control Surface
 
           case 'scores': {
             const result = await client.getOntologyScores(toolArgs.ontology_name as string);
@@ -1576,15 +1576,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
           }
 
-          case 'breathing_cycle': {
-            const result = await client.triggerBreathingCycle({
+          case 'annealing_cycle': {
+            const result = await client.triggerAnnealingCycle({
               dry_run: toolArgs.dry_run as boolean | undefined,
               demotion_threshold: toolArgs.demotion_threshold as number | undefined,
               promotion_min_degree: toolArgs.promotion_min_degree as number | undefined,
               max_proposals: toolArgs.max_proposals as number | undefined,
             });
             return {
-              content: [{ type: 'text', text: formatBreathingCycleResult(result) }],
+              content: [{ type: 'text', text: formatAnnealingCycleResult(result) }],
             };
           }
 

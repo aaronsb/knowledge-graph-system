@@ -471,7 +471,7 @@ export interface OntologyRenameResponse {
   error?: string;
 }
 
-// ADR-200 Phase 3a: Scoring & Breathing Control Surface
+// ADR-200 Phase 3a: Scoring & Annealing Control Surface
 
 export interface OntologyStats {
   ontology: string;
@@ -562,9 +562,9 @@ export interface OntologyEdgesResponse {
   edges: OntologyEdge[];
 }
 
-// ========== ADR-200 Phase 3b: Breathing Proposals ==========
+// ========== ADR-200 Phase 3b: Annealing Proposals ==========
 
-export interface BreathingProposal {
+export interface AnnealingProposal {
   id: number;
   proposal_type: string;
   ontology_name: string;
@@ -587,12 +587,12 @@ export interface BreathingProposal {
   suggested_description?: string;
 }
 
-export interface BreathingProposalListResponse {
-  proposals: BreathingProposal[];
+export interface AnnealingProposalListResponse {
+  proposals: AnnealingProposal[];
   count: number;
 }
 
-export interface BreathingCycleResult {
+export interface AnnealingCycleResult {
   proposals_generated: number;
   demotion_candidates: number;
   promotion_candidates: number;
