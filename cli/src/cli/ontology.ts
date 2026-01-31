@@ -508,6 +508,49 @@ export const ontologyCommand = setCommandHelp(
       })
   )
   .addCommand(
+    new Command('edges')
+      .description('Show ontology-to-ontology edges (OVERLAPS, SPECIALIZES, GENERALIZES). Derived by breathing cycles or created manually.')
+      .showHelpAfterError()
+      .argument('<name>', 'Ontology name')
+      .action(async (name) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.getOntologyEdges(name);
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title(`Ontology Edges: ${name}`));
+          console.log(separator());
+
+          if (result.count === 0) {
+            console.log(colors.status.warning('\nNo ontology edges found'));
+            console.log('Edges are derived during breathing cycles or created manually.');
+            return;
+          }
+
+          const table = new Table({
+            columns: [
+              { header: 'Type', field: 'edge_type', type: 'text', width: 14, align: 'left' },
+              { header: 'Dir', field: 'direction', type: 'text', width: 10, align: 'left' },
+              { header: 'Other Ontology', field: 'other_name', type: 'heading', width: 'flex', priority: 3 },
+              { header: 'Score', field: 'score', type: 'text', width: 8, align: 'right' },
+              { header: 'Shared', field: 'shared_concept_count', type: 'count', width: 8, align: 'right' },
+              { header: 'Source', field: 'source', type: 'text', width: 16, align: 'left' },
+            ]
+          });
+
+          table.print(result.edges.map(e => ({
+            ...e,
+            other_name: e.direction === 'outgoing' ? e.to_ontology : e.from_ontology,
+            score: e.score.toFixed(3),
+          })));
+        } catch (error: any) {
+          console.error(colors.status.error('Failed to get ontology edges'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
     new Command('reassign')
       .description('Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.')
       .showHelpAfterError()

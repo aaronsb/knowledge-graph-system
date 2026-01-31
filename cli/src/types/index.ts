@@ -543,6 +543,25 @@ export interface DissolveResponse {
   error?: string;
 }
 
+// ========== ADR-200 Phase 5: Ontology-to-Ontology Edges ==========
+
+export interface OntologyEdge {
+  from_ontology: string;
+  to_ontology: string;
+  edge_type: string;
+  score: number;
+  shared_concept_count: number;
+  computed_at_epoch: number;
+  source: string;
+  direction: string;
+}
+
+export interface OntologyEdgesResponse {
+  ontology: string;
+  count: number;
+  edges: OntologyEdge[];
+}
+
 // ========== ADR-200 Phase 3b: Breathing Proposals ==========
 
 export interface BreathingProposal {
@@ -574,6 +593,8 @@ export interface BreathingCycleResult {
   promotion_candidates: number;
   scores_updated: number;
   centroids_updated: number;
+  edges_created: number;
+  edges_deleted: number;
   cycle_epoch: number;
   dry_run: boolean;
 }

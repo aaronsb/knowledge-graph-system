@@ -402,6 +402,163 @@ class OntologyScorer:
         return updated
 
     # =========================================================================
+    # Ontology-to-Ontology Edge Derivation (ADR-200 Phase 5)
+    # =========================================================================
+
+    def derive_ontology_edges(
+        self,
+        overlap_threshold: float = 0.1,
+        specializes_threshold: float = 0.3,
+    ) -> Dict[str, int]:
+        """
+        Derive OVERLAPS / SPECIALIZES / GENERALIZES edges between ontologies.
+
+        Algorithm:
+          1. For each active ontology, compute affinity to all others
+          2. Build bidirectional affinity pairs: (A→B score, B→A score)
+          3. Classify each pair:
+             - OVERLAPS: both directions >= overlap_threshold
+             - SPECIALIZES: A→B high, B→A low (A is a subset of B)
+             - GENERALIZES: inverse of SPECIALIZES
+          4. Upsert edges, using the higher of the two scores
+
+        Args:
+            overlap_threshold: Minimum affinity score for OVERLAPS (default: 0.1)
+            specializes_threshold: Minimum asymmetry ratio for
+                SPECIALIZES/GENERALIZES — ratio of (high/low) must exceed
+                this factor above 1.0 (default: 0.3, meaning 30% asymmetry)
+
+        Returns:
+            {edges_created, edges_deleted, overlaps, specializes, generalizes}
+        """
+        epoch = self.client.get_current_epoch()
+
+        # 1. Get all active ontologies
+        nodes = self.client.list_ontology_nodes()
+        active = [
+            n["name"] for n in nodes
+            if n.get("name") and n.get("lifecycle_state", "active") != "frozen"
+        ]
+
+        if len(active) < 2:
+            return {
+                "edges_created": 0, "edges_deleted": 0,
+                "overlaps": 0, "specializes": 0, "generalizes": 0,
+            }
+
+        # 2. Collect bidirectional affinities: {(A, B): score_A_to_B}
+        pair_scores = {}
+        for name in active:
+            try:
+                affinities = self.client.get_cross_ontology_affinity(
+                    name, limit=len(active)
+                )
+                for aff in affinities:
+                    other = aff["other_ontology"]
+                    pair_scores[(name, other)] = {
+                        "score": aff["affinity_score"],
+                        "shared": aff["shared_concept_count"],
+                        "total": aff["total_concepts"],
+                    }
+            except Exception as e:
+                logger.warning(f"Affinity query failed for {name}: {e}")
+
+        # 3. Delete stale derived edges (full refresh each cycle)
+        deleted = self.client.delete_all_derived_ontology_edges()
+
+        # 4. Classify pairs and upsert edges
+        processed_pairs = set()
+        counts = {"overlaps": 0, "specializes": 0, "generalizes": 0}
+        edges_created = 0
+
+        for (a, b), a_to_b in pair_scores.items():
+            pair_key = tuple(sorted([a, b]))
+            if pair_key in processed_pairs:
+                continue
+            processed_pairs.add(pair_key)
+
+            b_to_a = pair_scores.get((b, a), {"score": 0.0, "shared": 0, "total": 0})
+
+            score_ab = a_to_b["score"]
+            score_ba = b_to_a["score"]
+
+            # Skip if neither direction meets minimum threshold
+            if score_ab < overlap_threshold and score_ba < overlap_threshold:
+                continue
+
+            # Determine edge type based on asymmetry
+            high_score = max(score_ab, score_ba)
+            low_score = min(score_ab, score_ba)
+            shared = max(a_to_b["shared"], b_to_a["shared"])
+
+            if low_score >= overlap_threshold:
+                # Both directions significant — mutual overlap
+                # Asymmetry check: is one direction much stronger?
+                asymmetry = (high_score - low_score) / high_score if high_score > 0 else 0
+
+                if asymmetry > specializes_threshold:
+                    # Asymmetric: the one with higher score is the subset
+                    if score_ab > score_ba:
+                        # A's concepts are mostly in B → A specializes B
+                        self._upsert_edge(a, b, "SPECIALIZES", score_ab, shared, epoch)
+                        self._upsert_edge(b, a, "GENERALIZES", score_ba, shared, epoch)
+                        counts["specializes"] += 1
+                        counts["generalizes"] += 1
+                        edges_created += 2
+                    else:
+                        self._upsert_edge(b, a, "SPECIALIZES", score_ba, shared, epoch)
+                        self._upsert_edge(a, b, "GENERALIZES", score_ab, shared, epoch)
+                        counts["specializes"] += 1
+                        counts["generalizes"] += 1
+                        edges_created += 2
+                else:
+                    # Symmetric enough — bidirectional OVERLAPS
+                    self._upsert_edge(a, b, "OVERLAPS", score_ab, shared, epoch)
+                    self._upsert_edge(b, a, "OVERLAPS", score_ba, shared, epoch)
+                    counts["overlaps"] += 2
+                    edges_created += 2
+            else:
+                # Only one direction significant — the higher side specializes
+                if score_ab >= overlap_threshold:
+                    self._upsert_edge(a, b, "SPECIALIZES", score_ab, shared, epoch)
+                    self._upsert_edge(b, a, "GENERALIZES", score_ba, shared, epoch)
+                else:
+                    self._upsert_edge(b, a, "SPECIALIZES", score_ba, shared, epoch)
+                    self._upsert_edge(a, b, "GENERALIZES", score_ab, shared, epoch)
+                counts["specializes"] += 1
+                counts["generalizes"] += 1
+                edges_created += 2
+
+        logger.info(
+            f"Ontology edges derived: {edges_created} created, {deleted} deleted "
+            f"(overlaps={counts['overlaps']}, specializes={counts['specializes']}, "
+            f"generalizes={counts['generalizes']})"
+        )
+
+        return {
+            "edges_created": edges_created,
+            "edges_deleted": deleted,
+            **counts,
+        }
+
+    def _upsert_edge(
+        self, from_name: str, to_name: str, edge_type: str,
+        score: float, shared: int, epoch: int,
+    ) -> None:
+        """Helper: upsert a single ontology edge, log failures without raising."""
+        try:
+            self.client.upsert_ontology_edge(
+                from_name=from_name,
+                to_name=to_name,
+                edge_type=edge_type,
+                score=score,
+                shared_concept_count=shared,
+                epoch=epoch,
+            )
+        except Exception as e:
+            logger.error(f"Failed to upsert {edge_type} {from_name}->{to_name}: {e}")
+
+    # =========================================================================
     # Helpers
     # =========================================================================
 

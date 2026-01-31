@@ -313,3 +313,131 @@ class TestCosineSimilarity:
         v1 = np.array([1.0, 0.0])
         v2 = np.array([-1.0, 0.0])
         assert scorer._cosine_similarity(v1, v2) == 0.0
+
+
+# ==========================================================================
+# ADR-200 Phase 5: Edge Derivation Tests
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestDeriveOntologyEdges:
+    """Tests for derive_ontology_edges()."""
+
+    def test_derives_overlaps_for_symmetric_affinity(self, scorer, mock_client):
+        """Symmetric high affinity between ontologies produces OVERLAPS edges."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "alpha", "lifecycle_state": "active"},
+            {"name": "beta", "lifecycle_state": "active"},
+        ]
+        # Both directions: alpha→beta and beta→alpha are high and symmetric
+        mock_client.get_cross_ontology_affinity.side_effect = lambda name, **kw: [
+            {"other_ontology": "beta" if name == "alpha" else "alpha",
+             "affinity_score": 0.5, "shared_concept_count": 20, "total_concepts": 40}
+        ]
+        mock_client.delete_all_derived_ontology_edges.return_value = 0
+        mock_client.upsert_ontology_edge.return_value = True
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges(
+            overlap_threshold=0.1, specializes_threshold=0.3
+        )
+
+        assert result["edges_created"] > 0
+        # Should have called upsert for OVERLAPS
+        calls = mock_client.upsert_ontology_edge.call_args_list
+        edge_types = [c.kwargs.get("edge_type") or c[1].get("edge_type", "") for c in calls]
+        assert "OVERLAPS" in edge_types
+
+    def test_derives_specializes_for_asymmetric_affinity(self, scorer, mock_client):
+        """When A→B affinity is high but B→A is low, A SPECIALIZES B."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "subset", "lifecycle_state": "active"},
+            {"name": "superset", "lifecycle_state": "active"},
+        ]
+        # subset→superset: high affinity (subset is part of superset)
+        # superset→subset: low affinity (superset is much bigger)
+        def mock_affinity(name, **kw):
+            if name == "subset":
+                return [{"other_ontology": "superset", "affinity_score": 0.8,
+                         "shared_concept_count": 20, "total_concepts": 25}]
+            else:
+                return [{"other_ontology": "subset", "affinity_score": 0.1,
+                         "shared_concept_count": 20, "total_concepts": 200}]
+
+        mock_client.get_cross_ontology_affinity.side_effect = mock_affinity
+        mock_client.delete_all_derived_ontology_edges.return_value = 0
+        mock_client.upsert_ontology_edge.return_value = True
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges(
+            overlap_threshold=0.1, specializes_threshold=0.3
+        )
+
+        assert result["edges_created"] > 0
+        calls = mock_client.upsert_ontology_edge.call_args_list
+        edge_types = [c.kwargs.get("edge_type") or c[1].get("edge_type", "") for c in calls]
+        assert "SPECIALIZES" in edge_types or "GENERALIZES" in edge_types
+
+    def test_skips_frozen_ontologies(self, scorer, mock_client):
+        """Frozen ontologies are excluded from edge derivation."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "active-one", "lifecycle_state": "active"},
+            {"name": "frozen-one", "lifecycle_state": "frozen"},
+        ]
+        mock_client.get_cross_ontology_affinity.return_value = []
+        mock_client.delete_all_derived_ontology_edges.return_value = 0
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges()
+
+        # Only active ontologies should be queried for affinity
+        affinity_calls = mock_client.get_cross_ontology_affinity.call_args_list
+        queried_names = [c.args[0] if c.args else c.kwargs.get("ontology_name") for c in affinity_calls]
+        assert "frozen-one" not in queried_names
+
+    def test_below_threshold_creates_no_edges(self, scorer, mock_client):
+        """Affinity below overlap_threshold creates no edges."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "a", "lifecycle_state": "active"},
+            {"name": "b", "lifecycle_state": "active"},
+        ]
+        mock_client.get_cross_ontology_affinity.return_value = [
+            {"other_ontology": "b", "affinity_score": 0.01,
+             "shared_concept_count": 1, "total_concepts": 100}
+        ]
+        mock_client.delete_all_derived_ontology_edges.return_value = 0
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges(overlap_threshold=0.1)
+
+        assert result["edges_created"] == 0
+        mock_client.upsert_ontology_edge.assert_not_called()
+
+    def test_deletes_stale_edges_before_creating(self, scorer, mock_client):
+        """All derived edges are deleted before new ones are created."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "a", "lifecycle_state": "active"},
+            {"name": "b", "lifecycle_state": "active"},
+        ]
+        mock_client.get_cross_ontology_affinity.return_value = []
+        mock_client.delete_all_derived_ontology_edges.return_value = 5
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges()
+
+        assert result["edges_deleted"] == 5
+        mock_client.delete_all_derived_ontology_edges.assert_called_once()
+
+    def test_single_ontology_creates_no_edges(self, scorer, mock_client):
+        """A single ontology has no pairs to compare."""
+        mock_client.list_ontology_nodes.return_value = [
+            {"name": "solo", "lifecycle_state": "active"},
+        ]
+        mock_client.get_cross_ontology_affinity.return_value = []
+        mock_client.delete_all_derived_ontology_edges.return_value = 0
+        mock_client.get_current_epoch.return_value = 10
+
+        result = scorer.derive_ontology_edges()
+
+        assert result["edges_created"] == 0

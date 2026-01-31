@@ -51,6 +51,8 @@ import {
   formatGraphEdgeList,
   formatGraphBatchResult,
   formatGraphQueueResult,
+  formatOntologyEdges,
+  formatOntologyAffinity,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -420,8 +422,8 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
           properties: {
             action: {
               type: 'string',
-              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'reassign', 'dissolve', 'proposals', 'proposal_review', 'breathing_cycle'],
-              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)',
+              enum: ['list', 'info', 'files', 'create', 'rename', 'delete', 'lifecycle', 'scores', 'score', 'score_all', 'candidates', 'affinity', 'edges', 'reassign', 'dissolve', 'proposals', 'proposal_review', 'breathing_cycle'],
+              description: 'Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "edges" (ontology-to-ontology edges), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)',
             },
             ontology_name: {
               type: 'string',
@@ -1507,7 +1509,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               (toolArgs.limit as number) || 10
             );
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyAffinity(result) }],
+            };
+          }
+
+          case 'edges': {
+            const result = await client.getOntologyEdges(
+              toolArgs.ontology_name as string
+            );
+            return {
+              content: [{ type: 'text', text: formatOntologyEdges(result) }],
             };
           }
 

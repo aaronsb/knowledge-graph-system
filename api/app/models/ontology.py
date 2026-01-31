@@ -252,5 +252,39 @@ class BreathingCycleResult(BaseModel):
     promotion_candidates: int = 0
     scores_updated: int = 0
     centroids_updated: int = 0
+    edges_created: int = 0
+    edges_deleted: int = 0
     cycle_epoch: int = 0
     dry_run: bool = False
+
+
+# =========================================================================
+# ADR-200 Phase 5: Ontology-to-Ontology Edges
+# =========================================================================
+
+class OntologyEdge(BaseModel):
+    """An edge between two ontology nodes (OVERLAPS, SPECIALIZES, GENERALIZES)"""
+    from_ontology: str
+    to_ontology: str
+    edge_type: str
+    score: float = 0.0
+    shared_concept_count: int = 0
+    computed_at_epoch: int = 0
+    source: str = ""
+    direction: str = ""
+
+
+class OntologyEdgesResponse(BaseModel):
+    """Ontology-to-ontology edges for an ontology"""
+    ontology: str
+    count: int
+    edges: List[OntologyEdge]
+
+
+class OntologyEdgeCreateRequest(BaseModel):
+    """Request to create a manual ontology-to-ontology edge"""
+    to_ontology: str = Field(..., description="Target ontology name")
+    edge_type: str = Field(..., pattern="^(OVERLAPS|SPECIALIZES|GENERALIZES)$",
+                           description="Edge type: OVERLAPS, SPECIALIZES, or GENERALIZES")
+    score: float = Field(1.0, ge=0.0, le=1.0, description="Edge weight (0-1)")
+    shared_concept_count: int = Field(0, ge=0, description="Number of shared concepts")

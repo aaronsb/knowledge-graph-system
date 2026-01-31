@@ -1021,6 +1021,40 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  // ========== Ontology Edges (ADR-200 Phase 5) ==========
+
+  async getOntologyEdges(ontologyName: string): Promise<import('../types').OntologyEdgesResponse> {
+    const response = await this.client.get(`/ontology/${encodeURIComponent(ontologyName)}/edges`);
+    return response.data;
+  }
+
+  async createOntologyEdge(
+    fromOntology: string,
+    toOntology: string,
+    edgeType: string,
+    score: number = 1.0,
+    sharedConceptCount: number = 0
+  ): Promise<import('../types').OntologyEdge> {
+    const response = await this.client.post(`/ontology/${encodeURIComponent(fromOntology)}/edges`, {
+      to_ontology: toOntology,
+      edge_type: edgeType,
+      score,
+      shared_concept_count: sharedConceptCount,
+    });
+    return response.data;
+  }
+
+  async deleteOntologyEdge(
+    fromOntology: string,
+    edgeType: string,
+    toOntology: string
+  ): Promise<{ deleted: number; from_ontology: string; to_ontology: string; edge_type: string }> {
+    const response = await this.client.delete(
+      `/ontology/${encodeURIComponent(fromOntology)}/edges/${encodeURIComponent(edgeType)}/${encodeURIComponent(toOntology)}`
+    );
+    return response.data;
+  }
+
   async reassignSources(
     fromOntology: string,
     targetOntology: string,
