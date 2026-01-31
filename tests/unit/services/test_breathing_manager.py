@@ -39,6 +39,7 @@ def mock_scorer():
     scorer = MagicMock()
     scorer.score_all_ontologies.return_value = []
     scorer.recompute_all_centroids.return_value = 0
+    scorer.derive_ontology_edges.return_value = {"edges_created": 0, "edges_deleted": 0}
     return scorer
 
 
@@ -297,3 +298,98 @@ class TestStoreProposal:
         )
 
         assert proposal_id is None
+
+
+# ==========================================================================
+# ADR-200 Phase 5: Edge Derivation Integration
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestBreathingCycleEdgeDerivation:
+    """Tests for edge derivation step in breathing cycle."""
+
+    @pytest.mark.asyncio
+    async def test_cycle_includes_edge_counts(self, manager, mock_scorer, mock_client):
+        """Breathing cycle result includes edge creation/deletion counts."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_scorer.derive_ontology_edges.return_value = {
+            "edges_created": 3, "edges_deleted": 1
+        }
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        result = await manager.run_breathing_cycle()
+
+        assert result["edges_created"] == 3
+        assert result["edges_deleted"] == 1
+
+    @pytest.mark.asyncio
+    async def test_cycle_calls_derive_edges_by_default(self, manager, mock_scorer, mock_client):
+        """Edge derivation is called when derive_edges=True (default)."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        await manager.run_breathing_cycle(derive_edges=True)
+
+        mock_scorer.derive_ontology_edges.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_cycle_skips_derive_edges_when_disabled(self, manager, mock_scorer, mock_client):
+        """Edge derivation is skipped when derive_edges=False."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        result = await manager.run_breathing_cycle(derive_edges=False)
+
+        mock_scorer.derive_ontology_edges.assert_not_called()
+        assert result["edges_created"] == 0
+        assert result["edges_deleted"] == 0
+
+    @pytest.mark.asyncio
+    async def test_edge_derivation_failure_is_non_fatal(self, manager, mock_scorer, mock_client):
+        """Edge derivation failure doesn't abort the breathing cycle."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_scorer.derive_ontology_edges.side_effect = Exception("edge derivation failed")
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        result = await manager.run_breathing_cycle()
+
+        # Cycle should still complete
+        assert result["proposals_generated"] == 0
+        assert result["edges_created"] == 0
+
+    @pytest.mark.asyncio
+    async def test_cycle_passes_edge_thresholds(self, manager, mock_scorer, mock_client):
+        """Edge derivation receives threshold parameters."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        await manager.run_breathing_cycle(
+            overlap_threshold=0.2,
+            specializes_threshold=0.4,
+        )
+
+        mock_scorer.derive_ontology_edges.assert_called_once_with(
+            overlap_threshold=0.2,
+            specializes_threshold=0.4,
+        )
+
+    @pytest.mark.asyncio
+    async def test_dry_run_includes_edge_counts(self, manager, mock_scorer, mock_client):
+        """Dry run also reports edge counts."""
+        mock_scorer.score_all_ontologies.return_value = []
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_scorer.derive_ontology_edges.return_value = {
+            "edges_created": 2, "edges_deleted": 0
+        }
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        result = await manager.run_breathing_cycle(dry_run=True)
+
+        assert result["edges_created"] == 2
+        assert result["dry_run"] is True

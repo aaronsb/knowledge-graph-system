@@ -40,6 +40,9 @@ from ..models.ontology import (
     BreathingProposalListResponse,
     BreathingProposalReviewRequest,
     BreathingCycleResult,
+    OntologyEdge,
+    OntologyEdgesResponse,
+    OntologyEdgeCreateRequest,
 )
 from api.app.lib.age_client import AGEClient
 
@@ -1302,6 +1305,183 @@ async def get_ontology_affinity(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get ontology affinity: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+# =========================================================================
+# ADR-200 Phase 5: Ontology-to-Ontology Edges
+# =========================================================================
+
+
+@router.get("/{ontology_name}/edges", response_model=OntologyEdgesResponse)
+async def get_ontology_edges(
+    ontology_name: str,
+    current_user: CurrentUser,
+):
+    """
+    Get ontology-to-ontology edges (both directions) (ADR-200 Phase 5).
+
+    Returns OVERLAPS, SPECIALIZES, and GENERALIZES edges derived by
+    the breathing cycle or created manually.
+
+    **Authentication:** Requires valid OAuth token
+    """
+    client = get_age_client()
+    try:
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ontology '{ontology_name}' not found",
+            )
+
+        edges = client.get_ontology_edges(ontology_name)
+
+        return OntologyEdgesResponse(
+            ontology=ontology_name,
+            count=len(edges),
+            edges=[OntologyEdge(**e) for e in edges],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ontology edges: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get ontology edges: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.post("/{ontology_name}/edges", response_model=OntologyEdge)
+async def create_ontology_edge(
+    ontology_name: str,
+    request: OntologyEdgeCreateRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Create a manual ontology-to-ontology edge (ADR-200 Phase 5).
+
+    Manual edges persist across breathing cycles (source='manual').
+
+    **Authentication:** Requires ontologies:write permission
+    """
+    client = get_age_client()
+    try:
+        # Verify both ontologies exist
+        from_node = client.get_ontology_node(ontology_name)
+        if not from_node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Source ontology '{ontology_name}' not found",
+            )
+
+        to_node = client.get_ontology_node(request.to_ontology)
+        if not to_node:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Target ontology '{request.to_ontology}' not found",
+            )
+
+        if ontology_name == request.to_ontology:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot create an edge from an ontology to itself",
+            )
+
+        epoch = client.get_current_epoch()
+        client.upsert_ontology_edge(
+            from_name=ontology_name,
+            to_name=request.to_ontology,
+            edge_type=request.edge_type,
+            score=request.score,
+            shared_concept_count=request.shared_concept_count,
+            epoch=epoch,
+            source="manual",
+        )
+
+        return OntologyEdge(
+            from_ontology=ontology_name,
+            to_ontology=request.to_ontology,
+            edge_type=request.edge_type,
+            score=request.score,
+            shared_concept_count=request.shared_concept_count,
+            computed_at_epoch=epoch,
+            source="manual",
+            direction="outgoing",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create ontology edge: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create ontology edge: {str(e)}",
+        )
+    finally:
+        client.close()
+
+
+@router.delete("/{ontology_name}/edges/{edge_type}/{to_ontology}")
+async def delete_ontology_edge(
+    ontology_name: str,
+    edge_type: str,
+    to_ontology: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "write")),
+):
+    """
+    Delete a specific ontology-to-ontology edge (ADR-200 Phase 5).
+
+    Can delete both manual and derived edges.
+
+    **Authentication:** Requires ontologies:write permission
+    """
+    valid_types = ("OVERLAPS", "SPECIALIZES", "GENERALIZES")
+    if edge_type not in valid_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid edge type '{edge_type}'. "
+                   f"Must be one of: {', '.join(valid_types)}",
+        )
+
+    client = get_age_client()
+    try:
+        # Delete the specific edge
+        query = f"""
+        MATCH (a:Ontology {{name: $from_name}})-[r:{edge_type}]->(b:Ontology {{name: $to_name}})
+        DELETE r
+        RETURN count(r) as deleted
+        """
+        result = client._execute_cypher(
+            query,
+            params={"from_name": ontology_name, "to_name": to_ontology},
+            fetch_one=True,
+        )
+
+        deleted = result.get("deleted", 0) if result else 0
+        if deleted == 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No {edge_type} edge found from '{ontology_name}' to '{to_ontology}'",
+            )
+
+        return {"deleted": deleted, "from_ontology": ontology_name,
+                "to_ontology": to_ontology, "edge_type": edge_type}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete ontology edge: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete ontology edge: {str(e)}",
         )
     finally:
         client.close()

@@ -784,3 +784,219 @@ class TestDissolveOntology:
 
         assert result['success'] is False
         assert 'not found' in result['error']
+
+
+# ==========================================================================
+# ADR-200 Phase 5: Ontology-to-Ontology Edge Methods
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestUpsertOntologyEdge:
+    """Tests for upsert_ontology_edge()."""
+
+    def test_upsert_creates_edge(self, mock_age_client):
+        """Upserting an edge returns True on success."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"type": "OVERLAPS"})
+
+        result = mock_age_client.upsert_ontology_edge(
+            from_name="ontology-a",
+            to_name="ontology-b",
+            edge_type="OVERLAPS",
+            score=0.5,
+            shared_concept_count=10,
+            epoch=5,
+            source="breathing_worker",
+        )
+
+        assert result is True
+        mock_age_client._execute_cypher.assert_called_once()
+
+    def test_upsert_passes_params(self, mock_age_client):
+        """All parameters are forwarded to Cypher."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"type": "SPECIALIZES"})
+
+        mock_age_client.upsert_ontology_edge(
+            from_name="domain-a",
+            to_name="domain-b",
+            edge_type="SPECIALIZES",
+            score=0.75,
+            shared_concept_count=20,
+            epoch=10,
+            source="manual",
+        )
+
+        call_args = mock_age_client._execute_cypher.call_args
+        params = call_args.kwargs.get('params') or call_args[1].get('params')
+        assert params['from_name'] == 'domain-a'
+        assert params['to_name'] == 'domain-b'
+        assert params['score'] == 0.75
+        assert params['shared_count'] == 20
+        assert params['epoch'] == 10
+        assert params['source'] == 'manual'
+
+    def test_upsert_rejects_invalid_edge_type(self, mock_age_client):
+        """Invalid edge type raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid ontology edge type"):
+            mock_age_client.upsert_ontology_edge(
+                from_name="a", to_name="b",
+                edge_type="INVALID_TYPE",
+                score=0.5, shared_concept_count=0, epoch=0,
+            )
+
+    def test_upsert_failure_returns_false(self, mock_age_client):
+        """Database error returns False."""
+        mock_age_client._execute_cypher = MagicMock(
+            side_effect=Exception("connection lost")
+        )
+
+        result = mock_age_client.upsert_ontology_edge(
+            from_name="a", to_name="b",
+            edge_type="OVERLAPS",
+            score=0.5, shared_concept_count=0, epoch=0,
+        )
+
+        assert result is False
+
+
+@pytest.mark.unit
+class TestGetOntologyEdges:
+    """Tests for get_ontology_edges()."""
+
+    def test_get_returns_edges(self, mock_age_client):
+        """Returns list of edge dicts for existing edges."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            "edges": [
+                {
+                    "from_ontology": "a",
+                    "to_ontology": "b",
+                    "edge_type": "OVERLAPS",
+                    "score": 0.5,
+                    "shared_concept_count": 10,
+                    "computed_at_epoch": 5,
+                    "source": "breathing_worker",
+                    "direction": "outgoing",
+                },
+                {
+                    "from_ontology": "c",
+                    "to_ontology": "a",
+                    "edge_type": "SPECIALIZES",
+                    "score": 0.8,
+                    "shared_concept_count": 15,
+                    "computed_at_epoch": 5,
+                    "source": "breathing_worker",
+                    "direction": "incoming",
+                },
+            ]
+        })
+
+        result = mock_age_client.get_ontology_edges("a")
+
+        assert len(result) == 2
+        assert result[0]["edge_type"] == "OVERLAPS"
+        assert result[1]["direction"] == "incoming"
+
+    def test_get_filters_null_entries(self, mock_age_client):
+        """Null entries from empty OPTIONAL MATCH are filtered out."""
+        mock_age_client._execute_cypher = MagicMock(return_value={
+            "edges": [
+                {"edge_type": None, "from_ontology": None},
+                {
+                    "from_ontology": "a",
+                    "to_ontology": "b",
+                    "edge_type": "OVERLAPS",
+                    "score": 0.5,
+                    "shared_concept_count": 10,
+                    "computed_at_epoch": 5,
+                    "source": "breathing_worker",
+                    "direction": "outgoing",
+                },
+            ]
+        })
+
+        result = mock_age_client.get_ontology_edges("a")
+
+        assert len(result) == 1
+        assert result[0]["edge_type"] == "OVERLAPS"
+
+    def test_get_empty_returns_empty_list(self, mock_age_client):
+        """No edges returns empty list."""
+        mock_age_client._execute_cypher = MagicMock(return_value=None)
+
+        result = mock_age_client.get_ontology_edges("lonely")
+
+        assert result == []
+
+    def test_get_error_returns_empty_list(self, mock_age_client):
+        """Database error returns empty list (graceful degradation)."""
+        mock_age_client._execute_cypher = MagicMock(
+            side_effect=Exception("connection lost")
+        )
+
+        result = mock_age_client.get_ontology_edges("broken")
+
+        assert result == []
+
+
+@pytest.mark.unit
+class TestDeleteDerivedOntologyEdges:
+    """Tests for delete_derived_ontology_edges()."""
+
+    def test_delete_returns_count(self, mock_age_client):
+        """Deleting derived edges returns total count across all types/directions."""
+        # Each call returns 1 deleted; 3 types * 2 directions = 6 calls
+        mock_age_client._execute_cypher = MagicMock(return_value={"deleted": 1})
+
+        result = mock_age_client.delete_derived_ontology_edges("test-ontology")
+
+        # 3 types * 2 directions * 1 each = 6
+        assert result == 6
+
+    def test_delete_specific_type(self, mock_age_client):
+        """Can delete specific edge type only (2 directions)."""
+        mock_age_client._execute_cypher = MagicMock(return_value={"deleted": 1})
+
+        result = mock_age_client.delete_derived_ontology_edges(
+            "test-ontology", edge_type="OVERLAPS"
+        )
+
+        # 1 type * 2 directions * 1 each = 2
+        assert result == 2
+        # All queries should reference OVERLAPS
+        for call in mock_age_client._execute_cypher.call_args_list:
+            query = call.args[0] if call.args else call.kwargs.get('query', '')
+            assert 'OVERLAPS' in query
+
+    def test_delete_error_returns_zero(self, mock_age_client):
+        """Database error returns 0."""
+        mock_age_client._execute_cypher = MagicMock(
+            side_effect=Exception("error")
+        )
+
+        result = mock_age_client.delete_derived_ontology_edges("broken")
+
+        assert result == 0
+
+
+@pytest.mark.unit
+class TestDeleteAllDerivedOntologyEdges:
+    """Tests for delete_all_derived_ontology_edges()."""
+
+    def test_delete_all_returns_count(self, mock_age_client):
+        """Deleting all derived edges returns total count across all types."""
+        # 3 types, each returning 2 deleted = 6 total
+        mock_age_client._execute_cypher = MagicMock(return_value={"deleted": 2})
+
+        result = mock_age_client.delete_all_derived_ontology_edges()
+
+        assert result == 6  # 3 types * 2 each
+
+    def test_delete_all_error_returns_zero(self, mock_age_client):
+        """Database error returns 0."""
+        mock_age_client._execute_cypher = MagicMock(
+            side_effect=Exception("error")
+        )
+
+        result = mock_age_client.delete_all_derived_ontology_edges()
+
+        assert result == 0

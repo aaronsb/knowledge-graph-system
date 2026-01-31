@@ -43,6 +43,9 @@ def run_breathing_worker(
     promotion_min_degree = job_data.get("promotion_min_degree", 10)
     max_proposals = job_data.get("max_proposals", 5)
     dry_run = job_data.get("dry_run", False)
+    derive_edges = job_data.get("derive_edges", True)
+    overlap_threshold = job_data.get("overlap_threshold", 0.1)
+    specializes_threshold = job_data.get("specializes_threshold", 0.3)
 
     logger.info(
         f"Breathing worker starting (job {job_id}): "
@@ -77,6 +80,9 @@ def run_breathing_worker(
             promotion_min_degree=promotion_min_degree,
             max_proposals=max_proposals,
             dry_run=dry_run,
+            derive_edges=derive_edges,
+            overlap_threshold=overlap_threshold,
+            specializes_threshold=specializes_threshold,
         ))
 
         job_queue.update_job(job_id, {

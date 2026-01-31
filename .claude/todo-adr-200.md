@@ -1,9 +1,9 @@
 # ADR-200: Breathing Ontologies — Implementation Tracker
 
 **ADR:** `docs/architecture/database-schema/ADR-200-breathing-ontologies-self-organizing-knowledge-graph-structure.md`
-**Branch:** `adr-200-phase-3a`
+**Branch:** `main` (all phases merged)
 **Started:** 2026-01-29
-**Status:** Phases 1-2 complete (PR #237, #238, #239). Phase 3a implemented, pending PR.
+**Status:** Phases 1-3b complete (PRs #237, #238, #239, #240, #246). Next: Phase 5 or Phase 4.
 
 ---
 
@@ -343,9 +343,10 @@ Concepts are **global** (not scoped to ontologies). Freezing protects the ontolo
 
 ---
 
-## Phase 3b: Breathing Worker (Proposals & Automation)
+## Phase 3b: Breathing Worker (Proposals & Automation) — COMPLETE
 
-**Branch:** `adr-200-phase-3b`
+**Branch:** `adr-200-phase-3b` (PR #246, merged 2026-01-30)
+**Code review fixes:** PR #246 findings 1-8 addressed, merged
 **Depends on:** Phase 3a (all controls available and manually proven)
 **Pattern:** Same as `kg vocab consolidate` — graph traversal → scoring → LLM judgment → proposals
 
@@ -353,28 +354,66 @@ The worker automates what can now be done manually via the Phase 3a control surf
 
 ### Worker Architecture
 
-- [ ] **Background job registration** — register `ontology_breathing_worker` in job system
+- [x] **Background job registration** — `ontology_breathing` worker type in job system
   - Heartbeat tied to epoch counter (graph_metrics), not wall-clock time
-  - Configurable trigger: run after every N ingestion events
+  - `BreathingLauncher` fires after configurable epoch interval (default: 5)
+  - Atomic epoch claim via `UPDATE...WHERE...RETURNING` (TOCTOU fix, PR #246 review)
 
 ### Candidate Identification
 
-- [ ] **Promotion candidates** — high-mass concepts not yet ontologies
+- [x] **Promotion candidates** — high-degree concepts not yet ontologies
   - Uses Phase 3a: `get_concept_degree_ranking()` + `score_ontology()`
   - LLM evaluates borderline: "nucleus (should promote) or crossroads (should stay)?"
+  - Neighbor context fetched via Cypher for richer LLM evaluation
 
-- [ ] **Demotion candidates** — low-protection ontologies
+- [x] **Demotion candidates** — low-protection ontologies
   - Uses Phase 3a: `score_all_ontologies()` + `get_cross_ontology_affinity()`
   - Skip pinned and frozen ontologies
 
 ### Proposal System
 
-- [ ] **Proposal storage** — structured recommendations, not auto-executed
-- [ ] **Review interface** — CLI: `kg ontology proposals` / `approve` / `reject`
+- [x] **Proposal storage** — `kg_api.breathing_proposals` table (migration 046)
+  - Structured recommendations with mass/coherence/protection scores
+  - 7-day expiry, status: pending/approved/rejected/expired
+- [x] **Review interface** — CLI: `kg ontology proposals` / `approve` / `reject`
+- [x] **API routes** — GET/POST proposals CRUD + `POST /ontology/breathing-cycle`
+- [x] **MCP actions** — `proposals`, `proposal_review`, `breathing_cycle`
 
-### Deferred Items
+### LLM Evaluator
 
-- [ ] Centroid recomputation — update Ontology embedding as centroid of member concept embeddings
+- [x] `api/app/lib/breathing_evaluator.py` — multi-provider (OpenAI, Anthropic, Ollama)
+  - Promotion judgment: nucleus vs crossroads
+  - Demotion judgment: absorb vs revive
+  - `asyncio.to_thread()` for sync LLM calls in async context (PR #246 review)
+
+### Centroid Recomputation
+
+- [x] `api/app/lib/ontology_scorer.py:recompute_centroid()` — mass-weighted top-K centroid
+  - Hysteresis: skip update if cosine similarity > 0.99
+  - Runs as part of breathing cycle before candidate evaluation
+
+### Files
+
+| File | Change |
+|------|--------|
+| `schema/migrations/046_breathing_proposals.sql` | **NEW** — proposals table |
+| `api/app/lib/breathing_evaluator.py` | **NEW** — LLM evaluation prompts |
+| `api/app/services/breathing_manager.py` | **NEW** — cycle orchestration |
+| `api/app/workers/breathing_worker.py` | **NEW** — job worker |
+| `api/app/launchers/breathing.py` | **NEW** — epoch-driven trigger |
+| `api/app/lib/ontology_scorer.py` | +centroid recomputation |
+| `api/app/models/ontology.py` | +proposal models |
+| `api/app/routes/ontology.py` | +4 proposal/cycle endpoints |
+| `cli/src/cli/ontology.ts` | +5 proposal/breathe subcommands |
+| `cli/src/mcp-server.ts` | +3 actions |
+| `api/app/workers/ingestion_worker.py` | +launcher hook after epoch |
+| `tests/unit/lib/test_breathing_evaluator.py` | **NEW** |
+| `tests/manual/test_breathing_controls.sh` | **NEW** — 36 integration tests |
+
+### Tests — 36 integration + 14 unit
+
+- [x] Shell integration: `test_breathing_controls.sh` — 36 passed, 0 failed
+- [x] Unit: `test_breathing_evaluator.py` — 14 tests (mock LLM responses, prompt construction)
 
 ---
 
@@ -432,9 +471,10 @@ Converts worker from proposal-only (Phase 3) to proposal-and-execute.
   - Bezier curve profiles (reuse ADR-046 aggressiveness infrastructure)
 
 - [ ] **Graduated automation levels**
-  - HITL: worker proposes, human approves (Phase 3 default)
-  - AITL: worker proposes, LLM evaluates, human reviews exceptions
-  - Autonomous: high-confidence proposals auto-execute within safety bounds
+  - [x] HITL: worker proposes, human approves — **operational in Phase 3b**
+    - Ingest → epoch increment → launcher fires → breathing cycle → proposals → human review via CLI/MCP
+  - [ ] AITL: worker proposes, LLM evaluates, human reviews exceptions
+  - [ ] Autonomous: high-confidence proposals auto-execute within safety bounds
   - Safety: never auto-demote pinned/frozen, require multiple consecutive cycles for demotion
 
 ---
@@ -493,3 +533,7 @@ Record adjustments, surprises, and deviations from the ADR as we implement.
 | 2026-01-30 | Edge-agnostic SCOPED_BY queries for lifecycle | Phase 3a queries use `(c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)` — lifecycle depends only on the SCOPED_BY infrastructure edge, not on vocabulary or ingestion plumbing edge names like APPEARS |
 | 2026-01-30 | SCOPED_BY added to SYSTEM_TYPES exclusion set | Infrastructure edges should not appear in vocabulary discovery or epistemic measurement |
 | 2026-01-30 | Structural edge misuse tracked as future work (#241) | LLMs could generate SCOPED_BY as vocabulary — detection in integrity checker, healing via SIMILAR_TO replacement at low confidence |
+| 2026-01-30 | Atomic epoch claim in breathing launcher (PR #246 review) | TOCTOU race: `UPDATE...WHERE counter diff >= N RETURNING` instead of read-then-write |
+| 2026-01-30 | asyncio.to_thread for sync LLM calls (PR #246 review) | breathing_evaluator calls sync provider SDK; wrapping avoids blocking event loop |
+| 2026-01-30 | Centroid hysteresis threshold 0.99 cosine | Skip embedding update if drift is negligible — avoids unnecessary writes |
+| 2026-01-31 | Comprehensive Cypher injection hardening (PR #247) | Parameterized all f-string Cypher queries in routes layer; added regex validation for relationship type names that can't use $params in openCypher pattern syntax |

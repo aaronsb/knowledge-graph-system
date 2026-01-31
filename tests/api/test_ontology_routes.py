@@ -1097,3 +1097,211 @@ class TestReviewProposalRoute:
             )
 
         assert response.status_code == 422
+
+
+# ==========================================================================
+# GET /ontology/{name}/edges — Ontology-to-Ontology Edges (ADR-200 Phase 5)
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestGetOntologyEdgesRoute:
+    """Tests for GET /ontology/{name}/edges endpoint."""
+
+    def test_get_edges_returns_list(self, api_client, auth_headers_user):
+        """GET edges returns list of edges for an ontology."""
+        client = mock_age_client(
+            get_ontology_node={"name": "my-domain", "ontology_id": "ont_1"},
+            get_ontology_edges=[
+                {
+                    "from_ontology": "my-domain",
+                    "to_ontology": "other-domain",
+                    "edge_type": "OVERLAPS",
+                    "score": 0.5,
+                    "shared_concept_count": 10,
+                    "computed_at_epoch": 5,
+                    "source": "breathing_worker",
+                    "direction": "outgoing",
+                },
+            ],
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/my-domain/edges",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ontology"] == "my-domain"
+        assert data["count"] == 1
+        assert data["edges"][0]["edge_type"] == "OVERLAPS"
+        assert data["edges"][0]["score"] == 0.5
+
+    def test_get_edges_empty(self, api_client, auth_headers_user):
+        """GET edges for ontology with no edges returns empty list."""
+        client = mock_age_client(
+            get_ontology_node={"name": "lonely", "ontology_id": "ont_2"},
+            get_ontology_edges=[],
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/lonely/edges",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert data["edges"] == []
+
+    def test_get_edges_not_found(self, api_client, auth_headers_user):
+        """GET edges for nonexistent ontology returns 404."""
+        client = mock_age_client()  # Default: get_ontology_node returns None
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/ghost/edges",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 404
+
+
+@pytest.mark.unit
+class TestCreateOntologyEdgeRoute:
+    """Tests for POST /ontology/{name}/edges endpoint."""
+
+    def test_create_manual_edge(self, api_client, auth_headers_admin):
+        """Creating a manual edge returns the edge details."""
+        client = mock_age_client(
+            get_ontology_node={"name": "from-domain", "ontology_id": "ont_1"},
+            get_current_epoch=10,
+        )
+        client.upsert_ontology_edge = MagicMock(return_value=True)
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/from-domain/edges",
+                json={
+                    "to_ontology": "to-domain",
+                    "edge_type": "SPECIALIZES",
+                    "score": 0.75,
+                    "shared_concept_count": 15,
+                },
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["from_ontology"] == "from-domain"
+        assert data["to_ontology"] == "to-domain"
+        assert data["edge_type"] == "SPECIALIZES"
+        assert data["source"] == "manual"
+
+    def test_create_edge_target_not_found(self, api_client, auth_headers_admin):
+        """Creating edge to nonexistent target returns 404."""
+        client = mock_age_client()
+        # from exists, to doesn't
+        client.get_ontology_node = MagicMock(
+            side_effect=lambda name: (
+                {"name": "from-domain", "ontology_id": "ont_1"}
+                if name == "from-domain" else None
+            )
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/from-domain/edges",
+                json={
+                    "to_ontology": "ghost",
+                    "edge_type": "OVERLAPS",
+                },
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 404
+        assert "ghost" in response.json()["detail"]
+
+    def test_create_self_edge_returns_400(self, api_client, auth_headers_admin):
+        """Creating an edge from an ontology to itself returns 400."""
+        client = mock_age_client(
+            get_ontology_node={"name": "self-ref", "ontology_id": "ont_1"},
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/self-ref/edges",
+                json={
+                    "to_ontology": "self-ref",
+                    "edge_type": "OVERLAPS",
+                },
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 400
+
+    def test_create_invalid_edge_type_returns_422(self, api_client, auth_headers_admin):
+        """Invalid edge type returns 422 (Pydantic validation)."""
+        client = mock_age_client(
+            get_ontology_node={"name": "a", "ontology_id": "ont_1"},
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/a/edges",
+                json={
+                    "to_ontology": "b",
+                    "edge_type": "INVALID",
+                },
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 422
+
+
+@pytest.mark.unit
+class TestDeleteOntologyEdgeRoute:
+    """Tests for DELETE /ontology/{name}/edges/{type}/{to} endpoint."""
+
+    def test_delete_edge(self, api_client, auth_headers_admin):
+        """Deleting an existing edge returns success."""
+        client = mock_age_client()
+        client._execute_cypher = MagicMock(return_value={"deleted": 1})
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.delete(
+                "/ontology/from-domain/edges/OVERLAPS/to-domain",
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["deleted"] == 1
+
+    def test_delete_nonexistent_edge_returns_404(self, api_client, auth_headers_admin):
+        """Deleting a nonexistent edge returns 404."""
+        client = mock_age_client()
+        client._execute_cypher = MagicMock(return_value={"deleted": 0})
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.delete(
+                "/ontology/a/edges/OVERLAPS/b",
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 404
+
+    def test_delete_invalid_edge_type_returns_400(self, api_client, auth_headers_admin):
+        """Invalid edge type returns 400."""
+        client = mock_age_client()
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.delete(
+                "/ontology/a/edges/INVALID_TYPE/b",
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 400

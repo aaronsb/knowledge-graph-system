@@ -33,11 +33,11 @@ def _read_options(conn) -> Dict:
         with conn.cursor() as cur:
             cur.execute("SELECT key, value FROM kg_api.breathing_options")
             for key, value in cur.fetchall():
-                if key == "enabled":
+                if key in ("enabled", "derive_edges"):
                     options[key] = value.lower() in ("true", "1", "yes")
                 elif key in ("epoch_interval", "promotion_min_degree", "max_proposals"):
                     options[key] = int(value)
-                elif key in ("demotion_threshold",):
+                elif key in ("demotion_threshold", "overlap_threshold", "specializes_threshold"):
                     options[key] = float(value)
                 else:
                     options[key] = value
@@ -139,6 +139,9 @@ class BreathingLauncher(JobLauncher):
             "demotion_threshold": options["demotion_threshold"],
             "promotion_min_degree": options["promotion_min_degree"],
             "max_proposals": options["max_proposals"],
+            "derive_edges": options.get("derive_edges", True),
+            "overlap_threshold": options.get("overlap_threshold", 0.1),
+            "specializes_threshold": options.get("specializes_threshold", 0.3),
             "dry_run": False,
             "triggered_at_epoch": current_epoch,
             "description": f"Breathing cycle at epoch {current_epoch}",

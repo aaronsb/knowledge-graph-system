@@ -40,14 +40,18 @@ class BreathingManager:
         promotion_min_degree: int = 10,
         max_proposals: int = 5,
         dry_run: bool = False,
+        derive_edges: bool = True,
+        overlap_threshold: float = 0.1,
+        specializes_threshold: float = 0.3,
     ) -> Dict[str, Any]:
         """
         Run a full breathing cycle.
 
         1. Score all ontologies
         2. Recompute centroids
-        3. Identify demotion candidates (low protection)
-        4. Identify promotion candidates (high-degree concepts)
+        3. Derive ontology-to-ontology edges (Phase 5)
+        4. Identify demotion candidates (low protection)
+        5. Identify promotion candidates (high-degree concepts)
         5. LLM evaluation (unless dry_run)
         6. Store proposals
 
@@ -71,13 +75,28 @@ class BreathingManager:
         centroids_updated = self.scorer.recompute_all_centroids()
         logger.info(f"Updated {centroids_updated} ontology centroids")
 
-        # 3. Identify demotion candidates
+        # 3. Derive ontology-to-ontology edges (ADR-200 Phase 5)
+        edge_result = {"edges_created": 0, "edges_deleted": 0}
+        if derive_edges:
+            try:
+                edge_result = self.scorer.derive_ontology_edges(
+                    overlap_threshold=overlap_threshold,
+                    specializes_threshold=specializes_threshold,
+                )
+                logger.info(
+                    f"Derived {edge_result['edges_created']} ontology edges "
+                    f"(deleted {edge_result['edges_deleted']} stale)"
+                )
+            except Exception as e:
+                logger.warning(f"Edge derivation failed (non-fatal): {e}")
+
+        # 4. Identify demotion candidates
         demotion_candidates = self._find_demotion_candidates(
             all_scores, demotion_threshold
         )
         logger.info(f"Found {len(demotion_candidates)} demotion candidates")
 
-        # 4. Identify promotion candidates
+        # 5. Identify promotion candidates
         promotion_candidates = self._find_promotion_candidates(
             all_scores, promotion_min_degree
         )
@@ -90,6 +109,8 @@ class BreathingManager:
                 "promotion_candidates": len(promotion_candidates),
                 "scores_updated": len(all_scores),
                 "centroids_updated": centroids_updated,
+                "edges_created": edge_result.get("edges_created", 0),
+                "edges_deleted": edge_result.get("edges_deleted", 0),
                 "cycle_epoch": global_epoch,
                 "dry_run": True,
                 "candidates": {
@@ -128,7 +149,8 @@ class BreathingManager:
 
         logger.info(
             f"Breathing cycle complete: {proposals_generated} proposals, "
-            f"{len(all_scores)} scored, {centroids_updated} centroids"
+            f"{len(all_scores)} scored, {centroids_updated} centroids, "
+            f"{edge_result.get('edges_created', 0)} edges"
         )
 
         return {
@@ -137,6 +159,8 @@ class BreathingManager:
             "promotion_candidates": len(promotion_candidates),
             "scores_updated": len(all_scores),
             "centroids_updated": centroids_updated,
+            "edges_created": edge_result.get("edges_created", 0),
+            "edges_deleted": edge_result.get("edges_deleted", 0),
             "cycle_epoch": global_epoch,
             "dry_run": False,
         }
