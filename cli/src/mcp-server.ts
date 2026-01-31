@@ -1008,9 +1008,9 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
             },
             category: {
               type: 'string',
-              enum: ['logical_truth', 'empirical_claim', 'value_judgment', 'conceptual', 'temporal_sequence', 'causal', 'other'],
-              description: 'Semantic category of the relationship (default: logical_truth)',
-              default: 'logical_truth',
+              enum: ['logical_truth', 'causal', 'structural', 'temporal', 'comparative', 'functional', 'definitional'],
+              description: 'Semantic category of the relationship (default: structural)',
+              default: 'structural',
             },
             confidence: {
               type: 'number',
