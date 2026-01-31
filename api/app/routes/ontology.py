@@ -44,6 +44,8 @@ from ..models.ontology import (
     OntologyEdgesResponse,
     OntologyEdgeCreateRequest,
 )
+import json as _json
+from psycopg2.extras import RealDictCursor
 from api.app.lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
@@ -235,30 +237,34 @@ async def list_ontologies(
 
 
 def _row_to_proposal(row) -> BreathingProposal:
-    """Map a positional SQL row to a BreathingProposal model.
+    """Map a RealDictCursor row to a BreathingProposal model."""
+    execution_result_raw = row.get("execution_result")
+    if isinstance(execution_result_raw, str):
+        try:
+            execution_result_raw = _json.loads(execution_result_raw)
+        except (ValueError, TypeError):
+            pass
 
-    Column order must match:
-        id, proposal_type, ontology_name, anchor_concept_id,
-        target_ontology, reasoning, mass_score, coherence_score,
-        protection_score, status, created_at, created_at_epoch,
-        reviewed_at, reviewed_by, reviewer_notes
-    """
     return BreathingProposal(
-        id=row[0],
-        proposal_type=row[1],
-        ontology_name=row[2],
-        anchor_concept_id=row[3],
-        target_ontology=row[4],
-        reasoning=row[5],
-        mass_score=float(row[6]) if row[6] is not None else None,
-        coherence_score=float(row[7]) if row[7] is not None else None,
-        protection_score=float(row[8]) if row[8] is not None else None,
-        status=row[9],
-        created_at=row[10],
-        created_at_epoch=row[11],
-        reviewed_at=row[12],
-        reviewed_by=row[13],
-        reviewer_notes=row[14],
+        id=row["id"],
+        proposal_type=row["proposal_type"],
+        ontology_name=row["ontology_name"],
+        anchor_concept_id=row.get("anchor_concept_id"),
+        target_ontology=row.get("target_ontology"),
+        reasoning=row["reasoning"],
+        mass_score=float(row["mass_score"]) if row.get("mass_score") is not None else None,
+        coherence_score=float(row["coherence_score"]) if row.get("coherence_score") is not None else None,
+        protection_score=float(row["protection_score"]) if row.get("protection_score") is not None else None,
+        status=row["status"],
+        created_at=row["created_at"],
+        created_at_epoch=row.get("created_at_epoch", 0),
+        reviewed_at=row.get("reviewed_at"),
+        reviewed_by=row.get("reviewed_by"),
+        reviewer_notes=row.get("reviewer_notes"),
+        executed_at=row.get("executed_at"),
+        execution_result=execution_result_raw,
+        suggested_name=row.get("suggested_name"),
+        suggested_description=row.get("suggested_description"),
     )
 
 @router.get("/proposals", response_model=BreathingProposalListResponse)
@@ -278,7 +284,7 @@ async def list_proposals(
     try:
         conn = client.pool.getconn()
         try:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 conditions = []
                 params = []
 
@@ -302,7 +308,9 @@ async def list_proposals(
                     SELECT id, proposal_type, ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
-                           reviewed_at, reviewed_by, reviewer_notes
+                           reviewed_at, reviewed_by, reviewer_notes,
+                           executed_at, execution_result,
+                           suggested_name, suggested_description
                     FROM kg_api.breathing_proposals
                     {where}
                     ORDER BY created_at DESC
@@ -334,12 +342,14 @@ async def get_proposal(
     try:
         conn = client.pool.getconn()
         try:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
                     SELECT id, proposal_type, ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
-                           reviewed_at, reviewed_by, reviewer_notes
+                           reviewed_at, reviewed_by, reviewer_notes,
+                           executed_at, execution_result,
+                           suggested_name, suggested_description
                     FROM kg_api.breathing_proposals
                     WHERE id = %s
                 """, (proposal_id,))
@@ -368,10 +378,11 @@ async def review_proposal(
     _: None = Depends(require_permission("ontologies", "write")),
 ):
     """
-    Approve or reject a breathing proposal (ADR-200 Phase 3b).
+    Approve or reject a breathing proposal (ADR-200 Phase 3b + Phase 4).
 
-    Phase 3b is proposal-only — approved proposals are stored but not executed.
-    Phase 4 will add automatic execution of approved proposals.
+    On approval, a proposal_execution job is dispatched to execute the
+    proposal asynchronously. The proposal status will progress through:
+    approved → executing → executed (or failed).
 
     **Authorization:** Requires `ontologies:write` permission
     """
@@ -379,7 +390,7 @@ async def review_proposal(
     try:
         conn = client.pool.getconn()
         try:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Verify proposal exists and is pending
                 cur.execute(
                     "SELECT status FROM kg_api.breathing_proposals WHERE id = %s",
@@ -388,10 +399,10 @@ async def review_proposal(
                 row = cur.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found")
-                if row[0] != "pending":
+                if row["status"] != "pending":
                     raise HTTPException(
                         status_code=409,
-                        detail=f"Proposal {proposal_id} is already {row[0]}"
+                        detail=f"Proposal {proposal_id} is already {row['status']}"
                     )
 
                 # Belt-and-suspenders: Pydantic validates via regex, but guard here too
@@ -407,15 +418,53 @@ async def review_proposal(
                     RETURNING id, proposal_type, ontology_name, anchor_concept_id,
                               target_ontology, reasoning, mass_score, coherence_score,
                               protection_score, status, created_at, created_at_epoch,
-                              reviewed_at, reviewed_by, reviewer_notes
+                              reviewed_at, reviewed_by, reviewer_notes,
+                              executed_at, execution_result,
+                              suggested_name, suggested_description
                 """, (request.status, reviewer, request.notes, proposal_id))
 
                 row = cur.fetchone()
                 conn.commit()
 
-                return _row_to_proposal(row)
+                proposal = _row_to_proposal(row)
         finally:
             client.pool.putconn(conn)
+
+        # Phase 4: dispatch execution job for approved proposals
+        if request.status == "approved":
+            try:
+                from api.app.services.job_queue import get_job_queue
+                queue = get_job_queue()
+                reviewer = current_user.username if current_user else "unknown"
+                exec_job_id = queue.enqueue(
+                    job_type="proposal_execution",
+                    job_data={
+                        "proposal_id": proposal_id,
+                        "triggered_by": reviewer,
+                    },
+                )
+                queue.update_job(exec_job_id, {
+                    "status": "approved",
+                    "approved_by": reviewer,
+                })
+                queue.execute_job_async(exec_job_id)
+                proposal.execution_job_id = exec_job_id
+                logger.info(
+                    f"Dispatched execution job {exec_job_id} for "
+                    f"proposal {proposal_id}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to dispatch execution for proposal "
+                    f"{proposal_id}: {e}",
+                    exc_info=True,
+                )
+                proposal.execution_result = {
+                    "dispatch_error": str(e),
+                }
+
+        return proposal
+
     except HTTPException:
         raise
     except Exception as e:

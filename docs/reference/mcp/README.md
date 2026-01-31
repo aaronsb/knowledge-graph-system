@@ -257,7 +257,7 @@ Manage ontologies (knowledge domains/collections): list all, get info, list file
 - `limit` (`number`) - Max results for candidates/affinity (default: 20/10)
 - `proposal_id` (`number`) - Proposal ID (for proposal_review action)
 - `status` (`string`) - Filter proposals by status, or review status (approved/rejected)
-  - Allowed values: `pending`, `approved`, `rejected`
+  - Allowed values: `pending`, `approved`, `rejected`, `executing`, `executed`, `failed`
 - `proposal_type` (`string`) - Filter proposals by type
   - Allowed values: `promotion`, `demotion`
 - `notes` (`string`) - Review notes (for proposal_review action)

@@ -157,6 +157,7 @@ ON EACH [c.label, c.search_terms];
 //
 // Edges:
 //   (:Source)-[:SCOPED_BY]->(:Ontology)        — source membership
+//   (:Ontology)-[:ANCHORED_BY]->(:Concept)     — promoted from concept (Phase 4)
 //   (:Ontology)-[:OVERLAPS]->(:Ontology)       — significant concept overlap (Phase 5)
 //   (:Ontology)-[:SPECIALIZES]->(:Ontology)    — coherent subset relationship (Phase 5)
 //   (:Ontology)-[:GENERALIZES]->(:Ontology)    — superset relationship (Phase 5)
@@ -166,9 +167,6 @@ ON EACH [c.label, c.search_terms];
 //   score: affinity strength (0.0-1.0)
 //   shared_concept_count: concepts in common
 //   computed_at_epoch: global epoch when derived
-//
-// Future:
-//   (:Ontology)-[:ANCHORED_BY]->(:Concept)  — promoted from concept (Phase 4)
 // ----------------------------------------------------------------------------
 
 // ============================================================================

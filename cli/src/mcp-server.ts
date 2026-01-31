@@ -51,8 +51,14 @@ import {
   formatGraphEdgeList,
   formatGraphBatchResult,
   formatGraphQueueResult,
+  formatOntologyList,
+  formatOntologyInfo,
+  formatOntologyScores,
   formatOntologyEdges,
   formatOntologyAffinity,
+  formatProposalList,
+  formatProposalDetail,
+  formatBreathingCycleResult,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -466,7 +472,7 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
             },
             status: {
               type: 'string',
-              enum: ['pending', 'approved', 'rejected'],
+              enum: ['pending', 'approved', 'rejected', 'executing', 'executed', 'failed'],
               description: 'Filter proposals by status, or review status (approved/rejected)',
             },
             proposal_type: {
@@ -1412,14 +1418,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'list': {
             const result = await client.listOntologies();
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyList(result) }],
             };
           }
 
           case 'info': {
             const result = await client.getOntologyInfo(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyInfo(result) }],
             };
           }
 
@@ -1475,21 +1481,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           case 'scores': {
             const result = await client.getOntologyScores(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
           case 'score': {
             const result = await client.computeOntologyScores(toolArgs.ontology_name as string);
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
           case 'score_all': {
             const result = await client.computeAllOntologyScores();
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatOntologyScores(result) }],
             };
           }
 
@@ -1551,7 +1557,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               limit: toolArgs.limit as number | undefined,
             });
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatProposalList(result) }],
             };
           }
 
@@ -1566,7 +1572,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               toolArgs.notes as string | undefined,
             );
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatProposalDetail(result) }],
             };
           }
 
@@ -1578,7 +1584,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               max_proposals: toolArgs.max_proposals as number | undefined,
             });
             return {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text', text: formatBreathingCycleResult(result) }],
             };
           }
 

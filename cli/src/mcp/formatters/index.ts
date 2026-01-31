@@ -68,4 +68,13 @@ export {
 } from './graph.js';
 
 // Ontology formatters (ADR-200)
-export { formatOntologyEdges, formatOntologyAffinity } from './ontology.js';
+export {
+  formatOntologyList,
+  formatOntologyInfo,
+  formatOntologyScores,
+  formatOntologyEdges,
+  formatOntologyAffinity,
+  formatProposalList,
+  formatProposalDetail,
+  formatBreathingCycleResult,
+} from './ontology.js';

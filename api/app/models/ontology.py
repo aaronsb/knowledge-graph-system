@@ -231,6 +231,12 @@ class BreathingProposal(BaseModel):
     reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
     reviewer_notes: Optional[str] = None
+    # Phase 4: execution tracking
+    executed_at: Optional[datetime] = None
+    execution_result: Optional[dict] = None
+    execution_job_id: Optional[str] = None
+    suggested_name: Optional[str] = None
+    suggested_description: Optional[str] = None
 
 
 class BreathingProposalListResponse(BaseModel):

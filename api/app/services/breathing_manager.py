@@ -71,6 +71,13 @@ class BreathingManager:
         all_scores = self.scorer.score_all_ontologies()
         logger.info(f"Scored {len(all_scores)} ontologies")
 
+        # 1b. Ecological snapshot (ADR-200 Phase 4, observational)
+        ecological = self._get_ecological_snapshot(all_scores)
+        logger.info(
+            f"Ecological snapshot: {ecological['total_ontologies']} ontologies, "
+            f"~{ecological['avg_concepts_per_ontology']:.0f} concepts/ontology"
+        )
+
         # 2. Recompute centroids
         centroids_updated = self.scorer.recompute_all_centroids()
         logger.info(f"Updated {centroids_updated} ontology centroids")
@@ -354,6 +361,8 @@ class BreathingManager:
             anchor_concept_id=candidate["concept_id"],
             reasoning=decision.reasoning,
             epoch=epoch,
+            suggested_name=decision.suggested_name,
+            suggested_description=decision.suggested_description,
         )
 
     def _store_proposal(
@@ -367,6 +376,8 @@ class BreathingManager:
         mass_score: Optional[float] = None,
         coherence_score: Optional[float] = None,
         protection_score: Optional[float] = None,
+        suggested_name: Optional[str] = None,
+        suggested_description: Optional[str] = None,
     ) -> Optional[int]:
         """Store a proposal in the breathing_proposals table. Returns proposal ID."""
         try:
@@ -377,13 +388,15 @@ class BreathingManager:
                         INSERT INTO kg_api.breathing_proposals
                         (proposal_type, ontology_name, anchor_concept_id,
                          target_ontology, reasoning, mass_score, coherence_score,
-                         protection_score, created_at_epoch)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         protection_score, created_at_epoch,
+                         suggested_name, suggested_description)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
                         proposal_type, ontology_name, anchor_concept_id,
                         target_ontology, reasoning, mass_score, coherence_score,
                         protection_score, epoch,
+                        suggested_name, suggested_description,
                     ))
                     row = cur.fetchone()
                     conn.commit()
@@ -398,3 +411,32 @@ class BreathingManager:
         except Exception as e:
             logger.error(f"Failed to store proposal: {e}")
             return None
+
+    # =========================================================================
+    # Ecological Snapshot (ADR-200 Phase 4)
+    # =========================================================================
+
+    def _get_ecological_snapshot(
+        self, all_scores: List[Dict]
+    ) -> Dict[str, Any]:
+        """
+        Compute ecological ratio metrics for the breathing cycle.
+
+        Observational only — logged and returned but does not yet adjust
+        promotion/demotion thresholds. Threshold feedback is deferred (#249).
+
+        Returns:
+            {total_ontologies, total_concepts, avg_concepts_per_ontology}
+        """
+        total_ontologies = len(all_scores)
+
+        # Sum concept counts already carried in scores (from scorer's stats fetch)
+        total_concepts = sum(s.get("concept_count", 0) for s in all_scores)
+
+        avg = total_concepts / total_ontologies if total_ontologies > 0 else 0
+
+        return {
+            "total_ontologies": total_ontologies,
+            "total_concepts": total_concepts,
+            "avg_concepts_per_ontology": avg,
+        }

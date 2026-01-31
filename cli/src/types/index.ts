@@ -580,6 +580,11 @@ export interface BreathingProposal {
   reviewed_at?: string;
   reviewed_by?: string;
   reviewer_notes?: string;
+  // Phase 4: execution tracking
+  executed_at?: string;
+  execution_result?: Record<string, unknown>;
+  suggested_name?: string;
+  suggested_description?: string;
 }
 
 export interface BreathingProposalListResponse {
