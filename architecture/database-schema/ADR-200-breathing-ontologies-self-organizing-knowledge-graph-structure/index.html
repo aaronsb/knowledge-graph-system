@@ -6356,6 +6356,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#centroid-recomputation-weighted-top-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Centroid Recomputation (Weighted Top-K)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#promotion-candidate-identification" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9530,6 +9541,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-200 Phase 3a: Breathing Controls Exercise Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
@@ -10286,6 +10325,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#centroid-recomputation-weighted-top-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Centroid Recomputation (Weighted Top-K)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#promotion-candidate-identification" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10990,6 +11040,9 @@
 <li>
 <p><strong>Human-machine collaboration.</strong> Humans assert hypotheses (create ontologies). The graph tests them. Weak hypotheses get absorbed. Strong patterns get elevated. Neither party works alone.</p>
 </li>
+<li>
+<p><strong>Edge-agnostic lifecycle.</strong> Breathing controls depend only on the <code>:SCOPED_BY</code> infrastructure edge for ontology membership — never on vocabulary edge names or ingestion plumbing like <code>:APPEARS</code>. Queries traverse <code>(c:Concept)--&gt;(s:Source)-[:SCOPED_BY]-&gt;(o:Ontology)</code> where <code>--&gt;</code> means "any outbound edge." This decouples lifecycle management from the ingestion pipeline's structural choices.</p>
+</li>
 </ol>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="a-keep-ontologies-as-string-properties">A. Keep Ontologies as String Properties</h3>
@@ -11116,7 +11169,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Per</span><span class="err">-</span><span class="n">ontology</span><span class="w"> </span><span class="n">mass</span><span class="p">:</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">concepts</span><span class="p">,</span><span class="w"> </span><span class="n">sources</span><span class="p">,</span><span class="w"> </span><span class="n">evidence</span><span class="p">,</span><span class="w"> </span><span class="n">relationships</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">o</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">name</span><span class="p">})</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">--&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">OPTIONAL</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">()</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">sources</span><span class="p">,</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">       </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">concepts</span><span class="p">,</span>
@@ -11133,39 +11186,64 @@
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>weighted_exposure = Σ (ingest_events_into_adjacent_ontologies × adjacency_score)
 </code></pre></div>
 <p>Adjacency is computable from embedding similarity between ontology nodes. An ingest into a neighboring ontology counts more than an ingest into something unrelated. This prevents penalizing an ontology for irrelevant graph activity while holding it accountable when nearby content flows past without connecting.</p>
+<h4 id="centroid-recomputation-weighted-top-k">Centroid Recomputation (Weighted Top-K)</h4>
+<p>After scoring, the breathing worker recomputes each ontology's embedding as a mass-weighted centroid of its top-K concepts. This replaces the initial name-based embedding with one that reflects the ontology's actual semantic position.</p>
+<p><strong>Algorithm:</strong></p>
+<ol>
+<li>
+<p><strong>Select Elders.</strong> Fetch top-K concepts (K=20-50) by degree centrality within the ontology. These are the load-bearing concepts that define the domain. Uses existing <code>get_concept_degree_ranking()</code>.</p>
+</li>
+<li>
+<p><strong>Compute weighted centroid.</strong> Average the Elder embeddings, weighted by degree (or grounding strength). Uses existing <code>get_ontology_concept_embeddings()</code>.</p>
+</li>
+</ol>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>E_ontology = Σ(v_i × M_i) / Σ(M_i)
+</code></pre></div>
+   where <code>v_i</code> is the Elder's embedding and <code>M_i</code> is its mass (degree centrality).</p>
+<ol>
+<li>
+<p><strong>Hysteresis check.</strong> Compute cosine similarity between old and new centroids. Only write if drift exceeds threshold (similarity &lt; 0.99). Prevents unnecessary index churn.</p>
+</li>
+<li>
+<p><strong>Update.</strong> Call existing <code>update_ontology_embedding()</code> with the new centroid.</p>
+</li>
+</ol>
+<p><strong>Why top-K, not all concepts:</strong> A mean of all concepts drifts toward the center of the embedding space as coverage broadens — a "democratic center of gravity" vulnerable to noise. The mass-weighted top-K produces a "meritocratic center of gravity" anchored by the ontology's most established members. At 20-50 vectors, the computation is trivial.</p>
+<p><strong>Bootstrapping:</strong> First call replaces the name-based embedding. Subsequent calls refine. No special first-run path needed.</p>
+<p><strong>Future enhancement:</strong> ADR-070 polarity projection could filter Elders by axis alignment, discarding high-mass "crossroads" concepts that are orthogonal to the domain direction. Not needed for MVP — the naive weighted centroid is sufficient, and crossroads filtering is an optimization to add if drift toward generic concepts is observed in practice.</p>
 <h4 id="promotion-candidate-identification">Promotion Candidate Identification</h4>
 <p>The worker ranks all concepts within each ontology by degree centrality, then evaluates the top-N:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>promotion_score = sigmoid(mass × coherence) - exposure_pressure(epoch_delta)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>promotion_score = sigmoid(mass × coherence) - exposure_pressure(epoch_delta)
 </code></pre></div>
 <p>Concepts above the promotion threshold become proposals. The LLM evaluates borderline cases — "Is this concept a nucleus (should be an ontology) or a crossroads (valuable connector, should stay a concept)?"</p>
 <h4 id="demotion-candidate-identification">Demotion Candidate Identification</h4>
 <p>The worker evaluates each non-pinned ontology's protection score:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)
 </code></pre></div>
 <p>Ontologies below the demotion threshold become demotion proposals. The hysteresis band (promotion_threshold=0.8, demotion_threshold=0.5) prevents flickering.</p>
 <p>For each demotion candidate, the worker pre-computes <strong>reassignment affinity</strong> — where would the sources go?</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Cross</span><span class="err">-</span><span class="n">ontology</span><span class="w"> </span><span class="n">affinity</span><span class="p">:</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="n">ontology</span><span class="w"> </span><span class="n">shares</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">most</span><span class="w"> </span><span class="n">concepts</span><span class="err">?</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">dying</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">name</span><span class="p">})</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">other_s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">candidate</span><span class="p">:</span><span class="n">Ontology</span><span class="p">)</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">candidate</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="n">dying</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">candidate</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shared_concepts</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">shared_concepts</span><span class="w"> </span><span class="k">DESC</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Cross</span><span class="err">-</span><span class="n">ontology</span><span class="w"> </span><span class="n">affinity</span><span class="p">:</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="n">ontology</span><span class="w"> </span><span class="n">shares</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">most</span><span class="w"> </span><span class="n">concepts</span><span class="err">?</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">dying</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">name</span><span class="p">})</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">--&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">--&gt;</span><span class="p">(</span><span class="n">other_s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">candidate</span><span class="p">:</span><span class="n">Ontology</span><span class="p">)</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">candidate</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="n">dying</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">candidate</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shared_concepts</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">shared_concepts</span><span class="w"> </span><span class="k">DESC</span>
 </code></pre></div>
 <p>This query works without materialized ontology-to-ontology edges — it computes affinity from the existing graph structure. Phase 5 materializes this as cached edges for performance.</p>
 <h4 id="proposal-storage">Proposal Storage</h4>
 <p>Proposals are stored as structured recommendations (likely in the job queue or a dedicated table):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;promotion&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;c_abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">&quot;concept_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Incident Response&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span><span class="nt">&quot;source_ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ITSM&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">  </span><span class="nt">&quot;scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;mass&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.87</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;coherence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;promotion_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">  </span><span class="nt">&quot;suggested_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Incident Response&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">  </span><span class="nt">&quot;suggested_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LLM explanation of why this concept warrants promotion&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">  </span><span class="nt">&quot;epoch&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5420</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;promotion&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;c_abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nt">&quot;concept_label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Incident Response&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span><span class="nt">&quot;source_ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ITSM&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">  </span><span class="nt">&quot;scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;mass&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.87</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;coherence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;promotion_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">&quot;suggested_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Incident Response&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="nt">&quot;suggested_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LLM explanation of why this concept warrants promotion&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">  </span><span class="nt">&quot;epoch&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5420</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="p">}</span>
 </code></pre></div>
 <p>Proposals can be approved/rejected via CLI (<code>kg ontology promote &lt;concept&gt;</code>), MCP, or web UI (ADR-700).</p>
 <h3 id="phase-5-ontology-to-ontology-edges-materialized-relationships">Phase 5: Ontology-to-Ontology Edges (Materialized Relationships)</h3>
@@ -11178,21 +11256,21 @@
 <li><strong>SPECIALIZES</strong> — A's concepts are a coherent subset of B's concept space (A is more specific)</li>
 <li><strong>GENERALIZES</strong> — inverse of SPECIALIZES</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Derive</span><span class="w"> </span><span class="n">OVERLAPS</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">shared</span><span class="w"> </span><span class="n">concept</span><span class="w"> </span><span class="n">count</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Ontology</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Ontology</span><span class="p">)</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="n">b</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s_a</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s_a</span><span class="p">)</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">APPEARS_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s_b</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="k">WITH</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">     </span><span class="o">[</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">s</span><span class="o">]</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">a_sources</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="k">WITH</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="n">a_sources</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">a_total</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">toFloat</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">a_total</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">3</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">threshold</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="n">OVERLAPS</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">OVERLAPS</span><span class="w"> </span><span class="p">{</span><span class="n">shared_concepts</span><span class="p">:</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span><span class="w"> </span><span class="n">ratio</span><span class="p">:</span><span class="w"> </span><span class="n">toFloat</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span><span class="err">/</span><span class="n">a_total</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Derive</span><span class="w"> </span><span class="n">OVERLAPS</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">shared</span><span class="w"> </span><span class="n">concept</span><span class="w"> </span><span class="n">count</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Ontology</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Ontology</span><span class="p">)</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="n">b</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">s_a</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">--&gt;</span><span class="p">(</span><span class="n">s_a</span><span class="p">)</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">--&gt;</span><span class="p">(</span><span class="n">s_b</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="k">WITH</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">     </span><span class="o">[</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SCOPED_BY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="n">s</span><span class="o">]</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">a_sources</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="k">WITH</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="n">a_sources</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">a_total</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">toFloat</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span><span class="w"> </span><span class="err">/</span><span class="w"> </span><span class="n">a_total</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">3</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">threshold</span><span class="w"> </span><span class="n">for</span><span class="w"> </span><span class="n">OVERLAPS</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">OVERLAPS</span><span class="w"> </span><span class="p">{</span><span class="n">shared_concepts</span><span class="p">:</span><span class="w"> </span><span class="n">shared</span><span class="p">,</span><span class="w"> </span><span class="n">ratio</span><span class="p">:</span><span class="w"> </span><span class="n">toFloat</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span><span class="err">/</span><span class="n">a_total</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="explicit-override-edges">Explicit Override Edges</h4>
 <p>Humans or AI can declare relationships that override or supplement derived edges:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Security Engineering&#39;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">SPECIALIZES</span><span class="w"> </span><span class="p">{</span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;manual&#39;</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Infrastructure&#39;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Security Engineering&#39;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">SPECIALIZES</span><span class="w"> </span><span class="p">{</span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;manual&#39;</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Infrastructure&#39;</span><span class="p">})</span>
 </code></pre></div>
 <p>Derived edges carry <code>source: 'breathing_worker'</code>; explicit edges carry <code>source: 'manual'</code> or <code>source: 'ai'</code>. Explicit edges take precedence when they conflict with derived edges.</p>
 <h4 id="integration">Integration</h4>
@@ -11223,7 +11301,7 @@
 </ol>
 <h4 id="ecological-ratio-tracking">Ecological Ratio Tracking</h4>
 <p>The system maintains a target cluster granularity — the ratio of ontologies to concepts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>target_ontology_count = f(total_concepts, desired_concepts_per_ontology)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>target_ontology_count = f(total_concepts, desired_concepts_per_ontology)
 </code></pre></div>
 <p>When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046) drives this — same mechanism, different domain.</p>
 <h4 id="graduated-automation">Graduated Automation</h4>

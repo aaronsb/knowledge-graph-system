@@ -8816,6 +8816,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-200 Phase 3a: Breathing Controls Exercise Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
@@ -9077,8 +9105,8 @@
 <p>Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion)</li>
-<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>create</code>, <code>rename</code>, <code>delete</code>, <code>lifecycle</code>, <code>scores</code>, <code>score</code>, <code>score_all</code>, <code>candidates</code>, <code>affinity</code>, <code>reassign</code>, <code>dissolve</code></li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "list" (all ontologies), "info" (details), "files" (source files), "create" (new ontology), "rename" (change name), "delete" (remove), "lifecycle" (set state), "scores" (cached scores), "score" (recompute one), "score_all" (recompute all), "candidates" (top concepts), "affinity" (cross-ontology overlap), "reassign" (move sources), "dissolve" (non-destructive demotion), "proposals" (list breathing proposals), "proposal_review" (approve/reject proposal), "breathing_cycle" (trigger breathing cycle)</li>
+<li>Allowed values: <code>list</code>, <code>info</code>, <code>files</code>, <code>create</code>, <code>rename</code>, <code>delete</code>, <code>lifecycle</code>, <code>scores</code>, <code>score</code>, <code>score_all</code>, <code>candidates</code>, <code>affinity</code>, <code>reassign</code>, <code>dissolve</code>, <code>proposals</code>, <code>proposal_review</code>, <code>breathing_cycle</code></li>
 <li><code>ontology_name</code> (<code>string</code>) - Ontology name (required for info, files, create, rename, delete)</li>
 <li><code>description</code> (<code>string</code>) - What this knowledge domain covers (for create action)</li>
 <li><code>new_name</code> (<code>string</code>) - New ontology name (required for rename action)</li>
@@ -9089,6 +9117,17 @@
 <li><code>target_ontology</code> (<code>string</code>) - Target ontology for reassign/dissolve actions</li>
 <li><code>source_ids</code> (<code>array</code>) - Source IDs to move (for reassign action)</li>
 <li><code>limit</code> (<code>number</code>) - Max results for candidates/affinity (default: 20/10)</li>
+<li><code>proposal_id</code> (<code>number</code>) - Proposal ID (for proposal_review action)</li>
+<li><code>status</code> (<code>string</code>) - Filter proposals by status, or review status (approved/rejected)</li>
+<li>Allowed values: <code>pending</code>, <code>approved</code>, <code>rejected</code></li>
+<li><code>proposal_type</code> (<code>string</code>) - Filter proposals by type</li>
+<li>Allowed values: <code>promotion</code>, <code>demotion</code></li>
+<li><code>notes</code> (<code>string</code>) - Review notes (for proposal_review action)</li>
+<li><code>dry_run</code> (<code>boolean</code>) - Preview candidates without proposals (for breathing_cycle)</li>
+<li>Default: <code>false</code></li>
+<li><code>demotion_threshold</code> (<code>number</code>) - Protection score below which to consider demotion (default: 0.15)</li>
+<li><code>promotion_min_degree</code> (<code>number</code>) - Minimum concept degree for promotion candidacy (default: 10)</li>
+<li><code>max_proposals</code> (<code>number</code>) - Maximum proposals per breathing cycle (default: 5)</li>
 </ul>
 <hr />
 
