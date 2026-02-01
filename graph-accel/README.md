@@ -10,12 +10,12 @@ Apache AGE stores graphs in PostgreSQL and translates Cypher path matches into n
 
 | Depth | AGE (SQL) | graph_accel | Speedup |
 |-------|-----------|-------------|---------|
-| 1 | 3,644ms | 0.18ms | 20,000x |
-| 2 | 471ms | 0.09ms | 5,200x |
-| 3 | 1,790ms | 0.14ms | 12,800x |
-| 4 | 11,460ms | 0.31ms | 37,000x |
-| 5 | 92,474ms | 0.42ms | **220,000x** |
-| 6 | Hangs | 0.38ms | --- |
+| 1 | 3,644ms | 0.101ms | 36,000x |
+| 2 | 471ms | 0.066ms | 7,100x |
+| 3 | 1,790ms | 0.122ms | 14,700x |
+| 4 | 11,460ms | 0.267ms | 42,900x |
+| 5 | 92,474ms | 0.378ms | **244,600x** |
+| 6 | Hangs | 0.377ms | --- |
 
 AGE hits a hard wall at depth 6. graph_accel handles arbitrary depth in sub-millisecond time.
 
@@ -253,7 +253,7 @@ graph-accel/
     └── benchmark-comparison.sh  # AGE vs graph_accel automated comparison
 ```
 
-**Core engine:** 771 lines, zero dependencies, 23 unit tests.
+**Core engine:** 771 lines, zero dependencies, 28 tests (26 unit + 2 integration).
 **Extension:** 602 lines wrapping core via pgrx.
 **Total:** ~1,400 lines of Rust.
 

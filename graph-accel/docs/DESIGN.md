@@ -38,6 +38,7 @@ pub struct Graph {
     app_id_index: HashMap<String, NodeId>,   // app-level ID → node
     rel_types: Vec<String>,                  // interned type names
     rel_type_map: HashMap<String, RelTypeId>,// type name → index
+    estimated_avg_degree: usize,             // hint for Vec pre-allocation
 }
 ```
 
@@ -117,7 +118,14 @@ The extension loads AGE's graph data via SPI (Server Programming Interface), rea
 **Loading sequence:**
 
 1. Verify graph exists: `SELECT 1 FROM ag_catalog.ag_graph WHERE name = $name`
-2. Load label catalog: `SELECT name::text, kind::text FROM ag_catalog.ag_label WHERE graph = $graphid`
+2. Load label catalog:
+   ```sql
+   SELECT l.name::text, l.kind::text
+   FROM ag_catalog.ag_label l
+   JOIN ag_catalog.ag_graph g ON l.graph = g.graphid
+   WHERE g.name = $name AND l.name NOT LIKE '_ag%'
+   ```
+   The `_ag%` exclusion skips AGE's internal labels (e.g., `_ag_label_vertex`, `_ag_label_edge`).
 3. For each vertex label (filtered by `node_labels` GUC):
    `SELECT id::text, properties::text FROM {graph}.{label}`
 4. For each edge label (filtered by `edge_types` GUC):
