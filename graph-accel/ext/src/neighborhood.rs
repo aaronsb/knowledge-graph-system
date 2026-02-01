@@ -14,6 +14,8 @@ fn direction_str(d: Direction) -> String {
 fn graph_accel_neighborhood(
     start_id: String,
     max_depth: default!(i32, 3),
+    direction_filter: default!(String, "'both'"),
+    min_confidence: default!(Option<f64>, "NULL"),
 ) -> TableIterator<
     'static,
     (
@@ -26,12 +28,13 @@ fn graph_accel_neighborhood(
     ),
 > {
     crate::generation::ensure_fresh();
+    let direction = crate::util::parse_direction(&direction_filter);
 
     let results = state::with_graph(|gs| {
         let internal_id = state::resolve_node(&gs.graph, &start_id);
 
         let result =
-            graph_accel_core::bfs_neighborhood(&gs.graph, internal_id, max_depth as u32);
+            graph_accel_core::bfs_neighborhood(&gs.graph, internal_id, max_depth as u32, direction, min_confidence.map(|v| v as f32));
 
         result
             .neighbors

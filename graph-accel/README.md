@@ -73,7 +73,12 @@ If `graph_name` is NULL, uses the `graph_accel.source_graph` GUC.
 ### graph_accel_neighborhood
 
 ```sql
-graph_accel_neighborhood(start_id TEXT, max_depth INT DEFAULT 3)
+graph_accel_neighborhood(
+    start_id TEXT,
+    max_depth INT DEFAULT 3,
+    direction_filter TEXT DEFAULT 'both',
+    min_confidence FLOAT8 DEFAULT NULL
+)
   RETURNS TABLE(
     node_id         BIGINT,
     label           TEXT,
@@ -86,14 +91,20 @@ graph_accel_neighborhood(start_id TEXT, max_depth INT DEFAULT 3)
 
 BFS from `start_id` up to `max_depth` hops. Returns all reachable nodes with their minimum distance, the relationship types along one shortest path, and the direction each edge was traversed.
 
-Traversal follows both incoming and outgoing edges. Each node appears at most once, at its minimum distance. `path_directions` indicates whether each edge was followed in its stored direction (`outgoing`: from -> to) or against it (`incoming`: to <- from).
+`direction_filter`: `'both'` (default, undirected), `'outgoing'` (forward edges only), or `'incoming'` (reverse edges only). `min_confidence`: when set, skips edges with loaded confidence below this threshold. Edges without confidence data always pass.
 
 Node resolution: tries `node_id_property` lookup first, then falls back to parsing as an AGE internal graph ID.
 
 ### graph_accel_path
 
 ```sql
-graph_accel_path(from_id TEXT, to_id TEXT, max_hops INT DEFAULT 10)
+graph_accel_path(
+    from_id TEXT,
+    to_id TEXT,
+    max_hops INT DEFAULT 10,
+    direction_filter TEXT DEFAULT 'both',
+    min_confidence FLOAT8 DEFAULT NULL
+)
   RETURNS TABLE(
     step      INT,
     node_id   BIGINT,
@@ -104,7 +115,45 @@ graph_accel_path(from_id TEXT, to_id TEXT, max_hops INT DEFAULT 10)
   )
 ```
 
-Finds the unweighted shortest path between two nodes. Returns the full path as ordered steps (0-indexed). Empty result set if no path exists within `max_hops` -- not an error. `direction` indicates whether each edge was followed in its stored direction or against it.
+Finds the unweighted shortest path between two nodes. Returns the full path as ordered steps (0-indexed). Empty result set if no path exists within `max_hops` -- not an error. `direction_filter` and `min_confidence` work the same as in `graph_accel_neighborhood`.
+
+### graph_accel_degree
+
+```sql
+graph_accel_degree(top_n INT DEFAULT 100)
+  RETURNS TABLE(
+    node_id      BIGINT,
+    label        TEXT,
+    app_id       TEXT,
+    out_degree   INT,
+    in_degree    INT,
+    total_degree INT
+  )
+```
+
+Returns nodes ranked by total degree (descending). `top_n = 0` returns all nodes. Useful for hub detection, ontology scoring, and annealing candidate ranking.
+
+### graph_accel_subgraph
+
+```sql
+graph_accel_subgraph(
+    start_id TEXT,
+    max_depth INT DEFAULT 3,
+    direction_filter TEXT DEFAULT 'both',
+    min_confidence FLOAT8 DEFAULT NULL
+)
+  RETURNS TABLE(
+    from_id     BIGINT,
+    from_label  TEXT,
+    from_app_id TEXT,
+    to_id       BIGINT,
+    to_label    TEXT,
+    to_app_id   TEXT,
+    rel_type    TEXT
+  )
+```
+
+Extracts the edge list within the subgraph reachable from `start_id`. Phase 1 discovers nodes via BFS, Phase 2 emits edges between discovered nodes. Useful for relationship counting, cross-ontology edge analysis, and component extraction.
 
 ### graph_accel_invalidate
 
@@ -207,7 +256,7 @@ docker cp target/release/graph_accel-pg17/.../lib/postgresql/graph_accel.so \
   my-postgres-container:/usr/lib/postgresql/17/lib/
 docker cp target/release/graph_accel-pg17/.../extension/graph_accel.control \
   my-postgres-container:/usr/share/postgresql/17/extension/
-docker cp target/release/graph_accel-pg17/.../extension/graph_accel--0.3.0.sql \
+docker cp target/release/graph_accel-pg17/.../extension/graph_accel--0.4.0.sql \
   my-postgres-container:/usr/share/postgresql/17/extension/
 
 # Activate
@@ -223,7 +272,7 @@ postgres:
   volumes:
     - ./graph_accel.so:/usr/lib/postgresql/17/lib/graph_accel.so:ro
     - ./graph_accel.control:/usr/share/postgresql/17/extension/graph_accel.control:ro
-    - ./graph_accel--0.3.0.sql:/usr/share/postgresql/17/extension/graph_accel--0.3.0.sql:ro
+    - ./graph_accel--0.4.0.sql:/usr/share/postgresql/17/extension/graph_accel--0.4.0.sql:ro
 ```
 
 ### Option B: Custom Dockerfile (production)
@@ -265,7 +314,10 @@ graph-accel/
 │       ├── generation.rs #  Cache invalidation, staleness check
 │       ├── status.rs   #   graph_accel_status()
 │       ├── neighborhood.rs  # graph_accel_neighborhood()
-│       └── path.rs     #   graph_accel_path()
+│       ├── path.rs     #   graph_accel_path()
+│       ├── degree.rs   #   graph_accel_degree()
+│       ├── subgraph.rs #   graph_accel_subgraph()
+│       └── util.rs     #   Shared helpers (direction parsing)
 ├── docs/               # Design docs, benchmark data
 │   ├── DESIGN.md       #   Technical deep dive
 │   └── benchmark-findings.md  # Measured performance data
@@ -304,9 +356,10 @@ $ ./target/release/graph_accel_bench scalefree 5000000
 | 1. Core engine | Done | Adjacency list, BFS, shortest path, 6-topology benchmark |
 | 2. pgrx extension | Done | SQL functions, SPI loading, GUCs, per-backend state |
 | 3. Cache invalidation | Done | Generation-based staleness, auto-reload, debouncing |
-| 4. Shared memory | Planned | Cross-backend graph sharing, background worker reload |
+| 4. Integration enablers | Done | Directed traversal, degree centrality, subgraph extraction, confidence filtering |
 | 5. API integration | Planned | Route queries through graph_accel when available |
-| 6. Publish | Planned | Standalone repo, PGXN submission |
+| 6. Shared memory | Deferred | Cross-backend graph sharing, background worker reload |
+| 7. Publish | Planned | Standalone repo, PGXN submission |
 
 See [docs/DESIGN.md](docs/DESIGN.md) for architectural details and design rationale.
 

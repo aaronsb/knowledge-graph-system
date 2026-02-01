@@ -10,5 +10,11 @@
 mod graph;
 mod traversal;
 
-pub use graph::{Direction, Edge, EdgeRecord, Graph, NodeId, NodeInfo, RelTypeId, MAX_REL_TYPES};
-pub use traversal::{bfs_neighborhood, shortest_path, NeighborResult, PathStep, TraversalResult};
+pub use graph::{
+    Direction, Edge, EdgeRecord, Graph, NodeId, NodeInfo, RelTypeId, TraversalDirection,
+    MAX_REL_TYPES,
+};
+pub use traversal::{
+    bfs_neighborhood, degree_centrality, extract_subgraph, shortest_path, DegreeResult,
+    NeighborResult, PathStep, SubgraphEdge, SubgraphResult, TraversalResult,
+};

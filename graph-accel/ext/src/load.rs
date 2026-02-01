@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use graph_accel_core::Graph;
+use graph_accel_core::{Edge, Graph};
 use pgrx::prelude::*;
 use pgrx::spi::{quote_identifier, quote_literal};
 
@@ -221,7 +221,7 @@ fn load_edges(
     let rel_type_id = graph.intern_rel_type(label_name);
 
     let query = format!(
-        "SELECT start_id::text, end_id::text FROM {}.{}",
+        "SELECT start_id::text, end_id::text, properties::text FROM {}.{}",
         quote_identifier(graph_name),
         quote_identifier(label_name)
     );
@@ -230,6 +230,7 @@ fn load_edges(
     for row in table {
         let from_str: Option<String> = row.get_by_name("start_id")?;
         let to_str: Option<String> = row.get_by_name("end_id")?;
+        let props_str: Option<String> = row.get_by_name("properties")?;
 
         let (Some(from_str), Some(to_str)) = (from_str, to_str) else {
             continue;
@@ -244,7 +245,13 @@ fn load_edges(
             Err(_) => continue,
         };
 
-        graph.add_edge(from_id, to_id, rel_type_id);
+        let confidence = props_str
+            .as_deref()
+            .and_then(|json| extract_json_float(json, "confidence"))
+            .map(|v| v as f32)
+            .unwrap_or(Edge::NO_CONFIDENCE);
+
+        graph.add_edge(from_id, to_id, rel_type_id, confidence);
     }
 
     Ok(())
@@ -261,6 +268,12 @@ fn extract_json_string(json: &str, key: &str) -> Option<String> {
         .get(key)
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
+}
+
+/// Extract a float value from a JSON object by key.
+fn extract_json_float(json: &str, key: &str) -> Option<f64> {
+    let value: serde_json::Value = serde_json::from_str(json).ok()?;
+    value.get(key).and_then(|v| v.as_f64())
 }
 
 /// Validate a name contains only safe characters before use in queries.

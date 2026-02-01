@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use crate::graph::{Direction, Graph, NodeId, RelTypeId};
+use crate::graph::{Direction, Graph, NodeId, RelTypeId, TraversalDirection};
 
 /// A node found during BFS neighborhood traversal.
 #[derive(Debug, Clone)]
@@ -33,14 +33,90 @@ pub struct TraversalResult {
     pub nodes_visited: usize,
 }
 
+/// A single edge in an extracted subgraph.
+#[derive(Debug, Clone)]
+pub struct SubgraphEdge {
+    pub from_id: NodeId,
+    pub from_label: String,
+    pub from_app_id: Option<String>,
+    pub to_id: NodeId,
+    pub to_label: String,
+    pub to_app_id: Option<String>,
+    pub rel_type: String,
+}
+
+/// Result of subgraph extraction.
+#[derive(Debug)]
+pub struct SubgraphResult {
+    pub node_count: usize,
+    pub edges: Vec<SubgraphEdge>,
+}
+
+/// Degree information for a single node.
+#[derive(Debug, Clone)]
+pub struct DegreeResult {
+    pub node_id: NodeId,
+    pub label: String,
+    pub app_id: Option<String>,
+    pub out_degree: u32,
+    pub in_degree: u32,
+    pub total_degree: u32,
+}
+
+/// Iterate neighbors according to a traversal direction filter and optional
+/// minimum confidence threshold.
+///
+/// Uses boolean flags to avoid Box/dyn dispatch — the compiler optimizes
+/// this into direct slice iteration with dead-code elimination.
+///
+/// Edges with NAN confidence (not loaded) always pass the filter — safe default.
+fn iter_neighbors<'a>(
+    graph: &'a Graph,
+    node: NodeId,
+    dir: TraversalDirection,
+    min_confidence: Option<f32>,
+) -> impl Iterator<Item = (&'a crate::graph::Edge, Direction)> {
+    let (use_out, use_inc) = match dir {
+        TraversalDirection::Outgoing => (true, false),
+        TraversalDirection::Incoming => (false, true),
+        TraversalDirection::Both => (true, true),
+    };
+
+    let out_iter = graph
+        .neighbors_out(node)
+        .iter()
+        .map(|e| (e, Direction::Outgoing))
+        .filter(move |_| use_out);
+
+    let in_iter = graph
+        .neighbors_in(node)
+        .iter()
+        .map(|e| (e, Direction::Incoming))
+        .filter(move |_| use_inc);
+
+    out_iter.chain(in_iter).filter(move |(e, _)| {
+        match min_confidence {
+            None => true,
+            Some(min) => !e.has_confidence() || e.confidence >= min,
+        }
+    })
+}
+
 /// BFS neighborhood: find all nodes reachable from `start` within `max_depth` hops.
 ///
-/// Traverses both outgoing and incoming edges (undirected). Uses visited-set
-/// pruning — each node is visited at most once, at its minimum distance.
+/// `direction` controls which edges to follow: `Both` for undirected,
+/// `Outgoing` for forward-only, `Incoming` for reverse-only.
 ///
-/// Stores parent pointers instead of cloning path Vecs at each node —
-/// paths are reconstructed lazily during result collection.
-pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> TraversalResult {
+/// Uses visited-set pruning — each node is visited at most once, at its
+/// minimum distance. Stores parent pointers instead of cloning path Vecs
+/// at each node — paths are reconstructed lazily during result collection.
+pub fn bfs_neighborhood(
+    graph: &Graph,
+    start: NodeId,
+    max_depth: u32,
+    direction: TraversalDirection,
+    min_confidence: Option<f32>,
+) -> TraversalResult {
     if graph.node(start).is_none() {
         return TraversalResult {
             neighbors: Vec::new(),
@@ -61,7 +137,7 @@ pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> Travers
             continue;
         }
 
-        for (edge, dir) in graph.neighbors_all(current) {
+        for (edge, dir) in iter_neighbors(graph, current, direction, min_confidence) {
             if !visited.contains_key(&edge.target) {
                 visited.insert(edge.target, (depth + 1, current, edge.rel_type, dir));
                 queue.push_back((edge.target, depth + 1));
@@ -122,6 +198,9 @@ fn reconstruct_path(
 
 /// Shortest path from `start` to `target` using BFS (unweighted).
 ///
+/// `direction` controls which edges to follow: `Both` for undirected,
+/// `Outgoing` for forward-only, `Incoming` for reverse-only.
+///
 /// Returns None if no path exists within `max_hops`, or if either node
 /// is not in the graph.
 /// Returns the path as a sequence of steps including both endpoints.
@@ -130,6 +209,8 @@ pub fn shortest_path(
     start: NodeId,
     target: NodeId,
     max_hops: u32,
+    direction: TraversalDirection,
+    min_confidence: Option<f32>,
 ) -> Option<Vec<PathStep>> {
     if graph.node(start).is_none() || graph.node(target).is_none() {
         return None;
@@ -163,7 +244,7 @@ pub fn shortest_path(
             continue;
         }
 
-        for (edge, dir) in graph.neighbors_all(current) {
+        for (edge, dir) in iter_neighbors(graph, current, direction, min_confidence) {
             if !visited.contains_key(&edge.target) {
                 visited.insert(edge.target, (current, edge.rel_type, dir));
 
@@ -214,10 +295,111 @@ fn reconstruct_sp_path(
     path
 }
 
+/// Extract the subgraph reachable from `start` within `max_depth` hops.
+///
+/// Phase 1: BFS to discover reachable nodes (respecting `direction` filter).
+/// Phase 2: For each discovered node, emit outgoing edges where the target
+/// is also in the discovered set. Uses outgoing-only iteration to avoid
+/// emitting each edge twice.
+pub fn extract_subgraph(
+    graph: &Graph,
+    start: NodeId,
+    max_depth: u32,
+    direction: TraversalDirection,
+    min_confidence: Option<f32>,
+) -> SubgraphResult {
+    use std::collections::HashSet;
+
+    if graph.node(start).is_none() {
+        return SubgraphResult {
+            node_count: 0,
+            edges: Vec::new(),
+        };
+    }
+
+    // Phase 1: BFS to discover reachable node set
+    let bfs = bfs_neighborhood(graph, start, max_depth, direction, min_confidence);
+    let mut node_set: HashSet<NodeId> = HashSet::with_capacity(bfs.nodes_visited);
+    node_set.insert(start);
+    for nr in &bfs.neighbors {
+        node_set.insert(nr.node_id);
+    }
+
+    // Phase 2: collect edges between discovered nodes
+    // Only iterate outgoing edges to avoid duplicates
+    let mut edges = Vec::new();
+    for &node_id in &node_set {
+        for edge in graph.neighbors_out(node_id) {
+            // Apply confidence filter to emitted edges
+            if let Some(min) = min_confidence {
+                if edge.has_confidence() && edge.confidence < min {
+                    continue;
+                }
+            }
+            if node_set.contains(&edge.target) {
+                let from_info = graph.node(node_id);
+                let to_info = graph.node(edge.target);
+                edges.push(SubgraphEdge {
+                    from_id: node_id,
+                    from_label: from_info.map(|n| n.label.clone()).unwrap_or_default(),
+                    from_app_id: from_info.and_then(|n| n.app_id.clone()),
+                    to_id: edge.target,
+                    to_label: to_info.map(|n| n.label.clone()).unwrap_or_default(),
+                    to_app_id: to_info.and_then(|n| n.app_id.clone()),
+                    rel_type: graph
+                        .rel_type_name(edge.rel_type)
+                        .unwrap_or("UNKNOWN")
+                        .to_string(),
+                });
+            }
+        }
+    }
+
+    SubgraphResult {
+        node_count: node_set.len(),
+        edges,
+    }
+}
+
+/// Return nodes ranked by degree (total connections).
+///
+/// If `top_n` is 0, returns all nodes. Otherwise returns the top N by
+/// total degree (descending). Ties are broken by node ID (ascending).
+pub fn degree_centrality(graph: &Graph, top_n: usize) -> Vec<DegreeResult> {
+    let mut results: Vec<DegreeResult> = graph
+        .nodes_iter()
+        .map(|(&id, info)| {
+            let out_degree = graph.neighbors_out(id).len() as u32;
+            let in_degree = graph.neighbors_in(id).len() as u32;
+            DegreeResult {
+                node_id: id,
+                label: info.label.clone(),
+                app_id: info.app_id.clone(),
+                out_degree,
+                in_degree,
+                total_degree: out_degree + in_degree,
+            }
+        })
+        .collect();
+
+    // Sort by total degree descending, then by node_id ascending for stability
+    results.sort_by(|a, b| {
+        b.total_degree
+            .cmp(&a.total_degree)
+            .then(a.node_id.cmp(&b.node_id))
+    });
+
+    if top_n > 0 && top_n < results.len() {
+        results.truncate(top_n);
+    }
+
+    results
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::{EdgeRecord, Graph};
+    use crate::graph::{Edge, EdgeRecord, Graph, TraversalDirection};
 
     fn edge(from: u64, to: u64, rel: &str) -> EdgeRecord {
         EdgeRecord {
@@ -228,6 +410,7 @@ mod tests {
             to_label: "Node".to_string(),
             from_app_id: None,
             to_app_id: None,
+            confidence: Edge::NO_CONFIDENCE,
         }
     }
 
@@ -247,6 +430,7 @@ mod tests {
             to_label: "Leaf".to_string(),
             from_app_id: None,
             to_app_id: None,
+            confidence: Edge::NO_CONFIDENCE,
         }));
         g
     }
@@ -262,7 +446,7 @@ mod tests {
     #[test]
     fn test_bfs_chain() {
         let g = make_chain(6);
-        let result = bfs_neighborhood(&g, 0, 10);
+        let result = bfs_neighborhood(&g, 0, 10, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 5);
         let node5 = result.neighbors.iter().find(|n| n.node_id == 5).unwrap();
         assert_eq!(node5.distance, 5);
@@ -271,7 +455,7 @@ mod tests {
     #[test]
     fn test_bfs_chain_depth_limited() {
         let g = make_chain(10);
-        let result = bfs_neighborhood(&g, 0, 3);
+        let result = bfs_neighborhood(&g, 0, 3, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 3);
         assert!(result.neighbors.iter().all(|n| n.distance <= 3));
     }
@@ -279,7 +463,7 @@ mod tests {
     #[test]
     fn test_bfs_star() {
         let g = make_star(0, 100);
-        let result = bfs_neighborhood(&g, 0, 1);
+        let result = bfs_neighborhood(&g, 0, 1, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 100);
         assert!(result.neighbors.iter().all(|n| n.distance == 1));
     }
@@ -287,14 +471,14 @@ mod tests {
     #[test]
     fn test_bfs_cycle_no_infinite_loop() {
         let g = make_cycle(5);
-        let result = bfs_neighborhood(&g, 0, 100);
+        let result = bfs_neighborhood(&g, 0, 100, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 4);
     }
 
     #[test]
     fn test_bfs_undirected() {
         let g = make_chain(2);
-        let result = bfs_neighborhood(&g, 1, 1);
+        let result = bfs_neighborhood(&g, 1, 1, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 1);
         assert_eq!(result.neighbors[0].node_id, 0);
     }
@@ -302,7 +486,7 @@ mod tests {
     #[test]
     fn test_bfs_empty_graph() {
         let g = Graph::new();
-        let result = bfs_neighborhood(&g, 0, 10);
+        let result = bfs_neighborhood(&g, 0, 10, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 0);
         assert_eq!(result.nodes_visited, 0);
     }
@@ -310,7 +494,7 @@ mod tests {
     #[test]
     fn test_bfs_start_not_in_graph() {
         let g = make_chain(3);
-        let result = bfs_neighborhood(&g, 999, 10);
+        let result = bfs_neighborhood(&g, 999, 10, TraversalDirection::Both, None);
         assert_eq!(result.neighbors.len(), 0);
         assert_eq!(result.nodes_visited, 0);
     }
@@ -318,7 +502,7 @@ mod tests {
     #[test]
     fn test_bfs_depth_zero() {
         let g = make_chain(5);
-        let result = bfs_neighborhood(&g, 0, 0);
+        let result = bfs_neighborhood(&g, 0, 0, TraversalDirection::Both, None);
         // Depth 0 = only start node, no neighbors
         assert_eq!(result.neighbors.len(), 0);
         assert_eq!(result.nodes_visited, 1);
@@ -328,7 +512,7 @@ mod tests {
     fn test_bfs_self_loop() {
         let mut g = Graph::new();
         g.load_edges(vec![edge(0, 0, "SELF")]);
-        let result = bfs_neighborhood(&g, 0, 5);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
         // Self-loop: node 0 is already visited as start, so no neighbors
         assert_eq!(result.neighbors.len(), 0);
     }
@@ -341,7 +525,7 @@ mod tests {
             edge(0, 1, "SUPPORTS"),
             edge(0, 1, "CONTRADICTS"),
         ]);
-        let result = bfs_neighborhood(&g, 0, 1);
+        let result = bfs_neighborhood(&g, 0, 1, TraversalDirection::Both, None);
         // Should find node 1 once (at distance 1) despite 3 parallel edges
         assert_eq!(result.neighbors.len(), 1);
         assert_eq!(result.neighbors[0].distance, 1);
@@ -352,7 +536,7 @@ mod tests {
     #[test]
     fn test_shortest_path_chain() {
         let g = make_chain(6);
-        let path = shortest_path(&g, 0, 5, 10).unwrap();
+        let path = shortest_path(&g, 0, 5, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 6);
         assert_eq!(path[0].node_id, 0);
         assert_eq!(path[5].node_id, 5);
@@ -363,7 +547,7 @@ mod tests {
     #[test]
     fn test_shortest_path_self() {
         let g = make_chain(3);
-        let path = shortest_path(&g, 1, 1, 10).unwrap();
+        let path = shortest_path(&g, 1, 1, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 1);
         assert_eq!(path[0].node_id, 1);
     }
@@ -373,14 +557,14 @@ mod tests {
         let mut g = Graph::new();
         g.add_node(0, "A".into(), None);
         g.add_node(1, "B".into(), None);
-        let path = shortest_path(&g, 0, 1, 10);
+        let path = shortest_path(&g, 0, 1, 10, TraversalDirection::Both, None);
         assert!(path.is_none());
     }
 
     #[test]
     fn test_shortest_path_max_hops() {
         let g = make_chain(10);
-        let path = shortest_path(&g, 0, 9, 5);
+        let path = shortest_path(&g, 0, 9, 5, TraversalDirection::Both, None);
         assert!(path.is_none());
     }
 
@@ -388,10 +572,10 @@ mod tests {
     fn test_shortest_path_max_hops_zero() {
         let g = make_chain(3);
         // max_hops=0 means no traversal allowed
-        let path = shortest_path(&g, 0, 1, 0);
+        let path = shortest_path(&g, 0, 1, 0, TraversalDirection::Both, None);
         assert!(path.is_none());
         // But start==target should still work even with max_hops=0
-        let path = shortest_path(&g, 0, 0, 0);
+        let path = shortest_path(&g, 0, 0, 0, TraversalDirection::Both, None);
         assert!(path.is_some());
         assert_eq!(path.unwrap().len(), 1);
     }
@@ -399,20 +583,20 @@ mod tests {
     #[test]
     fn test_shortest_path_cycle() {
         let g = make_cycle(6);
-        let path = shortest_path(&g, 0, 3, 10).unwrap();
+        let path = shortest_path(&g, 0, 3, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 4);
     }
 
     #[test]
     fn test_shortest_path_start_not_in_graph() {
         let g = make_chain(3);
-        assert!(shortest_path(&g, 999, 0, 10).is_none());
+        assert!(shortest_path(&g, 999, 0, 10, TraversalDirection::Both, None).is_none());
     }
 
     #[test]
     fn test_shortest_path_target_not_in_graph() {
         let g = make_chain(3);
-        assert!(shortest_path(&g, 0, 999, 10).is_none());
+        assert!(shortest_path(&g, 0, 999, 10, TraversalDirection::Both, None).is_none());
     }
 
     // --- Path type recording ---
@@ -425,10 +609,10 @@ mod tests {
         g.add_node(0, "A".into(), None);
         g.add_node(1, "B".into(), None);
         g.add_node(2, "C".into(), None);
-        g.add_edge(0, 1, implies);
-        g.add_edge(1, 2, supports);
+        g.add_edge(0, 1, implies, Edge::NO_CONFIDENCE);
+        g.add_edge(1, 2, supports, Edge::NO_CONFIDENCE);
 
-        let result = bfs_neighborhood(&g, 0, 5);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
         let node2 = result.neighbors.iter().find(|n| n.node_id == 2).unwrap();
         assert_eq!(node2.path_types, vec!["IMPLIES", "SUPPORTS"]);
     }
@@ -483,6 +667,7 @@ mod tests {
             to_label: "Concept".to_string(),
             from_app_id: Some("c_1".to_string()),
             to_app_id: Some("c_2".to_string()),
+            confidence: Edge::NO_CONFIDENCE,
         }]);
         assert_eq!(g.node_count(), 2);
         assert_eq!(g.edge_count(), 1);
@@ -502,7 +687,7 @@ mod tests {
     fn test_bfs_direction_outgoing() {
         // Chain 0→1→2, BFS from 0: both edges followed in their stored direction
         let g = make_chain(3);
-        let result = bfs_neighborhood(&g, 0, 5);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
         let node2 = result.neighbors.iter().find(|n| n.node_id == 2).unwrap();
         assert_eq!(node2.path_directions, vec![Direction::Outgoing, Direction::Outgoing]);
     }
@@ -511,7 +696,7 @@ mod tests {
     fn test_bfs_direction_incoming() {
         // Chain 0→1→2, BFS from 2: both edges followed against their stored direction
         let g = make_chain(3);
-        let result = bfs_neighborhood(&g, 2, 5);
+        let result = bfs_neighborhood(&g, 2, 5, TraversalDirection::Both, None);
         let node0 = result.neighbors.iter().find(|n| n.node_id == 0).unwrap();
         assert_eq!(node0.path_directions, vec![Direction::Incoming, Direction::Incoming]);
     }
@@ -521,7 +706,7 @@ mod tests {
         // 0→1←2: from node 0, reach 1 via outgoing, reach 2 via 1's incoming list
         let mut g = Graph::new();
         g.load_edges(vec![edge(0, 1, "A"), edge(2, 1, "B")]);
-        let result = bfs_neighborhood(&g, 0, 5);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
 
         let node1 = result.neighbors.iter().find(|n| n.node_id == 1).unwrap();
         assert_eq!(node1.path_directions, vec![Direction::Outgoing]);
@@ -540,7 +725,7 @@ mod tests {
         // Verify path_types and path_directions are always the same length
         let mut g = Graph::new();
         g.load_edges(vec![edge(0, 1, "IMPLIES"), edge(1, 2, "SUPPORTS")]);
-        let result = bfs_neighborhood(&g, 0, 5);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
         for n in &result.neighbors {
             assert_eq!(
                 n.path_types.len(),
@@ -555,7 +740,7 @@ mod tests {
     fn test_path_direction_forward() {
         // Chain 0→1→2, path from 0 to 2: both outgoing
         let g = make_chain(3);
-        let path = shortest_path(&g, 0, 2, 10).unwrap();
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 3);
         assert_eq!(path[0].direction, None); // start node
         assert_eq!(path[1].direction, Some(Direction::Outgoing));
@@ -566,7 +751,7 @@ mod tests {
     fn test_path_direction_reverse() {
         // Chain 0→1→2, path from 2 to 0: both incoming
         let g = make_chain(3);
-        let path = shortest_path(&g, 2, 0, 10).unwrap();
+        let path = shortest_path(&g, 2, 0, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 3);
         assert_eq!(path[0].direction, None); // start node
         assert_eq!(path[1].direction, Some(Direction::Incoming));
@@ -578,7 +763,7 @@ mod tests {
         // 0→1←2, path from 0 to 2: first outgoing, second incoming
         let mut g = Graph::new();
         g.load_edges(vec![edge(0, 1, "A"), edge(2, 1, "B")]);
-        let path = shortest_path(&g, 0, 2, 10).unwrap();
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 3);
         assert_eq!(path[0].direction, None);
         assert_eq!(path[1].direction, Some(Direction::Outgoing));   // 0→1
@@ -589,7 +774,7 @@ mod tests {
     fn test_path_direction_self() {
         // start == target: single step, no direction
         let g = make_chain(3);
-        let path = shortest_path(&g, 1, 1, 10).unwrap();
+        let path = shortest_path(&g, 1, 1, 10, TraversalDirection::Both, None).unwrap();
         assert_eq!(path.len(), 1);
         assert_eq!(path[0].direction, None);
     }
@@ -600,12 +785,329 @@ mod tests {
         let mut g = Graph::new();
         g.load_edges(vec![edge(0, 1, "SUPPORTS")]);
 
-        let from_0 = bfs_neighborhood(&g, 0, 1);
+        let from_0 = bfs_neighborhood(&g, 0, 1, TraversalDirection::Both, None);
         let n1 = from_0.neighbors.iter().find(|n| n.node_id == 1).unwrap();
         assert_eq!(n1.path_directions, vec![Direction::Outgoing]);
 
-        let from_1 = bfs_neighborhood(&g, 1, 1);
+        let from_1 = bfs_neighborhood(&g, 1, 1, TraversalDirection::Both, None);
         let n0 = from_1.neighbors.iter().find(|n| n.node_id == 0).unwrap();
         assert_eq!(n0.path_directions, vec![Direction::Incoming]);
+    }
+
+    // --- Directed-only traversal filter tests ---
+
+    #[test]
+    fn test_bfs_outgoing_only() {
+        // Chain 0→1→2: outgoing-only from 0 finds 1 and 2
+        let g = make_chain(3);
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Outgoing, None);
+        assert_eq!(result.neighbors.len(), 2);
+        assert!(result.neighbors.iter().any(|n| n.node_id == 1));
+        assert!(result.neighbors.iter().any(|n| n.node_id == 2));
+
+        // From 2, outgoing-only finds nothing (no outgoing edges from 2)
+        let result = bfs_neighborhood(&g, 2, 5, TraversalDirection::Outgoing, None);
+        assert_eq!(result.neighbors.len(), 0);
+    }
+
+    #[test]
+    fn test_bfs_incoming_only() {
+        // Chain 0→1→2: incoming-only from 2 finds 1 and 0
+        let g = make_chain(3);
+        let result = bfs_neighborhood(&g, 2, 5, TraversalDirection::Incoming, None);
+        assert_eq!(result.neighbors.len(), 2);
+        assert!(result.neighbors.iter().any(|n| n.node_id == 0));
+        assert!(result.neighbors.iter().any(|n| n.node_id == 1));
+
+        // From 0, incoming-only finds nothing (no incoming edges to 0)
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Incoming, None);
+        assert_eq!(result.neighbors.len(), 0);
+    }
+
+    #[test]
+    fn test_path_directed_outgoing() {
+        // Chain 0→1→2: outgoing path 0→2 works, reverse 2→0 returns None
+        let g = make_chain(3);
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Outgoing, None);
+        assert!(path.is_some());
+        assert_eq!(path.unwrap().len(), 3);
+
+        let path = shortest_path(&g, 2, 0, 10, TraversalDirection::Outgoing, None);
+        assert!(path.is_none());
+    }
+
+    #[test]
+    fn test_path_directed_incoming() {
+        // Chain 0→1→2: incoming path 2→0 works, forward 0→2 returns None
+        let g = make_chain(3);
+        let path = shortest_path(&g, 2, 0, 10, TraversalDirection::Incoming, None);
+        assert!(path.is_some());
+        assert_eq!(path.unwrap().len(), 3);
+
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Incoming, None);
+        assert!(path.is_none());
+    }
+
+    #[test]
+    fn test_star_directed() {
+        // Hub 0 with outgoing edges to 50 leaves
+        let g = make_star(0, 50);
+
+        // Outgoing from hub: finds all 50 leaves
+        let result = bfs_neighborhood(&g, 0, 1, TraversalDirection::Outgoing, None);
+        assert_eq!(result.neighbors.len(), 50);
+
+        // Incoming from hub: finds nothing (all edges point away from hub)
+        let result = bfs_neighborhood(&g, 0, 1, TraversalDirection::Incoming, None);
+        assert_eq!(result.neighbors.len(), 0);
+
+        // Outgoing from leaf: finds nothing (leaves have no outgoing edges)
+        let result = bfs_neighborhood(&g, 1, 1, TraversalDirection::Outgoing, None);
+        assert_eq!(result.neighbors.len(), 0);
+
+        // Incoming from leaf: finds hub
+        let result = bfs_neighborhood(&g, 1, 1, TraversalDirection::Incoming, None);
+        assert_eq!(result.neighbors.len(), 1);
+        assert_eq!(result.neighbors[0].node_id, 0);
+    }
+
+    #[test]
+    fn test_directed_both_matches_undirected() {
+        // Both should give same results as the undirected tests
+        let g = make_chain(6);
+        let both = bfs_neighborhood(&g, 0, 10, TraversalDirection::Both, None);
+        assert_eq!(both.neighbors.len(), 5);
+
+        // Outgoing + Incoming from same start should cover all Both neighbors
+        let out = bfs_neighborhood(&g, 0, 10, TraversalDirection::Outgoing, None);
+        let inc = bfs_neighborhood(&g, 0, 10, TraversalDirection::Incoming, None);
+        let mut union: Vec<NodeId> = out
+            .neighbors
+            .iter()
+            .chain(inc.neighbors.iter())
+            .map(|n| n.node_id)
+            .collect();
+        union.sort();
+        union.dedup();
+        let mut both_ids: Vec<NodeId> = both.neighbors.iter().map(|n| n.node_id).collect();
+        both_ids.sort();
+        assert_eq!(union, both_ids);
+    }
+
+    // --- Degree centrality tests ---
+
+    #[test]
+    fn test_degree_star() {
+        // Hub 0 with 50 outgoing edges to leaves
+        let g = make_star(0, 50);
+        let results = degree_centrality(&g, 0);
+
+        let hub = results.iter().find(|r| r.node_id == 0).unwrap();
+        assert_eq!(hub.out_degree, 50);
+        assert_eq!(hub.in_degree, 0);
+        assert_eq!(hub.total_degree, 50);
+
+        // Each leaf has in_degree=1 (from hub), out_degree=0
+        let leaf = results.iter().find(|r| r.node_id == 1).unwrap();
+        assert_eq!(leaf.out_degree, 0);
+        assert_eq!(leaf.in_degree, 1);
+        assert_eq!(leaf.total_degree, 1);
+    }
+
+    #[test]
+    fn test_degree_chain() {
+        // Chain 0→1→2→3→4
+        let g = make_chain(5);
+        let results = degree_centrality(&g, 0);
+
+        // Endpoints: degree 1
+        let node0 = results.iter().find(|r| r.node_id == 0).unwrap();
+        assert_eq!(node0.out_degree, 1);
+        assert_eq!(node0.in_degree, 0);
+        assert_eq!(node0.total_degree, 1);
+
+        let node4 = results.iter().find(|r| r.node_id == 4).unwrap();
+        assert_eq!(node4.out_degree, 0);
+        assert_eq!(node4.in_degree, 1);
+        assert_eq!(node4.total_degree, 1);
+
+        // Middle nodes: out=1, in=1, total=2
+        let node2 = results.iter().find(|r| r.node_id == 2).unwrap();
+        assert_eq!(node2.out_degree, 1);
+        assert_eq!(node2.in_degree, 1);
+        assert_eq!(node2.total_degree, 2);
+    }
+
+    #[test]
+    fn test_degree_top_n() {
+        // Star with hub having highest degree
+        let g = make_star(0, 50);
+        let results = degree_centrality(&g, 5);
+        assert_eq!(results.len(), 5);
+        // Hub should be first
+        assert_eq!(results[0].node_id, 0);
+        assert_eq!(results[0].total_degree, 50);
+    }
+
+    #[test]
+    fn test_degree_sorted() {
+        let g = make_star(0, 50);
+        let results = degree_centrality(&g, 0);
+        // Must be sorted descending by total_degree
+        for w in results.windows(2) {
+            assert!(
+                w[0].total_degree >= w[1].total_degree,
+                "not sorted: {} >= {} failed",
+                w[0].total_degree,
+                w[1].total_degree
+            );
+        }
+    }
+
+    #[test]
+    fn test_degree_empty() {
+        let g = Graph::new();
+        let results = degree_centrality(&g, 10);
+        assert!(results.is_empty());
+    }
+
+    // --- Subgraph extraction tests ---
+
+    #[test]
+    fn test_subgraph_chain() {
+        // Chain 0→1→2→3→4, depth 2 from 0: nodes 0,1,2 — edges 0→1, 1→2
+        let g = make_chain(5);
+        let sub = extract_subgraph(&g, 0, 2, TraversalDirection::Both, None);
+        assert_eq!(sub.node_count, 3); // 0, 1, 2
+        assert_eq!(sub.edges.len(), 2); // 0→1, 1→2
+    }
+
+    #[test]
+    fn test_subgraph_star() {
+        // Hub 0 → 10 leaves, depth 1: 11 nodes, 10 edges
+        let g = make_star(0, 10);
+        let sub = extract_subgraph(&g, 0, 1, TraversalDirection::Both, None);
+        assert_eq!(sub.node_count, 11);
+        assert_eq!(sub.edges.len(), 10);
+    }
+
+    #[test]
+    fn test_subgraph_directed() {
+        // Chain 0→1→2→3→4, outgoing from 2: reaches 3, 4
+        let g = make_chain(5);
+        let sub = extract_subgraph(&g, 2, 5, TraversalDirection::Outgoing, None);
+        assert_eq!(sub.node_count, 3); // 2, 3, 4
+        assert_eq!(sub.edges.len(), 2); // 2→3, 3→4
+    }
+
+    #[test]
+    fn test_subgraph_cycle() {
+        // Cycle 0→1→2→3→4→0: all 5 nodes, exactly 5 edges (no duplicates)
+        let g = make_cycle(5);
+        let sub = extract_subgraph(&g, 0, 10, TraversalDirection::Both, None);
+        assert_eq!(sub.node_count, 5);
+        assert_eq!(sub.edges.len(), 5);
+    }
+
+    #[test]
+    fn test_subgraph_rel_types() {
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "IMPLIES"), edge(1, 2, "SUPPORTS")]);
+        let sub = extract_subgraph(&g, 0, 5, TraversalDirection::Both, None);
+        let types: Vec<&str> = sub.edges.iter().map(|e| e.rel_type.as_str()).collect();
+        assert!(types.contains(&"IMPLIES"));
+        assert!(types.contains(&"SUPPORTS"));
+    }
+
+    #[test]
+    fn test_subgraph_empty() {
+        let g = make_chain(5);
+        // Node 999 doesn't exist — should return empty
+        let sub = extract_subgraph(&g, 999, 5, TraversalDirection::Both, None);
+        assert_eq!(sub.node_count, 0);
+        assert!(sub.edges.is_empty());
+    }
+
+    // --- Confidence filtering tests ---
+
+    fn edge_conf(from: u64, to: u64, rel: &str, conf: f32) -> EdgeRecord {
+        EdgeRecord {
+            from_id: from,
+            to_id: to,
+            rel_type: rel.to_string(),
+            from_label: "Node".to_string(),
+            to_label: "Node".to_string(),
+            from_app_id: None,
+            to_app_id: None,
+            confidence: conf,
+        }
+    }
+
+    #[test]
+    fn test_bfs_confidence_filter() {
+        // 0→1 (high confidence), 1→2 (low confidence)
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge_conf(0, 1, "A", 0.9),
+            edge_conf(1, 2, "B", 0.2),
+        ]);
+
+        // No filter: finds both
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, None);
+        assert_eq!(result.neighbors.len(), 2);
+
+        // Filter at 0.5: only finds node 1 (edge to 2 blocked)
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, Some(0.5));
+        assert_eq!(result.neighbors.len(), 1);
+        assert_eq!(result.neighbors[0].node_id, 1);
+    }
+
+    #[test]
+    fn test_confidence_nan_passes_filter() {
+        // NAN confidence (not loaded) should pass any threshold
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "A")]); // edge() uses NO_CONFIDENCE = NAN
+
+        let result = bfs_neighborhood(&g, 0, 5, TraversalDirection::Both, Some(0.99));
+        assert_eq!(result.neighbors.len(), 1);
+    }
+
+    #[test]
+    fn test_path_confidence_blocks() {
+        // 0→1 (high), 1→2 (low): path 0→2 blocked at confidence 0.5
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge_conf(0, 1, "A", 0.9),
+            edge_conf(1, 2, "B", 0.2),
+        ]);
+
+        // No filter: path exists
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Both, None);
+        assert!(path.is_some());
+
+        // With filter: path blocked
+        let path = shortest_path(&g, 0, 2, 10, TraversalDirection::Both, Some(0.5));
+        assert!(path.is_none());
+    }
+
+    #[test]
+    fn test_subgraph_confidence_filter() {
+        // 0→1 (0.9), 1→2 (0.2), 0→3 (0.8)
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge_conf(0, 1, "A", 0.9),
+            edge_conf(1, 2, "B", 0.2),
+            edge_conf(0, 3, "C", 0.8),
+        ]);
+
+        // No filter: 4 nodes, 3 edges
+        let sub = extract_subgraph(&g, 0, 5, TraversalDirection::Both, None);
+        assert_eq!(sub.node_count, 4);
+        assert_eq!(sub.edges.len(), 3);
+
+        // Filter at 0.5: BFS can't reach node 2 (edge 1→2 is 0.2), so 3 nodes, 2 edges
+        let sub = extract_subgraph(&g, 0, 5, TraversalDirection::Both, Some(0.5));
+        assert_eq!(sub.node_count, 3); // 0, 1, 3
+        assert_eq!(sub.edges.len(), 2); // 0→1, 0→3
     }
 }

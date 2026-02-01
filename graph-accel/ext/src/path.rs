@@ -8,6 +8,8 @@ fn graph_accel_path(
     from_id: String,
     to_id: String,
     max_hops: default!(i32, 10),
+    direction_filter: default!(String, "'both'"),
+    min_confidence: default!(Option<f64>, "NULL"),
 ) -> TableIterator<
     'static,
     (
@@ -20,12 +22,13 @@ fn graph_accel_path(
     ),
 > {
     crate::generation::ensure_fresh();
+    let direction = crate::util::parse_direction(&direction_filter);
 
     let results = state::with_graph(|gs| {
         let start = state::resolve_node(&gs.graph, &from_id);
         let target = state::resolve_node(&gs.graph, &to_id);
 
-        match graph_accel_core::shortest_path(&gs.graph, start, target, max_hops as u32) {
+        match graph_accel_core::shortest_path(&gs.graph, start, target, max_hops as u32, direction, min_confidence.map(|v| v as f32)) {
             Some(path) => path
                 .into_iter()
                 .enumerate()
