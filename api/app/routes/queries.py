@@ -1147,15 +1147,24 @@ async def find_related_concepts(
             # Use explicit types or None (all types)
             final_rel_types = request.relationship_types
 
-        # Build and execute related concepts query
-        query = QueryService.build_related_concepts_query(
+        # Build and execute per-depth queries to avoid path explosion.
+        # Each depth level is a separate fixed-length match query.
+        depth_queries = QueryService.build_related_concepts_query(
             request.max_depth,
             final_rel_types
         )
 
-        records = client._execute_cypher(
-            query, params={"concept_id": request.concept_id}
-        )
+        # Execute each depth and merge, keeping minimum distance per concept
+        seen = {}
+        for query, depth in depth_queries:
+            records = client._execute_cypher(
+                query, params={"concept_id": request.concept_id}
+            )
+            for record in (records or []):
+                cid = record['concept_id']
+                dist = record['distance']
+                if cid not in seen or dist < seen[cid]['distance']:
+                    seen[cid] = record
 
         results = [
             RelatedConcept(
@@ -1164,7 +1173,7 @@ async def find_related_concepts(
                 distance=record['distance'],
                 path_types=record['path_types']
             )
-            for record in (records or [])
+            for record in sorted(seen.values(), key=lambda r: (r['distance'], r['label']))
         ]
 
         return RelatedConceptsResponse(
