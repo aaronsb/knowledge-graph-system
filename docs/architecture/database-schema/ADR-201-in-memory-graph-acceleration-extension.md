@@ -146,7 +146,7 @@ The epoch trigger is installed automatically on `CREATE EXTENSION` for the confi
 
 **Load trigger model:**
 
-The extension follows an interrupt-driven pattern analogous to a hardware device sitting idle on a bus until an IRQ wakes it:
+The extension follows a "serve stale, reload async" pattern — inspired by Meta's TAO, where stale reads are almost always acceptable for graph traversal because topology doesn't change fast enough to matter for a neighborhood query. The goal: **always have something in memory to serve, improve it in the background.**
 
 ```
 ┌──────────┐     SQL function call      ┌──────────────────────┐
@@ -155,30 +155,64 @@ The extension follows an interrupt-driven pattern analogous to a hardware device
 └──────────┘                             │  1. Check epoch      │
                                          │     (1 row read)     │
                                          │                      │
-                              stale? ────│  2. Trigger reload   │
-                                    │    │     (SPI bulk read   │
-                                    │    │      from AGE tables │
-                                    │    │      → build HashMap │
-                                    │    │      → swap pointer) │
+                              stale? ────│  2. Signal bgworker  │
+                                    │    │     (async reload)   │
                                     │    │                      │
-                              fresh? ────│  3. Serve from       │
-                                         │     shared memory    │
-                                         │     (zero-copy read) │
+                                    │    │  3. Serve from       │
+                              fresh? ────│     current shared   │
+                                         │     memory (stale    │
+                                         │     is OK)           │
+                                         └──────────────────────┘
+
+                                         ┌──────────────────────┐
+                          signal ──────→ │ Background worker    │
+                                         │                      │
+                                         │  1. Advisory lock    │
+                                         │     (single writer)  │
+                                         │                      │
+                                         │  2. SPI bulk read    │
+                                         │     from AGE tables  │
+                                         │                      │
+                                         │  3. Build new        │
+                                         │     HashMap in       │
+                                         │     staging buffer   │
+                                         │                      │
+                                         │  4. Atomic swap      │
+                                         │                      │
+                                         │  5. Check epoch      │
+                                         │     again — if still │
+                                         │     stale, reload    │
+                                         │     immediately      │
+                                         │     (with debounce   │
+                                         │     cap)             │
                                          └──────────────────────┘
 ```
 
-**Idle state:** The extension occupies its allocated shared memory but uses zero CPU and zero I/O. No background workers, no polling, no timers. It's purely demand-driven.
+**Query path (never blocks):** Any `graph_accel_*()` query function is the interrupt source. The first instruction is always an epoch check — a single `SELECT epoch FROM graph_accel_epoch` (one row, one integer, ~0.01ms). If fresh, serve from shared memory. If stale, signal the background worker to begin a reload, then **serve the current (stale) graph immediately**. The caller never waits for a reload.
 
-**Load trigger:** Any `graph_accel_*()` query function call is the interrupt. The first instruction is always an epoch check — a single `SELECT epoch FROM graph_accel_epoch` (one row, one integer, ~0.01ms). If `loaded_epoch == current_epoch`, serve directly from shared memory. If stale, reload before serving.
+**Background worker (single writer):** A pgrx background worker handles all reloads. When signaled:
+1. Acquire `pg_try_advisory_lock` on a fixed key — if another reload is already in flight, exit immediately
+2. SPI bulk read from AGE's edge table into a staging buffer
+3. Build new adjacency structure
+4. Atomic pointer swap — new structure becomes active, old freed
+5. After completing, check epoch again — if writes continued during reload, start another pass immediately (up to `reload_debounce_sec` cap to avoid spin-reloading during bulk ingestion)
+
+**Single-writer guarantee:** The advisory lock ensures only one reload runs at a time, even if multiple backends notice staleness simultaneously. The second backend sees the lock is held and returns immediately — it knows a reload is already in progress and serves the current graph.
+
+**Cold start:** The one case where there is no graph to serve yet:
+- `preload = on`: background worker loads during Postgres startup, before connections are accepted. First query always has a graph.
+- `preload = off`: first query returns `ERROR: graph not loaded yet — loading in background, retry shortly`. The API layer retries after a short delay. Subsequent queries serve normally. This is cleanest because it avoids blocking the first caller for the full reload duration.
+
+**Reload coalescing:** During continuous writes (e.g. bulk ingestion), the epoch bumps faster than reloads complete. The background worker's post-reload epoch check handles this — if still stale after reload, start another pass. But `reload_debounce_sec` caps the rate: don't start a new reload within N seconds of the last one. This prevents spin-reloading during a long ingestion batch. The API layer can also suppress reload signals entirely during batch operations.
 
 **The critical path is the reload.** This is the memcpy-equivalent: serializing AGE's relational edge table into the in-memory adjacency structure. At target scale (50M edges), this involves:
 1. SPI query: `SELECT * FROM ag_catalog."knowledge_graph"._ag_label_edge` (~50M rows)
 2. Iterate rows, parse edge properties, build `HashMap` in a staging buffer
 3. Atomic pointer swap: new structure becomes active, old structure freed
 
-The SPI bulk read is the bottleneck — Postgres must scan the edge table and copy row data into the extension's memory context. This is bounded by disk I/O (if table is cold) or memory bandwidth (if table is in `shared_buffers`). On warm cache with NVMe storage, expect 5-20 seconds for 50M edges.
+The SPI bulk read is the bottleneck — Postgres must scan the edge table and copy row data into the extension's memory context. This is bounded by disk I/O (if table is cold) or memory bandwidth (if table is in `shared_buffers`). On warm cache with NVMe storage, expect 5-20 seconds for 50M edges. During this window, all queries continue serving from the previous graph snapshot.
 
-**Application-controlled triggers:** The API layer has full control over when reloads happen:
+**Application-controlled triggers:** The API layer has full control over reload behavior:
 
 ```sql
 -- Explicit reload (after bulk ingestion completes)
@@ -186,10 +220,10 @@ SELECT graph_accel_reload();
 
 -- Check without triggering reload
 SELECT * FROM graph_accel_status();
--- → loaded_epoch: 41, current_epoch: 42, status: 'stale'
+-- → loaded_epoch: 41, current_epoch: 42, status: 'stale_serving'
 
 -- Application-specific: stored procedure that checks business logic
--- before deciding whether to reload
+-- before signaling a reload
 CREATE OR REPLACE FUNCTION app_maybe_reload() RETURNS void AS $$
 DECLARE
     status record;
