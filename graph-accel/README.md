@@ -274,9 +274,9 @@ graph-accel/
     └── deploy-option0.sh        # Scripted Option 0 deployment
 ```
 
-**Core engine:** 771 lines, zero dependencies, 28 tests (26 unit + 2 integration).
-**Extension:** 602 lines wrapping core via pgrx.
-**Total:** ~1,400 lines of Rust.
+**Core engine:** 908 lines, zero dependencies, 35 unit tests.
+**Extension:** 897 lines wrapping core via pgrx.
+**Total:** ~1,800 lines of Rust.
 
 ## Standalone Benchmark
 
