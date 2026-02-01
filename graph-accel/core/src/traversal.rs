@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use crate::graph::{Graph, NodeId, RelTypeId};
+use crate::graph::{Direction, Graph, NodeId, RelTypeId};
 
 /// A node found during BFS neighborhood traversal.
 #[derive(Debug, Clone)]
@@ -11,6 +11,8 @@ pub struct NeighborResult {
     pub distance: u32,
     /// Relationship types on one shortest path from start to this node.
     pub path_types: Vec<String>,
+    /// Traversal direction of each edge on the path (parallel to path_types).
+    pub path_directions: Vec<Direction>,
 }
 
 /// A single step in a shortest path.
@@ -20,6 +22,8 @@ pub struct PathStep {
     pub label: String,
     pub app_id: Option<String>,
     pub rel_type: Option<String>,
+    /// Direction the edge was traversed to reach this node. None for the start node.
+    pub direction: Option<Direction>,
 }
 
 /// Result of a traversal operation.
@@ -44,12 +48,12 @@ pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> Travers
         };
     }
 
-    // visited maps node → (distance, parent_node, edge_rel_type)
-    // Start node uses itself as parent with a dummy rel_type of 0.
-    let mut visited: HashMap<NodeId, (u32, NodeId, RelTypeId)> = HashMap::new();
+    // visited maps node → (distance, parent_node, edge_rel_type, direction)
+    // Start node uses itself as parent with dummy rel_type and direction.
+    let mut visited: HashMap<NodeId, (u32, NodeId, RelTypeId, Direction)> = HashMap::new();
     let mut queue: VecDeque<(NodeId, u32)> = VecDeque::new();
 
-    visited.insert(start, (0, start, 0));
+    visited.insert(start, (0, start, 0, Direction::Outgoing));
     queue.push_back((start, 0));
 
     while let Some((current, depth)) = queue.pop_front() {
@@ -57,9 +61,9 @@ pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> Travers
             continue;
         }
 
-        for edge in graph.neighbors_all(current) {
+        for (edge, dir) in graph.neighbors_all(current) {
             if !visited.contains_key(&edge.target) {
-                visited.insert(edge.target, (depth + 1, current, edge.rel_type));
+                visited.insert(edge.target, (depth + 1, current, edge.rel_type, dir));
                 queue.push_back((edge.target, depth + 1));
             }
         }
@@ -67,19 +71,20 @@ pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> Travers
 
     let nodes_visited = visited.len();
 
-    // Reconstruct path_types lazily by walking parent pointers
+    // Reconstruct path_types + path_directions lazily by walking parent pointers
     let neighbors: Vec<NeighborResult> = visited
         .iter()
         .filter(|(&id, _)| id != start)
-        .map(|(&id, &(distance, _, _))| {
+        .map(|(&id, &(distance, _, _, _))| {
             let info = graph.node(id);
-            let path_types = reconstruct_path_types(graph, &visited, start, id);
+            let (path_types, path_directions) = reconstruct_path(graph, &visited, start, id);
             NeighborResult {
                 node_id: id,
                 label: info.map(|n| n.label.clone()).unwrap_or_default(),
                 app_id: info.and_then(|n| n.app_id.clone()),
                 distance,
                 path_types,
+                path_directions,
             }
         })
         .collect();
@@ -90,26 +95,29 @@ pub fn bfs_neighborhood(graph: &Graph, start: NodeId, max_depth: u32) -> Travers
     }
 }
 
-/// Walk parent pointers from `node` back to `start`, collecting rel_type names.
-fn reconstruct_path_types(
+/// Walk parent pointers from `node` back to `start`, collecting rel_type names and directions.
+fn reconstruct_path(
     graph: &Graph,
-    visited: &HashMap<NodeId, (u32, NodeId, RelTypeId)>,
+    visited: &HashMap<NodeId, (u32, NodeId, RelTypeId, Direction)>,
     start: NodeId,
     node: NodeId,
-) -> Vec<String> {
+) -> (Vec<String>, Vec<Direction>) {
     let mut types = Vec::new();
+    let mut directions = Vec::new();
     let mut current = node;
 
     while current != start {
-        let &(_, parent, rel_type) = &visited[&current];
+        let &(_, parent, rel_type, dir) = &visited[&current];
         if let Some(name) = graph.rel_type_name(rel_type) {
             types.push(name.to_string());
         }
+        directions.push(dir);
         current = parent;
     }
 
     types.reverse();
-    types
+    directions.reverse();
+    (types, directions)
 }
 
 /// Shortest path from `start` to `target` using BFS (unweighted).
@@ -134,6 +142,7 @@ pub fn shortest_path(
             label: info.map(|n| n.label.clone()).unwrap_or_default(),
             app_id: info.and_then(|n| n.app_id.clone()),
             rel_type: None,
+            direction: None,
         }]);
     }
 
@@ -141,12 +150,12 @@ pub fn shortest_path(
         return None;
     }
 
-    // BFS with parent tracking
-    let mut visited: HashMap<NodeId, (NodeId, RelTypeId)> = HashMap::new();
+    // BFS with parent tracking: node → (parent, rel_type, direction)
+    let mut visited: HashMap<NodeId, (NodeId, RelTypeId, Direction)> = HashMap::new();
     let mut queue: VecDeque<(NodeId, u32)> = VecDeque::new();
 
     // Sentinel: start node's parent is itself
-    visited.insert(start, (start, 0));
+    visited.insert(start, (start, 0, Direction::Outgoing));
     queue.push_back((start, 0));
 
     while let Some((current, depth)) = queue.pop_front() {
@@ -154,9 +163,9 @@ pub fn shortest_path(
             continue;
         }
 
-        for edge in graph.neighbors_all(current) {
+        for (edge, dir) in graph.neighbors_all(current) {
             if !visited.contains_key(&edge.target) {
-                visited.insert(edge.target, (current, edge.rel_type));
+                visited.insert(edge.target, (current, edge.rel_type, dir));
 
                 if edge.target == target {
                     return Some(reconstruct_sp_path(graph, &visited, start, target));
@@ -172,7 +181,7 @@ pub fn shortest_path(
 
 fn reconstruct_sp_path(
     graph: &Graph,
-    visited: &HashMap<NodeId, (NodeId, RelTypeId)>,
+    visited: &HashMap<NodeId, (NodeId, RelTypeId, Direction)>,
     start: NodeId,
     target: NodeId,
 ) -> Vec<PathStep> {
@@ -181,7 +190,7 @@ fn reconstruct_sp_path(
 
     loop {
         let info = graph.node(current);
-        let &(parent, rel_type) = &visited[&current];
+        let &(parent, rel_type, dir) = &visited[&current];
 
         path.push(PathStep {
             node_id: current,
@@ -192,6 +201,7 @@ fn reconstruct_sp_path(
             } else {
                 graph.rel_type_name(rel_type).map(|s| s.to_string())
             },
+            direction: if current == start { None } else { Some(dir) },
         });
 
         if current == start {
@@ -484,5 +494,118 @@ mod tests {
     fn test_memory_usage_nonzero() {
         let g = make_star(0, 100);
         assert!(g.memory_usage() > 0);
+    }
+
+    // --- Direction tracking tests ---
+
+    #[test]
+    fn test_bfs_direction_outgoing() {
+        // Chain 0→1→2, BFS from 0: both edges followed in their stored direction
+        let g = make_chain(3);
+        let result = bfs_neighborhood(&g, 0, 5);
+        let node2 = result.neighbors.iter().find(|n| n.node_id == 2).unwrap();
+        assert_eq!(node2.path_directions, vec![Direction::Outgoing, Direction::Outgoing]);
+    }
+
+    #[test]
+    fn test_bfs_direction_incoming() {
+        // Chain 0→1→2, BFS from 2: both edges followed against their stored direction
+        let g = make_chain(3);
+        let result = bfs_neighborhood(&g, 2, 5);
+        let node0 = result.neighbors.iter().find(|n| n.node_id == 0).unwrap();
+        assert_eq!(node0.path_directions, vec![Direction::Incoming, Direction::Incoming]);
+    }
+
+    #[test]
+    fn test_bfs_direction_mixed() {
+        // 0→1←2: from node 0, reach 1 via outgoing, reach 2 via 1's incoming list
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "A"), edge(2, 1, "B")]);
+        let result = bfs_neighborhood(&g, 0, 5);
+
+        let node1 = result.neighbors.iter().find(|n| n.node_id == 1).unwrap();
+        assert_eq!(node1.path_directions, vec![Direction::Outgoing]);
+
+        let node2 = result.neighbors.iter().find(|n| n.node_id == 2).unwrap();
+        assert_eq!(node2.distance, 2);
+        // 0→1 (outgoing), then 1←2 means 2→1 stored, so from 1's perspective
+        // node 2 is in 1's incoming list (2→1), traversed as Incoming from 1 to reach 2
+        assert_eq!(node2.path_directions.len(), 2);
+        assert_eq!(node2.path_directions[0], Direction::Outgoing); // 0→1
+        assert_eq!(node2.path_directions[1], Direction::Incoming); // 1←2 (followed backward)
+    }
+
+    #[test]
+    fn test_bfs_direction_parallel_to_path_types() {
+        // Verify path_types and path_directions are always the same length
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "IMPLIES"), edge(1, 2, "SUPPORTS")]);
+        let result = bfs_neighborhood(&g, 0, 5);
+        for n in &result.neighbors {
+            assert_eq!(
+                n.path_types.len(),
+                n.path_directions.len(),
+                "path_types and path_directions must be parallel for node {}",
+                n.node_id
+            );
+        }
+    }
+
+    #[test]
+    fn test_path_direction_forward() {
+        // Chain 0→1→2, path from 0 to 2: both outgoing
+        let g = make_chain(3);
+        let path = shortest_path(&g, 0, 2, 10).unwrap();
+        assert_eq!(path.len(), 3);
+        assert_eq!(path[0].direction, None); // start node
+        assert_eq!(path[1].direction, Some(Direction::Outgoing));
+        assert_eq!(path[2].direction, Some(Direction::Outgoing));
+    }
+
+    #[test]
+    fn test_path_direction_reverse() {
+        // Chain 0→1→2, path from 2 to 0: both incoming
+        let g = make_chain(3);
+        let path = shortest_path(&g, 2, 0, 10).unwrap();
+        assert_eq!(path.len(), 3);
+        assert_eq!(path[0].direction, None); // start node
+        assert_eq!(path[1].direction, Some(Direction::Incoming));
+        assert_eq!(path[2].direction, Some(Direction::Incoming));
+    }
+
+    #[test]
+    fn test_path_direction_mixed() {
+        // 0→1←2, path from 0 to 2: first outgoing, second incoming
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "A"), edge(2, 1, "B")]);
+        let path = shortest_path(&g, 0, 2, 10).unwrap();
+        assert_eq!(path.len(), 3);
+        assert_eq!(path[0].direction, None);
+        assert_eq!(path[1].direction, Some(Direction::Outgoing));   // 0→1
+        assert_eq!(path[2].direction, Some(Direction::Incoming));   // 1←2
+    }
+
+    #[test]
+    fn test_path_direction_self() {
+        // start == target: single step, no direction
+        let g = make_chain(3);
+        let path = shortest_path(&g, 1, 1, 10).unwrap();
+        assert_eq!(path.len(), 1);
+        assert_eq!(path[0].direction, None);
+    }
+
+    #[test]
+    fn test_direction_symmetric() {
+        // Edge 0→1: from 0's perspective it's Outgoing, from 1's perspective it's Incoming
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "SUPPORTS")]);
+
+        let from_0 = bfs_neighborhood(&g, 0, 1);
+        let n1 = from_0.neighbors.iter().find(|n| n.node_id == 1).unwrap();
+        assert_eq!(n1.path_directions, vec![Direction::Outgoing]);
+
+        let from_1 = bfs_neighborhood(&g, 1, 1);
+        let n0 = from_1.neighbors.iter().find(|n| n.node_id == 0).unwrap();
+        assert_eq!(n0.path_directions, vec![Direction::Incoming]);
     }
 }

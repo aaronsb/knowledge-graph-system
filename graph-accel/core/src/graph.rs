@@ -9,6 +9,15 @@ pub type RelTypeId = u16;
 /// Maximum number of distinct relationship types (u16::MAX).
 pub const MAX_REL_TYPES: usize = u16::MAX as usize;
 
+/// Whether an edge was traversed in its original direction or against it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    /// Edge followed from → to (its stored direction).
+    Outgoing,
+    /// Edge followed to ← from (against its stored direction).
+    Incoming,
+}
+
 /// Metadata about a node.
 #[derive(Debug, Clone)]
 pub struct NodeInfo {
@@ -182,11 +191,16 @@ impl Graph {
         self.incoming.get(&id).map(|v| v.as_slice()).unwrap_or(&[])
     }
 
-    /// Get both outgoing and incoming edges (undirected traversal).
-    pub fn neighbors_all(&self, id: NodeId) -> impl Iterator<Item = &Edge> {
+    /// Get both outgoing and incoming edges, tagged with traversal direction.
+    pub fn neighbors_all(&self, id: NodeId) -> impl Iterator<Item = (&Edge, Direction)> {
         self.neighbors_out(id)
             .iter()
-            .chain(self.neighbors_in(id).iter())
+            .map(|e| (e, Direction::Outgoing))
+            .chain(
+                self.neighbors_in(id)
+                    .iter()
+                    .map(|e| (e, Direction::Incoming)),
+            )
     }
 
     pub fn node_count(&self) -> usize {
