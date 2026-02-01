@@ -1,25 +1,28 @@
 # ADR-201 Implementation: In-Memory Graph Acceleration Extension
 
-Branch: `feature/graph-accel-extension`
 ADR: [ADR-201](docs/architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension.md)
 
 ## Phase 1: Scaffold & Proof of Concept ✓
+Merged: PR #263 → `main`
 - [x] Initialize Rust workspace (`graph-accel/` with `core` and `bench` crates)
 - [x] Set up dual build: `graph-accel-core` lib (no Postgres deps) + `graph-accel-bench` binary
 - [x] Implement core adjacency structure (`HashMap<NodeId, Vec<Edge>>`) in `graph-accel-core`
-- [x] Implement BFS neighborhood traversal with visited-set pruning
+- [x] Implement BFS neighborhood traversal with visited-set pruning (parent pointers, lazy path reconstruction)
 - [x] Implement shortest path (BFS, unweighted, parent backtracking)
 - [x] Write standalone benchmark with 6 topology generators (L-system, scale-free, small-world, Erdos-Renyi, barbell, DLA)
 - [x] Validate at target scale: 5M nodes / 50M edges — bounded-depth queries in ms, full-graph traversal in seconds
-- [x] 13 unit tests (chains, stars, cycles, disconnected, depth limits, undirected, app IDs)
+- [x] 26 unit tests (chains, stars, cycles, self-loops, parallel edges, depth limits, undirected, app IDs, bounds checks)
+- [x] Code review: EdgeRecord struct, parent-pointer BFS, u16 bounds check, memory_usage accuracy, VecDeque DLA
 
-## Phase 2: PostgreSQL Extension Shell
-- [ ] Wire up pgrx extension: `_PG_init`, GUC parameter registration
-- [ ] Implement `graph_accel_status()` — returns extension state
-- [ ] Implement `graph_accel_load(graph_name)` — SPI query to read AGE edge table, populate shared memory structure
-- [ ] Implement `graph_accel_neighborhood(node_id, max_depth)` — BFS from shared memory, returns set
-- [ ] Implement `graph_accel_path(from_id, to_id, max_hops)` — shortest path from shared memory
-- [ ] Option 0 deployment: manually copy .so into running `knowledge-graph-postgres` container, test
+## Phase 2: PostgreSQL Extension Shell ✓
+Branch: `feature/graph-accel-pgrx-shell`
+- [x] Wire up pgrx 0.16.1 extension: `_PG_init`, 7 GUC parameters registered
+- [x] Implement `graph_accel_status()` — returns extension state (works when unloaded)
+- [x] Implement `graph_accel_load(graph_name)` — SPI reads AGE label catalog, loads per-table with filtering
+- [x] Implement `graph_accel_neighborhood(start_id, max_depth)` — BFS via core engine, dual node resolution
+- [x] Implement `graph_accel_path(from_id, to_id, max_hops)` — shortest path via core engine
+- [x] Verified: `cargo pgrx run pg17` — extension loads, status/GUCs work in PG 17.7
+- [ ] Option 0 deployment: copy .so into running `knowledge-graph-postgres` container, test against live graph
 
 ## Phase 3: Epoch Invalidation
 - [ ] Create `graph_accel_epoch` table and trigger on AGE vertex/edge tables
