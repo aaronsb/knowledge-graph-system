@@ -1,0 +1,13 @@
+[package]
+name = "graph-accel-bench"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Benchmark binary for graph-accel-core traversal engine"
+
+[[bin]]
+name = "graph-accel-bench"
+path = "src/main.rs"
+
+[dependencies]
+graph-accel-core = { path = "../core" }
