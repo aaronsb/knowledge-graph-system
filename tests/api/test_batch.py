@@ -474,3 +474,156 @@ class TestBatchCreationMethod:
             call_args = mock_service.execute_batch.call_args
             request = call_args.kwargs.get('request') or call_args.args[0]
             assert request.creation_method.value == "api"
+
+
+class TestBatchOntologyIntegration:
+    """Tests for ontology node creation and SCOPED_BY edges in BatchService."""
+
+    @pytest.fixture
+    def mock_age_client(self):
+        """Provide a mock AGEClient with ontology methods."""
+        client = MagicMock()
+        client.graph_name = "knowledge_graph"
+        client.get_current_epoch.return_value = 1
+        client.ensure_ontology_exists.return_value = {
+            "ontology_id": "ont_test123",
+            "name": "test-ontology",
+            "lifecycle_state": "active",
+            "embedding": None,
+        }
+        client.update_ontology_embedding.return_value = True
+
+        # Mock pool/connection for transaction phase
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None
+        mock_cursor.fetchall.return_value = []
+        mock_conn.cursor.return_value.__enter__ = lambda s: mock_cursor
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        client.pool.getconn.return_value = mock_conn
+        client._parse_agtype = lambda x: x
+
+        return client
+
+    @pytest.fixture
+    def mock_embedding(self):
+        """Provide a mock embedding worker."""
+        worker = MagicMock()
+        worker.generate_concept_embedding.return_value = {
+            "success": True,
+            "embedding": [0.1] * 384
+        }
+        return worker
+
+    @pytest.mark.asyncio
+    async def test_execute_batch_calls_ensure_ontology_exists(
+        self, mock_age_client, mock_embedding
+    ):
+        """BatchService calls ensure_ontology_exists before the transaction."""
+        from api.app.services.batch_service import BatchService
+        from api.app.models.graph import BatchCreateRequest
+
+        service = BatchService(mock_age_client)
+        service._embedding_worker = mock_embedding
+
+        request = BatchCreateRequest(
+            ontology="test-ontology",
+            concepts=[{"label": "Test Concept"}]
+        )
+
+        try:
+            await service.execute_batch(request, user_id=100)
+        except Exception:
+            pass  # Transaction will fail on mocked DB, that's fine
+
+        mock_age_client.ensure_ontology_exists.assert_called_once_with(
+            "test-ontology", created_by="100"
+        )
+
+    @pytest.mark.asyncio
+    async def test_execute_batch_rejects_frozen_ontology(
+        self, mock_age_client, mock_embedding
+    ):
+        """BatchService rejects batch when ontology is frozen."""
+        from api.app.services.batch_service import BatchService
+        from api.app.models.graph import BatchCreateRequest
+
+        mock_age_client.ensure_ontology_exists.return_value = {
+            "ontology_id": "ont_frozen",
+            "name": "frozen-ontology",
+            "lifecycle_state": "frozen",
+            "embedding": [0.1] * 384,
+        }
+
+        service = BatchService(mock_age_client)
+        service._embedding_worker = mock_embedding
+
+        request = BatchCreateRequest(
+            ontology="frozen-ontology",
+            concepts=[{"label": "Should Not Create"}]
+        )
+
+        response = await service.execute_batch(request, user_id=100)
+
+        assert len(response.errors) > 0
+        assert "frozen" in response.errors[0].lower()
+        assert response.concepts_created == 0
+
+    @pytest.mark.asyncio
+    async def test_execute_batch_generates_ontology_embedding(
+        self, mock_age_client, mock_embedding
+    ):
+        """BatchService generates embedding for ontology if missing."""
+        from api.app.services.batch_service import BatchService
+        from api.app.models.graph import BatchCreateRequest
+
+        service = BatchService(mock_age_client)
+        service._embedding_worker = mock_embedding
+
+        request = BatchCreateRequest(
+            ontology="test-ontology",
+            concepts=[{"label": "Test Concept"}]
+        )
+
+        try:
+            await service.execute_batch(request, user_id=100)
+        except Exception:
+            pass
+
+        # Embedding worker should be called for the ontology text
+        embedding_calls = [
+            c for c in mock_embedding.generate_concept_embedding.call_args_list
+            if "test-ontology" in str(c)
+        ]
+        assert len(embedding_calls) > 0
+        mock_age_client.update_ontology_embedding.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_batch_skips_embedding_if_present(
+        self, mock_age_client, mock_embedding
+    ):
+        """BatchService skips ontology embedding if already present."""
+        from api.app.services.batch_service import BatchService
+        from api.app.models.graph import BatchCreateRequest
+
+        mock_age_client.ensure_ontology_exists.return_value = {
+            "ontology_id": "ont_test123",
+            "name": "test-ontology",
+            "lifecycle_state": "active",
+            "embedding": [0.1] * 384,  # Already has embedding
+        }
+
+        service = BatchService(mock_age_client)
+        service._embedding_worker = mock_embedding
+
+        request = BatchCreateRequest(
+            ontology="test-ontology",
+            concepts=[{"label": "Test Concept"}]
+        )
+
+        try:
+            await service.execute_batch(request, user_id=100)
+        except Exception:
+            pass
+
+        mock_age_client.update_ontology_embedding.assert_not_called()

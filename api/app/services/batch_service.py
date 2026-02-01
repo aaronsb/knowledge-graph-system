@@ -132,6 +132,40 @@ class BatchService:
             response.errors.append("Failed to generate embeddings for some concepts")
             return response
 
+        # Phase 1b: Ensure ontology node exists (before transaction)
+        # BatchService was missing this — concepts got ontology as a property
+        # but no (:Ontology) node or SCOPED_BY edges were created.
+        if request.ontology:
+            try:
+                ont_node = self.age_client.ensure_ontology_exists(
+                    request.ontology, created_by=str(user_id) if user_id else "system"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to ensure Ontology node for '{request.ontology}': {e}")
+                ont_node = None
+
+            if ont_node and ont_node.get("lifecycle_state") == "frozen":
+                response.errors.append(
+                    f"Ontology '{request.ontology}' is frozen (read-only). "
+                    "Set lifecycle state to 'active' before creating concepts."
+                )
+                return response
+
+            # Generate ontology embedding if missing
+            if ont_node and not ont_node.get("embedding"):
+                try:
+                    ont_text = request.ontology
+                    desc = ont_node.get("description")
+                    if desc:
+                        ont_text = f"{request.ontology}: {desc}"
+                    result = self.embedding_worker.generate_concept_embedding(ont_text)
+                    emb_vector = result.get("embedding", []) if result.get("success") else []
+                    if emb_vector:
+                        self.age_client.update_ontology_embedding(request.ontology, emb_vector)
+                        logger.info(f"Generated embedding for ontology '{request.ontology}'")
+                except Exception as e:
+                    logger.debug(f"Skipped ontology embedding: {e}")
+
         # Phase 2: Execute database operations in transaction
         conn = self.age_client.pool.getconn()
         try:
@@ -476,6 +510,18 @@ class BatchService:
             $$) as (source_id agtype);
         """
         cur.execute(query)
+
+        # Create SCOPED_BY edge to ontology node
+        scope_query = f"""
+            SELECT * FROM cypher('{self.age_client.graph_name}', $$
+                MATCH (s:Source {{source_id: '{source_id}'}}),
+                      (o:Ontology {{name: '{escaped_ontology}'}})
+                CREATE (s)-[:SCOPED_BY]->(o)
+                RETURN s.source_id as source_id
+            $$) as (source_id agtype);
+        """
+        cur.execute(scope_query)
+
         return source_id
 
     async def _create_concept_node_in_transaction(
