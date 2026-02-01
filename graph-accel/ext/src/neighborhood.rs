@@ -16,6 +16,8 @@ fn graph_accel_neighborhood(
         name!(path_types, Vec<String>),
     ),
 > {
+    crate::generation::ensure_fresh();
+
     let results = state::with_graph(|gs| {
         let internal_id = state::resolve_node(&gs.graph, &start_id);
 

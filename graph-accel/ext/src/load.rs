@@ -4,38 +4,26 @@ use graph_accel_core::Graph;
 use pgrx::prelude::*;
 use pgrx::spi::{quote_identifier, quote_literal};
 
+use crate::generation;
 use crate::guc;
 use crate::state::{self, GraphState};
 
-#[pg_extern]
-fn graph_accel_load(
-    graph_name: default!(Option<String>, "NULL"),
-) -> TableIterator<
-    'static,
-    (
-        name!(node_count, i64),
-        name!(edge_count, i64),
-        name!(load_time_ms, f64),
-    ),
-> {
+/// Core load logic, callable from both `graph_accel_load()` and `ensure_fresh()`.
+///
+/// Loads the graph via SPI, captures the current generation, and sets per-backend state.
+/// Returns (node_count, edge_count, load_time_ms).
+pub(crate) fn do_load(graph_name: &str) -> (i64, i64, f64) {
     let start = Instant::now();
 
-    // Resolve graph name: explicit argument > GUC > error
-    let gname = graph_name
-        .or_else(|| guc::get_string(&guc::SOURCE_GRAPH))
-        .unwrap_or_else(|| {
-            error!("graph_accel: source_graph not set and no graph_name argument provided");
-        });
+    validate_name(graph_name);
 
-    validate_name(&gname);
-
-    let (node_count, edge_count) = Spi::connect(|client| {
+    let (node_count, edge_count, loaded_gen) = Spi::connect(|client| {
         // Verify graph exists
         let exists = client
             .select(
                 &format!(
                     "SELECT 1 FROM ag_catalog.ag_graph WHERE name = {}",
-                    quote_literal(&gname)
+                    quote_literal(graph_name)
                 ),
                 None,
                 &[],
@@ -44,11 +32,11 @@ fn graph_accel_load(
             .is_some();
 
         if !exists {
-            error!("graph_accel: AGE graph '{}' does not exist", gname);
+            error!("graph_accel: AGE graph '{}' does not exist", graph_name);
         }
 
         // Get label catalog for this graph
-        let labels = load_label_catalog(&client, &gname)?;
+        let labels = load_label_catalog(&client, graph_name)?;
 
         // Parse GUC filters
         let node_label_filter = parse_filter(
@@ -68,7 +56,7 @@ fn graph_accel_load(
             }
             load_vertices(
                 &client,
-                &gname,
+                graph_name,
                 &label.name,
                 node_id_prop.as_deref(),
                 &mut graph,
@@ -80,7 +68,7 @@ fn graph_accel_load(
             if !matches_filter(&label.name, &edge_type_filter) {
                 continue;
             }
-            load_edges(&client, &gname, &label.name, &mut graph)?;
+            load_edges(&client, graph_name, &label.name, &mut graph)?;
         }
 
         // Check memory limit
@@ -93,24 +81,51 @@ fn graph_accel_load(
             );
         }
 
+        // Read current generation (0 if no row or table inaccessible)
+        let gen = generation::fetch_generation_spi(&client, graph_name).unwrap_or(0);
+
         let nc = graph.node_count() as i64;
         let ec = graph.edge_count() as i64;
 
         state::set_graph(GraphState {
             graph,
-            source_graph: gname,
+            source_graph: graph_name.to_string(),
             load_time_ms: start.elapsed().as_secs_f64() * 1000.0,
             loaded_at: Instant::now(),
+            loaded_generation: gen,
         });
 
-        Ok::<_, pgrx::spi::SpiError>((nc, ec))
+        Ok::<_, pgrx::spi::SpiError>((nc, ec, gen))
     })
     .unwrap_or_else(|e| {
         error!("graph_accel_load: SPI error: {}", e);
     });
 
     let load_time_ms = start.elapsed().as_secs_f64() * 1000.0;
-    TableIterator::once((node_count, edge_count, load_time_ms))
+    let _ = loaded_gen; // used internally via set_graph
+    (node_count, edge_count, load_time_ms)
+}
+
+#[pg_extern]
+fn graph_accel_load(
+    graph_name: default!(Option<String>, "NULL"),
+) -> TableIterator<
+    'static,
+    (
+        name!(node_count, i64),
+        name!(edge_count, i64),
+        name!(load_time_ms, f64),
+    ),
+> {
+    // Resolve graph name: explicit argument > GUC > error
+    let gname = graph_name
+        .or_else(|| guc::get_string(&guc::SOURCE_GRAPH))
+        .unwrap_or_else(|| {
+            error!("graph_accel: source_graph not set and no graph_name argument provided");
+        });
+
+    let result = do_load(&gname);
+    TableIterator::once(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -250,7 +265,7 @@ fn extract_json_string(json: &str, key: &str) -> Option<String> {
 
 /// Validate a name contains only safe characters before use in queries.
 /// Uses pgrx error!() instead of assert!() for proper Postgres ERROR handling.
-fn validate_name(name: &str) {
+pub(crate) fn validate_name(name: &str) {
     if name.is_empty() || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
         error!("graph_accel: invalid name: '{}'", name);
     }

@@ -17,6 +17,8 @@ fn graph_accel_path(
         name!(rel_type, Option<String>),
     ),
 > {
+    crate::generation::ensure_fresh();
+
     let results = state::with_graph(|gs| {
         let start = state::resolve_node(&gs.graph, &from_id);
         let target = state::resolve_node(&gs.graph, &to_id);
