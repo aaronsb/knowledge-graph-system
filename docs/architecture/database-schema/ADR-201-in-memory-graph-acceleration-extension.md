@@ -213,7 +213,88 @@ The standalone benchmark binary includes six synthetic graph generators. Differe
 | Edges | ~50,000,000 | ~2.5GB |
 | **Total in-memory** | | **~3GB** |
 
-At 50M edges with average degree 10, BFS to depth 10 touches at most 10^10 candidate paths — but with visited-set pruning, it touches at most 5M nodes (the entire graph). Wall time: milliseconds, bounded by node count, not path count.
+At 50M edges with average degree 10, BFS to depth 10 touches at most 10^10 candidate paths — but with visited-set pruning, it touches at most 5M nodes (the entire graph). Wall time: milliseconds for bounded-depth queries, seconds for full-graph traversal.
+
+### Standalone Benchmark Results (5M nodes)
+
+Measured with `graph-accel-bench` on the same hardware (16 cores / 32 threads, 128GB RAM). Six synthetic topologies at target scale. All generation + traversal runs single-threaded.
+
+**Generation performance:**
+
+| Topology | Nodes | Edges | Memory | Gen Time |
+|----------|-------|-------|--------|----------|
+| L-system tree | 5M | 5M | 992MB | 2.9s |
+| Scale-free (edge sampling) | 5M | 50M | 2.4GB | 20.6s |
+| Small-world (Watts-Strogatz) | 5M | 50M | 2.4GB | 6.8s |
+| Erdős-Rényi random | 5M | 50M | 2.4GB | 21.2s |
+| Barbell (clique-bridge-clique) | 5M | 100M | 3.9GB | 33.0s |
+| DLA (organic branching) | 5M | 5.5M | 1.0GB | 5.3s |
+
+**BFS neighborhood traversal (from hub/root node):**
+
+| Topology | Depth 1 | Depth 5 | Depth 10 | Full graph | Depth to 100% |
+|----------|---------|---------|----------|------------|---------------|
+| L-system | 0.0ms (3) | 0.3ms (363) | 79ms (89K) | 6.6s (5M) | 20 |
+| Scale-free | 6.3ms (11K) | 15.0s (5M) | — | 15.0s (5M) | 5 |
+| Small-world | 0.1ms (21) | 20ms (18K) | 9.5s (5M) | 11.1s (5M) | ~20 |
+| Random | 80ms (15) | 2.9s (2.5M) | 15.6s (5M) | 15.6s (5M) | 10 |
+| Barbell | 0.1ms (33) | 7.1s (2.5M) | 11.7s (2.5M) | 25.2s (5M) | 50 |
+| DLA | 0.0ms (12) | 3.2ms (4.5K) | 140ms (146K) | 8.3s (5M) | 50 |
+
+Values in parentheses are nodes found at that depth.
+
+**Shortest path (node 0 → last node):**
+
+| Topology | Hops | Time |
+|----------|------|------|
+| L-system | 14 | 1.9s |
+| Scale-free | 3 | 2.0s |
+| Small-world | 1 | 1.7ms |
+| Random | 5 | 344ms |
+| Barbell | 21 | 8.8s |
+| DLA | 17 | 1.3s |
+
+### Projected Speedup vs AGE on Real Data
+
+A real knowledge graph is structurally closest to scale-free (power-law hubs from popular concepts like "Machine Learning" or "Climate Change") with small-world shortcuts (ontology cross-references). The current system has ~200 concepts / ~1000 edges. Projections based on benchmark data:
+
+**Current graph size (~200 nodes, ~1000 edges):**
+
+| Query | AGE (measured) | graph_accel (projected) | Speedup |
+|-------|---------------|------------------------|---------|
+| Depth 2 neighborhood | 113ms | <0.1ms | ~1,000x |
+| Depth 3 neighborhood | 162ms | <0.1ms | ~1,600x |
+| Depth 5 neighborhood | 378ms | <0.1ms | ~3,800x |
+| Depth 6 neighborhood | ∞ (hangs) | <0.1ms | ∞ |
+| Depth 10 neighborhood | impossible | <0.1ms | — |
+
+At 200 nodes the entire graph fits in a few cache lines. Every query is sub-millisecond.
+
+**Projected at medium scale (~50K nodes, ~500K edges):**
+
+| Query | AGE (estimated) | graph_accel (projected) | Speedup |
+|-------|----------------|------------------------|---------|
+| Depth 3 neighborhood | ~2-5s | ~1-5ms | ~500x |
+| Depth 5 neighborhood | hangs | ~50-200ms | ∞ |
+| Depth 10 neighborhood | impossible | ~500ms-2s | — |
+| Shortest path | impossible beyond depth 5 | ~10-50ms | — |
+
+**Projected at target scale (~5M nodes, ~50M edges):**
+
+| Query | AGE (estimated) | graph_accel (measured) | Speedup |
+|-------|----------------|----------------------|---------|
+| Depth 3 neighborhood | impossible | ~500ms-5s | — |
+| Depth 5 neighborhood | impossible | ~3s-15s (full graph reached on scale-free) | — |
+| Bounded depth 5 (typical API query) | impossible | ~20ms-3s depending on topology | — |
+| Shortest path (short) | impossible | ~2ms-2s | — |
+
+**Key insight from benchmarks:** The bottleneck at scale is not the graph engine — it's touching millions of nodes. A depth-5 BFS on a scale-free graph with 5M nodes visits the entire graph because hub nodes fan out so broadly. In production, most queries will have `max_depth=5` on a graph where depth 5 reaches thousands to tens of thousands of nodes, not millions. The realistic query profile is:
+
+- Depth 3-5, returning 100-10,000 nodes: **sub-100ms**
+- Depth 10+, returning 50K+ nodes: **under 1 second**
+- Full graph traversal (analysis/export): **5-15 seconds**
+
+AGE cannot do any of these beyond depth 5 at any graph size.
 
 ### Configuration (GUC Parameters)
 
