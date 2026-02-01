@@ -29,12 +29,14 @@ pub fn get_string(setting: &GucSetting<Option<CString>>) -> Option<String> {
 }
 
 pub fn register_gucs() {
+    // Phase 2: Userset context allows per-session SET for easy testing.
+    // Phase 3 (shared memory) will tighten to Sighup/Postmaster where appropriate.
     GucRegistry::define_string_guc(
         c"graph_accel.source_graph",
         c"AGE graph name to load",
         c"Name of the Apache AGE graph to accelerate. Required for graph_accel_load().",
         &SOURCE_GRAPH,
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -46,7 +48,7 @@ pub fn register_gucs() {
         &MAX_MEMORY_MB,
         64,
         131072, // 128 GB
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -55,7 +57,7 @@ pub fn register_gucs() {
         c"Node property for application-level ID",
         c"Property name to index for app-level lookups (e.g. concept_id). Empty = AGE IDs only.",
         &NODE_ID_PROPERTY,
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -64,7 +66,7 @@ pub fn register_gucs() {
         c"Comma-separated node labels to load, or * for all",
         c"Filter which vertex labels to load into the in-memory graph.",
         &NODE_LABELS,
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -73,7 +75,7 @@ pub fn register_gucs() {
         c"Comma-separated edge types to load, or * for all",
         c"Filter which relationship types to load into the in-memory graph.",
         &EDGE_TYPES,
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -82,7 +84,7 @@ pub fn register_gucs() {
         c"Automatically reload when epoch mismatch detected",
         c"When true, stale detection triggers reload. (Phase 3 — registered but not wired.)",
         &AUTO_RELOAD,
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 
@@ -93,7 +95,7 @@ pub fn register_gucs() {
         &RELOAD_DEBOUNCE_SEC,
         0,
         3600, // 1 hour
-        GucContext::Sighup,
+        GucContext::Userset,
         GucFlags::default(),
     );
 }

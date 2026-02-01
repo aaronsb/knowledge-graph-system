@@ -22,7 +22,13 @@ Branch: `feature/graph-accel-pgrx-shell`
 - [x] Implement `graph_accel_neighborhood(start_id, max_depth)` — BFS via core engine, dual node resolution
 - [x] Implement `graph_accel_path(from_id, to_id, max_hops)` — shortest path via core engine
 - [x] Verified: `cargo pgrx run pg17` — extension loads, status/GUCs work in PG 17.7
-- [ ] Option 0 deployment: copy .so into running `knowledge-graph-postgres` container, test against live graph
+- [x] Option 0 deployment: copy .so into running container, tested against live graph
+  - Fixed: `ag_label.name` type cast (Postgres `name` → `text`), GUC contexts (Sighup → Userset for Phase 2)
+  - 788 nodes / 2,159 edges loaded in 22ms from live AGE graph
+  - Depth 5 neighborhood: 0.378ms vs AGE 92,474ms (244,600x speedup)
+  - Depth 6+: sub-ms vs AGE hangs — infinite speedup
+  - Data validation: depth-1 exact match (11/11), depth-2 strict superset (45/45 + 4 via cross-type paths)
+  - See: `graph-accel/docs/benchmark-findings.md`
 
 ## Phase 3: Epoch Invalidation
 - [ ] Create `graph_accel_epoch` table and trigger on AGE vertex/edge tables
@@ -31,9 +37,10 @@ Branch: `feature/graph-accel-pgrx-shell`
 - [ ] Test: mutate graph via AGE, verify epoch increments, verify reload triggers
 
 ## Phase 4: Generic Configuration
-- [ ] Implement `graph_accel.node_labels` filtering (load subset of node types)
-- [ ] Implement `graph_accel.edge_types` filtering
-- [ ] Implement `graph_accel.node_id_property` (secondary index on application-level IDs)
+- [x] `graph_accel.node_labels` filtering — implemented and tested (Concept-only load works)
+- [x] `graph_accel.edge_types` filtering — implemented (GUC + filter logic in load.rs)
+- [x] `graph_accel.node_id_property` — implemented and tested (concept_id resolution works)
+- [ ] Edge filtering: skip edges where source/target not in loaded node set
 - [ ] Test with a non-knowledge-graph AGE schema to verify generality
 
 ## Phase 5: Integration & Deployment
@@ -41,7 +48,7 @@ Branch: `feature/graph-accel-pgrx-shell`
 - [ ] Option A deployment: volume mount in docker-compose.yml
 - [ ] Option B deployment: custom Dockerfile extending apache/age
 - [ ] Update `operator.sh` for graph_accel-aware Postgres image
-- [ ] Benchmark: compare AGE direct vs graph_accel for depths 2-10 on real data
+- [x] Benchmark: compare AGE direct vs graph_accel for depths 1-5 on real data (see benchmark-findings.md)
 
 ## Phase 6: Polish & Publish
 - [ ] Implement `graph_accel_degree()` — degree centrality

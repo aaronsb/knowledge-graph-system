@@ -127,7 +127,7 @@ fn load_label_catalog(
     graph_name: &str,
 ) -> Result<Vec<LabelInfo>, pgrx::spi::SpiError> {
     let query = format!(
-        "SELECT l.name, l.kind::text \
+        "SELECT l.name::text, l.kind::text \
          FROM ag_catalog.ag_label l \
          JOIN ag_catalog.ag_graph g ON l.graph = g.graphid \
          WHERE g.name = {} \
