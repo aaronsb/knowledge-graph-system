@@ -227,6 +227,83 @@ fi
 
 echo ""
 
+# --- Cache invalidation ---
+echo "================================================================"
+echo "  Cache Invalidation (generation-based)"
+echo "================================================================"
+echo ""
+
+# Check if graph_accel_invalidate exists (v0.2.0+)
+has_invalidate=$(psql_cmd -c "SELECT count(*) FROM pg_proc WHERE proname = 'graph_accel_invalidate';")
+if [ "$has_invalidate" -eq 0 ]; then
+    echo "  SKIP: graph_accel_invalidate not available (requires v0.2.0+)"
+    echo ""
+else
+    # Test 1: invalidate returns monotonic generation
+    gen1=$(psql_cmd -c "SELECT graph_accel_invalidate('knowledge_graph');")
+    gen2=$(psql_cmd -c "SELECT graph_accel_invalidate('knowledge_graph');")
+    if [ "$gen2" -gt "$gen1" ] 2>/dev/null; then
+        echo "  Monotonic generation: OK (${gen1} -> ${gen2})"
+    else
+        echo "  Monotonic generation: FAIL (${gen1} -> ${gen2})"
+        all_pass=false
+    fi
+
+    # Test 2: status shows stale after invalidation
+    # Load graph, invalidate, check status
+    status_output=$(psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SET graph_accel.auto_reload = false;" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "SELECT graph_accel_invalidate('knowledge_graph');" \
+        -c "SELECT status, is_stale FROM graph_accel_status();")
+
+    # Parse status|is_stale from output (last non-empty line)
+    status_line=$(echo "$status_output" | grep -E 'stale|loaded' | tail -1 | tr -d ' ')
+    status_val=$(echo "$status_line" | cut -d'|' -f1)
+    is_stale_val=$(echo "$status_line" | cut -d'|' -f2)
+
+    if [ "$status_val" = "stale" ] && [ "$is_stale_val" = "t" ]; then
+        echo "  Stale detection:     OK (status='stale', is_stale=true)"
+    else
+        echo "  Stale detection:     FAIL (status='${status_val}', is_stale='${is_stale_val}')"
+        all_pass=false
+    fi
+
+    # Test 3: auto-reload clears stale status
+    fresh_output=$(psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SET graph_accel.auto_reload = true;" \
+        -c "SET graph_accel.reload_debounce_sec = 0;" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "SELECT graph_accel_invalidate('knowledge_graph');" \
+        -c "SELECT count(*) FROM graph_accel_neighborhood('$CONCEPT_ID', 1) WHERE label = 'Concept';" \
+        -c "SELECT status, is_stale FROM graph_accel_status();")
+
+    fresh_line=$(echo "$fresh_output" | grep -E 'stale|loaded' | tail -1 | tr -d ' ')
+    fresh_status=$(echo "$fresh_line" | cut -d'|' -f1)
+    fresh_stale=$(echo "$fresh_line" | cut -d'|' -f2)
+
+    if [ "$fresh_status" = "loaded" ] && [ "$fresh_stale" = "f" ]; then
+        echo "  Auto-reload:         OK (status='loaded' after stale query)"
+    else
+        echo "  Auto-reload:         FAIL (status='${fresh_status}', is_stale='${fresh_stale}')"
+        all_pass=false
+    fi
+
+    # Test 4: generation table has expected row
+    gen_row=$(psql_cmd -c "SELECT graph_name, generation FROM graph_accel.generation WHERE graph_name = 'knowledge_graph';")
+    if echo "$gen_row" | grep -q 'knowledge_graph'; then
+        gen_val=$(echo "$gen_row" | cut -d'|' -f2)
+        echo "  Generation table:    OK (knowledge_graph at gen ${gen_val})"
+    else
+        echo "  Generation table:    FAIL (no row for knowledge_graph)"
+        all_pass=false
+    fi
+
+    echo ""
+fi
+
 # --- Summary ---
 if $all_pass; then
     echo "RESULT: ALL CHECKS PASSED"
