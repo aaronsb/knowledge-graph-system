@@ -21,7 +21,7 @@ from unittest.mock import patch, MagicMock, PropertyMock
 @pytest.fixture
 def mock_age_client():
     """Create an AGEClient with mocked database connection."""
-    with patch('api.app.lib.age_client.psycopg2') as mock_psycopg2:
+    with patch('api.app.lib.age_client.base.psycopg2') as mock_psycopg2:
         # Mock the connection pool
         mock_pool = MagicMock()
         mock_conn = MagicMock()
