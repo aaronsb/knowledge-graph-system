@@ -297,9 +297,16 @@ This pattern applies to any AGE graph where traversal performance matters but fu
 
 ## Future Work
 
+### Integration enablers
+
+These directly support Phase 5 API integration — each unlocks capabilities that are currently too expensive via AGE.
+
+- **Directed-only traversal.** Filter parameter to follow only outgoing or only incoming edges. Direction metadata is already tracked; this adds a SQL parameter (`direction_filter TEXT DEFAULT 'both'`). Enables cleaner hydration for endpoints like `/query/concept/{id}` that separate outgoing vs incoming relationships.
+- **Degree centrality.** `graph_accel_degree(top_n)` returning nodes ranked by in/out/total degree. Direct enabler for ontology scoring, candidate ranking, and the annealing system — all of which currently walk the graph via Cypher aggregations.
+- **Connected component extraction.** `graph_accel_subgraph(start_id, max_depth)` for subgraph analysis. Supports ontology affinity detection and boundary analysis in the annealing cycle.
+- **Edge property filtering.** Load and index edge properties (e.g., `confidence`) to support filtered traversals. Bigger lift — requires property storage in the in-memory graph. Enables quality-filtered exploration ("only follow edges above confidence 0.5").
+
+### Deferred
+
+- **Weighted shortest path.** Dijkstra's algorithm using edge properties as weights. No current endpoint needs weighted paths, but this gives the platform better query control as it matures. Depends on edge property loading.
 - **Shared memory.** Cross-backend graph sharing via `pg_shmem_init!()`. Requires redesigning the core data structure to use a flat buffer layout (CSR) in fixed-size pre-allocated shared memory. Justified when per-backend copies exceed available RAM.
-- **Directed-only traversal.** Option to follow only outgoing or only incoming edges, matching AGE's `(a)-[r]->(b)` vs `(a)<-[r]-(b)` patterns. (Direction metadata is already tracked; this would add a filter parameter.)
-- **Edge property filtering.** Load and index edge properties to support filtered traversals (e.g., only follow edges above a confidence threshold).
-- **Weighted shortest path.** Dijkstra's algorithm using edge properties as weights.
-- **Degree centrality function.** `graph_accel_degree(top_n)` returning nodes ranked by in/out/total degree.
-- **Connected component extraction.** `graph_accel_subgraph(start_id, max_depth)` for subgraph analysis.
