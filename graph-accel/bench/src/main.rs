@@ -1,4 +1,5 @@
 use graph_accel_core::Graph;
+use std::collections::VecDeque;
 use std::time::Instant;
 
 fn main() {
@@ -354,9 +355,11 @@ fn gen_dla(node_count: u64) -> Graph {
 
     graph.add_node(0, "Seed".into(), Some("c_0".into()));
 
-    // Track active "surface" nodes — recent additions that new particles attach to
-    // This keeps the growth at the frontier, like real DLA
-    let mut surface: Vec<u64> = vec![0];
+    // Track active "surface" nodes — recent additions that new particles attach to.
+    // This keeps the growth at the frontier, like real DLA.
+    // VecDeque for O(1) pop_front when evicting oldest surface nodes.
+    let mut surface: VecDeque<u64> = VecDeque::with_capacity(10001);
+    surface.push_back(0);
     let surface_max = 10000usize;
 
     for new_node in 1..node_count {
@@ -377,9 +380,9 @@ fn gen_dla(node_count: u64) -> Graph {
         }
 
         // Maintain surface: add new node, evict oldest if over limit
-        surface.push(new_node);
+        surface.push_back(new_node);
         if surface.len() > surface_max {
-            surface.remove(0);
+            surface.pop_front();
         }
     }
 
