@@ -113,52 +113,66 @@ class QueryService:
     def build_related_concepts_query(
         max_depth: int,
         relationship_types: Optional[List[str]] = None
-    ) -> str:
+    ) -> List[tuple]:
         """
-        Build query for related concepts traversal.
+        Build queries for related concepts traversal.
 
-        Query flow:
-        1. Variable-length path traversal from starting concept
-        2. Filter by relationship types if specified
-        3. Exclude self-loops (start <> related)
-        4. Calculate minimum distance to each concept
-        5. Collect relationship types in path
+        Uses iterative fixed-depth matches instead of variable-length paths
+        to avoid combinatorial path explosion in cyclic graphs. Returns one
+        query per depth level, each producing O(nodes) rows instead of O(paths).
 
         Args:
             max_depth: Maximum traversal depth (1-5)
             relationship_types: Optional list of relationship types to filter
 
         Returns:
-            Cypher query string with relationship filter applied
+            List of (query_string, depth) tuples. Execute each separately
+            and merge results, keeping minimum distance per concept.
         """
         # Build relationship type filter
         rel_filter = ""
         if relationship_types:
             _validate_rel_types(relationship_types)
-            # Join types with | for Cypher union syntax: [:TYPE1|TYPE2|TYPE3]
             rel_types = "|".join(relationship_types)
             rel_filter = f":{rel_types}"
 
-        # Explicit string composition for clarity
-        # Note: Apache AGE doesn't support list comprehensions like [x in y | f(x)]
-        # So we use UNWIND + COLLECT instead to build path_types array
-        query = f"""
-            MATCH path = (start:Concept {{concept_id: $concept_id}})-[r{rel_filter}*1..{max_depth}]-(related:Concept)
-            WHERE start <> related
-            WITH related, min(length(path)) as min_distance, collect(path) as paths
-            WITH related, min_distance, paths[0] as shortest_path
-            WITH related, min_distance, relationships(shortest_path) as path_rels
-            UNWIND path_rels as rel
-            WITH related.concept_id as concept_id, related.label as label, min_distance, collect(type(rel)) as path_types
-            RETURN DISTINCT
-                concept_id,
-                label,
-                min_distance as distance,
-                path_types
-            ORDER BY min_distance, label
-        """
+        # Build per-depth queries to avoid variable-length path explosion.
+        # The old query used [*1..N] which enumerates ALL paths (combinatorial
+        # in cyclic graphs), then collect(path) materialized them all in memory.
+        # Fixed-depth chains produce O(nodes) distinct results per level.
+        #
+        # Returns a list of (query, depth) tuples — one per depth level.
+        # AGE's column spec parser can't handle UNION ALL, so each depth
+        # is executed as a separate query and merged in Python.
+        queries = []
+        for depth in range(1, max_depth + 1):
+            # Build explicit hop chain with named relationship variables
+            # depth 1: (start)-[r0]-(target:Concept)
+            # depth 2: (start)-[r0]-(h1:Concept)-[r1]-(target:Concept)
+            rel_vars = [f"r{i}" for i in range(depth)]
+            parts = []
+            for i in range(depth):
+                rel = f"[{rel_vars[i]}{rel_filter}]"
+                if i < depth - 1:
+                    parts.append(f"{rel}-(h{i+1}:Concept)")
+                else:
+                    parts.append(f"{rel}-(target:Concept)")
+            chain = "-".join(parts)
+            type_exprs = ", ".join(f"type({v})" for v in rel_vars)
 
-        return query
+            # Use WITH to build the path_types array before RETURN.
+            # The column spec parser splits on commas, so [type(r0), type(r1)]
+            # in RETURN would be misparse as extra columns.
+            queries.append((f"""
+                MATCH (start:Concept {{concept_id: $concept_id}})-{chain}
+                WHERE start <> target
+                WITH DISTINCT target.concept_id as concept_id,
+                    target.label as label,
+                    [{type_exprs}] as path_types
+                RETURN concept_id, label, {depth} as distance, path_types
+            """, depth))
+
+        return queries
 
     @staticmethod
     def build_shortest_path_query(

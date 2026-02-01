@@ -150,11 +150,29 @@ See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
 ## Architecture
 
-- **PostgreSQL + Apache AGE** — Graph database with native openCypher queries
+```
+Documents ──→ [FastAPI] ──→ LLM Extraction ──→ [PostgreSQL + AGE]
+                  │                                    │
+                  │                              [graph_accel]
+                  │                            in-memory traversal
+                  │                                    │
+              [Garage S3]                        [AGE graph store]
+               doc storage                     source of truth (ACID)
+                  │                                    │
+              [React + D3] ←──── REST API ────→ [FastAPI]
+            web visualization                   query + ingest
+                  │
+           [CLI / MCP / FUSE]
+           client interfaces
+```
+
+- **PostgreSQL + Apache AGE** — Graph database with native openCypher queries. ACID transactions, schema integrity, vector search (pgvector).
+- **graph_accel** — In-memory graph traversal accelerator. A Rust PostgreSQL extension that maintains an adjacency structure in shared memory for instant BFS/shortest-path at any depth. AGE handles writes; graph_accel handles reads. Epoch-based invalidation ensures the read model is never stale. ([ADR-201](docs/architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension.md))
 - **FastAPI** — Extraction pipeline and REST API
-- **React + D3** — Interactive visualization
-- **TypeScript CLI** — Command-line and MCP server
+- **React + D3** — Interactive graph visualization and exploration
+- **TypeScript CLI** — Command-line interface and MCP server for AI assistant integration
 - **Ollama** — Optional local inference (air-gapped operation)
+- **Garage** — S3-compatible object storage for document assets
 
 ## Documentation
 

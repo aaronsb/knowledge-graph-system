@@ -11,6 +11,7 @@ Provides REST API access to:
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List, Dict
+import asyncio
 import logging
 import numpy as np
 import os
@@ -1147,15 +1148,36 @@ async def find_related_concepts(
             # Use explicit types or None (all types)
             final_rel_types = request.relationship_types
 
-        # Build and execute related concepts query
-        query = QueryService.build_related_concepts_query(
+        # Build and execute per-depth queries to avoid path explosion.
+        # Each depth level is a separate fixed-length match query.
+        depth_queries = QueryService.build_related_concepts_query(
             request.max_depth,
             final_rel_types
         )
 
-        records = client._execute_cypher(
-            query, params={"concept_id": request.concept_id}
+        # Execute depth queries concurrently via thread pool.
+        # Each _execute_cypher call is synchronous (psycopg2) but gets its own
+        # connection from ThreadedConnectionPool. asyncio.to_thread dispatches
+        # each to a worker thread; GIL releases during DB I/O so queries run
+        # in genuine parallel on the Postgres side.
+        async def _run_depth(query, depth):
+            return await asyncio.to_thread(
+                client._execute_cypher,
+                query, params={"concept_id": request.concept_id}
+            )
+
+        depth_results = await asyncio.gather(
+            *[_run_depth(q, d) for q, d in depth_queries]
         )
+
+        # Merge results, keeping minimum distance per concept
+        seen = {}
+        for records in depth_results:
+            for record in (records or []):
+                cid = record['concept_id']
+                dist = record['distance']
+                if cid not in seen or dist < seen[cid]['distance']:
+                    seen[cid] = record
 
         results = [
             RelatedConcept(
@@ -1164,7 +1186,7 @@ async def find_related_concepts(
                 distance=record['distance'],
                 path_types=record['path_types']
             )
-            for record in (records or [])
+            for record in sorted(seen.values(), key=lambda r: (r['distance'], r['label']))
         ]
 
         return RelatedConceptsResponse(
