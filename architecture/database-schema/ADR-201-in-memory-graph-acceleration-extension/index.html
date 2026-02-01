@@ -5953,10 +5953,43 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#benchmark-topologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmark Topologies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#target-scale-envelope" class="md-nav__link">
     <span class="md-ellipsis">
       
         Target Scale Envelope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standalone-benchmark-results-5m-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standalone Benchmark Results (5M nodes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#projected-speedup-vs-age-on-real-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Projected Speedup vs AGE on Real Data
       
     </span>
   </a>
@@ -9457,10 +9490,43 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#benchmark-topologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmark Topologies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#target-scale-envelope" class="md-nav__link">
     <span class="md-ellipsis">
       
         Target Scale Envelope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standalone-benchmark-results-5m-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standalone Benchmark Results (5M nodes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#projected-speedup-vs-age-on-real-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Projected Speedup vs AGE on Real Data
       
     </span>
   </a>
@@ -9849,30 +9915,113 @@
 - Full reload: single flat query on AGE's internal tables — loads entire edge list
 - At target scale (50M edges), full reload takes seconds, not minutes
 - Incremental reload (delta application) is a future optimization if write-heavy workloads make full reload impractical</p>
-<p><strong>SQL interface:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Load/reload the graph (or automatic via epoch check)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">);</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">-- Neighborhood traversal (BFS, any depth)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_neighborhood</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">-- Returns: node_id, label, distance, path_types[]</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">-- Shortest path between two nodes</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_path</span><span class="p">(</span><span class="s1">&#39;from_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;to_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_hops</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1">-- Returns: step, node_id, label, rel_type (one row per hop)</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1">-- Connected components / subgraph extraction</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_subgraph</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1">-- Returns: node_id, label, component_id</span>
+<p><strong>Load trigger model:</strong></p>
+<p>The extension follows a "serve stale, reload async" pattern — inspired by Meta's TAO, where stale reads are almost always acceptable for graph traversal because topology doesn't change fast enough to matter for a neighborhood query. The goal: <strong>always have something in memory to serve, improve it in the background.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>┌──────────┐     SQL function call      ┌──────────────────────┐
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>│ API      │ ──────────────────────────→ │ graph_accel_*()      │
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│ Worker   │                             │                      │
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>└──────────┘                             │  1. Check epoch      │
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                                         │     (1 row read)     │
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>                                         │                      │
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>                              stale? ────│  2. Signal bgworker  │
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>                                    │    │     (async reload)   │
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>                                    │    │                      │
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>                                    │    │  3. Serve from       │
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>                              fresh? ────│     current shared   │
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>                                         │     memory (stale    │
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>                                         │     is OK)           │
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>                                         └──────────────────────┘
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="c1">-- Degree centrality (useful for graph analysis)</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_degree</span><span class="p">(</span><span class="n">top_n</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1">-- Returns: node_id, label, in_degree, out_degree, total_degree</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="c1">-- Status and diagnostics</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="c1">-- Returns: loaded_epoch, current_epoch, node_count, edge_count,</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="c1">--          memory_bytes, load_time_ms, source_graph, status</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>                                         ┌──────────────────────┐
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>                          signal ──────→ │ Background worker    │
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>                                         │                      │
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>                                         │  1. Advisory lock    │
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>                                         │     (single writer)  │
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>                                         │                      │
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>                                         │  2. SPI bulk read    │
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>                                         │     from AGE tables  │
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>                                         │                      │
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>                                         │  3. Build new        │
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>                                         │     HashMap in       │
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>                                         │     staging buffer   │
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>                                         │                      │
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>                                         │  4. Atomic swap      │
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>                                         │                      │
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>                                         │  5. Check epoch      │
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>                                         │     again — if still │
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>                                         │     stale, reload    │
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>                                         │     immediately      │
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>                                         │     (with debounce   │
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>                                         │     cap)             │
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>                                         └──────────────────────┘
+</code></pre></div>
+<p><strong>Query path (never blocks):</strong> Any <code>graph_accel_*()</code> query function is the interrupt source. The first instruction is always an epoch check — a single <code>SELECT epoch FROM graph_accel_epoch</code> (one row, one integer, ~0.01ms). If fresh, serve from shared memory. If stale, signal the background worker to begin a reload, then <strong>serve the current (stale) graph immediately</strong>. The caller never waits for a reload.</p>
+<p><strong>Background worker (single writer):</strong> A pgrx background worker handles all reloads. When signaled:
+1. Acquire <code>pg_try_advisory_lock</code> on a fixed key — if another reload is already in flight, exit immediately
+2. SPI bulk read from AGE's edge table into a staging buffer
+3. Build new adjacency structure
+4. Atomic pointer swap — new structure becomes active, old freed
+5. After completing, check epoch again — if writes continued during reload, start another pass immediately (up to <code>reload_debounce_sec</code> cap to avoid spin-reloading during bulk ingestion)</p>
+<p><strong>Single-writer guarantee:</strong> The advisory lock ensures only one reload runs at a time, even if multiple backends notice staleness simultaneously. The second backend sees the lock is held and returns immediately — it knows a reload is already in progress and serves the current graph.</p>
+<p><strong>Cold start:</strong> The one case where there is no graph to serve yet:
+- <code>preload = on</code>: background worker loads during Postgres startup, before connections are accepted. First query always has a graph.
+- <code>preload = off</code>: first query returns <code>ERROR: graph not loaded yet — loading in background, retry shortly</code>. The API layer retries after a short delay. Subsequent queries serve normally. This is cleanest because it avoids blocking the first caller for the full reload duration.</p>
+<p><strong>Reload coalescing:</strong> During continuous writes (e.g. bulk ingestion), the epoch bumps faster than reloads complete. The background worker's post-reload epoch check handles this — if still stale after reload, start another pass. But <code>reload_debounce_sec</code> caps the rate: don't start a new reload within N seconds of the last one. This prevents spin-reloading during a long ingestion batch. The API layer can also suppress reload signals entirely during batch operations.</p>
+<p><strong>The critical path is the reload.</strong> This is the memcpy-equivalent: serializing AGE's relational edge table into the in-memory adjacency structure. At target scale (50M edges), this involves:
+1. SPI query: <code>SELECT * FROM ag_catalog."knowledge_graph"._ag_label_edge</code> (~50M rows)
+2. Iterate rows, parse edge properties, build <code>HashMap</code> in a staging buffer
+3. Atomic pointer swap: new structure becomes active, old structure freed</p>
+<p>The SPI bulk read is the bottleneck — Postgres must scan the edge table and copy row data into the extension's memory context. This is bounded by disk I/O (if table is cold) or memory bandwidth (if table is in <code>shared_buffers</code>). On warm cache with NVMe storage, expect 5-20 seconds for 50M edges. During this window, all queries continue serving from the previous graph snapshot.</p>
+<p><strong>Application-controlled triggers:</strong> The API layer has full control over reload behavior:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Explicit reload (after bulk ingestion completes)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_reload</span><span class="p">();</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">-- Check without triggering reload</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- → loaded_epoch: 41, current_epoch: 42, status: &#39;stale_serving&#39;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">-- Application-specific: stored procedure that checks business logic</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1">-- before signaling a reload</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">app_maybe_reload</span><span class="p">()</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="n">void</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="k">DECLARE</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="n">record</span><span class="p">;</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">BEGIN</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="n">status</span><span class="p">.</span><span class="n">current_epoch</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">status</span><span class="p">.</span><span class="n">loaded_epoch</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">ingestion_jobs</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;running&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="k">THEN</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">        </span><span class="c1">-- No active ingestion — safe to reload</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">graph_accel_reload</span><span class="p">();</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="k">END</span><span class="p">;</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span>
+</code></pre></div>
+<p>This lets the application avoid reloading mid-batch-ingestion (where the epoch increments on every chunk), and instead reload once after the batch completes. The <code>reload_debounce_sec</code> GUC provides a simpler version of this — suppress reloads within N seconds of the last one — but the stored procedure approach gives full application-level control.</p>
+<p><strong>RAM is the accelerator.</strong> The extension's value proposition is trading RAM for query speed. It is intentionally greedy with memory — the entire edge graph lives resident in shared memory at all times. There is no eviction, no LRU, no paging. If the graph fits in <code>max_memory_mb</code>, it stays loaded until Postgres restarts or the extension is explicitly unloaded. This is a deliberate design choice: the complexity and latency of cache management is not worth it when the entire graph fits in a few GB.</p>
+<p><strong>SQL interface:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">-- Load/reload the graph (or automatic via epoch check)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">);</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">-- Neighborhood traversal (BFS, any depth)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_neighborhood</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">-- Returns: node_id, label, distance, path_types[]</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">-- Shortest path between two nodes</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_path</span><span class="p">(</span><span class="s1">&#39;from_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;to_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_hops</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">-- Returns: step, node_id, label, rel_type (one row per hop)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">-- Connected components / subgraph extraction</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_subgraph</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">-- Returns: node_id, label, component_id</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1">-- Degree centrality (useful for graph analysis)</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_degree</span><span class="p">(</span><span class="n">top_n</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="c1">-- Returns: node_id, label, in_degree, out_degree, total_degree</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="c1">-- Status and diagnostics</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="c1">-- Returns: loaded_epoch, current_epoch, node_count, edge_count,</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="c1">--          memory_bytes, load_time_ms, source_graph, status</span>
 </code></pre></div></p>
 <p>All functions accept the application-level node identifier (the string property configured via <code>graph_accel.node_id_property</code>), not AGE's internal integer IDs. This keeps the interface natural for application code.</p>
 <h3 id="dual-build-target">Dual Build Target</h3>
@@ -9886,6 +10035,65 @@
 - CI benchmarking with synthetic graphs of known topology
 - Profiling and optimization outside the Postgres process model
 - Validating correctness against a reference BFS implementation</p>
+<h3 id="benchmark-topologies">Benchmark Topologies</h3>
+<p>The standalone benchmark binary includes six synthetic graph generators. Different topologies stress different traversal behaviors — a graph engine that performs well on one shape may degrade on another.</p>
+<table>
+<thead>
+<tr>
+<th>Generator</th>
+<th>Topology</th>
+<th>What it tests</th>
+<th>Edges/node</th>
+<th>Generation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L-system tree</strong></td>
+<td>Fractal branching (ternary tree)</td>
+<td>Deep BFS (depth 12+ to reach full graph), path reconstruction on long chains</td>
+<td>1</td>
+<td>O(n), recursive frontier expansion</td>
+</tr>
+<tr>
+<td><strong>Scale-free</strong></td>
+<td>Power-law degree distribution (Barabási-Albert)</td>
+<td>High fan-out hubs, realistic knowledge graph structure. Depth 3 covers ~99% of nodes.</td>
+<td>10</td>
+<td>O(edges), edge-list endpoint sampling for preferential attachment</td>
+</tr>
+<tr>
+<td><strong>Small-world</strong></td>
+<td>Ring lattice + random rewiring (Watts-Strogatz)</td>
+<td>High clustering with short global paths. Tests that shortcuts are discovered.</td>
+<td>10</td>
+<td>O(n × k), p=0.05 rewire rate</td>
+</tr>
+<tr>
+<td><strong>Erdős-Rényi</strong></td>
+<td>Uniform random edges</td>
+<td>Baseline control — no structural bias. Gradual BFS expansion.</td>
+<td>10</td>
+<td>O(edges), random endpoint pairs</td>
+</tr>
+<tr>
+<td><strong>Barbell</strong></td>
+<td>Two dense cliques + thin bridge chain</td>
+<td>Bottleneck pathfinding. BFS at depth 5 covers only one clique. Must cross bridge to reach the other half.</td>
+<td>~20 (clique), 1 (bridge)</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td><strong>DLA</strong></td>
+<td>Diffusion-limited aggregation</td>
+<td>Organic branching, winding paths, tree-like with occasional shortcuts. Mimics natural growth.</td>
+<td>~1.1</td>
+<td>O(n), surface-limited attachment</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why these matter:</strong> A real knowledge graph is closest to scale-free (power-law hubs from popular concepts) with small-world properties (ontology cross-references create shortcuts). But edge cases like barbell (two isolated knowledge domains connected by a single bridging concept) and DLA (incrementally grown knowledge with no global structure) exercise failure modes that scale-free alone would miss.</p>
+<p><strong>Generation performance constraint:</strong> At target scale (5M nodes), all generators must complete in under 30 seconds. The original naive preferential attachment (O(n²) cumulative degree scan) took 4+ minutes at 5M nodes. The edge-list sampling approach achieves the same degree distribution in O(edges) time.</p>
 <h3 id="target-scale-envelope">Target Scale Envelope</h3>
 <table>
 <thead>
@@ -9923,7 +10131,335 @@
 </tr>
 </tbody>
 </table>
-<p>At 50M edges with average degree 10, BFS to depth 10 touches at most 10^10 candidate paths — but with visited-set pruning, it touches at most 5M nodes (the entire graph). Wall time: milliseconds, bounded by node count, not path count.</p>
+<p>At 50M edges with average degree 10, BFS to depth 10 touches at most 10^10 candidate paths — but with visited-set pruning, it touches at most 5M nodes (the entire graph). Wall time: milliseconds for bounded-depth queries, seconds for full-graph traversal.</p>
+<h3 id="standalone-benchmark-results-5m-nodes">Standalone Benchmark Results (5M nodes)</h3>
+<p>Measured with <code>graph-accel-bench</code> on the same hardware (16 cores / 32 threads, 128GB RAM). Six synthetic topologies at target scale. All generation + traversal runs single-threaded.</p>
+<p><strong>Generation performance:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Topology</th>
+<th>Nodes</th>
+<th>Edges</th>
+<th>Memory</th>
+<th>Gen Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L-system tree</td>
+<td>5M</td>
+<td>5M</td>
+<td>992MB</td>
+<td>2.9s</td>
+</tr>
+<tr>
+<td>Scale-free (edge sampling)</td>
+<td>5M</td>
+<td>50M</td>
+<td>2.4GB</td>
+<td>20.6s</td>
+</tr>
+<tr>
+<td>Small-world (Watts-Strogatz)</td>
+<td>5M</td>
+<td>50M</td>
+<td>2.4GB</td>
+<td>6.8s</td>
+</tr>
+<tr>
+<td>Erdős-Rényi random</td>
+<td>5M</td>
+<td>50M</td>
+<td>2.4GB</td>
+<td>21.2s</td>
+</tr>
+<tr>
+<td>Barbell (clique-bridge-clique)</td>
+<td>5M</td>
+<td>100M</td>
+<td>3.9GB</td>
+<td>33.0s</td>
+</tr>
+<tr>
+<td>DLA (organic branching)</td>
+<td>5M</td>
+<td>5.5M</td>
+<td>1.0GB</td>
+<td>5.3s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>BFS neighborhood traversal (from hub/root node):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Topology</th>
+<th>Memory</th>
+<th>Depth 1</th>
+<th>Depth 5</th>
+<th>Depth 10</th>
+<th>Full graph</th>
+<th>Depth to 100%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L-system</td>
+<td>992MB</td>
+<td>0.0ms (3)</td>
+<td>0.3ms (363)</td>
+<td>79ms (89K)</td>
+<td>6.6s (5M)</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Scale-free</td>
+<td>2.4GB</td>
+<td>6.3ms (11K)</td>
+<td>15.0s (5M)</td>
+<td>—</td>
+<td>15.0s (5M)</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Small-world</td>
+<td>2.4GB</td>
+<td>0.1ms (21)</td>
+<td>20ms (18K)</td>
+<td>9.5s (5M)</td>
+<td>11.1s (5M)</td>
+<td>~20</td>
+</tr>
+<tr>
+<td>Random</td>
+<td>2.4GB</td>
+<td>80ms (15)</td>
+<td>2.9s (2.5M)</td>
+<td>15.6s (5M)</td>
+<td>15.6s (5M)</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Barbell</td>
+<td>3.9GB</td>
+<td>0.1ms (33)</td>
+<td>7.1s (2.5M)</td>
+<td>11.7s (2.5M)</td>
+<td>25.2s (5M)</td>
+<td>50</td>
+</tr>
+<tr>
+<td>DLA</td>
+<td>1.0GB</td>
+<td>0.0ms (12)</td>
+<td>3.2ms (4.5K)</td>
+<td>140ms (146K)</td>
+<td>8.3s (5M)</td>
+<td>50</td>
+</tr>
+</tbody>
+</table>
+<p>Values in parentheses are nodes found at that depth.</p>
+<p><strong>Shortest path (node 0 → last node):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Topology</th>
+<th>Hops</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L-system</td>
+<td>14</td>
+<td>1.9s</td>
+</tr>
+<tr>
+<td>Scale-free</td>
+<td>3</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>Small-world</td>
+<td>1</td>
+<td>1.7ms</td>
+</tr>
+<tr>
+<td>Random</td>
+<td>5</td>
+<td>344ms</td>
+</tr>
+<tr>
+<td>Barbell</td>
+<td>21</td>
+<td>8.8s</td>
+</tr>
+<tr>
+<td>DLA</td>
+<td>17</td>
+<td>1.3s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="projected-speedup-vs-age-on-real-data">Projected Speedup vs AGE on Real Data</h3>
+<p>A real knowledge graph is structurally closest to scale-free (power-law hubs from popular concepts like "Machine Learning" or "Climate Change") with small-world shortcuts (ontology cross-references). The current system has ~200 concepts / ~1000 edges. Projections based on benchmark data:</p>
+<p><strong>Current graph size (~200 nodes, ~1000 edges):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>AGE (measured)</th>
+<th>graph_accel (projected)</th>
+<th>Memory</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Depth 2 neighborhood</td>
+<td>113ms</td>
+<td>&lt;0.1ms</td>
+<td>&lt;1MB</td>
+<td>~1,000x</td>
+</tr>
+<tr>
+<td>Depth 3 neighborhood</td>
+<td>162ms</td>
+<td>&lt;0.1ms</td>
+<td>&lt;1MB</td>
+<td>~1,600x</td>
+</tr>
+<tr>
+<td>Depth 5 neighborhood</td>
+<td>378ms</td>
+<td>&lt;0.1ms</td>
+<td>&lt;1MB</td>
+<td>~3,800x</td>
+</tr>
+<tr>
+<td>Depth 6 neighborhood</td>
+<td>∞ (hangs)</td>
+<td>&lt;0.1ms</td>
+<td>&lt;1MB</td>
+<td>∞</td>
+</tr>
+<tr>
+<td>Depth 10 neighborhood</td>
+<td>impossible</td>
+<td>&lt;0.1ms</td>
+<td>&lt;1MB</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>At 200 nodes the entire graph fits in a few cache lines. Every query is sub-millisecond. Reload from AGE: &lt;10ms.</p>
+<p><strong>Projected at medium scale (~50K nodes, ~500K edges):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>AGE (estimated)</th>
+<th>graph_accel (projected)</th>
+<th>Memory</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Depth 3 neighborhood</td>
+<td>~2-5s</td>
+<td>~1-5ms</td>
+<td>~50MB</td>
+<td>~500x</td>
+</tr>
+<tr>
+<td>Depth 5 neighborhood</td>
+<td>hangs</td>
+<td>~50-200ms</td>
+<td>~50MB</td>
+<td>∞</td>
+</tr>
+<tr>
+<td>Depth 10 neighborhood</td>
+<td>impossible</td>
+<td>~500ms-2s</td>
+<td>~50MB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Shortest path</td>
+<td>impossible beyond depth 5</td>
+<td>~10-50ms</td>
+<td>~50MB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Reload from AGE</td>
+<td>—</td>
+<td>~0.5-1s</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Projected at target scale (~5M nodes, ~50M edges):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>AGE (estimated)</th>
+<th>graph_accel (measured)</th>
+<th>Memory</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Depth 3 neighborhood</td>
+<td>impossible</td>
+<td>~500ms-5s</td>
+<td>~2.4GB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Depth 5 neighborhood</td>
+<td>impossible</td>
+<td>~3s-15s (full graph reached)</td>
+<td>~2.4GB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Bounded depth 5 (typical API query)</td>
+<td>impossible</td>
+<td>~20ms-3s</td>
+<td>~2.4GB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Shortest path (short)</td>
+<td>impossible</td>
+<td>~2ms-2s</td>
+<td>~2.4GB</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Reload from AGE</td>
+<td>—</td>
+<td>~5-20s (estimated)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key insight from benchmarks:</strong> The bottleneck at scale is not the graph engine — it's touching millions of nodes. A depth-5 BFS on a scale-free graph with 5M nodes visits the entire graph because hub nodes fan out so broadly. In production, most queries will have <code>max_depth=5</code> on a graph where depth 5 reaches thousands to tens of thousands of nodes, not millions. The realistic query profile is:</p>
+<ul>
+<li>Depth 3-5, returning 100-10,000 nodes: <strong>sub-100ms</strong></li>
+<li>Depth 10+, returning 50K+ nodes: <strong>under 1 second</strong></li>
+<li>Full graph traversal (analysis/export): <strong>5-15 seconds</strong></li>
+</ul>
+<p>AGE cannot do any of these beyond depth 5 at any graph size.</p>
 <h3 id="configuration-guc-parameters">Configuration (GUC Parameters)</h3>
 <p>The extension uses PostgreSQL's standard GUC (Grand Unified Configuration) system. Parameters are namespaced under <code>graph_accel.*</code> and set in <code>postgresql.conf</code>, via <code>ALTER SYSTEM SET</code>, or per-session with <code>SET</code>.</p>
 <table>
@@ -10011,53 +10547,53 @@
 <p>The graph_accel extension follows the same pattern. Four deployment options, from simplest to most integrated:</p>
 <p><strong>Option 0: Manual copy (bootstrapping / first build)</strong></p>
 <p>Build on the host, copy directly into the running container:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Build with pgrx</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>cargo<span class="w"> </span>pgrx<span class="w"> </span>package<span class="w"> </span>--pg-config<span class="w"> </span><span class="k">$(</span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_config<span class="w"> </span>--bindir<span class="k">)</span>/pg_config
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Copy artifacts into running container</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/lib/postgresql/17/lib/graph_accel.so<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>knowledge-graph-postgres:/usr/lib/postgresql/17/lib/
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/share/postgresql/17/extension/graph_accel.control<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>knowledge-graph-postgres:/usr/share/postgresql/17/extension/
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/share/postgresql/17/extension/graph_accel--0.1.0.sql<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span>knowledge-graph-postgres:/usr/share/postgresql/17/extension/
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># Activate</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;CREATE EXTENSION graph_accel;&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Build with pgrx</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cargo<span class="w"> </span>pgrx<span class="w"> </span>package<span class="w"> </span>--pg-config<span class="w"> </span><span class="k">$(</span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>pg_config<span class="w"> </span>--bindir<span class="k">)</span>/pg_config
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Copy artifacts into running container</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/lib/postgresql/17/lib/graph_accel.so<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>knowledge-graph-postgres:/usr/lib/postgresql/17/lib/
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/share/postgresql/17/extension/graph_accel.control<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>knowledge-graph-postgres:/usr/share/postgresql/17/extension/
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>docker<span class="w"> </span>cp<span class="w"> </span>target/release/graph_accel-pg17/usr/share/postgresql/17/extension/graph_accel--0.1.0.sql<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>knowledge-graph-postgres:/usr/share/postgresql/17/extension/
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># Activate</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;CREATE EXTENSION graph_accel;&quot;</span>
 </code></pre></div>
 <p>Pros: Zero infrastructure changes. Works right now with the existing container.
 Cons: Lost on container restart. Manual and not reproducible. Good for "does this work at all" testing.</p>
 <p><strong>Option A: Volume mount (development / quick testing)</strong></p>
 <p>Build the extension on the host, mount the artifacts into the container:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># docker-compose.yml</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">postgres</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apache/age</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel.so:/usr/lib/postgresql/17/lib/graph_accel.so:ro</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel.control:/usr/share/postgresql/17/extension/graph_accel.control:ro</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel--0.1.0.sql:/usr/share/postgresql/17/extension/graph_accel--0.1.0.sql:ro</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># docker-compose.yml</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">postgres</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apache/age</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel.so:/usr/lib/postgresql/17/lib/graph_accel.so:ro</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel.control:/usr/share/postgresql/17/extension/graph_accel.control:ro</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./extensions/graph_accel--0.1.0.sql:/usr/share/postgresql/17/extension/graph_accel--0.1.0.sql:ro</span>
 </code></pre></div>
 <p>Then activate:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="n">graph_accel</span><span class="p">;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">();</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="n">graph_accel</span><span class="p">;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">();</span>
 </code></pre></div></p>
 <p>Pros: No custom image needed. Fast iteration during development.
 Cons: Requires host Rust toolchain with pgrx. Extension must be compiled for the exact PG version in the container.</p>
 <p><strong>Option B: Custom Dockerfile extending apache/age (recommended for production)</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">FROM</span><span class="w"> </span><span class="s">apache/age</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">base</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c"># Build stage: compile extension</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">FROM</span><span class="w"> </span><span class="s">rust:latest</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">builder</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">RUN</span><span class="w"> </span>cargo<span class="w"> </span>install<span class="w"> </span>cargo-pgrx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cargo<span class="w"> </span>pgrx<span class="w"> </span>init<span class="w"> </span>--pg17<span class="w"> </span>/usr/bin/pg_config
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">COPY</span><span class="w"> </span>graph-accel/<span class="w"> </span>/build/
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/build</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">RUN</span><span class="w"> </span>cargo<span class="w"> </span>pgrx<span class="w"> </span>package<span class="w"> </span>--pg-config<span class="w"> </span>/usr/bin/pg_config
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c"># Final stage: copy extension into AGE image</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="k">FROM</span><span class="w"> </span><span class="s">base</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>builder<span class="w"> </span>/build/target/release/graph_accel-pg17/<span class="w"> </span>/usr/share/postgresql/17/
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>builder<span class="w"> </span>/build/target/release/graph_accel-pg17/<span class="w"> </span>/usr/lib/postgresql/17/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">FROM</span><span class="w"> </span><span class="s">apache/age</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">base</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c"># Build stage: compile extension</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">FROM</span><span class="w"> </span><span class="s">rust:latest</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">builder</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">RUN</span><span class="w"> </span>cargo<span class="w"> </span>install<span class="w"> </span>cargo-pgrx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cargo<span class="w"> </span>pgrx<span class="w"> </span>init<span class="w"> </span>--pg17<span class="w"> </span>/usr/bin/pg_config
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">COPY</span><span class="w"> </span>graph-accel/<span class="w"> </span>/build/
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/build</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="k">RUN</span><span class="w"> </span>cargo<span class="w"> </span>pgrx<span class="w"> </span>package<span class="w"> </span>--pg-config<span class="w"> </span>/usr/bin/pg_config
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c"># Final stage: copy extension into AGE image</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="k">FROM</span><span class="w"> </span><span class="s">base</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>builder<span class="w"> </span>/build/target/release/graph_accel-pg17/<span class="w"> </span>/usr/share/postgresql/17/
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>builder<span class="w"> </span>/build/target/release/graph_accel-pg17/<span class="w"> </span>/usr/lib/postgresql/17/
 </code></pre></div>
 <p>This produces a single image with both AGE and graph_accel. The operator's <code>upgrade</code> command would pull this image the same way it pulls the current <code>apache/age</code> image.</p>
 <p>Pros: Self-contained, reproducible. Works with <code>operator.sh upgrade</code>.
@@ -10066,19 +10602,19 @@ Cons: Custom image to maintain. Must rebuild when AGE or PG version changes.</p>
 <p>An init container compiles or copies the extension into a shared volume before Postgres starts. Overkill for Docker Compose but natural in Kubernetes deployments.</p>
 <p><strong>Recommended path:</strong> Start with Option A during development. Move to Option B once the extension is stable. The compose file change is minimal — swap <code>image: apache/age</code> for <code>build: ./docker/postgres/</code> pointing at the custom Dockerfile.</p>
 <p><strong>Activation after deployment:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- One-time setup (in schema init script)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">graph_accel</span><span class="p">;</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">-- Verify</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">-- → loaded_epoch: 0, current_epoch: 42, status: &#39;not_loaded&#39;</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">-- Manual load (or automatic if preload = on)</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">();</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1">-- → loaded 5000000 concepts, 50000000 edges in 2.3s</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1">-- → loaded_epoch: 42, current_epoch: 42, status: &#39;ready&#39;, memory_mb: 2847</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">-- One-time setup (in schema init script)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">graph_accel</span><span class="p">;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">-- Verify</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1">-- → loaded_epoch: 0, current_epoch: 42, status: &#39;not_loaded&#39;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1">-- Manual load (or automatic if preload = on)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">();</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1">-- → loaded 5000000 concepts, 50000000 edges in 2.3s</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1">-- → loaded_epoch: 42, current_epoch: 42, status: &#39;ready&#39;, memory_mb: 2847</span>
 </code></pre></div>
 <p>The <code>CREATE EXTENSION</code> line would be added to <code>schema/00_baseline.sql</code> alongside the existing <code>CREATE EXTENSION IF NOT EXISTS age;</code>.</p>
 <h3 id="safety-and-correctness">Safety and Correctness</h3>
