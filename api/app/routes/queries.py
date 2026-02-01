@@ -1623,6 +1623,7 @@ async def execute_cypher_query(
                         if node_id not in nodes_map:
                             # Prefer properties.label (actual name) over AGE label (node type like "Concept")
                             props = value.get('properties', {})
+                            props.pop('embedding', None)
                             node_label = props.get('label') or value.get('label', node_id)
                             nodes_map[node_id] = CypherNode(
                                 id=node_id,
@@ -1650,6 +1651,7 @@ async def execute_cypher_query(
                                 if node_id not in nodes_map:
                                     # Prefer properties.label (actual name) over AGE label (node type)
                                     props = item.get('properties', {})
+                                    props.pop('embedding', None)
                                     node_label = props.get('label') or item.get('label', node_id)
                                     nodes_map[node_id] = CypherNode(
                                         id=node_id,
