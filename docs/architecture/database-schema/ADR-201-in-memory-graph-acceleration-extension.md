@@ -186,6 +186,23 @@ This enables:
 - Profiling and optimization outside the Postgres process model
 - Validating correctness against a reference BFS implementation
 
+### Benchmark Topologies
+
+The standalone benchmark binary includes six synthetic graph generators. Different topologies stress different traversal behaviors — a graph engine that performs well on one shape may degrade on another.
+
+| Generator | Topology | What it tests | Edges/node | Generation |
+|-----------|----------|---------------|------------|------------|
+| **L-system tree** | Fractal branching (ternary tree) | Deep BFS (depth 12+ to reach full graph), path reconstruction on long chains | 1 | O(n), recursive frontier expansion |
+| **Scale-free** | Power-law degree distribution (Barabási-Albert) | High fan-out hubs, realistic knowledge graph structure. Depth 3 covers ~99% of nodes. | 10 | O(edges), edge-list endpoint sampling for preferential attachment |
+| **Small-world** | Ring lattice + random rewiring (Watts-Strogatz) | High clustering with short global paths. Tests that shortcuts are discovered. | 10 | O(n × k), p=0.05 rewire rate |
+| **Erdős-Rényi** | Uniform random edges | Baseline control — no structural bias. Gradual BFS expansion. | 10 | O(edges), random endpoint pairs |
+| **Barbell** | Two dense cliques + thin bridge chain | Bottleneck pathfinding. BFS at depth 5 covers only one clique. Must cross bridge to reach the other half. | ~20 (clique), 1 (bridge) | O(n) |
+| **DLA** | Diffusion-limited aggregation | Organic branching, winding paths, tree-like with occasional shortcuts. Mimics natural growth. | ~1.1 | O(n), surface-limited attachment |
+
+**Why these matter:** A real knowledge graph is closest to scale-free (power-law hubs from popular concepts) with small-world properties (ontology cross-references create shortcuts). But edge cases like barbell (two isolated knowledge domains connected by a single bridging concept) and DLA (incrementally grown knowledge with no global structure) exercise failure modes that scale-free alone would miss.
+
+**Generation performance constraint:** At target scale (5M nodes), all generators must complete in under 30 seconds. The original naive preferential attachment (O(n²) cumulative degree scan) took 4+ minutes at 5M nodes. The edge-list sampling approach achieves the same degree distribution in O(edges) time.
+
 ### Target Scale Envelope
 
 | Dimension | Target | Memory Estimate |
