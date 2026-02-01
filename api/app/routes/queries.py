@@ -11,6 +11,7 @@ Provides REST API access to:
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List, Dict
+import asyncio
 import logging
 import numpy as np
 import os
@@ -1154,12 +1155,24 @@ async def find_related_concepts(
             final_rel_types
         )
 
-        # Execute each depth and merge, keeping minimum distance per concept
-        seen = {}
-        for query, depth in depth_queries:
-            records = client._execute_cypher(
+        # Execute depth queries concurrently via thread pool.
+        # Each _execute_cypher call is synchronous (psycopg2) but gets its own
+        # connection from ThreadedConnectionPool. asyncio.to_thread dispatches
+        # each to a worker thread; GIL releases during DB I/O so queries run
+        # in genuine parallel on the Postgres side.
+        async def _run_depth(query, depth):
+            return await asyncio.to_thread(
+                client._execute_cypher,
                 query, params={"concept_id": request.concept_id}
             )
+
+        depth_results = await asyncio.gather(
+            *[_run_depth(q, d) for q, d in depth_queries]
+        )
+
+        # Merge results, keeping minimum distance per concept
+        seen = {}
+        for records in depth_results:
             for record in (records or []):
                 cid = record['concept_id']
                 dist = record['distance']
