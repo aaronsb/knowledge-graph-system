@@ -9,6 +9,8 @@ pub struct GraphState {
     pub source_graph: String,
     pub load_time_ms: f64,
     pub loaded_at: Instant,
+    /// Generation counter at time of load. 0 = loaded before any invalidation.
+    pub loaded_generation: i64,
 }
 
 thread_local! {
@@ -16,7 +18,7 @@ thread_local! {
     ///
     /// PostgreSQL backends are single-threaded, so thread_local! + RefCell
     /// is safe. Each connection loads its own graph copy.
-    /// Shared memory deferred to Phase 3.
+    /// Shared memory deferred to a future phase.
     static GRAPH_STATE: RefCell<Option<GraphState>> = const { RefCell::new(None) };
 }
 

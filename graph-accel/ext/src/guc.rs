@@ -29,8 +29,8 @@ pub fn get_string(setting: &GucSetting<Option<CString>>) -> Option<String> {
 }
 
 pub fn register_gucs() {
-    // Phase 2: Userset context allows per-session SET for easy testing.
-    // Phase 3 (shared memory) will tighten to Sighup/Postmaster where appropriate.
+    // Userset context: per-session SET. Shared memory phase will tighten
+    // to Sighup/Postmaster where appropriate.
     GucRegistry::define_string_guc(
         c"graph_accel.source_graph",
         c"AGE graph name to load",
@@ -43,8 +43,7 @@ pub fn register_gucs() {
     GucRegistry::define_int_guc(
         c"graph_accel.max_memory_mb",
         c"Maximum memory for in-memory graph (MB)",
-        c"Per-backend memory cap. graph_accel_load() will error if the graph exceeds this. \
-          Changes to Postmaster context in Phase 3 (shared memory).",
+        c"Per-backend memory cap. graph_accel_load() will error if the graph exceeds this.",
         &MAX_MEMORY_MB,
         64,
         131072, // 128 GB
@@ -81,8 +80,8 @@ pub fn register_gucs() {
 
     GucRegistry::define_bool_guc(
         c"graph_accel.auto_reload",
-        c"Automatically reload when epoch mismatch detected",
-        c"When true, stale detection triggers reload. (Phase 3 — registered but not wired.)",
+        c"Automatically reload when generation mismatch detected",
+        c"When true, query functions check the generation table and reload inline if stale.",
         &AUTO_RELOAD,
         GucContext::Userset,
         GucFlags::default(),
@@ -90,8 +89,8 @@ pub fn register_gucs() {
 
     GucRegistry::define_int_guc(
         c"graph_accel.reload_debounce_sec",
-        c"Minimum seconds between reloads",
-        c"Prevents thrashing during bulk ingestion. (Phase 3 — registered but not wired.)",
+        c"Minimum seconds between auto-reloads",
+        c"Prevents reload thrashing during bulk writes. 0 disables debouncing.",
         &RELOAD_DEBOUNCE_SEC,
         0,
         3600, // 1 hour

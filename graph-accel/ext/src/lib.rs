@@ -2,10 +2,11 @@
 //!
 //! Wraps graph-accel-core to provide SQL functions for BFS neighborhood
 //! traversal and shortest path queries against Apache AGE graphs.
-//! Phase 2: per-backend state, no shared memory.
+//! Per-backend state with generation-based cache invalidation.
 
 use pgrx::prelude::*;
 
+mod generation;
 mod guc;
 mod load;
 mod neighborhood;
@@ -37,6 +38,26 @@ mod tests {
         let max_mem =
             Spi::get_one::<String>("SHOW graph_accel.max_memory_mb");
         assert_eq!(max_mem, Ok(Some("4096".to_string())));
+    }
+
+    #[pg_test]
+    fn test_invalidate_returns_generation() {
+        let gen = Spi::get_one::<i64>("SELECT graph_accel_invalidate('test_graph')");
+        assert_eq!(gen, Ok(Some(1)));
+
+        let gen2 = Spi::get_one::<i64>("SELECT graph_accel_invalidate('test_graph')");
+        assert_eq!(gen2, Ok(Some(2)));
+    }
+
+    #[pg_test]
+    fn test_invalidate_separate_graphs() {
+        let g1 = Spi::get_one::<i64>("SELECT graph_accel_invalidate('graph_a')");
+        let g2 = Spi::get_one::<i64>("SELECT graph_accel_invalidate('graph_b')");
+        assert_eq!(g1, Ok(Some(1)));
+        assert_eq!(g2, Ok(Some(1)));
+
+        let g1_again = Spi::get_one::<i64>("SELECT graph_accel_invalidate('graph_a')");
+        assert_eq!(g1_again, Ok(Some(2)));
     }
 }
 
