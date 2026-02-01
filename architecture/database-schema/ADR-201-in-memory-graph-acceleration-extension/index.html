@@ -9717,8 +9717,10 @@
 <h2 id="context">Context</h2>
 <p>Apache AGE provides graph storage and openCypher query support as a PostgreSQL extension, but its traversal performance is fundamentally limited by PostgreSQL's relational query planner. AGE translates Cypher path matches into nested SQL joins on internal edge/vertex tables. For multi-hop traversals (depth 3+), this creates combinatorial intermediate result sets that the planner cannot optimize — it doesn't understand graph topology.</p>
 <h3 id="benchmarks">Benchmarks</h3>
-<p>Testing on a ~200 node, ~1000 edge graph (16 cores / 32 threads, 128GB RAM).</p>
+<p>Testing on a ~236 concept, ~120 edge type graph (16 cores / 32 threads, 128GB RAM).</p>
+<p><strong>Motivating query:</strong> Neighborhood search for "Way" (degree 36, 2nd highest hub) through the web workstation's NeighborhoodBlock → <code>POST /query/related</code> → iterative fixed-depth Cypher chains. See <a href="../../../graph-accel/docs/benchmark-findings.md">benchmark-findings.md</a> for full query chain, reproduction SQL, and graph_accel comparison.</p>
 <p><strong>Traversal performance (iterative fixed-depth chain queries, PR #262):</strong></p>
+<p>API-measured timing (Python <code>asyncio.to_thread</code> dispatch, includes connection pool overhead):</p>
 <table>
 <thead>
 <tr>
@@ -9764,6 +9766,48 @@
 <td>Hangs indefinitely</td>
 <td>—</td>
 <td>—</td>
+</tr>
+</tbody>
+</table>
+<p>SQL-measured timing (psql <code>\timing</code>, pure query execution, "Way" concept with degree 36):</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Concepts Found</th>
+<th>SQL Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>11</td>
+<td>3,644ms</td>
+</tr>
+<tr>
+<td>2</td>
+<td>45</td>
+<td>471ms</td>
+</tr>
+<tr>
+<td>3</td>
+<td>73</td>
+<td>1,790ms</td>
+</tr>
+<tr>
+<td>4</td>
+<td>105</td>
+<td>11,460ms</td>
+</tr>
+<tr>
+<td>5</td>
+<td>124</td>
+<td>92,474ms</td>
+</tr>
+<tr>
+<td>6</td>
+<td>—</td>
+<td>Hangs</td>
 </tr>
 </tbody>
 </table>
