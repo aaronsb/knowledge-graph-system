@@ -274,9 +274,9 @@ graph-accel/
     └── deploy-option0.sh        # Scripted Option 0 deployment
 ```
 
-**Core engine:** 908 lines, zero dependencies, 35 unit tests.
-**Extension:** 897 lines wrapping core via pgrx.
-**Total:** ~1,800 lines of Rust.
+**Core:** Pure Rust traversal engine with unit tests. No PostgreSQL dependencies.
+**Extension:** pgrx wrapper — SPI loading, GUCs, SQL function bindings.
+**Bench:** Standalone binary for profiling outside Postgres.
 
 ## Standalone Benchmark
 
