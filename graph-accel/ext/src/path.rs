@@ -1,3 +1,4 @@
+use graph_accel_core::Direction;
 use pgrx::prelude::*;
 
 use crate::state;
@@ -15,6 +16,7 @@ fn graph_accel_path(
         name!(label, String),
         name!(app_id, Option<String>),
         name!(rel_type, Option<String>),
+        name!(direction, Option<String>),
     ),
 > {
     crate::generation::ensure_fresh();
@@ -27,7 +29,13 @@ fn graph_accel_path(
             Some(path) => path
                 .into_iter()
                 .enumerate()
-                .map(|(i, s)| (i as i32, s.node_id as i64, s.label, s.app_id, s.rel_type))
+                .map(|(i, s)| {
+                    let dir = s.direction.map(|d| match d {
+                        Direction::Outgoing => "outgoing".to_string(),
+                        Direction::Incoming => "incoming".to_string(),
+                    });
+                    (i as i32, s.node_id as i64, s.label, s.app_id, s.rel_type, dir)
+                })
                 .collect::<Vec<_>>(),
             None => Vec::new(),
         }

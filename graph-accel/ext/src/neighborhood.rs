@@ -1,6 +1,14 @@
+use graph_accel_core::Direction;
 use pgrx::prelude::*;
 
 use crate::state;
+
+fn direction_str(d: Direction) -> String {
+    match d {
+        Direction::Outgoing => "outgoing".to_string(),
+        Direction::Incoming => "incoming".to_string(),
+    }
+}
 
 #[pg_extern]
 fn graph_accel_neighborhood(
@@ -14,6 +22,7 @@ fn graph_accel_neighborhood(
         name!(app_id, Option<String>),
         name!(distance, i32),
         name!(path_types, Vec<String>),
+        name!(path_directions, Vec<String>),
     ),
 > {
     crate::generation::ensure_fresh();
@@ -28,12 +37,14 @@ fn graph_accel_neighborhood(
             .neighbors
             .into_iter()
             .map(|nr| {
+                let dirs = nr.path_directions.into_iter().map(direction_str).collect();
                 (
                     nr.node_id as i64,
                     nr.label,
                     nr.app_id,
                     nr.distance as i32,
                     nr.path_types,
+                    dirs,
                 )
             })
             .collect::<Vec<_>>()
