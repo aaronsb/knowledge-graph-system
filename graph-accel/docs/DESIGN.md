@@ -359,6 +359,50 @@ graph_accel_path('from', 'to', 10, 'both', 0.5) → step, node_id, rel_type, dir
 
 This pattern applies to any AGE graph where traversal performance matters but full property data is needed in the response. The extension stays topology-only; property handling is the application's concern.
 
+## API Integration Map
+
+Each graph_accel function was designed to replace a specific expensive pattern in the knowledge graph API. This section maps functions to the API code they accelerate, organized by integration priority.
+
+### Tier 1 — Multi-hop traversal (highest value)
+
+These endpoints generate per-depth Cypher chain queries that scale as O(degree^depth). graph_accel replaces the traversal entirely; hydration fetches properties for the result set.
+
+| API Endpoint | Current Pattern | graph_accel Replacement | Direction needed? |
+|-------------|----------------|------------------------|-------------------|
+| `POST /query/related` | Fixed-depth Cypher chains, one query per depth, merged in Python | `graph_accel_neighborhood(id, depth, direction, min_confidence)` + hydration | Yes — returns relationships with direction |
+| `POST /query/connect` | BFS or variable-length Cypher path | `graph_accel_path(from, to, max_hops, direction, min_confidence)` | Yes — path steps need edge direction |
+| `POST /query/connect-by-search` | Vector search → pathfinding | Search unchanged; pathfinding via `graph_accel_path` | Yes |
+| `GET /query/concept/{id}` | Separate outgoing/incoming Cypher queries | `graph_accel_neighborhood(id, 1, 'outgoing')` + `graph_accel_neighborhood(id, 1, 'incoming')` | Yes — the whole point is directional separation |
+
+### Tier 2 — Scoring and analysis (moderate value)
+
+These patterns run during annealing cycles and ontology management. Less latency-sensitive but called repeatedly per cycle.
+
+| API Pattern | Current Pattern | graph_accel Replacement |
+|------------|----------------|------------------------|
+| `get_concept_degree_ranking(name, limit)` | 2× `OPTIONAL MATCH` per concept, counted in Python | `graph_accel_degree(top_n)` — single pass over all nodes |
+| Ontology affinity / cross-ontology edges | 3-hop Cypher `MATCH` with `UNWIND` | `graph_accel_subgraph(start, depth)` — edge list for relationship counting |
+| Quality-filtered traversal (`pathfinding_facade.py`) | Fetch all neighbors, filter by confidence in Python | `graph_accel_neighborhood(id, depth, 'both', min_confidence)` — filtered at traversal time |
+| Annealing centroid recomputation | `get_concept_degree_ranking` + embedding fetch per concept | `graph_accel_degree` for ranking, then targeted embedding fetch for top-K |
+
+### Not candidates
+
+These patterns don't involve multi-hop traversal and won't benefit from graph_accel:
+
+- **Vector search** (`POST /query/search`) — embedding similarity, not graph traversal
+- **Projections** (`analyze_polarity_axis`) — embedding math, no path queries
+- **Vocabulary analysis** — edge type statistics, not node traversal
+- **CRUD operations** — single-node reads/writes
+- **Source retrieval** — Garage S3 fetch, not graph query
+
+### Cache invalidation placement
+
+`graph_accel_invalidate('knowledge_graph')` must be called after any graph mutation. In the API:
+
+- After batch ingestion completes (`batch_service.py`) — covers concept/source/edge creation
+- After manual graph edits (`graph` tool create/edit/delete) — covers direct manipulation
+- After ontology reassign/dissolve (`ontology.py` routes) — covers SCOPED_BY edge changes
+
 ## Future Work
 
 - **Weighted shortest path.** Dijkstra's algorithm using edge confidence as weights. The confidence data is already loaded; this adds a weighted traversal mode. No current endpoint needs weighted paths, but it would enable "highest-confidence path" queries.
