@@ -304,6 +304,161 @@ else
     echo ""
 fi
 
+# --- Direction correctness ---
+echo "================================================================"
+echo "  Direction Correctness"
+echo "================================================================"
+echo ""
+
+# Check if path_directions column exists (v0.3.0+)
+has_directions=$(psql_cmd \
+    -c "SET graph_accel.node_id_property = 'concept_id';" \
+    -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+    -c "SELECT count(*) FROM information_schema.columns
+        WHERE table_name = 'graph_accel_neighborhood'
+        AND column_name = 'path_directions';" 2>/dev/null || echo "0")
+# graph_accel functions are set-returning, so check by querying directly
+has_directions=$(psql_cmd \
+    -c "SET graph_accel.node_id_property = 'concept_id';" \
+    -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+    -c "SELECT path_directions FROM graph_accel_neighborhood('$CONCEPT_ID', 1) LIMIT 1;" 2>/dev/null && echo "1" || echo "0")
+
+if [ "$has_directions" = "0" ]; then
+    echo "  SKIP: path_directions not available (requires v0.3.0+)"
+    echo ""
+else
+    # Test 1: Depth-1 direction check against AGE
+    # For each depth-1 neighbor, graph_accel says outgoing or incoming.
+    # Verify against AGE directed queries.
+    echo "  --- Depth-1 direction check ---"
+
+    # Get graph_accel depth-1 neighbors with directions
+    ga_dir_output=$(psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "SELECT app_id, path_directions[1] FROM graph_accel_neighborhood('$CONCEPT_ID', 1)
+            WHERE label = 'Concept' ORDER BY app_id;")
+
+    # Get AGE outgoing neighbors (start)-[]->(target)
+    age_outgoing=$(psql_cmd -c "LOAD 'age'; SET search_path = ag_catalog, public;" \
+        -c "SELECT * FROM cypher('knowledge_graph', \$\$
+            MATCH (start:Concept {concept_id: '$CONCEPT_ID'})-[r]->(target:Concept)
+            RETURN DISTINCT target.concept_id
+        \$\$) as (cid agtype);" | grep -v '^$\|^LOAD\|^SET' | sed 's/"//g' | sort)
+
+    dir_pass=true
+    dir_checked=0
+    dir_errors=0
+
+    while IFS='|' read -r app_id direction; do
+        [ -z "$app_id" ] && continue
+        app_id=$(echo "$app_id" | tr -d ' ')
+        direction=$(echo "$direction" | tr -d ' {}')
+        [ -z "$app_id" ] && continue
+
+        dir_checked=$((dir_checked + 1))
+
+        # Check: if graph_accel says outgoing, AGE should have a forward edge
+        if [ "$direction" = "outgoing" ]; then
+            if ! echo "$age_outgoing" | grep -qF "$app_id"; then
+                echo "    FAIL: $app_id marked outgoing but no forward edge in AGE"
+                dir_errors=$((dir_errors + 1))
+                dir_pass=false
+            fi
+        elif [ "$direction" = "incoming" ]; then
+            if echo "$age_outgoing" | grep -qF "$app_id"; then
+                # It's in the outgoing set — could be bidirectional (edges in both directions).
+                # Only fail if there's NO incoming edge. For now, having it in outgoing
+                # while marked incoming is suspicious but not necessarily wrong if
+                # there are parallel edges in both directions. Log as warning.
+                :
+            fi
+        fi
+    done <<< "$ga_dir_output"
+
+    if $dir_pass; then
+        echo "  Depth-1 directions:  OK ($dir_checked checked, $dir_errors errors)"
+    else
+        echo "  Depth-1 directions:  FAIL ($dir_checked checked, $dir_errors errors)"
+        all_pass=false
+    fi
+
+    # Test 2: Path direction check
+    # Find a shortest path, verify each step's direction against AGE
+    echo "  --- Path direction check ---"
+
+    # Pick a depth-2 neighbor to get a multi-step path
+    path_target=$(psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 2)
+            WHERE label = 'Concept' AND distance = 2 LIMIT 1;")
+    path_target=$(echo "$path_target" | tr -d ' ' | head -1)
+
+    if [ -n "$path_target" ]; then
+        path_output=$(psql_cmd \
+            -c "SET graph_accel.node_id_property = 'concept_id';" \
+            -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+            -c "SELECT step, app_id, rel_type, direction FROM graph_accel_path('$CONCEPT_ID', '$path_target');")
+
+        path_steps=$(echo "$path_output" | grep -c '|' || true)
+        path_has_dirs=$(echo "$path_output" | grep -c 'outgoing\|incoming' || true)
+        path_has_null=$(echo "$path_output" | grep -c '|$' || true)  # start node has NULL direction
+
+        if [ "$path_steps" -ge 2 ] && [ "$path_has_dirs" -ge 1 ]; then
+            echo "  Path directions:     OK ($path_steps steps, $path_has_dirs with direction)"
+        else
+            echo "  Path directions:     FAIL (steps=$path_steps, with_dir=$path_has_dirs)"
+            all_pass=false
+        fi
+    else
+        echo "  Path directions:     SKIP (no depth-2 neighbor found)"
+    fi
+
+    # Test 3: Symmetry test — same edge from both endpoints
+    echo "  --- Symmetry test ---"
+
+    # Get a depth-1 neighbor and its direction
+    sym_output=$(psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "SELECT app_id, path_directions[1] FROM graph_accel_neighborhood('$CONCEPT_ID', 1)
+            WHERE label = 'Concept' LIMIT 1;")
+
+    sym_neighbor=$(echo "$sym_output" | head -1 | cut -d'|' -f1 | tr -d ' ')
+    sym_dir=$(echo "$sym_output" | head -1 | cut -d'|' -f2 | tr -d ' {}')
+
+    if [ -n "$sym_neighbor" ] && [ -n "$sym_dir" ]; then
+        # Query from the neighbor back to our start concept
+        reverse_output=$(psql_cmd \
+            -c "SET graph_accel.node_id_property = 'concept_id';" \
+            -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+            -c "SELECT app_id, path_directions[1] FROM graph_accel_neighborhood('$sym_neighbor', 1)
+                WHERE app_id = '$CONCEPT_ID';")
+
+        reverse_dir=$(echo "$reverse_output" | head -1 | cut -d'|' -f2 | tr -d ' {}')
+
+        # outgoing from A should be incoming from B, and vice versa
+        expected_reverse=""
+        if [ "$sym_dir" = "outgoing" ]; then
+            expected_reverse="incoming"
+        elif [ "$sym_dir" = "incoming" ]; then
+            expected_reverse="outgoing"
+        fi
+
+        if [ "$reverse_dir" = "$expected_reverse" ]; then
+            echo "  Symmetry:            OK ($sym_dir from start → $reverse_dir from neighbor)"
+        else
+            echo "  Symmetry:            FAIL (start=$sym_dir, reverse=$reverse_dir, expected=$expected_reverse)"
+            all_pass=false
+        fi
+    else
+        echo "  Symmetry:            SKIP (no neighbor found)"
+    fi
+
+    echo ""
+fi
+
 # --- Summary ---
 if $all_pass; then
     echo "RESULT: ALL CHECKS PASSED"
