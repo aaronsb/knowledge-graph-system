@@ -29,6 +29,15 @@ def setup_auth_mocks(mock_oauth_validation):
     pass
 
 
+@pytest.fixture(autouse=True)
+def bypass_permission_check(monkeypatch):
+    """Bypass require_permission for route tests — auth is tested separately."""
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.check_permission",
+        lambda *args, **kwargs: True
+    )
+
+
 class TestBatchCreate:
     """Tests for POST /graph/batch endpoint."""
 
@@ -43,10 +52,14 @@ class TestBatchCreate:
         )
         assert response.status_code == 401
 
-    def test_batch_requires_import_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+    def test_batch_requires_import_permission(
+        self, api_client: TestClient, auth_headers_user, monkeypatch
     ):
-        """Batch create requires kg:import scope."""
+        """Batch create requires import permission on graph."""
+        monkeypatch.setattr(
+            "api.app.dependencies.auth.check_permission",
+            lambda *args, **kwargs: False
+        )
         response = api_client.post(
             "/graph/batch",
             json={
@@ -56,7 +69,7 @@ class TestBatchCreate:
             headers=auth_headers_user
         )
         assert response.status_code == 403
-        assert "kg:import" in response.json()["detail"]
+        assert "import" in response.json()["detail"]
 
     def test_batch_create_concepts_success(self, api_client: TestClient, auth_headers_user):
         """Batch create concepts successfully."""
