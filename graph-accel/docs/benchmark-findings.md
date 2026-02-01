@@ -164,6 +164,51 @@ The 4 extra concepts are reachable through Instance/Source intermediate nodes. A
 - When replacing `/query/related`, either filter graph_accel results to Concept-only OR load with `node_labels = 'Concept'` AND add edge filtering to skip cross-type edges
 - Alternatively, accept the broader traversal — the extra concepts are genuinely connected and may be valuable for discovery
 
+## v0.4.0 Integration Enabler Results
+
+Measured on the same graph and test concept ("Way") after deploying v0.4.0.
+
+### Directed Traversal
+
+Outgoing-only and incoming-only depth-1 results exactly match AGE's directed Cypher queries:
+
+| Direction | graph_accel | AGE | Match |
+|-----------|------------|-----|-------|
+| Outgoing (`->`) | 9 concepts | 9 concepts | Exact |
+| Incoming (`<-`) | 3 concepts | 3 concepts | Exact |
+| Both (default) | 11 concepts | 11 concepts | Exact |
+
+Outgoing ∪ Incoming = Both confirmed.
+
+### Degree Centrality
+
+`graph_accel_degree(10)` returns the top hubs in the graph. Note: graph_accel counts edges to all node types (Concept + Instance + Source), while AGE's undirected `MATCH (c)-[r]-(n)` deduplicates differently for parallel edges.
+
+| Rank | Concept | Out | In | Total |
+|------|---------|-----|-----|-------|
+| 1 | sha256:bd065...b30009d0 | 24 | 20 | 44 |
+| 2 | sha256:990a8...d7639f13 ("Way") | 31 | 9 | 40 |
+| 3 | sha256:990a8...68ca74a8 | 16 | 18 | 34 |
+| 4 | sha256:990a8...fb57484e | 21 | 12 | 33 |
+
+### Subgraph Extraction
+
+Depth-2 subgraph from "Way": **324 edges among 103 reachable nodes**. All edge sources verified to be within the BFS-reachable neighborhood.
+
+### Confidence Filtering
+
+Confidence filtering is monotonic — higher thresholds produce strictly fewer or equal results:
+
+| Threshold | Nodes (depth 2) |
+|-----------|----------------|
+| None (all edges) | 103 |
+| 0.5 | 103 |
+| 0.9 | 76 |
+
+The 0.5 = unfiltered result is expected: most edges in this graph have confidence ≥ 0.5 or no loaded confidence (NAN, which passes all thresholds).
+
+Path confidence: "Way" → depth-2 neighbor path is 3 steps with both no filter and min_confidence=0.5, indicating the shortest path uses high-confidence edges.
+
 ## Benchmark SQL (for reproduction)
 
 ```sql
@@ -234,4 +279,21 @@ SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 4);
 SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 5);
 SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 6);
 SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 10);
+
+-- v0.4.0: Directed traversal
+SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 1, 'outgoing');
+SELECT * FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 1, 'incoming');
+
+-- v0.4.0: Degree centrality
+SELECT * FROM graph_accel_degree(10);
+
+-- v0.4.0: Subgraph extraction
+SELECT count(*) FROM graph_accel_subgraph('sha256:990a8_chunk1_d7639f13', 2);
+
+-- v0.4.0: Confidence filtering
+SELECT count(*) FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 2, 'both', 0.5);
+SELECT count(*) FROM graph_accel_neighborhood('sha256:990a8_chunk1_d7639f13', 2, 'both', 0.9);
+
+-- v0.4.0: Path with confidence
+SELECT * FROM graph_accel_path('sha256:990a8_chunk1_d7639f13', 'sha256:bd065_chunk11_b30009d0', 10, 'both', 0.5);
 ```

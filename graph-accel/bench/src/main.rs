@@ -1,4 +1,4 @@
-use graph_accel_core::{Direction, Graph};
+use graph_accel_core::{Direction, Edge, Graph, TraversalDirection};
 use std::collections::VecDeque;
 use std::time::Instant;
 
@@ -81,7 +81,7 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
 
     for depth in [1, 2, 3, 5, 10, 20, 50] {
         let t = Instant::now();
-        let result = graph_accel_core::bfs_neighborhood(&graph, 0, depth);
+        let result = graph_accel_core::bfs_neighborhood(&graph, 0, depth, TraversalDirection::Both, None);
         let elapsed = t.elapsed();
         println!(
             "{:>8} {:>12} {:>12} {:>8.1}ms",
@@ -104,7 +104,7 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
     let far_node = graph.node_count() as u64 - 1;
     println!();
     let t = Instant::now();
-    let path = graph_accel_core::shortest_path(&graph, 0, far_node, 100);
+    let path = graph_accel_core::shortest_path(&graph, 0, far_node, 100, TraversalDirection::Both, None);
     let elapsed = t.elapsed();
     match &path {
         Some(p) => println!(
@@ -288,7 +288,7 @@ fn gen_lsystem(node_count: u64) -> Graph {
                 next_id += 1;
                 graph.add_node(child, "Concept".into(), Some(format!("c_{}", child)));
                 let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-                graph.add_edge(parent, child, rt);
+                graph.add_edge(parent, child, rt, Edge::NO_CONFIDENCE);
                 next_frontier.push(child);
             }
         }
@@ -318,7 +318,7 @@ fn gen_scale_free(node_count: u64) -> Graph {
     for i in 0..seed {
         for j in (i + 1)..seed {
             let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-            graph.add_edge(i, j, rt);
+            graph.add_edge(i, j, rt, Edge::NO_CONFIDENCE);
             edge_endpoints.push(i);
             edge_endpoints.push(j);
         }
@@ -335,7 +335,7 @@ fn gen_scale_free(node_count: u64) -> Graph {
             let target = edge_endpoints[idx];
             if target != new_node {
                 let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-                graph.add_edge(new_node, target, rt);
+                graph.add_edge(new_node, target, rt, Edge::NO_CONFIDENCE);
                 edge_endpoints.push(new_node);
                 edge_endpoints.push(target);
             }
@@ -370,12 +370,12 @@ fn gen_small_world(node_count: u64) -> Graph {
             if rng.next_f64() < p {
                 let rewired = rng.next(node_count);
                 if rewired != i {
-                    graph.add_edge(i, rewired, rt);
+                    graph.add_edge(i, rewired, rt, Edge::NO_CONFIDENCE);
                 } else {
-                    graph.add_edge(i, neighbor, rt);
+                    graph.add_edge(i, neighbor, rt, Edge::NO_CONFIDENCE);
                 }
             } else {
-                graph.add_edge(i, neighbor, rt);
+                graph.add_edge(i, neighbor, rt, Edge::NO_CONFIDENCE);
             }
         }
     }
@@ -401,7 +401,7 @@ fn gen_random(node_count: u64) -> Graph {
         let to = rng.next(node_count);
         if from != to {
             let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-            graph.add_edge(from, to, rt);
+            graph.add_edge(from, to, rt, Edge::NO_CONFIDENCE);
         }
     }
 
@@ -427,7 +427,7 @@ fn gen_barbell(node_count: u64) -> Graph {
             let target = rng.next(clique_size);
             if target != i {
                 let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-                graph.add_edge(i, target, rt);
+                graph.add_edge(i, target, rt, Edge::NO_CONFIDENCE);
             }
         }
     }
@@ -439,10 +439,10 @@ fn gen_barbell(node_count: u64) -> Graph {
         graph.add_node(id, "Bridge".into(), Some(format!("c_{}", id)));
         if i == 0 {
             let rt = graph.intern_rel_type("BRIDGES");
-            graph.add_edge(clique_size - 1, id, rt);
+            graph.add_edge(clique_size - 1, id, rt, Edge::NO_CONFIDENCE);
         } else {
             let rt = graph.intern_rel_type("NEXT");
-            graph.add_edge(id - 1, id, rt);
+            graph.add_edge(id - 1, id, rt, Edge::NO_CONFIDENCE);
         }
     }
 
@@ -454,14 +454,14 @@ fn gen_barbell(node_count: u64) -> Graph {
     }
     // Connect bridge to clique B
     let rt = graph.intern_rel_type("BRIDGES");
-    graph.add_edge(b_start - 1, b_start, rt);
+    graph.add_edge(b_start - 1, b_start, rt, Edge::NO_CONFIDENCE);
 
     for i in 0..clique_size {
         for _ in 0..20u64.min(clique_size - 1) {
             let target = rng.next(clique_size);
             if target != i {
                 let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-                graph.add_edge(b_start + i, b_start + target, rt);
+                graph.add_edge(b_start + i, b_start + target, rt, Edge::NO_CONFIDENCE);
             }
         }
     }
@@ -494,14 +494,14 @@ fn gen_dla(node_count: u64) -> Graph {
         // Attach to a random surface node (primary edge)
         let attach_to = surface[rng.next(surface.len() as u64) as usize];
         let rt = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-        graph.add_edge(new_node, attach_to, rt);
+        graph.add_edge(new_node, attach_to, rt, Edge::NO_CONFIDENCE);
 
         // 10% chance of a second connection (creates loops / shortcuts)
         if rng.next(10) == 0 && new_node > 1 {
             let other = rng.next(new_node);
             if other != attach_to {
                 let rt2 = graph.intern_rel_type(REL_TYPES[rng.next(5) as usize]);
-                graph.add_edge(new_node, other, rt2);
+                graph.add_edge(new_node, other, rt2, Edge::NO_CONFIDENCE);
             }
         }
 

@@ -6,6 +6,7 @@
 
 use pgrx::prelude::*;
 
+mod degree;
 mod generation;
 mod guc;
 mod load;
@@ -13,6 +14,8 @@ mod neighborhood;
 mod path;
 mod state;
 mod status;
+mod subgraph;
+mod util;
 
 pg_module_magic!();
 

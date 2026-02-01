@@ -18,6 +18,17 @@ pub enum Direction {
     Incoming,
 }
 
+/// Filter for which edge directions to follow during traversal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TraversalDirection {
+    /// Follow only outgoing edges (from → to).
+    Outgoing,
+    /// Follow only incoming edges (to ← from).
+    Incoming,
+    /// Follow both directions (undirected traversal).
+    Both,
+}
+
 /// Metadata about a node.
 #[derive(Debug, Clone)]
 pub struct NodeInfo {
@@ -30,6 +41,19 @@ pub struct NodeInfo {
 pub struct Edge {
     pub target: NodeId,
     pub rel_type: RelTypeId,
+    /// Edge confidence (0.0–1.0). `f32::NAN` means "not loaded" —
+    /// avoids Option<f32> which would bloat Edge from 8 to 12+ bytes.
+    pub confidence: f32,
+}
+
+impl Edge {
+    /// Sentinel value for edges with no confidence data.
+    pub const NO_CONFIDENCE: f32 = f32::NAN;
+
+    /// Returns true if this edge has a loaded confidence value.
+    pub fn has_confidence(&self) -> bool {
+        !self.confidence.is_nan()
+    }
 }
 
 /// A record describing an edge to load into the graph.
@@ -43,6 +67,7 @@ pub struct EdgeRecord {
     pub to_label: String,
     pub from_app_id: Option<String>,
     pub to_app_id: Option<String>,
+    pub confidence: f32,
 }
 
 /// In-memory graph: adjacency lists + node metadata + relationship type interning.
@@ -129,16 +154,24 @@ impl Graph {
     }
 
     /// Add a directed edge. Also inserts into the incoming adjacency list.
-    pub fn add_edge(&mut self, from: NodeId, to: NodeId, rel_type: RelTypeId) {
+    pub fn add_edge(&mut self, from: NodeId, to: NodeId, rel_type: RelTypeId, confidence: f32) {
         let avg = self.estimated_avg_degree;
         self.outgoing
             .entry(from)
             .or_insert_with(|| Vec::with_capacity(avg))
-            .push(Edge { target: to, rel_type });
+            .push(Edge {
+                target: to,
+                rel_type,
+                confidence,
+            });
         self.incoming
             .entry(to)
             .or_insert_with(|| Vec::with_capacity(avg))
-            .push(Edge { target: from, rel_type });
+            .push(Edge {
+                target: from,
+                rel_type,
+                confidence,
+            });
     }
 
     /// Bulk load from EdgeRecord structs.
@@ -167,7 +200,7 @@ impl Graph {
             });
 
             let rt = self.intern_rel_type(&rec.rel_type);
-            self.add_edge(rec.from_id, rec.to_id, rt);
+            self.add_edge(rec.from_id, rec.to_id, rt, rec.confidence);
         }
     }
 
@@ -201,6 +234,11 @@ impl Graph {
                     .iter()
                     .map(|e| (e, Direction::Incoming)),
             )
+    }
+
+    /// Iterate over all node IDs and their metadata.
+    pub fn nodes_iter(&self) -> impl Iterator<Item = (&NodeId, &NodeInfo)> {
+        self.nodes.iter()
     }
 
     pub fn node_count(&self) -> usize {

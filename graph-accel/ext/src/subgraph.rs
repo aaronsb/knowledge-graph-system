@@ -1,10 +1,9 @@
 use pgrx::prelude::*;
 
 use crate::state;
-use crate::util::direction_str;
 
 #[pg_extern]
-fn graph_accel_neighborhood(
+fn graph_accel_subgraph(
     start_id: String,
     max_depth: default!(i32, 3),
     direction_filter: default!(String, "'both'"),
@@ -12,12 +11,13 @@ fn graph_accel_neighborhood(
 ) -> TableIterator<
     'static,
     (
-        name!(node_id, i64),
-        name!(label, String),
-        name!(app_id, Option<String>),
-        name!(distance, i32),
-        name!(path_types, Vec<String>),
-        name!(path_directions, Vec<String>),
+        name!(from_id, i64),
+        name!(from_label, String),
+        name!(from_app_id, Option<String>),
+        name!(to_id, i64),
+        name!(to_label, String),
+        name!(to_app_id, Option<String>),
+        name!(rel_type, String),
     ),
 > {
     crate::generation::ensure_fresh();
@@ -27,21 +27,19 @@ fn graph_accel_neighborhood(
     let results = state::with_graph(|gs| {
         let internal_id = state::resolve_node(&gs.graph, &start_id);
 
-        let result =
-            graph_accel_core::bfs_neighborhood(&gs.graph, internal_id, depth, direction, min_confidence.map(|v| v as f32));
+        let sub = graph_accel_core::extract_subgraph(&gs.graph, internal_id, depth, direction, min_confidence.map(|v| v as f32));
 
-        result
-            .neighbors
+        sub.edges
             .into_iter()
-            .map(|nr| {
-                let dirs = nr.path_directions.into_iter().map(direction_str).collect();
+            .map(|e| {
                 (
-                    nr.node_id as i64,
-                    nr.label,
-                    nr.app_id,
-                    nr.distance as i32,
-                    nr.path_types,
-                    dirs,
+                    e.from_id as i64,
+                    e.from_label,
+                    e.from_app_id,
+                    e.to_id as i64,
+                    e.to_label,
+                    e.to_app_id,
+                    e.rel_type,
                 )
             })
             .collect::<Vec<_>>()

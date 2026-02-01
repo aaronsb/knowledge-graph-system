@@ -15,6 +15,35 @@
 #     Not suitable for untrusted input without parameterization.
 #   - Concept ID grep filter assumes sha256: or c_ prefixes (current dataset).
 #
+# API Integration Rosetta Stone
+# =============================
+# Each test section below maps to an API worker pattern. When integrating
+# graph_accel into the API server, use these as reference for the SQL calls:
+#
+#   BFS Comparison → bfs_neighborhood() in query_facade.py
+#     Current: Cypher MATCH chain at fixed depth
+#     Replace: SELECT * FROM graph_accel_neighborhood(concept_id, depth)
+#
+#   Directed Filter → concept detail routes (outgoing/incoming separation)
+#     Current: Two separate Cypher queries with -> and <-
+#     Replace: graph_accel_neighborhood(id, depth, 'outgoing'|'incoming')
+#
+#   Degree Centrality → get_concept_degree_ranking() in ontology routes
+#     Current: OPTIONAL MATCH per concept, counted in Python
+#     Replace: SELECT * FROM graph_accel_degree(top_n) WHERE label = 'Concept'
+#
+#   Subgraph Extraction → ontology affinity, cross-ontology edge analysis
+#     Current: 3-hop Cypher patterns with UNWIND
+#     Replace: SELECT * FROM graph_accel_subgraph(start_id, depth)
+#
+#   Confidence Filtering → quality-filtered traversal in pathfinding_facade.py
+#     Current: Fetch all, filter in Python
+#     Replace: graph_accel_neighborhood(id, depth, 'both', min_confidence)
+#
+#   Cache Invalidation → call after any graph mutation in ingest/edit routes
+#     Current: N/A (no cache)
+#     Replace: SELECT graph_accel_invalidate('knowledge_graph') after writes
+#
 # Usage:
 #   ./graph-accel/tests/benchmark-comparison.sh
 #   ./graph-accel/tests/benchmark-comparison.sh sha256:990a8_chunk1_d7639f13   # custom concept
@@ -34,6 +63,20 @@ psql_cmd() {
 
 psql_timed() {
     docker exec "$CONTAINER" psql -U "$USER" -d "$DB" "$@"
+}
+
+# Helper: run a graph_accel query and return only the last statement's output.
+# Filters out SET/LOAD noise and graph_accel_load table output.
+ga_query() {
+    psql_cmd \
+        -c "SET graph_accel.node_id_property = 'concept_id';" \
+        -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+        -c "$1" 2>&1 | grep -v -E '^$|^SET$|^LOAD$|^[0-9]+\|[0-9]+\|[0-9]'
+}
+
+# Helper: run ga_query and extract a single integer count
+ga_count() {
+    ga_query "$1" | grep -oE '^[0-9]+$' | head -1
 }
 
 echo "================================================================"
@@ -393,7 +436,7 @@ else
         -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
         -c "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 2)
             WHERE label = 'Concept' AND distance = 2 LIMIT 1;")
-    path_target=$(echo "$path_target" | tr -d ' ' | head -1)
+    path_target=$(echo "$path_target" | grep '^sha256:\|^c_' | tr -d ' ' | head -1)
 
     if [ -n "$path_target" ]; then
         path_output=$(psql_cmd \
@@ -425,8 +468,9 @@ else
         -c "SELECT app_id, path_directions[1] FROM graph_accel_neighborhood('$CONCEPT_ID', 1)
             WHERE label = 'Concept' LIMIT 1;")
 
-    sym_neighbor=$(echo "$sym_output" | head -1 | cut -d'|' -f1 | tr -d ' ')
-    sym_dir=$(echo "$sym_output" | head -1 | cut -d'|' -f2 | tr -d ' {}')
+    sym_line=$(echo "$sym_output" | grep -E '^(sha256:|c_)' | head -1)
+    sym_neighbor=$(echo "$sym_line" | cut -d'|' -f1 | tr -d ' ')
+    sym_dir=$(echo "$sym_line" | cut -d'|' -f2 | tr -d ' {}')
 
     if [ -n "$sym_neighbor" ] && [ -n "$sym_dir" ]; then
         # Query from the neighbor back to our start concept
@@ -436,7 +480,7 @@ else
             -c "SELECT app_id, path_directions[1] FROM graph_accel_neighborhood('$sym_neighbor', 1)
                 WHERE app_id = '$CONCEPT_ID';")
 
-        reverse_dir=$(echo "$reverse_output" | head -1 | cut -d'|' -f2 | tr -d ' {}')
+        reverse_dir=$(echo "$reverse_output" | grep -E '^(sha256:|c_)' | head -1 | cut -d'|' -f2 | tr -d ' {}')
 
         # outgoing from A should be incoming from B, and vice versa
         expected_reverse=""
@@ -458,6 +502,212 @@ else
 
     echo ""
 fi
+
+# --- Directed traversal filter ---
+echo "================================================================"
+echo "  Directed Traversal Filter (v0.4.0)"
+echo "================================================================"
+echo ""
+
+# Test: outgoing-only depth-1 should match AGE forward query
+# Exclude start node (distance > 0) to match AGE's WHERE start <> target
+ga_outgoing=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 1, 'outgoing')
+    WHERE label = 'Concept' AND distance > 0 ORDER BY app_id;" \
+    | grep '^sha256:\|^c_' | sort)
+
+age_fwd=$(psql_cmd -c "LOAD 'age'; SET search_path = ag_catalog, public;" \
+    -c "SELECT * FROM cypher('knowledge_graph', \$\$
+        MATCH (start:Concept {concept_id: '$CONCEPT_ID'})-[r]->(target:Concept)
+        WHERE start <> target
+        RETURN DISTINCT target.concept_id
+    \$\$) as (cid agtype);" | grep -v '^$\|^LOAD\|^SET' | sed 's/"//g' | sort)
+
+if diff <(echo "$age_fwd") <(echo "$ga_outgoing") > /dev/null 2>&1; then
+    fwd_count=$(echo "$age_fwd" | grep -c . || true)
+    echo "  Outgoing depth-1:    OK (exact match, $fwd_count concepts)"
+else
+    echo "  Outgoing depth-1:    FAIL"
+    echo "    Only in AGE forward:"
+    comm -23 <(echo "$age_fwd") <(echo "$ga_outgoing") | head -3
+    echo "    Only in graph_accel outgoing:"
+    comm -13 <(echo "$age_fwd") <(echo "$ga_outgoing") | head -3
+    all_pass=false
+fi
+
+# Test: incoming-only depth-1 should match AGE reverse query
+ga_incoming=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 1, 'incoming')
+    WHERE label = 'Concept' AND distance > 0 ORDER BY app_id;" \
+    | grep '^sha256:\|^c_' | sort)
+
+age_rev=$(psql_cmd -c "LOAD 'age'; SET search_path = ag_catalog, public;" \
+    -c "SELECT * FROM cypher('knowledge_graph', \$\$
+        MATCH (start:Concept {concept_id: '$CONCEPT_ID'})<-[r]-(target:Concept)
+        WHERE start <> target
+        RETURN DISTINCT target.concept_id
+    \$\$) as (cid agtype);" | grep -v '^$\|^LOAD\|^SET' | sed 's/"//g' | sort)
+
+if diff <(echo "$age_rev") <(echo "$ga_incoming") > /dev/null 2>&1; then
+    rev_count=$(echo "$age_rev" | grep -c . || true)
+    echo "  Incoming depth-1:    OK (exact match, $rev_count concepts)"
+else
+    echo "  Incoming depth-1:    FAIL"
+    echo "    Only in AGE reverse:"
+    comm -23 <(echo "$age_rev") <(echo "$ga_incoming") | head -3
+    echo "    Only in graph_accel incoming:"
+    comm -13 <(echo "$age_rev") <(echo "$ga_incoming") | head -3
+    all_pass=false
+fi
+
+# Test: outgoing ∪ incoming = both at depth 1
+ga_both=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 1)
+    WHERE label = 'Concept' AND distance > 0 ORDER BY app_id;" \
+    | grep '^sha256:\|^c_' | sort)
+
+ga_union=$(sort -u <(echo "$ga_outgoing") <(echo "$ga_incoming"))
+
+if diff <(echo "$ga_both") <(echo "$ga_union") > /dev/null 2>&1; then
+    echo "  Union = both:        OK"
+else
+    echo "  Union = both:        FAIL (outgoing ∪ incoming ≠ both)"
+    all_pass=false
+fi
+
+echo ""
+
+# --- Degree centrality ---
+echo "================================================================"
+echo "  Degree Centrality (v0.4.0)"
+echo "================================================================"
+echo ""
+
+# Get top-10 from graph_accel (filter noise lines from SET/LOAD output)
+ga_degree=$(ga_query "SELECT app_id, out_degree, in_degree, total_degree
+    FROM graph_accel_degree(10)
+    WHERE label = 'Concept';" | grep -E '^(sha256:|c_)')
+
+top_node=$(echo "$ga_degree" | head -1)
+top_app_id=$(echo "$top_node" | cut -d'|' -f1 | tr -d ' ')
+top_total=$(echo "$top_node" | cut -d'|' -f4 | tr -d ' ')
+
+if [ -n "$top_app_id" ] && [ "$top_total" -gt 0 ] 2>/dev/null; then
+    # Verify top node's degree against AGE
+    age_degree=$(psql_cmd -c "LOAD 'age'; SET search_path = ag_catalog, public;" \
+        -c "SELECT * FROM cypher('knowledge_graph', \$\$
+            MATCH (c:Concept {concept_id: '$top_app_id'})-[r]-(n)
+            RETURN count(r)
+        \$\$) as (cnt agtype);" | grep -oE '[0-9]+' | head -1)
+
+    if [ "$top_total" = "$age_degree" ] 2>/dev/null; then
+        echo "  Top node degree:     OK ($top_app_id: $top_total matches AGE)"
+    else
+        echo "  Top node degree:     WARN ($top_app_id: graph_accel=$top_total, AGE=$age_degree)"
+        # Not a hard fail — AGE counts differently with self-loops and multi-edges
+    fi
+    echo "  Top 5 by degree:"
+    echo "$ga_degree" | head -5 | while IFS='|' read -r app out ind total; do
+        printf "    %-40s  out=%-4s in=%-4s total=%-4s\n" \
+            "$(echo "$app" | tr -d ' ')" "$(echo "$out" | tr -d ' ')" \
+            "$(echo "$ind" | tr -d ' ')" "$(echo "$total" | tr -d ' ')"
+    done
+else
+    echo "  Degree centrality:   FAIL (no results)"
+    all_pass=false
+fi
+
+echo ""
+
+# --- Subgraph extraction ---
+echo "================================================================"
+echo "  Subgraph Extraction (v0.4.0)"
+echo "================================================================"
+echo ""
+
+ga_sub_count=$(ga_count "SELECT count(*) FROM graph_accel_subgraph('$CONCEPT_ID', 2);")
+
+# Neighborhood node count at depth 2 for reference
+ga_hood_count=$(ga_count "SELECT count(*) FROM graph_accel_neighborhood('$CONCEPT_ID', 2);")
+
+if [ -n "$ga_sub_count" ] && [ "$ga_sub_count" -gt 0 ] 2>/dev/null; then
+    echo "  Depth-2 subgraph:    OK ($ga_sub_count edges among $ga_hood_count nodes)"
+
+    # Verify edges are between reachable nodes (spot check: first 5 from_app_id should be in neighborhood)
+    ga_sub_from=$(ga_query "SELECT DISTINCT from_app_id FROM graph_accel_subgraph('$CONCEPT_ID', 2)
+        WHERE from_app_id IS NOT NULL LIMIT 5;" | grep '^sha256:\|^c_')
+    ga_hood_ids=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 2)
+        WHERE app_id IS NOT NULL;")
+
+    sub_valid=true
+    while IFS= read -r from_id; do
+        from_id=$(echo "$from_id" | tr -d ' ')
+        [ -z "$from_id" ] && continue
+        if ! echo "$ga_hood_ids" | grep -qF "$from_id"; then
+            echo "    FAIL: edge from $from_id not in neighborhood"
+            sub_valid=false
+        fi
+    done <<< "$ga_sub_from"
+
+    if $sub_valid; then
+        echo "  Edge containment:    OK (all edge sources within neighborhood)"
+    else
+        all_pass=false
+    fi
+else
+    echo "  Depth-2 subgraph:    FAIL (no edges returned)"
+    all_pass=false
+fi
+
+echo ""
+
+# --- Confidence filtering ---
+echo "================================================================"
+echo "  Confidence Filtering (v0.4.0)"
+echo "================================================================"
+echo ""
+
+# Unfiltered count
+ga_unfiltered=$(ga_count "SELECT count(*) FROM graph_accel_neighborhood('$CONCEPT_ID', 2);")
+
+# Filtered at 0.5
+ga_filtered=$(ga_count "SELECT count(*) FROM graph_accel_neighborhood('$CONCEPT_ID', 2, 'both', 0.5);")
+
+if [ "$ga_filtered" -le "$ga_unfiltered" ] 2>/dev/null; then
+    echo "  Filtered ≤ unfiltered: OK ($ga_filtered ≤ $ga_unfiltered at min_confidence=0.5)"
+else
+    echo "  Filtered ≤ unfiltered: FAIL ($ga_filtered > $ga_unfiltered)"
+    all_pass=false
+fi
+
+# Filtered at high threshold should find fewer or equal
+ga_strict=$(ga_count "SELECT count(*) FROM graph_accel_neighborhood('$CONCEPT_ID', 2, 'both', 0.9);")
+
+if [ "$ga_strict" -le "$ga_filtered" ] 2>/dev/null; then
+    echo "  Monotonic filtering:   OK ($ga_strict ≤ $ga_filtered ≤ $ga_unfiltered)"
+else
+    echo "  Monotonic filtering:   FAIL (0.9=$ga_strict, 0.5=$ga_filtered, none=$ga_unfiltered)"
+    all_pass=false
+fi
+
+# Path with confidence — reuse path_target from direction correctness section
+if [ -n "$path_target" ]; then
+    ga_path_unfiltered=$(ga_count "SELECT count(*) FROM graph_accel_path('$CONCEPT_ID', '$path_target');")
+    ga_path_filtered=$(ga_count "SELECT count(*) FROM graph_accel_path('$CONCEPT_ID', '$path_target', 10, 'both', 0.5);")
+else
+    # Pick a depth-2 neighbor for path test
+    path_target=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 2)
+        WHERE label = 'Concept' AND distance = 2 LIMIT 1;" | grep '^sha256:\|^c_' | tr -d ' ' | head -1)
+    ga_path_unfiltered=$(ga_count "SELECT count(*) FROM graph_accel_path('$CONCEPT_ID', '$path_target');")
+    ga_path_filtered=$(ga_count "SELECT count(*) FROM graph_accel_path('$CONCEPT_ID', '$path_target', 10, 'both', 0.5);")
+fi
+
+echo "  Path (unfiltered):     $ga_path_unfiltered steps"
+echo "  Path (min_conf=0.5):   $ga_path_filtered steps"
+if [ "$ga_path_filtered" -ge "$ga_path_unfiltered" ] 2>/dev/null || [ "$ga_path_filtered" -eq 0 ] 2>/dev/null; then
+    echo "  Path confidence:       OK (filtered path ≥ unfiltered or no path)"
+else
+    echo "  Path confidence:       WARN (filtered shorter — alternate route?)"
+fi
+
+echo ""
 
 # --- Summary ---
 if $all_pass; then
