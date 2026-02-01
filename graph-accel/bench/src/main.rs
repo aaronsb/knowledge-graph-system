@@ -1,4 +1,4 @@
-use graph_accel_core::Graph;
+use graph_accel_core::{Direction, Graph};
 use std::collections::VecDeque;
 use std::time::Instant;
 
@@ -74,6 +74,11 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
     println!("{:>8} {:>12} {:>12} {:>10}", "depth", "found", "visited", "time");
     println!("{:->8} {:->12} {:->12} {:->10}", "", "", "", "");
 
+    let mut bfs_d1 = graph_accel_core::TraversalResult {
+        neighbors: Vec::new(),
+        nodes_visited: 0,
+    };
+
     for depth in [1, 2, 3, 5, 10, 20, 50] {
         let t = Instant::now();
         let result = graph_accel_core::bfs_neighborhood(&graph, 0, depth);
@@ -85,8 +90,11 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
             result.nodes_visited,
             elapsed.as_secs_f64() * 1000.0
         );
-        // Stop if we already found everything
-        if result.nodes_visited >= graph.node_count() {
+        let reached_all = result.nodes_visited >= graph.node_count();
+        if depth == 1 {
+            bfs_d1 = result;
+        }
+        if reached_all {
             println!("{:>8} (entire graph reached)", "");
             break;
         }
@@ -98,7 +106,7 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
     let t = Instant::now();
     let path = graph_accel_core::shortest_path(&graph, 0, far_node, 100);
     let elapsed = t.elapsed();
-    match path {
+    match &path {
         Some(p) => println!(
             "Shortest path 0 → {}: {} hops in {:.1}ms",
             far_node,
@@ -111,7 +119,125 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
             elapsed.as_secs_f64() * 1000.0
         ),
     }
+
+    // Direction validation
     println!();
+    validate_directions(&graph, &bfs_d1, &path);
+    println!();
+}
+
+/// Validate direction metadata against the known graph structure.
+///
+/// For each depth-1 neighbor of node 0, verify that:
+///   - Outgoing means node 0 has a forward edge to the neighbor
+///   - Incoming means the neighbor has a forward edge to node 0
+///   - path_types and path_directions are the same length
+///
+/// For shortest path, verify:
+///   - Start node has direction = None
+///   - All other steps have Some direction
+///   - Each direction matches the actual edge in the graph
+fn validate_directions(
+    graph: &Graph,
+    bfs_d1: &graph_accel_core::TraversalResult,
+    path: &Option<Vec<graph_accel_core::PathStep>>,
+) {
+    let mut checks = 0u32;
+    let mut failures = 0u32;
+
+    // BFS depth-1: verify direction matches edge storage
+    for nr in &bfs_d1.neighbors {
+        // path_types and path_directions must be parallel
+        checks += 1;
+        if nr.path_types.len() != nr.path_directions.len() {
+            eprintln!(
+                "  FAIL: node {} path_types len {} != path_directions len {}",
+                nr.node_id,
+                nr.path_types.len(),
+                nr.path_directions.len()
+            );
+            failures += 1;
+            continue;
+        }
+
+        // At depth 1, there's exactly one edge
+        if nr.distance != 1 || nr.path_directions.len() != 1 {
+            continue;
+        }
+
+        checks += 1;
+        let dir = nr.path_directions[0];
+        let has_outgoing = graph.neighbors_out(0).iter().any(|e| e.target == nr.node_id);
+        let has_incoming = graph.neighbors_in(0).iter().any(|e| e.target == nr.node_id);
+
+        match dir {
+            Direction::Outgoing => {
+                if !has_outgoing {
+                    eprintln!(
+                        "  FAIL: node {} marked Outgoing but no forward edge 0→{}",
+                        nr.node_id, nr.node_id
+                    );
+                    failures += 1;
+                }
+            }
+            Direction::Incoming => {
+                if !has_incoming {
+                    eprintln!(
+                        "  FAIL: node {} marked Incoming but no reverse edge {}→0",
+                        nr.node_id, nr.node_id
+                    );
+                    failures += 1;
+                }
+            }
+        }
+    }
+
+    // Shortest path: verify start has None, rest have Some, each matches graph
+    if let Some(steps) = path {
+        if !steps.is_empty() {
+            checks += 1;
+            if steps[0].direction.is_some() {
+                eprintln!("  FAIL: start node has direction {:?}, expected None", steps[0].direction);
+                failures += 1;
+            }
+
+            for w in steps.windows(2) {
+                let from = &w[0];
+                let to = &w[1];
+                checks += 1;
+                match to.direction {
+                    None => {
+                        eprintln!("  FAIL: step {} has direction None, expected Some", to.node_id);
+                        failures += 1;
+                    }
+                    Some(Direction::Outgoing) => {
+                        if !graph.neighbors_out(from.node_id).iter().any(|e| e.target == to.node_id) {
+                            eprintln!(
+                                "  FAIL: {}→{} marked Outgoing but no forward edge",
+                                from.node_id, to.node_id
+                            );
+                            failures += 1;
+                        }
+                    }
+                    Some(Direction::Incoming) => {
+                        if !graph.neighbors_in(from.node_id).iter().any(|e| e.target == to.node_id) {
+                            eprintln!(
+                                "  FAIL: {}→{} marked Incoming but no reverse edge",
+                                from.node_id, to.node_id
+                            );
+                            failures += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if failures == 0 {
+        println!("Direction check: PASS ({} checks)", checks);
+    } else {
+        println!("Direction check: FAIL ({} failures / {} checks)", failures, checks);
+    }
 }
 
 // ---------------------------------------------------------------------------

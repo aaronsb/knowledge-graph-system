@@ -86,20 +86,20 @@ Standard BFS with two enhancements:
 
 ```
 BFS queue: [(start, 0)]
-visited: {start → (parent=None, rel_type=None)}
+visited: {start → (parent=None, rel_type=None, direction=None)}
 
 while queue not empty:
     (node, depth) = dequeue
     if depth >= max_depth: skip
-    for (target, rel_type) in neighbors_all(node):
+    for (target, rel_type, direction) in neighbors_all(node):
         if target not in visited:
-            visited[target] = (parent=node, rel_type)
+            visited[target] = (parent=node, rel_type, direction)
             enqueue (target, depth+1)
 ```
 
-**Undirected traversal:** `neighbors_all()` concatenates outgoing and incoming edges, treating the graph as undirected. This matches the AGE query pattern `(a)-[r]-(b)` which traverses in both directions.
+**Direction-aware traversal:** `neighbors_all()` concatenates outgoing and incoming edges, tagging each with its traversal direction (`Outgoing` if followed from → to, `Incoming` if followed against the stored direction). This preserves edge semantics -- the caller can distinguish "A SUPPORTS B" from "B SUPPORTS A" -- while still exploring the full undirected neighborhood.
 
-**Path type reconstruction:** For each discovered node, walk the parent pointers from node back to start, collecting relationship type names. This produces the relationship types along one shortest path -- not all shortest paths. The lazy reconstruction avoids allocating path data for nodes that may never be returned (e.g., if the caller filters by label).
+**Path reconstruction:** For each discovered node, walk the parent pointers from node back to start, collecting relationship type names and directions. This produces the types and directions along one shortest path -- not all shortest paths. The lazy reconstruction avoids allocating path data for nodes that may never be returned (e.g., if the caller filters by label).
 
 ### Shortest Path
 
@@ -201,7 +201,7 @@ The per-backend approach may be sufficient indefinitely if connection pools keep
 
 ### Read-Only Guarantee
 
-The extension never writes to AGE's internal tables. It reads via SPI during load and serves from in-memory state during queries. The only table the extension will eventually write to is its own epoch counter (Phase 3), and only via triggers on AGE mutations -- not from extension code directly.
+The extension never writes to AGE's internal tables. It reads via SPI during load and serves from in-memory state during queries. The only table the extension writes to is `graph_accel.generation` (its own cache invalidation counter), managed via `graph_accel_invalidate()`.
 
 ### Memory Bounds
 
@@ -241,12 +241,65 @@ See [benchmark-findings.md](benchmark-findings.md) for detailed results and repr
 - **u16 relationship type limit.** Max 65,535 distinct relationship types. Sufficient for any practical graph but panics (caught by pg_guard) if exceeded.
 - **No incremental updates.** The entire graph is reloaded on each `graph_accel_load()` call. Incremental edge insertion/deletion is a future enhancement.
 
+## Cache Invalidation
+
+Generation-based cooperative invalidation. AGE bypasses PostgreSQL row-level triggers (its C functions directly manipulate vertex/edge tables), so transparent invalidation is impossible. Applications cooperate by calling `graph_accel_invalidate(graph_name)` after mutations.
+
+**Schema** (created at `CREATE EXTENSION` via `extension_sql!` bootstrap):
+
+```sql
+CREATE TABLE graph_accel.generation (
+    graph_name  text PRIMARY KEY,
+    generation  bigint NOT NULL DEFAULT 1,
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+```
+
+**Invalidation function:**
+
+```sql
+SELECT graph_accel_invalidate('my_graph');  -- returns new generation (monotonic)
+```
+
+Atomically bumps the generation counter and fires `pg_notify('graph_accel', graph_name)` for external listeners.
+
+**Staleness check:** Every query function calls `ensure_fresh()` as its first instruction — a single-row PK lookup (~0.01ms). If `loaded_generation < current_generation` and `auto_reload = true` (with debounce), the graph reloads inline. If reload fails, `PgTryBuilder` catches the error and serves stale data with a warning.
+
+**Status:** `graph_accel_status()` returns `loaded_generation`, `current_generation`, and `is_stale`. Status string is `"loaded"`, `"stale"`, or `"not_loaded"`.
+
+**Graceful degradation:**
+- Generation table missing → skip staleness check, serve loaded graph
+- No row for this graph → generation 0 → always fresh
+- Auto-reload fails → warning, serve stale
+- Never invalidated → everything fresh forever
+
+## Integration Pattern: Two-Phase Queries
+
+graph_accel stores topology — node IDs, labels, application-level identifiers, and edges with relationship types. It does **not** store node properties (descriptions, scores, embeddings, or any domain-specific data). This keeps the extension generic and lightweight.
+
+Applications that need full node properties alongside fast traversal use a two-phase pattern:
+
+```
+Phase 1: Topology (graph_accel, sub-ms)
+  graph_accel_neighborhood('node_id', 5)
+  → node_id, label, app_id, distance, path_types[], path_directions[]
+
+Phase 2: Property Hydration (application-side, parallel)
+  SELECT * FROM {graph}.{label} WHERE id IN (...)
+  → full node properties for the IDs returned by Phase 1
+```
+
+**Why this works:** AGE's `MATCH (a)-[*1..N]-(b)` translates to nested SQL joins with O(degree^depth) intermediate rows. The two-phase pattern eliminates that — Phase 1 is O(V+E) BFS with visited-set pruning, Phase 2 is flat index lookups at O(result_count).
+
+**Application-side orchestration:** Because Phase 1 returns the complete set of node IDs before any property fetching begins, the application controls how hydration executes — batch sizing, priority ordering (shallow results first), cancellation, selective hydration (skip properties for topology-only views), and parallel dispatch across multiple connections. Each hydration worker gets a disjoint ID set with no overlap.
+
+This pattern applies to any AGE graph where traversal performance matters but full property data is needed in the response. The extension stays topology-only; property handling is the application's concern.
+
 ## Future Work
 
-- **Epoch invalidation (Phase 3).** A monotonic counter in a dedicated table, incremented by triggers on AGE mutations. Query functions check the epoch before serving -- if stale, trigger a reload.
-- **Shared memory (Phase 4).** Cross-backend graph sharing via `pg_shmem_init!()`. Requires redesigning the core data structure to use a flat buffer layout (CSR) in fixed-size pre-allocated shared memory.
-- **Directed traversal.** Option to follow only outgoing or only incoming edges, matching AGE's `(a)-[r]->(b)` vs `(a)-[r]-(b)` patterns.
-- **Edge property filtering.** Load and index edge properties (e.g., `grounding_strength`) to support filtered traversals.
+- **Shared memory.** Cross-backend graph sharing via `pg_shmem_init!()`. Requires redesigning the core data structure to use a flat buffer layout (CSR) in fixed-size pre-allocated shared memory. Justified when per-backend copies exceed available RAM.
+- **Directed-only traversal.** Option to follow only outgoing or only incoming edges, matching AGE's `(a)-[r]->(b)` vs `(a)<-[r]-(b)` patterns. (Direction metadata is already tracked; this would add a filter parameter.)
+- **Edge property filtering.** Load and index edge properties to support filtered traversals (e.g., only follow edges above a confidence threshold).
 - **Weighted shortest path.** Dijkstra's algorithm using edge properties as weights.
 - **Degree centrality function.** `graph_accel_degree(top_n)` returning nodes ranked by in/out/total degree.
 - **Connected component extraction.** `graph_accel_subgraph(start_id, max_depth)` for subgraph analysis.
