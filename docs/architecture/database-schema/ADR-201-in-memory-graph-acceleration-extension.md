@@ -17,9 +17,13 @@ Apache AGE provides graph storage and openCypher query support as a PostgreSQL e
 
 ### Benchmarks
 
-Testing on a ~200 node, ~1000 edge graph (16 cores / 32 threads, 128GB RAM).
+Testing on a ~236 concept, ~120 edge type graph (16 cores / 32 threads, 128GB RAM).
+
+**Motivating query:** Neighborhood search for "Way" (degree 36, 2nd highest hub) through the web workstation's NeighborhoodBlock → `POST /query/related` → iterative fixed-depth Cypher chains. See [benchmark-findings.md](../../../graph-accel/docs/benchmark-findings.md) for full query chain, reproduction SQL, and graph_accel comparison.
 
 **Traversal performance (iterative fixed-depth chain queries, PR #262):**
+
+API-measured timing (Python `asyncio.to_thread` dispatch, includes connection pool overhead):
 
 | Depth | Concepts Found | Sequential | Parallel (asyncio.to_thread) | Speedup |
 |-------|---------------|------------|------------------------------|---------|
@@ -28,6 +32,17 @@ Testing on a ~200 node, ~1000 edge graph (16 cores / 32 threads, 128GB RAM).
 | 4     | 14            | 0.529s     | 0.204s                       | 2.6x    |
 | 5     | 20            | 0.871s     | 0.378s                       | 2.3x    |
 | 6     | —             | Hangs indefinitely | —                      | —       |
+
+SQL-measured timing (psql `\timing`, pure query execution, "Way" concept with degree 36):
+
+| Depth | Concepts Found | SQL Time |
+|-------|---------------|----------|
+| 1     | 11            | 3,644ms  |
+| 2     | 45            | 471ms    |
+| 3     | 73            | 1,790ms  |
+| 4     | 105           | 11,460ms |
+| 5     | 124           | 92,474ms |
+| 6     | —             | Hangs    |
 
 Parallel execution dispatches each depth level to a separate thread via `asyncio.to_thread`, each getting its own connection from AGE's `ThreadedConnectionPool`. Real parallelism on the Postgres side (GIL releases during I/O). Consistent ~2-2.5x speedup.
 
