@@ -16,6 +16,7 @@ import json
 import logging
 from typing import List, Dict, Optional, Any
 import numpy as np
+from psycopg2 import extras
 
 logger = logging.getLogger(__name__)
 

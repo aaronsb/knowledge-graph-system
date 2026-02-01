@@ -17,6 +17,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
+from psycopg2 import extras
 from api.app.constants import RELATIONSHIP_TYPE_TO_CATEGORY
 
 logger = logging.getLogger(__name__)
