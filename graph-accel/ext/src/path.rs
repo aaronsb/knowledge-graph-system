@@ -18,8 +18,8 @@ fn graph_accel_path(
     ),
 > {
     let results = state::with_graph(|gs| {
-        let start = resolve_node(&gs.graph, &from_id);
-        let target = resolve_node(&gs.graph, &to_id);
+        let start = state::resolve_node(&gs.graph, &from_id);
+        let target = state::resolve_node(&gs.graph, &to_id);
 
         match graph_accel_core::shortest_path(&gs.graph, start, target, max_hops as u32) {
             Some(path) => path
@@ -35,19 +35,4 @@ fn graph_accel_path(
     });
 
     TableIterator::new(results)
-}
-
-/// Resolve a node identifier: try app_id first, then parse as AGE graphid.
-fn resolve_node(graph: &graph_accel_core::Graph, id_str: &str) -> u64 {
-    graph
-        .resolve_app_id(id_str)
-        .or_else(|| {
-            id_str
-                .parse::<u64>()
-                .ok()
-                .filter(|id| graph.node(*id).is_some())
-        })
-        .unwrap_or_else(|| {
-            error!("graph_accel: node '{}' not found", id_str);
-        })
 }

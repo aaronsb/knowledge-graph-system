@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use graph_accel_core::Graph;
 use pgrx::prelude::*;
+use pgrx::spi::{quote_identifier, quote_literal};
 
 use crate::guc;
 use crate::state::{self, GraphState};
@@ -26,13 +27,15 @@ fn graph_accel_load(
             error!("graph_accel: source_graph not set and no graph_name argument provided");
         });
 
+    validate_name(&gname);
+
     let (node_count, edge_count) = Spi::connect(|client| {
         // Verify graph exists
         let exists = client
             .select(
                 &format!(
-                    "SELECT 1 FROM ag_catalog.ag_graph WHERE name = '{}'",
-                    sanitize_ident(&gname)
+                    "SELECT 1 FROM ag_catalog.ag_graph WHERE name = {}",
+                    quote_literal(&gname)
                 ),
                 None,
                 &[],
@@ -127,9 +130,9 @@ fn load_label_catalog(
         "SELECT l.name, l.kind::text \
          FROM ag_catalog.ag_label l \
          JOIN ag_catalog.ag_graph g ON l.graph = g.graphid \
-         WHERE g.name = '{}' \
+         WHERE g.name = {} \
            AND l.name NOT LIKE '_ag%%'",
-        sanitize_ident(graph_name)
+        quote_literal(graph_name)
     );
 
     let mut labels = Vec::new();
@@ -162,9 +165,9 @@ fn load_vertices(
     graph: &mut Graph,
 ) -> Result<(), pgrx::spi::SpiError> {
     let query = format!(
-        "SELECT id::text, properties::text FROM {}.\"{}\"",
-        sanitize_ident(graph_name),
-        sanitize_ident(label_name)
+        "SELECT id::text, properties::text FROM {}.{}",
+        quote_identifier(graph_name),
+        quote_identifier(label_name)
     );
 
     let table = client.select(&query, None, &[])?;
@@ -203,9 +206,9 @@ fn load_edges(
     let rel_type_id = graph.intern_rel_type(label_name);
 
     let query = format!(
-        "SELECT start_id::text, end_id::text FROM {}.\"{}\"",
-        sanitize_ident(graph_name),
-        sanitize_ident(label_name)
+        "SELECT start_id::text, end_id::text FROM {}.{}",
+        quote_identifier(graph_name),
+        quote_identifier(label_name)
     );
 
     let table = client.select(&query, None, &[])?;
@@ -245,14 +248,12 @@ fn extract_json_string(json: &str, key: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-/// Validate an identifier contains only safe characters.
-fn sanitize_ident(name: &str) -> &str {
-    assert!(
-        !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_'),
-        "graph_accel: invalid identifier: '{}'",
-        name
-    );
-    name
+/// Validate a name contains only safe characters before use in queries.
+/// Uses pgrx error!() instead of assert!() for proper Postgres ERROR handling.
+fn validate_name(name: &str) {
+    if name.is_empty() || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+        error!("graph_accel: invalid name: '{}'", name);
+    }
 }
 
 enum Filter {
