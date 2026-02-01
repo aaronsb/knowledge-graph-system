@@ -13,6 +13,7 @@
 
 use pgrx::prelude::*;
 use pgrx::spi::quote_literal;
+use pgrx::PgTryBuilder;
 
 use crate::guc;
 use crate::state;
@@ -187,7 +188,7 @@ pub fn ensure_fresh() {
         }
     }
 
-    // Reload inline.
+    // Reload inline. Catch errors to degrade gracefully (serve stale).
     notice!(
         "graph_accel: auto-reloading '{}' (gen {} -> {})",
         graph_name,
@@ -195,5 +196,14 @@ pub fn ensure_fresh() {
         current_gen
     );
 
-    crate::load::do_load(&graph_name);
+    PgTryBuilder::new(|| {
+        crate::load::do_load(&graph_name);
+    })
+    .catch_others(|_| {
+        warning!(
+            "graph_accel: auto-reload of '{}' failed, serving stale graph",
+            graph_name
+        );
+    })
+    .execute();
 }
