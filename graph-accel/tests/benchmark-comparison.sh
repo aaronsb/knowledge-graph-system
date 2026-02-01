@@ -7,6 +7,13 @@
 # Requirements:
 #   - knowledge-graph-postgres container running with AGE graph loaded
 #   - graph_accel extension installed (Option 0 or later deployment)
+#   - PostgreSQL 17.x (psql output parsing assumes 17.x formatting)
+#   - bc (for floating-point speedup calculation)
+#
+# Notes:
+#   - Operator tooling — concept_id is interpolated into Cypher strings.
+#     Not suitable for untrusted input without parameterization.
+#   - Concept ID grep filter assumes sha256: or c_ prefixes (current dataset).
 #
 # Usage:
 #   ./graph-accel/tests/benchmark-comparison.sh
