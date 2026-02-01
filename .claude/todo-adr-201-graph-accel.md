@@ -3,14 +3,15 @@
 Branch: `feature/graph-accel-extension`
 ADR: [ADR-201](docs/architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension.md)
 
-## Phase 1: Scaffold & Proof of Concept
-- [ ] Initialize Rust workspace with pgrx (`cargo pgrx new graph_accel`)
-- [ ] Set up dual build: `graph-accel-core` lib (no Postgres deps) + `graph-accel-pg` extension crate
-- [ ] Implement core adjacency structure (`HashMap<NodeId, Vec<(TargetId, RelType)>>`) in `graph-accel-core`
-- [ ] Implement BFS neighborhood traversal in `graph-accel-core`
-- [ ] Implement shortest path in `graph-accel-core`
-- [ ] Write standalone benchmark binary that generates synthetic graphs and traverses them
-- [ ] Validate: benchmark at target scale (5M nodes, 50M edges) — confirm microsecond traversal
+## Phase 1: Scaffold & Proof of Concept ✓
+- [x] Initialize Rust workspace (`graph-accel/` with `core` and `bench` crates)
+- [x] Set up dual build: `graph-accel-core` lib (no Postgres deps) + `graph-accel-bench` binary
+- [x] Implement core adjacency structure (`HashMap<NodeId, Vec<Edge>>`) in `graph-accel-core`
+- [x] Implement BFS neighborhood traversal with visited-set pruning
+- [x] Implement shortest path (BFS, unweighted, parent backtracking)
+- [x] Write standalone benchmark with 6 topology generators (L-system, scale-free, small-world, Erdos-Renyi, barbell, DLA)
+- [x] Validate at target scale: 5M nodes / 50M edges — bounded-depth queries in ms, full-graph traversal in seconds
+- [x] 13 unit tests (chains, stars, cycles, disconnected, depth limits, undirected, app IDs)
 
 ## Phase 2: PostgreSQL Extension Shell
 - [ ] Wire up pgrx extension: `_PG_init`, GUC parameter registration

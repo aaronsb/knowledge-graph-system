@@ -144,6 +144,71 @@ The epoch trigger is installed automatically on `CREATE EXTENSION` for the confi
 - At target scale (50M edges), full reload takes seconds, not minutes
 - Incremental reload (delta application) is a future optimization if write-heavy workloads make full reload impractical
 
+**Load trigger model:**
+
+The extension follows an interrupt-driven pattern analogous to a hardware device sitting idle on a bus until an IRQ wakes it:
+
+```
+┌──────────┐     SQL function call      ┌──────────────────────┐
+│ API      │ ──────────────────────────→ │ graph_accel_*()      │
+│ Worker   │                             │                      │
+└──────────┘                             │  1. Check epoch      │
+                                         │     (1 row read)     │
+                                         │                      │
+                              stale? ────│  2. Trigger reload   │
+                                    │    │     (SPI bulk read   │
+                                    │    │      from AGE tables │
+                                    │    │      → build HashMap │
+                                    │    │      → swap pointer) │
+                                    │    │                      │
+                              fresh? ────│  3. Serve from       │
+                                         │     shared memory    │
+                                         │     (zero-copy read) │
+                                         └──────────────────────┘
+```
+
+**Idle state:** The extension occupies its allocated shared memory but uses zero CPU and zero I/O. No background workers, no polling, no timers. It's purely demand-driven.
+
+**Load trigger:** Any `graph_accel_*()` query function call is the interrupt. The first instruction is always an epoch check — a single `SELECT epoch FROM graph_accel_epoch` (one row, one integer, ~0.01ms). If `loaded_epoch == current_epoch`, serve directly from shared memory. If stale, reload before serving.
+
+**The critical path is the reload.** This is the memcpy-equivalent: serializing AGE's relational edge table into the in-memory adjacency structure. At target scale (50M edges), this involves:
+1. SPI query: `SELECT * FROM ag_catalog."knowledge_graph"._ag_label_edge` (~50M rows)
+2. Iterate rows, parse edge properties, build `HashMap` in a staging buffer
+3. Atomic pointer swap: new structure becomes active, old structure freed
+
+The SPI bulk read is the bottleneck — Postgres must scan the edge table and copy row data into the extension's memory context. This is bounded by disk I/O (if table is cold) or memory bandwidth (if table is in `shared_buffers`). On warm cache with NVMe storage, expect 5-20 seconds for 50M edges.
+
+**Application-controlled triggers:** The API layer has full control over when reloads happen:
+
+```sql
+-- Explicit reload (after bulk ingestion completes)
+SELECT graph_accel_reload();
+
+-- Check without triggering reload
+SELECT * FROM graph_accel_status();
+-- → loaded_epoch: 41, current_epoch: 42, status: 'stale'
+
+-- Application-specific: stored procedure that checks business logic
+-- before deciding whether to reload
+CREATE OR REPLACE FUNCTION app_maybe_reload() RETURNS void AS $$
+DECLARE
+    status record;
+BEGIN
+    SELECT * INTO status FROM graph_accel_status();
+    IF status.current_epoch > status.loaded_epoch
+       AND NOT EXISTS (SELECT 1 FROM ingestion_jobs WHERE status = 'running')
+    THEN
+        -- No active ingestion — safe to reload
+        PERFORM graph_accel_reload();
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This lets the application avoid reloading mid-batch-ingestion (where the epoch increments on every chunk), and instead reload once after the batch completes. The `reload_debounce_sec` GUC provides a simpler version of this — suppress reloads within N seconds of the last one — but the stored procedure approach gives full application-level control.
+
+**RAM is the accelerator.** The extension's value proposition is trading RAM for query speed. It is intentionally greedy with memory — the entire edge graph lives resident in shared memory at all times. There is no eviction, no LRU, no paging. If the graph fits in `max_memory_mb`, it stays loaded until Postgres restarts or the extension is explicitly unloaded. This is a deliberate design choice: the complexity and latency of cache management is not worth it when the entire graph fits in a few GB.
+
 **SQL interface:**
 ```sql
 -- Load/reload the graph (or automatic via epoch check)
@@ -232,14 +297,14 @@ Measured with `graph-accel-bench` on the same hardware (16 cores / 32 threads, 1
 
 **BFS neighborhood traversal (from hub/root node):**
 
-| Topology | Depth 1 | Depth 5 | Depth 10 | Full graph | Depth to 100% |
-|----------|---------|---------|----------|------------|---------------|
-| L-system | 0.0ms (3) | 0.3ms (363) | 79ms (89K) | 6.6s (5M) | 20 |
-| Scale-free | 6.3ms (11K) | 15.0s (5M) | — | 15.0s (5M) | 5 |
-| Small-world | 0.1ms (21) | 20ms (18K) | 9.5s (5M) | 11.1s (5M) | ~20 |
-| Random | 80ms (15) | 2.9s (2.5M) | 15.6s (5M) | 15.6s (5M) | 10 |
-| Barbell | 0.1ms (33) | 7.1s (2.5M) | 11.7s (2.5M) | 25.2s (5M) | 50 |
-| DLA | 0.0ms (12) | 3.2ms (4.5K) | 140ms (146K) | 8.3s (5M) | 50 |
+| Topology | Memory | Depth 1 | Depth 5 | Depth 10 | Full graph | Depth to 100% |
+|----------|--------|---------|---------|----------|------------|---------------|
+| L-system | 992MB | 0.0ms (3) | 0.3ms (363) | 79ms (89K) | 6.6s (5M) | 20 |
+| Scale-free | 2.4GB | 6.3ms (11K) | 15.0s (5M) | — | 15.0s (5M) | 5 |
+| Small-world | 2.4GB | 0.1ms (21) | 20ms (18K) | 9.5s (5M) | 11.1s (5M) | ~20 |
+| Random | 2.4GB | 80ms (15) | 2.9s (2.5M) | 15.6s (5M) | 15.6s (5M) | 10 |
+| Barbell | 3.9GB | 0.1ms (33) | 7.1s (2.5M) | 11.7s (2.5M) | 25.2s (5M) | 50 |
+| DLA | 1.0GB | 0.0ms (12) | 3.2ms (4.5K) | 140ms (146K) | 8.3s (5M) | 50 |
 
 Values in parentheses are nodes found at that depth.
 
@@ -260,33 +325,35 @@ A real knowledge graph is structurally closest to scale-free (power-law hubs fro
 
 **Current graph size (~200 nodes, ~1000 edges):**
 
-| Query | AGE (measured) | graph_accel (projected) | Speedup |
-|-------|---------------|------------------------|---------|
-| Depth 2 neighborhood | 113ms | <0.1ms | ~1,000x |
-| Depth 3 neighborhood | 162ms | <0.1ms | ~1,600x |
-| Depth 5 neighborhood | 378ms | <0.1ms | ~3,800x |
-| Depth 6 neighborhood | ∞ (hangs) | <0.1ms | ∞ |
-| Depth 10 neighborhood | impossible | <0.1ms | — |
+| Query | AGE (measured) | graph_accel (projected) | Memory | Speedup |
+|-------|---------------|------------------------|--------|---------|
+| Depth 2 neighborhood | 113ms | <0.1ms | <1MB | ~1,000x |
+| Depth 3 neighborhood | 162ms | <0.1ms | <1MB | ~1,600x |
+| Depth 5 neighborhood | 378ms | <0.1ms | <1MB | ~3,800x |
+| Depth 6 neighborhood | ∞ (hangs) | <0.1ms | <1MB | ∞ |
+| Depth 10 neighborhood | impossible | <0.1ms | <1MB | — |
 
-At 200 nodes the entire graph fits in a few cache lines. Every query is sub-millisecond.
+At 200 nodes the entire graph fits in a few cache lines. Every query is sub-millisecond. Reload from AGE: <10ms.
 
 **Projected at medium scale (~50K nodes, ~500K edges):**
 
-| Query | AGE (estimated) | graph_accel (projected) | Speedup |
-|-------|----------------|------------------------|---------|
-| Depth 3 neighborhood | ~2-5s | ~1-5ms | ~500x |
-| Depth 5 neighborhood | hangs | ~50-200ms | ∞ |
-| Depth 10 neighborhood | impossible | ~500ms-2s | — |
-| Shortest path | impossible beyond depth 5 | ~10-50ms | — |
+| Query | AGE (estimated) | graph_accel (projected) | Memory | Speedup |
+|-------|----------------|------------------------|--------|---------|
+| Depth 3 neighborhood | ~2-5s | ~1-5ms | ~50MB | ~500x |
+| Depth 5 neighborhood | hangs | ~50-200ms | ~50MB | ∞ |
+| Depth 10 neighborhood | impossible | ~500ms-2s | ~50MB | — |
+| Shortest path | impossible beyond depth 5 | ~10-50ms | ~50MB | — |
+| Reload from AGE | — | ~0.5-1s | — | — |
 
 **Projected at target scale (~5M nodes, ~50M edges):**
 
-| Query | AGE (estimated) | graph_accel (measured) | Speedup |
-|-------|----------------|----------------------|---------|
-| Depth 3 neighborhood | impossible | ~500ms-5s | — |
-| Depth 5 neighborhood | impossible | ~3s-15s (full graph reached on scale-free) | — |
-| Bounded depth 5 (typical API query) | impossible | ~20ms-3s depending on topology | — |
-| Shortest path (short) | impossible | ~2ms-2s | — |
+| Query | AGE (estimated) | graph_accel (measured) | Memory | Speedup |
+|-------|----------------|----------------------|--------|---------|
+| Depth 3 neighborhood | impossible | ~500ms-5s | ~2.4GB | — |
+| Depth 5 neighborhood | impossible | ~3s-15s (full graph reached) | ~2.4GB | — |
+| Bounded depth 5 (typical API query) | impossible | ~20ms-3s | ~2.4GB | — |
+| Shortest path (short) | impossible | ~2ms-2s | ~2.4GB | — |
+| Reload from AGE | — | ~5-20s (estimated) | — | — |
 
 **Key insight from benchmarks:** The bottleneck at scale is not the graph engine — it's touching millions of nodes. A depth-5 BFS on a scale-free graph with 5M nodes visits the entire graph because hub nodes fan out so broadly. In production, most queries will have `max_depth=5` on a graph where depth 5 reaches thousands to tens of thousands of nodes, not millions. The realistic query profile is:
 
