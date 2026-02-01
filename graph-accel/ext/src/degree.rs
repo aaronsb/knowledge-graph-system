@@ -17,9 +17,10 @@ fn graph_accel_degree(
     ),
 > {
     crate::generation::ensure_fresh();
+    let n = crate::util::check_non_negative(top_n, "top_n") as usize;
 
     let results = state::with_graph(|gs| {
-        graph_accel_core::degree_centrality(&gs.graph, top_n as usize)
+        graph_accel_core::degree_centrality(&gs.graph, n)
             .into_iter()
             .map(|dr| {
                 (

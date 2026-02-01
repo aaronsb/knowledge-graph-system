@@ -1,7 +1,7 @@
-use graph_accel_core::Direction;
 use pgrx::prelude::*;
 
 use crate::state;
+use crate::util::direction_str;
 
 #[pg_extern]
 fn graph_accel_path(
@@ -23,20 +23,18 @@ fn graph_accel_path(
 > {
     crate::generation::ensure_fresh();
     let direction = crate::util::parse_direction(&direction_filter);
+    let hops = crate::util::check_non_negative(max_hops, "max_hops");
 
     let results = state::with_graph(|gs| {
         let start = state::resolve_node(&gs.graph, &from_id);
         let target = state::resolve_node(&gs.graph, &to_id);
 
-        match graph_accel_core::shortest_path(&gs.graph, start, target, max_hops as u32, direction, min_confidence.map(|v| v as f32)) {
+        match graph_accel_core::shortest_path(&gs.graph, start, target, hops, direction, min_confidence.map(|v| v as f32)) {
             Some(path) => path
                 .into_iter()
                 .enumerate()
                 .map(|(i, s)| {
-                    let dir = s.direction.map(|d| match d {
-                        Direction::Outgoing => "outgoing".to_string(),
-                        Direction::Incoming => "incoming".to_string(),
-                    });
+                    let dir = s.direction.map(direction_str);
                     (i as i32, s.node_id as i64, s.label, s.app_id, s.rel_type, dir)
                 })
                 .collect::<Vec<_>>(),

@@ -22,11 +22,12 @@ fn graph_accel_subgraph(
 > {
     crate::generation::ensure_fresh();
     let direction = crate::util::parse_direction(&direction_filter);
+    let depth = crate::util::check_non_negative(max_depth, "max_depth");
 
     let results = state::with_graph(|gs| {
         let internal_id = state::resolve_node(&gs.graph, &start_id);
 
-        let sub = graph_accel_core::extract_subgraph(&gs.graph, internal_id, max_depth as u32, direction, min_confidence.map(|v| v as f32));
+        let sub = graph_accel_core::extract_subgraph(&gs.graph, internal_id, depth, direction, min_confidence.map(|v| v as f32));
 
         sub.edges
             .into_iter()

@@ -27,7 +27,7 @@ if [[ "${1:-}" == "--skip-build" ]]; then
 fi
 
 # Find pg_config
-PG_CONFIG=$(find ~/.pgrx -name pg_config -path "*/17.*/bin/*" 2>/dev/null | head -1)
+PG_CONFIG=$(find ~/.pgrx -name pg_config -path "*/17.*/pgrx-install/bin/*" 2>/dev/null | head -1)
 if [ -z "$PG_CONFIG" ]; then
     echo "ERROR: pg_config for PG 17 not found in ~/.pgrx/"
     echo "Run: cargo pgrx init --pg17=download"
