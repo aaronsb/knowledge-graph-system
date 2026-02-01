@@ -144,6 +144,26 @@ Graph saturation at depth 6: 679 of 788 nodes (86%) reachable from "Way". Remain
 - graph_accel_load(): 22ms (788 nodes, 2,159 edges via SPI)
 - This is a one-time cost per backend; subsequent queries are sub-millisecond
 
+## Data Correctness Validation
+
+Verified graph_accel returns the same concept set as AGE.
+
+**Depth 1 — exact match:**
+- AGE: 11 concepts | graph_accel: 11 concepts
+- Diff: **0 differences** — identical concept_id sets
+
+**Depth ≤ 2 — superset:**
+- AGE: 45 concepts | graph_accel: 49 concepts
+- All 45 AGE concepts present in graph_accel: **yes**
+- Missing from graph_accel: **0**
+- Extra in graph_accel: **4** (reached via non-Concept intermediaries)
+
+The 4 extra concepts are reachable through Instance/Source intermediate nodes. AGE's Cypher query `(Concept)-[r]-(Concept)` restricts traversal to Concept-only paths. graph_accel's BFS traverses all edges regardless of intermediate node type, finding Concept nodes reachable via `Concept → Instance → Concept` or `Concept → Source → Concept` 2-hop paths.
+
+**Implication for API integration (Phase 5):**
+- When replacing `/query/related`, either filter graph_accel results to Concept-only OR load with `node_labels = 'Concept'` AND add edge filtering to skip cross-type edges
+- Alternatively, accept the broader traversal — the extra concepts are genuinely connected and may be valuable for discovery
+
 ## Benchmark SQL (for reproduction)
 
 ```sql
