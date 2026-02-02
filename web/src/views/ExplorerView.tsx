@@ -60,8 +60,8 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // UI state for IconRailPanel
   const [activeTab, setActiveTab] = useState('history');
 
-  // Track if we're initializing from URL to prevent loops
-  const initializingFromUrl = React.useRef(false);
+  // Track if we've already initialized from URL (run once on mount)
+  const hasInitializedFromUrl = React.useRef(false);
 
   // Derive mode from current params
   const mode = deriveMode(searchParams);
@@ -76,8 +76,10 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setSelectedExplorer(explorerType);
   }, [explorerType, setSelectedExplorer]);
 
-  // Initialize from URL parameters on mount (supports both new and legacy URL formats)
+  // Initialize from URL parameters once on mount
   useEffect(() => {
+    if (hasInitializedFromUrl.current) return;
+
     // New format: c=conceptId, to=destId, d=depth, h=maxHops, s=similarity
     // Legacy format: mode=concept|neighborhood|path, conceptId=X, fromConceptId=X, etc.
     const primaryId = urlParams.get('c') || urlParams.get('conceptId');
@@ -91,8 +93,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     const legacyFromId = urlParams.get('fromConceptId');
 
     if (legacyMode === 'path' && legacyFromId) {
-      // Legacy path URL
-      initializingFromUrl.current = true;
+      hasInitializedFromUrl.current = true;
       setSearchParams({
         primaryConceptId: legacyFromId,
         destinationConceptId: destId || undefined,
@@ -100,10 +101,8 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         maxHops,
         loadMode: 'clean',
       });
-      setTimeout(() => { initializingFromUrl.current = false; }, 100);
     } else if (primaryId) {
-      // New format or legacy concept/neighborhood URL
-      initializingFromUrl.current = true;
+      hasInitializedFromUrl.current = true;
 
       const effectiveDepth = depth || (legacyMode === 'neighborhood' ? 2 : 1);
 
@@ -118,14 +117,15 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       if (similarity) {
         setSimilarityThreshold(parseFloat(similarity));
       }
-
-      setTimeout(() => { initializingFromUrl.current = false; }, 100);
     }
   }, [urlParams, setSearchParams, setSimilarityThreshold]);
 
   // Sync store state → URL parameters
   useEffect(() => {
-    if (initializingFromUrl.current) return;
+    if (!hasInitializedFromUrl.current && mode !== 'idle') {
+      // First store change — mark as initialized to prevent URL→store loop
+      hasInitializedFromUrl.current = true;
+    }
     if (mode === 'idle') return;
 
     const newParams = new URLSearchParams();
