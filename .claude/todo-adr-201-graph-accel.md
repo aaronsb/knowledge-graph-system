@@ -134,9 +134,26 @@ Merged: PR #275 → `main`
   - /query/related: 280ms → 14ms (20x improvement)
   - Eliminated 265ms graph reload on every request
 
-### 5e: Cleanup
-- [ ] Remove old facades: `query_facade.py`, `pathfinding_facade.py`, `query_service.py`
-- [ ] Migrate remaining consumers (if any) to `client.graph.*`
+### 5e: Cleanup (legacy facade removal + code review debt)
+- [ ] Remove old facades: `query_facade.py` (681 lines), `pathfinding_facade.py` (654 lines), `query_service.py`
+- [ ] Audit and migrate remaining consumers of old facades to `client.graph.*`
+- [ ] Consolidate `_get_graph_generation()` — currently 3 implementations across query.py and
+      confidence_analyzer.py with identical logic but different signatures. Extract to shared helper.
+- [ ] Extract grounding/caching cluster from query.py (1126 lines) into `api/app/lib/age_client/grounding.py` mixin
+- [ ] Optimization: skip pool connection on 100% cache hits (generation check only when misses exist)
+
+### 5g: Client consistency audit
+Ensure all clients use the accelerated API endpoints consistently.
+
+- [ ] **Web workstation** (`web/src/api/client.ts`) — inventory query calls, verify they hit
+      the routes that use `client.graph.*` and batch hydration
+- [ ] **MCP server** — inventory tool implementations, verify grounding/confidence parameters
+      are passed through correctly
+- [ ] **CLI** (`cli/src/`) — inventory `kg search`, `kg search connect`, etc. verify they
+      request grounding and use the batch-enabled endpoints
+- [ ] **FUSE driver** (`fuse/`) — inventory graph queries, verify they use the same API surface
+- [ ] Document findings: which clients need updates, which are already consistent
+- [ ] Apply fixes per client
 
 ## Phase 6: Polish & Publish
 - [x] Implement `graph_accel_degree()` — degree centrality
@@ -146,7 +163,7 @@ Merged: PR #275 → `main`
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
 
 ### 5f: Generation-aware grounding cache (hydration optimization)
-Branch: `feature/grounding-cache`
+Branch: `feature/grounding-cache` → PR #276 (ready to merge)
 
 The topology phase (graph_accel) is sub-ms. The remaining 3-4s per connect query
 is grounding hydration: `calculate_grounding_strength_semantic()` runs sequentially
@@ -186,7 +203,9 @@ edges — no cross-concept dependency. This makes per-concept caching safe.
 - [x] Per-concept computation after batch fetch (dot products, thresholds — no DB)
   - Pure CPU work after batch fetch, no pool contention
 
-- [ ] Docstrings: document the two-tier cache invalidation model
+- [x] Code review: 8 findings, 0 blocking. Remediated #1 (cache comment) and #3 (shared constant).
+      Remaining findings (#4 generation dedup, #6 file size, #7 warm-hit optimization) deferred to 5e.
+- [ ] Docstrings: document the two-tier cache invalidation model (deferred to 5e cleanup)
   - `calculate_grounding_strength_semantic()` — explain polarity axis caching, vocab generation check
   - `_build_connection_paths()` — explain per-concept grounding cache, graph generation check
   - `GraphFacade._execute_sql()` — explain pinned connection, generation-based ensure_fresh
