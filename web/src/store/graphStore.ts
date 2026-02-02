@@ -39,7 +39,7 @@ export interface SearchParams {
 
   // Neighborhood mode
   centerConceptId?: string;
-  depth?: number; // Also used for path enrichment
+  depth?: number;
 
   // Path mode
   fromConceptId?: string;
