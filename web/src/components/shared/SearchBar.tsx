@@ -1,14 +1,20 @@
 /**
- * Multi-Mode Smart Search Component
+ * Multi-Mode Search Component
  *
  * Top-level: Query mode selection via radio dial
- * - Smart Search (with sub-modes: Concept/Neighborhood/Path)
+ * - Smart Search (unified progressive interface)
  * - Block Builder
  * - openCypher Editor
+ *
+ * Smart Search is a single progressive flow:
+ * 1. Search for a concept → select it
+ * 2. Depth slider appears (1 = immediate, >1 = neighborhood)
+ * 3. Optional: add destination concept for path finding
+ * 4. Path mode: max hops + find paths + select + load
  */
 
-import React, { useState } from 'react';
-import { Search, Network, GitBranch, Blocks, Code, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, GitBranch, Blocks, Code, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -16,7 +22,6 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
-import { getZIndexClass } from '../../config/zIndex';
 import {
   ConceptSearchInput,
   SelectedConceptChip,
@@ -25,66 +30,40 @@ import {
   PathResults,
 } from './search';
 
-type SmartSearchSubMode = 'concept' | 'neighborhood' | 'path';
-
 export const SearchBar: React.FC = () => {
-  // Top-level mode (dial): smart-search, block-builder, cypher-editor - use store
+  // Top-level mode (dial)
   const { queryMode, setQueryMode, blockBuilderExpanded, setBlockBuilderExpanded } = useGraphStore();
 
-  // Smart Search sub-mode (pills)
-  const [smartSearchMode, setSmartSearchMode] = useState<SmartSearchSubMode>('concept');
-
-  // Collapsible sections state
-  const [expandedSections, setExpandedSections] = useState<Record<SmartSearchSubMode, boolean>>({
-    concept: true,
-    neighborhood: true,
-    path: true,
-  });
-
-  // Collapsible state for Smart Search
+  // Collapsible state
   const [smartSearchExpanded, setSmartSearchExpanded] = useState(true);
-
-  // Collapsible state for openCypher editor
   const [cypherEditorExpanded, setCypherEditorExpanded] = useState(true);
 
-  const toggleSmartSearch = () => {
-    setSmartSearchExpanded(!smartSearchExpanded);
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-  };
+  const triggerResize = () => setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 
-  const toggleSection = (mode: SmartSearchSubMode) => {
-    setExpandedSections(prev => ({ ...prev, [mode]: !prev[mode] }));
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-  };
+  // Shared controls from store
+  const {
+    similarityThreshold: similarity,
+    setSimilarityThreshold: setSimilarity,
+    searchParams,
+    setSearchParams,
+    setRawGraphData,
+    mergeRawGraphData,
+    setGraphData,
+  } = useGraphStore();
 
-  const toggleCypherEditor = () => {
-    setCypherEditorExpanded(!cypherEditorExpanded);
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-  };
+  // === UNIFIED SEARCH STATE ===
+  // Primary concept (the starting point for any search)
+  const [primaryQuery, setPrimaryQuery] = useState('');
+  const [selectedPrimary, setSelectedPrimary] = useState<any>(null);
+  const [depth, setDepth] = useState(1);
 
-  const toggleBlockBuilder = () => {
-    setBlockBuilderExpanded(!blockBuilderExpanded);
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-  };
-
-  // Shared controls - use global similarity threshold from store
-  const { similarityThreshold: similarity, setSimilarityThreshold: setSimilarity } = useGraphStore();
-
-  // Concept mode state
-  const [conceptQuery, setConceptQuery] = useState('');
-  const [selectedConcept, setSelectedConcept] = useState<any>(null);
-
-  // Neighborhood mode state
-  const [neighborhoodQuery, setNeighborhoodQuery] = useState('');
-  const [selectedCenterConcept, setSelectedCenterConcept] = useState<any>(null);
-  const [neighborhoodDepth, setNeighborhoodDepth] = useState(2);
-
-  // Path mode state
-  const [pathFromQuery, setPathFromQuery] = useState('');
-  const [pathToQuery, setPathToQuery] = useState('');
-  const [selectedFromConcept, setSelectedFromConcept] = useState<any>(null);
-  const [selectedToConcept, setSelectedToConcept] = useState<any>(null);
+  // Destination concept (optional — triggers path mode)
+  const [destinationQuery, setDestinationQuery] = useState('');
+  const [selectedDestination, setSelectedDestination] = useState<any>(null);
+  const [showDestination, setShowDestination] = useState(false);
   const [maxHops, setMaxHops] = useState(5);
+
+  // Path search state
   const [pathResults, setPathResults] = useState<any>(null);
   const [selectedPath, setSelectedPath] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
@@ -97,99 +76,95 @@ LIMIT 50`);
   const [isExecutingCypher, setIsExecutingCypher] = useState(false);
   const [cypherError, setCypherError] = useState<string | null>(null);
 
-  const { setSearchParams, setRawGraphData, mergeRawGraphData, setGraphData } = useGraphStore();
-
-  // Debounce values to prevent excessive API calls
-  const debouncedConceptQuery = useDebouncedValue(conceptQuery, 800);
-  const debouncedNeighborhoodQuery = useDebouncedValue(neighborhoodQuery, 800);
-  const debouncedPathFromQuery = useDebouncedValue(pathFromQuery, 800);
-  const debouncedPathToQuery = useDebouncedValue(pathToQuery, 800);
+  // Debounce values
+  const debouncedPrimaryQuery = useDebouncedValue(primaryQuery, 800);
+  const debouncedDestinationQuery = useDebouncedValue(destinationQuery, 800);
   const debouncedSimilarity = useDebouncedValue(similarity, 500);
 
-  // Search hooks (gated by mode + selection state)
-  const { data: conceptResults, isLoading: isLoadingConcepts } = useSearchConcepts(
-    debouncedConceptQuery,
+  // Search hooks
+  const { data: primaryResults, isLoading: isLoadingPrimary } = useSearchConcepts(
+    debouncedPrimaryQuery,
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: queryMode === 'smart-search' && smartSearchMode === 'concept' && !selectedConcept,
+      enabled: queryMode === 'smart-search' && !selectedPrimary,
     }
   );
 
-  const { data: neighborhoodSearchResults, isLoading: isLoadingNeighborhoodSearch } = useSearchConcepts(
-    debouncedNeighborhoodQuery,
+  const { data: destinationResults, isLoading: isLoadingDestination } = useSearchConcepts(
+    debouncedDestinationQuery,
     {
       limit: 10,
       minSimilarity: debouncedSimilarity,
-      enabled: queryMode === 'smart-search' && smartSearchMode === 'neighborhood' && !selectedCenterConcept,
+      enabled: queryMode === 'smart-search' && showDestination && !selectedDestination,
     }
   );
 
-  const { data: pathFromSearchResults, isLoading: isLoadingPathFromSearch } = useSearchConcepts(
-    debouncedPathFromQuery,
-    {
-      limit: 10,
-      minSimilarity: debouncedSimilarity,
-      enabled: queryMode === 'smart-search' && smartSearchMode === 'path' && !selectedFromConcept,
+  // Sync from store → local state when Follow Concept updates searchParams externally
+  useEffect(() => {
+    if (searchParams.primaryConceptId && searchParams.primaryConceptLabel) {
+      // External update (e.g., node click) — sync to local state
+      if (!selectedPrimary || selectedPrimary.concept_id !== searchParams.primaryConceptId) {
+        setSelectedPrimary({
+          concept_id: searchParams.primaryConceptId,
+          label: searchParams.primaryConceptLabel,
+        });
+        setPrimaryQuery('');
+        setDepth(searchParams.depth);
+      }
     }
-  );
+  }, [searchParams.primaryConceptId, searchParams.primaryConceptLabel]);
 
-  const { data: pathToSearchResults, isLoading: isLoadingPathToSearch } = useSearchConcepts(
-    debouncedPathToQuery,
-    {
-      limit: 10,
-      minSimilarity: debouncedSimilarity,
-      enabled: queryMode === 'smart-search' && smartSearchMode === 'path' && !selectedToConcept,
-    }
-  );
+  // === HANDLERS ===
 
-  // Selection handlers
-  const handleSelectConcept = (concept: any) => {
-    setSelectedConcept(concept);
-    setConceptQuery('');
+  const handleSelectPrimary = (concept: any) => {
+    setSelectedPrimary(concept);
+    setPrimaryQuery('');
   };
 
-  const handleSelectCenterConcept = (concept: any) => {
-    setSelectedCenterConcept(concept);
-    setNeighborhoodQuery('');
+  const handleClearPrimary = () => {
+    setSelectedPrimary(null);
+    setSelectedDestination(null);
+    setShowDestination(false);
+    setPathResults(null);
+    setSelectedPath(null);
+    setDepth(1);
   };
 
-  const handleSelectFromConcept = (concept: any) => {
-    setSelectedFromConcept(concept);
-    setPathFromQuery('');
+  const handleSelectDestination = (concept: any) => {
+    setSelectedDestination(concept);
+    setDestinationQuery('');
   };
 
-  const handleSelectToConcept = (concept: any) => {
-    setSelectedToConcept(concept);
-    setPathToQuery('');
+  const handleClearDestination = () => {
+    setSelectedDestination(null);
+    setPathResults(null);
+    setSelectedPath(null);
   };
 
-  // Load handlers
-  const handleLoadConcept = (loadMode: 'clean' | 'add') => {
-    if (!selectedConcept) return;
+  const handleRemoveDestination = () => {
+    setShowDestination(false);
+    setSelectedDestination(null);
+    setDestinationQuery('');
+    setPathResults(null);
+    setSelectedPath(null);
+  };
+
+  // Load explore (concept or neighborhood depending on depth)
+  const handleLoadExplore = (loadMode: 'clean' | 'add') => {
+    if (!selectedPrimary) return;
     setSearchParams({
-      primaryConceptId: selectedConcept.concept_id,
-      primaryConceptLabel: selectedConcept.label,
-      depth: 1,
+      primaryConceptId: selectedPrimary.concept_id,
+      primaryConceptLabel: selectedPrimary.label,
+      depth,
       maxHops: 5,
       loadMode,
     });
   };
 
-  const handleLoadNeighborhood = (loadMode: 'clean' | 'add') => {
-    if (!selectedCenterConcept) return;
-    setSearchParams({
-      primaryConceptId: selectedCenterConcept.concept_id,
-      primaryConceptLabel: selectedCenterConcept.label,
-      depth: neighborhoodDepth,
-      maxHops: 5,
-      loadMode,
-    });
-  };
-
-  // Path search (manual, not auto)
+  // Path search (manual)
   const handleFindPaths = async () => {
-    if (!selectedFromConcept || !selectedToConcept) return;
+    if (!selectedPrimary || !selectedDestination) return;
 
     setIsLoadingPath(true);
     setPathResults(null);
@@ -197,8 +172,8 @@ LIMIT 50`);
 
     try {
       const result = await apiClient.findConnection({
-        from_id: selectedFromConcept.concept_id,
-        to_id: selectedToConcept.concept_id,
+        from_id: selectedPrimary.concept_id,
+        to_id: selectedDestination.concept_id,
         max_hops: maxHops,
       });
       setPathResults(result);
@@ -224,7 +199,6 @@ LIMIT 50`);
   const handleLoadPath = (loadMode: 'clean' | 'add') => {
     if (!selectedPath) return;
 
-    // Extract Concept nodes only (skip Source/Ontology with empty IDs)
     const conceptNodes: any[] = [];
     const conceptRelTypes: string[][] = [];
     let pendingRels: string[] = [];
@@ -285,18 +259,18 @@ LIMIT 50`);
       });
 
       const { transformForD3 } = await import('../../utils/graphTransform');
-      const nodes = result.nodes.map((n: any) => ({
+      const graphNodes = result.nodes.map((n: any) => ({
         concept_id: n.id,
         label: n.label,
         ontology: n.properties?.ontology || 'default',
       }));
-      const links = result.relationships.map((r: any) => ({
+      const graphLinks = result.relationships.map((r: any) => ({
         from_id: r.from_id,
         to_id: r.to_id,
         relationship_type: r.type,
       }));
 
-      const graphData = transformForD3(nodes, links);
+      const graphData = transformForD3(graphNodes, graphLinks);
       useGraphStore.getState().setGraphData(graphData);
     } catch (error: any) {
       console.error('Failed to execute Cypher query:', error);
@@ -308,10 +282,9 @@ LIMIT 50`);
 
   // Block builder → Cypher editor
   const handleSendToEditor = (compiledCypher: string) => {
-    const hasExistingCode = cypherQuery.trim().length > 0;
-    if (hasExistingCode) {
+    if (cypherQuery.trim().length > 0) {
       const confirmed = window.confirm(
-        'The openCypher editor already has code. Do you want to overwrite it with the compiled query from the block builder?'
+        'The openCypher editor already has code. Do you want to overwrite it?'
       );
       if (!confirmed) return;
     }
@@ -326,7 +299,7 @@ LIMIT 50`);
         return {
           icon: Search,
           title: 'Smart Search',
-          description: 'Find concepts using semantic similarity, explore neighborhoods, and discover paths between ideas',
+          description: 'Find concepts, explore neighborhoods, and discover paths between ideas',
         };
       case 'block-builder':
         return {
@@ -346,32 +319,32 @@ LIMIT 50`);
   const modeInfo = getModeInfo();
   const ModeIcon = modeInfo.icon;
 
-  // "No results" content for concept search (with below-threshold suggestions)
-  const conceptNoResults = conceptResults && conceptResults.results && conceptResults.results.length === 0 && (
+  // No-results content with below-threshold suggestions
+  const noResultsContent = primaryResults && primaryResults.results && primaryResults.results.length === 0 && (
     <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-4 z-50">
       <div className="text-center">
-        {conceptResults.below_threshold_count ? (
+        {primaryResults.below_threshold_count ? (
           <div className="space-y-3">
             <div className="text-muted-foreground">
               <div className="font-medium mb-2">No results at {(similarity * 100).toFixed(0)}% similarity</div>
               <div className="text-sm">
-                Found {conceptResults.below_threshold_count} concept{conceptResults.below_threshold_count > 1 ? 's' : ''} at lower similarity
+                Found {primaryResults.below_threshold_count} concept{primaryResults.below_threshold_count > 1 ? 's' : ''} at lower similarity
               </div>
             </div>
-            {conceptResults.suggested_threshold && (
+            {primaryResults.suggested_threshold && (
               <button
-                onClick={() => setSimilarity(conceptResults.suggested_threshold)}
+                onClick={() => setSimilarity(primaryResults.suggested_threshold)}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
               >
-                Try {(conceptResults.suggested_threshold * 100).toFixed(0)}% Similarity
+                Try {(primaryResults.suggested_threshold * 100).toFixed(0)}% Similarity
               </button>
             )}
-            {conceptResults.top_match && (
+            {primaryResults.top_match && (
               <div className="text-left p-3 bg-muted rounded-lg">
                 <div className="text-xs text-muted-foreground mb-1">Top match:</div>
-                <div className="font-medium">{conceptResults.top_match.label}</div>
+                <div className="font-medium">{primaryResults.top_match.label}</div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  {(conceptResults.top_match.score * 100).toFixed(0)}% similarity
+                  {(primaryResults.top_match.score * 100).toFixed(0)}% similarity
                 </div>
               </div>
             )}
@@ -383,7 +356,7 @@ LIMIT 50`);
     </div>
   );
 
-  // Similarity slider shorthand
+  // Reusable similarity slider
   const similaritySlider = (
     <SliderControl
       label="Similarity:"
@@ -415,12 +388,11 @@ LIMIT 50`);
         <ModeDial mode={queryMode} onChange={setQueryMode} />
       </div>
 
-      {/* Smart Search Mode */}
+      {/* ===== SMART SEARCH (Unified Progressive) ===== */}
       {queryMode === 'smart-search' && (
         <div className="space-y-3">
-          {/* Collapsible Header */}
           <button
-            onClick={toggleSmartSearch}
+            onClick={() => { setSmartSearchExpanded(!smartSearchExpanded); triggerResize(); }}
             className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -435,232 +407,97 @@ LIMIT 50`);
           </button>
 
           {smartSearchExpanded && (
-            <>
-              {/* Sub-mode Selector (Pill Buttons) */}
-              <div className="flex gap-1 p-1 bg-muted rounded-lg">
-                <button
-                  onClick={() => setSmartSearchMode('concept')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    smartSearchMode === 'concept'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Search className="w-4 h-4" />
-                  Concept
-                </button>
-                <button
-                  onClick={() => setSmartSearchMode('neighborhood')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    smartSearchMode === 'neighborhood'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Network className="w-4 h-4" />
-                  Neighborhood
-                </button>
-                <button
-                  onClick={() => setSmartSearchMode('path')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    smartSearchMode === 'path'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <GitBranch className="w-4 h-4" />
-                  Path
-                </button>
-              </div>
-
-              {/* ===== CONCEPT MODE ===== */}
-              {smartSearchMode === 'concept' && (
+            <div className="space-y-3">
+              {/* Stage 1: Search for primary concept */}
+              {!selectedPrimary ? (
                 <div className="space-y-3">
-                  <button
-                    onClick={() => toggleSection('concept')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Search className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Search for Concept</span>
-                    </div>
-                    {expandedSections.concept ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  {expandedSections.concept && (
-                    <>
-                      {!selectedConcept ? (
-                        <div className="space-y-3">
-                          <ConceptSearchInput
-                            query={conceptQuery}
-                            onQueryChange={setConceptQuery}
-                            placeholder="Search for a concept..."
-                            icon={Search}
-                            isLoading={isLoadingConcepts}
-                            results={conceptResults?.results}
-                            debouncedQuery={debouncedConceptQuery}
-                            onSelect={handleSelectConcept}
-                            noResultsContent={conceptNoResults}
-                          />
-                          {similaritySlider}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <SelectedConceptChip
-                            label="Selected concept:"
-                            conceptLabel={selectedConcept.label}
-                            onClear={() => setSelectedConcept(null)}
-                          />
-                          {similaritySlider}
-                          <LoadButtons
-                            onLoadClean={() => handleLoadConcept('clean')}
-                            onLoadAdd={() => handleLoadConcept('add')}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
+                  <ConceptSearchInput
+                    query={primaryQuery}
+                    onQueryChange={setPrimaryQuery}
+                    placeholder="Search for a concept..."
+                    icon={Search}
+                    isLoading={isLoadingPrimary}
+                    results={primaryResults?.results}
+                    debouncedQuery={debouncedPrimaryQuery}
+                    onSelect={handleSelectPrimary}
+                    noResultsContent={noResultsContent}
+                  />
+                  {similaritySlider}
                 </div>
-              )}
-
-              {/* ===== NEIGHBORHOOD MODE ===== */}
-              {smartSearchMode === 'neighborhood' && (
+              ) : (
+                /* Stage 2+: Primary selected — show controls */
                 <div className="space-y-3">
-                  <button
-                    onClick={() => toggleSection('neighborhood')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Network className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Explore Neighborhood</span>
-                    </div>
-                    {expandedSections.neighborhood ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
+                  <SelectedConceptChip
+                    label="Concept:"
+                    conceptLabel={selectedPrimary.label}
+                    onClear={handleClearPrimary}
+                  />
 
-                  {expandedSections.neighborhood && (
-                    <>
-                      {!selectedCenterConcept ? (
-                        <div className="space-y-3">
-                          <ConceptSearchInput
-                            query={neighborhoodQuery}
-                            onQueryChange={setNeighborhoodQuery}
-                            placeholder="Search for center concept..."
-                            icon={Network}
-                            isLoading={isLoadingNeighborhoodSearch}
-                            results={neighborhoodSearchResults?.results}
-                            debouncedQuery={debouncedNeighborhoodQuery}
-                            onSelect={handleSelectCenterConcept}
-                          />
-                          {similaritySlider}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <SelectedConceptChip
-                            label="Center concept:"
-                            conceptLabel={selectedCenterConcept.label}
-                            onClear={() => setSelectedCenterConcept(null)}
-                          />
-                          <SliderControl
-                            label="Depth:"
-                            value={neighborhoodDepth}
-                            min={1}
-                            max={5}
-                            onChange={setNeighborhoodDepth}
-                            unit={`hop${neighborhoodDepth > 1 ? 's' : ''}`}
-                          />
-                          <LoadButtons
-                            onLoadClean={() => handleLoadNeighborhood('clean')}
-                            onLoadAdd={() => handleLoadNeighborhood('add')}
-                          />
-                        </div>
-                      )}
-                    </>
+                  {similaritySlider}
+
+                  <SliderControl
+                    label="Depth:"
+                    value={depth}
+                    min={1}
+                    max={5}
+                    onChange={setDepth}
+                    unit={`hop${depth > 1 ? 's' : ''}`}
+                  />
+
+                  {/* Load buttons (explore mode — no destination) */}
+                  {!showDestination && (
+                    <LoadButtons
+                      onLoadClean={() => handleLoadExplore('clean')}
+                      onLoadAdd={() => handleLoadExplore('add')}
+                    />
                   )}
-                </div>
-              )}
 
-              {/* ===== PATH MODE ===== */}
-              {smartSearchMode === 'path' && (
-                <div className="space-y-3">
-                  <button
-                    onClick={() => toggleSection('path')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Find Paths Between Concepts</span>
-                    </div>
-                    {expandedSections.path ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  {expandedSections.path && (
-                    <>
-                      {/* Step 1: Select From concept */}
-                      {!selectedFromConcept ? (
-                        <div className="space-y-3">
-                          <ConceptSearchInput
-                            query={pathFromQuery}
-                            onQueryChange={setPathFromQuery}
-                            placeholder="Search for starting concept..."
-                            icon={GitBranch}
-                            isLoading={isLoadingPathFromSearch}
-                            results={pathFromSearchResults?.results}
-                            debouncedQuery={debouncedPathFromQuery}
-                            onSelect={handleSelectFromConcept}
-                          />
-                          {similaritySlider}
+                  {/* Destination toggle / search */}
+                  {!showDestination ? (
+                    <button
+                      onClick={() => setShowDestination(true)}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg hover:border-primary/50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Find path to another concept
+                    </button>
+                  ) : (
+                    <div className="space-y-3 pt-2 border-t border-border">
+                      {/* Destination header with close button */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <GitBranch className="w-4 h-4" />
+                          <span className="font-medium">Path Destination</span>
                         </div>
-                      ) : !selectedToConcept ? (
-                        /* Step 2: Select To concept */
+                        <button
+                          onClick={handleRemoveDestination}
+                          className="text-muted-foreground hover:text-foreground p-1"
+                          title="Remove destination"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {!selectedDestination ? (
+                        /* Search for destination */
+                        <ConceptSearchInput
+                          query={destinationQuery}
+                          onQueryChange={setDestinationQuery}
+                          placeholder="Search for destination concept..."
+                          icon={GitBranch}
+                          isLoading={isLoadingDestination}
+                          results={destinationResults?.results}
+                          debouncedQuery={debouncedDestinationQuery}
+                          onSelect={handleSelectDestination}
+                        />
+                      ) : (
+                        /* Both selected — path controls */
                         <div className="space-y-3">
                           <SelectedConceptChip
-                            label="From concept:"
-                            conceptLabel={selectedFromConcept.label}
-                            onClear={() => setSelectedFromConcept(null)}
+                            label="Destination:"
+                            conceptLabel={selectedDestination.label}
+                            onClear={handleClearDestination}
                           />
-                          <ConceptSearchInput
-                            query={pathToQuery}
-                            onQueryChange={setPathToQuery}
-                            placeholder="Search for target concept..."
-                            icon={GitBranch}
-                            isLoading={isLoadingPathToSearch}
-                            results={pathToSearchResults?.results}
-                            debouncedQuery={debouncedPathToQuery}
-                            onSelect={handleSelectToConcept}
-                          />
-                        </div>
-                      ) : (
-                        /* Step 3: Both selected — configure and search */
-                        <div className="space-y-3">
-                          <div className="space-y-2">
-                            <SelectedConceptChip
-                              label="From concept:"
-                              conceptLabel={selectedFromConcept.label}
-                              onClear={() => {
-                                setSelectedFromConcept(null);
-                                setSelectedToConcept(null);
-                              }}
-                            />
-                            <SelectedConceptChip
-                              label="To concept:"
-                              conceptLabel={selectedToConcept.label}
-                              onClear={() => setSelectedToConcept(null)}
-                            />
-                          </div>
-
-                          {similaritySlider}
 
                           <SliderControl
                             label="Max Hops:"
@@ -670,7 +507,6 @@ LIMIT 50`);
                             onChange={setMaxHops}
                           />
 
-                          {/* Find Paths Button */}
                           <button
                             onClick={handleFindPaths}
                             disabled={isLoadingPath}
@@ -696,11 +532,11 @@ LIMIT 50`);
                           />
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
@@ -709,7 +545,7 @@ LIMIT 50`);
       {queryMode === 'block-builder' && (
         <div className="space-y-3">
           <button
-            onClick={toggleBlockBuilder}
+            onClick={() => { setBlockBuilderExpanded(!blockBuilderExpanded); triggerResize(); }}
             className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -735,7 +571,7 @@ LIMIT 50`);
       {queryMode === 'cypher-editor' && (
         <div className="space-y-3">
           <button
-            onClick={toggleCypherEditor}
+            onClick={() => { setCypherEditorExpanded(!cypherEditorExpanded); triggerResize(); }}
             className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -750,52 +586,50 @@ LIMIT 50`);
           </button>
 
           {cypherEditorExpanded && (
-            <>
-              <div className="space-y-2">
-                <textarea
-                  value={cypherQuery}
-                  onChange={(e) => setCypherQuery(e.target.value)}
-                  placeholder="Enter openCypher query..."
-                  className="w-full h-48 px-3 py-2 font-mono text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-y"
-                  spellCheck={false}
-                />
+            <div className="space-y-2">
+              <textarea
+                value={cypherQuery}
+                onChange={(e) => setCypherQuery(e.target.value)}
+                placeholder="Enter openCypher query..."
+                className="w-full h-48 px-3 py-2 font-mono text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                spellCheck={false}
+              />
 
-                {cypherError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
-                    {cypherError}
-                  </div>
+              {cypherError && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+                  {cypherError}
+                </div>
+              )}
+
+              <button
+                onClick={handleExecuteCypher}
+                disabled={isExecutingCypher || !cypherQuery.trim()}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isExecutingCypher ? (
+                  <>
+                    <LoadingSpinner className="text-primary-foreground" />
+                    Executing Query...
+                  </>
+                ) : (
+                  <>
+                    <Code className="w-4 h-4" />
+                    Execute Query
+                  </>
                 )}
+              </button>
 
-                <button
-                  onClick={handleExecuteCypher}
-                  disabled={isExecutingCypher || !cypherQuery.trim()}
-                  className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isExecutingCypher ? (
-                    <>
-                      <LoadingSpinner className="text-primary-foreground" />
-                      Executing Query...
-                    </>
-                  ) : (
-                    <>
-                      <Code className="w-4 h-4" />
-                      Execute Query
-                    </>
-                  )}
-                </button>
-
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div className="font-medium">Example queries:</div>
-                  <div className="font-mono bg-muted p-2 rounded">
-                    <div>MATCH (c:Concept) WHERE c.label CONTAINS 'organizational' RETURN c LIMIT 10</div>
-                    <div className="mt-1">{'MATCH (c:Concept)-[r:IMPLIES]->(n:Concept) RETURN c, r, n LIMIT 50'}</div>
-                  </div>
-                  <div className="text-muted-foreground/70 mt-2">
-                    Results are automatically loaded into the graph visualization.
-                  </div>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div className="font-medium">Example queries:</div>
+                <div className="font-mono bg-muted p-2 rounded">
+                  <div>MATCH (c:Concept) WHERE c.label CONTAINS 'organizational' RETURN c LIMIT 10</div>
+                  <div className="mt-1">{'MATCH (c:Concept)-[r:IMPLIES]->(n:Concept) RETURN c, r, n LIMIT 50'}</div>
+                </div>
+                <div className="text-muted-foreground/70 mt-2">
+                  Results are automatically loaded into the graph visualization.
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
