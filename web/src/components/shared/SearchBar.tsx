@@ -148,6 +148,7 @@ LIMIT 50`);
     setDestinationQuery('');
     setPathResults(null);
     setSelectedPath(null);
+    setDepth(1); // Reset to explore default
   };
 
   // Load explore (concept or neighborhood depending on depth)
@@ -195,8 +196,8 @@ LIMIT 50`);
     }
   };
 
-  // Load selected path directly into graph
-  const handleLoadPath = (loadMode: 'clean' | 'add') => {
+  // Load selected path directly into graph, with optional neighborhood enrichment
+  const handleLoadPath = async (loadMode: 'clean' | 'add') => {
     if (!selectedPath) return;
 
     const conceptNodes: any[] = [];
@@ -239,6 +240,26 @@ LIMIT 50`);
       setRawGraphData({ nodes, links });
     } else {
       mergeRawGraphData({ nodes, links });
+    }
+
+    // Enrich path nodes with neighborhood context
+    if (depth > 0 && conceptNodes.length <= 50) {
+      const enrichDepth = Math.min(depth, 2);
+      const idsToEnrich = conceptNodes.map((n) => n.id).filter(Boolean);
+      if (idsToEnrich.length > 0) {
+        try {
+          const enrichments = await Promise.all(
+            idsToEnrich.map((id: string) =>
+              apiClient.getSubgraph({ center_concept_id: id, depth: enrichDepth })
+            )
+          );
+          for (const data of enrichments) {
+            mergeRawGraphData({ nodes: data.nodes, links: data.links });
+          }
+        } catch (error) {
+          console.error('Path enrichment failed:', error);
+        }
+      }
     }
 
     setPathResults(null);
@@ -436,12 +457,12 @@ LIMIT 50`);
                   {similaritySlider}
 
                   <SliderControl
-                    label="Depth:"
+                    label={showDestination ? "Context:" : "Depth:"}
                     value={depth}
-                    min={1}
-                    max={5}
+                    min={showDestination ? 0 : 1}
+                    max={showDestination ? 2 : 5}
                     onChange={setDepth}
-                    unit={`hop${depth > 1 ? 's' : ''}`}
+                    unit={showDestination && depth === 0 ? 'none' : `hop${depth !== 1 ? 's' : ''}`}
                   />
 
                   {/* Load buttons (explore mode — no destination) */}
@@ -455,7 +476,7 @@ LIMIT 50`);
                   {/* Destination toggle / search */}
                   {!showDestination ? (
                     <button
-                      onClick={() => setShowDestination(true)}
+                      onClick={() => { setShowDestination(true); setDepth(0); }}
                       className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg hover:border-primary/50 transition-colors"
                     >
                       <Plus className="w-4 h-4" />

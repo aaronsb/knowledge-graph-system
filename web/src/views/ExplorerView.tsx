@@ -8,7 +8,7 @@
  * - Saved queries management (ADR-083)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { History, Settings, Trash2 } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
@@ -17,7 +17,7 @@ import { useGraphStore, deriveMode } from '../store/graphStore';
 import { useReportStore } from '../store/reportStore';
 import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
 import type { GraphReportData } from '../store/reportStore';
-import { useSubgraph, useFindConnection } from '../hooks/useGraphData';
+import { useSubgraph, useFindConnection, usePathEnrichment } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
 import { getZIndexValue } from '../config/zIndex';
 import type { VisualizationType } from '../types/explorer';
@@ -164,6 +164,20 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     }
   );
 
+  // Path enrichment: expand neighborhoods around path nodes when depth > 0
+  const pathNodeIds = useMemo(() => {
+    if (mode !== 'path' || !pathData?.nodes) return [];
+    return pathData.nodes
+      .map((n: any) => n.concept_id || n.id)
+      .filter(Boolean);
+  }, [mode, pathData]);
+
+  const { data: enrichmentData, isLoading: isLoadingEnrichment } = usePathEnrichment(
+    pathNodeIds,
+    searchParams.depth,
+    { enabled: mode === 'path' && pathNodeIds.length > 0 }
+  );
+
   // Update rawGraphData when query results come back
   useEffect(() => {
     const newData = mode === 'path' ? pathData : exploreData;
@@ -179,7 +193,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     }
   }, [exploreData, pathData, searchParams.loadMode, mode]);
 
-  const isLoading = isLoadingExplore || isLoadingPath;
+  // Merge path enrichment data when it arrives
+  useEffect(() => {
+    if (!enrichmentData) return;
+    mergeRawGraphData(enrichmentData);
+  }, [enrichmentData]);
+
+  const isLoading = isLoadingExplore || isLoadingPath || isLoadingEnrichment;
   const error = pathError;
   const graphData = storeGraphData;
 

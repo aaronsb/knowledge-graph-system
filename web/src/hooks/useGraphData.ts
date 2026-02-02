@@ -5,7 +5,8 @@
  * loading states, and automatic refetching.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { transformForD3 } from '../utils/graphTransform';
 
@@ -301,6 +302,84 @@ export function useTimeline(
     enabled: options?.enabled !== false && !!ontology,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
+}
+
+/**
+ * Enrich path nodes with neighborhood context.
+ * Fetches subgraphs around each node in parallel and merges results.
+ *
+ * Performance guards:
+ * - Enrichment depth capped at 2
+ * - Skipped if more than 50 nodes
+ */
+export function usePathEnrichment(
+  nodeIds: string[],
+  depth: number,
+  options?: { enabled?: boolean }
+) {
+  const enrichDepth = Math.min(depth, 2);
+  const shouldEnrich =
+    options?.enabled !== false &&
+    enrichDepth > 0 &&
+    nodeIds.length > 0 &&
+    nodeIds.length <= 50;
+
+  const queries = useQueries({
+    queries: shouldEnrich
+      ? nodeIds.map((id) => ({
+          queryKey: ['subgraph', id, enrichDepth],
+          queryFn: async () => {
+            const response = await apiClient.getSubgraph({
+              center_concept_id: id,
+              depth: enrichDepth,
+            });
+            return { nodes: response.nodes, links: response.links };
+          },
+          staleTime: 5 * 60 * 1000,
+        }))
+      : [],
+  });
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const isSuccess = queries.length > 0 && queries.every((q) => q.isSuccess);
+
+  // Use dataUpdatedAt timestamps to create a stable memo dependency
+  const dataVersion = queries.map((q) => q.dataUpdatedAt).join(',');
+
+  const data = useMemo(() => {
+    if (!isSuccess) return null;
+
+    const allNodes = new Map<string, any>();
+    const linkKeys = new Set<string>();
+    const allLinks: any[] = [];
+
+    queries.forEach((q) => {
+      if (q.data) {
+        const result = q.data as { nodes: any[]; links: any[] };
+        result.nodes.forEach((n: any) => {
+          const id = n.concept_id || n.id;
+          if (id && !allNodes.has(id)) allNodes.set(id, n);
+        });
+        result.links.forEach((l: any) => {
+          const from = l.from_id || l.source;
+          const to = l.to_id || l.target;
+          const type = l.relationship_type || l.type || '';
+          const key = `${from}-${type}-${to}`;
+          if (!linkKeys.has(key)) {
+            linkKeys.add(key);
+            allLinks.push(l);
+          }
+        });
+      }
+    });
+
+    return allNodes.size > 0
+      ? { nodes: Array.from(allNodes.values()), links: allLinks }
+      : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, dataVersion]);
+
+  return { data, isLoading };
 }
 
 /**
