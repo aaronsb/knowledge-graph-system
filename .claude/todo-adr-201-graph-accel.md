@@ -85,7 +85,7 @@ Merged: PR #270 → `main`
 - [x] AGEClient composed via multiple inheritance, import interface unchanged
 
 ### 5b: Unified GraphFacade with two-phase query pattern ✓
-Branch: `feature/graph-facade`
+Merged: PR #274 → `main`
 - [x] `api/app/lib/graph_facade.py` — unified GraphFacade class
   - graph_accel availability detection (lazy, cached per-request)
   - `neighborhood()` — graph_accel_neighborhood fast path + Cypher fallback
@@ -117,6 +117,21 @@ Branch: `feature/graph-facade`
 - [ ] Update `operator.sh` for graph_accel-aware Postgres image
 - [x] Call `graph_accel_invalidate()` after batch ingestion + graph mutations
 - [x] Benchmark: compare AGE direct vs graph_accel for depths 1-5 on real data (see benchmark-findings.md)
+
+### 5d: Multi-path acceleration (Yen's k-shortest-paths) ← NEXT
+- [ ] Implement `k_shortest_paths()` in `graph-accel/core/src/traversal.rs` (Yen's algorithm)
+- [ ] Add standalone bench tests for k-shortest across 6 topologies at 5M/50M scale
+- [ ] Expose `graph_accel_paths(from_id, to_id, max_hops, max_paths, direction, confidence)` via pgrx
+- [ ] Extension version: 0.4.0 → 0.5.0
+- [ ] Deploy to container, validate with benchmark-comparison.sh
+- [ ] Add multi-path tests to `graph-accel/tests/benchmark-comparison.sh`
+- [ ] Wire `_find_paths_accel()` into GraphFacade, remove single-path-only guard
+- [ ] Benchmark: re-run baseline query (Graph Structure → Property Graph Databases, max_hops=4)
+- [ ] Fix empty middle node in APPEARS→APPEARS path chains
+
+### 5e: Cleanup
+- [ ] Remove old facades: `query_facade.py`, `pathfinding_facade.py`, `query_service.py`
+- [ ] Migrate remaining consumers (if any) to `client.graph.*`
 
 ## Phase 6: Polish & Publish
 - [x] Implement `graph_accel_degree()` — degree centrality
