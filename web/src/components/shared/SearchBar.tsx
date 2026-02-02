@@ -106,7 +106,6 @@ export const SearchBar: React.FC = () => {
   const [pathResults, setPathResults] = useState<any>(null);
   const [selectedPath, setSelectedPath] = useState<any>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
-  const [pathEnrichmentDepth, setPathEnrichmentDepth] = useState(1); // Depth around each hop
 
   // Cypher editor state
   const [cypherQuery, setCypherQuery] = useState(`MATCH (c:Concept)-[r]->(n:Concept)
@@ -116,7 +115,7 @@ LIMIT 50`);
   const [isExecutingCypher, setIsExecutingCypher] = useState(false);
   const [cypherError, setCypherError] = useState<string | null>(null);
 
-  const { setSearchParams } = useGraphStore();
+  const { setSearchParams, setRawGraphData, mergeRawGraphData, setGraphData } = useGraphStore();
 
   // Debounce values to prevent excessive API calls while user is typing/dragging sliders
   // 800ms for typing (embeddings are expensive), 500ms for sliders (cheaper operations)
@@ -254,18 +253,57 @@ LIMIT 50`);
     }
   };
 
-  // Handler: Load selected path with enriched neighborhoods
+  // Handler: Load selected path directly into graph
+  // Converts the specific selected path to graph format (matching useFindConnection logic)
   const handleLoadPath = (loadMode: 'clean' | 'add') => {
     if (!selectedPath) return;
 
-    setSearchParams({
-      mode: 'path',
-      fromConceptId: selectedFromConcept.concept_id,
-      toConceptId: selectedToConcept.concept_id,
-      maxHops,
-      depth: pathEnrichmentDepth, // Add neighborhood context around each hop
-      loadMode,
-    });
+    // Extract Concept nodes only (skip Source/Ontology with empty IDs)
+    const conceptNodes: any[] = [];
+    const conceptRelTypes: string[][] = [];
+    let pendingRels: string[] = [];
+
+    for (let i = 0; i < selectedPath.nodes.length; i++) {
+      const node = selectedPath.nodes[i];
+      if (node.id && node.id !== '') {
+        conceptNodes.push(node);
+        conceptRelTypes.push(pendingRels);
+        pendingRels = [];
+      }
+      if (i < selectedPath.relationships.length) {
+        pendingRels.push(selectedPath.relationships[i]);
+      }
+    }
+
+    const nodes = conceptNodes.map((node: any) => ({
+      concept_id: node.id,
+      label: node.label,
+      description: node.description,
+      ontology: 'default',
+      grounding_strength: node.grounding_strength,
+    }));
+
+    const links: any[] = [];
+    for (let i = 0; i < conceptNodes.length - 1; i++) {
+      const rels = conceptRelTypes[i + 1];
+      const relType = rels.find(r => r !== 'APPEARS' && r !== 'SCOPED_BY') || rels[0] || 'CONNECTED';
+      links.push({
+        from_id: conceptNodes[i].id,
+        to_id: conceptNodes[i + 1].id,
+        relationship_type: relType,
+      });
+    }
+
+    if (loadMode === 'clean') {
+      setGraphData(null);
+      setRawGraphData({ nodes, links });
+    } else {
+      mergeRawGraphData({ nodes, links });
+    }
+
+    // Dismiss the path selection UI after loading
+    setPathResults(null);
+    setSelectedPath(null);
   };
 
   // Handler: Execute openCypher query
@@ -972,12 +1010,14 @@ LIMIT 50`);
                                 }`}
                               >
                                 <div className="text-sm font-mono">
-                                  {path.nodes.map((node: any, i: number) => (
-                                    <span key={i}>
-                                      {i > 0 && <span className="text-muted-foreground"> → </span>}
-                                      <span className="font-medium">{node.label}</span>
-                                    </span>
-                                  ))}
+                                  {path.nodes
+                                    .filter((node: any) => node.id && node.id !== '')
+                                    .map((node: any, i: number) => (
+                                      <span key={i}>
+                                        {i > 0 && <span className="text-muted-foreground"> → </span>}
+                                        <span className="font-medium">{node.label}</span>
+                                      </span>
+                                    ))}
                                 </div>
                                 {path.score && (
                                   <div className="text-xs text-muted-foreground mt-1">
@@ -988,51 +1028,22 @@ LIMIT 50`);
                             ))}
                           </div>
 
-                          {/* Enrichment Depth Slider (only if path selected) */}
+                          {/* Load Buttons (only if path selected) */}
                           {selectedPath && (
-                            <>
-                              <div className="flex items-center gap-3 px-1">
-                                <label className="text-sm text-muted-foreground whitespace-nowrap">
-                                  Context Depth:
-                                </label>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="3"
-                                  value={pathEnrichmentDepth}
-                                  onChange={(e) => setPathEnrichmentDepth(parseInt(e.target.value))}
-                                  className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer
-                                             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                                             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary
-                                             [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4
-                                             [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
-                                />
-                                <span className="text-sm font-medium min-w-[1ch] text-right">
-                                  {pathEnrichmentDepth}
-                                </span>
-                              </div>
-                              <div className="text-xs text-muted-foreground px-1">
-                                {pathEnrichmentDepth === 0
-                                  ? 'Show path only (no context)'
-                                  : `Show ${pathEnrichmentDepth}-hop neighborhood around each node in path`}
-                              </div>
-
-                              {/* Load Buttons */}
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleLoadPath('clean')}
-                                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                                >
-                                  Load into Clean Graph
-                                </button>
-                                <button
-                                  onClick={() => handleLoadPath('add')}
-                                  className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
-                                >
-                                  Add to Existing Graph
-                                </button>
-                              </div>
-                            </>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleLoadPath('clean')}
+                                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                              >
+                                Load into Clean Graph
+                              </button>
+                              <button
+                                onClick={() => handleLoadPath('add')}
+                                className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors text-sm font-medium"
+                              >
+                                Add to Existing Graph
+                              </button>
+                            </div>
                           )}
                         </>
                       ) : (
