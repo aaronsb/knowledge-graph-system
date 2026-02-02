@@ -709,6 +709,109 @@ fi
 
 echo ""
 
+# --- Multi-path (Yen's k-shortest-paths, v0.5.0) ---
+echo "================================================================"
+echo "  Multi-Path / Yen's k-shortest-paths (v0.5.0)"
+echo "================================================================"
+echo ""
+
+# Check if graph_accel_paths exists
+has_paths=$(psql_cmd -c "SELECT count(*) FROM pg_proc WHERE proname = 'graph_accel_paths';")
+if [ "$has_paths" -eq 0 ]; then
+    echo "  SKIP: graph_accel_paths not available (requires v0.5.0+)"
+    echo ""
+else
+    # Pick a target concept at distance 2 for multi-path testing
+    ksp_target=$(ga_query "SELECT app_id FROM graph_accel_neighborhood('$CONCEPT_ID', 2)
+        WHERE label = 'Concept' AND distance = 2 LIMIT 1;" | grep '^sha256:\|^c_' | tr -d ' ' | head -1)
+
+    if [ -z "$ksp_target" ]; then
+        echo "  SKIP: no depth-2 neighbor found for multi-path test"
+        echo ""
+    else
+        echo "  Source: $CONCEPT_ID"
+        echo "  Target: $ksp_target"
+        echo ""
+
+        # Test 1: k=1 should match graph_accel_path (single shortest)
+        single_path=$(ga_query "SELECT step, app_id, rel_type FROM graph_accel_path('$CONCEPT_ID', '$ksp_target');" \
+            | grep -E '^[0-9]')
+        single_hops=$(echo "$single_path" | wc -l)
+
+        multi_k1=$(ga_query "SELECT path_index, step, app_id, rel_type FROM graph_accel_paths('$CONCEPT_ID', '$ksp_target', 10, 1);" \
+            | grep -E '^0\|')
+        multi_k1_hops=$(echo "$multi_k1" | wc -l)
+
+        if [ "$single_hops" = "$multi_k1_hops" ]; then
+            echo "  k=1 matches single:  OK ($single_hops steps)"
+        else
+            echo "  k=1 matches single:  FAIL (single=$single_hops, k=1=$multi_k1_hops)"
+            all_pass=false
+        fi
+
+        # Test 2: k=5 should return 1-5 paths, all distinct
+        multi_k5_output=$(ga_query "SELECT path_index, step, app_id, rel_type FROM graph_accel_paths('$CONCEPT_ID', '$ksp_target', 10, 5);")
+        multi_k5_paths=$(echo "$multi_k5_output" | grep -E '^[0-9]' | cut -d'|' -f1 | sort -u | wc -l)
+
+        if [ "$multi_k5_paths" -ge 1 ]; then
+            echo "  k=5 found paths:     OK ($multi_k5_paths distinct paths)"
+        else
+            echo "  k=5 found paths:     FAIL (no paths returned)"
+            all_pass=false
+        fi
+
+        # Test 3: All paths start and end at the right nodes
+        path_starts=$(echo "$multi_k5_output" | grep -E '^[0-9]+\|0\|' | cut -d'|' -f3 | tr -d ' ' | sort -u)
+        if [ "$(echo "$path_starts" | wc -l)" = "1" ] && [ "$(echo "$path_starts" | head -1)" = "$CONCEPT_ID" ]; then
+            echo "  Start nodes correct: OK (all start at $CONCEPT_ID)"
+        else
+            echo "  Start nodes correct: FAIL"
+            all_pass=false
+        fi
+
+        # Check last step of each path ends at target
+        end_check_pass=true
+        for pi in $(echo "$multi_k5_output" | grep -E '^[0-9]' | cut -d'|' -f1 | sort -un); do
+            last_node=$(echo "$multi_k5_output" | grep "^${pi}|" | tail -1 | cut -d'|' -f3 | tr -d ' ')
+            if [ "$last_node" != "$ksp_target" ]; then
+                echo "  End node path $pi:    FAIL (expected $ksp_target, got $last_node)"
+                end_check_pass=false
+                all_pass=false
+            fi
+        done
+        if $end_check_pass; then
+            echo "  End nodes correct:   OK (all end at $ksp_target)"
+        fi
+
+        # Test 4: Paths are sorted by length (non-decreasing)
+        prev_len=0
+        sorted_pass=true
+        for pi in $(echo "$multi_k5_output" | grep -E '^[0-9]' | cut -d'|' -f1 | sort -un); do
+            path_len=$(echo "$multi_k5_output" | grep -c "^${pi}|")
+            if [ "$path_len" -lt "$prev_len" ]; then
+                echo "  Sorted by length:    FAIL (path $pi has $path_len steps < previous $prev_len)"
+                sorted_pass=false
+                all_pass=false
+            fi
+            prev_len=$path_len
+        done
+        if $sorted_pass; then
+            echo "  Sorted by length:    OK"
+        fi
+
+        # Test 5: Timing
+        multi_timing=$(psql_timed -c "\\timing" \
+            -c "SET graph_accel.node_id_property = 'concept_id';" \
+            -c "SELECT * FROM graph_accel_load('knowledge_graph');" \
+            -c "SELECT count(*) FROM graph_accel_paths('$CONCEPT_ID', '$ksp_target', 10, 5);" 2>&1)
+        multi_time=$(echo "$multi_timing" | grep "^Time:" | tail -1 | grep -oP '[\d.]+' | head -1)
+        multi_rows=$(echo "$multi_timing" | grep -E '^\s+[0-9]+$' | tail -1 | tr -d ' ')
+        echo "  k=5 timing:          ${multi_time}ms ($multi_rows rows)"
+
+        echo ""
+    fi
+fi
+
 # --- Summary ---
 if $all_pass; then
     echo "RESULT: ALL CHECKS PASSED"

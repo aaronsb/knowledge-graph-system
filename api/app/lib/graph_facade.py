@@ -20,11 +20,20 @@ Access via: client.graph.neighborhood(...)
 import logging
 import math
 import re
+import threading
 from typing import List, Dict, Optional, Any, Set, Tuple
 
+import psycopg2
 from psycopg2 import extras
 
 logger = logging.getLogger(__name__)
+
+# Module-level persistent connection for graph_accel SQL queries.
+# graph_accel uses per-backend state (thread_local + RefCell in Rust),
+# so we pin a single connection to keep the graph loaded across requests.
+# Only reloads when generation changes (Phase 3 cache invalidation).
+_accel_conn = None
+_accel_conn_lock = threading.Lock()
 
 # Valid Cypher relationship type: uppercase letters, digits, underscores
 _VALID_REL_TYPE_RE = re.compile(r'^[A-Z][A-Z0-9_]*$')
@@ -299,11 +308,35 @@ class GraphFacade:
     ) -> List[Dict[str, Any]]:
         """Find multiple paths between two concepts.
 
-        First path via graph_accel (or BFS), additional paths via
-        BFS with edge exclusion.
+        Uses graph_accel_paths (Yen's k-shortest) when available,
+        falls back to BFS with edge exclusion.
 
         Returns list of path dicts sorted by length.
         """
+        if from_id == to_id:
+            node_data = self._get_concept_data(from_id)
+            if node_data:
+                return [{"path_nodes": [node_data], "path_rels": [], "hops": 0}]
+            return []
+
+        if self._accel_ready:
+            logger.debug(
+                f"find_paths: graph_accel ({from_id} → {to_id}, "
+                f"max_hops={max_hops}, max_paths={max_paths})"
+            )
+            paths = self._find_paths_accel(from_id, to_id, max_hops, max_paths)
+            if relationship_types:
+                type_set = set(relationship_types)
+                paths = [
+                    p for p in paths
+                    if all(r.get('label', '') in type_set
+                           for r in p.get('path_rels', []))
+                ]
+            logger.debug(f"find_paths: graph_accel returned {len(paths)} paths")
+            return paths
+
+        # Cypher BFS fallback
+        logger.debug("find_paths: using Cypher BFS fallback")
         shortest = self.find_path(
             from_id, to_id, max_hops,
             relationship_types=relationship_types
@@ -313,11 +346,7 @@ class GraphFacade:
 
         paths = [shortest]
 
-        # Additional paths via Cypher BFS with edge exclusion.
-        # Skip when graph_accel handled the first path — Cypher BFS on
-        # dense graphs (412K edges) hangs. Multi-path support can be
-        # added Rust-side later.
-        if max_paths > 1 and shortest["hops"] > 0 and not self._accel_ready:
+        if max_paths > 1 and shortest["hops"] > 0:
             excluded_edges = self._extract_edges(shortest)
             for _ in range(max_paths - 1):
                 additional = self._find_path_bfs_excluding(
@@ -360,31 +389,36 @@ class GraphFacade:
         graph_accel returns: step, app_id, label, rel_type, direction
         We need: path_nodes [{concept_id, label, description}],
                  path_rels [{label, properties}], hops
+
+        Nodes without app_id (Source, Instance) use their AGE vertex label
+        as a fallback display name.
         """
-        node_ids = []
-        path_nodes = []
+        node_ids = [row['app_id'] for row in rows]
         path_rels = []
 
         for row in rows:
-            node_ids.append(row['app_id'])
-            # rel_type is NULL for start node (step 0)
             if row['rel_type']:
                 path_rels.append({
                     "label": row['rel_type'],
                     "properties": {}
                 })
 
-        # Batch hydrate concept data for all nodes in path
-        hydrated = self._hydrate_concepts(node_ids)
+        # Batch hydrate concept data for nodes with app_id
+        hydrated = self._hydrate_concepts(
+            [nid for nid in node_ids if nid]
+        ) if any(node_ids) else {}
 
-        for nid in node_ids:
-            data = hydrated.get(nid)
+        path_nodes = []
+        for row in rows:
+            nid = row['app_id']
+            data = hydrated.get(nid) if nid else None
             if data:
                 path_nodes.append(data)
             else:
+                # Non-Concept node (Source, Instance) — use AGE label
                 path_nodes.append({
                     "concept_id": nid or '',
-                    "label": '',
+                    "label": row.get('label', '') or '',
                     "description": ''
                 })
 
@@ -393,6 +427,69 @@ class GraphFacade:
             "path_rels": path_rels,
             "hops": len(path_rels)
         }
+
+    def _find_paths_accel(
+        self,
+        from_id: str,
+        to_id: str,
+        max_hops: int,
+        max_paths: int
+    ) -> List[Dict[str, Any]]:
+        """graph_accel multi-path via Yen's k-shortest-paths."""
+        rows = self._execute_sql(
+            "SELECT path_index, step, app_id, label, rel_type, direction "
+            "FROM graph_accel_paths(%s, %s, %s, %s)",
+            (from_id, to_id, max_hops, max_paths)
+        )
+
+        if not rows:
+            return []
+
+        # Group rows by path_index
+        paths_by_index: Dict[int, List[Dict]] = {}
+        for row in rows:
+            pi = row['path_index']
+            paths_by_index.setdefault(pi, []).append(row)
+
+        # Collect all unique node IDs across all paths for batch hydration
+        all_node_ids = list({
+            row['app_id'] for row in rows if row.get('app_id')
+        })
+        hydrated = self._hydrate_concepts(all_node_ids) if all_node_ids else {}
+
+        # Convert each path group to the standard path dict format
+        result = []
+        for pi in sorted(paths_by_index.keys()):
+            path_rows = paths_by_index[pi]
+            path_nodes = []
+            path_rels = []
+
+            for row in path_rows:
+                nid = row['app_id']
+                data = hydrated.get(nid) if nid else None
+                if data:
+                    path_nodes.append(data)
+                else:
+                    # Non-Concept node (Source, Instance) — use AGE label
+                    path_nodes.append({
+                        "concept_id": nid or '',
+                        "label": row.get('label', '') or '',
+                        "description": ''
+                    })
+
+                if row['rel_type']:
+                    path_rels.append({
+                        "label": row['rel_type'],
+                        "properties": {}
+                    })
+
+            result.append({
+                "path_nodes": path_nodes,
+                "path_rels": path_rels,
+                "hops": len(path_rels)
+            })
+
+        return result
 
     # -------------------------------------------------------------------------
     # Cypher BFS fallback (from PathfindingFacade)
@@ -850,56 +947,87 @@ class GraphFacade:
     # SQL execution (for graph_accel calls)
     # -------------------------------------------------------------------------
 
+    def _get_accel_connection(self):
+        """Get or create the persistent connection for graph_accel queries.
+
+        graph_accel uses per-backend state, so we pin a single connection
+        to keep the graph loaded across requests. The connection is
+        module-level: one per worker process, shared across all facade
+        instances. GUCs are set once on creation.
+        """
+        global _accel_conn
+
+        if _accel_conn is not None and not _accel_conn.closed:
+            return _accel_conn
+
+        client = self._client
+        _accel_conn = psycopg2.connect(
+            host=client.host,
+            port=client.port,
+            database=client.database,
+            user=client.user,
+            password=client.password
+        )
+        _accel_conn.autocommit = True
+
+        # Set GUCs once for the connection lifetime
+        with _accel_conn.cursor() as cur:
+            cur.execute("SET graph_accel.node_id_property = 'concept_id'")
+
+        logger.info("graph_accel: created dedicated connection")
+        return _accel_conn
+
     def _execute_sql(
         self,
         query: str,
         params: Optional[tuple] = None
     ) -> List[Dict[str, Any]]:
-        """Execute raw SQL (not Cypher) via the client's connection pool.
+        """Execute raw SQL via the dedicated graph_accel connection.
 
-        Used for graph_accel function calls which are regular SQL functions.
-        Synchronous — matches _execute_cypher's calling convention.
-
-        Ensures graph_accel is loaded in the current backend before each
-        query. graph_accel uses per-backend state (thread_local + RefCell),
-        so each pool connection must load independently. The status check
-        adds ~0.01ms overhead per call.
+        Uses a pinned connection so the in-memory graph stays loaded
+        across requests. The graph loads once on first query, then
+        graph_accel's ensure_fresh() handles generation-based reload
+        (~0.01ms check per call, only reloads after invalidation).
         """
-        conn = self._client.pool.getconn()
-        try:
-            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                # Set graph_accel GUCs for this session
-                cur.execute("SET graph_accel.node_id_property = 'concept_id'")
+        global _accel_conn
 
-                # Ensure graph is loaded in this backend
-                cur.execute("SELECT status FROM graph_accel_status()")
-                status_row = cur.fetchone()
-                backend_status = status_row['status'] if status_row else 'unknown'
-                if backend_status == 'not_loaded':
-                    logger.info("graph_accel: loading graph in this backend...")
-                    cur.execute(
-                        "SELECT * FROM graph_accel_load(%s)",
-                        ('knowledge_graph',)
-                    )
-                    load_result = cur.fetchall()
-                    if load_result:
-                        r = load_result[0]
-                        logger.info(
-                            f"graph_accel: loaded {r.get('node_count', '?')} nodes / "
-                            f"{r.get('edge_count', '?')} edges in "
-                            f"{r.get('load_time_ms', '?'):.0f}ms"
+        with _accel_conn_lock:
+            conn = self._get_accel_connection()
+            try:
+                with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                    # Ensure graph is loaded in this backend
+                    cur.execute("SELECT status FROM graph_accel_status()")
+                    status_row = cur.fetchone()
+                    backend_status = status_row['status'] if status_row else 'unknown'
+                    if backend_status == 'not_loaded':
+                        logger.info("graph_accel: loading graph...")
+                        cur.execute(
+                            "SELECT * FROM graph_accel_load(%s)",
+                            ('knowledge_graph',)
                         )
-                else:
-                    logger.debug(f"graph_accel: backend status={backend_status}")
+                        load_result = cur.fetchall()
+                        if load_result:
+                            r = load_result[0]
+                            logger.info(
+                                f"graph_accel: loaded {r.get('node_count', '?')} nodes / "
+                                f"{r.get('edge_count', '?')} edges in "
+                                f"{r.get('load_time_ms', '?'):.0f}ms"
+                            )
 
-                # Run the actual query
-                if params:
-                    cur.execute(query, params)
-                else:
-                    cur.execute(query)
-                if cur.description is not None:
-                    return [dict(row) for row in cur.fetchall()]
-                return []
-        finally:
-            conn.commit()
-            self._client.pool.putconn(conn)
+                    # Run the actual query
+                    if params:
+                        cur.execute(query, params)
+                    else:
+                        cur.execute(query)
+                    if cur.description is not None:
+                        return [dict(row) for row in cur.fetchall()]
+                    return []
+            except Exception as e:
+                # Connection broken — close and reconnect on next call
+                logger.warning(f"graph_accel: SQL error, will reconnect: {e}")
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                _accel_conn = None
+                raise

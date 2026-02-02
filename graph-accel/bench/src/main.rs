@@ -120,6 +120,25 @@ fn run_benchmark(name: &str, generator: fn(u64) -> Graph, node_count: u64) {
         ),
     }
 
+    // k-shortest-paths (Yen's algorithm): 0 to last node
+    println!();
+    for k in [1, 3, 5, 10] {
+        let t = Instant::now();
+        let paths = graph_accel_core::k_shortest_paths(
+            &graph, 0, far_node, 100, k, TraversalDirection::Both, None,
+        );
+        let elapsed = t.elapsed();
+        let hop_summary: Vec<String> = paths.iter().map(|p| format!("{}", p.len() - 1)).collect();
+        println!(
+            "k-shortest (k={:>2}) 0 → {}: {} paths [{}] in {:.1}ms",
+            k,
+            far_node,
+            paths.len(),
+            hop_summary.join(","),
+            elapsed.as_secs_f64() * 1000.0
+        );
+    }
+
     // Direction validation
     println!();
     validate_directions(&graph, &bfs_d1, &path);

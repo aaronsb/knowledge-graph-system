@@ -15,6 +15,6 @@ pub use graph::{
     MAX_REL_TYPES,
 };
 pub use traversal::{
-    bfs_neighborhood, degree_centrality, extract_subgraph, shortest_path, DegreeResult,
-    NeighborResult, PathStep, SubgraphEdge, SubgraphResult, TraversalResult,
+    bfs_neighborhood, degree_centrality, extract_subgraph, k_shortest_paths, shortest_path,
+    DegreeResult, NeighborResult, PathStep, SubgraphEdge, SubgraphResult, TraversalResult,
 };
