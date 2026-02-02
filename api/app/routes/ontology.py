@@ -1557,6 +1557,12 @@ async def reassign_sources(
             else:
                 raise HTTPException(status_code=500, detail=error)
 
+        # ADR-201: Invalidate graph_accel cache after SCOPED_BY edge changes
+        try:
+            client.graph.invalidate()
+        except Exception:
+            pass  # Non-fatal — extension may not be installed
+
         return ReassignResponse(
             from_ontology=ontology_name,
             to_ontology=request.target_ontology,
@@ -1607,6 +1613,12 @@ async def dissolve_ontology(
                 raise HTTPException(status_code=403, detail=error)
             else:
                 raise HTTPException(status_code=500, detail=error)
+
+        # ADR-201: Invalidate graph_accel cache after ontology dissolution
+        try:
+            client.graph.invalidate()
+        except Exception:
+            pass  # Non-fatal — extension may not be installed
 
         return DissolveResponse(
             dissolved_ontology=ontology_name,

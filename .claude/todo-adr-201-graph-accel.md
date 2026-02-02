@@ -77,34 +77,45 @@ Merged: PR #269 → `main`
 - [ ] Edge filtering: skip edges where source/target not in loaded node set
 - [ ] Test with a non-knowledge-graph AGE schema to verify generality
 
-## Phase 5: API Integration ← NEXT
+## Phase 5: API Integration
 
-### 5a: age_client.py refactor (prerequisite — issue #243)
-- [ ] Extract `age_query.py` — search, pathfinding, concept details, neighborhood
-- [ ] Extract `age_ingestion.py` — concept/source/instance CRUD, matching
-- [ ] Extract `age_ontology.py` — ontology nodes, lifecycle, scoring
-- [ ] Extract `age_vocabulary.py` — vocab types, consolidation
-- [ ] Shared base: connection pool + `_execute_cypher` helper
+### 5a: age_client.py refactor (prerequisite — issue #243) ✓
+Merged: PR #270 → `main`
+- [x] Extract into domain mixin package: base, ingestion, query, ontology, ontology_scoring, ontology_edges, vocabulary
+- [x] AGEClient composed via multiple inheritance, import interface unchanged
 
-### 5b: Two-phase query pattern
-graph_accel knows topology (IDs, labels, edges) but not properties (embeddings,
-grounding_strength, descriptions). Integration pattern:
-1. graph_accel → fast traversal (sub-ms): "which concept IDs within N hops?"
-2. Direct SQL → targeted property hydration: "fetch properties for these IDs"
-
-See `graph-accel/tests/benchmark-comparison.sh` header for the API integration
-rosetta stone — maps each graph_accel function to its API worker replacement.
-
-- [ ] Identify which `age_query.py` methods can use accelerated traversal
-- [ ] Build hydration layer: given a set of node IDs from graph_accel, fetch full properties via SQL
-- [ ] Wire `/query/related` through graph_accel + hydration, fall back to AGE if not loaded
-- [ ] Ensure response shape is identical to current AGE-only path
+### 5b: Unified GraphFacade with two-phase query pattern ✓
+Branch: `feature/graph-facade`
+- [x] `api/app/lib/graph_facade.py` — unified GraphFacade class
+  - graph_accel availability detection (lazy, cached per-request)
+  - `neighborhood()` — graph_accel_neighborhood fast path + Cypher fallback
+  - `find_path()` / `find_paths()` — graph_accel_path + bidirectional BFS fallback
+  - `degree()` — graph_accel_degree + Cypher OPTIONAL MATCH fallback
+  - `subgraph()` — graph_accel_subgraph + Cypher edge list fallback
+  - `match_sources()` / `match_concepts_for_sources_batch()` — carried from QueryFacade
+  - `invalidate()` / `status()` / `is_accelerated()` — cache management
+  - `_hydrate_concepts()` — batch property fetch for topology IDs
+  - `_execute_sql()` — sync SQL helper for graph_accel function calls
+- [x] `client.graph` lazy property wired on AGEClient (QueryMixin + BaseMixin)
+- [x] Route migration — 4 routes use `client.graph.*`:
+  - POST /query/related → `client.graph.neighborhood()`
+  - POST /query/connect → `client.graph.find_paths()`
+  - POST /query/connect-by-search → `client.graph.find_paths()`
+  - POST /query/sources/search → `client.graph.match_sources()` + `match_concepts_for_sources_batch()`
+- [x] `_build_connection_paths()` shared helper extracted (deduplicated from /connect and /connect-by-search)
+- [x] Cache invalidation wired at mutation sites:
+  - `ingestion_worker.py` — after batch completion
+  - `routes/graph.py` — after batch create
+  - `routes/ontology.py` — after reassign and dissolve
+- [x] 32 unit tests (test_graph_facade.py): availability, neighborhood (accel + fallback),
+      pathfinding, degree, invalidation, hydration, match_sources
+- [x] Full suite: 975 passed, 0 failed
 
 ### 5c: Deployment
 - [ ] Option A deployment: volume mount in docker-compose.yml
 - [ ] Option B deployment: custom Dockerfile extending apache/age
 - [ ] Update `operator.sh` for graph_accel-aware Postgres image
-- [ ] Call `graph_accel_invalidate()` after batch ingestion in `batch_service.py`
+- [x] Call `graph_accel_invalidate()` after batch ingestion + graph mutations
 - [x] Benchmark: compare AGE direct vs graph_accel for depths 1-5 on real data (see benchmark-findings.md)
 
 ## Phase 6: Polish & Publish
@@ -113,6 +124,25 @@ rosetta stone — maps each graph_accel function to its API worker replacement.
 - [ ] Set up CI: `cargo pgrx test` + standalone benchmark regression
 - [ ] Publish to GitHub as standalone repo (Apache 2.0)
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
+
+## Live API Benchmarks (2026-02-02, 1393 nodes / 412K edges)
+
+Baseline query for multi-path comparison:
+```
+POST /query/connect
+from: sha256:bd065_chunk4_c51b1769 (Graph Structure)
+to:   sha256:bd065_chunk8_78c1711d (Property Graph Databases)
+max_hops: 4, include_grounding: true
+```
+
+| Scenario | Time | Result |
+|----------|------|--------|
+| Cypher BFS only (no graph_accel) | >187s → terminated by restarting postgres | 500, 5 postgres workers at 95% CPU |
+| graph_accel single path (cold, first load) | 2.3s | 200, 1 path / 2 hops |
+| graph_accel single path (warm, graph loaded) | TBD after multi-path | should be sub-second |
+| graph_accel multi-path (Yen's k-shortest) | TBD — next branch | target: <1s for 5 paths |
+
+Re-run this query after implementing Rust multi-path to compare.
 
 ## Notes
 - pgrx 0.16.1 (latest stable), PostgreSQL 13-18, container is PG 17.7

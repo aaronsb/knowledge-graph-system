@@ -89,6 +89,9 @@ class BaseMixin:
         # Lazy-loaded facade for namespace-safe queries (ADR-048)
         self._facade = None
 
+        # Lazy-loaded graph facade for accelerated traversal (ADR-201)
+        self._graph_facade = None
+
     def _setup_age(self, conn):
         """Load AGE extension and set search path."""
         with conn.cursor() as cur:
