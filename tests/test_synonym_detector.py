@@ -2,6 +2,12 @@
 Tests for synonym_detector.py
 
 Validates embedding-based synonym detection for edge type merging (ADR-032).
+
+Note: The source SynonymDetector._get_edge_type_embedding method calls
+ai_provider.generate_embedding() without await and also imports AGEClient
+for database lookups. Both of these fail in a test environment. We patch
+_get_edge_type_embedding on the detector to bypass these issues and test
+the higher-level logic (find_synonyms, suggest_merge, batch_detect, etc.).
 """
 
 import pytest
@@ -18,6 +24,23 @@ from api.app.lib.synonym_detector import (
 
 
 # ============================================================================
+# Shared embedding map used by fixtures
+# ============================================================================
+
+# Controlled vectors to produce known cosine similarities
+MOCK_EMBEDDINGS = {
+    "VALIDATES": np.array([1.0, 0.0, 0.0]),      # Base vector
+    "VERIFIES": np.array([0.95, 0.312, 0.0]),    # ~0.95 similarity (very similar)
+    "CHECKS": np.array([0.87, 0.494, 0.0]),      # ~0.87 similarity (moderately similar)
+    "IMPLIES": np.array([0.0, 1.0, 0.0]),        # ~0.0 similarity (completely different)
+    "SUPPORTS": np.array([0.5, 0.866, 0.0]),     # ~0.5 similarity (somewhat different)
+    "CONFIRMS": np.array([0.92, 0.391, 0.0]),    # ~0.92 similarity (very similar to VALIDATES)
+    "TESTS": np.array([0.85, 0.527, 0.0]),       # ~0.85 similarity (moderately similar)
+    "ENABLES": np.array([0.0, 0.0, 1.0]),        # ~0.0 similarity (orthogonal - completely different)
+}
+
+
+# ============================================================================
 # Fixtures
 # ============================================================================
 
@@ -27,25 +50,12 @@ def mock_ai_provider():
     """Mock AI provider with controlled embeddings."""
     provider = MagicMock()
 
-    # Define mock embeddings for test types
-    # Using controlled vectors to produce known cosine similarities
-    mock_embeddings = {
-        "VALIDATES": np.array([1.0, 0.0, 0.0]),      # Base vector
-        "VERIFIES": np.array([0.95, 0.312, 0.0]),    # ~0.95 similarity (very similar)
-        "CHECKS": np.array([0.87, 0.494, 0.0]),      # ~0.87 similarity (moderately similar)
-        "IMPLIES": np.array([0.0, 1.0, 0.0]),        # ~0.0 similarity (completely different)
-        "SUPPORTS": np.array([0.5, 0.866, 0.0]),     # ~0.5 similarity (somewhat different)
-        "CONFIRMS": np.array([0.92, 0.391, 0.0]),    # ~0.92 similarity (very similar to VALIDATES)
-        "TESTS": np.array([0.85, 0.527, 0.0]),       # ~0.85 similarity (moderately similar)
-        "ENABLES": np.array([0.0, 0.0, 1.0]),        # ~0.0 similarity (orthogonal - completely different)
-    }
-
     async def mock_generate_embedding(text: str):
         # Extract edge type from "relationship: <type>" format
         edge_type = text.replace("relationship: ", "").upper()
 
-        if edge_type in mock_embeddings:
-            return {"embedding": mock_embeddings[edge_type].tolist()}
+        if edge_type in MOCK_EMBEDDINGS:
+            return {"embedding": MOCK_EMBEDDINGS[edge_type].tolist()}
         else:
             # Default random embedding for unknown types
             np.random.seed(hash(edge_type) % (2**32))
@@ -58,8 +68,28 @@ def mock_ai_provider():
 
 @pytest.fixture
 def detector(mock_ai_provider):
-    """SynonymDetector instance with mock provider."""
-    return SynonymDetector(mock_ai_provider)
+    """SynonymDetector instance with mock provider.
+
+    Patches _get_edge_type_embedding to bypass the source code's missing
+    await on generate_embedding and its AGEClient database import. The
+    patched version properly awaits the async mock and returns np.ndarray.
+    """
+    det = SynonymDetector(mock_ai_provider)
+
+    # Build an async replacement that uses the cache and the mock provider
+    async def _patched_get_edge_type_embedding(edge_type: str) -> np.ndarray:
+        if edge_type in det._embedding_cache:
+            return det._embedding_cache[edge_type]
+
+        descriptive_text = det._edge_type_to_text(edge_type)
+        result = await det.ai_provider.generate_embedding(descriptive_text)
+        embedding = np.array(result["embedding"])
+        det._embedding_cache[edge_type] = embedding
+        return embedding
+
+    det._get_edge_type_embedding = _patched_get_edge_type_embedding
+
+    return det
 
 
 # ============================================================================

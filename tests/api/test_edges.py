@@ -37,8 +37,8 @@ def make_edge_list_response(edges=None, total=0, offset=0, limit=50):
 
 
 @pytest.fixture(autouse=True)
-def setup_auth_mocks(mock_oauth_validation):
-    """Auto-use mock OAuth validation for all tests in this module."""
+def setup_auth_mocks(mock_oauth_validation, bypass_permission_check):
+    """Auto-use mock OAuth validation and bypass RBAC for all tests in this module."""
     pass
 
 
@@ -399,12 +399,20 @@ class TestEdgeCategories:
 
 
 class TestEdgeScopeEnforcement:
-    """Tests for OAuth scope enforcement on edge endpoints."""
+    """Tests for RBAC permission enforcement on edge endpoints."""
+
+    @pytest.fixture(autouse=True)
+    def _read_only_permissions(self, monkeypatch):
+        """Override module-level bypass with read-only RBAC for permission tests."""
+        monkeypatch.setattr(
+            "api.app.dependencies.auth.check_permission",
+            lambda user, resource_type, action, resource_id=None, resource_context=None: action == "read"
+        )
 
     def test_create_edge_requires_write_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Create edge with read-only scope returns 403."""
+        """Create edge without write permission returns 403."""
         response = api_client.post(
             "/edges",
             json={
@@ -416,32 +424,32 @@ class TestEdgeScopeEnforcement:
             headers=auth_headers_user
         )
         assert response.status_code == 403
-        assert "kg:write" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_update_edge_requires_edit_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Update edge with read-only scope returns 403."""
+        """Update edge without write permission returns 403."""
         response = api_client.patch(
             "/edges/c_1/IMPLIES/c_2",
             json={"confidence": 0.5},
             headers=auth_headers_user
         )
         assert response.status_code == 403
-        assert "kg:edit" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_delete_edge_requires_edit_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Delete edge with read-only scope returns 403."""
+        """Delete edge without delete permission returns 403."""
         response = api_client.delete("/edges/c_1/IMPLIES/c_2", headers=auth_headers_user)
         assert response.status_code == 403
-        assert "kg:edit" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_list_edges_allowed_with_read_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """List edges succeeds with read-only scope."""
+        """List edges succeeds with read permission."""
         with patch('api.app.routes.edges.get_age_client'), \
              patch('api.app.routes.edges.get_edge_service') as mock_service_factory:
 

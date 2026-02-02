@@ -4,11 +4,20 @@ Test script for markdown preprocessing pipeline.
 
 Tests AST parsing and serialization without AI translation.
 Can be run standalone to verify preprocessing before API integration.
+
+NOTE: This is a manual test script meant to be run inside the API container
+where the 'mistune' markdown parser and other dependencies are available.
+It is not intended for automated pytest collection.
 """
 
 import os
 import sys
 from pathlib import Path
+
+import pytest
+
+# Skip entire module if dependencies are missing (manual test, requires API container)
+mistune = pytest.importorskip("mistune", reason="Manual test requires 'mistune' package (run inside API container)")
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))

@@ -38,8 +38,8 @@ def make_concept_list_response(concepts=None, total=0, offset=0, limit=50):
 
 
 @pytest.fixture(autouse=True)
-def setup_auth_mocks(mock_oauth_validation):
-    """Auto-use mock OAuth validation for all tests in this module."""
+def setup_auth_mocks(mock_oauth_validation, bypass_permission_check):
+    """Auto-use mock OAuth validation and bypass RBAC for all tests in this module."""
     pass
 
 
@@ -379,44 +379,52 @@ class TestConceptDelete:
 
 
 class TestConceptScopeEnforcement:
-    """Tests for OAuth scope enforcement on concept endpoints."""
+    """Tests for RBAC permission enforcement on concept endpoints."""
+
+    @pytest.fixture(autouse=True)
+    def _read_only_permissions(self, monkeypatch):
+        """Override module-level bypass with read-only RBAC for permission tests."""
+        monkeypatch.setattr(
+            "api.app.dependencies.auth.check_permission",
+            lambda user, resource_type, action, resource_id=None, resource_context=None: action == "read"
+        )
 
     def test_create_concept_requires_write_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Create concept with read-only scope returns 403."""
+        """Create concept without write permission returns 403."""
         response = api_client.post(
             "/concepts",
             json={"label": "Test", "ontology": "test"},
             headers=auth_headers_user
         )
         assert response.status_code == 403
-        assert "kg:write" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_update_concept_requires_edit_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Update concept with read-only scope returns 403."""
+        """Update concept without write permission returns 403."""
         response = api_client.patch(
             "/concepts/c_123",
             json={"label": "Updated"},
             headers=auth_headers_user
         )
         assert response.status_code == 403
-        assert "kg:edit" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_delete_concept_requires_edit_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Delete concept with read-only scope returns 403."""
+        """Delete concept without delete permission returns 403."""
         response = api_client.delete("/concepts/c_123", headers=auth_headers_user)
         assert response.status_code == 403
-        assert "kg:edit" in response.json()["detail"]
+        assert "Permission denied" in response.json()["detail"]
 
     def test_list_concepts_allowed_with_read_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """List concepts succeeds with read-only scope."""
+        """List concepts succeeds with read permission."""
         with patch('api.app.routes.concepts.get_age_client'), \
              patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
 
@@ -428,9 +436,9 @@ class TestConceptScopeEnforcement:
             assert response.status_code == 200
 
     def test_get_concept_allowed_with_read_scope(
-        self, api_client: TestClient, auth_headers_user, mock_oauth_read_only
+        self, api_client: TestClient, auth_headers_user
     ):
-        """Get concept succeeds with read-only scope."""
+        """Get concept succeeds with read permission."""
         with patch('api.app.routes.concepts.get_age_client'), \
              patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
 

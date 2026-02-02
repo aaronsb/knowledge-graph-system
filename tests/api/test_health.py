@@ -45,5 +45,5 @@ def test_health_endpoint_status_is_healthy(api_client):
     response = api_client.get("/health")
     data = response.json()
 
-    # Should return exactly {"status": "healthy"}
-    assert data == {"status": "healthy"}
+    # Must include status: healthy (may include additional fields like components)
+    assert data["status"] == "healthy"

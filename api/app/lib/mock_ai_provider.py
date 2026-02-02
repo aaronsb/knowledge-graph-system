@@ -240,6 +240,44 @@ class MockAIProvider(AIProvider):
             ]
         }
 
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """
+        Mock translation of code/diagram to prose.
+
+        Returns deterministic prose based on input content.
+
+        Args:
+            prompt: Translation prompt (specific to content type)
+            code: Code/diagram content to translate
+
+        Returns:
+            Dict with 'text' (prose translation) and 'tokens' (usage info)
+        """
+        prose = f"Mock prose translation of code block ({len(code)} chars): {code[:100]}"
+        return {
+            "text": prose,
+            "tokens": self._calculate_mock_tokens(prompt + code)
+        }
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """
+        Mock image description.
+
+        Returns deterministic description based on image data size.
+
+        Args:
+            image_data: Raw image bytes
+            prompt: Description prompt
+
+        Returns:
+            Dict with 'text' (description) and 'tokens' (usage info)
+        """
+        description = f"Mock image description ({len(image_data)} bytes). Prompt: {prompt[:100]}"
+        return {
+            "text": description,
+            "tokens": self._calculate_mock_tokens(prompt)
+        }
+
     def _calculate_mock_tokens(self, text: str) -> int:
         """
         Calculate mock token count.

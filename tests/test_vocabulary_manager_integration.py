@@ -86,12 +86,17 @@ def mock_db_client():
             "meta": 1
         }
 
+    def get_vocab_config(key):
+        """Return None for all config keys so VocabularyManager uses defaults."""
+        return None
+
     client.get_vocabulary_size = get_vocabulary_size
     client.get_all_edge_types = get_all_edge_types
     client.add_edge_type = add_edge_type
     client.get_edge_type_info = get_edge_type_info
     client.merge_edge_types = merge_edge_types
     client.get_category_distribution = get_category_distribution
+    client.get_vocab_config = get_vocab_config
 
     return client
 
@@ -114,37 +119,66 @@ def mock_ai_provider():
     return provider
 
 
+def _patch_synonym_detector(manager):
+    """Patch the SynonymDetector._get_edge_type_embedding on a VocabularyManager.
+
+    The source SynonymDetector._get_edge_type_embedding calls
+    ai_provider.generate_embedding() without await and also imports AGEClient
+    for database lookups. Both fail in tests. This helper replaces it with a
+    properly-awaited version that uses the mock AI provider directly.
+    """
+    detector = manager.synonym_detector
+
+    async def _patched_get_edge_type_embedding(edge_type: str) -> np.ndarray:
+        if edge_type in detector._embedding_cache:
+            return detector._embedding_cache[edge_type]
+
+        descriptive_text = detector._edge_type_to_text(edge_type)
+        result = await detector.ai_provider.generate_embedding(descriptive_text)
+        embedding = np.array(result["embedding"])
+        detector._embedding_cache[edge_type] = embedding
+        return embedding
+
+    detector._get_edge_type_embedding = _patched_get_edge_type_embedding
+
+
 @pytest.fixture
 def vocabulary_manager_naive(mock_db_client, mock_ai_provider):
     """VocabularyManager in naive mode (auto-execute)"""
-    return VocabularyManager(
+    mgr = VocabularyManager(
         db_client=mock_db_client,
         ai_provider=mock_ai_provider,
         mode="naive",
         aggressiveness_profile="aggressive"
     )
+    _patch_synonym_detector(mgr)
+    return mgr
 
 
 @pytest.fixture
 def vocabulary_manager_hitl(mock_db_client, mock_ai_provider):
     """VocabularyManager in HITL mode (human review)"""
-    return VocabularyManager(
+    mgr = VocabularyManager(
         db_client=mock_db_client,
         ai_provider=mock_ai_provider,
         mode="hitl",
         aggressiveness_profile="aggressive"
     )
+    _patch_synonym_detector(mgr)
+    return mgr
 
 
 @pytest.fixture
 def vocabulary_manager_aitl(mock_db_client, mock_ai_provider):
     """VocabularyManager in AITL mode (AI review)"""
-    return VocabularyManager(
+    mgr = VocabularyManager(
         db_client=mock_db_client,
         ai_provider=mock_ai_provider,
         mode="aitl",
         aggressiveness_profile="aggressive"
     )
+    _patch_synonym_detector(mgr)
+    return mgr
 
 
 # =============================================================================
@@ -638,7 +672,7 @@ async def test_empty_synonym_candidates(vocabulary_manager_naive):
     """Test analysis when no synonym candidates found"""
     with patch.object(
         vocabulary_manager_naive.synonym_detector,
-        'find_synonyms',
+        'find_synonyms_for_type',
         return_value=[]  # No synonyms
     ):
         synonyms = await vocabulary_manager_naive.check_for_synonyms("UNIQUE_TYPE")

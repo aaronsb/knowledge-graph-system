@@ -11,11 +11,17 @@ import time
 from io import BytesIO
 
 
+@pytest.fixture(autouse=True)
+def setup_auth_mocks(mock_oauth_validation, bypass_permission_check, ensure_test_users_in_db):
+    """Auto-use mock OAuth validation, bypass RBAC, and ensure DB test users."""
+    pass
+
+
 @pytest.mark.api
 @pytest.mark.smoke
-def test_jobs_list_empty(api_client):
+def test_jobs_list_empty(api_client, auth_headers_user):
     """Test that GET /jobs returns empty list when no jobs exist"""
-    response = api_client.get("/jobs")
+    response = api_client.get("/jobs", headers=auth_headers_user)
 
     assert response.status_code == 200
     data = response.json()
@@ -26,9 +32,9 @@ def test_jobs_list_empty(api_client):
 
 @pytest.mark.api
 @pytest.mark.smoke
-def test_jobs_list_with_status_filter(api_client):
+def test_jobs_list_with_status_filter(api_client, auth_headers_user):
     """Test that GET /jobs?status=X filters by status"""
-    response = api_client.get("/jobs?status=completed")
+    response = api_client.get("/jobs?status=completed", headers=auth_headers_user)
 
     assert response.status_code == 200
     data = response.json()
@@ -39,9 +45,9 @@ def test_jobs_list_with_status_filter(api_client):
 
 @pytest.mark.api
 @pytest.mark.smoke
-def test_jobs_list_with_limit(api_client):
+def test_jobs_list_with_limit(api_client, auth_headers_user):
     """Test that GET /jobs?limit=N limits results"""
-    response = api_client.get("/jobs?limit=5")
+    response = api_client.get("/jobs?limit=5", headers=auth_headers_user)
 
     assert response.status_code == 200
     data = response.json()
@@ -51,9 +57,9 @@ def test_jobs_list_with_limit(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_get_job_status_not_found(api_client):
+def test_get_job_status_not_found(api_client, auth_headers_user):
     """Test that GET /jobs/{job_id} returns 404 for non-existent job"""
-    response = api_client.get("/jobs/non-existent-job-id")
+    response = api_client.get("/jobs/non-existent-job-id", headers=auth_headers_user)
 
     assert response.status_code == 404
     data = response.json()
@@ -62,23 +68,24 @@ def test_get_job_status_not_found(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_create_and_get_job(api_client):
+def test_create_and_get_job(api_client, auth_headers_user):
     """Test creating a job and retrieving its status"""
     # Create a test job via text ingestion
     ingest_data = {
         "text": "This is a test document for job status testing.",
         "ontology": "test-ontology",
-        "filename": "test.txt"
+        "filename": "test.txt",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     assert create_response.status_code == 200
 
     create_data = create_response.json()
     job_id = create_data["job_id"]
 
     # Get job status
-    status_response = api_client.get(f"/jobs/{job_id}")
+    status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
     assert status_response.status_code == 200
 
     status_data = status_response.json()
@@ -89,19 +96,20 @@ def test_create_and_get_job(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_job_status_fields(api_client):
+def test_job_status_fields(api_client, auth_headers_user):
     """Test that job status response contains all required fields"""
     # Create a test job
     ingest_data = {
         "text": "Test content for field validation",
-        "ontology": "test-fields"
+        "ontology": "test-fields",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     job_id = create_response.json()["job_id"]
 
     # Get status
-    response = api_client.get(f"/jobs/{job_id}")
+    response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
     data = response.json()
 
     # Verify required fields
@@ -116,22 +124,23 @@ def test_job_status_fields(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_cancel_job(api_client):
+def test_cancel_job(api_client, auth_headers_user):
     """Test cancelling a job before it processes"""
     # Create a test job (without auto-approve so it stays pending)
     ingest_data = {
         "text": "Test content for cancellation",
-        "ontology": "test-cancel"
+        "ontology": "test-cancel",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     job_id = create_response.json()["job_id"]
 
     # Wait briefly for analysis to complete (job should be awaiting_approval)
     time.sleep(0.5)
 
     # Cancel the job
-    cancel_response = api_client.delete(f"/jobs/{job_id}")
+    cancel_response = api_client.delete(f"/jobs/{job_id}", headers=auth_headers_user)
 
     # Should succeed if job is in cancellable state
     if cancel_response.status_code == 200:
@@ -140,7 +149,7 @@ def test_cancel_job(api_client):
         assert cancel_data["job_id"] == job_id
 
         # Verify job is cancelled
-        status_response = api_client.get(f"/jobs/{job_id}")
+        status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
         assert status_response.json()["status"] == "cancelled"
     elif cancel_response.status_code == 409:
         # Job already processing or completed (timing issue)
@@ -152,30 +161,31 @@ def test_cancel_job(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_cancel_nonexistent_job(api_client):
+def test_cancel_nonexistent_job(api_client, auth_headers_user):
     """Test that cancelling a non-existent job returns 404"""
-    response = api_client.delete("/jobs/non-existent-job")
+    response = api_client.delete("/jobs/non-existent-job", headers=auth_headers_user)
 
     assert response.status_code == 404
 
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_approve_job(api_client):
+def test_approve_job(api_client, auth_headers_user):
     """Test approving a job for processing"""
     # Create a test job (without auto-approve)
     ingest_data = {
         "text": "Test content for approval workflow",
-        "ontology": "test-approve"
+        "ontology": "test-approve",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     job_id = create_response.json()["job_id"]
 
     # Wait for analysis to complete
     max_attempts = 10
     for _ in range(max_attempts):
-        status_response = api_client.get(f"/jobs/{job_id}")
+        status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
         status = status_response.json()["status"]
 
         if status == "awaiting_approval":
@@ -186,7 +196,7 @@ def test_approve_job(api_client):
         time.sleep(0.2)
 
     # Approve the job
-    approve_response = api_client.post(f"/jobs/{job_id}/approve")
+    approve_response = api_client.post(f"/jobs/{job_id}/approve", headers=auth_headers_user)
 
     if approve_response.status_code == 200:
         approve_data = approve_response.json()
@@ -202,28 +212,29 @@ def test_approve_job(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_approve_nonexistent_job(api_client):
+def test_approve_nonexistent_job(api_client, auth_headers_user):
     """Test that approving a non-existent job returns 404"""
-    response = api_client.post("/jobs/non-existent-job/approve")
+    response = api_client.post("/jobs/non-existent-job/approve", headers=auth_headers_user)
 
     assert response.status_code == 404
 
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_list_jobs_by_client_id(api_client):
+def test_list_jobs_by_client_id(api_client, auth_headers_user):
     """Test filtering jobs by client_id"""
     # Create a job (will use "anonymous" client_id by default)
     ingest_data = {
         "text": "Test content for client filtering",
-        "ontology": "test-client-filter"
+        "ontology": "test-client-filter",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     assert create_response.status_code == 200
 
     # List jobs for anonymous client
-    response = api_client.get("/jobs?client_id=anonymous")
+    response = api_client.get("/jobs?client_id=anonymous", headers=auth_headers_user)
     assert response.status_code == 200
 
     data = response.json()
@@ -236,16 +247,17 @@ def test_list_jobs_by_client_id(api_client):
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_auto_approve_job(api_client):
+def test_auto_approve_job(api_client, auth_headers_user):
     """Test auto-approve workflow (ADR-014)"""
     # Create a job with auto_approve=true
     ingest_data = {
         "text": "Test content for auto-approve",
         "ontology": "test-auto-approve",
-        "auto_approve": "true"  # Form data, so string
+        "auto_approve": "true",  # Form data, so string
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     assert create_response.status_code == 200
 
     job_id = create_response.json()["job_id"]
@@ -254,32 +266,33 @@ def test_auto_approve_job(api_client):
     time.sleep(0.5)
 
     # Check status - should skip awaiting_approval and go to approved/processing/completed
-    status_response = api_client.get(f"/jobs/{job_id}")
+    status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
     status = status_response.json()["status"]
 
     # Should NOT be in awaiting_approval (because auto-approved)
     assert status != "awaiting_approval"
     # Should be in one of these states
-    valid_auto_approve_states = ["approved", "processing", "completed", "failed"]
+    valid_auto_approve_states = ["approved", "processing", "running", "completed", "failed"]
     assert status in valid_auto_approve_states
 
 
 @pytest.mark.api
 @pytest.mark.integration
-def test_job_lifecycle_workflow(api_client):
+def test_job_lifecycle_workflow(api_client, auth_headers_user):
     """Test full job lifecycle: create → pending → awaiting_approval → approve → processing/completed"""
     # 1. Create job
     ingest_data = {
         "text": "Full lifecycle test content",
-        "ontology": "test-lifecycle"
+        "ontology": "test-lifecycle",
+        "force": "true"
     }
 
-    create_response = api_client.post("/ingest/text", data=ingest_data)
+    create_response = api_client.post("/ingest/text", data=ingest_data, headers=auth_headers_user)
     assert create_response.status_code == 200
     job_id = create_response.json()["job_id"]
 
     # 2. Should start as pending
-    status_response = api_client.get(f"/jobs/{job_id}")
+    status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
     initial_status = status_response.json()["status"]
     assert initial_status in ["pending", "awaiting_approval"]  # May be fast
 
@@ -287,7 +300,7 @@ def test_job_lifecycle_workflow(api_client):
     max_attempts = 10
     reached_awaiting = False
     for _ in range(max_attempts):
-        status_response = api_client.get(f"/jobs/{job_id}")
+        status_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
         status = status_response.json()["status"]
 
         if status == "awaiting_approval":
@@ -300,10 +313,10 @@ def test_job_lifecycle_workflow(api_client):
 
     if reached_awaiting:
         # 4. Approve job
-        approve_response = api_client.post(f"/jobs/{job_id}/approve")
+        approve_response = api_client.post(f"/jobs/{job_id}/approve", headers=auth_headers_user)
         if approve_response.status_code == 200:
             # 5. Should transition to approved/processing
             time.sleep(0.1)
-            final_response = api_client.get(f"/jobs/{job_id}")
+            final_response = api_client.get(f"/jobs/{job_id}", headers=auth_headers_user)
             final_status = final_response.json()["status"]
-            assert final_status in ["approved", "processing", "completed", "failed"]
+            assert final_status in ["approved", "processing", "running", "completed", "failed"]
