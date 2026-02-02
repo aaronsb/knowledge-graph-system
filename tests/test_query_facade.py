@@ -133,8 +133,12 @@ class TestGraphQueryFacade:
 
         call_args = mock_age_client._execute_cypher.call_args
         query = call_args[0][0]
-        assert 'MATCH (c1:Concept)-[r:IMPLIES|SUPPORTS]->(c2:Concept)' in query
-        assert 'WHERE r.edge_count > 5' in query
+        # AGE uses WHERE type(r) IN [...] instead of inline MATCH syntax
+        assert 'MATCH (c1:Concept)-[r]->(c2:Concept)' in query
+        assert "type(r) IN" in query
+        assert "'IMPLIES'" in query
+        assert "'SUPPORTS'" in query
+        assert 'r.edge_count > 5' in query
         assert 'RETURN c1, r, c2' in query
 
     def test_count_concepts(self, facade, mock_age_client):
@@ -278,10 +282,12 @@ class TestGraphQueryFacade:
 
     def test_execute_raw_logs_warning(self, facade, mock_age_client, caplog):
         """Test that execute_raw logs warning."""
-        facade.execute_raw(
-            "MATCH (n) RETURN n",
-            namespace="migration"
-        )
+        import logging
+        with caplog.at_level(logging.WARNING, logger="api.app.lib.query_facade"):
+            facade.execute_raw(
+                "MATCH (n) RETURN n",
+                namespace="migration"
+            )
 
         # Verify warning was logged
         assert any("escape hatch" in record.message.lower() for record in caplog.records)
@@ -339,12 +345,11 @@ class TestGraphQueryFacade:
     def test_log_audit_summary(self, facade, mock_age_client, caplog):
         """Test logging audit summary."""
         import logging
-        caplog.set_level(logging.INFO)
+        with caplog.at_level(logging.INFO, logger="api.app.lib.query_facade"):
+            # Make some queries
+            facade.count_concepts()
 
-        # Make some queries
-        facade.count_concepts()
-
-        facade.log_audit_summary()
+            facade.log_audit_summary()
 
         # Verify summary was logged
         assert any("Audit Summary" in record.message for record in caplog.records), \
@@ -463,8 +468,10 @@ class TestEpistemicStatusFiltering:
 
     def test_include_affirmative_status(self, mock_client):
         """Test filtering to include only AFFIRMATIVE relationships."""
-        mock_client._execute_cypher.return_value = [
-            {'c1': {'label': 'Concept A'}, 'r': {'type': 'IMPLIES'}, 'c2': {'label': 'Concept B'}}
+        # First call: vocab query returns type_name; second call: relationship query
+        mock_client._execute_cypher.side_effect = [
+            [{'type_name': 'IMPLIES'}],
+            [{'c1': {'label': 'Concept A'}, 'r': {'type': 'IMPLIES'}, 'c2': {'label': 'Concept B'}}]
         ]
 
         facade = mock_client.facade
@@ -473,19 +480,18 @@ class TestEpistemicStatusFiltering:
             limit=5
         )
 
-        # Verify query was executed
-        assert mock_client._execute_cypher.called
-        call_args = mock_client._execute_cypher.call_args
-        query = call_args[0][0]
-
-        # Verify epistemic status filter in query
-        assert 'epistemic_status' in query.lower()
-        assert 'AFFIRMATIVE' in query
+        # Verify queries were executed (vocab lookup + relationship query)
+        assert mock_client._execute_cypher.call_count == 2
+        # First call is the vocab query with epistemic_status filter
+        vocab_query = mock_client._execute_cypher.call_args_list[0][0][0]
+        assert 'epistemic_status' in vocab_query.lower()
+        assert 'AFFIRMATIVE' in vocab_query
 
     def test_include_contested_status(self, mock_client):
         """Test filtering to include only CONTESTED relationships."""
-        mock_client._execute_cypher.return_value = [
-            {'c1': {'label': 'Concept A'}, 'r': {'type': 'ENABLES'}, 'c2': {'label': 'Concept B'}}
+        mock_client._execute_cypher.side_effect = [
+            [{'type_name': 'ENABLES'}],
+            [{'c1': {'label': 'Concept A'}, 'r': {'type': 'ENABLES'}, 'c2': {'label': 'Concept B'}}]
         ]
 
         facade = mock_client.facade
@@ -494,17 +500,16 @@ class TestEpistemicStatusFiltering:
             limit=5
         )
 
-        assert mock_client._execute_cypher.called
-        call_args = mock_client._execute_cypher.call_args
-        query = call_args[0][0]
-
-        assert 'epistemic_status' in query.lower()
-        assert 'CONTESTED' in query
+        assert mock_client._execute_cypher.call_count == 2
+        vocab_query = mock_client._execute_cypher.call_args_list[0][0][0]
+        assert 'epistemic_status' in vocab_query.lower()
+        assert 'CONTESTED' in vocab_query
 
     def test_exclude_historical_status(self, mock_client):
         """Test filtering to exclude HISTORICAL relationships."""
-        mock_client._execute_cypher.return_value = [
-            {'c1': {'label': 'Concept A'}, 'r': {'type': 'IMPLIES'}, 'c2': {'label': 'Concept B'}}
+        mock_client._execute_cypher.side_effect = [
+            [{'type_name': 'IMPLIES'}, {'type_name': 'SUPPORTS'}],
+            [{'c1': {'label': 'Concept A'}, 'r': {'type': 'IMPLIES'}, 'c2': {'label': 'Concept B'}}]
         ]
 
         facade = mock_client.facade
@@ -513,19 +518,21 @@ class TestEpistemicStatusFiltering:
             limit=5
         )
 
-        assert mock_client._execute_cypher.called
-        call_args = mock_client._execute_cypher.call_args
-        query = call_args[0][0]
+        assert mock_client._execute_cypher.call_count == 2
+        vocab_query = mock_client._execute_cypher.call_args_list[0][0][0]
 
-        # Verify exclusion logic
-        assert 'epistemic_status' in query.lower()
-        assert 'NOT IN' in query or '<>' in query
+        # Verify exclusion logic in vocab query
+        assert 'epistemic_status' in vocab_query.lower()
+        assert 'NOT' in vocab_query
 
     def test_multiple_status_filter(self, mock_client):
         """Test dialectical query with multiple statuses (CONTESTED + CONTRADICTORY)."""
-        mock_client._execute_cypher.return_value = [
-            {'c1': {'label': 'Concept A'}, 'r': {'type': 'SUPPORTS'}, 'c2': {'label': 'Concept B'}},
-            {'c1': {'label': 'Concept C'}, 'r': {'type': 'CONTRADICTS'}, 'c2': {'label': 'Concept D'}}
+        mock_client._execute_cypher.side_effect = [
+            [{'type_name': 'SUPPORTS'}, {'type_name': 'CONTRADICTS'}],
+            [
+                {'c1': {'label': 'Concept A'}, 'r': {'type': 'SUPPORTS'}, 'c2': {'label': 'Concept B'}},
+                {'c1': {'label': 'Concept C'}, 'r': {'type': 'CONTRADICTS'}, 'c2': {'label': 'Concept D'}}
+            ]
         ]
 
         facade = mock_client.facade
@@ -534,18 +541,18 @@ class TestEpistemicStatusFiltering:
             limit=5
         )
 
-        assert mock_client._execute_cypher.called
-        call_args = mock_client._execute_cypher.call_args
-        query = call_args[0][0]
+        assert mock_client._execute_cypher.call_count == 2
+        vocab_query = mock_client._execute_cypher.call_args_list[0][0][0]
 
-        # Verify both statuses in query
-        assert 'CONTESTED' in query
-        assert 'CONTRADICTORY' in query
+        # Verify both statuses in vocab query
+        assert 'CONTESTED' in vocab_query
+        assert 'CONTRADICTORY' in vocab_query
 
     def test_combined_relationship_and_epistemic_filter(self, mock_client):
         """Test combining rel_types with epistemic status filtering."""
-        mock_client._execute_cypher.return_value = [
-            {'c1': {'label': 'Concept A'}, 'r': {'type': 'ENABLES'}, 'c2': {'label': 'Concept B'}}
+        mock_client._execute_cypher.side_effect = [
+            [{'type_name': 'ENABLES'}],
+            [{'c1': {'label': 'Concept A'}, 'r': {'type': 'ENABLES'}, 'c2': {'label': 'Concept B'}}]
         ]
 
         facade = mock_client.facade
@@ -555,11 +562,12 @@ class TestEpistemicStatusFiltering:
             limit=5
         )
 
-        assert mock_client._execute_cypher.called
-        call_args = mock_client._execute_cypher.call_args
-        query = call_args[0][0]
+        assert mock_client._execute_cypher.call_count == 2
+        # First call: vocab query with epistemic filter
+        vocab_query = mock_client._execute_cypher.call_args_list[0][0][0]
+        assert 'epistemic_status' in vocab_query.lower()
+        assert 'CONTESTED' in vocab_query
 
-        # Verify both relationship type and epistemic status filters
-        assert 'ENABLES' in query
-        assert 'epistemic_status' in query.lower()
-        assert 'CONTESTED' in query
+        # Second call: relationship query with type filter from intersection
+        rel_query = mock_client._execute_cypher.call_args_list[1][0][0]
+        assert 'ENABLES' in rel_query

@@ -65,7 +65,7 @@ def mock_concept_duplicate():
     return Concept(
         concept_id="test_a_dup",
         label="Concept A Duplicate",
-        embedding=np.array([1.0, 0.01, 0.0], dtype=np.float32),  # Very similar to A
+        embedding=np.array([1.0, 1e-10, 0.0], dtype=np.float32),  # Nearly identical to A
         description="Nearly identical to A",
         grounding=0.5
     )
@@ -75,10 +75,20 @@ def mock_concept_duplicate():
 # Unit Tests: PolarityAxis Class
 # ============================================================================
 
+def _make_axis(positive_pole, negative_pole):
+    """Helper to construct PolarityAxis with placeholder fields that __post_init__ recalculates."""
+    return PolarityAxis(
+        positive_pole=positive_pole,
+        negative_pole=negative_pole,
+        axis_vector=np.zeros_like(positive_pole.embedding),
+        axis_magnitude=0.0
+    )
+
+
 @pytest.mark.unit
 def test_polarity_axis_creation(mock_concept_a, mock_concept_b):
     """Test that PolarityAxis can be created with valid poles"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
 
     assert axis.positive_pole == mock_concept_a
     assert axis.negative_pole == mock_concept_b
@@ -90,7 +100,7 @@ def test_polarity_axis_creation(mock_concept_a, mock_concept_b):
 @pytest.mark.unit
 def test_polarity_axis_magnitude(mock_concept_a, mock_concept_b):
     """Test that axis magnitude is calculated correctly"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
 
     # Manual calculation: distance between [1,0,0] and [0,1,0]
     expected_magnitude = np.linalg.norm(
@@ -103,7 +113,7 @@ def test_polarity_axis_magnitude(mock_concept_a, mock_concept_b):
 @pytest.mark.unit
 def test_polarity_axis_unit_vector(mock_concept_a, mock_concept_b):
     """Test that axis vector is normalized"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
 
     # Unit vector should have magnitude 1
     unit_magnitude = np.linalg.norm(axis.axis_vector)
@@ -114,7 +124,7 @@ def test_polarity_axis_unit_vector(mock_concept_a, mock_concept_b):
 def test_polarity_axis_rejects_similar_poles(mock_concept_a, mock_concept_duplicate):
     """Test that similar poles are rejected"""
     with pytest.raises(ValueError, match="too similar"):
-        PolarityAxis(mock_concept_a, mock_concept_duplicate)
+        _make_axis(mock_concept_a, mock_concept_duplicate)
 
 
 @pytest.mark.unit
@@ -129,7 +139,7 @@ def test_polarity_axis_rejects_zero_magnitude():
     )
 
     with pytest.raises(ValueError, match="too similar"):
-        PolarityAxis(concept, concept)
+        _make_axis(concept, concept)
 
 
 # ============================================================================
@@ -139,7 +149,7 @@ def test_polarity_axis_rejects_zero_magnitude():
 @pytest.mark.unit
 def test_project_concept_at_positive_pole(mock_concept_a, mock_concept_b):
     """Test projection of concept at positive pole"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
     projection = axis.project_concept(mock_concept_a)
 
     # Concept at positive pole should have position close to +1
@@ -151,7 +161,7 @@ def test_project_concept_at_positive_pole(mock_concept_a, mock_concept_b):
 @pytest.mark.unit
 def test_project_concept_at_negative_pole(mock_concept_a, mock_concept_b):
     """Test projection of concept at negative pole"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
     projection = axis.project_concept(mock_concept_b)
 
     # Concept at negative pole should have position close to -1
@@ -163,7 +173,7 @@ def test_project_concept_at_negative_pole(mock_concept_a, mock_concept_b):
 @pytest.mark.unit
 def test_project_concept_neutral(mock_concept_a, mock_concept_b, mock_concept_c):
     """Test projection of neutral concept"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
     projection = axis.project_concept(mock_concept_c)
 
     # Concept between poles should have neutral position
@@ -174,7 +184,7 @@ def test_project_concept_neutral(mock_concept_a, mock_concept_b, mock_concept_c)
 @pytest.mark.unit
 def test_direction_classification_thresholds(mock_concept_a, mock_concept_b):
     """Test direction classification thresholds (±0.3)"""
-    axis = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis = _make_axis(mock_concept_a, mock_concept_b)
 
     # Create concepts at specific positions
     concept_positive = Concept(
@@ -218,11 +228,11 @@ def test_pole_inversion_flips_positions(mock_concept_a, mock_concept_b, mock_con
     This is the critical validation test mentioned in the code review.
     """
     # Create axis with A as positive, B as negative
-    axis1 = PolarityAxis(mock_concept_a, mock_concept_b)
+    axis1 = _make_axis(mock_concept_a, mock_concept_b)
     proj1 = axis1.project_concept(mock_concept_c)
 
     # Create axis with B as positive, A as negative (swapped)
-    axis2 = PolarityAxis(mock_concept_b, mock_concept_a)
+    axis2 = _make_axis(mock_concept_b, mock_concept_a)
     proj2 = axis2.project_concept(mock_concept_c)
 
     # Positions should have opposite signs
@@ -262,7 +272,7 @@ def test_orthogonal_concept_high_axis_distance():
         grounding=0.0
     )
 
-    axis = PolarityAxis(concept_a, concept_b)
+    axis = _make_axis(concept_a, concept_b)
     projection = axis.project_concept(concept_orthogonal)
 
     # Orthogonal concept should have high axis distance
@@ -476,7 +486,7 @@ def test_single_dimensional_embeddings():
         grounding=0.0
     )
 
-    axis = PolarityAxis(concept_a, concept_b)
+    axis = _make_axis(concept_a, concept_b)
     projection = axis.project_concept(concept_mid)
 
     # Midpoint should project to position ~0
@@ -514,7 +524,7 @@ def test_high_dimensional_embeddings():
     )
 
     # Should work with high-dimensional embeddings
-    axis = PolarityAxis(concept_a, concept_b)
+    axis = _make_axis(concept_a, concept_b)
     projection = axis.project_concept(concept_c)
 
     assert -1.0 <= projection['position'] <= 1.0
@@ -542,7 +552,7 @@ def test_normalized_embeddings():
     )
 
     # Should work correctly with normalized embeddings
-    axis = PolarityAxis(concept_a, concept_b)
+    axis = _make_axis(concept_a, concept_b)
 
     assert axis.axis_magnitude > 0
     assert np.isclose(np.linalg.norm(axis.axis_vector), 1.0)

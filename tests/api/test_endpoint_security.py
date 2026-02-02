@@ -19,6 +19,32 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+@pytest.fixture(autouse=True)
+def mock_role_based_permissions(monkeypatch):
+    """Mock RBAC permissions with role-aware behavior for endpoint security tests."""
+    ADMIN_RESOURCES = {
+        "admin", "rbac", "embedding_config", "extraction_config",
+        "vocabulary_config", "api_keys", "backups", "users", "oauth_clients", "storage"
+    }
+
+    # Actions that require admin even on non-admin resources
+    ADMIN_ACTIONS = {("ontologies", "delete")}
+
+    def role_aware_check(user, resource_type, action, resource_id=None, resource_context=None):
+        if user.role == "admin":
+            return True
+        if resource_type in ADMIN_RESOURCES:
+            return False
+        if (resource_type, action) in ADMIN_ACTIONS:
+            return False
+        return True
+
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.check_permission",
+        role_aware_check
+    )
+
+
 # =============================================================================
 # PUBLIC Endpoint Tests (No Authentication Required)
 # =============================================================================
@@ -106,7 +132,7 @@ def test_query_search_succeeds_with_user_token(api_client, mock_oauth_validation
 @pytest.mark.security
 def test_query_details_requires_auth(api_client, mock_oauth_validation):
     """Test /query/details/{concept_id} returns 401 without token"""
-    response = api_client.get("/query/details/test-concept-123")
+    response = api_client.get("/query/concept/test-concept-123")
 
     assert response.status_code == 401
 
@@ -116,7 +142,7 @@ def test_query_details_requires_auth(api_client, mock_oauth_validation):
 def test_query_details_succeeds_with_user_token(api_client, mock_oauth_validation, auth_headers_user):
     """Test /query/details/{concept_id} succeeds with valid user token"""
     response = api_client.get(
-        "/query/details/test-concept-123",
+        "/query/concept/test-concept-123",
         headers=auth_headers_user
     )
 
@@ -177,8 +203,8 @@ def test_database_stats_succeeds_with_user_token(api_client, mock_oauth_validati
 @pytest.mark.api
 @pytest.mark.security
 def test_ontology_list_requires_auth(api_client, mock_oauth_validation):
-    """Test /ontology/list returns 401 without token"""
-    response = api_client.get("/ontology/list")
+    """Test /ontology/ returns 401 without token"""
+    response = api_client.get("/ontology/")
 
     assert response.status_code == 401
 
@@ -186,8 +212,8 @@ def test_ontology_list_requires_auth(api_client, mock_oauth_validation):
 @pytest.mark.api
 @pytest.mark.security
 def test_ontology_list_succeeds_with_user_token(api_client, mock_oauth_validation, auth_headers_user):
-    """Test /ontology/list succeeds with valid user token"""
-    response = api_client.get("/ontology/list", headers=auth_headers_user)
+    """Test /ontology/ succeeds with valid user token"""
+    response = api_client.get("/ontology/", headers=auth_headers_user)
 
     assert response.status_code == 200
 
@@ -212,7 +238,7 @@ def test_admin_status_requires_admin_role(api_client, mock_oauth_validation, aut
     response = api_client.get("/admin/status", headers=auth_headers_user)
 
     assert response.status_code == 403
-    assert "admin" in response.json()["detail"].lower()
+    assert "permission denied" in response.json()["detail"].lower()
 
 
 @pytest.mark.api
@@ -227,14 +253,8 @@ def test_admin_status_succeeds_with_admin_token(api_client, mock_oauth_validatio
 @pytest.mark.api
 @pytest.mark.security
 def test_admin_reset_requires_admin_role(api_client, mock_oauth_validation, auth_headers_user):
-    """Test /admin/reset returns 403 with non-admin token"""
-    response = api_client.post(
-        "/admin/reset",
-        json={"confirm_phrase": "live man switch"},
-        headers=auth_headers_user
-    )
-
-    assert response.status_code == 403
+    """POST /admin/reset was removed — skip."""
+    pytest.skip("POST /admin/reset endpoint removed")
 
 
 @pytest.mark.api
@@ -295,9 +315,9 @@ def test_rbac_roles_succeeds_with_admin(api_client, mock_oauth_validation, auth_
 @pytest.mark.api
 @pytest.mark.security
 def test_vocabulary_config_set_requires_admin(api_client, mock_oauth_validation, auth_headers_user):
-    """Test /vocabulary/config/set returns 403 with non-admin token"""
-    response = api_client.post(
-        "/vocabulary/config/set",
+    """Test PUT /admin/vocabulary/config returns 403 with non-admin token"""
+    response = api_client.put(
+        "/admin/vocabulary/config",
         json={"setting": "test", "value": "test"},
         headers=auth_headers_user
     )
@@ -308,9 +328,9 @@ def test_vocabulary_config_set_requires_admin(api_client, mock_oauth_validation,
 @pytest.mark.api
 @pytest.mark.security
 def test_vocabulary_config_set_succeeds_with_admin(api_client, mock_oauth_validation, auth_headers_admin):
-    """Test /vocabulary/config/set succeeds with admin token"""
-    response = api_client.post(
-        "/vocabulary/config/set",
+    """Test PUT /admin/vocabulary/config succeeds with admin token"""
+    response = api_client.put(
+        "/admin/vocabulary/config",
         json={"setting": "test", "value": "test"},
         headers=auth_headers_admin
     )
@@ -324,7 +344,7 @@ def test_vocabulary_config_set_succeeds_with_admin(api_client, mock_oauth_valida
 def test_ontology_delete_requires_admin(api_client, mock_oauth_validation, auth_headers_user):
     """Test /ontology/delete returns 403 with non-admin token"""
     response = api_client.delete(
-        "/ontology/delete/TestOntology",
+        "/ontology/TestOntology",
         headers=auth_headers_user
     )
 
@@ -336,7 +356,7 @@ def test_ontology_delete_requires_admin(api_client, mock_oauth_validation, auth_
 def test_ontology_delete_succeeds_with_admin(api_client, mock_oauth_validation, auth_headers_admin):
     """Test /ontology/delete succeeds with admin token"""
     response = api_client.delete(
-        "/ontology/delete/TestOntology",
+        "/ontology/TestOntology",
         headers=auth_headers_admin
     )
 

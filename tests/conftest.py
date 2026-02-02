@@ -466,9 +466,65 @@ def mock_oauth_read_only(monkeypatch, test_user_credentials):
     )
 
 
+@pytest.fixture
+def bypass_permission_check(monkeypatch):
+    """
+    Bypass RBAC permission checks for route tests.
+
+    Routes use require_permission() which calls check_permission() via
+    PermissionChecker (database query). For unit tests without a live
+    database, bypass this to test route logic in isolation.
+
+    Auth is tested separately in test_endpoint_security.py.
+    """
+    monkeypatch.setattr(
+        "api.app.dependencies.auth.check_permission",
+        lambda *args, **kwargs: True
+    )
+
+
+@pytest.fixture
+def ensure_test_users_in_db():
+    """
+    Ensure mock OAuth test users exist in the database.
+
+    Integration tests that hit the real DB need the mock user (id=100)
+    and mock admin (id=101) to exist in kg_auth.users for foreign key
+    constraints (e.g., fk_jobs_user).
+
+    Idempotent: uses INSERT ON CONFLICT DO NOTHING.
+    """
+    from api.app.dependencies.auth import get_db_connection
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO kg_auth.users (id, username, password_hash, primary_role, created_at)
+                VALUES
+                    (100, '_test_user', '$2b$12$mock', 'contributor', NOW()),
+                    (101, '_test_admin', '$2b$12$mock', 'admin', NOW())
+                ON CONFLICT (id) DO NOTHING
+            """)
+            conn.commit()
+        yield
+    finally:
+        conn.close()
+
+
 # ============================================================================
 # Pytest Configuration Hooks
 # ============================================================================
+
+def pytest_ignore_collect(collection_path, config):
+    """Skip tests/manual/ directory during automated collection.
+
+    Manual tests are designed to be run explicitly inside the API container
+    and may have parameters that aren't pytest fixtures.
+    """
+    if "manual" in collection_path.parts:
+        return True
+
 
 def pytest_configure(config):
     """

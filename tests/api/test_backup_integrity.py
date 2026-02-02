@@ -269,7 +269,7 @@ def test_instance_with_invalid_concept_id_fails(valid_full_backup):
     result = checker.check_data(invalid_backup)
 
     assert result.valid is False
-    assert any("unknown concept" in e.message for e in result.errors)
+    assert any("concept_id" in e.message and "doesn't exist" in e.message for e in result.errors)
 
 
 @pytest.mark.unit
@@ -282,7 +282,7 @@ def test_instance_with_invalid_source_id_fails(valid_full_backup):
     result = checker.check_data(invalid_backup)
 
     assert result.valid is False
-    assert any("unknown source" in e.message for e in result.errors)
+    assert any("source_id" in e.message and "doesn't exist" in e.message for e in result.errors)
 
 
 @pytest.mark.unit
@@ -295,7 +295,7 @@ def test_relationship_with_invalid_from_concept_fails(valid_full_backup):
     result = checker.check_data(invalid_backup)
 
     assert result.valid is False
-    assert any("unknown 'from' concept" in e.message for e in result.errors)
+    assert any("'from'" in e.message and "doesn't exist" in e.message for e in result.errors)
 
 
 @pytest.mark.unit
@@ -308,7 +308,7 @@ def test_relationship_with_invalid_to_concept_fails(valid_full_backup):
     result = checker.check_data(invalid_backup)
 
     assert result.valid is False
-    assert any("unknown 'to' concept" in e.message for e in result.errors)
+    assert any("'to'" in e.message and "doesn't exist" in e.message for e in result.errors)
 
 
 @pytest.mark.unit
@@ -321,7 +321,7 @@ def test_unusual_relationship_type_warning(valid_full_backup):
     result = checker.check_data(backup)
 
     assert result.valid is True  # Warning, not error
-    assert any("unusual type" in w.message for w in result.warnings)
+    assert any("not in vocabulary" in w.message for w in result.warnings)
 
 
 # ========== Unit Tests: Statistics Validation ==========
@@ -351,7 +351,7 @@ def test_external_deps_detected_in_ontology_backup(valid_ontology_backup):
     assert result.valid is True
     assert result.has_external_deps is True
     assert result.external_deps == 2  # 1 from instance, 1 from relationship
-    assert any("external concept references" in w.message for w in result.warnings)
+    assert any("concept_ids from other ontologies" in w.message for w in result.warnings)
 
 
 @pytest.mark.unit

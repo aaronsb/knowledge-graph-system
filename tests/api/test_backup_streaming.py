@@ -292,8 +292,6 @@ async def test_create_backup_stream_logs_validation_success(caplog):
     from api.app.lib.backup_streaming import create_backup_stream
     import logging
 
-    caplog.set_level(logging.INFO)
-
     mock_client = Mock()
     valid_backup_data = {
         "version": "1.0",
@@ -325,16 +323,19 @@ async def test_create_backup_stream_logs_validation_success(caplog):
         mock_integrity.warnings = []
         mock_check.return_value = mock_integrity
 
-        stream, filename = await create_backup_stream(
-            client=mock_client,
-            backup_type="full"
-        )
+        with caplog.at_level(logging.INFO, logger="api.app.lib.backup_streaming"):
+            stream, filename = await create_backup_stream(
+                client=mock_client,
+                backup_type="full"
+            )
 
         # Verify success log contains statistics
         assert any("Backup validated successfully" in record.message
-                   for record in caplog.records)
+                   for record in caplog.records), \
+            f"Expected 'Backup validated successfully' in logs, got: {[r.message for r in caplog.records]}"
         assert any("Concepts: 42" in record.message
-                   for record in caplog.records)
+                   for record in caplog.records), \
+            f"Expected 'Concepts: 42' in logs, got: {[r.message for r in caplog.records]}"
 
 
 @pytest.mark.unit
@@ -343,8 +344,6 @@ async def test_create_backup_stream_logs_validation_warnings(caplog):
     """Test that validation warnings are logged"""
     from api.app.lib.backup_streaming import create_backup_stream
     import logging
-
-    caplog.set_level(logging.WARNING)
 
     mock_client = Mock()
     valid_backup_data = {
@@ -382,15 +381,20 @@ async def test_create_backup_stream_logs_validation_warnings(caplog):
 
         mock_check.return_value = mock_integrity
 
-        stream, filename = await create_backup_stream(
-            client=mock_client,
-            backup_type="full"
-        )
+        with caplog.at_level(logging.WARNING, logger="api.app.lib.backup_streaming"):
+            stream, filename = await create_backup_stream(
+                client=mock_client,
+                backup_type="full"
+            )
 
-        # Verify warning log
-        assert any("Backup validation warning" in record.message and
-                   "Statistics mismatch detected" in record.message
-                   for record in caplog.records)
+        # Source code logs warnings in two records:
+        # 1. "Backup validation: N warnings in category 'X'"
+        # 2. "  Example: <warning message>"
+        all_messages = " ".join(record.message for record in caplog.records)
+        assert "Backup validation" in all_messages, \
+            f"Expected 'Backup validation' in logs, got: {[r.message for r in caplog.records]}"
+        assert "Statistics mismatch detected" in all_messages, \
+            f"Expected 'Statistics mismatch detected' in logs, got: {[r.message for r in caplog.records]}"
 
 
 @pytest.mark.unit
@@ -446,7 +450,7 @@ async def test_create_backup_stream_ontology_validates():
 # ============================================================================
 
 @pytest.mark.api
-def test_backup_endpoint_full_backup_streams_response(api_client):
+def test_backup_endpoint_full_backup_streams_response(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test POST /admin/backup streams full backup"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
          patch('api.app.routes.admin.create_backup_stream') as mock_stream:
@@ -460,7 +464,8 @@ def test_backup_endpoint_full_backup_streams_response(api_client):
 
         response = api_client.post(
             "/admin/backup",
-            json={"backup_type": "full"}
+            json={"backup_type": "full", "format": "json"},
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 200
@@ -471,7 +476,7 @@ def test_backup_endpoint_full_backup_streams_response(api_client):
 
 
 @pytest.mark.api
-def test_backup_endpoint_ontology_backup_includes_headers(api_client):
+def test_backup_endpoint_ontology_backup_includes_headers(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test POST /admin/backup includes custom headers for ontology backup"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
          patch('api.app.routes.admin.create_backup_stream') as mock_stream:
@@ -486,7 +491,8 @@ def test_backup_endpoint_ontology_backup_includes_headers(api_client):
             json={
                 "backup_type": "ontology",
                 "ontology_name": "My Ontology"
-            }
+            },
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 200
@@ -495,7 +501,7 @@ def test_backup_endpoint_ontology_backup_includes_headers(api_client):
 
 
 @pytest.mark.api
-def test_backup_endpoint_missing_ontology_name_returns_400(api_client):
+def test_backup_endpoint_missing_ontology_name_returns_400(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test POST /admin/backup returns 400 when ontology_name missing"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
          patch('api.app.routes.admin.create_backup_stream') as mock_stream:
@@ -504,7 +510,8 @@ def test_backup_endpoint_missing_ontology_name_returns_400(api_client):
 
         response = api_client.post(
             "/admin/backup",
-            json={"backup_type": "ontology"}
+            json={"backup_type": "ontology"},
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 400
@@ -512,7 +519,7 @@ def test_backup_endpoint_missing_ontology_name_returns_400(api_client):
 
 
 @pytest.mark.api
-def test_backup_endpoint_invalid_backup_type_returns_400(api_client):
+def test_backup_endpoint_invalid_backup_type_returns_400(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test POST /admin/backup returns 400 for invalid backup type"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
          patch('api.app.routes.admin.create_backup_stream') as mock_stream:
@@ -521,7 +528,8 @@ def test_backup_endpoint_invalid_backup_type_returns_400(api_client):
 
         response = api_client.post(
             "/admin/backup",
-            json={"backup_type": "invalid"}
+            json={"backup_type": "invalid"},
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 400
@@ -529,14 +537,15 @@ def test_backup_endpoint_invalid_backup_type_returns_400(api_client):
 
 
 @pytest.mark.api
-def test_backup_endpoint_database_error_returns_500(api_client):
+def test_backup_endpoint_database_error_returns_500(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test POST /admin/backup returns 500 on database error"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class:
         mock_client_class.side_effect = Exception("Database connection failed")
 
         response = api_client.post(
             "/admin/backup",
-            json={"backup_type": "full"}
+            json={"backup_type": "full"},
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 500
@@ -544,7 +553,7 @@ def test_backup_endpoint_database_error_returns_500(api_client):
 
 
 @pytest.mark.api
-def test_backup_endpoint_content_disposition_header_format(api_client):
+def test_backup_endpoint_content_disposition_header_format(api_client, mock_oauth_validation, auth_headers_admin, bypass_permission_check):
     """Test that Content-Disposition header is properly formatted"""
     with patch('api.app.routes.admin.AGEClient') as mock_client_class, \
          patch('api.app.routes.admin.create_backup_stream') as mock_stream:
@@ -557,7 +566,8 @@ def test_backup_endpoint_content_disposition_header_format(api_client):
 
         response = api_client.post(
             "/admin/backup",
-            json={"backup_type": "full"}
+            json={"backup_type": "full", "format": "json"},
+            headers=auth_headers_admin
         )
 
         assert response.status_code == 200
