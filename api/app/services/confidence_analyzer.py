@@ -12,6 +12,14 @@ This implements the two-dimensional epistemic model:
 The confidence_score uses a nonlinear (saturation) function that reflects
 diminishing returns - early evidence contributes more than later evidence.
 
+Caching (ADR-201 Phase 5f):
+    Confidence signals (relationship count, source count, evidence count)
+    depend only on a concept's own graph neighborhood — no cross-concept
+    dependency. Results are cached per-concept against the graph generation
+    counter. When the graph mutates (ingestion, edits, merges), the generation
+    bumps and the entire cache evicts. Between mutations, repeated queries
+    for the same concept return instantly from cache.
+
 References:
     - ADR-044: Probabilistic Truth Convergence
     - ADR-063: Semantic Diversity as Authenticity Signal
@@ -19,12 +27,19 @@ References:
     - .claude/additional-scoring-findings.md
 """
 
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional, Set, Tuple
 import logging
+import threading
 import time
 import math
 
 logger = logging.getLogger(__name__)
+
+# Per-concept confidence cache, keyed by (concept_id, graph_generation).
+# Evicts entirely when graph generation changes.
+_confidence_cache_lock = threading.Lock()
+_confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
+_confidence_cache_generation: Optional[int] = None
 
 
 # Confidence level thresholds
@@ -71,6 +86,11 @@ class ConfidenceAnalyzer:
         """
         Calculate epistemic confidence for a concept.
 
+        Results are cached per-concept against the graph generation counter.
+        The grounding_display field depends on both the cached signals AND
+        the grounding_strength parameter, so it's recomputed from cached
+        signals when grounding_strength differs (cheap — no DB queries).
+
         Args:
             concept_id: Target concept ID
             grounding_strength: Optional grounding score for combined interpretation
@@ -79,17 +99,38 @@ class ConfidenceAnalyzer:
             Dictionary with confidence metrics:
             {
                 "level": "confident" | "tentative" | "insufficient",
-                "signals": {
-                    "relationship_count": int,
-                    "source_count": int,
-                    "evidence_count": int,
-                    "relationship_types": int,  # unique types
-                    "relationship_type_diversity": float  # 0-1
-                },
+                "signals": {...},
                 "interpretation": str,
-                "grounding_display": str  # Combined grounding × confidence label
+                "grounding_display": str  # Combined grounding x confidence label
             }
         """
+        global _confidence_cache, _confidence_cache_generation
+
+        # Check graph generation for cache validity
+        graph_gen = self._get_graph_generation()
+
+        with _confidence_cache_lock:
+            if _confidence_cache_generation != graph_gen:
+                if _confidence_cache:
+                    logger.info(
+                        f"Confidence cache invalidated: generation "
+                        f"{_confidence_cache_generation} → {graph_gen} "
+                        f"({len(_confidence_cache)} entries evicted)"
+                    )
+                _confidence_cache.clear()
+                _confidence_cache_generation = graph_gen
+
+            cache_key = (concept_id, graph_gen)
+            cached = _confidence_cache.get(cache_key)
+
+        if cached is not None:
+            # Recompute grounding_display (depends on caller's grounding_strength)
+            result = dict(cached)
+            result['grounding_display'] = self._get_grounding_display(
+                grounding_strength, result['level']
+            )
+            return result
+
         start_time = time.time()
 
         try:
@@ -102,7 +143,7 @@ class ConfidenceAnalyzer:
             # Generate interpretation
             interpretation = self._interpret(level, signals)
 
-            # Generate combined grounding × confidence display label
+            # Generate combined grounding x confidence display label
             grounding_display = self._get_grounding_display(
                 grounding_strength, level
             )
@@ -118,7 +159,7 @@ class ConfidenceAnalyzer:
             # Calculate numeric confidence score (0-1, nonlinear)
             confidence_score = self._calculate_score(signals)
 
-            return {
+            result = {
                 "level": level,
                 "confidence_score": confidence_score,
                 "signals": signals,
@@ -127,9 +168,52 @@ class ConfidenceAnalyzer:
                 "calculation_time_ms": calculation_time_ms
             }
 
+            with _confidence_cache_lock:
+                _confidence_cache[cache_key] = result
+
+            return result
+
         except Exception as e:
             logger.error(f"Confidence calculation failed for {concept_id}: {e}")
             raise
+
+    def _get_graph_generation(self) -> int:
+        """Read graph generation for cache invalidation.
+
+        Same two-tier probe as query.py: tries graph_accel.generation first,
+        falls back to vocabulary_change_counter.
+        """
+        from psycopg2 import extras
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                try:
+                    cur.execute("SAVEPOINT conf_gen_check")
+                    cur.execute(
+                        "SELECT current_generation FROM graph_accel.generation "
+                        "WHERE graph_name = 'knowledge_graph'"
+                    )
+                    row = cur.fetchone()
+                    cur.execute("RELEASE SAVEPOINT conf_gen_check")
+                    if row:
+                        return int(row['current_generation'])
+                except Exception:
+                    try:
+                        cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check")
+                    except Exception:
+                        pass
+                # Fallback
+                try:
+                    cur.execute(
+                        "SELECT counter FROM graph_metrics "
+                        "WHERE metric_name = 'vocabulary_change_counter'"
+                    )
+                    row = cur.fetchone()
+                    return int(row['counter']) if row else 0
+                except Exception:
+                    return 0
+        finally:
+            self.client.pool.putconn(conn)
 
     def _gather_signals(self, concept_id: str) -> Dict[str, Any]:
         """
