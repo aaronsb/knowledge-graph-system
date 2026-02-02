@@ -146,7 +146,7 @@ Merged: PR #275 → `main`
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
 
 ### 5f: Generation-aware grounding cache (hydration optimization)
-Branch: TBD
+Branch: `feature/grounding-cache`
 
 The topology phase (graph_accel) is sub-ms. The remaining 3-4s per connect query
 is grounding hydration: `calculate_grounding_strength_semantic()` runs sequentially
@@ -180,6 +180,12 @@ edges — no cross-concept dependency. This makes per-concept caching safe.
   - Same for confidence signals (`_gather_signals`)
 - [ ] After batching: parallel computation in Python (dot products, thresholds — no DB)
   - Pure CPU work, no pool contention, ThreadPoolExecutor works correctly
+
+- [ ] Docstrings: document the two-tier cache invalidation model
+  - `calculate_grounding_strength_semantic()` — explain polarity axis caching, vocab generation check
+  - `_build_connection_paths()` — explain per-concept grounding cache, graph generation check
+  - `GraphFacade._execute_sql()` — explain pinned connection, generation-based ensure_fresh
+  - `graph_facade.py` module docstring — explain the full pipeline: topology (sub-ms) → cached hydration
 
 Expected improvement: 3.7s → ~0.5-1s for connect queries (warm cache hit: ~0.1s).
 

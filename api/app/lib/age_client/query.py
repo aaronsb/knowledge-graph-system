@@ -10,15 +10,69 @@ Key operations:
 - Learned knowledge CRUD: validate, create, list, delete connections
 - calculate_grounding_strength_semantic(): Polarity axis projection
 - facade property: Lazy-loaded GraphQueryFacade for namespace-safe queries (ADR-048)
+
+Caching (ADR-201 Phase 5f):
+  The polarity axis used for grounding is vocabulary-level data — it depends only
+  on relationship type embeddings, not on any individual concept. It's cached
+  against graph_metrics.vocabulary_change_counter and reused across all concepts.
+  Vocabulary mutations (synonym collapse, embedding regeneration) bump the counter,
+  invalidating the cache. Each concept's grounding is then independently cached
+  against the graph generation counter (graph_accel.generation).
 """
 
 import json
 import logging
-from typing import List, Dict, Optional, Any
+import threading
+from typing import List, Dict, Optional, Any, Tuple
 import numpy as np
 from psycopg2 import extras
 
 logger = logging.getLogger(__name__)
+
+# ---- Two-tier grounding cache (ADR-201 Phase 5f) ----
+#
+# Tier 1: Polarity axis — derived from vocabulary embeddings, shared across all
+# concepts. Invalidates when vocabulary_change_counter changes (synonym collapse,
+# embedding regeneration). One axis computation replaces N identical DB queries.
+#
+# Tier 2: Per-concept grounding — cached against graph generation. Each concept's
+# grounding depends only on its own incoming edges (no cross-concept dependency),
+# making independent caching safe. Invalidates when graph_accel_invalidate() bumps
+# the generation after ingestion, edits, or vocabulary merges.
+#
+# Analogy: like GI probe caching in real-time rendering — only recompute when the
+# "frame" (generation) changes, and each "probe" (concept) is independent.
+
+_polarity_axis_cache_lock = threading.Lock()
+_polarity_axis_cache: Optional[Tuple[int, np.ndarray]] = None  # (vocab_generation, axis_vector)
+
+_grounding_cache_lock = threading.Lock()
+_grounding_cache: Dict[Tuple[str, int], Tuple[float, Dict]] = {}  # (concept_id, graph_gen) → (grounding, confidence)
+_grounding_cache_generation: Optional[int] = None  # tracks which graph generation the cache covers
+
+
+def _parse_embedding(emb_json) -> Optional[np.ndarray]:
+    """Parse embedding from various storage formats (JSONB, list, str)."""
+    if isinstance(emb_json, str):
+        return np.array(json.loads(emb_json), dtype=float)
+    elif isinstance(emb_json, list):
+        return np.array(emb_json, dtype=float)
+    elif isinstance(emb_json, dict):
+        return np.array(list(emb_json.values()), dtype=float)
+    else:
+        try:
+            return np.array(list(emb_json), dtype=float)
+        except Exception:
+            return None
+
+
+def _parse_confidence(value) -> float:
+    """Parse edge confidence from AGE result (may be float, str, dict, or None)."""
+    if value is None:
+        return 1.0
+    if isinstance(value, dict):
+        return float(value.get('confidence', 1.0))
+    return float(value)
 
 
 class QueryMixin:
@@ -478,6 +532,95 @@ class QueryMixin:
     # Grounding Strength Calculation (ADR-044)
     # =========================================================================
 
+    def _get_vocab_generation(self, cur) -> int:
+        """Read vocabulary_change_counter from graph_metrics (single-row query)."""
+        try:
+            cur.execute(
+                "SELECT counter FROM graph_metrics "
+                "WHERE metric_name = 'vocabulary_change_counter'"
+            )
+            row = cur.fetchone()
+            return int(row['counter']) if row else 0
+        except Exception:
+            return 0
+
+    def _get_polarity_axis(self, cur) -> Optional[np.ndarray]:
+        """Get cached polarity axis, recomputing if vocabulary has changed.
+
+        The polarity axis is derived from vocabulary embeddings for opposing
+        relationship pairs (SUPPORTS/CONTRADICTS, etc.). It's shared across
+        all concepts — only the per-concept edge projections differ.
+
+        Cached against graph_metrics.vocabulary_change_counter. Invalidates
+        when synonym collapse, embedding regeneration, or any vocabulary
+        mutation bumps the counter via refresh_graph_metrics().
+        """
+        global _polarity_axis_cache
+
+        vocab_gen = self._get_vocab_generation(cur)
+
+        with _polarity_axis_cache_lock:
+            if _polarity_axis_cache is not None:
+                cached_gen, cached_axis = _polarity_axis_cache
+                if cached_gen == vocab_gen:
+                    return cached_axis
+
+        # Cache miss — recompute from vocabulary embeddings
+        POLARITY_PAIRS = [
+            ("SUPPORTS", "CONTRADICTS"),
+            ("VALIDATES", "REFUTES"),
+            ("CONFIRMS", "DISPROVES"),
+            ("REINFORCES", "OPPOSES"),
+            ("ENABLES", "PREVENTS"),
+        ]
+
+        all_pair_terms = set()
+        for positive, negative in POLARITY_PAIRS:
+            all_pair_terms.add(positive)
+            all_pair_terms.add(negative)
+
+        terms_list = ','.join([f"'{t}'" for t in all_pair_terms])
+        cur.execute(f"""
+            SELECT relationship_type, embedding
+            FROM kg_api.relationship_vocabulary
+            WHERE relationship_type IN ({terms_list})
+              AND embedding IS NOT NULL
+        """)
+
+        pair_embeddings = {}
+        for row in cur.fetchall():
+            emb_array = _parse_embedding(row['embedding'])
+            if emb_array is not None:
+                pair_embeddings[row['relationship_type']] = emb_array
+
+        difference_vectors = []
+        for positive, negative in POLARITY_PAIRS:
+            if positive in pair_embeddings and negative in pair_embeddings:
+                difference_vectors.append(
+                    pair_embeddings[positive] - pair_embeddings[negative]
+                )
+
+        if not difference_vectors:
+            logger.warning("No polarity pairs available for axis calculation (need embeddings)")
+            return None
+
+        polarity_axis = np.mean(difference_vectors, axis=0)
+        axis_magnitude = np.linalg.norm(polarity_axis)
+        if axis_magnitude == 0:
+            logger.warning("Polarity axis has zero magnitude")
+            return None
+
+        polarity_axis = polarity_axis / axis_magnitude
+        logger.info(
+            f"Polarity axis computed from {len(difference_vectors)} pairs "
+            f"(vocab generation {vocab_gen})"
+        )
+
+        with _polarity_axis_cache_lock:
+            _polarity_axis_cache = (vocab_gen, polarity_axis)
+
+        return polarity_axis
+
     def calculate_grounding_strength_semantic(
         self,
         concept_id: str,
@@ -491,19 +634,15 @@ class QueryMixin:
         polarity axis (support ↔ contradict). Edge embeddings are projected onto
         this axis via dot product to determine their grounding contribution.
 
-        Algorithm (Polarity Axis Triangulation):
-        1. Define multiple opposing pairs (SUPPORTS/CONTRADICTS, VALIDATES/REFUTES, etc.)
-        2. Fetch embeddings for all pairs that exist in vocabulary
-        3. Calculate difference vectors: positive_emb - negative_emb for each pair
-        4. Average difference vectors to get robust polarity axis
-        5. Normalize axis to unit vector
-        6. For each incoming edge:
-           - Project edge embedding onto polarity axis via dot product
-           - Weight projection by edge confidence
-        7. Calculate grounding = sum(weighted_projections) / sum(confidences)
+        Two-tier caching (ADR-201 Phase 5f):
+          Tier 1 — Polarity axis: Vocabulary-level, shared across all concepts.
+          Cached against graph_metrics.vocabulary_change_counter. Recomputed only
+          when vocabulary mutates (synonym collapse, embedding regeneration).
 
-        This approach provides nuanced grounding scores even for single edge types,
-        based on how semantically aligned they are with support vs contradict axes.
+          Tier 2 — Per-concept grounding: Cached against graph generation
+          (graph_accel.generation). Each concept's grounding depends only on its
+          own incoming edges — no cross-concept dependency — so per-concept
+          caching is safe. Recomputed only when the graph mutates.
 
         Args:
             concept_id: Target concept to calculate grounding for
@@ -516,204 +655,147 @@ class QueryMixin:
             - Zero = Edge types are neutral or balanced
             - Negative = Edge types align with contradict-like semantics
 
-        Example:
-            >>> client = AGEClient()
-            >>> grounding = client.calculate_grounding_strength_semantic("concept-123")
-            >>> print(f"Grounding: {grounding:.3f}")
-            Grounding: 0.347  # Moderately grounded (nuanced value)
-
         References:
             - ADR-044: Probabilistic Truth Convergence
             - ADR-045: Unified Embedding Generation
         """
-        import numpy as np
-
-        # Define opposing pairs for polarity axis triangulation
-        # Format: (positive_pole, negative_pole)
-        # These pairs help triangulate the semantic direction of "support" vs "contradict"
-        POLARITY_PAIRS = [
-            ("SUPPORTS", "CONTRADICTS"),      # Core evidential pair
-            ("VALIDATES", "REFUTES"),         # Verification semantics
-            ("CONFIRMS", "DISPROVES"),        # Proof semantics
-            ("REINFORCES", "OPPOSES"),        # Strength semantics
-            ("ENABLES", "PREVENTS"),          # Causation semantics
-        ]
+        global _grounding_cache, _grounding_cache_generation
 
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                # Step 1: Fetch embeddings for all polarity pair terms that exist
-                all_pair_terms = set()
-                for positive, negative in POLARITY_PAIRS:
-                    all_pair_terms.add(positive)
-                    all_pair_terms.add(negative)
+                # ---- Tier 2 cache check: per-concept grounding ----
+                # Read graph generation from graph_accel if available,
+                # otherwise fall back to a simple counter.
+                graph_gen = self._get_graph_generation(cur)
 
-                terms_list = ','.join([f"'{t}'" for t in all_pair_terms])
-                cur.execute(f"""
-                    SELECT relationship_type, embedding
-                    FROM kg_api.relationship_vocabulary
-                    WHERE relationship_type IN ({terms_list})
-                      AND embedding IS NOT NULL
-                """)
+                # Evict entire cache if graph generation changed
+                with _grounding_cache_lock:
+                    if _grounding_cache_generation != graph_gen:
+                        if _grounding_cache:
+                            logger.info(
+                                f"Grounding cache invalidated: generation "
+                                f"{_grounding_cache_generation} → {graph_gen} "
+                                f"({len(_grounding_cache)} entries evicted)"
+                            )
+                        _grounding_cache.clear()
+                        _grounding_cache_generation = graph_gen
 
-                pair_embeddings = {}
-                for row in cur.fetchall():
-                    emb_json = row['embedding']
-                    # Parse embedding (handle various formats)
-                    if isinstance(emb_json, str):
-                        emb_array = np.array(json.loads(emb_json), dtype=float)
-                    elif isinstance(emb_json, list):
-                        emb_array = np.array(emb_json, dtype=float)
-                    elif isinstance(emb_json, dict):
-                        emb_array = np.array(list(emb_json.values()), dtype=float)
-                    else:
-                        try:
-                            emb_array = np.array(list(emb_json), dtype=float)
-                        except:
-                            logger.warning(f"Could not parse embedding for {row['relationship_type']}")
-                            continue
+                    cache_key = (concept_id, graph_gen)
+                    if cache_key in _grounding_cache:
+                        return _grounding_cache[cache_key]
 
-                    pair_embeddings[row['relationship_type']] = emb_array
-
-                # Step 2: Calculate difference vectors for each pair
-                difference_vectors = []
-                for positive, negative in POLARITY_PAIRS:
-                    if positive in pair_embeddings and negative in pair_embeddings:
-                        diff_vec = pair_embeddings[positive] - pair_embeddings[negative]
-                        difference_vectors.append(diff_vec)
-                        logger.debug(f"Polarity pair: {positive} - {negative} (magnitude: {np.linalg.norm(diff_vec):.3f})")
-
-                if len(difference_vectors) == 0:
-                    logger.warning("No polarity pairs available for axis calculation (need embeddings)")
+                # ---- Tier 1: get or compute polarity axis ----
+                polarity_axis = self._get_polarity_axis(cur)
+                if polarity_axis is None:
                     return 0.0
 
-                # Step 3: Average difference vectors to get robust polarity axis
-                polarity_axis = np.mean(difference_vectors, axis=0)
-
-                # Step 4: Normalize to unit vector
-                axis_magnitude = np.linalg.norm(polarity_axis)
-                if axis_magnitude == 0:
-                    logger.warning("Polarity axis has zero magnitude")
-                    return 0.0
-
-                polarity_axis = polarity_axis / axis_magnitude
-                logger.debug(f"Polarity axis triangulated from {len(difference_vectors)} pairs")
-
-                # Step 5: Get all incoming relationships to this concept
-                # Use _execute_cypher() to avoid agtype parsing issues
+                # ---- Per-concept: fetch incoming edges ----
                 cypher_edges_query = f"""
                     MATCH (c:Concept {{concept_id: '{concept_id}'}})<-[r]-(source)
                     RETURN type(r) as rel_type, r.confidence as confidence
                 """
-
                 edge_results = self._execute_cypher(cypher_edges_query)
 
                 if not edge_results:
-                    # No incoming edges = neutral grounding
+                    with _grounding_cache_lock:
+                        _grounding_cache[cache_key] = 0.0
                     return 0.0
 
-                # Step 6: Get embeddings for these edge types from vocabulary
-                # Build list of unique relationship types
+                # Filter relationship types
                 rel_types = set(edge['rel_type'] for edge in edge_results)
-
-                # Apply type filters
                 if include_types:
                     rel_types = rel_types & set(include_types)
                 if exclude_types:
                     rel_types = rel_types - set(exclude_types)
-
                 if not rel_types:
+                    with _grounding_cache_lock:
+                        _grounding_cache[cache_key] = 0.0
                     return 0.0
 
-                # Query vocabulary for embeddings
+                # Fetch vocabulary embeddings for these edge types
                 types_list = ','.join([f"'{t}'" for t in rel_types])
-                vocab_query = f"""
+                cur.execute(f"""
                     SELECT relationship_type, embedding
                     FROM kg_api.relationship_vocabulary
                     WHERE relationship_type IN ({types_list})
                       AND embedding IS NOT NULL
-                """
+                """)
+                vocab_embeddings = {
+                    row['relationship_type']: row['embedding']
+                    for row in cur.fetchall()
+                }
 
-                cur.execute(vocab_query)
-                vocab_embeddings = {row['relationship_type']: row['embedding']
-                                   for row in cur.fetchall()}
-
-                # Join edge results with embeddings in Python
-                edges = []
-                for edge in edge_results:
-                    rel_type = edge['rel_type']
-                    if rel_type in vocab_embeddings:
-                        # Default confidence to 1.0 if None
-                        confidence = edge.get('confidence') or 1.0
-                        edges.append({
-                            'relationship_type': rel_type,
-                            'confidence': float(confidence),
-                            'embedding': vocab_embeddings[rel_type]
-                        })
-
-                if not edges:
-                    # No incoming edges = neutral grounding
-                    return 0.0
-
-                # Step 7: Project each edge onto polarity axis and accumulate
+                # Project each edge onto polarity axis
                 total_polarity = 0.0
                 total_confidence = 0.0
+                edge_count = 0
 
-                for edge in edges:
-                    # Parse edge embedding from JSONB
-                    emb_json = edge['embedding']
-                    if isinstance(emb_json, str):
-                        edge_emb = np.array(json.loads(emb_json), dtype=float)
-                    elif isinstance(emb_json, list):
-                        edge_emb = np.array(emb_json, dtype=float)
-                    elif isinstance(emb_json, dict):
-                        # JSONB might be returned as dict, not list
-                        edge_emb = np.array(list(emb_json.values()), dtype=float)
-                    else:
-                        # Try to convert to list
-                        try:
-                            edge_emb = np.array(list(emb_json), dtype=float)
-                        except:
-                            logger.warning(f"Could not parse embedding for {edge.get('relationship_type')}")
-                            continue
+                for edge in edge_results:
+                    rel_type = edge['rel_type']
+                    if rel_type not in vocab_embeddings:
+                        continue
 
-                    # Get confidence (default to 1.0 if not set)
-                    confidence_str = edge.get('confidence')
-                    if confidence_str:
-                        # Parse agtype confidence
-                        if isinstance(confidence_str, dict):
-                            confidence = float(confidence_str.get('confidence', 1.0))
-                        else:
-                            confidence = float(confidence_str)
-                    else:
-                        confidence = 1.0
+                    edge_emb = _parse_embedding(vocab_embeddings[rel_type])
+                    if edge_emb is None:
+                        continue
 
-                    # Project edge embedding onto polarity axis using dot product
-                    # Positive projection = support-like, negative = contradict-like
+                    confidence = _parse_confidence(edge.get('confidence'))
                     polarity_projection = np.dot(edge_emb, polarity_axis)
-
-                    # Accumulate weighted projections
                     total_polarity += confidence * float(polarity_projection)
                     total_confidence += confidence
+                    edge_count += 1
 
-                    logger.debug(f"  Edge {edge.get('relationship_type')}: projection={polarity_projection:.3f}, confidence={confidence:.2f}")
-
-                # Step 8: Calculate final grounding strength
                 if total_confidence == 0:
+                    with _grounding_cache_lock:
+                        _grounding_cache[cache_key] = 0.0
                     return 0.0
 
-                # Average weighted projection
-                grounding_strength = total_polarity / total_confidence
+                grounding_strength = float(total_polarity / total_confidence)
+                logger.debug(
+                    f"Grounding for {concept_id}: {grounding_strength:.3f} "
+                    f"(from {edge_count} edges)"
+                )
 
-                logger.debug(f"Grounding for {concept_id}: {grounding_strength:.3f} (from {len(edges)} edges)")
+                with _grounding_cache_lock:
+                    _grounding_cache[cache_key] = grounding_strength
 
-                return float(grounding_strength)
+                return grounding_strength
 
         except Exception as e:
             logger.error(f"Error calculating grounding strength for {concept_id}: {e}")
             return 0.0
         finally:
             self.pool.putconn(conn)
+
+    def _get_graph_generation(self, cur) -> int:
+        """Read current graph generation for cache invalidation.
+
+        Uses graph_accel.generation table if available (bumped by
+        graph_accel_invalidate after mutations), falls back to
+        vocabulary_change_counter from graph_metrics.
+
+        Uses SAVEPOINT to safely probe for graph_accel.generation —
+        if the extension isn't loaded on this pool connection, the
+        query fails without aborting the outer transaction.
+        """
+        try:
+            cur.execute("SAVEPOINT gen_check")
+            cur.execute(
+                "SELECT current_generation FROM graph_accel.generation "
+                "WHERE graph_name = 'knowledge_graph'"
+            )
+            row = cur.fetchone()
+            cur.execute("RELEASE SAVEPOINT gen_check")
+            if row:
+                return int(row['current_generation'])
+        except Exception:
+            try:
+                cur.execute("ROLLBACK TO SAVEPOINT gen_check")
+            except Exception:
+                pass
+        # Fallback: use vocabulary_change_counter
+        return self._get_vocab_generation(cur)
 
     async def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """
