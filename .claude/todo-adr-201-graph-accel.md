@@ -164,7 +164,11 @@ counter. The key property: each concept's grounding is computed from its own inc
 edges — no cross-concept dependency. This makes per-concept caching safe.
 
 - [ ] Cache polarity axis (vocabulary-level) — shared across all concepts
-  - Invalidation: when vocabulary embeddings change (separate from graph generation)
+  - Invalidation key: `graph_metrics.vocabulary_change_counter` (already bumped by
+    `refresh_graph_metrics()` after synonym consolidation in vocab_consolidate_worker.py:118)
+  - Synonym collapse (CONCEDES→CONCEDE) triggers `merge_edge_types()` → worker calls
+    `refresh_graph_metrics()` → counter bumps → polarity axis cache invalidates
+  - No new wiring needed at the mutation site — existing signal suffices
   - This eliminates the polarity pair embedding query (runs once per vocab change, not per concept)
 - [ ] Cache per-concept grounding against graph generation
   - Store: `{concept_id: (generation, grounding_strength, confidence_result)}`
@@ -178,6 +182,14 @@ edges — no cross-concept dependency. This makes per-concept caching safe.
   - Pure CPU work, no pool contention, ThreadPoolExecutor works correctly
 
 Expected improvement: 3.7s → ~0.5-1s for connect queries (warm cache hit: ~0.1s).
+
+Two-tier invalidation (both signals already exist):
+  | Cache layer        | Generation source                          | Signal origin                    |
+  |--------------------|--------------------------------------------|----------------------------------|
+  | Polarity axis      | graph_metrics.vocabulary_change_counter     | refresh_graph_metrics() after consolidation |
+  | Per-concept ground | graph_accel.generation                      | graph_accel_invalidate() after mutations    |
+  merge_edge_types() both deletes/recreates edges (graph mutation) AND triggers
+  refresh_graph_metrics() (vocab mutation), so both caches invalidate correctly.
 
 Analogy: id Tech GI probe caching — only update volumes where the player looks.
 Graph generation is the "frame number"; if it hasn't changed, every cached value is valid.
