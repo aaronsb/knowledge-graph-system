@@ -48,7 +48,6 @@ from ..models.queries import (
     PolarityAxisRequest,
     PolarityAxisResponse
 )
-from ..services.query_service import QueryService  # retained for non-migrated callers
 from ..services.diversity_analyzer import DiversityAnalyzer
 from ..services.confidence_analyzer import ConfidenceAnalyzer
 
@@ -74,7 +73,6 @@ def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstan
             seen_quotes.add(e.quote)
             result.append(e)
     return result
-from ..lib.pathfinding_facade import PathfindingFacade  # retained for non-migrated callers
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ai_providers import get_provider
 
