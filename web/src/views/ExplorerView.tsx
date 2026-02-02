@@ -427,7 +427,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
           className="border-b border-border bg-card"
           style={{ zIndex: getZIndexValue('searchBar') }}
         >
-          <div className="p-4 min-w-0 overflow-hidden">
+          <div className="p-4 min-w-0">
             <SearchBar />
           </div>
         </div>
