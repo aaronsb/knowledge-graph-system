@@ -3,11 +3,11 @@ Tests for synonym_detector.py
 
 Validates embedding-based synonym detection for edge type merging (ADR-032).
 
-Note: The source SynonymDetector._get_edge_type_embedding method calls
-ai_provider.generate_embedding() without await and also imports AGEClient
-for database lookups. Both of these fail in a test environment. We patch
-_get_edge_type_embedding on the detector to bypass these issues and test
-the higher-level logic (find_synonyms, suggest_merge, batch_detect, etc.).
+Note: SynonymDetector._get_edge_type_embedding imports AGEClient for
+database lookups, which isn't available in tests. We patch it via
+helpers.patch_synonym_detector_embedding to go directly to the mock
+AI provider and test the higher-level logic (find_synonyms, suggest_merge,
+batch_detect, etc.).
 """
 
 import pytest
