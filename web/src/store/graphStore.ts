@@ -58,6 +58,8 @@ interface GraphStore {
   // Graph data (raw API format - cached to avoid re-fetching)
   rawGraphData: { nodes: any[]; links: any[] } | null;
   setRawGraphData: (data: { nodes: any[]; links: any[] } | null) => void;
+  // Merge new data into existing graph (deduplicating nodes by concept_id, links by from+type+to)
+  mergeRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
 
   // Graph data (transformed for current explorer)
   graphData: GraphData | null;
@@ -169,6 +171,40 @@ export const useGraphStore = create<GraphStore>((set) => ({
   // Graph data (raw API data - cached)
   rawGraphData: null,
   setRawGraphData: (data) => set({ rawGraphData: data }),
+  mergeRawGraphData: (data) =>
+    set((state) => {
+      const current = state.rawGraphData;
+      if (!current || !current.nodes || current.nodes.length === 0) {
+        return { rawGraphData: data };
+      }
+
+      const existingNodeIds = new Set(current.nodes.map((n: any) => n.id || n.concept_id));
+      const newNodes = (data.nodes || []).filter(
+        (n: any) => !existingNodeIds.has(n.id || n.concept_id)
+      );
+
+      const existingLinkKeys = new Set(
+        current.links.map((l: any) => {
+          const from = l.from_id || l.source?.id || l.source;
+          const to = l.to_id || l.target?.id || l.target;
+          const type = l.relationship_type || l.type || '';
+          return `${from}-${type}-${to}`;
+        })
+      );
+      const newLinks = (data.links || []).filter((l: any) => {
+        const from = l.from_id || l.source?.id || l.source;
+        const to = l.to_id || l.target?.id || l.target;
+        const type = l.relationship_type || l.type || '';
+        return !existingLinkKeys.has(`${from}-${type}-${to}`);
+      });
+
+      return {
+        rawGraphData: {
+          nodes: [...current.nodes, ...newNodes],
+          links: [...current.links, ...newLinks],
+        },
+      };
+    }),
 
   // Graph data (transformed)
   graphData: null,

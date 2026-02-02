@@ -180,31 +180,65 @@ export function useFindConnection(
         max_hops: options?.maxHops,
       });
 
-      // Convert paths to graph format (raw API data, not transformed)
+      // Convert paths to graph format, filtering to Concept nodes only.
+      // graph_accel traverses ALL vertices (Concept, Source, Ontology).
+      // Source/Ontology nodes have empty IDs and aren't useful for visualization.
+      // We collapse intermediate hops into direct Concept-to-Concept edges.
       if (response.paths && response.paths.length > 0) {
         const allNodes = new Map();
+        const linkSet = new Set<string>();
         const allLinks: any[] = [];
 
         response.paths.forEach((path: any) => {
-          path.nodes.forEach((node: any) => {
-            allNodes.set(node.id, {
-              concept_id: node.id,
-              label: node.label,
-              ontology: 'default',
-            });
+          // Extract only Concept nodes (non-empty ID)
+          const conceptNodes: any[] = [];
+          const conceptRelTypes: string[][] = [];
+
+          let pendingRels: string[] = [];
+          for (let i = 0; i < path.nodes.length; i++) {
+            const node = path.nodes[i];
+            if (node.id && node.id !== '') {
+              conceptNodes.push(node);
+              conceptRelTypes.push(pendingRels);
+              pendingRels = [];
+            }
+            if (i < path.relationships.length) {
+              pendingRels.push(path.relationships[i]);
+            }
+          }
+
+          // Add Concept nodes
+          conceptNodes.forEach((node: any) => {
+            if (!allNodes.has(node.id)) {
+              allNodes.set(node.id, {
+                concept_id: node.id,
+                label: node.label,
+                description: node.description,
+                ontology: 'default',
+                grounding_strength: node.grounding_strength,
+              });
+            }
           });
 
-          // Build links from relationships
-          for (let i = 0; i < path.nodes.length - 1; i++) {
-            allLinks.push({
-              from_id: path.nodes[i].id,
-              to_id: path.nodes[i + 1].id,
-              relationship_type: path.relationships[i] || 'RELATED',
-            });
+          // Build edges between consecutive Concept nodes
+          for (let i = 0; i < conceptNodes.length - 1; i++) {
+            const fromId = conceptNodes[i].id;
+            const toId = conceptNodes[i + 1].id;
+            // Use the first meaningful relationship type from collapsed hops
+            const rels = conceptRelTypes[i + 1];
+            const relType = rels.find(r => r !== 'APPEARS' && r !== 'SCOPED_BY') || rels[0] || 'CONNECTED';
+            const linkKey = `${fromId}-${relType}-${toId}`;
+            if (!linkSet.has(linkKey)) {
+              linkSet.add(linkKey);
+              allLinks.push({
+                from_id: fromId,
+                to_id: toId,
+                relationship_type: relType,
+              });
+            }
           }
         });
 
-        // Return raw API data
         return { nodes: Array.from(allNodes.values()), links: allLinks };
       }
 

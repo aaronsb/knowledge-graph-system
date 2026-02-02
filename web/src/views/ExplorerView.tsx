@@ -19,7 +19,6 @@ import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
 import type { GraphReportData } from '../store/reportStore';
 import { useSubgraph, useFindConnection } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
-import { apiClient } from '../api/client';
 import { getZIndexValue } from '../config/zIndex';
 import type { VisualizationType } from '../types/explorer';
 
@@ -37,6 +36,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     rawGraphData,
     setGraphData,
     setRawGraphData,
+    mergeRawGraphData,
     setSelectedExplorer,
     setSearchParams,
     setSimilarityThreshold,
@@ -186,137 +186,34 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     searchParams.mode === 'path' ? searchParams.toConceptId || null : null,
     {
       maxHops: searchParams.maxHops || 5,
-      enabled: searchParams.mode === 'path' && !!searchParams.fromConceptId && !!searchParams.toConceptId && !searchParams.depth,
+      enabled: searchParams.mode === 'path' && !!searchParams.fromConceptId && !!searchParams.toConceptId,
     }
   );
 
-  // Path enrichment: When depth is specified, fetch neighborhoods around each hop
-  const [enrichedPathData, setEnrichedPathData] = React.useState<any>(null);
-  const [isEnrichingPath, setIsEnrichingPath] = React.useState(false);
-
-  useEffect(() => {
-    const enrichPath = async () => {
-      if (searchParams.mode !== 'path' || !searchParams.depth || searchParams.depth === 0) {
-        setEnrichedPathData(null);
-        return;
-      }
-
-      if (!searchParams.fromConceptId || !searchParams.toConceptId) return;
-
-      setIsEnrichingPath(true);
-      try {
-        // Step 1: Get the path
-        const pathResult = await apiClient.findConnection({
-          from_id: searchParams.fromConceptId,
-          to_id: searchParams.toConceptId,
-          max_hops: searchParams.maxHops || 5,
-        });
-
-        if (!pathResult.paths || pathResult.paths.length === 0) {
-          setEnrichedPathData({ nodes: [], links: [] });
-          setIsEnrichingPath(false);
-          return;
-        }
-
-        // Step 2: Get the first/best path
-        const bestPath = pathResult.paths[0];
-        const nodeIds = bestPath.nodes.map((n: any) => n.id);
-
-        // Step 3: Fetch neighborhood for each node in the path
-        const neighborhoodPromises = nodeIds.map((nodeId: string) =>
-          apiClient.getSubgraph({
-            center_concept_id: nodeId,
-            depth: searchParams.depth,
-          })
-        );
-
-        const neighborhoods = await Promise.all(neighborhoodPromises);
-
-        // Step 4: Merge all neighborhoods + path
-        const allNodes = new Map();
-        const allLinks: any[] = [];
-
-        // Add path nodes
-        bestPath.nodes.forEach((node: any) => {
-          allNodes.set(node.id, {
-            concept_id: node.id,
-            label: node.label,
-            ontology: 'default',
-          });
-        });
-
-        // Add path links
-        for (let i = 0; i < bestPath.nodes.length - 1; i++) {
-          allLinks.push({
-            from_id: bestPath.nodes[i].id,
-            to_id: bestPath.nodes[i + 1].id,
-            relationship_type: bestPath.relationships[i] || 'PATH',
-          });
-        }
-
-        // Add neighborhood nodes and links
-        neighborhoods.forEach((neighborhood) => {
-          neighborhood.nodes.forEach((node: any) => {
-            if (!allNodes.has(node.concept_id)) {
-              allNodes.set(node.concept_id, node);
-            }
-          });
-          neighborhood.links.forEach((link: any) => {
-            allLinks.push(link);
-          });
-        });
-
-        // Return raw API data (transformation happens in explorer-specific dataTransformer)
-        const enrichedData = { nodes: Array.from(allNodes.values()), links: allLinks };
-        setEnrichedPathData(enrichedData);
-      } catch (error) {
-        console.error('Failed to enrich path:', error);
-        setEnrichedPathData(null);
-      } finally {
-        setIsEnrichingPath(false);
-      }
-    };
-
-    enrichPath();
-  }, [searchParams.mode, searchParams.fromConceptId, searchParams.toConceptId, searchParams.maxHops, searchParams.depth]);
-
   // Update rawGraphData when query results come back (cache API data)
   useEffect(() => {
-    const newData = conceptData || neighborhoodData || pathData || enrichedPathData;
+    // Mode-aware data selection: use data from the active query mode only
+    // (prevents stale cached data from a previous mode shadowing new results)
+    let newData;
+    switch (searchParams.mode) {
+      case 'concept': newData = conceptData; break;
+      case 'neighborhood': newData = neighborhoodData; break;
+      case 'path': newData = pathData; break;
+      default: newData = conceptData || neighborhoodData || pathData;
+    }
     if (!newData) return;
 
+    const graphPayload = { nodes: newData.nodes || [], links: newData.links || [] };
+
     if (searchParams.loadMode === 'clean') {
-      // Clear old transformed data immediately to prevent stale data being displayed
       setGraphData(null);
-      // Store raw data (transformation happens in separate useEffect)
-      setRawGraphData({ nodes: newData.nodes || [], links: newData.links || [] });
+      setRawGraphData(graphPayload);
     } else if (searchParams.loadMode === 'add') {
-      // Merge with existing raw data
-      const currentRawData = useGraphStore.getState().rawGraphData;
-
-      if (!currentRawData || !currentRawData.nodes || currentRawData.nodes.length === 0) {
-        setRawGraphData({ nodes: newData.nodes || [], links: newData.links || [] });
-      } else {
-        // Simple merge - deduplicate by node ID
-        const existingNodeIds = new Set(currentRawData.nodes.map((n: any) => n.id || n.concept_id));
-        const newNodes = (newData.nodes || []).filter((n: any) => !existingNodeIds.has(n.id || n.concept_id));
-
-        const existingLinkKeys = new Set(
-          currentRawData.links.map((l: any) => `${l.from_id || l.source}->${l.to_id || l.target}`)
-        );
-        const newLinks = (newData.links || []).filter((l: any) =>
-          !existingLinkKeys.has(`${l.from_id || l.source}->${l.to_id || l.target}`)
-        );
-
-        setRawGraphData({
-          nodes: [...currentRawData.nodes, ...newNodes],
-          links: [...currentRawData.links, ...newLinks],
-        });
-      }
+      mergeRawGraphData(graphPayload);
     }
-  }, [conceptData, neighborhoodData, pathData, enrichedPathData, searchParams.loadMode]);
+  }, [conceptData, neighborhoodData, pathData, searchParams.loadMode, searchParams.mode]);
 
-  const isLoading = isLoadingConcept || isLoadingNeighborhood || isLoadingPath || isEnrichingPath;
+  const isLoading = isLoadingConcept || isLoadingNeighborhood || isLoadingPath;
   const error = pathError;
   const graphData = storeGraphData;
 

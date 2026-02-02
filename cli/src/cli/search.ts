@@ -155,10 +155,12 @@ const queryCommand = setCommandHelp(
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
-      .action(async (query, options) => {
+      .action(async (query, options, command) => {
         try {
           const client = createClientFromEnv();
           const config = getConfig();
+          // Commander v12: parent search also defines --json, so check both levels
+          const jsonOutput = options.json || command.parent?.opts()?.json;
 
           // Use config defaults, allow CLI flags to override
           // Commander.js --no-evidence flag sets options.evidence to false
@@ -178,7 +180,7 @@ const queryCommand = setCommandHelp(
           });
 
           // JSON output mode
-          if (options.json) {
+          if (jsonOutput) {
             console.log(JSON.stringify(result, null, 2));
             return;
           }
@@ -322,14 +324,15 @@ const showCommand = setCommandHelp(
       .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
-      .action(async (conceptId, options) => {
+      .action(async (conceptId, options, command) => {
         try {
           const client = createClientFromEnv();
+          const jsonOutput = options.json || command.parent?.opts()?.json;
           const includeGrounding = options.grounding !== false; // Default: true
           const concept = await client.getConceptDetails(conceptId, includeGrounding);
 
           // JSON output mode
-          if (options.json) {
+          if (jsonOutput) {
             console.log(JSON.stringify(concept, null, 2));
             return;
           }
@@ -387,9 +390,10 @@ const relatedCommand = setCommandHelp(
       .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
       .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
-      .action(async (conceptId, options) => {
+      .action(async (conceptId, options, command) => {
         try {
           const client = createClientFromEnv();
+          const jsonOutput = options.json || command.parent?.opts()?.json;
           const result = await client.findRelatedConcepts({
             concept_id: conceptId,
             max_depth: parseInt(options.depth),
@@ -400,7 +404,7 @@ const relatedCommand = setCommandHelp(
           });
 
           // JSON output mode
-          if (options.json) {
+          if (jsonOutput) {
             console.log(JSON.stringify(result, null, 2));
             return;
           }
@@ -464,10 +468,12 @@ Notes:
   - Error messages suggest threshold adjustments when near-misses exist
   - Use --include-epistemic to filter by relationship confidence level (ADR-065)
       `)
-      .action(async (from, to, options) => {
+      .action(async (from, to, options, command) => {
         try {
           const client = createClientFromEnv();
           const config = getConfig();
+          // Commander v12: parent search also defines --json, so check both levels
+          const jsonOutput = options.json || command.parent?.opts()?.json;
 
           // Use config defaults, allow CLI flags to override
           const includeEvidence = options.evidence !== undefined ? options.evidence : config.getSearchShowEvidence();
@@ -518,7 +524,7 @@ Notes:
           }
 
           // JSON output mode
-          if (options.json) {
+          if (jsonOutput) {
             console.log(JSON.stringify(result, null, 2));
             return;
           }
@@ -641,9 +647,10 @@ const sourcesCommand = setCommandHelp(
       .option('--no-concepts', 'Hide concepts extracted from matched sources (shown by default)')
       .option('--no-full-text', 'Hide full source text (shown by default)')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
-      .action(async (query, options) => {
+      .action(async (query, options, command) => {
         try {
           const client = createClientFromEnv();
+          const jsonOutput = options.json || command.parent?.opts()?.json;
 
           const includeConcepts = options.concepts !== false; // Default: true
           const includeFullText = options.fullText !== false; // Default: true
@@ -658,7 +665,7 @@ const sourcesCommand = setCommandHelp(
           });
 
           // JSON output mode
-          if (options.json) {
+          if (jsonOutput) {
             console.log(JSON.stringify(result, null, 2));
             return;
           }
