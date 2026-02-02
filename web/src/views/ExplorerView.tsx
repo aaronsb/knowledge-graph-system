@@ -13,7 +13,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { History, Settings, Trash2 } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
-import { useGraphStore } from '../store/graphStore';
+import { useGraphStore, deriveMode } from '../store/graphStore';
 import { useReportStore } from '../store/reportStore';
 import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
 import type { GraphReportData } from '../store/reportStore';
@@ -59,6 +59,9 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Track if we're initializing from URL to prevent loops
   const initializingFromUrl = React.useRef(false);
 
+  // Derive mode from current params
+  const mode = deriveMode(searchParams);
+
   // Load saved queries on mount
   useEffect(() => {
     loadSavedQueries();
@@ -69,138 +72,101 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setSelectedExplorer(explorerType);
   }, [explorerType, setSelectedExplorer]);
 
-  // Initialize from URL parameters on mount
+  // Initialize from URL parameters on mount (supports both new and legacy URL formats)
   useEffect(() => {
-    const conceptId = urlParams.get('conceptId');
-    const mode = urlParams.get('mode') as 'concept' | 'neighborhood' | 'path' | null;
-    const similarity = urlParams.get('similarity');
-    const depth = urlParams.get('depth');
-    const fromConceptId = urlParams.get('fromConceptId');
-    const toConceptId = urlParams.get('toConceptId');
-    const maxHops = urlParams.get('maxHops');
+    // New format: c=conceptId, to=destId, d=depth, h=maxHops, s=similarity
+    // Legacy format: mode=concept|neighborhood|path, conceptId=X, fromConceptId=X, etc.
+    const primaryId = urlParams.get('c') || urlParams.get('conceptId');
+    const destId = urlParams.get('to') || urlParams.get('toConceptId');
+    const depth = parseInt(urlParams.get('d') || urlParams.get('depth') || '0');
+    const maxHops = parseInt(urlParams.get('h') || urlParams.get('maxHops') || '5');
+    const similarity = urlParams.get('s') || urlParams.get('similarity');
 
-    if (conceptId && mode) {
+    // Legacy path mode used fromConceptId instead of conceptId
+    const legacyMode = urlParams.get('mode');
+    const legacyFromId = urlParams.get('fromConceptId');
+
+    if (legacyMode === 'path' && legacyFromId) {
+      // Legacy path URL
       initializingFromUrl.current = true;
-
-      if (mode === 'concept') {
-        // Concept mode: load single concept with similar concepts
-        setSearchParams({
-          mode: 'concept',
-          conceptId: conceptId,
-          loadMode: 'clean',
-        });
-        if (similarity) {
-          setSimilarityThreshold(parseFloat(similarity));
-        }
-      } else if (mode === 'neighborhood') {
-        // Neighborhood mode: load subgraph around concept
-        setSearchParams({
-          mode: 'neighborhood',
-          centerConceptId: conceptId,
-          depth: depth ? parseInt(depth) : 2,
-          loadMode: 'clean',
-        });
-      }
-
-      // Reset flag after a tick to allow URL sync to run
-      setTimeout(() => {
-        initializingFromUrl.current = false;
-      }, 100);
-    } else if (mode === 'path' && fromConceptId && toConceptId) {
-      initializingFromUrl.current = true;
-
-      // Path mode: find connection between concepts
       setSearchParams({
-        mode: 'path',
-        fromConceptId: fromConceptId,
-        toConceptId: toConceptId,
-        maxHops: maxHops ? parseInt(maxHops) : 5,
-        depth: depth ? parseInt(depth) : undefined,
+        primaryConceptId: legacyFromId,
+        destinationConceptId: destId || undefined,
+        depth: depth || 1,
+        maxHops,
+        loadMode: 'clean',
+      });
+      setTimeout(() => { initializingFromUrl.current = false; }, 100);
+    } else if (primaryId) {
+      // New format or legacy concept/neighborhood URL
+      initializingFromUrl.current = true;
+
+      const effectiveDepth = depth || (legacyMode === 'neighborhood' ? 2 : 1);
+
+      setSearchParams({
+        primaryConceptId: primaryId,
+        destinationConceptId: destId || undefined,
+        depth: effectiveDepth,
+        maxHops,
         loadMode: 'clean',
       });
 
-      setTimeout(() => {
-        initializingFromUrl.current = false;
-      }, 100);
+      if (similarity) {
+        setSimilarityThreshold(parseFloat(similarity));
+      }
+
+      setTimeout(() => { initializingFromUrl.current = false; }, 100);
     }
   }, [urlParams, setSearchParams, setSimilarityThreshold]);
 
-  // Sync store state → URL parameters (bidirectional)
+  // Sync store state → URL parameters
   useEffect(() => {
-    // Don't update URL if we're initializing from URL
     if (initializingFromUrl.current) return;
-
-    // Don't update URL if no search params set
-    if (!searchParams.mode) return;
+    if (mode === 'idle') return;
 
     const newParams = new URLSearchParams();
 
-    if (searchParams.mode === 'concept' && searchParams.conceptId) {
-      newParams.set('conceptId', searchParams.conceptId);
-      newParams.set('mode', 'concept');
-      newParams.set('similarity', similarityThreshold.toString());
-    } else if (searchParams.mode === 'neighborhood' && searchParams.centerConceptId) {
-      newParams.set('conceptId', searchParams.centerConceptId);
-      newParams.set('mode', 'neighborhood');
-      newParams.set('depth', (searchParams.depth || 2).toString());
-    } else if (searchParams.mode === 'path' && searchParams.fromConceptId && searchParams.toConceptId) {
-      newParams.set('mode', 'path');
-      newParams.set('fromConceptId', searchParams.fromConceptId);
-      newParams.set('toConceptId', searchParams.toConceptId);
-      newParams.set('maxHops', (searchParams.maxHops || 5).toString());
-      if (searchParams.depth) {
-        newParams.set('depth', searchParams.depth.toString());
+    if (searchParams.primaryConceptId) {
+      newParams.set('c', searchParams.primaryConceptId);
+      newParams.set('d', searchParams.depth.toString());
+
+      if (searchParams.destinationConceptId) {
+        newParams.set('to', searchParams.destinationConceptId);
+        newParams.set('h', searchParams.maxHops.toString());
       }
+
+      newParams.set('s', similarityThreshold.toString());
     }
 
-    // Only update URL if params have changed
     const currentParams = urlParams.toString();
     const updatedParams = newParams.toString();
     if (currentParams !== updatedParams) {
-      setUrlParams(newParams, { replace: true }); // Use replace to avoid cluttering history
+      setUrlParams(newParams, { replace: true });
     }
-  }, [searchParams, similarityThreshold, urlParams, setUrlParams]);
+  }, [searchParams, similarityThreshold, mode, urlParams, setUrlParams]);
 
-  // React to searchParams - fetch data based on mode
-  // Concept mode: load single concept with neighbors
-  const { data: conceptData, isLoading: isLoadingConcept } = useSubgraph(
-    searchParams.mode === 'concept' ? searchParams.conceptId || null : null,
+  // Explore mode: subgraph around primary concept (covers old concept + neighborhood)
+  const { data: exploreData, isLoading: isLoadingExplore } = useSubgraph(
+    mode === 'explore' ? searchParams.primaryConceptId || null : null,
     {
-      depth: 1,
-      enabled: searchParams.mode === 'concept' && !!searchParams.conceptId,
+      depth: searchParams.depth,
+      enabled: mode === 'explore' && !!searchParams.primaryConceptId,
     }
   );
 
-  // Neighborhood mode: load subgraph with specified depth
-  const { data: neighborhoodData, isLoading: isLoadingNeighborhood } = useSubgraph(
-    searchParams.mode === 'neighborhood' ? searchParams.centerConceptId || null : null,
-    {
-      depth: searchParams.depth || 2,
-      enabled: searchParams.mode === 'neighborhood' && !!searchParams.centerConceptId,
-    }
-  );
-
-  // Path mode: find paths between two concepts
+  // Path mode: find paths between primary and destination
   const { data: pathData, isLoading: isLoadingPath, error: pathError } = useFindConnection(
-    searchParams.mode === 'path' ? searchParams.fromConceptId || null : null,
-    searchParams.mode === 'path' ? searchParams.toConceptId || null : null,
+    mode === 'path' ? searchParams.primaryConceptId || null : null,
+    mode === 'path' ? searchParams.destinationConceptId || null : null,
     {
-      maxHops: searchParams.maxHops || 5,
-      enabled: searchParams.mode === 'path' && !!searchParams.fromConceptId && !!searchParams.toConceptId,
+      maxHops: searchParams.maxHops,
+      enabled: mode === 'path' && !!searchParams.primaryConceptId && !!searchParams.destinationConceptId,
     }
   );
 
-  // Update rawGraphData when query results come back (cache API data)
+  // Update rawGraphData when query results come back
   useEffect(() => {
-    // Mode-aware data selection: use data from the active query mode only
-    // (prevents stale cached data from a previous mode shadowing new results)
-    let newData;
-    switch (searchParams.mode) {
-      case 'concept': newData = conceptData; break;
-      case 'neighborhood': newData = neighborhoodData; break;
-      case 'path': newData = pathData; break;
-      default: newData = conceptData || neighborhoodData || pathData;
-    }
+    const newData = mode === 'path' ? pathData : exploreData;
     if (!newData) return;
 
     const graphPayload = { nodes: newData.nodes || [], links: newData.links || [] };
@@ -211,9 +177,9 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     } else if (searchParams.loadMode === 'add') {
       mergeRawGraphData(graphPayload);
     }
-  }, [conceptData, neighborhoodData, pathData, searchParams.loadMode, searchParams.mode]);
+  }, [exploreData, pathData, searchParams.loadMode, mode]);
 
-  const isLoading = isLoadingConcept || isLoadingNeighborhood || isLoadingPath;
+  const isLoading = isLoadingExplore || isLoadingPath;
   const error = pathError;
   const graphData = storeGraphData;
 
@@ -255,16 +221,22 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   const ExplorerComponent = explorerPlugin.component;
 
-  // Stable callback for node clicks to prevent simulation restarts
+  // Follow Concept: load clicked node's neighborhood
   const handleNodeClick = useCallback((nodeId: string) => {
-    // Follow Concept: Load clicked node's neighborhood
     const store = useGraphStore.getState();
+
+    // Resolve label from current graph data for SearchBar display
+    const nodeLabel = store.rawGraphData?.nodes?.find(
+      (n: any) => (n.concept_id || n.id) === nodeId
+    )?.label;
+
     store.setFocusedNodeId(nodeId);
     store.setSearchParams({
-      mode: 'neighborhood',
-      centerConceptId: nodeId,
-      depth: 2, // Default depth for Follow Concept
-      loadMode: 'add', // Add to existing graph
+      primaryConceptId: nodeId,
+      primaryConceptLabel: nodeLabel,
+      depth: 2,
+      maxHops: 5,
+      loadMode: 'add',
     });
   }, []);
 
@@ -290,21 +262,21 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         grounding_strength: l.grounding_strength,
       })),
       searchParams: {
-        mode: searchParams.mode || 'unknown',
-        conceptId: searchParams.conceptId || searchParams.centerConceptId,
+        mode: mode === 'idle' ? 'unknown' : mode,
+        conceptId: searchParams.primaryConceptId,
         depth: searchParams.depth,
       },
     };
 
     await addReport({
-      name: '', // Will auto-generate name based on content
+      name: '',
       type: 'graph',
       data: reportData,
       sourceExplorer: explorerType === 'force-3d' ? '3d' : '2d',
     });
 
     navigate('/report');
-  }, [rawGraphData, searchParams, explorerType, addReport, navigate]);
+  }, [rawGraphData, searchParams, mode, explorerType, addReport, navigate]);
 
   // Load a saved query
   const handleLoadQuery = useCallback((query: any) => {
@@ -461,10 +433,10 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
                 <div className="text-sm text-muted-foreground">
                   <p>Tips:</p>
                   <ul className="mt-2 space-y-1 text-left">
-                    <li>• Use the search bar above to find concepts</li>
-                    <li>• Click nodes to explore connections</li>
-                    <li>• Use the sidebar for saved queries and settings</li>
-                    <li>• Drag nodes to reposition them</li>
+                    <li>Search for a concept above to find concepts</li>
+                    <li>Click nodes to explore connections</li>
+                    <li>Use the sidebar for saved queries and settings</li>
+                    <li>Drag nodes to reposition them</li>
                   </ul>
                 </div>
               </div>

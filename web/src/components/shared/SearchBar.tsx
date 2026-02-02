@@ -168,8 +168,10 @@ LIMIT 50`);
   const handleLoadConcept = (loadMode: 'clean' | 'add') => {
     if (!selectedConcept) return;
     setSearchParams({
-      mode: 'concept',
-      conceptId: selectedConcept.concept_id,
+      primaryConceptId: selectedConcept.concept_id,
+      primaryConceptLabel: selectedConcept.label,
+      depth: 1,
+      maxHops: 5,
       loadMode,
     });
   };
@@ -177,9 +179,10 @@ LIMIT 50`);
   const handleLoadNeighborhood = (loadMode: 'clean' | 'add') => {
     if (!selectedCenterConcept) return;
     setSearchParams({
-      mode: 'neighborhood',
-      centerConceptId: selectedCenterConcept.concept_id,
+      primaryConceptId: selectedCenterConcept.concept_id,
+      primaryConceptLabel: selectedCenterConcept.label,
       depth: neighborhoodDepth,
+      maxHops: 5,
       loadMode,
     });
   };

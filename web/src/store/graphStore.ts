@@ -26,28 +26,36 @@ interface UISettings {
   highlightNeighbors: boolean;
 }
 
-// Search parameters - describes WHAT to query, not HOW to query it
-// SearchBar sets these, App.tsx reacts to them
-export type SearchMode = 'concept' | 'neighborhood' | 'path' | null;
+// Search parameters — parameter-presence model where mode is derived, not declared.
+// SearchBar sets these, ExplorerView reacts to them.
 export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
 
 export interface SearchParams {
-  mode: SearchMode;
+  // Primary concept (always present for any search)
+  primaryConceptId?: string;
+  primaryConceptLabel?: string;
 
-  // Concept mode
-  conceptId?: string;
+  // Neighborhood depth (1 = immediate neighbors, >1 = deeper expansion)
+  depth: number;
 
-  // Neighborhood mode
-  centerConceptId?: string;
-  depth?: number;
+  // Destination concept (presence triggers path mode)
+  destinationConceptId?: string;
+  destinationConceptLabel?: string;
 
-  // Path mode
-  fromConceptId?: string;
-  toConceptId?: string;
-  maxHops?: number;
+  // Path parameters (only relevant when destination is set)
+  maxHops: number;
 
-  // Shared parameters
-  loadMode?: 'clean' | 'add'; // Replace graph or add to existing
+  // Load behavior
+  loadMode: 'clean' | 'add';
+}
+
+// Derived from which parameters are populated — never stored explicitly
+export type DerivedMode = 'idle' | 'explore' | 'path';
+
+export function deriveMode(params: SearchParams): DerivedMode {
+  if (!params.primaryConceptId) return 'idle';
+  if (params.destinationConceptId) return 'path';
+  return 'explore';
 }
 
 interface GraphStore {
@@ -159,7 +167,8 @@ const defaultUISettings: UISettings = {
 };
 
 const defaultSearchParams: SearchParams = {
-  mode: null,
+  depth: 1,
+  maxHops: 5,
   loadMode: 'clean',
 };
 
