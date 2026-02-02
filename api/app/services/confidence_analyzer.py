@@ -42,6 +42,11 @@ _confidence_cache_lock = threading.Lock()
 _confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 _confidence_cache_generation: Optional[int] = None
 
+# Maximum concepts per batch Cypher query. Matches BATCH_CHUNK_SIZE in
+# query.py. Keeps IN-clause lists small for AGE and releases pool
+# connections between chunks.
+BATCH_CHUNK_SIZE = 25
+
 
 # Confidence level thresholds
 # These are initial values - Phase 4 will tune based on real data
@@ -226,7 +231,7 @@ class ConfidenceAnalyzer:
 
         Amortized version of calculate_confidence(). On cache miss, replaces
         3N DB round-trips (relationship counts, source counts, evidence counts
-        per concept) with exactly 3 batch Cypher queries total.
+        per concept) with 3 queries per chunk of BATCH_CHUNK_SIZE concepts.
 
         Cache interaction:
             Uses the same _confidence_cache global as the per-concept method.
@@ -237,9 +242,10 @@ class ConfidenceAnalyzer:
             the cache, so subsequent per-concept calls benefit.
 
         Connection management:
-            Gets a single pool connection for generation check + all three
-            batch Cypher queries. This replaces 3N separate connections that
-            the per-concept path would acquire via _execute_cypher.
+            Misses are processed in chunks of BATCH_CHUNK_SIZE. Each chunk
+            gets its own pool connection, runs 3 Cypher queries, and returns
+            it. This keeps IN-clause lists small for AGE's query planner
+            and releases connections between chunks.
 
         Args:
             concept_ids: Concept IDs to compute confidence for.
@@ -265,10 +271,10 @@ class ConfidenceAnalyzer:
 
         from psycopg2 import extras as pg_extras
 
+        # --- Phase 1: cache check (one connection) ---
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=pg_extras.RealDictCursor) as cur:
-                # --- Cache check: evict stale, separate hits from misses ---
                 graph_gen = self._get_graph_generation_on_cursor(cur)
 
                 misses = []
@@ -287,7 +293,6 @@ class ConfidenceAnalyzer:
                         cache_key = (cid, graph_gen)
                         cached = _confidence_cache.get(cache_key)
                         if cached is not None:
-                            # Recompute grounding_display from cached signals
                             entry = dict(cached)
                             entry['grounding_display'] = (
                                 self._get_grounding_display(
@@ -305,53 +310,71 @@ class ConfidenceAnalyzer:
                         f"served from cache"
                     )
                     return result
-
-                # --- Batch gather signals (3 queries on this connection) ---
-                signals_map = self._gather_signals_batch(misses, cur)
-
-                # --- Per-concept computation (pure Python, no DB) ---
-                calc_time_ms = int((time.time() - start_time) * 1000)
-                for cid in misses:
-                    signals = signals_map.get(cid, {
-                        'relationship_count': 0,
-                        'source_count': 0,
-                        'evidence_count': 0,
-                        'relationship_types': 0,
-                        'relationship_type_diversity': 0.0,
-                    })
-                    level = self._calculate_level(signals)
-                    confidence_score = self._calculate_score(signals)
-                    interpretation = self._interpret(level, signals)
-                    grounding_display = self._get_grounding_display(
-                        grounding_map.get(cid), level
-                    )
-
-                    entry = {
-                        'level': level,
-                        'confidence_score': confidence_score,
-                        'signals': signals,
-                        'interpretation': interpretation,
-                        'grounding_display': grounding_display,
-                        'calculation_time_ms': calc_time_ms,
-                    }
-                    result[cid] = entry
-
-                    with _confidence_cache_lock:
-                        _confidence_cache[(cid, graph_gen)] = entry
-
-                logger.debug(
-                    f"Confidence batch: {len(concept_ids)} concepts, "
-                    f"{len(concept_ids) - len(misses)} cached, "
-                    f"{len(misses)} computed"
-                )
-
-                return result
-
-        except Exception as e:
-            logger.error(f"Batch confidence failed: {e}")
-            raise
         finally:
             self.client.pool.putconn(conn)
+
+        # --- Phase 2: process misses in chunks ---
+        # Each chunk gets its own connection, keeping IN-clause lists
+        # small and releasing connections between chunks.
+        default_signals = {
+            'relationship_count': 0,
+            'source_count': 0,
+            'evidence_count': 0,
+            'relationship_types': 0,
+            'relationship_type_diversity': 0.0,
+        }
+
+        for i in range(0, len(misses), BATCH_CHUNK_SIZE):
+            chunk = misses[i:i + BATCH_CHUNK_SIZE]
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor(
+                    cursor_factory=pg_extras.RealDictCursor
+                ) as cur:
+                    signals_map = self._gather_signals_batch(chunk, cur)
+
+                    calc_time_ms = int(
+                        (time.time() - start_time) * 1000
+                    )
+                    for cid in chunk:
+                        signals = signals_map.get(
+                            cid, dict(default_signals)
+                        )
+                        level = self._calculate_level(signals)
+                        confidence_score = self._calculate_score(signals)
+                        interpretation = self._interpret(level, signals)
+                        grounding_display = self._get_grounding_display(
+                            grounding_map.get(cid), level
+                        )
+
+                        entry = {
+                            'level': level,
+                            'confidence_score': confidence_score,
+                            'signals': signals,
+                            'interpretation': interpretation,
+                            'grounding_display': grounding_display,
+                            'calculation_time_ms': calc_time_ms,
+                        }
+                        result[cid] = entry
+
+                        with _confidence_cache_lock:
+                            _confidence_cache[(cid, graph_gen)] = entry
+
+            except Exception as e:
+                logger.error(f"Batch confidence chunk failed: {e}")
+                raise
+            finally:
+                self.client.pool.putconn(conn)
+
+        logger.debug(
+            f"Confidence batch: {len(concept_ids)} concepts, "
+            f"{len(concept_ids) - len(misses)} cached, "
+            f"{len(misses)} computed in "
+            f"{(len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE} "
+            f"chunks"
+        )
+
+        return result
 
     def _get_graph_generation_on_cursor(self, cur) -> int:
         """Read graph generation using an existing cursor.

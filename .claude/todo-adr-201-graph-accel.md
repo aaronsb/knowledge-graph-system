@@ -249,11 +249,14 @@ AGE scans all edges for pattern matching.
 | Cold (topology + batch hydration) | 0.69s | graph_accel + batch grounding + batch confidence |
 | Warm (all cached) | 0.57s | Topology + cached hydration |
 
-Three cache tiers + batch queries:
+Three cache tiers + chunked batch queries:
 1. Polarity axis — cached against `vocabulary_change_counter` (computed once per vocab change)
 2. Per-concept grounding — cached against `graph_accel.generation` (computed once per graph mutation)
 3. Per-concept confidence — cached against `graph_accel.generation` (eliminates 3 Cypher queries/concept)
-4. Batch queries — 5 total (2 grounding + 3 confidence) instead of 5N sequential on cache miss
+4. Batch queries — 2 grounding + 3 confidence per chunk of BATCH_CHUNK_SIZE (25) concepts
+   - Chunks keep AGE IN-clause lists small, release pool connections between chunks
+   - No measurable overhead on current graph (all concepts fit in one chunk)
+   - Enables future ThreadPoolExecutor parallelization across chunks
 
 ## Notes
 - pgrx 0.16.1 (latest stable), PostgreSQL 13-18, container is PG 17.7
