@@ -26,8 +26,6 @@ import {
   NodeInfoBox,
   EdgeInfoBox,
   StatsPanel,
-  Settings3DPanel,
-  GraphSettingsPanel,
   Legend,
   PanelStack,
   useGraphNavigation,
@@ -1946,20 +1944,6 @@ export const ForceGraph3D: React.FC<
           )}
         </div>
 
-        {onSettingsChange && (
-          <GraphSettingsPanel
-            settings={settings}
-            onChange={onSettingsChange}
-            sliderRanges={SLIDER_RANGES}
-          />
-        )}
-
-        {onSettingsChange && (
-          <Settings3DPanel
-            camera={settings.camera}
-            onCameraChange={(camera) => onSettingsChange({ ...settings, camera })}
-          />
-        )}
       </PanelStack>
 
       {/* Unified Context Menu (context-aware for node vs background) */}

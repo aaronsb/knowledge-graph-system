@@ -57,12 +57,14 @@ interface GraphSettingsPanelProps<T extends GraphSettings> {
   settings: T;
   onChange: (settings: T) => void;
   sliderRanges: SliderRanges;
+  embedded?: boolean;
 }
 
 export const GraphSettingsPanel = <T extends GraphSettings>({
   settings,
   onChange,
   sliderRanges,
+  embedded = false,
 }: GraphSettingsPanelProps<T>) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -101,11 +103,14 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
 
   return (
     <div
-      className="bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
-      style={{ width: '280px', maxHeight: '95vh' }}
+      className={embedded
+        ? "flex flex-col"
+        : "bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
+      }
+      style={embedded ? undefined : { width: '280px', maxHeight: '95vh' }}
     >
       {/* Content */}
-      <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
+      <div className={`overflow-y-auto overflow-x-hidden ${embedded ? '' : 'p-3'} space-y-3`}>
         {/* Physics Section */}
         <div className="border-b border-border pb-3">
           <button

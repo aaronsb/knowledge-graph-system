@@ -19,6 +19,10 @@ import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
 import type { GraphReportData } from '../store/reportStore';
 import { useSubgraph, useFindConnection, usePathEnrichment } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
+import { GraphSettingsPanel } from '../explorers/common/GraphSettingsPanel';
+import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
+import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
+import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
 import type { VisualizationType } from '../types/explorer';
 
@@ -228,6 +232,9 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     }
   }, [explorerPlugin, explorerType]);
 
+  // Slider ranges for the current explorer's settings panel
+  const sliderRanges = explorerType === 'force-3d' ? SLIDER_RANGES_3D : SLIDER_RANGES_2D;
+
   if (!explorerPlugin) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -358,27 +365,32 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     </div>
   );
 
-  // Settings panel content
+  // Settings panel content — graph settings (physics, visual, interaction)
   const settingsPanelContent = (
     <div className="p-3 space-y-4">
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium">Similarity Threshold</label>
-          <span className="text-sm font-mono text-primary">{Math.round(similarityThreshold * 100)}%</span>
+      {explorerSettings?.physics ? (
+        <>
+          <GraphSettingsPanel
+            settings={explorerSettings}
+            onChange={setExplorerSettings}
+            sliderRanges={sliderRanges}
+            embedded
+          />
+          {explorerType === 'force-3d' && explorerSettings.camera && (
+            <Settings3DPanel
+              camera={explorerSettings.camera}
+              onCameraChange={(camera) =>
+                setExplorerSettings({ ...explorerSettings, camera })
+              }
+              embedded
+            />
+          )}
+        </>
+      ) : (
+        <div className="text-center text-muted-foreground text-sm py-4">
+          <p>No settings for this explorer</p>
         </div>
-        <input
-          type="range"
-          min="0.3"
-          max="0.95"
-          step="0.05"
-          value={similarityThreshold}
-          onChange={(e) => setSimilarityThreshold(parseFloat(e.target.value))}
-          className="w-full"
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Minimum similarity for concept search
-        </p>
-      </div>
+      )}
     </div>
   );
 
