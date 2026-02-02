@@ -50,17 +50,16 @@ class TestAvailabilityDetection:
             mock_sql.return_value = [{'status': 'stale'}]
             assert facade._accel_ready is True
 
-    def test_accel_loads_when_not_loaded(self, facade):
-        """Extension installed but not loaded → triggers load."""
+    def test_accel_available_when_not_loaded(self, facade):
+        """Extension installed but not loaded → still available.
+
+        _detect_accel only checks if the extension is installed.
+        Per-connection loading is handled by _execute_sql.
+        """
         with patch.object(facade, '_execute_sql') as mock_sql:
-            # First call: status check returns not_loaded
-            # Second call: load succeeds
-            mock_sql.side_effect = [
-                [{'status': 'not_loaded'}],
-                [{'node_count': 800, 'edge_count': 2000, 'load_time_ms': 22.0}]
-            ]
+            mock_sql.return_value = [{'status': 'not_loaded'}]
             assert facade._accel_ready is True
-            assert mock_sql.call_count == 2
+            assert mock_sql.call_count == 1
 
     def test_accel_unavailable_when_extension_missing(self, facade):
         """Extension not installed → _accel_ready is False."""

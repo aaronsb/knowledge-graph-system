@@ -66,20 +66,19 @@ class GraphFacade:
         return self._accel_available
 
     def _detect_accel(self) -> bool:
-        """Probe graph_accel extension. Try to load if not loaded."""
+        """Check if graph_accel extension is installed.
+
+        Does NOT try to load the graph here — loading must happen on the
+        same connection that will run the query (per-backend state).
+        _execute_sql handles per-connection loading automatically.
+        """
         try:
-            rows = self._execute_sql(
-                "SELECT status FROM graph_accel_status()"
-            )
-            status = rows[0]['status'] if rows else 'not_loaded'
-            if status == 'not_loaded':
-                self._execute_sql(
-                    "SELECT * FROM graph_accel_load(%s)",
-                    ('knowledge_graph',)
-                )
+            rows = self._execute_sql("SELECT status FROM graph_accel_status()")
+            status = rows[0]['status'] if rows else 'unknown'
+            logger.info(f"graph_accel detected: status={status}")
             return True
-        except Exception:
-            # Extension not installed or load failed
+        except Exception as e:
+            logger.info(f"graph_accel not available: {e}")
             return False
 
     def is_accelerated(self) -> bool:
@@ -252,11 +251,16 @@ class GraphFacade:
             return None
 
         if self._accel_ready:
+            logger.info(f"find_path: using graph_accel ({from_id} → {to_id}, max_hops={max_hops})")
             result = self._find_path_accel(
                 from_id, to_id, max_hops, direction, min_confidence
             )
             if result is not None:
+                logger.info(f"find_path: graph_accel returned path with {result['hops']} hops")
                 return result
+            logger.info("find_path: graph_accel returned no path, falling through to BFS")
+        else:
+            logger.info(f"find_path: graph_accel not available, using Cypher BFS")
 
         return self._find_path_bfs(from_id, to_id, max_hops, relationship_types)
 
@@ -284,7 +288,11 @@ class GraphFacade:
 
         paths = [shortest]
 
-        if max_paths > 1 and shortest["hops"] > 0:
+        # Additional paths via Cypher BFS with edge exclusion.
+        # Skip when graph_accel handled the first path — Cypher BFS on
+        # dense graphs (412K edges) hangs. Multi-path support can be
+        # added Rust-side later.
+        if max_paths > 1 and shortest["hops"] > 0 and not self._accel_ready:
             excluded_edges = self._extract_edges(shortest)
             for _ in range(max_paths - 1):
                 additional = self._find_path_bfs_excluding(
@@ -823,12 +831,34 @@ class GraphFacade:
 
         Used for graph_accel function calls which are regular SQL functions.
         Synchronous — matches _execute_cypher's calling convention.
+
+        Ensures graph_accel is loaded in the current backend before each
+        query. graph_accel uses per-backend state (thread_local + RefCell),
+        so each pool connection must load independently. The status check
+        adds ~0.01ms overhead per call.
         """
         conn = self._client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
                 # Set graph_accel GUCs for this session
                 cur.execute("SET graph_accel.node_id_property = 'concept_id'")
+
+                # Ensure graph is loaded in this backend
+                cur.execute("SELECT status FROM graph_accel_status()")
+                status_row = cur.fetchone()
+                backend_status = status_row['status'] if status_row else 'unknown'
+                if backend_status == 'not_loaded':
+                    logger.info("graph_accel: loading graph in this backend...")
+                    cur.execute(
+                        "SELECT * FROM graph_accel_load(%s)",
+                        ('knowledge_graph',)
+                    )
+                    load_result = cur.fetchall()
+                    logger.info(f"graph_accel: loaded — {load_result}")
+                else:
+                    logger.debug(f"graph_accel: backend status={backend_status}")
+
+                # Run the actual query
                 if params:
                     cur.execute(query, params)
                 else:

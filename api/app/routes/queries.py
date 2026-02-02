@@ -89,64 +89,78 @@ def _build_connection_paths(
 
     Handles grounding/confidence calculation and evidence fetching for
     each node in the path. Shared by /connect and /connect-by-search.
+
+    Deduplicates: computes grounding and evidence once per unique concept
+    across all paths, then reuses cached results.
     """
+    # Pre-compute grounding and evidence for unique concepts across all paths
+    grounding_cache: Dict[str, Dict] = {}
+    evidence_cache: Dict[str, Optional[List]] = {}
+
+    all_concept_ids = set()
+    for raw_path in raw_paths:
+        for node_data in raw_path.get('path_nodes', []):
+            cid = node_data.get('concept_id', '')
+            if cid:
+                all_concept_ids.add(cid)
+
+    if include_grounding:
+        conf_analyzer = ConfidenceAnalyzer(client)
+        for concept_id in all_concept_ids:
+            try:
+                gs = client.calculate_grounding_strength_semantic(concept_id)
+                conf_result = conf_analyzer.calculate_confidence(concept_id, gs)
+                grounding_cache[concept_id] = {
+                    'grounding_strength': gs,
+                    'confidence_level': conf_result.get('level'),
+                    'confidence_score': conf_result.get('confidence_score'),
+                    'grounding_display': conf_result.get('grounding_display'),
+                }
+            except Exception as e:
+                logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+    if include_evidence:
+        for concept_id in all_concept_ids:
+            evidence_query = client._execute_cypher(
+                "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                "s.content_type as content_type, s.storage_key as storage_key "
+                "ORDER BY s.document, s.paragraph "
+                "LIMIT 3",
+                params={"cid": concept_id}
+            )
+            if evidence_query:
+                evidence_cache[concept_id] = _dedupe_evidence([
+                    ConceptInstance(
+                        quote=e['quote'],
+                        document=e['document'],
+                        paragraph=e['paragraph'],
+                        source_id=e['source_id'],
+                        content_type=e.get('content_type'),
+                        has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                        image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                        storage_key=e.get('storage_key')
+                    )
+                    for e in evidence_query
+                ])
+
+    # Assemble paths from caches
     paths = []
     for raw_path in raw_paths:
         nodes = []
         for node_data in raw_path.get('path_nodes', []):
             concept_id = node_data.get('concept_id', '')
-            label = node_data.get('label', '')
-            description = node_data.get('description', '')
-
-            grounding_strength = None
-            confidence_level = None
-            confidence_score = None
-            grounding_display = None
-            if include_grounding and concept_id:
-                try:
-                    grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                    conf_analyzer = ConfidenceAnalyzer(client)
-                    conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
-                    confidence_level = conf_result.get('level')
-                    confidence_score = conf_result.get('confidence_score')
-                    grounding_display = conf_result.get('grounding_display')
-                except Exception as e:
-                    logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
-
-            sample_evidence = None
-            if include_evidence and concept_id:
-                evidence_query = client._execute_cypher(
-                    "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                    "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                    "s.content_type as content_type, s.storage_key as storage_key "
-                    "ORDER BY s.document, s.paragraph "
-                    "LIMIT 3",
-                    params={"cid": concept_id}
-                )
-                if evidence_query:
-                    sample_evidence = _dedupe_evidence([
-                        ConceptInstance(
-                            quote=e['quote'],
-                            document=e['document'],
-                            paragraph=e['paragraph'],
-                            source_id=e['source_id'],
-                            content_type=e.get('content_type'),
-                            has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
-                            image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
-                            storage_key=e.get('storage_key')
-                        )
-                        for e in evidence_query
-                    ])
+            g = grounding_cache.get(concept_id, {})
 
             nodes.append(PathNode(
                 id=concept_id,
-                label=label,
-                description=description,
-                grounding_strength=grounding_strength,
-                confidence_level=confidence_level,
-                confidence_score=confidence_score,
-                grounding_display=grounding_display,
-                sample_evidence=sample_evidence
+                label=node_data.get('label', ''),
+                description=node_data.get('description', ''),
+                grounding_strength=g.get('grounding_strength'),
+                confidence_level=g.get('confidence_level'),
+                confidence_score=g.get('confidence_score'),
+                grounding_display=g.get('grounding_display'),
+                sample_evidence=evidence_cache.get(concept_id)
             ))
 
         rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
