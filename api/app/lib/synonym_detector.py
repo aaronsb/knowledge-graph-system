@@ -478,8 +478,8 @@ class SynonymDetector:
         # Convert edge type to descriptive text
         descriptive_text = self._edge_type_to_text(edge_type)
 
-        # Generate embedding (synchronous call)
-        result = self.ai_provider.generate_embedding(descriptive_text)
+        # Generate embedding
+        result = await self.ai_provider.generate_embedding(descriptive_text)
         embedding = np.array(result["embedding"])
 
         # Cache for reuse

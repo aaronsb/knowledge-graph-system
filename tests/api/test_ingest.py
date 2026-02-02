@@ -315,5 +315,4 @@ def test_ingest_empty_text(api_client, auth_headers_user):
 
     response = api_client.post("/ingest/text", data=data, headers=auth_headers_user)
 
-    # Empty text is now rejected at the validation layer
-    assert response.status_code in [200, 422]
+    assert response.status_code == 422

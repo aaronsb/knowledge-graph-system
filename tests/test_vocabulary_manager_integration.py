@@ -18,6 +18,7 @@ from typing import List, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 
+from tests.helpers import patch_synonym_detector_embedding
 from api.app.services.vocabulary_manager import VocabularyManager
 from api.app.lib.aggressiveness_curve import calculate_aggressiveness
 from api.app.lib.vocabulary_scoring import EdgeTypeScore
@@ -120,26 +121,8 @@ def mock_ai_provider():
 
 
 def _patch_synonym_detector(manager):
-    """Patch the SynonymDetector._get_edge_type_embedding on a VocabularyManager.
-
-    The source SynonymDetector._get_edge_type_embedding calls
-    ai_provider.generate_embedding() without await and also imports AGEClient
-    for database lookups. Both fail in tests. This helper replaces it with a
-    properly-awaited version that uses the mock AI provider directly.
-    """
-    detector = manager.synonym_detector
-
-    async def _patched_get_edge_type_embedding(edge_type: str) -> np.ndarray:
-        if edge_type in detector._embedding_cache:
-            return detector._embedding_cache[edge_type]
-
-        descriptive_text = detector._edge_type_to_text(edge_type)
-        result = await detector.ai_provider.generate_embedding(descriptive_text)
-        embedding = np.array(result["embedding"])
-        detector._embedding_cache[edge_type] = embedding
-        return embedding
-
-    detector._get_edge_type_embedding = _patched_get_edge_type_embedding
+    """Patch SynonymDetector on a VocabularyManager to bypass AGEClient."""
+    patch_synonym_detector_embedding(manager.synonym_detector)
 
 
 @pytest.fixture

@@ -3,16 +3,17 @@ Tests for synonym_detector.py
 
 Validates embedding-based synonym detection for edge type merging (ADR-032).
 
-Note: The source SynonymDetector._get_edge_type_embedding method calls
-ai_provider.generate_embedding() without await and also imports AGEClient
-for database lookups. Both of these fail in a test environment. We patch
-_get_edge_type_embedding on the detector to bypass these issues and test
-the higher-level logic (find_synonyms, suggest_merge, batch_detect, etc.).
+Note: SynonymDetector._get_edge_type_embedding imports AGEClient for
+database lookups, which isn't available in tests. We patch it via
+helpers.patch_synonym_detector_embedding to go directly to the mock
+AI provider and test the higher-level logic (find_synonyms, suggest_merge,
+batch_detect, etc.).
 """
 
 import pytest
 import numpy as np
 from unittest.mock import AsyncMock, MagicMock
+from tests.helpers import patch_synonym_detector_embedding
 from api.app.lib.synonym_detector import (
     SynonymDetector,
     SynonymCandidate,
@@ -70,25 +71,11 @@ def mock_ai_provider():
 def detector(mock_ai_provider):
     """SynonymDetector instance with mock provider.
 
-    Patches _get_edge_type_embedding to bypass the source code's missing
-    await on generate_embedding and its AGEClient database import. The
-    patched version properly awaits the async mock and returns np.ndarray.
+    Patches _get_edge_type_embedding to bypass the AGEClient database
+    import. The patched version goes directly to the mock AI provider.
     """
     det = SynonymDetector(mock_ai_provider)
-
-    # Build an async replacement that uses the cache and the mock provider
-    async def _patched_get_edge_type_embedding(edge_type: str) -> np.ndarray:
-        if edge_type in det._embedding_cache:
-            return det._embedding_cache[edge_type]
-
-        descriptive_text = det._edge_type_to_text(edge_type)
-        result = await det.ai_provider.generate_embedding(descriptive_text)
-        embedding = np.array(result["embedding"])
-        det._embedding_cache[edge_type] = embedding
-        return embedding
-
-    det._get_edge_type_embedding = _patched_get_edge_type_embedding
-
+    patch_synonym_detector_embedding(det)
     return det
 
 
