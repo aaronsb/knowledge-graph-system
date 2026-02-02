@@ -42,10 +42,7 @@ _confidence_cache_lock = threading.Lock()
 _confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 _confidence_cache_generation: Optional[int] = None
 
-# Maximum concepts per batch Cypher query. Matches BATCH_CHUNK_SIZE in
-# query.py. Keeps IN-clause lists small for AGE and releases pool
-# connections between chunks.
-BATCH_CHUNK_SIZE = 25
+from api.app.constants import BATCH_CHUNK_SIZE
 
 
 # Confidence level thresholds
@@ -174,6 +171,9 @@ class ConfidenceAnalyzer:
                 "calculation_time_ms": calculation_time_ms
             }
 
+            # Note: the cached entry stores grounding_display from this caller's
+            # grounding_strength. The cache-hit path always recomputes it from
+            # the caller's value, so the stored copy is never served stale.
             with _confidence_cache_lock:
                 _confidence_cache[cache_key] = result
 

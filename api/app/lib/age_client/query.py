@@ -51,11 +51,7 @@ _grounding_cache_lock = threading.Lock()
 _grounding_cache: Dict[Tuple[str, int], Tuple[float, Dict]] = {}  # (concept_id, graph_gen) → (grounding, confidence)
 _grounding_cache_generation: Optional[int] = None  # tracks which graph generation the cache covers
 
-# Maximum concepts per batch Cypher query. Keeps IN-clause lists small for
-# AGE's query planner and returns pool connections between chunks so other
-# requests aren't starved. Each chunk costs 2 queries (edges + vocab) for
-# grounding or 3 queries (rels + sources + evidence) for confidence.
-BATCH_CHUNK_SIZE = 25
+from api.app.constants import BATCH_CHUNK_SIZE
 
 
 def _parse_embedding(emb_json) -> Optional[np.ndarray]:
