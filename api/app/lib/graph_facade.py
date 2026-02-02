@@ -29,12 +29,22 @@ logger = logging.getLogger(__name__)
 # Valid Cypher relationship type: uppercase letters, digits, underscores
 _VALID_REL_TYPE_RE = re.compile(r'^[A-Z][A-Z0-9_]*$')
 
+# Valid concept ID: sha256 prefix + hex/underscore/alphanumeric (no quotes, no injection)
+_VALID_CONCEPT_ID_RE = re.compile(r'^[a-zA-Z0-9:_-]+$')
+
 
 def _validate_rel_types(types: List[str]) -> None:
     """Validate relationship type names for safe Cypher interpolation."""
     for t in types:
         if not _VALID_REL_TYPE_RE.match(t):
             raise ValueError(f"Invalid relationship type name: {t!r}")
+
+
+def _validate_concept_ids(ids: List[str]) -> None:
+    """Validate concept IDs for safe Cypher interpolation."""
+    for cid in ids:
+        if not _VALID_CONCEPT_ID_RE.match(cid):
+            raise ValueError(f"Invalid concept ID: {cid!r}")
 
 
 class GraphFacade:
@@ -75,10 +85,10 @@ class GraphFacade:
         try:
             rows = self._execute_sql("SELECT status FROM graph_accel_status()")
             status = rows[0]['status'] if rows else 'unknown'
-            logger.info(f"graph_accel detected: status={status}")
+            logger.debug(f"graph_accel detected: status={status}")
             return True
         except Exception as e:
-            logger.info(f"graph_accel not available: {e}")
+            logger.debug(f"graph_accel not available: {e}")
             return False
 
     def is_accelerated(self) -> bool:
@@ -139,9 +149,18 @@ class GraphFacade:
             List of dicts with concept_id, label, distance, path_types
         """
         if self._accel_ready:
-            return self._neighborhood_accel(
+            results = self._neighborhood_accel(
                 concept_id, max_depth, direction, min_confidence
             )
+            # graph_accel doesn't filter by relationship type at SQL level;
+            # post-filter if caller specified types
+            if relationship_types:
+                type_set = set(relationship_types)
+                results = [
+                    r for r in results
+                    if any(t in type_set for t in (r.get('path_types') or []))
+                ]
+            return results
         return self._neighborhood_cypher(
             concept_id, max_depth, relationship_types
         )
@@ -163,10 +182,16 @@ class GraphFacade:
             "WHERE label = 'Concept' AND distance > 0",
             (concept_id, max_depth, direction, conf_param)
         )
+
+        # graph_accel 'label' is the AGE vertex label ("Concept"), not
+        # the concept's display name. Hydrate to get real properties.
+        concept_ids = [r['app_id'] for r in rows if r['app_id']]
+        hydrated = self._hydrate_concepts(concept_ids) if concept_ids else {}
+
         return [
             {
                 'concept_id': r['app_id'],
-                'label': r['label'] or '',
+                'label': hydrated.get(r['app_id'], {}).get('label', ''),
                 'distance': r['distance'],
                 'path_types': r['path_types'] or []
             }
@@ -251,16 +276,16 @@ class GraphFacade:
             return None
 
         if self._accel_ready:
-            logger.info(f"find_path: using graph_accel ({from_id} → {to_id}, max_hops={max_hops})")
+            logger.debug(f"find_path: using graph_accel ({from_id} → {to_id}, max_hops={max_hops})")
             result = self._find_path_accel(
                 from_id, to_id, max_hops, direction, min_confidence
             )
             if result is not None:
-                logger.info(f"find_path: graph_accel returned path with {result['hops']} hops")
+                logger.debug(f"find_path: graph_accel returned path with {result['hops']} hops")
                 return result
-            logger.info("find_path: graph_accel returned no path, falling through to BFS")
+            logger.debug("find_path: graph_accel returned no path, falling through to BFS")
         else:
-            logger.info(f"find_path: graph_accel not available, using Cypher BFS")
+            logger.debug("find_path: graph_accel not available, using Cypher BFS")
 
         return self._find_path_bfs(from_id, to_id, max_hops, relationship_types)
 
@@ -498,6 +523,7 @@ class GraphFacade:
                 properties(r) as rel_props
         """
 
+        _validate_concept_ids(node_ids)
         ids_str = ", ".join(f"'{id}'" for id in node_ids)
         query_substituted = query.replace("$ids", f"[{ids_str}]")
 
@@ -673,6 +699,7 @@ class GraphFacade:
 
         neighbor_ids = [n['concept_id'] for n in neighbors]
         neighbor_ids.append(start_id)
+        _validate_concept_ids(neighbor_ids)
         ids_str = ", ".join(f"'{id}'" for id in neighbor_ids)
 
         query = f"""
@@ -764,6 +791,7 @@ class GraphFacade:
         if not unique_ids:
             return {}
 
+        _validate_concept_ids(unique_ids)
         ids_str = ", ".join(f"'{cid}'" for cid in unique_ids)
         query = f"""
             MATCH (c:Concept)
@@ -854,7 +882,13 @@ class GraphFacade:
                         ('knowledge_graph',)
                     )
                     load_result = cur.fetchall()
-                    logger.info(f"graph_accel: loaded — {load_result}")
+                    if load_result:
+                        r = load_result[0]
+                        logger.info(
+                            f"graph_accel: loaded {r.get('node_count', '?')} nodes / "
+                            f"{r.get('edge_count', '?')} edges in "
+                            f"{r.get('load_time_ms', '?'):.0f}ms"
+                        )
                 else:
                     logger.debug(f"graph_accel: backend status={backend_status}")
 

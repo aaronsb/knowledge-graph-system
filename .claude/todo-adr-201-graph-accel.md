@@ -125,6 +125,25 @@ Branch: `feature/graph-facade`
 - [ ] Publish to GitHub as standalone repo (Apache 2.0)
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
 
+## Live API Benchmarks (2026-02-02, 1393 nodes / 412K edges)
+
+Baseline query for multi-path comparison:
+```
+POST /query/connect
+from: sha256:bd065_chunk4_c51b1769 (Graph Structure)
+to:   sha256:bd065_chunk8_78c1711d (Property Graph Databases)
+max_hops: 4, include_grounding: true
+```
+
+| Scenario | Time | Result |
+|----------|------|--------|
+| Cypher BFS only (no graph_accel) | >187s → terminated by restarting postgres | 500, 5 postgres workers at 95% CPU |
+| graph_accel single path (cold, first load) | 2.3s | 200, 1 path / 2 hops |
+| graph_accel single path (warm, graph loaded) | TBD after multi-path | should be sub-second |
+| graph_accel multi-path (Yen's k-shortest) | TBD — next branch | target: <1s for 5 paths |
+
+Re-run this query after implementing Rust multi-path to compare.
+
 ## Notes
 - pgrx 0.16.1 (latest stable), PostgreSQL 13-18, container is PG 17.7
 - Per-backend state (thread_local + RefCell). Shared memory deferred.

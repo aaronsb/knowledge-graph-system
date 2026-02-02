@@ -86,16 +86,19 @@ class TestNeighborhoodAccelerated:
     """Test neighborhood() with graph_accel fast path."""
 
     def test_returns_concept_list(self, facade):
-        """Accelerated path returns properly mapped results."""
-        with patch.object(facade, '_execute_sql') as mock_sql:
-            # Availability check
-            mock_sql.return_value = [{'status': 'loaded'}]
-            facade._accel_available = True
+        """Accelerated path returns properly mapped results with hydrated labels."""
+        facade._accel_available = True
 
+        with patch.object(facade, '_execute_sql') as mock_sql, \
+             patch.object(facade, '_hydrate_concepts') as mock_hydrate:
             mock_sql.return_value = [
-                {'app_id': 'c_abc', 'label': 'Concept A', 'distance': 1, 'path_types': ['IMPLIES']},
-                {'app_id': 'c_def', 'label': 'Concept B', 'distance': 2, 'path_types': ['IMPLIES', 'SUPPORTS']},
+                {'app_id': 'c_abc', 'label': 'Concept', 'distance': 1, 'path_types': ['IMPLIES']},
+                {'app_id': 'c_def', 'label': 'Concept', 'distance': 2, 'path_types': ['IMPLIES', 'SUPPORTS']},
             ]
+            mock_hydrate.return_value = {
+                'c_abc': {'concept_id': 'c_abc', 'label': 'Concept A', 'description': ''},
+                'c_def': {'concept_id': 'c_def', 'label': 'Concept B', 'description': ''},
+            }
 
             results = facade.neighborhood('c_start', max_depth=2)
 
@@ -105,6 +108,7 @@ class TestNeighborhoodAccelerated:
             assert results[0]['distance'] == 1
             assert results[0]['path_types'] == ['IMPLIES']
             assert results[1]['distance'] == 2
+            mock_hydrate.assert_called_once_with(['c_abc', 'c_def'])
 
     def test_passes_direction_and_confidence(self, facade):
         """Direction and min_confidence params are forwarded to SQL."""
