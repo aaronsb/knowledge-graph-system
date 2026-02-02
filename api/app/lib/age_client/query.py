@@ -799,3 +799,21 @@ class QueryMixin:
             self._facade = GraphQueryFacade(self)
 
         return self._facade
+
+    @property
+    def graph(self):
+        """
+        Get unified graph facade with graph_accel acceleration (ADR-201).
+
+        Lazy-loads GraphFacade on first access. Provides accelerated
+        neighborhood, pathfinding, degree, and subgraph operations with
+        automatic Cypher fallback when graph_accel is not available.
+
+        Returns:
+            GraphFacade instance
+        """
+        if self._graph_facade is None:
+            from api.app.lib.graph_facade import GraphFacade
+            self._graph_facade = GraphFacade(self)
+
+        return self._graph_facade

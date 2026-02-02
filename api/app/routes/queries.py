@@ -48,7 +48,7 @@ from ..models.queries import (
     PolarityAxisRequest,
     PolarityAxisResponse
 )
-from ..services.query_service import QueryService
+from ..services.query_service import QueryService  # retained for non-migrated callers
 from ..services.diversity_analyzer import DiversityAnalyzer
 from ..services.confidence_analyzer import ConfidenceAnalyzer
 
@@ -74,9 +74,89 @@ def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstan
             seen_quotes.add(e.quote)
             result.append(e)
     return result
-from ..lib.pathfinding_facade import PathfindingFacade
+from ..lib.pathfinding_facade import PathfindingFacade  # retained for non-migrated callers
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ai_providers import get_provider
+
+
+def _build_connection_paths(
+    raw_paths: List[Dict],
+    client,
+    include_grounding: bool = True,
+    include_evidence: bool = False
+) -> List[ConnectionPath]:
+    """Convert raw path dicts from GraphFacade into ConnectionPath response objects.
+
+    Handles grounding/confidence calculation and evidence fetching for
+    each node in the path. Shared by /connect and /connect-by-search.
+    """
+    paths = []
+    for raw_path in raw_paths:
+        nodes = []
+        for node_data in raw_path.get('path_nodes', []):
+            concept_id = node_data.get('concept_id', '')
+            label = node_data.get('label', '')
+            description = node_data.get('description', '')
+
+            grounding_strength = None
+            confidence_level = None
+            confidence_score = None
+            grounding_display = None
+            if include_grounding and concept_id:
+                try:
+                    grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
+                    conf_analyzer = ConfidenceAnalyzer(client)
+                    conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
+                    confidence_level = conf_result.get('level')
+                    confidence_score = conf_result.get('confidence_score')
+                    grounding_display = conf_result.get('grounding_display')
+                except Exception as e:
+                    logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+
+            sample_evidence = None
+            if include_evidence and concept_id:
+                evidence_query = client._execute_cypher(
+                    "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
+                    "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
+                    "s.content_type as content_type, s.storage_key as storage_key "
+                    "ORDER BY s.document, s.paragraph "
+                    "LIMIT 3",
+                    params={"cid": concept_id}
+                )
+                if evidence_query:
+                    sample_evidence = _dedupe_evidence([
+                        ConceptInstance(
+                            quote=e['quote'],
+                            document=e['document'],
+                            paragraph=e['paragraph'],
+                            source_id=e['source_id'],
+                            content_type=e.get('content_type'),
+                            has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
+                            image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
+                            storage_key=e.get('storage_key')
+                        )
+                        for e in evidence_query
+                    ])
+
+            nodes.append(PathNode(
+                id=concept_id,
+                label=label,
+                description=description,
+                grounding_strength=grounding_strength,
+                confidence_level=confidence_level,
+                confidence_score=confidence_score,
+                grounding_display=grounding_display,
+                sample_evidence=sample_evidence
+            ))
+
+        rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
+        paths.append(ConnectionPath(
+            nodes=nodes,
+            relationships=rel_types,
+            hops=raw_path.get('hops', len(rel_types))
+        ))
+
+    return paths
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/query", tags=["queries"])
@@ -737,8 +817,8 @@ async def search_sources(
         # 4. Batch-fetch Source nodes and concepts from AGE
         client = get_age_client()
         try:
-            # Batch-fetch all Source nodes at once (query safety via facade)
-            sources_data = client.facade.match_sources(
+            # Batch-fetch all Source nodes at once (ADR-048 namespace safety)
+            sources_data = client.graph.match_sources(
                 where="s.source_id IN $source_ids",
                 params={"source_ids": top_source_ids}
             )
@@ -756,7 +836,7 @@ async def search_sources(
             # Batch-fetch all concepts for all sources at once (fixes N+1 query problem)
             concepts_by_source = {}
             if request.include_concepts:
-                concepts_by_source = client.facade.match_concepts_for_sources_batch(top_source_ids)
+                concepts_by_source = client.graph.match_concepts_for_sources_batch(top_source_ids)
 
             # 5. Assemble results using helper function
             results = []
@@ -1148,36 +1228,14 @@ async def find_related_concepts(
             # Use explicit types or None (all types)
             final_rel_types = request.relationship_types
 
-        # Build and execute per-depth queries to avoid path explosion.
-        # Each depth level is a separate fixed-length match query.
-        depth_queries = QueryService.build_related_concepts_query(
-            request.max_depth,
-            final_rel_types
+        # ADR-201: Unified graph facade — uses graph_accel when available,
+        # falls back to per-depth Cypher chains automatically.
+        raw_results = await asyncio.to_thread(
+            client.graph.neighborhood,
+            concept_id=request.concept_id,
+            max_depth=request.max_depth,
+            relationship_types=final_rel_types
         )
-
-        # Execute depth queries concurrently via thread pool.
-        # Each _execute_cypher call is synchronous (psycopg2) but gets its own
-        # connection from ThreadedConnectionPool. asyncio.to_thread dispatches
-        # each to a worker thread; GIL releases during DB I/O so queries run
-        # in genuine parallel on the Postgres side.
-        async def _run_depth(query, depth):
-            return await asyncio.to_thread(
-                client._execute_cypher,
-                query, params={"concept_id": request.concept_id}
-            )
-
-        depth_results = await asyncio.gather(
-            *[_run_depth(q, d) for q, d in depth_queries]
-        )
-
-        # Merge results, keeping minimum distance per concept
-        seen = {}
-        for records in depth_results:
-            for record in (records or []):
-                cid = record['concept_id']
-                dist = record['distance']
-                if cid not in seen or dist < seen[cid]['distance']:
-                    seen[cid] = record
 
         results = [
             RelatedConcept(
@@ -1186,7 +1244,7 @@ async def find_related_concepts(
                 distance=record['distance'],
                 path_types=record['path_types']
             )
-            for record in sorted(seen.values(), key=lambda r: (r['distance'], r['label']))
+            for record in raw_results
         ]
 
         return RelatedConceptsResponse(
@@ -1252,88 +1310,20 @@ async def find_connection(
             request.exclude_epistemic_status
         )
 
-        # ADR-076: Use Bidirectional BFS instead of exhaustive Cypher patterns
-        pathfinder = PathfindingFacade(client)
-        raw_paths = pathfinder.find_paths(
+        # ADR-201: Unified graph facade with graph_accel acceleration
+        raw_paths = await asyncio.to_thread(
+            client.graph.find_paths,
             from_id=request.from_id,
             to_id=request.to_id,
             max_hops=request.max_hops,
             max_paths=5,
-            allowed_rel_types=allowed_rel_types
+            relationship_types=allowed_rel_types
         )
 
         # Convert facade output to API response format
-        paths = []
-        for raw_path in raw_paths:
-            nodes = []
-            for node_data in raw_path.get('path_nodes', []):
-                concept_id = node_data.get('concept_id', '')
-                label = node_data.get('label', '')
-                description = node_data.get('description', '')
-
-                # Calculate grounding strength if requested (default: true)
-                grounding_strength = None
-                confidence_level = None
-                confidence_score = None
-                grounding_display = None
-                if request.include_grounding and concept_id:
-                    try:
-                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                        # Calculate epistemic confidence
-                        conf_analyzer = ConfidenceAnalyzer(client)
-                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
-                        confidence_level = conf_result.get('level')
-                        confidence_score = conf_result.get('confidence_score')
-                        grounding_display = conf_result.get('grounding_display')
-                    except Exception as e:
-                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
-
-                # Fetch sample evidence if requested (ADR-057: include image metadata)
-                sample_evidence = None
-                if request.include_evidence and concept_id:
-                    evidence_query = client._execute_cypher(
-                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        "s.content_type as content_type, s.storage_key as storage_key "
-                        "ORDER BY s.document, s.paragraph "
-                        "LIMIT 3",
-                        params={"cid": concept_id}
-                    )
-                    if evidence_query:
-                        # Dedupe evidence due to Instance->multiple Source data issue
-                        sample_evidence = _dedupe_evidence([
-                            ConceptInstance(
-                                quote=e['quote'],
-                                document=e['document'],
-                                paragraph=e['paragraph'],
-                                source_id=e['source_id'],
-                                content_type=e.get('content_type'),
-                                has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
-                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
-                                storage_key=e.get('storage_key')
-                            )
-                            for e in evidence_query
-                        ])
-
-                nodes.append(PathNode(
-                    id=concept_id,
-                    label=label,
-                    description=description,
-                    grounding_strength=grounding_strength,
-                    confidence_level=confidence_level,
-                    confidence_score=confidence_score,
-                    grounding_display=grounding_display,
-                    sample_evidence=sample_evidence
-                ))
-
-            # Extract relationship types from facade output
-            rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
-
-            paths.append(ConnectionPath(
-                nodes=nodes,
-                relationships=rel_types,
-                hops=raw_path.get('hops', len(rel_types))
-            ))
+        paths = _build_connection_paths(
+            raw_paths, client, request.include_grounding, request.include_evidence
+        )
 
         return FindConnectionResponse(
             from_id=request.from_id,
@@ -1473,88 +1463,20 @@ async def find_connection_by_search(
             request.exclude_epistemic_status
         )
 
-        # ADR-076: Use Bidirectional BFS instead of exhaustive Cypher patterns
-        pathfinder = PathfindingFacade(client)
-        raw_paths = pathfinder.find_paths(
+        # ADR-201: Unified graph facade with graph_accel acceleration
+        raw_paths = await asyncio.to_thread(
+            client.graph.find_paths,
             from_id=from_concept_id,
             to_id=to_concept_id,
             max_hops=request.max_hops,
             max_paths=5,
-            allowed_rel_types=allowed_rel_types
+            relationship_types=allowed_rel_types
         )
 
         # Convert facade output to API response format
-        paths = []
-        for raw_path in raw_paths:
-            nodes = []
-            for node_data in raw_path.get('path_nodes', []):
-                concept_id = node_data.get('concept_id', '')
-                label = node_data.get('label', '')
-                description = node_data.get('description', '')
-
-                # Calculate grounding strength if requested (default: true)
-                grounding_strength = None
-                confidence_level = None
-                confidence_score = None
-                grounding_display = None
-                if request.include_grounding and concept_id:
-                    try:
-                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                        # Calculate epistemic confidence
-                        conf_analyzer = ConfidenceAnalyzer(client)
-                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
-                        confidence_level = conf_result.get('level')
-                        confidence_score = conf_result.get('confidence_score')
-                        grounding_display = conf_result.get('grounding_display')
-                    except Exception as e:
-                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
-
-                # Fetch sample evidence if requested (ADR-057: include image metadata)
-                sample_evidence = None
-                if request.include_evidence and concept_id:
-                    evidence_query = client._execute_cypher(
-                        "MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)-[:FROM_SOURCE]->(s:Source) "
-                        "RETURN i.quote as quote, s.document as document, s.paragraph as paragraph, s.source_id as source_id, "
-                        "s.content_type as content_type, s.storage_key as storage_key "
-                        "ORDER BY s.document, s.paragraph "
-                        "LIMIT 3",
-                        params={"cid": concept_id}
-                    )
-                    if evidence_query:
-                        # Dedupe evidence due to Instance->multiple Source data issue
-                        sample_evidence = _dedupe_evidence([
-                            ConceptInstance(
-                                quote=e['quote'],
-                                document=e['document'],
-                                paragraph=e['paragraph'],
-                                source_id=e['source_id'],
-                                content_type=e.get('content_type'),
-                                has_image=e.get('content_type') == 'image' and e.get('storage_key') is not None,
-                                image_uri=f"/api/sources/{e['source_id']}/image" if e.get('content_type') == 'image' and e.get('storage_key') else None,
-                                storage_key=e.get('storage_key')
-                            )
-                            for e in evidence_query
-                        ])
-
-                nodes.append(PathNode(
-                    id=concept_id,
-                    label=label,
-                    description=description,
-                    grounding_strength=grounding_strength,
-                    confidence_level=confidence_level,
-                    confidence_score=confidence_score,
-                    grounding_display=grounding_display,
-                    sample_evidence=sample_evidence
-                ))
-
-            # Extract relationship types from facade output
-            rel_types = [rel.get('label', '') for rel in raw_path.get('path_rels', [])]
-
-            paths.append(ConnectionPath(
-                nodes=nodes,
-                relationships=rel_types,
-                hops=raw_path.get('hops', len(rel_types))
-            ))
+        paths = _build_connection_paths(
+            raw_paths, client, request.include_grounding, request.include_evidence
+        )
 
         return FindConnectionBySearchResponse(
             from_query=request.from_query,

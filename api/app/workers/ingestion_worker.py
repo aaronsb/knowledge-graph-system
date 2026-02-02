@@ -496,6 +496,12 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Annealing launcher check failed: {e}")
 
+        # ADR-201: Invalidate graph_accel cache after graph mutations
+        try:
+            age_client.graph.invalidate()
+        except Exception:
+            pass  # Non-fatal — extension may not be installed
+
         # Close AGE connection
         age_client.close()
 

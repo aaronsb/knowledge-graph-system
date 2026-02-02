@@ -91,6 +91,14 @@ async def create_batch(
                 }
             )
 
+        # ADR-201: Invalidate graph_accel cache after graph mutations
+        try:
+            _client = get_age_client()
+            _client.graph.invalidate()
+            _client.close()
+        except Exception:
+            pass  # Non-fatal — extension may not be installed
+
         return response
 
     except HTTPException:
