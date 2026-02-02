@@ -135,25 +135,14 @@ Merged: PR #275 → `main`
   - Eliminated 265ms graph reload on every request
 
 ### 5e: Cleanup (legacy facade removal + code review debt)
-- [ ] Remove old facades: `query_facade.py` (681 lines), `pathfinding_facade.py` (654 lines), `query_service.py`
-- [ ] Audit and migrate remaining consumers of old facades to `client.graph.*`
-- [ ] Consolidate `_get_graph_generation()` — currently 3 implementations across query.py and
-      confidence_analyzer.py with identical logic but different signatures. Extract to shared helper.
-- [ ] Extract grounding/caching cluster from query.py (1126 lines) into `api/app/lib/age_client/grounding.py` mixin
-- [ ] Optimization: skip pool connection on 100% cache hits (generation check only when misses exist)
+- [ ] Remove old facades (~1,500 lines) — issue #279
+- [ ] Consolidate `_get_graph_generation()` (3 implementations) — issue #277
+- [ ] Extract grounding/caching mixin from query.py (1126 lines) + warm-hit optimization + docstrings — issue #278
 
-### 5g: Client consistency audit
-Ensure all clients use the accelerated API endpoints consistently.
-
-- [ ] **Web workstation** (`web/src/api/client.ts`) — inventory query calls, verify they hit
-      the routes that use `client.graph.*` and batch hydration
-- [ ] **MCP server** — inventory tool implementations, verify grounding/confidence parameters
-      are passed through correctly
-- [ ] **CLI** (`cli/src/`) — inventory `kg search`, `kg search connect`, etc. verify they
-      request grounding and use the batch-enabled endpoints
-- [ ] **FUSE driver** (`fuse/`) — inventory graph queries, verify they use the same API surface
-- [ ] Document findings: which clients need updates, which are already consistent
-- [ ] Apply fixes per client
+### 5g: Client consistency audit — issue #280
+- [ ] Web workstation, MCP server, CLI, FUSE driver
+- [ ] Verify all use accelerated endpoints with correct parameters
+- [ ] Document gaps, apply fixes per client
 
 ## Phase 6: Polish & Publish
 - [x] Implement `graph_accel_degree()` — degree centrality
