@@ -135,7 +135,10 @@ Merged: PR #275 → `main`
   - Eliminated 265ms graph reload on every request
 
 ### 5e: Cleanup (legacy facade removal + code review debt)
-- [ ] Remove old facades (~1,500 lines) — issue #279
+- [x] Delete `pathfinding_facade.py` (654 lines) and `query_service.py` (~350 lines) — dead code
+- [ ] Migrate `query_facade.py` callers (~15 across workers/launchers/routes/lib) — issue #279
+      GraphQueryFacade provides namespace-safe Cypher (execute_raw, match_concepts, match_vocab_types)
+      — different layer from GraphFacade's topology operations
 - [ ] Consolidate `_get_graph_generation()` (3 implementations) — issue #277
 - [ ] Extract grounding/caching mixin from query.py (1126 lines) + warm-hit optimization + docstrings — issue #278
 
@@ -151,8 +154,8 @@ Merged: PR #275 → `main`
 - [ ] Publish to GitHub as standalone repo (Apache 2.0)
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
 
-### 5f: Generation-aware grounding cache (hydration optimization)
-Branch: `feature/grounding-cache` → PR #276 (ready to merge)
+### 5f: Generation-aware grounding cache (hydration optimization) ✓
+Merged: PR #276 → `main`
 
 The topology phase (graph_accel) is sub-ms. The remaining 3-4s per connect query
 is grounding hydration: `calculate_grounding_strength_semantic()` runs sequentially
