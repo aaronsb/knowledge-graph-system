@@ -304,7 +304,7 @@ async def ingest_document(
 async def ingest_text(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
-    text: str = Form(..., description="Text content to ingest"),
+    text: str = Form(..., min_length=1, description="Text content to ingest"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
