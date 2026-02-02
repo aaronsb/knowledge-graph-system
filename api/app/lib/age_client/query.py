@@ -23,6 +23,7 @@ Caching (ADR-201 Phase 5f):
 import json
 import logging
 import threading
+from collections import defaultdict
 from typing import List, Dict, Optional, Any, Tuple
 import numpy as np
 from psycopg2 import extras
@@ -765,6 +766,206 @@ class QueryMixin:
         except Exception as e:
             logger.error(f"Error calculating grounding strength for {concept_id}: {e}")
             return 0.0
+        finally:
+            self.pool.putconn(conn)
+
+    def calculate_grounding_strength_batch(
+        self,
+        concept_ids: List[str],
+        include_types: Optional[List[str]] = None,
+        exclude_types: Optional[List[str]] = None
+    ) -> Dict[str, float]:
+        """
+        Batch-compute grounding strength for multiple concepts (ADR-201 Phase 5f).
+
+        Amortized version of calculate_grounding_strength_semantic(). On cache
+        miss, replaces 2N DB round-trips (N Cypher edge queries + N SQL vocab
+        queries) with exactly 2 queries total:
+          1. One batch Cypher: incoming edges for all miss concepts
+          2. One SQL: vocabulary embeddings for all unique relationship types
+
+        The per-concept computation (dot product against polarity axis) then
+        runs in pure Python with no further DB access.
+
+        Cache interaction:
+            Uses the same _grounding_cache global as the per-concept method.
+            For each concept_id: if (concept_id, graph_gen) is in cache, the
+            cached value is used (no DB hit). Only cache misses trigger the
+            batch queries. Each computed result is written back to the cache,
+            so subsequent per-concept calls for any concept in this batch
+            will return instantly from cache.
+
+        Connection management:
+            Gets a single pool connection for all work (generation check,
+            polarity axis, batch Cypher, vocab SQL). This is an improvement
+            over the per-concept method which uses two connections (one held
+            for cache/polarity, one from _execute_cypher for edges).
+
+        Args:
+            concept_ids: Concept IDs to compute grounding for.
+            include_types: Optional whitelist of relationship types.
+            exclude_types: Optional blacklist of relationship types.
+
+        Returns:
+            Dict mapping concept_id -> grounding_strength float.
+            Missing or failed concepts default to 0.0.
+        """
+        global _grounding_cache, _grounding_cache_generation
+
+        if not concept_ids:
+            return {}
+
+        result = {cid: 0.0 for cid in concept_ids}
+
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                # --- Cache check: evict stale, separate hits from misses ---
+                graph_gen = self._get_graph_generation(cur)
+
+                misses = []
+                with _grounding_cache_lock:
+                    if _grounding_cache_generation != graph_gen:
+                        if _grounding_cache:
+                            logger.info(
+                                f"Grounding cache invalidated: generation "
+                                f"{_grounding_cache_generation} → {graph_gen} "
+                                f"({len(_grounding_cache)} entries evicted)"
+                            )
+                        _grounding_cache.clear()
+                        _grounding_cache_generation = graph_gen
+
+                    for cid in concept_ids:
+                        cache_key = (cid, graph_gen)
+                        if cache_key in _grounding_cache:
+                            result[cid] = _grounding_cache[cache_key]
+                        else:
+                            misses.append(cid)
+
+                if not misses:
+                    logger.debug(
+                        f"Grounding batch: all {len(concept_ids)} concepts "
+                        f"served from cache"
+                    )
+                    return result
+
+                # --- Tier 1: get or compute polarity axis ---
+                polarity_axis = self._get_polarity_axis(cur)
+                if polarity_axis is None:
+                    # No polarity data — cache 0.0 for all misses
+                    with _grounding_cache_lock:
+                        for cid in misses:
+                            _grounding_cache[(cid, graph_gen)] = 0.0
+                    return result
+
+                # --- Batch Cypher: incoming edges for all miss concepts ---
+                # Uses proven ag_catalog.cypher() pattern from
+                # embedding_projection_service.py:460
+                ids_str = ','.join([f"'{cid}'" for cid in misses])
+                batch_edges_sql = f"""
+                    SELECT * FROM ag_catalog.cypher('{self.graph_name}', $$
+                        MATCH (c:Concept)<-[r]-(source)
+                        WHERE c.concept_id IN [{ids_str}]
+                        RETURN c.concept_id as concept_id,
+                               type(r) as rel_type,
+                               r.confidence as confidence
+                    $$) AS (concept_id agtype, rel_type agtype,
+                            confidence agtype)
+                """
+                cur.execute(batch_edges_sql)
+                all_edges = cur.fetchall()
+
+                # Group edges by concept, collect unique rel types
+                edges_by_concept = defaultdict(list)
+                rel_types_needed = set()
+                for row in all_edges:
+                    cid = str(row['concept_id']).strip('"')
+                    rel_type = str(row['rel_type']).strip('"')
+                    conf_str = str(row['confidence']) if row['confidence'] else "1.0"
+                    try:
+                        confidence = float(conf_str.strip('"'))
+                    except (ValueError, AttributeError):
+                        confidence = 1.0
+                    edges_by_concept[cid].append({
+                        'rel_type': rel_type,
+                        'confidence': confidence
+                    })
+                    rel_types_needed.add(rel_type)
+
+                # Apply type filters
+                if include_types:
+                    rel_types_needed = rel_types_needed & set(include_types)
+                if exclude_types:
+                    rel_types_needed = rel_types_needed - set(exclude_types)
+
+                # --- Batch SQL: vocabulary embeddings for all rel types ---
+                vocab_embeddings = {}
+                if rel_types_needed:
+                    types_list = ','.join([f"'{t}'" for t in rel_types_needed])
+                    cur.execute(f"""
+                        SELECT relationship_type, embedding
+                        FROM kg_api.relationship_vocabulary
+                        WHERE relationship_type IN ({types_list})
+                          AND embedding IS NOT NULL
+                    """)
+                    vocab_embeddings = {
+                        row['relationship_type']: _parse_embedding(
+                            row['embedding']
+                        )
+                        for row in cur.fetchall()
+                    }
+                    # Remove entries where parsing failed
+                    vocab_embeddings = {
+                        k: v for k, v in vocab_embeddings.items()
+                        if v is not None
+                    }
+
+                # --- Per-concept computation (pure CPU, no DB) ---
+                for cid in misses:
+                    edges = edges_by_concept.get(cid, [])
+                    if not edges:
+                        grounding = 0.0
+                    else:
+                        total_polarity = 0.0
+                        total_confidence = 0.0
+                        for edge in edges:
+                            rel_type = edge['rel_type']
+                            # Apply type filters per-edge
+                            if include_types and rel_type not in include_types:
+                                continue
+                            if exclude_types and rel_type in exclude_types:
+                                continue
+                            emb = vocab_embeddings.get(rel_type)
+                            if emb is None:
+                                continue
+                            confidence = edge['confidence']
+                            polarity_projection = np.dot(emb, polarity_axis)
+                            total_polarity += confidence * float(
+                                polarity_projection
+                            )
+                            total_confidence += confidence
+
+                        grounding = (
+                            float(total_polarity / total_confidence)
+                            if total_confidence > 0
+                            else 0.0
+                        )
+
+                    result[cid] = grounding
+                    with _grounding_cache_lock:
+                        _grounding_cache[(cid, graph_gen)] = grounding
+
+                logger.debug(
+                    f"Grounding batch: {len(concept_ids)} concepts, "
+                    f"{len(concept_ids) - len(misses)} cached, "
+                    f"{len(misses)} computed ({len(all_edges)} edges total)"
+                )
+
+                return result
+
+        except Exception as e:
+            logger.error(f"Batch grounding failed: {e}")
+            raise
         finally:
             self.pool.putconn(conn)
 

@@ -79,6 +79,86 @@ from api.app.lib.age_client import AGEClient
 from api.app.lib.ai_providers import get_provider
 
 
+def _hydrate_grounding_batch(
+    client,
+    concept_ids: List[str]
+) -> Dict[str, Dict]:
+    """
+    Batch-compute grounding and confidence for a set of concepts.
+
+    Combines batch grounding (QueryMixin) and batch confidence
+    (ConfidenceAnalyzer) into a single call, reducing DB round-trips from
+    5N (2 grounding + 3 confidence per concept) to 5 total (2 + 3 batch
+    queries). Results are returned in the same dict structure used by
+    the per-concept path in _build_connection_paths and the search loop.
+
+    Falls back to per-concept computation if the batch queries fail,
+    logging a warning. This ensures callers never see a hard failure from
+    the batch optimization — they just pay the sequential cost as before.
+
+    Args:
+        client: AGEClient instance with calculate_grounding_strength_batch().
+        concept_ids: Concept IDs to hydrate.
+
+    Returns:
+        Dict mapping concept_id -> {
+            'grounding_strength': float,
+            'confidence_level': str,
+            'confidence_score': float,
+            'grounding_display': str,
+        }
+    """
+    if not concept_ids:
+        return {}
+
+    try:
+        # Phase 1: batch grounding (2 queries for all cache misses)
+        grounding_map = client.calculate_grounding_strength_batch(
+            list(concept_ids)
+        )
+
+        # Phase 2: batch confidence (3 queries for all cache misses)
+        conf_analyzer = ConfidenceAnalyzer(client)
+        confidence_map = conf_analyzer.calculate_confidence_batch(
+            list(concept_ids), grounding_map
+        )
+
+        # Assemble combined result
+        result = {}
+        for cid in concept_ids:
+            gs = grounding_map.get(cid, 0.0)
+            conf = confidence_map.get(cid, {})
+            result[cid] = {
+                'grounding_strength': gs,
+                'confidence_level': conf.get('level'),
+                'confidence_score': conf.get('confidence_score'),
+                'grounding_display': conf.get('grounding_display'),
+            }
+        return result
+
+    except Exception as e:
+        logger.warning(
+            f"Batch hydration failed, falling back to per-concept: {e}"
+        )
+        result = {}
+        conf_analyzer = ConfidenceAnalyzer(client)
+        for cid in concept_ids:
+            try:
+                gs = client.calculate_grounding_strength_semantic(cid)
+                conf_result = conf_analyzer.calculate_confidence(cid, gs)
+                result[cid] = {
+                    'grounding_strength': gs,
+                    'confidence_level': conf_result.get('level'),
+                    'confidence_score': conf_result.get('confidence_score'),
+                    'grounding_display': conf_result.get('grounding_display'),
+                }
+            except Exception as inner_e:
+                logger.warning(
+                    f"Per-concept fallback failed for {cid}: {inner_e}"
+                )
+        return result
+
+
 def _build_connection_paths(
     raw_paths: List[Dict],
     client,
@@ -105,19 +185,7 @@ def _build_connection_paths(
                 all_concept_ids.add(cid)
 
     if include_grounding:
-        conf_analyzer = ConfidenceAnalyzer(client)
-        for concept_id in all_concept_ids:
-            try:
-                gs = client.calculate_grounding_strength_semantic(concept_id)
-                conf_result = conf_analyzer.calculate_confidence(concept_id, gs)
-                grounding_cache[concept_id] = {
-                    'grounding_strength': gs,
-                    'confidence_level': conf_result.get('level'),
-                    'confidence_score': conf_result.get('confidence_score'),
-                    'grounding_display': conf_result.get('grounding_display'),
-                }
-            except Exception as e:
-                logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+        grounding_cache = _hydrate_grounding_batch(client, list(all_concept_ids))
 
     if include_evidence:
         for concept_id in all_concept_ids:
@@ -501,6 +569,13 @@ async def search_concepts(
             # Apply offset (skip first N results) and limit
             paginated_matches = matches[request.offset:request.offset + request.limit]
 
+            # Pre-compute grounding + confidence for all result concepts
+            # (batch: 5 queries total instead of 5N sequential)
+            _grounding_batch = {}
+            if request.include_grounding:
+                _batch_ids = [m['concept_id'] for m in paginated_matches]
+                _grounding_batch = _hydrate_grounding_batch(client, _batch_ids)
+
             # Filter by minimum similarity and gather document/evidence info
             results = []
             for match in paginated_matches:
@@ -533,22 +608,17 @@ async def search_concepts(
                 )
                 evidence_count = evidence_query['evidence_count'] if evidence_query else 0
 
-                # Calculate grounding strength if requested (default: true)
+                # Look up pre-computed grounding + confidence from batch
                 grounding_strength = None
                 confidence_level = None
                 grounding_display = None
                 confidence_score = None
                 if request.include_grounding:
-                    try:
-                        grounding_strength = client.calculate_grounding_strength_semantic(concept_id)
-                        # Calculate epistemic confidence (grounding × confidence two-dimensional model)
-                        conf_analyzer = ConfidenceAnalyzer(client)
-                        conf_result = conf_analyzer.calculate_confidence(concept_id, grounding_strength)
-                        confidence_level = conf_result.get('level')
-                        confidence_score = conf_result.get('confidence_score')
-                        grounding_display = conf_result.get('grounding_display')
-                    except Exception as e:
-                        logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
+                    hydrated = _grounding_batch.get(concept_id, {})
+                    grounding_strength = hydrated.get('grounding_strength')
+                    confidence_level = hydrated.get('confidence_level')
+                    confidence_score = hydrated.get('confidence_score')
+                    grounding_display = hydrated.get('grounding_display')
 
                 # Calculate semantic diversity if requested (ADR-063)
                 diversity_score = None

@@ -179,11 +179,12 @@ edges — no cross-concept dependency. This makes per-concept caching safe.
   - Same pattern as grounding: module-level dict keyed by (concept_id, generation)
   - `grounding_display` recomputed from cached signals (depends on caller's grounding_strength)
   - Eliminates 3 Cypher queries per concept (_gather_signals) on cache hit
-- [ ] Batch incoming-edges query — `WHERE c.concept_id IN [...]` for all path concepts
-  - One Cypher round-trip instead of N
-  - Same for confidence signals (`_gather_signals`)
-- [ ] After batching: parallel computation in Python (dot products, thresholds — no DB)
-  - Pure CPU work, no pool contention, ThreadPoolExecutor works correctly
+- [x] Batch incoming-edges query — `WHERE c.concept_id IN [...]` for all path concepts
+  - One Cypher round-trip instead of N (grounding: 2 queries, confidence: 3 queries)
+  - `_hydrate_grounding_batch()` helper combines both with per-concept fallback
+  - Callers updated: `_build_connection_paths()`, search result loop, epistemic status service
+- [x] Per-concept computation after batch fetch (dot products, thresholds — no DB)
+  - Pure CPU work after batch fetch, no pool contention
 
 - [ ] Docstrings: document the two-tier cache invalidation model
   - `calculate_grounding_strength_semantic()` — explain polarity axis caching, vocab generation check
@@ -206,9 +207,10 @@ Analogy: id Tech GI probe caching — only update volumes where the player looks
 Graph generation is the "frame number"; if it hasn't changed, every cached value is valid.
 Each concept's grounding is an independent "probe" — no mutual influence.
 
-## Live API Benchmarks (2026-02-02, 1393 nodes / 412K edges)
+## Live API Benchmarks
 
-Baseline query for multi-path comparison:
+### Multi-path topology (Phase 5d, 1393 nodes / 412K edges — before test cleanup)
+
 ```
 POST /query/connect
 from: sha256:bd065_chunk4_c51b1769 (Graph Structure)
@@ -225,18 +227,33 @@ max_hops: 4, include_grounding: true
 
 Multi-path speedup vs Cypher: >1,400,000x (0.128ms vs >187,000ms).
 
-### Search query hydration (Phase 5f caching, `kg search query 'way' --min-similarity 0.48`, 20 concepts):
+**Note:** The "412K edges" benchmark was inflated by 408K parasitic HAS_SOURCE edges from
+4 test ontologies (test-auto-approve, test-approve, test-lifecycle, test-file-auto). After
+cleanup: 237 nodes, 2,166 edges. This dramatically affects Cypher query performance since
+AGE scans all edges for pattern matching.
+
+### Hydration caching + batch (Phase 5f, 237 nodes / 2,166 edges)
+
+`kg search query 'way' --min-similarity 0.48` (20 concepts):
+
+| Scenario | Time (server) | Notes |
+|----------|---------------|-------|
+| No grounding/diversity (baseline) | ~0.3s | Vector search only |
+| Batch hydration (cold caches) | 1.2s | 5 batch queries (2 grounding + 3 confidence) |
+| Batch hydration (warm caches) | 0.33s | All served from cache |
+
+`kg search connect 'ways' 'governance'`:
 
 | Scenario | Time | Notes |
 |----------|------|-------|
-| No grounding/diversity (baseline) | 0.59s | Vector search only |
-| Grounding + confidence (cold caches) | 2.85s | +2.26s hydration overhead |
-| Grounding + confidence (warm caches) | 0.68s | +0.09s overhead (4.2x vs cold) |
+| Cold (topology + batch hydration) | 0.69s | graph_accel + batch grounding + batch confidence |
+| Warm (all cached) | 0.57s | Topology + cached hydration |
 
-Three cache tiers working together:
+Three cache tiers + batch queries:
 1. Polarity axis — cached against `vocabulary_change_counter` (computed once per vocab change)
 2. Per-concept grounding — cached against `graph_accel.generation` (computed once per graph mutation)
 3. Per-concept confidence — cached against `graph_accel.generation` (eliminates 3 Cypher queries/concept)
+4. Batch queries — 5 total (2 grounding + 3 confidence) instead of 5N sequential on cache miss
 
 ## Notes
 - pgrx 0.16.1 (latest stable), PostgreSQL 13-18, container is PG 17.7

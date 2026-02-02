@@ -148,22 +148,38 @@ class EpistemicStatusService:
             sample = results if total_edges <= sample_size else random.sample(results, sample_size)
             sampled_count = len(sample)
 
-            # Calculate grounding dynamically for each sampled target concept
-            grounding_values = []
-            for row in sample:
-                target_id = row.get('target_id')
-                if not target_id:
-                    continue
-
-                try:
-                    # Dynamic grounding calculation (bounded recursion)
-                    grounding = self.client.calculate_grounding_strength_semantic(target_id)
-                    if grounding is not None:
-                        grounding_values.append(float(grounding))
-                except Exception as e:
-                    # Skip concepts where grounding calculation fails
-                    logger.debug(f"Skipping concept {target_id}: {e}")
-                    continue
+            # Batch-compute grounding for all sampled target concepts
+            # (2 queries total instead of 2N sequential)
+            target_ids = [
+                row.get('target_id') for row in sample
+                if row.get('target_id')
+            ]
+            try:
+                grounding_map = self.client.calculate_grounding_strength_batch(
+                    target_ids
+                )
+                grounding_values = [
+                    float(g) for g in grounding_map.values()
+                    if g is not None
+                ]
+            except Exception as e:
+                logger.warning(
+                    f"Batch grounding failed, falling back to per-concept: {e}"
+                )
+                grounding_values = []
+                for target_id in target_ids:
+                    try:
+                        grounding = (
+                            self.client.calculate_grounding_strength_semantic(
+                                target_id
+                            )
+                        )
+                        if grounding is not None:
+                            grounding_values.append(float(grounding))
+                    except Exception as inner_e:
+                        logger.debug(
+                            f"Skipping concept {target_id}: {inner_e}"
+                        )
 
             if not grounding_values:
                 return {
