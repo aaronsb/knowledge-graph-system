@@ -245,7 +245,9 @@ class TestFindPaths:
     """Test find_paths() multiple path discovery."""
 
     def test_returns_single_path_when_only_one_exists(self, facade):
-        """Single shortest path found → returns list of one."""
+        """Single shortest path found (BFS fallback) → returns list of one."""
+        facade._accel_available = False
+
         with patch.object(facade, 'find_path') as mock_fp:
             mock_fp.return_value = {
                 'path_nodes': [
@@ -262,12 +264,16 @@ class TestFindPaths:
 
     def test_returns_empty_when_no_path(self, facade):
         """No path found → empty list."""
+        facade._accel_available = False
+
         with patch.object(facade, 'find_path', return_value=None):
             paths = facade.find_paths('c_a', 'c_z')
             assert paths == []
 
     def test_limits_to_max_paths(self, facade):
-        """Never returns more than max_paths paths."""
+        """Never returns more than max_paths paths (BFS fallback)."""
+        facade._accel_available = False
+
         mock_path = {
             'path_nodes': [
                 {'concept_id': 'c_a', 'label': 'A', 'description': ''},
@@ -281,6 +287,55 @@ class TestFindPaths:
              patch.object(facade, '_find_path_bfs_excluding', return_value=mock_path):
             paths = facade.find_paths('c_a', 'c_b', max_paths=2)
             assert len(paths) <= 2
+
+    def test_accel_multi_path(self, facade):
+        """graph_accel_paths returns multiple paths grouped by path_index."""
+        facade._accel_available = True
+
+        with patch.object(facade, '_execute_sql') as mock_sql, \
+             patch.object(facade, '_hydrate_concepts') as mock_hydrate:
+            mock_sql.return_value = [
+                {'path_index': 0, 'step': 0, 'app_id': 'c_a', 'label': 'Concept', 'rel_type': None, 'direction': None},
+                {'path_index': 0, 'step': 1, 'app_id': 'c_b', 'label': 'Concept', 'rel_type': 'IMPLIES', 'direction': 'outgoing'},
+                {'path_index': 1, 'step': 0, 'app_id': 'c_a', 'label': 'Concept', 'rel_type': None, 'direction': None},
+                {'path_index': 1, 'step': 1, 'app_id': 'c_c', 'label': 'Concept', 'rel_type': 'SUPPORTS', 'direction': 'outgoing'},
+                {'path_index': 1, 'step': 2, 'app_id': 'c_b', 'label': 'Concept', 'rel_type': 'IMPLIES', 'direction': 'outgoing'},
+            ]
+            mock_hydrate.return_value = {
+                'c_a': {'concept_id': 'c_a', 'label': 'A', 'description': ''},
+                'c_b': {'concept_id': 'c_b', 'label': 'B', 'description': ''},
+                'c_c': {'concept_id': 'c_c', 'label': 'C', 'description': ''},
+            }
+
+            paths = facade.find_paths('c_a', 'c_b', max_paths=5)
+
+            assert len(paths) == 2
+            # Path 0: 1-hop direct
+            assert paths[0]['hops'] == 1
+            assert paths[0]['path_nodes'][0]['concept_id'] == 'c_a'
+            assert paths[0]['path_rels'][0]['label'] == 'IMPLIES'
+            # Path 1: 2-hop via c_c
+            assert paths[1]['hops'] == 2
+            assert paths[1]['path_nodes'][1]['concept_id'] == 'c_c'
+
+    def test_accel_multi_path_empty(self, facade):
+        """graph_accel_paths returns no rows → empty list."""
+        facade._accel_available = True
+
+        with patch.object(facade, '_execute_sql') as mock_sql:
+            mock_sql.return_value = []
+            paths = facade.find_paths('c_a', 'c_z', max_paths=5)
+            assert paths == []
+
+    def test_same_node_returns_self_path(self, facade):
+        """from_id == to_id returns single-node path."""
+        with patch.object(facade, '_hydrate_concepts') as mock_hydrate:
+            mock_hydrate.return_value = {
+                'c_a': {'concept_id': 'c_a', 'label': 'A', 'description': 'desc'}
+            }
+            paths = facade.find_paths('c_a', 'c_a')
+            assert len(paths) == 1
+            assert paths[0]['hops'] == 0
 
 
 class TestDegree:

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::graph::{Direction, Graph, NodeId, RelTypeId, TraversalDirection};
 
@@ -293,6 +293,190 @@ fn reconstruct_sp_path(
 
     path.reverse();
     path
+}
+
+/// Find up to `k` shortest simple paths between two nodes using Yen's algorithm.
+///
+/// Returns paths sorted by hop count (shortest first). Each path is loop-free.
+/// Uses BFS as the inner pathfinding step, with node and edge exclusion sets
+/// to force alternative routes at each spur node.
+///
+/// Complexity: O(k * L * (V + E)) where L is the longest path length.
+/// For typical use (k=5, L~4, 1K nodes / 400K edges) this runs in microseconds.
+pub fn k_shortest_paths(
+    graph: &Graph,
+    start: NodeId,
+    target: NodeId,
+    max_hops: u32,
+    k: usize,
+    direction: TraversalDirection,
+    min_confidence: Option<f32>,
+) -> Vec<Vec<PathStep>> {
+    if k == 0 {
+        return Vec::new();
+    }
+
+    // A[0]: first shortest path via standard BFS
+    let first = match shortest_path(graph, start, target, max_hops, direction, min_confidence) {
+        Some(path) => path,
+        None => return Vec::new(),
+    };
+
+    let mut result: Vec<Vec<PathStep>> = vec![first];
+    // Candidate pool: paths found but not yet selected, sorted by length when picking
+    let mut candidates: Vec<Vec<PathStep>> = Vec::new();
+
+    for ki in 1..k {
+        let prev_path = &result[ki - 1];
+
+        // For each spur node in the previous path (skip the last — no edge to deviate from)
+        for spur_idx in 0..prev_path.len().saturating_sub(1) {
+            let spur_node = prev_path[spur_idx].node_id;
+
+            // Root path: start → spur_node (spur_idx hops)
+            let root_path: Vec<PathStep> = prev_path[..=spur_idx].to_vec();
+            let root_ids: Vec<NodeId> = root_path.iter().map(|s| s.node_id).collect();
+
+            // Exclude edges leaving the spur node that are used by paths sharing this root
+            let mut excluded_edges: HashSet<(NodeId, NodeId)> = HashSet::new();
+            for path in &result {
+                if path.len() > spur_idx
+                    && path[..=spur_idx]
+                        .iter()
+                        .map(|s| s.node_id)
+                        .eq(root_ids.iter().copied())
+                {
+                    excluded_edges.insert((
+                        path[spur_idx].node_id,
+                        path[spur_idx + 1].node_id,
+                    ));
+                }
+            }
+
+            // Exclude root-path nodes (except the spur node) to force simple paths
+            let excluded_nodes: HashSet<NodeId> =
+                root_ids[..spur_idx].iter().copied().collect();
+
+            // Remaining hop budget for the spur path
+            let remaining_hops = max_hops.saturating_sub(spur_idx as u32);
+            if remaining_hops == 0 {
+                continue;
+            }
+
+            // Find spur path: spur_node → target avoiding excluded nodes/edges
+            if let Some(spur_path) = shortest_path_excluding(
+                graph,
+                spur_node,
+                target,
+                remaining_hops,
+                direction,
+                min_confidence,
+                &excluded_nodes,
+                &excluded_edges,
+            ) {
+                // Combine root + spur (skip spur_node duplicate)
+                let mut candidate = root_path.clone();
+                candidate.extend(spur_path.into_iter().skip(1));
+
+                // Deduplicate by node sequence
+                let candidate_ids: Vec<NodeId> =
+                    candidate.iter().map(|s| s.node_id).collect();
+                let is_dup = result
+                    .iter()
+                    .chain(candidates.iter())
+                    .any(|p| {
+                        p.len() == candidate_ids.len()
+                            && p.iter()
+                                .map(|s| s.node_id)
+                                .eq(candidate_ids.iter().copied())
+                    });
+
+                if !is_dup {
+                    candidates.push(candidate);
+                }
+            }
+        }
+
+        if candidates.is_empty() {
+            break;
+        }
+
+        // Pick the shortest candidate (fewest hops)
+        candidates.sort_by_key(|p| p.len());
+        result.push(candidates.remove(0));
+    }
+
+    result
+}
+
+/// BFS shortest path with node and edge exclusion (inner loop for Yen's algorithm).
+///
+/// `excluded_nodes`: nodes that cannot appear on the path (except start/target).
+/// `excluded_edges`: (from, to) pairs that cannot be traversed.
+fn shortest_path_excluding(
+    graph: &Graph,
+    start: NodeId,
+    target: NodeId,
+    max_hops: u32,
+    direction: TraversalDirection,
+    min_confidence: Option<f32>,
+    excluded_nodes: &HashSet<NodeId>,
+    excluded_edges: &HashSet<(NodeId, NodeId)>,
+) -> Option<Vec<PathStep>> {
+    if graph.node(start).is_none() || graph.node(target).is_none() {
+        return None;
+    }
+    if excluded_nodes.contains(&start) || excluded_nodes.contains(&target) {
+        return None;
+    }
+
+    if start == target {
+        let info = graph.node(start);
+        return Some(vec![PathStep {
+            node_id: start,
+            label: info.map(|n| n.label.clone()).unwrap_or_default(),
+            app_id: info.and_then(|n| n.app_id.clone()),
+            rel_type: None,
+            direction: None,
+        }]);
+    }
+
+    if max_hops == 0 {
+        return None;
+    }
+
+    let mut visited: HashMap<NodeId, (NodeId, RelTypeId, Direction)> = HashMap::new();
+    let mut queue: VecDeque<(NodeId, u32)> = VecDeque::new();
+
+    visited.insert(start, (start, 0, Direction::Outgoing));
+    queue.push_back((start, 0));
+
+    while let Some((current, depth)) = queue.pop_front() {
+        if depth >= max_hops {
+            continue;
+        }
+
+        for (edge, dir) in iter_neighbors(graph, current, direction, min_confidence) {
+            if excluded_nodes.contains(&edge.target) {
+                continue;
+            }
+            if excluded_edges.contains(&(current, edge.target)) {
+                continue;
+            }
+
+            if !visited.contains_key(&edge.target) {
+                visited.insert(edge.target, (current, edge.rel_type, dir));
+
+                if edge.target == target {
+                    return Some(reconstruct_sp_path(graph, &visited, start, target));
+                }
+
+                queue.push_back((edge.target, depth + 1));
+            }
+        }
+    }
+
+    None
 }
 
 /// Extract the subgraph reachable from `start` within `max_depth` hops.
@@ -1109,5 +1293,247 @@ mod tests {
         let sub = extract_subgraph(&g, 0, 5, TraversalDirection::Both, Some(0.5));
         assert_eq!(sub.node_count, 3); // 0, 1, 3
         assert_eq!(sub.edges.len(), 2); // 0→1, 0→3
+    }
+
+    // --- k-shortest-paths (Yen's algorithm) tests ---
+
+    /// Diamond graph: two distinct 2-hop paths from 0 to 3.
+    ///   0→1→3  (via IMPLIES)
+    ///   0→2→3  (via SUPPORTS)
+    fn make_diamond() -> Graph {
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge(0, 1, "IMPLIES"),
+            edge(1, 3, "IMPLIES"),
+            edge(0, 2, "SUPPORTS"),
+            edge(2, 3, "SUPPORTS"),
+        ]);
+        g
+    }
+
+    /// Grid-like graph with multiple paths of different lengths.
+    ///   0→1→2→5
+    ///   0→3→4→5
+    ///   0→1→4→5  (cross-edge 1→4)
+    ///   0→3→2→5  (cross-edge 3→2)
+    fn make_grid() -> Graph {
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge(0, 1, "A"),
+            edge(1, 2, "A"),
+            edge(2, 5, "A"),
+            edge(0, 3, "B"),
+            edge(3, 4, "B"),
+            edge(4, 5, "B"),
+            edge(1, 4, "C"), // cross-edge
+            edge(3, 2, "C"), // cross-edge
+        ]);
+        g
+    }
+
+    #[test]
+    fn test_ksp_single_path_same_as_shortest() {
+        let g = make_chain(5); // 0→1→2→3→4
+        let paths = k_shortest_paths(&g, 0, 4, 10, 1, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 1);
+        let ids: Vec<NodeId> = paths[0].iter().map(|s| s.node_id).collect();
+        assert_eq!(ids, vec![0, 1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_ksp_diamond_two_paths() {
+        let g = make_diamond();
+        let paths = k_shortest_paths(&g, 0, 3, 10, 5, TraversalDirection::Both, None);
+
+        // Should find exactly 2 paths (both 2 hops)
+        assert_eq!(paths.len(), 2);
+
+        let path_ids: Vec<Vec<NodeId>> = paths
+            .iter()
+            .map(|p| p.iter().map(|s| s.node_id).collect())
+            .collect();
+
+        // Both paths should start at 0 and end at 3
+        for ids in &path_ids {
+            assert_eq!(ids[0], 0);
+            assert_eq!(*ids.last().unwrap(), 3);
+            assert_eq!(ids.len(), 3); // 2 hops = 3 steps
+        }
+
+        // Should find both routes: via 1 and via 2
+        let middle_nodes: Vec<NodeId> = path_ids.iter().map(|p| p[1]).collect();
+        assert!(middle_nodes.contains(&1));
+        assert!(middle_nodes.contains(&2));
+    }
+
+    #[test]
+    fn test_ksp_grid_multiple_paths() {
+        let g = make_grid();
+        let paths = k_shortest_paths(&g, 0, 5, 10, 10, TraversalDirection::Both, None);
+
+        // Grid has at least 4 distinct 3-hop paths from 0 to 5,
+        // plus longer paths via cross-edges with undirected traversal
+        assert!(paths.len() >= 4, "expected at least 4 paths, got {}", paths.len());
+
+        // All paths start at 0, end at 5
+        for path in &paths {
+            assert_eq!(path.first().unwrap().node_id, 0);
+            assert_eq!(path.last().unwrap().node_id, 5);
+        }
+
+        // Sorted by length (shortest first)
+        for w in paths.windows(2) {
+            assert!(w[0].len() <= w[1].len());
+        }
+
+        // All paths are distinct (no duplicate node sequences)
+        let path_ids: Vec<Vec<NodeId>> = paths
+            .iter()
+            .map(|p| p.iter().map(|s| s.node_id).collect())
+            .collect();
+        for i in 0..path_ids.len() {
+            for j in (i + 1)..path_ids.len() {
+                assert_ne!(path_ids[i], path_ids[j], "duplicate paths at {} and {}", i, j);
+            }
+        }
+    }
+
+    #[test]
+    fn test_ksp_no_path() {
+        // Disconnected graph: 0→1, 2→3 — no path from 0 to 3
+        let mut g = Graph::new();
+        g.load_edges(vec![edge(0, 1, "A"), edge(2, 3, "A")]);
+
+        let paths = k_shortest_paths(&g, 0, 3, 10, 5, TraversalDirection::Both, None);
+        assert!(paths.is_empty());
+    }
+
+    #[test]
+    fn test_ksp_k_zero() {
+        let g = make_diamond();
+        let paths = k_shortest_paths(&g, 0, 3, 10, 0, TraversalDirection::Both, None);
+        assert!(paths.is_empty());
+    }
+
+    #[test]
+    fn test_ksp_k_exceeds_available() {
+        // Chain has exactly 1 simple path
+        let g = make_chain(4); // 0→1→2→3
+        let paths = k_shortest_paths(&g, 0, 3, 10, 10, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 1);
+    }
+
+    #[test]
+    fn test_ksp_same_node() {
+        let g = make_chain(3);
+        let paths = k_shortest_paths(&g, 1, 1, 10, 5, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 1);
+        assert_eq!(paths[0].len(), 1);
+        assert_eq!(paths[0][0].node_id, 1);
+    }
+
+    #[test]
+    fn test_ksp_max_hops_limits() {
+        let g = make_diamond();
+        // max_hops=1: can't reach node 3 (needs 2 hops)
+        let paths = k_shortest_paths(&g, 0, 3, 1, 5, TraversalDirection::Both, None);
+        assert!(paths.is_empty());
+
+        // max_hops=2: both 2-hop paths found
+        let paths = k_shortest_paths(&g, 0, 3, 2, 5, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 2);
+    }
+
+    #[test]
+    fn test_ksp_directed_outgoing() {
+        let g = make_diamond();
+        // Outgoing only: both paths should still work (all edges are forward)
+        let paths = k_shortest_paths(
+            &g, 0, 3, 10, 5, TraversalDirection::Outgoing, None,
+        );
+        assert_eq!(paths.len(), 2);
+
+        // Reverse direction: no path from 3 to 0 via outgoing
+        let paths = k_shortest_paths(
+            &g, 3, 0, 10, 5, TraversalDirection::Outgoing, None,
+        );
+        assert!(paths.is_empty());
+    }
+
+    #[test]
+    fn test_ksp_directed_incoming() {
+        let g = make_diamond();
+        // Incoming only from node 3 to 0: should find paths (traversing edges in reverse)
+        let paths = k_shortest_paths(
+            &g, 3, 0, 10, 5, TraversalDirection::Incoming, None,
+        );
+        assert_eq!(paths.len(), 2);
+    }
+
+    #[test]
+    fn test_ksp_confidence_filter() {
+        // Diamond with different confidences:
+        //   0→1 (0.9), 1→3 (0.9) — high-confidence path
+        //   0→2 (0.9), 2→3 (0.3) — low-confidence on second edge
+        let mut g = Graph::new();
+        g.load_edges(vec![
+            edge_conf(0, 1, "A", 0.9),
+            edge_conf(1, 3, "A", 0.9),
+            edge_conf(0, 2, "B", 0.9),
+            edge_conf(2, 3, "B", 0.3),
+        ]);
+
+        // No filter: both paths
+        let paths = k_shortest_paths(&g, 0, 3, 10, 5, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 2);
+
+        // Filter at 0.5: only the high-confidence path survives
+        let paths = k_shortest_paths(&g, 0, 3, 10, 5, TraversalDirection::Both, Some(0.5));
+        assert_eq!(paths.len(), 1);
+        let ids: Vec<NodeId> = paths[0].iter().map(|s| s.node_id).collect();
+        assert_eq!(ids, vec![0, 1, 3]);
+    }
+
+    #[test]
+    fn test_ksp_paths_are_simple() {
+        // Cycle graph: paths must not revisit nodes
+        let g = make_cycle(6); // 0→1→2→3→4→5→0
+        let paths = k_shortest_paths(&g, 0, 3, 10, 5, TraversalDirection::Both, None);
+
+        for path in &paths {
+            let ids: Vec<NodeId> = path.iter().map(|s| s.node_id).collect();
+            let unique: HashSet<NodeId> = ids.iter().copied().collect();
+            assert_eq!(
+                ids.len(),
+                unique.len(),
+                "path has repeated nodes: {:?}",
+                ids
+            );
+        }
+    }
+
+    #[test]
+    fn test_ksp_rel_types_preserved() {
+        let g = make_diamond();
+        let paths = k_shortest_paths(&g, 0, 3, 10, 2, TraversalDirection::Both, None);
+        assert_eq!(paths.len(), 2);
+
+        // Each path should have rel_type info on non-start nodes
+        for path in &paths {
+            assert!(path[0].rel_type.is_none()); // start node
+            for step in &path[1..] {
+                assert!(step.rel_type.is_some(), "missing rel_type on step {:?}", step);
+            }
+        }
+    }
+
+    #[test]
+    fn test_ksp_node_not_in_graph() {
+        let g = make_chain(3);
+        let paths = k_shortest_paths(&g, 0, 999, 10, 5, TraversalDirection::Both, None);
+        assert!(paths.is_empty());
+
+        let paths = k_shortest_paths(&g, 999, 0, 10, 5, TraversalDirection::Both, None);
+        assert!(paths.is_empty());
     }
 }
