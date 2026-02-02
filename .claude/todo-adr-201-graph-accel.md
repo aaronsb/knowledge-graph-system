@@ -134,9 +134,15 @@ Merged: PR #275 → `main`
   - /query/related: 280ms → 14ms (20x improvement)
   - Eliminated 265ms graph reload on every request
 
-### 5e: Cleanup
-- [ ] Remove old facades: `query_facade.py`, `pathfinding_facade.py`, `query_service.py`
-- [ ] Migrate remaining consumers (if any) to `client.graph.*`
+### 5e: Cleanup (legacy facade removal + code review debt)
+- [ ] Remove old facades (~1,500 lines) — issue #279
+- [ ] Consolidate `_get_graph_generation()` (3 implementations) — issue #277
+- [ ] Extract grounding/caching mixin from query.py (1126 lines) + warm-hit optimization + docstrings — issue #278
+
+### 5g: Client consistency audit — issue #280
+- [ ] Web workstation, MCP server, CLI, FUSE driver
+- [ ] Verify all use accelerated endpoints with correct parameters
+- [ ] Document gaps, apply fixes per client
 
 ## Phase 6: Polish & Publish
 - [x] Implement `graph_accel_degree()` — degree centrality
@@ -146,7 +152,7 @@ Merged: PR #275 → `main`
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
 
 ### 5f: Generation-aware grounding cache (hydration optimization)
-Branch: TBD
+Branch: `feature/grounding-cache` → PR #276 (ready to merge)
 
 The topology phase (graph_accel) is sub-ms. The remaining 3-4s per connect query
 is grounding hydration: `calculate_grounding_strength_semantic()` runs sequentially
@@ -163,25 +169,39 @@ Polarity axis and per-concept grounding are both cacheable against the graph gen
 counter. The key property: each concept's grounding is computed from its own incoming
 edges — no cross-concept dependency. This makes per-concept caching safe.
 
-- [ ] Cache polarity axis (vocabulary-level) — shared across all concepts
+- [x] Cache polarity axis (vocabulary-level) — shared across all concepts
   - Invalidation key: `graph_metrics.vocabulary_change_counter` (already bumped by
     `refresh_graph_metrics()` after synonym consolidation in vocab_consolidate_worker.py:118)
   - Synonym collapse (CONCEDES→CONCEDE) triggers `merge_edge_types()` → worker calls
     `refresh_graph_metrics()` → counter bumps → polarity axis cache invalidates
   - No new wiring needed at the mutation site — existing signal suffices
   - This eliminates the polarity pair embedding query (runs once per vocab change, not per concept)
-- [ ] Cache per-concept grounding against graph generation
+- [x] Cache per-concept grounding against graph generation
   - Store: `{concept_id: (generation, grounding_strength, confidence_result)}`
   - On query: check `cached_generation == current_generation` → cache hit
   - On invalidation: generation bumps, all caches stale, recompute on next access
-  - Storage: module-level dict (in-process), or pg table for cross-process
-- [ ] Batch incoming-edges query — `WHERE c.concept_id IN [...]` for all path concepts
-  - One Cypher round-trip instead of N
-  - Same for confidence signals (`_gather_signals`)
-- [ ] After batching: parallel computation in Python (dot products, thresholds — no DB)
-  - Pure CPU work, no pool contention, ThreadPoolExecutor works correctly
+  - Storage: module-level dict (in-process)
+- [x] Cache per-concept confidence against graph generation
+  - Same pattern as grounding: module-level dict keyed by (concept_id, generation)
+  - `grounding_display` recomputed from cached signals (depends on caller's grounding_strength)
+  - Eliminates 3 Cypher queries per concept (_gather_signals) on cache hit
+- [x] Batch incoming-edges query — `WHERE c.concept_id IN [...]` for all path concepts
+  - One Cypher round-trip instead of N (grounding: 2 queries, confidence: 3 queries)
+  - `_hydrate_grounding_batch()` helper combines both with per-concept fallback
+  - Callers updated: `_build_connection_paths()`, search result loop, epistemic status service
+- [x] Per-concept computation after batch fetch (dot products, thresholds — no DB)
+  - Pure CPU work after batch fetch, no pool contention
 
-Expected improvement: 3.7s → ~0.5-1s for connect queries (warm cache hit: ~0.1s).
+- [x] Code review: 8 findings, 0 blocking. Remediated #1 (cache comment) and #3 (shared constant).
+      Remaining findings (#4 generation dedup, #6 file size, #7 warm-hit optimization) deferred to 5e.
+- [ ] Docstrings: document the two-tier cache invalidation model (deferred to 5e cleanup)
+  - `calculate_grounding_strength_semantic()` — explain polarity axis caching, vocab generation check
+  - `_build_connection_paths()` — explain per-concept grounding cache, graph generation check
+  - `GraphFacade._execute_sql()` — explain pinned connection, generation-based ensure_fresh
+  - `graph_facade.py` module docstring — explain the full pipeline: topology (sub-ms) → cached hydration
+
+Measured improvement (search query, 20 concepts @ 48% threshold):
+  Cold: 2.85s → Warm: 0.68s (4.2x speedup, 90ms over no-grounding baseline).
 
 Two-tier invalidation (both signals already exist):
   | Cache layer        | Generation source                          | Signal origin                    |
@@ -195,9 +215,10 @@ Analogy: id Tech GI probe caching — only update volumes where the player looks
 Graph generation is the "frame number"; if it hasn't changed, every cached value is valid.
 Each concept's grounding is an independent "probe" — no mutual influence.
 
-## Live API Benchmarks (2026-02-02, 1393 nodes / 412K edges)
+## Live API Benchmarks
 
-Baseline query for multi-path comparison:
+### Multi-path topology (Phase 5d, 1393 nodes / 412K edges — before test cleanup)
+
 ```
 POST /query/connect
 from: sha256:bd065_chunk4_c51b1769 (Graph Structure)
@@ -213,6 +234,37 @@ max_hops: 4, include_grounding: true
 | graph_accel multi-path via API (cold, first load) | ~3s | 200, 5 paths (1/2/2/3/3 hops), includes grounding+evidence hydration |
 
 Multi-path speedup vs Cypher: >1,400,000x (0.128ms vs >187,000ms).
+
+**Note:** The "412K edges" benchmark was inflated by 408K parasitic HAS_SOURCE edges from
+4 test ontologies (test-auto-approve, test-approve, test-lifecycle, test-file-auto). After
+cleanup: 237 nodes, 2,166 edges. This dramatically affects Cypher query performance since
+AGE scans all edges for pattern matching.
+
+### Hydration caching + batch (Phase 5f, 237 nodes / 2,166 edges)
+
+`kg search query 'way' --min-similarity 0.48` (20 concepts):
+
+| Scenario | Time (server) | Notes |
+|----------|---------------|-------|
+| No grounding/diversity (baseline) | ~0.3s | Vector search only |
+| Batch hydration (cold caches) | 1.2s | 5 batch queries (2 grounding + 3 confidence) |
+| Batch hydration (warm caches) | 0.33s | All served from cache |
+
+`kg search connect 'ways' 'governance'`:
+
+| Scenario | Time | Notes |
+|----------|------|-------|
+| Cold (topology + batch hydration) | 0.69s | graph_accel + batch grounding + batch confidence |
+| Warm (all cached) | 0.57s | Topology + cached hydration |
+
+Three cache tiers + chunked batch queries:
+1. Polarity axis — cached against `vocabulary_change_counter` (computed once per vocab change)
+2. Per-concept grounding — cached against `graph_accel.generation` (computed once per graph mutation)
+3. Per-concept confidence — cached against `graph_accel.generation` (eliminates 3 Cypher queries/concept)
+4. Batch queries — 2 grounding + 3 confidence per chunk of BATCH_CHUNK_SIZE (25) concepts
+   - Chunks keep AGE IN-clause lists small, release pool connections between chunks
+   - No measurable overhead on current graph (all concepts fit in one chunk)
+   - Enables future ThreadPoolExecutor parallelization across chunks
 
 ## Notes
 - pgrx 0.16.1 (latest stable), PostgreSQL 13-18, container is PG 17.7

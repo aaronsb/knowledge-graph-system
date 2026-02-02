@@ -146,3 +146,12 @@ LOCAL_PROVIDERS: Set[str] = {
     "ollama",
     "vllm",
 }
+
+# ============================================================================
+# Batch Query Configuration
+# ============================================================================
+# Maximum concepts per batch Cypher query. Keeps AGE IN-clause lists small
+# (the query planner does full scans on large IN-lists) and releases pool
+# connections between chunks so concurrent requests aren't starved. Each
+# chunk costs 2 queries for grounding or 3 for confidence.
+BATCH_CHUNK_SIZE = 25

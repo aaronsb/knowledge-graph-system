@@ -12,6 +12,14 @@ This implements the two-dimensional epistemic model:
 The confidence_score uses a nonlinear (saturation) function that reflects
 diminishing returns - early evidence contributes more than later evidence.
 
+Caching (ADR-201 Phase 5f):
+    Confidence signals (relationship count, source count, evidence count)
+    depend only on a concept's own graph neighborhood — no cross-concept
+    dependency. Results are cached per-concept against the graph generation
+    counter. When the graph mutates (ingestion, edits, merges), the generation
+    bumps and the entire cache evicts. Between mutations, repeated queries
+    for the same concept return instantly from cache.
+
 References:
     - ADR-044: Probabilistic Truth Convergence
     - ADR-063: Semantic Diversity as Authenticity Signal
@@ -19,12 +27,22 @@ References:
     - .claude/additional-scoring-findings.md
 """
 
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, List, Optional, Set, Tuple
+from collections import defaultdict
 import logging
+import threading
 import time
 import math
 
 logger = logging.getLogger(__name__)
+
+# Per-concept confidence cache, keyed by (concept_id, graph_generation).
+# Evicts entirely when graph generation changes.
+_confidence_cache_lock = threading.Lock()
+_confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
+_confidence_cache_generation: Optional[int] = None
+
+from api.app.constants import BATCH_CHUNK_SIZE
 
 
 # Confidence level thresholds
@@ -71,6 +89,11 @@ class ConfidenceAnalyzer:
         """
         Calculate epistemic confidence for a concept.
 
+        Results are cached per-concept against the graph generation counter.
+        The grounding_display field depends on both the cached signals AND
+        the grounding_strength parameter, so it's recomputed from cached
+        signals when grounding_strength differs (cheap — no DB queries).
+
         Args:
             concept_id: Target concept ID
             grounding_strength: Optional grounding score for combined interpretation
@@ -79,17 +102,38 @@ class ConfidenceAnalyzer:
             Dictionary with confidence metrics:
             {
                 "level": "confident" | "tentative" | "insufficient",
-                "signals": {
-                    "relationship_count": int,
-                    "source_count": int,
-                    "evidence_count": int,
-                    "relationship_types": int,  # unique types
-                    "relationship_type_diversity": float  # 0-1
-                },
+                "signals": {...},
                 "interpretation": str,
-                "grounding_display": str  # Combined grounding × confidence label
+                "grounding_display": str  # Combined grounding x confidence label
             }
         """
+        global _confidence_cache, _confidence_cache_generation
+
+        # Check graph generation for cache validity
+        graph_gen = self._get_graph_generation()
+
+        with _confidence_cache_lock:
+            if _confidence_cache_generation != graph_gen:
+                if _confidence_cache:
+                    logger.info(
+                        f"Confidence cache invalidated: generation "
+                        f"{_confidence_cache_generation} → {graph_gen} "
+                        f"({len(_confidence_cache)} entries evicted)"
+                    )
+                _confidence_cache.clear()
+                _confidence_cache_generation = graph_gen
+
+            cache_key = (concept_id, graph_gen)
+            cached = _confidence_cache.get(cache_key)
+
+        if cached is not None:
+            # Recompute grounding_display (depends on caller's grounding_strength)
+            result = dict(cached)
+            result['grounding_display'] = self._get_grounding_display(
+                grounding_strength, result['level']
+            )
+            return result
+
         start_time = time.time()
 
         try:
@@ -102,7 +146,7 @@ class ConfidenceAnalyzer:
             # Generate interpretation
             interpretation = self._interpret(level, signals)
 
-            # Generate combined grounding × confidence display label
+            # Generate combined grounding x confidence display label
             grounding_display = self._get_grounding_display(
                 grounding_strength, level
             )
@@ -118,7 +162,7 @@ class ConfidenceAnalyzer:
             # Calculate numeric confidence score (0-1, nonlinear)
             confidence_score = self._calculate_score(signals)
 
-            return {
+            result = {
                 "level": level,
                 "confidence_score": confidence_score,
                 "signals": signals,
@@ -127,9 +171,351 @@ class ConfidenceAnalyzer:
                 "calculation_time_ms": calculation_time_ms
             }
 
+            # Note: the cached entry stores grounding_display from this caller's
+            # grounding_strength. The cache-hit path always recomputes it from
+            # the caller's value, so the stored copy is never served stale.
+            with _confidence_cache_lock:
+                _confidence_cache[cache_key] = result
+
+            return result
+
         except Exception as e:
             logger.error(f"Confidence calculation failed for {concept_id}: {e}")
             raise
+
+    def _get_graph_generation(self) -> int:
+        """Read graph generation for cache invalidation.
+
+        Same two-tier probe as query.py: tries graph_accel.generation first,
+        falls back to vocabulary_change_counter.
+        """
+        from psycopg2 import extras
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                try:
+                    cur.execute("SAVEPOINT conf_gen_check")
+                    cur.execute(
+                        "SELECT current_generation FROM graph_accel.generation "
+                        "WHERE graph_name = 'knowledge_graph'"
+                    )
+                    row = cur.fetchone()
+                    cur.execute("RELEASE SAVEPOINT conf_gen_check")
+                    if row:
+                        return int(row['current_generation'])
+                except Exception:
+                    try:
+                        cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check")
+                    except Exception:
+                        pass
+                # Fallback
+                try:
+                    cur.execute(
+                        "SELECT counter FROM graph_metrics "
+                        "WHERE metric_name = 'vocabulary_change_counter'"
+                    )
+                    row = cur.fetchone()
+                    return int(row['counter']) if row else 0
+                except Exception:
+                    return 0
+        finally:
+            self.client.pool.putconn(conn)
+
+    def calculate_confidence_batch(
+        self,
+        concept_ids: List[str],
+        grounding_map: Optional[Dict[str, float]] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch-compute confidence for multiple concepts (ADR-201 Phase 5f).
+
+        Amortized version of calculate_confidence(). On cache miss, replaces
+        3N DB round-trips (relationship counts, source counts, evidence counts
+        per concept) with 3 queries per chunk of BATCH_CHUNK_SIZE concepts.
+
+        Cache interaction:
+            Uses the same _confidence_cache global as the per-concept method.
+            For each concept_id: if (concept_id, graph_gen) is in cache, the
+            cached signals are reused (only grounding_display is recomputed,
+            since it depends on the caller's grounding_map). Only cache misses
+            trigger the batch queries. Each computed result is written back to
+            the cache, so subsequent per-concept calls benefit.
+
+        Connection management:
+            Misses are processed in chunks of BATCH_CHUNK_SIZE. Each chunk
+            gets its own pool connection, runs 3 Cypher queries, and returns
+            it. This keeps IN-clause lists small for AGE's query planner
+            and releases connections between chunks.
+
+        Args:
+            concept_ids: Concept IDs to compute confidence for.
+            grounding_map: Optional mapping of concept_id -> grounding_strength.
+                Used for the grounding_display field. Concepts missing from
+                this map get grounding=None for display purposes.
+
+        Returns:
+            Dict mapping concept_id -> confidence result dict with keys:
+            level, confidence_score, signals, interpretation, grounding_display,
+            calculation_time_ms.
+        """
+        global _confidence_cache, _confidence_cache_generation
+
+        if not concept_ids:
+            return {}
+
+        if grounding_map is None:
+            grounding_map = {}
+
+        result = {}
+        start_time = time.time()
+
+        from psycopg2 import extras as pg_extras
+
+        # --- Phase 1: cache check (one connection) ---
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=pg_extras.RealDictCursor) as cur:
+                graph_gen = self._get_graph_generation_on_cursor(cur)
+
+                misses = []
+                with _confidence_cache_lock:
+                    if _confidence_cache_generation != graph_gen:
+                        if _confidence_cache:
+                            logger.info(
+                                f"Confidence cache invalidated: generation "
+                                f"{_confidence_cache_generation} → {graph_gen} "
+                                f"({len(_confidence_cache)} entries evicted)"
+                            )
+                        _confidence_cache.clear()
+                        _confidence_cache_generation = graph_gen
+
+                    for cid in concept_ids:
+                        cache_key = (cid, graph_gen)
+                        cached = _confidence_cache.get(cache_key)
+                        if cached is not None:
+                            entry = dict(cached)
+                            entry['grounding_display'] = (
+                                self._get_grounding_display(
+                                    grounding_map.get(cid),
+                                    entry['level']
+                                )
+                            )
+                            result[cid] = entry
+                        else:
+                            misses.append(cid)
+
+                if not misses:
+                    logger.debug(
+                        f"Confidence batch: all {len(concept_ids)} concepts "
+                        f"served from cache"
+                    )
+                    return result
+        finally:
+            self.client.pool.putconn(conn)
+
+        # --- Phase 2: process misses in chunks ---
+        # Each chunk gets its own connection, keeping IN-clause lists
+        # small and releasing connections between chunks.
+        default_signals = {
+            'relationship_count': 0,
+            'source_count': 0,
+            'evidence_count': 0,
+            'relationship_types': 0,
+            'relationship_type_diversity': 0.0,
+        }
+
+        for i in range(0, len(misses), BATCH_CHUNK_SIZE):
+            chunk = misses[i:i + BATCH_CHUNK_SIZE]
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor(
+                    cursor_factory=pg_extras.RealDictCursor
+                ) as cur:
+                    signals_map = self._gather_signals_batch(chunk, cur)
+
+                    calc_time_ms = int(
+                        (time.time() - start_time) * 1000
+                    )
+                    for cid in chunk:
+                        signals = signals_map.get(
+                            cid, dict(default_signals)
+                        )
+                        level = self._calculate_level(signals)
+                        confidence_score = self._calculate_score(signals)
+                        interpretation = self._interpret(level, signals)
+                        grounding_display = self._get_grounding_display(
+                            grounding_map.get(cid), level
+                        )
+
+                        entry = {
+                            'level': level,
+                            'confidence_score': confidence_score,
+                            'signals': signals,
+                            'interpretation': interpretation,
+                            'grounding_display': grounding_display,
+                            'calculation_time_ms': calc_time_ms,
+                        }
+                        result[cid] = entry
+
+                        with _confidence_cache_lock:
+                            _confidence_cache[(cid, graph_gen)] = entry
+
+            except Exception as e:
+                logger.error(f"Batch confidence chunk failed: {e}")
+                raise
+            finally:
+                self.client.pool.putconn(conn)
+
+        logger.debug(
+            f"Confidence batch: {len(concept_ids)} concepts, "
+            f"{len(concept_ids) - len(misses)} cached, "
+            f"{len(misses)} computed in "
+            f"{(len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE} "
+            f"chunks"
+        )
+
+        return result
+
+    def _get_graph_generation_on_cursor(self, cur) -> int:
+        """Read graph generation using an existing cursor.
+
+        Same two-tier probe as _get_graph_generation(), but operates on
+        a caller-provided cursor instead of acquiring its own connection.
+        Used by batch methods that already hold a connection.
+        """
+        try:
+            cur.execute("SAVEPOINT conf_gen_check_batch")
+            cur.execute(
+                "SELECT current_generation FROM graph_accel.generation "
+                "WHERE graph_name = 'knowledge_graph'"
+            )
+            row = cur.fetchone()
+            cur.execute("RELEASE SAVEPOINT conf_gen_check_batch")
+            if row:
+                return int(row['current_generation'])
+        except Exception:
+            try:
+                cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check_batch")
+            except Exception:
+                pass
+        # Fallback to vocabulary_change_counter
+        try:
+            cur.execute(
+                "SELECT counter FROM graph_metrics "
+                "WHERE metric_name = 'vocabulary_change_counter'"
+            )
+            row = cur.fetchone()
+            return int(row['counter']) if row else 0
+        except Exception:
+            return 0
+
+    def _gather_signals_batch(
+        self,
+        concept_ids: List[str],
+        cur
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch-gather confidence signals for multiple concepts.
+
+        Replaces 3N Cypher queries (per-concept relationship counts, source
+        counts, evidence counts) with 3 batch queries that return rows for
+        all concepts at once. Results are grouped by concept_id in Python.
+
+        Uses raw ag_catalog.cypher() SQL on the caller's cursor to avoid
+        acquiring additional pool connections.
+
+        Args:
+            concept_ids: Concept IDs to gather signals for.
+            cur: Database cursor to execute queries on.
+
+        Returns:
+            Dict mapping concept_id -> signals dict with keys:
+            relationship_count, source_count, evidence_count,
+            relationship_types, relationship_type_diversity.
+        """
+        ids_str = ','.join([f"'{cid}'" for cid in concept_ids])
+        graph_name = self.client.graph_name
+
+        # Query 1: Relationship counts and type diversity per concept
+        # Returns raw rows (concept_id + rel_type) to avoid potential
+        # AGE aggregation issues with WHERE IN + GROUP BY.
+        rel_sql = f"""
+            SELECT * FROM ag_catalog.cypher('{graph_name}', $$
+                MATCH (c:Concept)-[r]-(other:Concept)
+                WHERE c.concept_id IN [{ids_str}]
+                RETURN c.concept_id as concept_id, type(r) as rel_type
+            $$) AS (concept_id agtype, rel_type agtype)
+        """
+        cur.execute(rel_sql)
+        rel_rows = cur.fetchall()
+
+        # Group: count relationships and unique types per concept
+        rel_counts = defaultdict(int)
+        type_sets = defaultdict(set)
+        for row in rel_rows:
+            cid = str(row['concept_id']).strip('"')
+            rtype = str(row['rel_type']).strip('"')
+            rel_counts[cid] += 1
+            type_sets[cid].add(rtype)
+
+        # Query 2: Source document counts per concept
+        source_sql = f"""
+            SELECT * FROM ag_catalog.cypher('{graph_name}', $$
+                MATCH (c:Concept)-[:APPEARS_IN]->(s:Source)
+                WHERE c.concept_id IN [{ids_str}]
+                RETURN c.concept_id as concept_id, s.document as doc
+            $$) AS (concept_id agtype, doc agtype)
+        """
+        cur.execute(source_sql)
+        source_rows = cur.fetchall()
+
+        # Group: count unique documents per concept
+        source_docs = defaultdict(set)
+        for row in source_rows:
+            cid = str(row['concept_id']).strip('"')
+            doc = str(row['doc']).strip('"')
+            source_docs[cid].add(doc)
+
+        # Query 3: Evidence instance counts per concept
+        evidence_sql = f"""
+            SELECT * FROM ag_catalog.cypher('{graph_name}', $$
+                MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance)
+                WHERE c.concept_id IN [{ids_str}]
+                RETURN c.concept_id as concept_id, id(i) as instance_id
+            $$) AS (concept_id agtype, instance_id agtype)
+        """
+        cur.execute(evidence_sql)
+        evidence_rows = cur.fetchall()
+
+        # Group: count evidence instances per concept
+        evidence_counts = defaultdict(int)
+        for row in evidence_rows:
+            cid = str(row['concept_id']).strip('"')
+            evidence_counts[cid] += 1
+
+        # Assemble signals per concept
+        result = {}
+        for cid in concept_ids:
+            relationship_count = rel_counts.get(cid, 0)
+            relationship_types = len(type_sets.get(cid, set()))
+            source_count = len(source_docs.get(cid, set()))
+            evidence_count = evidence_counts.get(cid, 0)
+
+            type_diversity = 0.0
+            if relationship_count > 0:
+                type_diversity = min(
+                    1.0, relationship_types / relationship_count
+                )
+
+            result[cid] = {
+                'relationship_count': relationship_count,
+                'source_count': source_count,
+                'evidence_count': evidence_count,
+                'relationship_types': relationship_types,
+                'relationship_type_diversity': round(type_diversity, 3),
+            }
+
+        return result
 
     def _gather_signals(self, concept_id: str) -> Dict[str, Any]:
         """
