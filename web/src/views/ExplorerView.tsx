@@ -61,7 +61,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   // Load saved queries on mount
   useEffect(() => {
-    loadSavedQueries({ definition_type: 'graph_query' });
+    loadSavedQueries();
   }, [loadSavedQueries]);
 
   // Set the explorer type when this view mounts
