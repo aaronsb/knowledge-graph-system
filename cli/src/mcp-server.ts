@@ -1372,6 +1372,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 from_id: toolArgs.from_id as string,
                 to_id: toolArgs.to_id as string,
                 max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
+                include_grounding: true,
+                include_evidence: true,
                 // ADR-065: Epistemic status filtering
                 include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
                 exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
