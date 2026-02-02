@@ -118,7 +118,8 @@ Merged: PR #274 → `main`
 - [x] Call `graph_accel_invalidate()` after batch ingestion + graph mutations
 - [x] Benchmark: compare AGE direct vs graph_accel for depths 1-5 on real data (see benchmark-findings.md)
 
-### 5d: Multi-path acceleration (Yen's k-shortest-paths)
+### 5d: Multi-path acceleration (Yen's k-shortest-paths) ✓
+Merged: PR #275 → `main`
 - [x] Implement `k_shortest_paths()` in `graph-accel/core/src/traversal.rs` (Yen's algorithm)
 - [x] Expose `graph_accel_paths(from_id, to_id, max_hops, max_paths, direction, confidence)` via pgrx
 - [x] Extension version: 0.4.0 → 0.5.0
@@ -129,6 +130,9 @@ Merged: PR #274 → `main`
 - [x] Add standalone bench tests for k-shortest across 6 topologies
 - [x] Add multi-path tests to `graph-accel/tests/benchmark-comparison.sh`
 - [x] Fix empty middle node in APPEARS→APPEARS path chains (use AGE label as fallback)
+- [x] Pinned dedicated connection for graph_accel — graph loads once, stays in memory
+  - /query/related: 280ms → 14ms (20x improvement)
+  - Eliminated 265ms graph reload on every request
 
 ### 5e: Cleanup
 - [ ] Remove old facades: `query_facade.py`, `pathfinding_facade.py`, `query_service.py`
@@ -140,6 +144,44 @@ Merged: PR #274 → `main`
 - [ ] Set up CI: `cargo pgrx test` + standalone benchmark regression
 - [ ] Publish to GitHub as standalone repo (Apache 2.0)
 - [ ] Submit to PGXN (PostgreSQL Extension Network)
+
+### 5f: Generation-aware grounding cache (hydration optimization)
+Branch: TBD
+
+The topology phase (graph_accel) is sub-ms. The remaining 3-4s per connect query
+is grounding hydration: `calculate_grounding_strength_semantic()` runs sequentially
+per concept, each needing 2-3 Cypher round-trips.
+
+Naive thread-pool parallelization doesn't work because `calculate_grounding_strength_semantic`
+holds one pool connection while internally calling `_execute_cypher` (second connection).
+10 threads × 2 connections = pool exhaustion. Confirmed: parallel version was 5.1s vs
+sequential 3.7s due to ThreadedConnectionPool lock contention.
+
+**Architecture: generation-aware cached hydration**
+
+Polarity axis and per-concept grounding are both cacheable against the graph generation
+counter. The key property: each concept's grounding is computed from its own incoming
+edges — no cross-concept dependency. This makes per-concept caching safe.
+
+- [ ] Cache polarity axis (vocabulary-level) — shared across all concepts
+  - Invalidation: when vocabulary embeddings change (separate from graph generation)
+  - This eliminates the polarity pair embedding query (runs once per vocab change, not per concept)
+- [ ] Cache per-concept grounding against graph generation
+  - Store: `{concept_id: (generation, grounding_strength, confidence_result)}`
+  - On query: check `cached_generation == current_generation` → cache hit
+  - On invalidation: generation bumps, all caches stale, recompute on next access
+  - Storage: module-level dict (in-process), or pg table for cross-process
+- [ ] Batch incoming-edges query — `WHERE c.concept_id IN [...]` for all path concepts
+  - One Cypher round-trip instead of N
+  - Same for confidence signals (`_gather_signals`)
+- [ ] After batching: parallel computation in Python (dot products, thresholds — no DB)
+  - Pure CPU work, no pool contention, ThreadPoolExecutor works correctly
+
+Expected improvement: 3.7s → ~0.5-1s for connect queries (warm cache hit: ~0.1s).
+
+Analogy: id Tech GI probe caching — only update volumes where the player looks.
+Graph generation is the "frame number"; if it hasn't changed, every cached value is valid.
+Each concept's grounding is an independent "probe" — no mutual influence.
 
 ## Live API Benchmarks (2026-02-02, 1393 nodes / 412K edges)
 
