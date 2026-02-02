@@ -11,11 +11,11 @@ export const SelectedConceptChip: React.FC<SelectedConceptChipProps> = ({
   conceptLabel,
   onClear,
 }) => (
-  <div className="p-3 bg-muted rounded-lg">
-    <div className="flex items-start justify-between">
-      <div>
+  <div className="p-3 bg-muted rounded-lg overflow-hidden">
+    <div className="flex items-start justify-between gap-2 min-w-0">
+      <div className="min-w-0">
         <div className="text-xs text-muted-foreground mb-1">{label}</div>
-        <div className="font-medium">{conceptLabel}</div>
+        <div className="font-medium truncate">{conceptLabel}</div>
       </div>
       <button
         onClick={onClear}

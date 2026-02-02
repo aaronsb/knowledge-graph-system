@@ -390,7 +390,7 @@ LIMIT 50`);
   );
 
   return (
-    <div className="relative space-y-4">
+    <div className="relative space-y-4 min-w-0 overflow-hidden">
       {/* Header with Mode Info and Dial */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3 flex-1">

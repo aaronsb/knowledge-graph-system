@@ -19,7 +19,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   displayValue,
   unit,
 }) => (
-  <div className="flex items-center gap-3 px-1">
+  <div className="flex items-center gap-3 px-1 min-w-0">
     <label className="text-sm text-muted-foreground whitespace-nowrap">
       {label}
     </label>
