@@ -86,17 +86,17 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         (n: any) => (n.concept_id || n.id) === nodeId
       )?.label || nodeId;
 
+      const response = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1,
+      });
+
       store.addExplorationStep({
         action: 'follow',
         op: '+',
         cypher: stepToCypher({ action: 'follow', conceptLabel: nodeLabel, depth: 1 }),
         conceptId: nodeId,
         conceptLabel: nodeLabel,
-        depth: 1,
-      });
-
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
         depth: 1,
       });
 
@@ -117,17 +117,17 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         (n: any) => (n.concept_id || n.id) === nodeId
       )?.label || nodeId;
 
+      const response = await apiClient.getSubgraph({
+        center_concept_id: nodeId,
+        depth: 1,
+      });
+
       store.addExplorationStep({
         action: 'add-adjacent',
         op: '+',
         cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 1 }),
         conceptId: nodeId,
         conceptLabel: nodeLabel,
-        depth: 1,
-      });
-
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
         depth: 1,
       });
 
@@ -148,9 +148,9 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     const nodeLabel = node?.label || nodeId;
 
     store.addExplorationStep({
-      action: 'add-adjacent',
+      action: 'cypher',
       op: '-',
-      cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 1 }),
+      cypher: `MATCH (c:Concept)-[r]-(n:Concept)\nWHERE c.label = '${nodeLabel}'\nRETURN c, r, n`,
       conceptId: nodeId,
       conceptLabel: nodeLabel,
       depth: 1,

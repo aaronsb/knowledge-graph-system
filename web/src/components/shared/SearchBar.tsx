@@ -159,7 +159,7 @@ LIMIT 50`);
 
     useGraphStore.getState().addExplorationStep({
       action: 'explore',
-      op: loadMode === 'add' ? '+' : '+',
+      op: '+',
       cypher: stepToCypher(stepParams),
       conceptId: selectedPrimary.concept_id,
       conceptLabel: selectedPrimary.label,
