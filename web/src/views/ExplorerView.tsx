@@ -364,17 +364,26 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       for (const stmt of definition.statements as Array<{ op: '+' | '-'; cypher: string }>) {
         try {
           const result = await apiClient.executeCypherQuery({ query: stmt.cypher, limit: 500 });
+
+          // Build AGE internal ID → concept_id map
+          const internalToConceptId = new Map<string, string>();
+          (result.nodes || []).forEach((n: any) => {
+            const conceptId = n.properties?.concept_id || n.id;
+            internalToConceptId.set(n.id, conceptId);
+          });
+
           const nodes = (result.nodes || []).map((n: any) => ({
-            concept_id: n.id,
+            concept_id: n.properties?.concept_id || n.id,
             label: n.label,
             ontology: n.properties?.ontology || 'default',
             search_terms: n.properties?.search_terms || [],
             grounding_strength: n.properties?.grounding_strength,
           }));
           const links = (result.relationships || []).map((r: any) => ({
-            from_id: r.from_id,
-            to_id: r.to_id,
+            from_id: internalToConceptId.get(r.from_id) || r.from_id,
+            to_id: internalToConceptId.get(r.to_id) || r.to_id,
             relationship_type: r.type,
+            category: r.properties?.category,
             confidence: r.confidence,
           }));
 

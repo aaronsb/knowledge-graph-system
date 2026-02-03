@@ -1643,8 +1643,18 @@ async def execute_cypher_query(
             # Extract nodes and relationships from each record
             for key, value in record.items():
                 if isinstance(value, dict):
-                    # Check if it's a node (has 'id' and typically 'label')
-                    if 'id' in value:
+                    # Check for relationship first (AGE edges have start_id/end_id)
+                    start_id = value.get('start_id') or value.get('start')
+                    end_id = value.get('end_id') or value.get('end')
+
+                    if start_id and end_id:
+                        relationships.append(CypherRelationship(
+                            from_id=str(start_id),
+                            to_id=str(end_id),
+                            type=value.get('label', value.get('type', 'RELATED')),
+                            properties=value.get('properties', {})
+                        ))
+                    elif 'id' in value:
                         node_id = str(value['id'])
                         if node_id not in nodes_map:
                             # Prefer properties.label (actual name) over AGE label (node type like "Concept")
