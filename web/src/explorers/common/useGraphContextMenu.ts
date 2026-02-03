@@ -3,17 +3,18 @@
  *
  * Provides common context menu functionality for both 2D and 3D explorers:
  * - Node context menu actions (follow, add, mark location)
- * - Canvas context menu actions (show/hide grid)
+ * - Canvas context menu actions (travel path, send to polarity)
  * - Generic navigation and graph manipulation
  *
  * Explorer-specific actions (pin/unpin for 2D vs 3D) are passed as callbacks.
  */
 
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import { transformForD3 } from '../../utils/graphTransform';
 import { stepToCypher } from '../../utils/cypherGenerator';
 import { useGraphStore } from '../../store/graphStore';
+import { useReportStore, type TraversalReportData } from '../../store/reportStore';
 import type { ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
   ArrowRight,
@@ -24,13 +25,15 @@ import {
   Pin,
   PinOff,
   Circle,
-  Grid3x3,
   Eye,
   EyeOff,
   Navigation,
   Target,
   Flag,
   FlagOff,
+  GitBranch,
+  Route,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export interface NodeContextMenuParams {
@@ -45,8 +48,11 @@ export interface GraphContextMenuHandlers {
   handleRemoveFromGraph: (nodeId: string) => void;
   setOriginNode: (nodeId: string | null) => void;
   setDestinationNode: (nodeId: string | null) => void;
-  travelToOrigin?: () => void;  // Optional navigation to origin node
-  travelToDestination?: () => void;  // Optional navigation to destination node
+  travelToOrigin?: () => void;
+  travelToDestination?: () => void;
+
+  // Path travel — explorer-provided camera animation through ordered node list
+  travelAlongPath?: (nodeIds: string[], reverse?: boolean) => void;
 
   // Focus handlers
   setFocusedNode: (nodeId: string | null) => void;
@@ -56,8 +62,8 @@ export interface GraphContextMenuHandlers {
   isPinned: (nodeId: string) => boolean;
   togglePinNode: (nodeId: string) => void;
   unpinAllNodes: () => void;
-  applyOriginMarker?: (nodeId: string) => void;  // Optional visual marker (e.g., gold ring)
-  applyDestinationMarker?: (nodeId: string) => void;  // Optional visual marker (e.g., blue flag)
+  applyOriginMarker?: (nodeId: string) => void;
+  applyDestinationMarker?: (nodeId: string) => void;
 }
 
 export interface GraphContextMenuCallbacks {
@@ -70,6 +76,7 @@ export interface GraphContextMenuCallbacks {
  */
 export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
   const { setGraphData, setRawGraphData, mergeRawGraphData, setFocusedNodeId } = useGraphStore();
+  const navigate = useNavigate();
 
   /** Follow concept — replace graph with this node's neighborhood and record the step */
   const handleFollowConcept = useCallback(async (nodeId: string) => {
@@ -155,7 +162,194 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     });
   }, []);
 
-  return { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph };
+  /** Find path between origin/destination, merge into graph, then animate camera */
+  const handleTravelPath = useCallback(async (
+    originId: string,
+    destinationId: string,
+    travelAlongPath: (nodeIds: string[], reverse?: boolean) => void,
+    reverse: boolean
+  ) => {
+    try {
+      const store = useGraphStore.getState();
+      const rawNodes = store.rawGraphData?.nodes || [];
+      const originLabel = rawNodes.find(
+        (n: any) => (n.concept_id || n.id) === originId
+      )?.label || originId;
+      const destLabel = rawNodes.find(
+        (n: any) => (n.concept_id || n.id) === destinationId
+      )?.label || destinationId;
+
+      const result = await apiClient.findConnection({
+        from_id: originId,
+        to_id: destinationId,
+        max_hops: 5,
+      });
+
+      if (!result.paths?.length) {
+        console.warn('No path found between origin and destination');
+        return;
+      }
+
+      const path = result.paths[0];
+
+      // Extract concept nodes (skip empty relationship placeholders)
+      const conceptNodes: any[] = [];
+      const conceptRelTypes: string[][] = [];
+      let pendingRels: string[] = [];
+
+      for (let i = 0; i < path.nodes.length; i++) {
+        const node = path.nodes[i];
+        if (node.id && node.id !== '') {
+          conceptNodes.push(node);
+          conceptRelTypes.push(pendingRels);
+          pendingRels = [];
+        }
+        if (i < path.relationships.length) {
+          pendingRels.push(path.relationships[i]);
+        }
+      }
+
+      const nodes = conceptNodes.map((node: any) => ({
+        concept_id: node.id,
+        label: node.label,
+        description: node.description,
+        ontology: 'default',
+        grounding_strength: node.grounding_strength,
+      }));
+
+      const links: any[] = [];
+      for (let i = 0; i < conceptNodes.length - 1; i++) {
+        const rels = conceptRelTypes[i + 1];
+        const relType = rels.find(r => r !== 'APPEARS' && r !== 'SCOPED_BY') || rels[0] || 'CONNECTED';
+        links.push({
+          from_id: conceptNodes[i].id,
+          to_id: conceptNodes[i + 1].id,
+          relationship_type: relType,
+        });
+      }
+
+      // Record exploration step
+      store.addExplorationStep({
+        action: 'load-path',
+        op: '+',
+        cypher: stepToCypher({
+          action: 'load-path',
+          conceptLabel: originLabel,
+          depth: 1,
+          destinationConceptLabel: destLabel,
+          maxHops: 5,
+        }),
+        conceptId: originId,
+        conceptLabel: originLabel,
+        depth: 1,
+        destinationConceptId: destinationId,
+        destinationConceptLabel: destLabel,
+        maxHops: 5,
+      });
+
+      // Merge path into graph
+      mergeRawGraphData({ nodes, links });
+
+      // Wait for graph to re-render with new nodes, then animate
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const nodeIds = conceptNodes.map((n: any) => n.id);
+          travelAlongPath(nodeIds, reverse);
+        });
+      });
+    } catch (error: any) {
+      console.error('Failed to travel path:', error);
+    }
+  }, [mergeRawGraphData]);
+
+  /** Set polarity poles from origin/destination and navigate to polarity explorer */
+  const handleSendToPolarity = useCallback((originId: string, destinationId: string) => {
+    const store = useGraphStore.getState();
+    const rawNodes = store.rawGraphData?.nodes || [];
+
+    const originNode = rawNodes.find((n: any) => (n.concept_id || n.id) === originId);
+    const destNode = rawNodes.find((n: any) => (n.concept_id || n.id) === destinationId);
+
+    if (!originNode || !destNode) return;
+
+    store.setPolarityState({
+      selectedPositivePole: {
+        concept_id: originId,
+        label: originNode.label,
+      },
+      selectedNegativePole: {
+        concept_id: destinationId,
+        label: destNode.label,
+      },
+    });
+
+    navigate('/polarity');
+  }, [navigate]);
+
+  /** Find path between origin/destination and create a traversal report */
+  const handleSendPathToReports = useCallback(async (originId: string, destinationId: string) => {
+    try {
+      const store = useGraphStore.getState();
+      const rawNodes = store.rawGraphData?.nodes || [];
+
+      const originNode = rawNodes.find((n: any) => (n.concept_id || n.id) === originId);
+      const destNode = rawNodes.find((n: any) => (n.concept_id || n.id) === destinationId);
+
+      if (!originNode || !destNode) return;
+
+      const result = await apiClient.findConnection({
+        from_id: originId,
+        to_id: destinationId,
+        max_hops: 5,
+      });
+
+      const reportData: TraversalReportData = {
+        type: 'traversal',
+        origin: { concept_id: originId, label: originNode.label },
+        destination: { concept_id: destinationId, label: destNode.label },
+        maxHops: 5,
+        pathCount: result.count || result.paths?.length || 0,
+        paths: (result.paths || []).map((p: any) => {
+          const nodes = (p.nodes || [])
+            .filter((n: any) => n.id && n.id !== '')
+            .map((n: any) => ({
+              id: n.id,
+              label: n.label,
+              description: n.description,
+              grounding_strength: n.grounding_strength,
+              confidence_level: n.confidence_level,
+              diversity_score: n.diversity_score,
+            }));
+          return {
+            hops: p.hops || nodes.length - 1,
+            nodes,
+            relationships: p.relationships || [],
+          };
+        }),
+      };
+
+      const { addReport } = useReportStore.getState();
+      await addReport({
+        type: 'traversal',
+        data: reportData,
+        name: '',
+        sourceExplorer: 'traversal',
+      });
+
+      navigate('/report');
+    } catch (error: any) {
+      console.error('Failed to create traversal report:', error);
+    }
+  }, [navigate]);
+
+  return {
+    handleFollowConcept,
+    handleAddToGraph,
+    handleRemoveFromGraph,
+    handleTravelPath,
+    handleSendToPolarity,
+    handleSendPathToReports,
+  };
 }
 
 /**
@@ -167,7 +361,17 @@ export function buildContextMenuItems(
   handlers: GraphContextMenuHandlers,
   callbacks: GraphContextMenuCallbacks,
   originNodeId: string | null,
-  destinationNodeId: string | null
+  destinationNodeId: string | null,
+  extraHandlers?: {
+    handleTravelPath?: (
+      originId: string,
+      destinationId: string,
+      travelAlongPath: (nodeIds: string[], reverse?: boolean) => void,
+      reverse: boolean
+    ) => Promise<void>;
+    handleSendToPolarity?: (originId: string, destinationId: string) => void;
+    handleSendPathToReports?: (originId: string, destinationId: string) => Promise<void>;
+  }
 ): ContextMenuItem[] {
   const {
     isPinned,
@@ -182,6 +386,7 @@ export function buildContextMenuItems(
     setDestinationNode,
     travelToOrigin,
     travelToDestination,
+    travelAlongPath,
     setFocusedNode,
     focusedNodeId,
   } = handlers;
@@ -193,11 +398,9 @@ export function buildContextMenuItems(
   const originSubmenu: ContextMenuItem[] = [];
 
   if (nodeContext) {
-    // Right-clicked on a node
     const { nodeId } = nodeContext;
 
     if (originNodeId === nodeId) {
-      // This node IS the origin - show Clear
       originSubmenu.push({
         label: 'Clear Origin',
         icon: MapPinOff,
@@ -207,7 +410,6 @@ export function buildContextMenuItems(
         },
       });
     } else {
-      // This node is NOT the origin - show Set
       originSubmenu.push({
         label: 'Set Origin',
         icon: MapPin,
@@ -220,10 +422,9 @@ export function buildContextMenuItems(
         },
       });
 
-      // Travel to origin if origin exists
       if (originNodeId && travelToOrigin) {
         originSubmenu.push({
-          label: 'Travel to Origin',
+          label: 'Go to Origin',
           icon: Navigation,
           onClick: () => {
             travelToOrigin();
@@ -233,9 +434,7 @@ export function buildContextMenuItems(
       }
     }
   } else {
-    // Right-clicked on background
     if (originNodeId) {
-      // Origin is set - show Clear and Travel
       originSubmenu.push({
         label: 'Clear Origin',
         icon: MapPinOff,
@@ -247,7 +446,7 @@ export function buildContextMenuItems(
 
       if (travelToOrigin) {
         originSubmenu.push({
-          label: 'Travel to Origin',
+          label: 'Go to Origin',
           icon: Navigation,
           onClick: () => {
             travelToOrigin();
@@ -262,11 +461,9 @@ export function buildContextMenuItems(
   const destinationSubmenu: ContextMenuItem[] = [];
 
   if (nodeContext) {
-    // Right-clicked on a node
     const { nodeId } = nodeContext;
 
     if (destinationNodeId === nodeId) {
-      // This node IS the destination - show Clear
       destinationSubmenu.push({
         label: 'Clear Destination',
         icon: FlagOff,
@@ -276,7 +473,6 @@ export function buildContextMenuItems(
         },
       });
     } else {
-      // This node is NOT the destination - show Set
       destinationSubmenu.push({
         label: 'Set Destination',
         icon: Flag,
@@ -289,10 +485,9 @@ export function buildContextMenuItems(
         },
       });
 
-      // Travel to destination if destination exists
       if (destinationNodeId && travelToDestination) {
         destinationSubmenu.push({
-          label: 'Travel to Destination',
+          label: 'Go to Destination',
           icon: Navigation,
           onClick: () => {
             travelToDestination();
@@ -302,9 +497,7 @@ export function buildContextMenuItems(
       }
     }
   } else {
-    // Right-clicked on background
     if (destinationNodeId) {
-      // Destination is set - show Clear and Travel
       destinationSubmenu.push({
         label: 'Clear Destination',
         icon: FlagOff,
@@ -316,7 +509,7 @@ export function buildContextMenuItems(
 
       if (travelToDestination) {
         destinationSubmenu.push({
-          label: 'Travel to Destination',
+          label: 'Go to Destination',
           icon: Navigation,
           onClick: () => {
             travelToDestination();
@@ -345,6 +538,59 @@ export function buildContextMenuItems(
     });
   }
 
+  // Travel submenu — find path between origin and destination, animate camera through nodes
+  if (originNodeId && destinationNodeId && travelAlongPath && extraHandlers?.handleTravelPath) {
+    const { handleTravelPath } = extraHandlers;
+    items.push({
+      label: 'Travel',
+      icon: Route,
+      submenu: [
+        {
+          label: 'From Origin',
+          icon: MapPin,
+          onClick: () => {
+            onClose();
+            handleTravelPath(originNodeId, destinationNodeId, travelAlongPath, false);
+          },
+        },
+        {
+          label: 'From Destination',
+          icon: Flag,
+          onClick: () => {
+            onClose();
+            handleTravelPath(originNodeId, destinationNodeId, travelAlongPath, true);
+          },
+        },
+      ],
+    });
+  }
+
+  // Send to Polarity Explorer — use origin/destination as poles
+  if (originNodeId && destinationNodeId && extraHandlers?.handleSendToPolarity) {
+    const { handleSendToPolarity } = extraHandlers;
+    items.push({
+      label: 'Send to Polarity Explorer',
+      icon: GitBranch,
+      onClick: () => {
+        onClose();
+        handleSendToPolarity(originNodeId, destinationNodeId);
+      },
+    });
+  }
+
+  // Send Path to Reports — create traversal report from origin/destination
+  if (originNodeId && destinationNodeId && extraHandlers?.handleSendPathToReports) {
+    const { handleSendPathToReports } = extraHandlers;
+    items.push({
+      label: 'Send Path to Reports',
+      icon: FileSpreadsheet,
+      onClick: () => {
+        onClose();
+        handleSendPathToReports(originNodeId, destinationNodeId);
+      },
+    });
+  }
+
   // Node-specific actions (only when right-clicking on a node)
   if (nodeContext) {
     const { nodeId, nodeLabel } = nodeContext;
@@ -354,7 +600,6 @@ export function buildContextMenuItems(
       label: 'Node',
       icon: Circle,
       submenu: [
-        // Contextual pin/unpin node
         isPinned(nodeId)
           ? {
               label: 'Unpin Node',

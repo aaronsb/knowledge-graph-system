@@ -12,7 +12,7 @@ import { apiClient } from '../api/client';
 import type { Representation } from '../types/artifacts';
 
 // Report types
-export type ReportType = 'graph' | 'polarity' | 'document';
+export type ReportType = 'graph' | 'polarity' | 'document' | 'traversal';
 
 // Graph report data (from 2D/3D explorers)
 export interface GraphReportData {
@@ -83,7 +83,28 @@ export interface DocumentReportData {
   };
 }
 
-export type ReportData = GraphReportData | PolarityReportData | DocumentReportData;
+// Traversal report data (path between origin and destination)
+export interface TraversalReportData {
+  type: 'traversal';
+  origin: { concept_id: string; label: string };
+  destination: { concept_id: string; label: string };
+  maxHops: number;
+  pathCount: number;
+  paths: Array<{
+    hops: number;
+    nodes: Array<{
+      id: string;
+      label: string;
+      description?: string;
+      grounding_strength?: number;
+      confidence_level?: string;
+      diversity_score?: number;
+    }>;
+    relationships: string[];
+  }>;
+}
+
+export type ReportData = GraphReportData | PolarityReportData | DocumentReportData | TraversalReportData;
 
 // Previous values for delta comparison (keyed by concept_id)
 export interface PreviousValues {
@@ -101,7 +122,7 @@ export interface Report {
   type: ReportType;
   data: ReportData;
   createdAt: string;
-  sourceExplorer: '2d' | '3d' | 'polarity' | 'document';
+  sourceExplorer: '2d' | '3d' | 'polarity' | 'document' | 'traversal';
   // Recalculation tracking
   lastCalculatedAt?: string;
   previousValues?: PreviousValues;
@@ -170,6 +191,9 @@ const generateDefaultName = (type: ReportType, data: ReportData): string => {
   } else if (type === 'polarity') {
     const polarityData = data as PolarityReportData;
     return `${polarityData.positivePole.label} ↔ ${polarityData.negativePole.label} - ${timestamp}`;
+  } else if (type === 'traversal') {
+    const travData = data as TraversalReportData;
+    return `${travData.origin.label} → ${travData.destination.label} - ${timestamp}`;
   } else {
     const docData = data as DocumentReportData;
     const docCount = docData.documents.length;
@@ -184,6 +208,11 @@ const getConceptIds = (data: ReportData): string[] => {
     return (data as GraphReportData).nodes.map(n => n.id);
   } else if (data.type === 'polarity') {
     return (data as PolarityReportData).concepts.map(c => c.concept_id);
+  } else if (data.type === 'traversal') {
+    const travData = data as TraversalReportData;
+    const ids = new Set<string>();
+    travData.paths.forEach(p => p.nodes.forEach(n => ids.add(n.id)));
+    return Array.from(ids);
   } else {
     // Document reports don't have concept IDs at the report level
     return [];
@@ -191,7 +220,7 @@ const getConceptIds = (data: ReportData): string[] => {
 };
 
 // Map source explorer to representation
-const getRepresentation = (source: '2d' | '3d' | 'polarity' | 'document'): Representation => {
+const getRepresentation = (source: '2d' | '3d' | 'polarity' | 'document' | 'traversal'): Representation => {
   switch (source) {
     case '2d': return 'force_graph_2d';
     case '3d': return 'force_graph_3d';
@@ -375,7 +404,7 @@ export const useReportStore = create<ReportStore>()(
                 type: (params.reportType as ReportType) || (data.type as ReportType) || 'graph',
                 data,
                 createdAt: artifact.created_at,
-                sourceExplorer: (params.sourceExplorer as '2d' | '3d' | 'polarity') || '2d',
+                sourceExplorer: (params.sourceExplorer as Report['sourceExplorer']) || '2d',
                 artifactId: artifact.id,
                 isSynced: true,
                 isFresh: artifact.is_fresh,
