@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-046-grounding-aware-vocabulary-management/">
+        <link rel="prev" href="../ADR-084-document-search/">
       
       
-        <link rel="next" href="../ADR-048-vocabulary-metadata-as-graph/">
+        <link rel="next" href="../../user-interfaces/ADR-011-cli-admin-separation/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-047: Probabilistic Vocabulary Categorization - Knowledge Graph System</title>
+        <title>ADR-500: Graph Program DSL and AST Architecture - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-047-probabilistic-vocabulary-categorization" class="md-skip">
+        <a href="#adr-500-graph-program-dsl-and-ast-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-047: Probabilistic Vocabulary Categorization
+              ADR-500: Graph Program DSL and AST Architecture
             
           </span>
         </div>
@@ -6772,18 +6772,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_8" checked>
         
           
           <label class="md-nav__link" for="__nav_9_8" id="__nav_9_8_label" tabindex="0">
@@ -6804,7 +6806,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -6822,7 +6824,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -6857,7 +6859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -6892,7 +6894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -6927,7 +6929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -6962,7 +6964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -6997,7 +6999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -7032,7 +7034,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -7067,7 +7069,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -7099,10 +7101,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-500: Graph Program DSL and AST Architecture
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -7125,6 +7161,419 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-this-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This Is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#design-constraints-the-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Constraints (The Boundary)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-two-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Two Graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-authoring-spectrum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Authoring Spectrum
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-ast-is-the-canonical-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The AST is the Canonical Form
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-statements-and-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Statements and Operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-operation-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Operation Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-conditional-branching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Conditional Branching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-block-annotations-decompilation-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Block Annotations (Decompilation Support)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-text-dsl-serialization-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Text DSL (Serialization Format)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-api-side-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. API-Side Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-server-side-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Server-Side Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-mapping-existing-primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Mapping Existing Primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-extend-the-current-ir-minimally-just-add-type-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Extend the current IR minimally (just add type field)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-use-cypher-as-the-canonical-form-embed-api-calls-as-commentspragmas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. Use Cypher as the canonical form (embed API calls as comments/pragmas)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-adopt-datalog-or-another-existing-query-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Adopt Datalog or another existing query language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-build-a-full-language-with-parser-type-system-and-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Build a full language with parser, type system, and compiler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e-keep-execution-client-side-api-only-validates-and-runs-individual-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E. Keep execution client-side (API only validates and runs individual queries)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-validate-client-side-only-keep-api-stateless" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Validate client-side only (keep API stateless)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-allow-iteration-with-safety-bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Allow iteration with safety bounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-ast-foundation-and-api-executor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: AST Foundation and API Executor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-branching-and-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Branching and Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-round-trip-and-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Round-Trip and Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7812,20 +8261,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_11" >
         
           
           <label class="md-nav__link" for="__nav_9_11" id="__nav_9_11_label" tabindex="0">
@@ -7846,7 +8293,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_11_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_11_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -7864,7 +8311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -7899,7 +8346,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -7934,7 +8381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -7969,7 +8416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -8004,7 +8451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -8039,7 +8486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -8071,44 +8518,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-047: Probabilistic Vocabulary Categorization
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--Accepted"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8131,408 +8544,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Problem
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-fundamental-constraint" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Fundamental Constraint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#failed-approach-fixed-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Failed Approach: Fixed Classification
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-principle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Principle
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#satisficing-strategy-herbert-simon" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Satisficing Strategy (Herbert Simon)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#confidence-thresholds" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Confidence Thresholds
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ambiguity-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ambiguity Detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ecological-pruning-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ecological Pruning Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-0-seed-validation-optional-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 0: Seed Validation (Optional, Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-foundation-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Foundation (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-batch-categorization-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Batch Categorization (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-cli-integration-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: CLI Integration (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-validation-week-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Validation (Week 2)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-orphan-detection-week-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Orphan Detection (Week 2)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-manual-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 1: Manual Classification
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-llm-auto-classification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 2: LLM Auto-Classification
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-hybrid-embeddings-llm-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 3: Hybrid (Embeddings + LLM validation)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-multi-category-assignment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 4: Multi-Category Assignment
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#success-criteria" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Success Criteria
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-categorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Categorization
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -8545,7 +8556,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -8580,7 +8591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -8615,7 +8626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8650,7 +8661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -8685,7 +8696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -8720,7 +8731,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9513,17 +9524,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9536,10 +9536,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
+  <a href="#what-this-is" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Problem
+        What This Is
       
     </span>
   </a>
@@ -9547,10 +9547,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-fundamental-constraint" class="md-nav__link">
+  <a href="#design-constraints-the-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Fundamental Constraint
+        Design Constraints (The Boundary)
       
     </span>
   </a>
@@ -9558,10 +9558,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#failed-approach-fixed-classification" class="md-nav__link">
+  <a href="#the-two-graphs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Failed Approach: Fixed Classification
+        The Two Graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-authoring-spectrum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Authoring Spectrum
       
     </span>
   </a>
@@ -9586,10 +9597,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#core-principle" class="md-nav__link">
+  <a href="#1-the-ast-is-the-canonical-form" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Principle
+        1. The AST is the Canonical Form
       
     </span>
   </a>
@@ -9597,10 +9608,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#2-statements-and-operators" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        2. Statements and Operators
       
     </span>
   </a>
@@ -9608,10 +9619,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#satisficing-strategy-herbert-simon" class="md-nav__link">
+  <a href="#3-operation-types" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Satisficing Strategy (Herbert Simon)
+        3. Operation Types
       
     </span>
   </a>
@@ -9619,10 +9630,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#confidence-thresholds" class="md-nav__link">
+  <a href="#4-conditional-branching" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Confidence Thresholds
+        4. Conditional Branching
       
     </span>
   </a>
@@ -9630,10 +9641,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ambiguity-detection" class="md-nav__link">
+  <a href="#5-block-annotations-decompilation-support" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ambiguity Detection
+        5. Block Annotations (Decompilation Support)
       
     </span>
   </a>
@@ -9641,10 +9652,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cli-integration" class="md-nav__link">
+  <a href="#6-text-dsl-serialization-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI Integration
+        6. Text DSL (Serialization Format)
       
     </span>
   </a>
@@ -9652,10 +9663,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ecological-pruning-workflow" class="md-nav__link">
+  <a href="#7-api-side-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ecological Pruning Workflow
+        7. API-Side Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-server-side-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Server-Side Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-mapping-existing-primitives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Mapping Existing Primitives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Storage
       
     </span>
   </a>
@@ -9718,89 +9762,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-0-seed-validation-optional-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 0: Seed Validation (Optional, Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-foundation-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Foundation (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-batch-categorization-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Batch Categorization (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-cli-integration-week-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: CLI Integration (Week 1)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-validation-week-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Validation (Week 2)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-orphan-detection-week-2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Orphan Detection (Week 2)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9813,10 +9774,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#alternative-1-manual-classification" class="md-nav__link">
+  <a href="#a-extend-the-current-ir-minimally-just-add-type-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 1: Manual Classification
+        A. Extend the current IR minimally (just add type field)
       
     </span>
   </a>
@@ -9824,10 +9785,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-2-llm-auto-classification" class="md-nav__link">
+  <a href="#b-use-cypher-as-the-canonical-form-embed-api-calls-as-commentspragmas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 2: LLM Auto-Classification
+        B. Use Cypher as the canonical form (embed API calls as comments/pragmas)
       
     </span>
   </a>
@@ -9835,10 +9796,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-3-hybrid-embeddings-llm-validation" class="md-nav__link">
+  <a href="#c-adopt-datalog-or-another-existing-query-language" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 3: Hybrid (Embeddings + LLM validation)
+        C. Adopt Datalog or another existing query language
       
     </span>
   </a>
@@ -9846,10 +9807,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alternative-4-multi-category-assignment" class="md-nav__link">
+  <a href="#d-build-a-full-language-with-parser-type-system-and-compiler" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative 4: Multi-Category Assignment
+        D. Build a full language with parser, type system, and compiler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e-keep-execution-client-side-api-only-validates-and-runs-individual-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E. Keep execution client-side (API only validates and runs individual queries)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-validate-client-side-only-keep-api-stateless" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Validate client-side only (keep API stateless)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-allow-iteration-with-safety-bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Allow iteration with safety bounds
       
     </span>
   </a>
@@ -9862,24 +9856,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#success-criteria" class="md-nav__link">
+  <a href="#implementation-phases" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Success Criteria
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-ast-foundation-and-api-executor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: AST Foundation and API Executor
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#example-categorization" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-branching-and-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example Categorization
+        Phase 2: Branching and Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-round-trip-and-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Round-Trip and Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -9914,440 +9936,565 @@
   
 
 
-<h1 id="adr-047-probabilistic-vocabulary-categorization">ADR-047: Probabilistic Vocabulary Categorization</h1>
-<ul>
-<li>Migration 015: Schema fields for category scoring</li>
-<li>VocabularyCategorizer class: Core categorization logic</li>
-<li>Integrated into ingestion pipeline: add_edge_type() auto-categorizes new types</li>
-<li>Integrated into graph updates: VocabularyCategorizer updates :IN_CATEGORY relationships</li>
-<li>CLI commands: kg vocab refresh-categories (default: all types), kg vocab category-scores</li>
-<li>Embedding worker: Unified embedding generation for vocabulary and concepts</li>
-<li>Result: All 47 types properly categorized (30 builtin + 17 custom) with confidence scores</li>
-</ul>
-<h2 id="overview">Overview</h2>
-<p>When your AI learns a new relationship type like "HARMONIZES_WITH", which semantic category does it belong to? Is it about composition (how things fit together), interaction (how things affect each other), or something else entirely? The original system only knew how to categorize the 30 hand-picked relationship types—everything the AI discovered got dumped into a generic "llm_generated" bucket, losing valuable semantic information.</p>
-<p>This ADR solves the categorization problem using the same embedding technology that powers concept matching. Think of it like having reference examples for each category: "causation" is defined by types like CAUSES and ENABLES, "composition" by PART_OF and CONTAINS. When a new type appears, the system generates its embedding vector (a mathematical representation of its meaning) and compares it to the embeddings of these reference types, asking "which category is this most similar to?" The result is probabilistic—a type might be 73% composition and 21% interaction, revealing semantic ambiguity. This automatic categorization happens immediately when new types are discovered, organizing your growing vocabulary without manual classification. The system can now filter queries by relationship category (show me all causal connections), detect when vocabulary is drifting toward certain semantic areas, and explain to users what kind of relationship "HARMONIZES_WITH" actually represents.</p>
-<hr />
+<h1 id="adr-500-graph-program-dsl-and-ast-architecture">ADR-500: Graph Program DSL and AST Architecture</h1>
 <h2 id="context">Context</h2>
-<p>The relationship vocabulary system currently has two classification approaches:</p>
-<p><strong>Builtin Types (30 types):</strong> Hand-assigned semantic categories
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>CAUSES        → causation
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>COMPOSED_OF   → composition
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>IMPLIES       → logical
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>SUPPORTS      → evidential
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>...
-</code></pre></div></p>
-<p><strong>LLM-Generated Types (88+ types):</strong> Generic "llm_generated" category
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ENHANCES      → llm_generated  ❌ Not semantically useful
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>INTEGRATES    → llm_generated  ❌ Can&#39;t distinguish from ENHANCES
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>CONFIGURES    → llm_generated  ❌ Lost semantic information
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>...
-</code></pre></div></p>
-<h3 id="the-problem">The Problem</h3>
-<p>Without meaningful categories, the system cannot:
-- <strong>Match relationships semantically</strong> during extraction (Is "improves" similar to "enhances"?)
-- <strong>Filter graph traversals</strong> by relationship type (Show me all causal relationships)
-- <strong>Explain relationships</strong> to users (What kind of relationship is CONFIGURES?)
-- <strong>Detect category drift</strong> (Are we generating too many causal vs structural types?)</p>
-<h3 id="the-fundamental-constraint">The Fundamental Constraint</h3>
-<p>The core challenge is <strong>distilling unbounded semantic space into bounded knowledge</strong>:</p>
-<blockquote>
-<p>We are essentially distilling a bunch of relationships that mean infinite things possibly, and satisficing it into a structure with bounded knowledge (our vocabulary).</p>
-</blockquote>
-<p>LLMs can generate unlimited relationship variants (ENHANCES, AUGMENTS, STRENGTHENS, AMPLIFIES, BOOSTS...), but humans need a <strong>bounded, semantically meaningful vocabulary</strong> to understand and work with the graph. We can't enumerate all possible relationships, but we can satisfice them into 8 interpretable categories using our 30 hand-validated seed types as anchors.</p>
-<p>This is fundamentally a <strong>lossy compression</strong> problem: preserve semantic utility while discarding infinite variation.</p>
-<h3 id="failed-approach-fixed-classification">Failed Approach: Fixed Classification</h3>
-<p><strong>Attempt 1:</strong> Manually classify all 88 types
-- <strong>Problem:</strong> Subjective, time-consuming, doesn't scale
-- <strong>Result:</strong> Abandoned - too much manual work</p>
-<p><strong>Attempt 2:</strong> LLM auto-classification
-- <strong>Problem:</strong> Adds LLM dependency, inconsistent, needs validation
-- <strong>Result:</strong> Violates principle of avoiding LLM for metadata</p>
-<h2 id="decision">Decision</h2>
-<p>Implement <strong>probabilistic category assignment</strong> using embedding similarity - the same pattern that succeeded with grounding strength (ADR-044).</p>
-<h3 id="core-principle">Core Principle</h3>
-<blockquote>
-<p>Categories emerge from semantic similarity to seed types, not fixed assignments.</p>
-</blockquote>
-<p>Just as grounding scores emerge from SUPPORTS/CONTRADICTS relationships, categories emerge from similarity to the 30 builtin "seed" types.</p>
-<h3 id="architecture">Architecture</h3>
-<p><strong>1. Seed Types (30 Builtin Types)</strong></p>
-<p>These are the ground truth for each category:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">CATEGORY_SEEDS</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s1">&#39;causation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CAUSES&#39;</span><span class="p">,</span> <span class="s1">&#39;ENABLES&#39;</span><span class="p">,</span> <span class="s1">&#39;PREVENTS&#39;</span><span class="p">,</span> <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">,</span> <span class="s1">&#39;RESULTS_FROM&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s1">&#39;composition&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;PART_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTAINS&#39;</span><span class="p">,</span> <span class="s1">&#39;COMPOSED_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;SUBSET_OF&#39;</span><span class="p">,</span> <span class="s1">&#39;INSTANCE_OF&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s1">&#39;logical&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;IMPLIES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">,</span> <span class="s1">&#39;PRESUPPOSES&#39;</span><span class="p">,</span> <span class="s1">&#39;EQUIVALENT_TO&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="s1">&#39;evidential&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;SUPPORTS&#39;</span><span class="p">,</span> <span class="s1">&#39;REFUTES&#39;</span><span class="p">,</span> <span class="s1">&#39;EXEMPLIFIES&#39;</span><span class="p">,</span> <span class="s1">&#39;MEASURED_BY&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="s1">&#39;semantic&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;SIMILAR_TO&#39;</span><span class="p">,</span> <span class="s1">&#39;ANALOGOUS_TO&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRASTS_WITH&#39;</span><span class="p">,</span> <span class="s1">&#39;OPPOSITE_OF&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="s1">&#39;temporal&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;PRECEDES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONCURRENT_WITH&#39;</span><span class="p">,</span> <span class="s1">&#39;EVOLVES_INTO&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="s1">&#39;dependency&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DEPENDS_ON&#39;</span><span class="p">,</span> <span class="s1">&#39;REQUIRES&#39;</span><span class="p">,</span> <span class="s1">&#39;CONSUMES&#39;</span><span class="p">,</span> <span class="s1">&#39;PRODUCES&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="s1">&#39;derivation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DERIVED_FROM&#39;</span><span class="p">,</span> <span class="s1">&#39;GENERATED_BY&#39;</span><span class="p">,</span> <span class="s1">&#39;BASED_ON&#39;</span><span class="p">]</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">}</span>
+<p>The knowledge graph system has three query authoring surfaces — smart search, block editor, and Cypher editor — that converge on a shared intermediate representation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{ op: &#39;+&#39; | &#39;-&#39;, cypher: string }[]
 </code></pre></div>
-<p><strong>2. Category Assignment via Embedding Similarity</strong></p>
-<p>For each LLM-generated type:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_category_scores</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="sd">    Compute similarity to each category&#39;s seed types.</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="sd">    Returns dict like:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="sd">    {</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="sd">        &#39;causation&#39;: 0.85,    # ENHANCES is very similar to ENABLES</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="sd">        &#39;composition&#39;: 0.45,  # Less similar to CONTAINS</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="sd">        &#39;logical&#39;: 0.23,      # Not similar to IMPLIES</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="sd">        ...</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="sd">    }</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">type_embedding</span> <span class="o">=</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">)</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">category_scores</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">seed_types</span> <span class="ow">in</span> <span class="n">CATEGORY_SEEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="c1"># Compute similarity to all seeds in this category</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        <span class="n">similarities</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>            <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">type_embedding</span><span class="p">,</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>            <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">seed_types</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>        <span class="p">]</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>        <span class="c1"># Category score = max similarity to any seed</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>        <span class="n">category_scores</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="k">return</span> <span class="n">category_scores</span>
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="c1"># Example:</span>
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="n">scores</span> <span class="o">=</span> <span class="n">compute_category_scores</span><span class="p">(</span><span class="s2">&quot;ENHANCES&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="c1"># =&gt; {&#39;causation&#39;: 0.85, &#39;composition&#39;: 0.45, &#39;logical&#39;: 0.23, ...}</span>
-<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>
-<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="n">assigned_category</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
-<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="n">confidence</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">assigned_category</span><span class="p">]</span>
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="c1"># =&gt; category=&#39;causation&#39;, confidence=0.85</span>
-</code></pre></div>
-<h3 id="satisficing-strategy-herbert-simon">Satisficing Strategy (Herbert Simon)</h3>
-<p>This algorithm uses <strong>satisficing</strong> (accept "good enough" vs. optimal):</p>
-<p><strong>Why <code>max()</code> instead of <code>mean()</code>:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Example: ENHANCES vs causation seeds</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">similarities</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="s1">&#39;ENABLES&#39;</span><span class="p">:</span>    <span class="mf">0.87</span><span class="p">,</span>  <span class="c1"># Very similar! (same polarity)</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s1">&#39;CAUSES&#39;</span><span class="p">:</span>     <span class="mf">0.72</span><span class="p">,</span>  <span class="c1"># Similar</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s1">&#39;PREVENTS&#39;</span><span class="p">:</span>   <span class="mf">0.12</span><span class="p">,</span>  <span class="c1"># Opposite polarity (but still causal!)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">:</span> <span class="mf">0.65</span>   <span class="c1"># Similar</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>  <span class="o">=</span> <span class="mf">0.87</span>  <span class="err">✓</span> <span class="n">Satisficing</span><span class="p">:</span> <span class="s2">&quot;Found one good match!&quot;</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">mean</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.59</span>  <span class="err">✗</span> <span class="n">Optimizing</span><span class="p">:</span> <span class="n">Wrongly</span> <span class="n">penalized</span> <span class="n">by</span> <span class="n">PREVENTS</span>
-</code></pre></div>
-<p>Categories contain <strong>opposing polarities</strong> (ENABLES vs PREVENTS are both causal). Max satisfices: "Is this semantically similar to ANY seed? Yes? Good enough!"</p>
-<h3 id="confidence-thresholds">Confidence Thresholds</h3>
-<p>Accept "good enough" based on confidence:</p>
-<ul>
-<li><strong>High (≥ 70%):</strong> Auto-categorize confidently</li>
-<li><strong>Medium (50-69%):</strong> Auto-categorize with warning</li>
-<li><strong>Low (&lt; 50%):</strong> Flag for curator review (possible new seed needed)</li>
-</ul>
-<h3 id="ambiguity-detection">Ambiguity Detection</h3>
-<p>When runner-up score is close to winner (&gt; 0.70), flag as multi-category candidate:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">primary</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">runner_up_score</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">if</span> <span class="n">runner_up_score</span> <span class="o">&gt;</span> <span class="mf">0.70</span><span class="p">:</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ambiguous: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> could be </span><span class="si">{</span><span class="n">primary</span><span class="si">}</span><span class="s2"> OR </span><span class="si">{</span><span class="n">runner_up_category</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="c1"># Store category_ambiguous: true for future multi-category support</span>
-</code></pre></div>
-<p><strong>3. Storage Schema</strong></p>
-<p>Update <code>relationship_vocabulary</code> table:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_source</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;computed&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;builtin&#39; or &#39;computed&#39; (no overrides)</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_confidence</span><span class="w"> </span><span class="nb">FLOAT</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 0.0 to 1.0</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_scores</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Full score breakdown</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">category_ambiguous</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">;</span><span class="w">  </span><span class="c1">-- True if runner-up &gt; 0.70</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_relationship_category</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">relationship_vocabulary</span><span class="p">(</span><span class="n">category</span><span class="p">);</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_category_confidence</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">relationship_vocabulary</span><span class="p">(</span><span class="n">category_confidence</span><span class="p">);</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">-- Example row:</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">-- type: ENHANCES</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">-- category: causation</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1">-- category_source: computed</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">-- category_confidence: 0.85</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1">-- category_scores: {&quot;causation&quot;: 0.85, &quot;composition&quot;: 0.45, &quot;logical&quot;: 0.23, ...}</span>
-</code></pre></div>
-<p><strong>4. Cache and Refresh</strong></p>
-<p>Category assignments are cached but can be recomputed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Compute once on vocabulary insert</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">INSERT</span> <span class="n">INTO</span> <span class="n">relationship_vocabulary</span> <span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">category_source</span><span class="p">,</span> <span class="n">category_confidence</span><span class="p">)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">VALUES</span> <span class="p">(</span><span class="s1">&#39;ENHANCES&#39;</span><span class="p">,</span> <span class="s1">&#39;causation&#39;</span><span class="p">,</span> <span class="s1">&#39;computed&#39;</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">);</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Recompute on demand</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">kg</span> <span class="n">vocab</span> <span class="n">refresh</span><span class="o">-</span><span class="n">categories</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Recalculates all &#39;computed&#39; categories based on current embeddings</span>
-</code></pre></div>
-<p><strong>When to refresh categories:</strong></p>
+<p>Smart search and the Cypher editor already round-trip through this IR (see <code>feature/unified-smart-search</code>). But several limitations prevent it from becoming a true program representation:</p>
 <ol>
 <li>
-<p><strong>After vocabulary merges</strong> (vocabulary topology changes):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>STRENGTHENS<span class="w"> </span>ENHANCES<span class="w">  </span><span class="c1"># Consolidate synonyms</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">          </span><span class="c1"># Recalculate with cleaner landscape</span>
-</code></pre></div></p>
+<p><strong>The operator vocabulary is too narrow.</strong> Only <code>+</code> (union) and <code>-</code> (difference) exist. Intersection, conditional branching, and assertions have no representation.</p>
 </li>
 <li>
-<p><strong>After embedding model changes</strong> (semantic space shifts):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--model<span class="w"> </span>nomic-embed-text
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>regenerate<span class="w"> </span>--vocabulary
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">  </span><span class="c1"># Automatically triggered</span>
-</code></pre></div></p>
+<p><strong>Smart blocks are invisible to the IR.</strong> Vector search, source search, epistemic filtering, and enrichment blocks compile to Cypher comment markers (<code>// Smart Block: ...</code>). The IR is lossy — you can't reconstruct intent from a comment.</p>
 </li>
 <li>
-<p><strong>After seed adjustments</strong> (category definitions change):
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># If CATEGORY_SEEDS updated in code</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w">  </span><span class="c1"># Recalculate with new seeds</span>
-</code></pre></div></p>
+<p><strong>The block editor doesn't participate.</strong> It compiles to a single Cypher string, not to the <code>{ op, cypher }[]</code> array. Its 18 block types have no mapping to the IR.</p>
+</li>
+<li>
+<p><strong>Validation is client-side only.</strong> The block compiler runs in the browser. Invalid programs fail at execution time with opaque Cypher errors. There is no structural validation of whether a program is well-formed before it hits the database.</p>
+</li>
+<li>
+<p><strong>Programs aren't portable.</strong> The current save format stores either raw <code>searchParams</code> or ReactFlow layout (<code>{ nodes, edges }</code>). Neither captures the executable program in a form that agents, other clients, or the API can work with.</p>
 </li>
 </ol>
-<h3 id="cli-integration">CLI Integration</h3>
-<p><strong>Display categories with confidence:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>list
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>TYPE<span class="w">          </span>CATEGORY<span class="w">    </span>EDGES<span class="w">  </span>STATUS<span class="w">  </span>CONFIDENCE
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>CAUSES<span class="w">        </span>causation<span class="w">      </span><span class="m">91</span><span class="w">  </span>✓<span class="w">       </span><span class="nb">builtin</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>ENHANCES<span class="w">      </span>causation<span class="w">      </span><span class="m">28</span><span class="w">  </span>✓<span class="w">       </span><span class="m">85</span>%
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>INTEGRATES<span class="w">    </span>composition<span class="w">    </span><span class="m">15</span><span class="w">  </span>✓<span class="w">       </span><span class="m">78</span>%
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>CONFIGURES<span class="w">    </span>dependency<span class="w">      </span><span class="m">3</span><span class="w">  </span>✓<span class="w">       </span><span class="m">72</span>%
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>MYSTERIOUS<span class="w">    </span>causation<span class="w">       </span><span class="m">1</span><span class="w">  </span>✓<span class="w">       </span><span class="m">45</span>%<span class="w">  </span>⚠<span class="w"> </span>low<span class="w"> </span>confidence
-</code></pre></div>
-<p><strong>Show category breakdown:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>ENHANCES
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>Similarity<span class="w"> </span>to<span class="w"> </span>category<span class="w"> </span>seeds:
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>causation:<span class="w">    </span><span class="m">0</span>.85<span class="w">  </span>███████████████████<span class="w">  </span><span class="o">(</span>closest:<span class="w"> </span>ENABLES<span class="w"> </span><span class="m">0</span>.87<span class="o">)</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>composition:<span class="w">  </span><span class="m">0</span>.45<span class="w">  </span>█████████
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>dependency:<span class="w">   </span><span class="m">0</span>.38<span class="w">  </span>████████
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span>semantic:<span class="w">     </span><span class="m">0</span>.31<span class="w">  </span>██████
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span>logical:<span class="w">      </span><span class="m">0</span>.23<span class="w">  </span>█████
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span>evidential:<span class="w">   </span><span class="m">0</span>.19<span class="w">  </span>████
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span>temporal:<span class="w">     </span><span class="m">0</span>.12<span class="w">  </span>██
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span>derivation:<span class="w">   </span><span class="m">0</span>.08<span class="w">  </span>██
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>Assigned:<span class="w"> </span>causation<span class="w"> </span><span class="o">(</span><span class="m">85</span>%<span class="w"> </span>confidence<span class="o">)</span>
-</code></pre></div>
-<h3 id="ecological-pruning-workflow">Ecological Pruning Workflow</h3>
-<p>Categories enable <strong>ecological vocabulary management</strong> without curator overrides.</p>
-<p><strong>Core Philosophy:</strong></p>
-<blockquote>
-<p>The graph is timeless. Vocabulary is part of the graph.
-Curators observe current state, prune weak connections, let strong ones emerge.</p>
-</blockquote>
-<p><strong>Vocabulary State (Timeless):</strong>
-- Types exist, connected to concepts via edges
-- Edge count reflects usage (connection strength)
-- Category confidence reflects cluster fit
-- Strong types accumulate edges, weak types remain sparse</p>
-<p><strong>Integrated Workflow with ADR-032 (Pruning) and ADR-046 (Synonym Detection):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># 1. OBSERVE current state</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># ENHANCES:     causation, 87% confidence, 47 edges</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># STRENGTHENS:  causation, 86% confidence, 12 edges</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># SUPPORTS:     evidential, 91% confidence, 38 edges</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># MYSTERIOUS:   causation, 45% confidence, 1 edge</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1"># 2. FIND pruning candidates (ADR-047 categories reveal)</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>kg<span class="w"> </span>vocab<span class="w"> </span>find-synonyms<span class="w"> </span>--category<span class="w"> </span>causation<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.85
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1"># ENHANCES ↔ STRENGTHENS: 0.89 similarity (same category)</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>kg<span class="w"> </span>vocab<span class="w"> </span>prune-candidates
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="c1"># MYSTERIOUS: orphan (confidence &lt; 50%, edge_count = 1)</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="c1"># 3. MERGE synonyms (ADR-046)</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>kg<span class="w"> </span>vocab<span class="w"> </span>merge<span class="w"> </span>STRENGTHENS<span class="w"> </span>ENHANCES
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1"># ENHANCES now has 59 edges (47 + 12)</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="c1"># Result: 88 → 87 types</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="c1"># 4. REFRESH categories (ADR-047)</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
-<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="c1"># Recomputes with cleaner vocabulary topology</span>
-<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="c1"># ENHANCES confidence may shift (embedding landscape changed)</span>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>
-<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="c1"># 5. DEPRECATE weak types (ADR-032)</span>
-<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>kg<span class="w"> </span>vocab<span class="w"> </span>deprecate<span class="w"> </span>MYSTERIOUS
-<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="c1"># Result: 87 → 86 types</span>
-<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>
-<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="c1"># 6. OBSERVE new state</span>
-<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
-<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="c1"># ENHANCES: 59 edges (stronger)</span>
-<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="c1"># Fewer types, denser connections</span>
-<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="c1"># System converging on strong vocabulary</span>
-</code></pre></div>
-<p><strong>What Categories Reveal:</strong></p>
+<h3 id="what-this-is">What This Is</h3>
+<p>This is a <strong>domain-specific query composition language</strong> built on openCypher — in the same category as Atlassian's JQL (which wraps Lucene). JQL succeeded for 15+ years by staying scoped: system-provided fields and functions, boolean composition, server-side validation, round-trip between visual builder and text. No user-defined functions, no general computation. It became the most powerful feature in Jira precisely because of those constraints.</p>
+<p>The parallel is direct:</p>
 <table>
 <thead>
 <tr>
-<th>Insight</th>
-<th>Action</th>
-<th>ADR</th>
+<th>JQL</th>
+<th>This System</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Orphans</strong> (confidence &lt; 50%, low edges)</td>
-<td>Deprecate weak types</td>
-<td>ADR-032</td>
+<td>Wraps Lucene</td>
+<td>Wraps openCypher + REST API</td>
 </tr>
 <tr>
-<td><strong>Synonyms</strong> (same category, similarity &gt; 0.85)</td>
-<td>Merge redundant types</td>
-<td>ADR-046</td>
+<td>Domain fields (<code>project</code>, <code>status</code>)</td>
+<td>Domain concepts (<code>ontology</code>, <code>grounding_strength</code>)</td>
 </tr>
 <tr>
-<td><strong>Imbalances</strong> (40 causation, 3 temporal)</td>
-<td>Need better seed diversity</td>
-<td>ADR-047</td>
+<td>System functions (<code>currentUser()</code>)</td>
+<td>Smart blocks (<code>vectorSearch</code>, <code>epistemicFilter</code>)</td>
 </tr>
 <tr>
-<td><strong>Bridges</strong> (ambiguous, runner-up &gt; 0.70)</td>
-<td>Keep valuable connectors</td>
-<td>ADR-047</td>
+<td><code>AND</code>, <code>OR</code>, <code>NOT</code></td>
+<td><code>+</code>, <code>-</code>, <code>&amp;</code> (set algebra)</td>
+</tr>
+<tr>
+<td>Basic filter UI ↔ JQL text</td>
+<td>Block builder ↔ program text</td>
+</tr>
+<tr>
+<td>Server-side validation</td>
+<td>API-side validation</td>
+</tr>
+<tr>
+<td>Saved/shared filters</td>
+<td>Saved/shared programs</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Why No Curator Overrides:</strong></p>
-<p>Categories are <strong>computed from current embeddings and seeds</strong>:
-- Override = frozen state that doesn't evolve with system
-- Model upgrades → embeddings change → override blocks benefits
-- Vocabulary merges → topology changes → override becomes stale
-- Better: Curators adjust seeds/topology, categories recompute</p>
-<p><strong>Emergent Signal:</strong>
-After compaction, strong types accumulate more edges (reinforcement). System naturally converges on fewer, stronger vocabulary through graph dynamics, not temporal metrics.</p>
+<h3 id="design-constraints-the-boundary">Design Constraints (The Boundary)</h3>
+<p>This is a query composition language, not a general-purpose programming language. The boundary is explicit:</p>
+<p><strong>In scope:</strong>
+- Set algebra on query results (<code>+</code>, <code>-</code>, <code>&amp;</code>)
+- Conditional branching (if/else, switch — select which query to run based on W state)
+- Parameters with substitution (resolved once at execution time, not mutable)
+- System-provided operations (blocks are the fixed vocabulary)
+- Assertions and optional execution (fail-fast or skip on empty results)</p>
+<p><strong>Out of scope — deliberately and permanently:</strong>
+- <strong>No iteration.</strong> A program cannot loop over queries against the graph. Every program is a finite, statically-determinable sequence of operations. Iteration against a live database is an unbounded resource commitment — the executor must always be able to answer "how many operations will this program perform?" before running it.
+- <strong>No user-defined abstractions.</strong> No <code>DEFINE BLOCK</code>, no macros, no function definitions. Blocks are the fixed vocabulary provided by the system.
+- <strong>No mutable variables.</strong> Parameters are substituted once. The block compiler generates internal variables (<code>c0</code>, <code>neighbor1</code>) but these are compilation artifacts, not user-facing bindings.
+- <strong>No recursion.</strong> Programs are DAGs at most, never cycles.</p>
+<p>The moment any of these constraints is violated, the system has left the JQL zone and should adopt a real language runtime.</p>
+<h3 id="the-two-graphs">The Two Graphs</h3>
+<p>Any program operates across two conceptual graphs:</p>
+<table>
+<thead>
+<tr>
+<th>Graph</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>H</strong> (Source)</td>
+<td>The persistent knowledge graph. Immutable during query execution.</td>
+</tr>
+<tr>
+<td><strong>W</strong> (Working)</td>
+<td>The constructed subgraph. Mutable, ephemeral, exists in client state.</td>
+</tr>
+</tbody>
+</table>
+<p>All operators read from H and/or W, and write to W. This framing clarifies operator semantics: <code>+</code> queries H and adds to W; <code>-</code> queries H (or W) and removes from W; <code>&amp;</code> queries H and intersects with W.</p>
+<h3 id="the-authoring-spectrum">The Authoring Spectrum</h3>
+<p>Programs can originate from:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Recording ────→ Macro ────→ Refined Program ────→ Reusable Policy
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    │              │               │                    │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a> raw clicks    linear replay   with branches,       generalized,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a> or queries    of exploration  conditionals          parameterized,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>                                                    stored as
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                                                    artifacts
+</code></pre></div>
+<p>The AST must support all points on this spectrum.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-the-ast-is-the-canonical-form">1. The AST is the Canonical Form</h3>
+<p>Graph programs are JSON ASTs validated by the API. The AST is the single source of truth — text DSL, block diagrams, and recorded explorations are all serialization formats that compile to it.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">GraphProgram</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">metadata</span><span class="o">:</span><span class="w"> </span><span class="kt">ProgramMetadata</span><span class="p">;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nx">params?</span><span class="o">:</span><span class="w"> </span><span class="kt">ParamDeclaration</span><span class="p">[];</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nx">statements</span><span class="o">:</span><span class="w"> </span><span class="kt">Statement</span><span class="p">[];</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ProgramMetadata</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="nx">description?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="nx">author</span><span class="o">?:</span><span class="w"> </span><span class="s1">&#39;human&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;agent&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span><span class="nx">created?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// ISO timestamp</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="p">}</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ParamDeclaration</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">               </span><span class="c1">// e.g. &quot;concept_name&quot;</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;number&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">  </span><span class="nx">default?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="2-statements-and-operators">2. Statements and Operators</h3>
+<p>Each statement has an operator and a typed operation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">Statement</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="kt">Operator</span><span class="p">;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="kt">CypherOp</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">ApiOp</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">ConditionalOp</span><span class="p">;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nx">label?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">             </span><span class="c1">// human-readable step description</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nx">block?</span><span class="o">:</span><span class="w"> </span><span class="kt">BlockAnnotation</span><span class="p">;</span><span class="w">    </span><span class="c1">// source block type (for decompilation)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">}</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="kr">type</span><span class="w"> </span><span class="nx">Operator</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;+&#39;</span><span class="w">    </span><span class="c1">// Add: query H, merge results into W</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;-&#39;</span><span class="w">    </span><span class="c1">// Subtract: query H (or pattern-match W), remove from W</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;&amp;&#39;</span><span class="w">    </span><span class="c1">// Intersect: query H, keep only overlap with current W</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="w">    </span><span class="c1">// Optional: execute, no-op if empty result (don&#39;t fail)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;!&#39;</span><span class="w">    </span><span class="c1">// Assert: execute, fail program if empty result</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Why no iteration operator:</strong> Every program must have a statically-determinable operation count. The executor can compute the maximum number of queries a program will issue before running a single one. This is a resource guarantee — programs are bounded by construction, not by runtime safety checks.</p>
+<h3 id="3-operation-types">3. Operation Types</h3>
+<p>Operations describe <em>what</em> to execute. The executor dispatches on <code>type</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// Execute a Cypher query against H</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">CypherOp</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;cypher&#39;</span><span class="p">;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">              </span><span class="c1">// openCypher statement</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nx">limit?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">}</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">// Call a REST API endpoint (smart blocks)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ApiOp</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;api&#39;</span><span class="p">;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nx">endpoint</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// e.g. &#39;/search/concepts&#39;</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="p">}</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="c1">// Conditional branching (select execution path based on W state)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ConditionalOp</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;conditional&#39;</span><span class="p">;</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="nx">condition</span><span class="o">:</span><span class="w"> </span><span class="kt">Condition</span><span class="p">;</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">  </span><span class="nx">then</span><span class="o">:</span><span class="w"> </span><span class="kt">Statement</span><span class="p">[];</span><span class="w">          </span><span class="c1">// execute if condition is true</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="nx">else?</span><span class="o">:</span><span class="w"> </span><span class="kt">Statement</span><span class="p">[];</span><span class="w">         </span><span class="c1">// execute if condition is false</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="4-conditional-branching">4. Conditional Branching</h3>
+<p>Programs can branch based on the current state of W. Conditions inspect W without modifying it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kr">type</span><span class="w"> </span><span class="nx">Condition</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_results&#39;</span><span class="w"> </span><span class="p">}</span><span class="w">                           </span><span class="c1">// W is non-empty</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;empty&#39;</span><span class="w"> </span><span class="p">}</span><span class="w">                                 </span><span class="c1">// W is empty</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;count_gte&#39;</span><span class="p">;</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">}</span><span class="w">              </span><span class="c1">// W has &gt;= N nodes</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;count_lte&#39;</span><span class="p">;</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">}</span><span class="w">              </span><span class="c1">// W has &lt;= N nodes</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_ontology&#39;</span><span class="p">;</span><span class="w"> </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="c1">// W contains nodes from ontology</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_relationship&#39;</span><span class="p">;</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="c1">// W contains edges of type</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p">;</span>
+</code></pre></div>
+<p>Branching is <em>selection</em>, not <em>computation</em>. It chooses which queries to run based on what's already in the working graph. Every branch path has a deterministic operation count.</p>
+<p><strong>Example — if/else:</strong> "If the initial search found results, expand the neighborhood. Otherwise, try a broader vector search."</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;conditional&#39;</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nx">condition</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_results&#39;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nx">then</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;cypher&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;MATCH (c)-[r*1..2]-(n) ...&#39;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="k">else</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;api&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">endpoint</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/search/concepts&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">min_similarity</span><span class="o">:</span><span class="w"> </span><span class="kt">0.5</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Example — switch-like pattern:</strong> Chain conditionals for multi-way branching.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// If W has &quot;business&quot; ontology nodes → filter to those</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1">// Else if W has &quot;technical&quot; ontology nodes → filter to those</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1">// Else → keep everything</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;conditional&#39;</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nx">condition</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_ontology&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;business&#39;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="nx">then</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;cypher&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;...WHERE ontology = &quot;business&quot;...&#39;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}],</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="k">else</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;conditional&#39;</span><span class="p">,</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="nx">condition</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">test</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;has_ontology&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;technical&#39;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">        </span><span class="nx">then</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">operation</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;cypher&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;...WHERE ontology = &quot;technical&quot;...&#39;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}]</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="p">}}]</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">}}</span>
+</code></pre></div>
+<p>Nested conditionals are permitted (for switch-case patterns) but the validator enforces a maximum nesting depth (default: 3) to prevent deep branching trees.</p>
+<h3 id="5-block-annotations-decompilation-support">5. Block Annotations (Decompilation Support)</h3>
+<p>When the block editor compiles to the AST, it annotates each statement with its source block type and parameters. This enables text → blocks round-trip:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">BlockAnnotation</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nx">blockType</span><span class="o">:</span><span class="w"> </span><span class="kt">BlockType</span><span class="p">;</span><span class="w">       </span><span class="c1">// &#39;search&#39;, &#39;neighborhood&#39;, &#39;vectorSearch&#39;, etc.</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="p">}</span>
+</code></pre></div>
+<p>A statement with a block annotation can be decompiled back to a visual block. Statements without annotations (hand-written Cypher) render as generic "Cypher" blocks.</p>
+<h3 id="6-text-dsl-serialization-format">6. Text DSL (Serialization Format)</h3>
+<p>The text DSL is a human-readable serialization of the AST. It is authored and read by humans; the canonical form is always the JSON AST.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Exploration</span><span class="p">:</span><span class="w"> </span><span class="n">Organizational</span><span class="w"> </span><span class="n">Patterns</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="err">--</span><span class="w"> </span><span class="n">Author</span><span class="p">:</span><span class="w"> </span><span class="n">human</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="err">@</span><span class="n">param</span><span class="w"> </span><span class="n">concept_name</span><span class="p">:</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;organizational&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="err">--</span><span class="w"> </span><span class="n">Step</span><span class="w"> </span><span class="m">1</span><span class="p">:</span><span class="w"> </span><span class="n">Find</span><span class="w"> </span><span class="n">matching</span><span class="w"> </span><span class="n">concepts</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="err">--</span><span class="w"> </span><span class="err">@</span><span class="n">block</span><span class="w"> </span><span class="n">search</span><span class="w"> </span><span class="n">query</span><span class="p">=</span><span class="s">&quot;organizational&quot;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="err">+</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">label</span><span class="w"> </span><span class="n">CONTAINS</span><span class="w"> </span><span class="err">$</span><span class="n">concept_name</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">  </span><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="err">--</span><span class="w"> </span><span class="n">Step</span><span class="w"> </span><span class="m">2</span><span class="p">:</span><span class="w"> </span><span class="n">Add</span><span class="w"> </span><span class="n">semantically</span><span class="w"> </span><span class="n">similar</span><span class="w"> </span><span class="n">concepts</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="err">--</span><span class="w"> </span><span class="err">@</span><span class="n">block</span><span class="w"> </span><span class="n">vectorSearch</span><span class="w"> </span><span class="n">query</span><span class="p">=</span><span class="s">&quot;organizational&quot;</span><span class="w"> </span><span class="n">similarity</span><span class="p">=</span><span class="m">0</span><span class="p">.</span><span class="m">7</span><span class="w"> </span><span class="k">limit</span><span class="p">=</span><span class="m">10</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="err">+</span><span class="w"> </span><span class="err">@</span><span class="n">api</span><span class="w"> </span><span class="err">/</span><span class="n">search</span><span class="err">/</span><span class="n">concepts</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;$concept_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;min_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">7</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="m">10</span><span class="p">};</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="err">--</span><span class="w"> </span><span class="n">Step</span><span class="w"> </span><span class="m">3</span><span class="p">:</span><span class="w"> </span><span class="k">Remove</span><span class="w"> </span><span class="n">weakly</span><span class="w"> </span><span class="n">grounded</span><span class="w"> </span><span class="n">results</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="err">-</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">2</span><span class="w"> </span><span class="k">RETURN</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="err">--</span><span class="w"> </span><span class="n">Step</span><span class="w"> </span><span class="m">4</span><span class="p">:</span><span class="w"> </span><span class="n">Keep</span><span class="w"> </span><span class="n">only</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">both</span><span class="w"> </span><span class="n">neighborhoods</span><span class="w"> </span><span class="p">(</span><span class="n">intersection</span><span class="p">)</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="err">&amp;</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SUPPORTS</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="w"> </span><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="err">--</span><span class="w"> </span><span class="n">Step</span><span class="w"> </span><span class="m">5</span><span class="p">:</span><span class="w"> </span><span class="n">Branch</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">results</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="err">?</span><span class="w"> </span><span class="n">IF</span><span class="w"> </span><span class="n">has_results</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="w">    </span><span class="err">+</span><span class="w"> </span><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*</span><span class="m">1</span><span class="p">..</span><span class="m">2</span><span class="o">]-</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="w"> </span><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="n">ELSE</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="err">+</span><span class="w"> </span><span class="err">@</span><span class="n">api</span><span class="w"> </span><span class="err">/</span><span class="n">search</span><span class="err">/</span><span class="n">concepts</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;$concept_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;min_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">5</span><span class="p">};</span>
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">  </span><span class="p">};</span>
+</code></pre></div>
+<p><strong>Syntax rules:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operator prefix</td>
+<td><code>+</code>, <code>-</code>, <code>&amp;</code>, <code>?</code>, <code>!</code> at start of statement</td>
+</tr>
+<tr>
+<td>Cypher statement</td>
+<td>Standard openCypher, terminated by <code>;</code></td>
+</tr>
+<tr>
+<td>API call</td>
+<td><code>@api &lt;endpoint&gt; &lt;json_params&gt;;</code></td>
+</tr>
+<tr>
+<td>Parameter declaration</td>
+<td><code>@param &lt;name&gt;: &lt;type&gt; = &lt;default&gt;</code></td>
+</tr>
+<tr>
+<td>Conditional</td>
+<td><code>IF &lt;condition&gt; THEN { ... } ELSE { ... };</code></td>
+</tr>
+<tr>
+<td>Block annotation</td>
+<td><code>-- @block &lt;type&gt; &lt;key&gt;=&lt;value&gt;...</code> (comment)</td>
+</tr>
+<tr>
+<td>Metadata</td>
+<td><code>-- Key: value</code> header lines</td>
+</tr>
+<tr>
+<td>Comments</td>
+<td><code>--</code> lines without <code>@</code> prefix</td>
+</tr>
+<tr>
+<td>Default operator</td>
+<td>Bare Cypher (no prefix) treated as <code>+</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="7-api-side-validation">7. API-Side Validation</h3>
+<p>The API validates program ASTs before execution. Validation checks:</p>
+<ul>
+<li><strong>Structural</strong>: Required fields present, operator is valid, operation type is known</li>
+<li><strong>Boundedness</strong>: Total operation count is statically computable and within limits (default: 100). Conditional branches contribute their longer path to the count.</li>
+<li><strong>Cypher safety</strong>: Statements pass through the query facade safety checks (ADR-048) — no writes, no unbounded matches without LIMIT</li>
+<li><strong>Parameter resolution</strong>: All <code>$param</code> references resolve to declared parameters or provided values</li>
+<li><strong>API endpoint allowlist</strong>: <code>ApiOp</code> endpoints must be in the permitted set</li>
+<li><strong>Nesting depth</strong>: Conditional nesting does not exceed maximum (default: 3)</li>
+</ul>
+<p>Validation returns structured errors referencing the statement index:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">&quot;valid&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">&quot;errors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;query&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MATCH without LIMIT on unbounded pattern&quot;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="8-server-side-execution">8. Server-Side Execution</h3>
+<p><strong>The executor lives in the API worker, not the client.</strong> Programs are submitted as JSON ASTs and executed entirely server-side. The API returns the resulting W and a step log. Clients are consumers of results, not executors.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Client (any)                    API Worker
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>─────────────                   ──────────
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>POST /programs/execute ───────→ Validate AST
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  { program, params }           Resolve parameters
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>                                For each statement:
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>                                  Evaluate conditions against W
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>                                  Execute CypherOp against H (via AGE)
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>                                  Execute ApiOp internally (no HTTP round-trip)
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>                                  Apply operator (+, -, &amp;, ?, !) to W
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>                           ←─── Return { result: W, log: StepLog[] }
+</code></pre></div>
+<p>This is the central architectural choice. It means:</p>
+<ul>
+<li><strong>One executor, many clients.</strong> The web app, CLI, MCP server, and AI agents all submit programs to the same endpoint. The set algebra (merge, subtract, intersect) is implemented once in the API worker, not reimplemented per client.</li>
+<li><strong>Agents execute headless.</strong> An agent can load a saved program, bind parameters, execute it, and receive W — no browser required. Agents can also borrow programs authored by users (or by other agents) from the query definitions store.</li>
+<li><strong>Smart blocks are internal calls.</strong> <code>ApiOp</code> statements don't make HTTP requests back to the API from the client — the executor invokes the underlying service functions directly (vector search, source search, epistemic status). This eliminates N+1 round-trips for programs with multiple smart blocks.</li>
+<li><strong>W lives server-side during execution.</strong> The working graph is built in memory on the API worker. Only the final result crosses the wire. This is more efficient than the current model where each statement's results travel client → server → client → server.</li>
+</ul>
+<p><strong>Step processing:</strong></p>
+<p>Each statement in the program is processed sequentially:</p>
+<ol>
+<li>Resolve parameters (<code>$name</code> → provided value or default)</li>
+<li>Evaluate conditionals against current W state (if applicable)</li>
+<li>Execute the selected operation:</li>
+<li><code>CypherOp</code>: run against H via the query facade (ADR-048)</li>
+<li><code>ApiOp</code>: call internal service function directly</li>
+<li>Map results to <code>RawGraphData</code> format</li>
+<li>Apply the operator to W:</li>
+<li><code>+</code>: merge results into W (deduplicate by concept_id)</li>
+<li><code>-</code>: remove matching nodes and their dangling edges from W</li>
+<li><code>&amp;</code>: intersect — keep only W nodes that appear in results</li>
+<li><code>?</code>: same as <code>+</code>, but empty results are not an error</li>
+<li><code>!</code>: same as <code>+</code>, but empty results abort the program</li>
+</ol>
+<p><strong>Response:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ProgramResult</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nx">result</span><span class="o">:</span><span class="w"> </span><span class="kt">RawGraphData</span><span class="p">;</span><span class="w">         </span><span class="c1">// the final W</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nx">log</span><span class="o">:</span><span class="w"> </span><span class="kt">StepLogEntry</span><span class="p">[];</span><span class="w">          </span><span class="c1">// per-statement execution record</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nx">aborted</span><span class="o">?:</span><span class="w"> </span><span class="p">{</span><span class="w">                   </span><span class="c1">// present if ! (assert) failed</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nx">statement</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="p">}</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">StepLogEntry</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">  </span><span class="nx">statement</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w">            </span><span class="c1">// index into program.statements</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">  </span><span class="nx">op</span><span class="o">:</span><span class="w"> </span><span class="kt">Operator</span><span class="p">;</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">  </span><span class="nx">operation_type</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">       </span><span class="c1">// &#39;cypher&#39; | &#39;api&#39; | &#39;conditional&#39;</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">  </span><span class="nx">branch_taken</span><span class="o">?:</span><span class="w"> </span><span class="s1">&#39;then&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;else&#39;</span><span class="p">;</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">  </span><span class="nx">nodes_affected</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">  </span><span class="nx">links_affected</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">  </span><span class="nx">w_size</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">nodes</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w"> </span><span class="nx">links</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">};</span><span class="w">  </span><span class="c1">// W state after this step</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">  </span><span class="nx">duration_ms</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="p">}</span>
+</code></pre></div>
+<p>The step log enables clients to reconstruct exploration sessions, show step-by-step execution progress, and debug programs. It is also the data structure that would back per-user execution history when stored alongside the program definition.</p>
+<p><strong>Migration from client-side execution:</strong></p>
+<p>The current client-side execution loop (SearchBar's <code>handleExecuteCypher</code>, ExplorerView's <code>handleLoadQuery</code>) becomes a thin wrapper around <code>POST /programs/execute</code>. During transition, both paths can coexist — the client can fall back to local execution for simple single-statement programs while the API handles full programs.</p>
+<h3 id="9-mapping-existing-primitives">9. Mapping Existing Primitives</h3>
+<p>Every existing block type and exploration action maps to the AST:</p>
+<table>
+<thead>
+<tr>
+<th>Existing Primitive</th>
+<th>AST Mapping</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>search</code> block</td>
+<td><code>+ { type: 'cypher', query: 'MATCH...CONTAINS...' }</code></td>
+</tr>
+<tr>
+<td><code>neighborhood</code> block</td>
+<td><code>+ { type: 'cypher', query: 'MATCH (c)-[*1..N]-...' }</code></td>
+</tr>
+<tr>
+<td><code>filterOntology</code> block</td>
+<td><code>&amp; { type: 'cypher', query: 'MATCH...WHERE ontology...' }</code></td>
+</tr>
+<tr>
+<td><code>filterEdge</code> block</td>
+<td><code>&amp; { type: 'cypher', query: 'MATCH...-[r:TYPE]-...' }</code></td>
+</tr>
+<tr>
+<td><code>filterNode</code> block</td>
+<td><code>&amp; { type: 'cypher', query: 'MATCH...WHERE confidence...' }</code></td>
+</tr>
+<tr>
+<td><code>not</code> block</td>
+<td><code>- { type: 'cypher', query: 'MATCH...WHERE pattern...' }</code></td>
+</tr>
+<tr>
+<td><code>and</code> block</td>
+<td><code>&amp;</code> operator (intersect two preceding results)</td>
+</tr>
+<tr>
+<td><code>or</code> block</td>
+<td><code>+</code> on second branch (union is additive)</td>
+</tr>
+<tr>
+<td><code>vectorSearch</code> block</td>
+<td><code>+ { type: 'api', endpoint: '/search/concepts', params: {...} }</code></td>
+</tr>
+<tr>
+<td><code>sourceSearch</code> block</td>
+<td><code>+ { type: 'api', endpoint: '/search/sources', params: {...} }</code></td>
+</tr>
+<tr>
+<td><code>epistemicFilter</code> block</td>
+<td><code>&amp; { type: 'api', endpoint: '/vocabulary/status', params: {...} }</code></td>
+</tr>
+<tr>
+<td><code>enrich</code> block</td>
+<td><code>+ { type: 'api', endpoint: '/concepts/batch', params: {...} }</code></td>
+</tr>
+<tr>
+<td><code>limit</code> block</td>
+<td><code>limit</code> field on the preceding statement's operation</td>
+</tr>
+<tr>
+<td><code>pathTo</code> block</td>
+<td><code>+ { type: 'cypher', query: 'MATCH path=...' }</code></td>
+</tr>
+<tr>
+<td>Smart search explore</td>
+<td><code>+ { type: 'cypher' }</code> with <code>block: { blockType: 'neighborhood' }</code></td>
+</tr>
+<tr>
+<td>Context menu follow</td>
+<td><code>+ { type: 'cypher' }</code> (recorded as exploration step)</td>
+</tr>
+<tr>
+<td>Context menu remove</td>
+<td><code>- { type: 'cypher' }</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="10-storage">10. Storage</h3>
+<p>Programs are stored as <code>query_definition</code> records (ADR-083) with <code>definition_type: 'program'</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;definition_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;program&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">&quot;definition&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Organizational Patterns&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;human&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">&quot;statements&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">]</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>This sits alongside existing definition types (<code>exploration</code>, <code>block_diagram</code>, <code>searchParams</code>). Migration path: <code>exploration</code> definitions are already <code>{ statements: [{op, cypher}] }</code> — they gain a <code>version</code> field and the operations get <code>type: 'cypher'</code> wrappers.</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
-<p><strong>1. No LLM Required</strong>
-- Uses embeddings we already generate
-- Fast, deterministic, reproducible</p>
-<p><strong>2. Scales Automatically</strong>
-- New LLM types get categorized immediately
-- No manual classification backlog</p>
-<p><strong>3. Semantic Accuracy</strong>
-- ENHANCES → causation (similar to ENABLES)
-- INTEGRATES_WITH → composition (similar to COMPOSED_OF)
-- Reflects actual semantic relationships</p>
-<p><strong>4. Confidence Scores</strong>
-- Know when categorization is uncertain
-- Low confidence → might need new category seed</p>
-<p><strong>5. Follows Grounding Pattern</strong>
-- Probabilistic (scores not binary)
-- Evidence-based (similarity to seeds)
-- Query-time or cached (flexible)
-- Transparent (show the math)</p>
+<ul>
+<li><strong>One executor for all clients.</strong> The web app, CLI, MCP server, and AI agents all use the same <code>POST /programs/execute</code> endpoint. Set algebra implemented once, tested once.</li>
+<li><strong>Headless agent execution.</strong> Agents can author, store, load, and execute programs without a browser. Agents can borrow programs from users or other agents via the query definitions API.</li>
+<li><strong>No N+1 round-trips.</strong> Smart blocks (vector search, epistemic filter, etc.) are internal function calls during execution, not HTTP requests from the client. A 10-step program with 4 smart blocks is 1 HTTP request, not 11.</li>
+<li><strong>Static cost guarantees.</strong> The validator computes maximum operation count from the AST before execution. Combined with Cypher safety checks (ADR-048), this means programs can't consume unbounded resources.</li>
+<li>All three authoring surfaces compile to one format — eliminates three separate client-side execution paths</li>
+<li>Smart blocks become first-class IR citizens — programs are no longer lossy</li>
+<li>Block ↔ text ↔ recording round-trip becomes possible via block annotations</li>
+<li>Parameters enable reusable program templates</li>
+<li>The <code>&amp;</code> (intersect) operator unblocks the AND/OR blocks that are currently placeholders</li>
+<li>The step log provides per-statement execution history — foundation for per-user execution tracking</li>
+</ul>
 <h3 id="negative">Negative</h3>
-<p><strong>1. Embedding Model Changes</strong>
-- Requires embedding model consistency within a deployment
-- Changing models triggers automatic recalculation:
-  - <code>kg admin embedding regenerate --vocabulary</code> → <code>kg vocab refresh-categories</code> (automatic)
-  - Categories recompute with new embeddings
-  - Current state reflects current model (timeless)</p>
-<p><strong>2. Seed Type Quality</strong>
-- Categories only as good as seed types
-- Poorly chosen seeds = poor categorization</p>
-<p><strong>3. Ambiguous Types</strong>
-- Some types genuinely span multiple categories
-- Need threshold for "low confidence" warning</p>
-<p><strong>4. Initial Computation</strong>
-- 88 types × 30 seeds = 2,640 similarity calculations
-- Amortized via caching</p>
+<ul>
+<li>Server-side execution means clients can't show incremental W updates during execution (mitigated by the step log and potential streaming in a future phase)</li>
+<li>Migration cost: existing <code>exploration</code> and <code>block_diagram</code> definitions need adapters</li>
+<li>The block compiler needs a second output path (AST alongside the current Cypher string) during transition</li>
+<li>Intersection (<code>&amp;</code>) requires the executor to compare W against query results — more complex than append-only</li>
+<li>Conditional branching adds nesting to the AST — increases validator and executor complexity</li>
+</ul>
 <h3 id="neutral">Neutral</h3>
-<p><strong>1. Category Evolution</strong>
-- Categories recompute when vocabulary topology changes (merges, model changes)
-- Current state always reflects current embeddings and seeds
-- No historical tracking needed (graph is timeless)</p>
-<p><strong>2. New Categories</strong>
-- System can detect "orphan" types (low scores across all categories)
-- Signals need for new category seed or vocabulary pruning</p>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-0-seed-validation-optional-week-1">Phase 0: Seed Validation (Optional, Week 1)</h3>
 <ul>
-<li>[ ] Compute pairwise similarity of seeds within each category</li>
-<li>[ ] Ensure seeds cluster (intra-category similarity &gt; 0.65)</li>
-<li>[ ] Flag seeds that are outliers or better fit in different categories</li>
-<li>[ ] Document seed validation results</li>
-</ul>
-<h3 id="phase-1-foundation-week-1">Phase 1: Foundation (Week 1)</h3>
-<ul>
-<li>[ ] Add schema columns (category_source, category_confidence, category_scores, category_ambiguous)</li>
-<li>[ ] Add indexes (idx_relationship_category, idx_category_confidence)</li>
-<li>[ ] Implement <code>compute_category_scores()</code> function with satisficing (max similarity)</li>
-<li>[ ] Add category assignment to vocabulary insert logic</li>
-</ul>
-<h3 id="phase-2-batch-categorization-week-1">Phase 2: Batch Categorization (Week 1)</h3>
-<ul>
-<li>[ ] Compute categories for existing 88 llm_generated types</li>
-<li>[ ] Store scores in database</li>
-<li>[ ] Verify accuracy on sample types</li>
-<li>[ ] Identify ambiguous types (runner-up &gt; 0.70)</li>
-</ul>
-<h3 id="phase-3-cli-integration-week-1">Phase 3: CLI Integration (Week 1)</h3>
-<ul>
-<li>[ ] Update <code>kg vocab list</code> to show confidence and ambiguous flag</li>
-<li>[ ] Add <code>kg vocab category-scores &lt;TYPE&gt;</code> command</li>
-<li>[ ] Add <code>kg vocab refresh-categories</code> command</li>
-<li>[ ] Add <code>kg vocab prune-candidates</code> command</li>
-<li>[ ] Add <code>kg vocab find-synonyms</code> command</li>
-</ul>
-<h3 id="phase-4-validation-week-2">Phase 4: Validation (Week 2)</h3>
-<ul>
-<li>[ ] Compare computed categories to manual review</li>
-<li>[ ] Identify low-confidence types (&lt; 50%)</li>
-<li>[ ] Determine if new category seeds needed</li>
-<li>[ ] Test merge → refresh workflow</li>
-</ul>
-<h3 id="phase-5-orphan-detection-week-2">Phase 5: Orphan Detection (Week 2)</h3>
-<ul>
-<li>[ ] Implement <code>kg vocab find-orphans</code> command</li>
-<li>[ ] Definition: types with max_score &lt; 50% across all categories</li>
-<li>[ ] Output recommendations (new seed? deprecate? merge?)</li>
-<li>[ ] Integrate with ecological pruning workflow</li>
+<li>The text DSL is a serialization format, not a standalone language — no parser ecosystem to maintain</li>
+<li>Programs stored as JSON ASTs are machine-readable but less human-scannable than text — both formats coexist</li>
+<li>The <code>?</code> and <code>!</code> operators are simple wrappers around result-count checks — minimal executor changes</li>
+<li>Block annotations are optional metadata — programs work without them, round-trip is degraded</li>
+<li>Client-side pre-validation is still useful for fast feedback (syntax highlighting, error squiggles) but the API is authoritative</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="alternative-1-manual-classification">Alternative 1: Manual Classification</h3>
-<p><strong>Rejected:</strong> Doesn't scale, subjective, high maintenance</p>
-<h3 id="alternative-2-llm-auto-classification">Alternative 2: LLM Auto-Classification</h3>
-<p><strong>Rejected:</strong> Adds LLM dependency for metadata (anti-pattern)</p>
-<h3 id="alternative-3-hybrid-embeddings-llm-validation">Alternative 3: Hybrid (Embeddings + LLM validation)</h3>
-<p><strong>Rejected:</strong> Unnecessary complexity, embeddings alone sufficient</p>
-<h3 id="alternative-4-multi-category-assignment">Alternative 4: Multi-Category Assignment</h3>
-<p>Allow types to have multiple categories (e.g., ENHANCES = 85% causal, 45% compositional)</p>
-<p><strong>Deferred:</strong> Start with single category (highest score), add multi-category if needed</p>
-<h2 id="success-criteria">Success Criteria</h2>
-<ol>
-<li><strong>All llm_generated types get meaningful categories</strong> (not generic "llm_generated")</li>
-<li><strong>Category confidence ≥ 70%</strong> for 80% of types</li>
-<li><strong>No LLM calls</strong> for category assignment</li>
-<li><strong>Performance targets:</strong></li>
-<li>Single type categorization: &lt; 50ms (on vocab insert)</li>
-<li>Batch refresh (all 118 types): &lt; 1s</li>
-<li>Category-scores CLI output: &lt; 100ms</li>
-<li><strong>User can understand</strong> why a type got its category (<code>kg vocab category-scores</code>)</li>
-<li><strong>Vocabulary convergence:</strong> Strong types accumulate edges, weak types remain sparse (observable from current state)</li>
-</ol>
-<h2 id="example-categorization">Example Categorization</h2>
-<p>Based on embedding similarity to seeds:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ENHANCES       → causation    (87% - very similar to ENABLES)
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>INTEGRATES     → composition  (82% - similar to COMPOSED_OF)
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>CONFIGURES     → dependency   (79% - similar to REQUIRES)
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>VALIDATES      → evidential   (91% - very similar to SUPPORTS)
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>EVOLVES_TO     → temporal     (88% - similar to EVOLVES_INTO)
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>DEFINES        → semantic     (76% - similar to DEFINES)
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>ADDRESSES      → causation    (73% - similar to CAUSES)
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>BUILDS_ON      → composition  (68% - similar to PART_OF)
-</code></pre></div>
+<h3 id="a-extend-the-current-ir-minimally-just-add-type-field">A. Extend the current IR minimally (just add <code>type</code> field)</h3>
+<p>Keep <code>{ op: '+' | '-', type: 'cypher' | 'api', ... }[]</code> without the full AST wrapper, metadata, parameters, or branching.</p>
+<p>Rejected because: This doesn't solve validation, parameterization, or the authoring spectrum. It's an incremental patch that would need to be replaced.</p>
+<h3 id="b-use-cypher-as-the-canonical-form-embed-api-calls-as-commentspragmas">B. Use Cypher as the canonical form (embed API calls as comments/pragmas)</h3>
+<p>Keep everything as text Cypher with special comment directives for smart blocks.</p>
+<p>Rejected because: Comments are lossy and unparseable by definition. The API can't validate comment-encoded intent. This is what we have today and it's the core problem.</p>
+<h3 id="c-adopt-datalog-or-another-existing-query-language">C. Adopt Datalog or another existing query language</h3>
+<p>Use a formally-specified language with proven semantics.</p>
+<p>Rejected because: The core problem is query <em>composition</em>, not query <em>expression</em>. Datalog (or SPARQL, GQL, etc.) would be a second query language alongside openCypher, requiring a transpiler to AGE. It also can't represent REST API calls (smart blocks). The system already has a query language — what it needs is an orchestration layer on top of it.</p>
+<h3 id="d-build-a-full-language-with-parser-type-system-and-compiler">D. Build a full language with parser, type system, and compiler</h3>
+<p>Design a standalone DSL with its own grammar, LALR parser, type checker, and compilation stages.</p>
+<p>Rejected because: Excessive complexity for the problem size. The JSON AST with a text serialization format achieves the same goals with the language boundary constraints (no iteration, no user-defined abstractions, no mutable variables) preventing scope creep. If requirements eventually exceed these constraints, the AST is the right foundation to build a proper language on top of.</p>
+<h3 id="e-keep-execution-client-side-api-only-validates-and-runs-individual-queries">E. Keep execution client-side (API only validates and runs individual queries)</h3>
+<p>Clients loop through statements, calling the API for each Cypher/API operation, and manage W in local state (the current architecture).</p>
+<p>Rejected because: Every client reimplements set algebra, smart block dispatch, conditional evaluation, and parameter resolution. Agents would need a full client runtime to execute programs. Smart blocks become N+1 HTTP round-trips instead of internal function calls. The execution model can't be audited, rate-limited, or logged centrally. Per-user execution history requires every client to report back.</p>
+<h3 id="f-validate-client-side-only-keep-api-stateless">F. Validate client-side only (keep API stateless)</h3>
+<p>Run all validation in the browser, send pre-validated programs to the API.</p>
+<p>Rejected because: Agents and non-browser clients need validation too. The API is the trust boundary — programs from any source should be validated at the point of execution. Client-side pre-validation is still useful for fast feedback but is not authoritative.</p>
+<h3 id="f-allow-iteration-with-safety-bounds">F. Allow iteration with safety bounds</h3>
+<p>Add a <code>*</code> (repeat) or <code>WHILE</code> operator with maximum iteration counts.</p>
+<p>Rejected because: Even bounded iteration makes program cost dependent on graph state rather than program structure. A program with <code>* MATCH ... LIMIT 100 MAX_ITER 10</code> could issue anywhere from 1 to 10 queries depending on results. The static boundedness guarantee — knowing the exact maximum operation count from the AST alone — is more valuable than the expressiveness iteration provides. If a use case genuinely needs iterative expansion, it should be implemented as a system-provided smart block (API operation) with its own resource controls, not as a language primitive.</p>
+<h2 id="implementation-phases">Implementation Phases</h2>
+<h3 id="phase-1-ast-foundation-and-api-executor">Phase 1: AST Foundation and API Executor</h3>
+<ul>
+<li>Define <code>GraphProgram</code> types in a shared schema (used by web, API, CLI, MCP)</li>
+<li>Implement <code>POST /programs/validate</code> — structural + safety checks</li>
+<li>Implement <code>POST /programs/execute</code> — server-side executor with <code>CypherOp</code> and <code>ApiOp</code> dispatch, <code>+</code>/<code>-</code>/<code>&amp;</code>/<code>?</code>/<code>!</code> operators, step log</li>
+<li>Extend <code>compileBlocksToIR()</code> to emit AST alongside Cypher string</li>
+<li>Migrate <code>exploration</code> definition type to <code>program</code> with <code>version: 1</code></li>
+<li>Web client calls execute endpoint instead of local statement loop</li>
+</ul>
+<h3 id="phase-2-branching-and-parameters">Phase 2: Branching and Parameters</h3>
+<ul>
+<li>Conditional branching in executor and validator (<code>ConditionalOp</code>, <code>Condition</code>)</li>
+<li>Parameter declarations and <code>$param</code> substitution</li>
+<li>Nesting depth and operation count enforcement</li>
+<li>MCP / CLI can submit programs with bound parameters</li>
+</ul>
+<h3 id="phase-3-round-trip-and-authoring">Phase 3: Round-Trip and Authoring</h3>
+<ul>
+<li>Block annotation preservation through serialize/deserialize cycle</li>
+<li>Text → AST parser handles <code>@block</code>, <code>@api</code>, <code>@param</code>, <code>IF</code> directives</li>
+<li>AST → Blocks decompiler reconstructs ReactFlow layout</li>
+<li>Full Blocks ↔ Text ↔ Recording interconversion</li>
+<li>Per-user execution history stored alongside program definitions</li>
+</ul>
 <h2 id="references">References</h2>
 <ul>
-<li><strong>ADR-044:</strong> Probabilistic Truth Convergence (pattern we're following)</li>
-<li><strong>ADR-032:</strong> Automatic Edge Vocabulary Expansion (pruning weak types)</li>
-<li><strong>ADR-046:</strong> Grounding-Aware Vocabulary Management (synonym detection via embeddings)</li>
-<li><strong>ADR-025:</strong> Dynamic Relationship Vocabulary (allows new types)</li>
-<li><strong>ADR-022:</strong> Semantic Relationship Taxonomy (defined the 8 categories)</li>
+<li><code>feature/unified-smart-search</code> — current IR, round-trip between Cypher editor and smart search</li>
+<li><code>web/src/utils/cypherGenerator.ts</code> — current text serializer/deserializer</li>
+<li><code>web/src/utils/cypherResultMapper.ts</code> — AGE result mapping, <code>RawGraphData</code> types</li>
+<li><code>web/src/lib/blockCompiler.ts</code> — current block → Cypher compiler</li>
+<li><code>web/src/types/blocks.ts</code> — 18 block type definitions</li>
+<li><code>.claude/todo-unified-query-language.md</code> — prior ideation notes</li>
+<li>ADR-048 — Query safety and GraphQueryFacade</li>
+<li>ADR-083 — Artifact persistence pattern</li>
 </ul>
-<hr />
-<p><strong>This ADR continues the evolution from fixed → probabilistic systems:</strong>
-1. Fixed relationships (5 types) → Dynamic vocabulary (ADR-025)
-2. Fixed truth → Probabilistic grounding (ADR-044)
-3. Fixed categories → Probabilistic categorization (ADR-047) ✨</p>
 
 
 
