@@ -22,6 +22,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
+import { stepToCypher } from '../../utils/cypherGenerator';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -135,9 +136,25 @@ LIMIT 50`);
     setDepth(1); // Reset to explore default
   };
 
-  // Load explore (concept or neighborhood depending on depth)
+  /** Load explore — fetch subgraph around selected concept and record the step */
   const handleLoadExplore = (loadMode: 'clean' | 'add') => {
     if (!selectedPrimary) return;
+
+    const stepParams = {
+      action: 'explore' as const,
+      conceptLabel: selectedPrimary.label,
+      depth,
+    };
+
+    useGraphStore.getState().addExplorationStep({
+      action: 'explore',
+      op: loadMode === 'add' ? '+' : '+',
+      cypher: stepToCypher(stepParams),
+      conceptId: selectedPrimary.concept_id,
+      conceptLabel: selectedPrimary.label,
+      depth,
+    });
+
     setSearchParams({
       primaryConceptId: selectedPrimary.concept_id,
       primaryConceptLabel: selectedPrimary.label,
@@ -180,9 +197,29 @@ LIMIT 50`);
     }
   };
 
-  // Load selected path directly into graph, with optional neighborhood enrichment
+  /** Load selected path into graph and record the step */
   const handleLoadPath = async (loadMode: 'clean' | 'add') => {
-    if (!selectedPath) return;
+    if (!selectedPath || !selectedPrimary || !selectedDestination) return;
+
+    const stepParams = {
+      action: 'load-path' as const,
+      conceptLabel: selectedPrimary.label,
+      depth,
+      destinationConceptLabel: selectedDestination.label,
+      maxHops,
+    };
+
+    useGraphStore.getState().addExplorationStep({
+      action: 'load-path',
+      op: '+',
+      cypher: stepToCypher(stepParams),
+      conceptId: selectedPrimary.concept_id,
+      conceptLabel: selectedPrimary.label,
+      depth,
+      destinationConceptId: selectedDestination.concept_id,
+      destinationConceptLabel: selectedDestination.label,
+      maxHops,
+    });
 
     const conceptNodes: any[] = [];
     const conceptRelTypes: string[][] = [];

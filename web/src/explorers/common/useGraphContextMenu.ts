@@ -12,6 +12,7 @@
 import { useCallback } from 'react';
 import { apiClient } from '../../api/client';
 import { transformForD3 } from '../../utils/graphTransform';
+import { stepToCypher } from '../../utils/cypherGenerator';
 import { useGraphStore } from '../../store/graphStore';
 import type { ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
@@ -68,12 +69,26 @@ export interface GraphContextMenuCallbacks {
 export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
   const { setGraphData, setRawGraphData, mergeRawGraphData, setFocusedNodeId } = useGraphStore();
 
-  // Handler: Follow concept (replace graph)
+  /** Follow concept — replace graph with this node's neighborhood and record the step */
   const handleFollowConcept = useCallback(async (nodeId: string) => {
     try {
+      const store = useGraphStore.getState();
+      const nodeLabel = store.rawGraphData?.nodes?.find(
+        (n: any) => (n.concept_id || n.id) === nodeId
+      )?.label || nodeId;
+
+      store.addExplorationStep({
+        action: 'follow',
+        op: '+',
+        cypher: stepToCypher({ action: 'follow', conceptLabel: nodeLabel, depth: 1 }),
+        conceptId: nodeId,
+        conceptLabel: nodeLabel,
+        depth: 1,
+      });
+
       const response = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors
+        depth: 1,
       });
 
       setGraphData(null);
@@ -85,12 +100,26 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     }
   }, [setGraphData, setRawGraphData, setFocusedNodeId]);
 
-  // Handler: Add adjacent nodes to graph (merge neighbors)
+  /** Add adjacent nodes — merge this node's neighbors into the graph and record the step */
   const handleAddToGraph = useCallback(async (nodeId: string) => {
     try {
+      const store = useGraphStore.getState();
+      const nodeLabel = store.rawGraphData?.nodes?.find(
+        (n: any) => (n.concept_id || n.id) === nodeId
+      )?.label || nodeId;
+
+      store.addExplorationStep({
+        action: 'add-adjacent',
+        op: '+',
+        cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 1 }),
+        conceptId: nodeId,
+        conceptLabel: nodeLabel,
+        depth: 1,
+      });
+
       const response = await apiClient.getSubgraph({
         center_concept_id: nodeId,
-        depth: 1, // Load immediate neighbors
+        depth: 1,
       });
 
       mergeRawGraphData({ nodes: response.nodes, links: response.links });

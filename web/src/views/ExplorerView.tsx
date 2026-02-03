@@ -24,6 +24,7 @@ import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
+import { stepToCypher } from '../utils/cypherGenerator';
 import type { VisualizationType } from '../types/explorer';
 
 interface ExplorerViewProps {
@@ -261,14 +262,22 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   const ExplorerComponent = explorerPlugin.component;
 
-  // Follow Concept: load clicked node's neighborhood
+  /** Follow Concept: load clicked node's neighborhood and record the step */
   const handleNodeClick = useCallback((nodeId: string) => {
     const store = useGraphStore.getState();
 
-    // Resolve label from current graph data for SearchBar display
     const nodeLabel = store.rawGraphData?.nodes?.find(
       (n: any) => (n.concept_id || n.id) === nodeId
-    )?.label;
+    )?.label || nodeId;
+
+    store.addExplorationStep({
+      action: 'add-adjacent',
+      op: '+',
+      cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 2 }),
+      conceptId: nodeId,
+      conceptLabel: nodeLabel,
+      depth: 2,
+    });
 
     store.setFocusedNodeId(nodeId);
     store.setSearchParams({

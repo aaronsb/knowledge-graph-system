@@ -6,9 +6,18 @@
  * - Graph data and filters
  * - UI settings
  * - Node/edge selection
+ * - Exploration session tracking (ordered Cypher statement log)
+ *
+ * The exploration session records each graph action as a step with an additive (+)
+ * or subtractive (-) operator and its equivalent Cypher statement. This enables:
+ * - Persistence across refresh (localStorage)
+ * - Saving named explorations as replayable query sets
+ * - Exporting to the Cypher editor for viewing/editing
+ * - Sharing explorations as copy/pasteable Cypher
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { VisualizationType } from '../types/explorer';
 import type { GraphData } from '../types/graph';
 
@@ -58,16 +67,84 @@ export function deriveMode(params: SearchParams): DerivedMode {
   return 'explore';
 }
 
+// --- Exploration Session Types ---
+
+/** The type of graph action performed */
+export type ExplorationAction = 'explore' | 'follow' | 'add-adjacent' | 'load-path';
+
+/** Set algebra operator: additive (+) merges results, subtractive (-) removes them */
+export type ExplorationOp = '+' | '-';
+
+/**
+ * A single step in an exploration session.
+ *
+ * Each step records one intentional graph action — a discrete thought in the
+ * user's exploration sequence. The step includes both the semantic description
+ * (action, concept, depth) and the equivalent Cypher statement for replay.
+ */
+export interface ExplorationStep {
+  /** Unique step identifier */
+  id: string;
+  /** When this step was performed */
+  timestamp: number;
+  /** What kind of action was taken */
+  action: ExplorationAction;
+  /** Whether this step adds to or removes from the graph */
+  op: ExplorationOp;
+  /** The equivalent Cypher statement for this action */
+  cypher: string;
+
+  /** Primary concept ID */
+  conceptId: string;
+  /** Human-readable concept label */
+  conceptLabel: string;
+  /** Neighborhood traversal depth */
+  depth: number;
+
+  /** Destination concept ID (path mode only) */
+  destinationConceptId?: string;
+  /** Destination concept label (path mode only) */
+  destinationConceptLabel?: string;
+  /** Maximum hops for path search (path mode only) */
+  maxHops?: number;
+}
+
+/**
+ * An exploration session — an ordered list of steps that together define
+ * a graph query. The sequence mirrors how the user actually explored.
+ * Replay executes steps in order, applying +/- operators.
+ */
+export interface ExplorationSession {
+  /** Unique session identifier */
+  id: string;
+  /** User-provided name (null until saved) */
+  name: string | null;
+  /** When the session started */
+  createdAt: number;
+  /** Ordered list of exploration steps */
+  steps: ExplorationStep[];
+}
+
+const createEmptySession = (): ExplorationSession => ({
+  id: crypto.randomUUID(),
+  name: null,
+  createdAt: Date.now(),
+  steps: [],
+});
+
 interface GraphStore {
   // Explorer selection
   selectedExplorer: VisualizationType;
   setSelectedExplorer: (type: VisualizationType) => void;
 
-  // Graph data (raw API format - cached to avoid re-fetching)
+  // Graph data (raw API format - cached to avoid re-fetching, persisted to localStorage)
   rawGraphData: { nodes: any[]; links: any[] } | null;
+  /** Replace raw graph data entirely (clean load) */
   setRawGraphData: (data: { nodes: any[]; links: any[] } | null) => void;
-  // Merge new data into existing graph (deduplicating nodes by concept_id, links by from+type+to)
+  /** Merge new data into existing graph, deduplicating by concept_id / link key */
   mergeRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
+  /** Remove matching nodes and their connected links from the graph (subtractive operator) */
+  subtractRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
 
   // Graph data (transformed for current explorer)
   graphData: GraphData | null;
@@ -150,6 +227,18 @@ interface GraphStore {
   addPolarityAnalysis: (analysis: GraphStore['polarityState']['analysisHistory'][0]) => void;
   removePolarityAnalysis: (id: string) => void;
   clearPolarityHistory: () => void;
+
+  // Exploration session — ordered list of graph actions with +/- operators
+  /** Current exploration session (persisted to localStorage) */
+  explorationSession: ExplorationSession;
+  /** Record a new step in the exploration session */
+  addExplorationStep: (step: Omit<ExplorationStep, 'id' | 'timestamp'>) => void;
+  /** Remove the last step from the session */
+  undoLastStep: () => void;
+  /** Clear the session and graph data, starting fresh */
+  clearExploration: () => void;
+  /** Set a name for the current exploration (for saving) */
+  setExplorationName: (name: string) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -172,7 +261,9 @@ const defaultSearchParams: SearchParams = {
   loadMode: 'clean',
 };
 
-export const useGraphStore = create<GraphStore>((set) => ({
+export const useGraphStore = create<GraphStore>()(
+  persist(
+    (set) => ({
   // Explorer selection
   selectedExplorer: 'force-2d',
   setSelectedExplorer: (type) => set({ selectedExplorer: type }),
@@ -211,6 +302,41 @@ export const useGraphStore = create<GraphStore>((set) => ({
         rawGraphData: {
           nodes: [...current.nodes, ...newNodes],
           links: [...current.links, ...newLinks],
+        },
+      };
+    }),
+
+  subtractRawGraphData: (data) =>
+    set((state) => {
+      const current = state.rawGraphData;
+      if (!current || !current.nodes || current.nodes.length === 0) {
+        return {};
+      }
+
+      // Build set of node IDs to remove
+      const removeNodeIds = new Set(
+        (data.nodes || []).map((n: any) => n.id || n.concept_id)
+      );
+
+      // Remove matching nodes
+      const remainingNodes = current.nodes.filter(
+        (n: any) => !removeNodeIds.has(n.id || n.concept_id)
+      );
+
+      // Remove links that reference removed nodes
+      const remainingNodeIds = new Set(
+        remainingNodes.map((n: any) => n.id || n.concept_id)
+      );
+      const remainingLinks = current.links.filter((l: any) => {
+        const from = l.from_id || l.source?.id || l.source;
+        const to = l.to_id || l.target?.id || l.target;
+        return remainingNodeIds.has(from) && remainingNodeIds.has(to);
+      });
+
+      return {
+        rawGraphData: {
+          nodes: remainingNodes,
+          links: remainingLinks,
         },
       };
     }),
@@ -393,4 +519,56 @@ export const useGraphStore = create<GraphStore>((set) => ({
         selectedAnalysisId: null,
       },
     })),
-}));
+
+  // Exploration session
+  explorationSession: createEmptySession(),
+
+  addExplorationStep: (stepData) =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        steps: [
+          ...state.explorationSession.steps,
+          {
+            ...stepData,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+          },
+        ],
+      },
+    })),
+
+  undoLastStep: () =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        steps: state.explorationSession.steps.slice(0, -1),
+      },
+    })),
+
+  clearExploration: () =>
+    set({
+      explorationSession: createEmptySession(),
+      rawGraphData: null,
+      graphData: null,
+    }),
+
+  setExplorationName: (name) =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        name,
+      },
+    })),
+    }),
+    {
+      name: 'kg-graph-exploration',
+      partialize: (state) => ({
+        rawGraphData: state.rawGraphData,
+        explorationSession: state.explorationSession,
+        searchParams: state.searchParams,
+        similarityThreshold: state.similarityThreshold,
+      }),
+    }
+  )
+);
