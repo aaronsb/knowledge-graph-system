@@ -18,11 +18,13 @@ interface Camera3DSettings {
 interface Settings3DPanelProps {
   camera: Camera3DSettings;
   onCameraChange: (camera: Camera3DSettings) => void;
+  embedded?: boolean;
 }
 
 export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
   camera,
   onCameraChange,
+  embedded = false,
 }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['camera']));
 
@@ -55,11 +57,14 @@ export const Settings3DPanel: React.FC<Settings3DPanelProps> = ({
 
   return (
     <div
-      className="bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
-      style={{ width: '280px', maxHeight: '95vh' }}
+      className={embedded
+        ? "flex flex-col"
+        : "bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
+      }
+      style={embedded ? undefined : { width: '280px', maxHeight: '95vh' }}
     >
       {/* Content */}
-      <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
+      <div className={`overflow-y-auto overflow-x-hidden ${embedded ? '' : 'p-3'} space-y-3`}>
         {/* Camera Section */}
         <div>
           <button

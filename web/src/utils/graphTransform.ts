@@ -40,14 +40,14 @@ export function transformForD3(
       return d3.interpolateTurbo(t);
     }));
 
-  // Transform nodes (with grounding strength)
+  // Transform nodes — spread all API fields, add visualization aliases
   const nodes: D3Node[] = apiNodes.map(node => ({
+    ...node,
     id: node.concept_id,
-    label: node.label,
     group: node.ontology,
+    grounding: node.grounding_strength,
     size: 10, // Will be updated with degree
     color: colorScale(node.ontology),
-    grounding: node.grounding_strength, // -1.0 to +1.0
   }));
 
   // Transform links - enrich with vocabulary data from store
@@ -69,12 +69,13 @@ export function transformForD3(
     const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
 
     return {
+      ...link,
       source: link.from_id,
       target: link.to_id,
       type: link.relationship_type,
-      value: categoryConfidence, // Use category confidence for visualization
+      value: categoryConfidence,
       color: getCategoryColor(category),
-      category, // Store category for info boxes
+      category,
     };
   });
 
@@ -167,17 +168,30 @@ export function filterByEdgeCategory(
     visibleCategories.has(link.category || 'default')
   );
 
-  // Get all node IDs that have visible connections
-  const connectedNodeIds = new Set<string>();
+  // Get all node IDs that have ANY connections (visible or not)
+  const allConnectedNodeIds = new Set<string>();
+  data.links.forEach(link => {
+    const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+    const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+    allConnectedNodeIds.add(sourceId);
+    allConnectedNodeIds.add(targetId);
+  });
+
+  // Get node IDs that have visible connections
+  const visiblyConnectedNodeIds = new Set<string>();
   filteredLinks.forEach(link => {
     const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
     const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-    connectedNodeIds.add(sourceId);
-    connectedNodeIds.add(targetId);
+    visiblyConnectedNodeIds.add(sourceId);
+    visiblyConnectedNodeIds.add(targetId);
   });
 
-  // Filter nodes to only include those with visible connections
-  const filteredNodes = data.nodes.filter(node => connectedNodeIds.has(node.id));
+  // Keep nodes that either:
+  // 1. Have visible connections, or
+  // 2. Have no connections at all (isolated nodes from additive loading)
+  const filteredNodes = data.nodes.filter(node =>
+    visiblyConnectedNodeIds.has(node.id) || !allConnectedNodeIds.has(node.id)
+  );
 
   return {
     nodes: filteredNodes,

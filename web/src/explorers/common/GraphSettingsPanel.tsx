@@ -17,6 +17,7 @@ interface GraphSettings {
     linkDistance: number;
     gravity: number;
     friction: number;
+    warmth?: number;
   };
   visual: {
     nodeColorBy: string;
@@ -44,6 +45,7 @@ interface SliderRanges {
     charge: { min: number; max: number; step: number };
     linkDistance: { min: number; max: number; step: number };
     gravity: { min: number; max: number; step: number };
+    warmth?: { min: number; max: number; step: number };
   };
   visual: {
     nodeSize: { min: number; max: number; step: number };
@@ -57,12 +59,14 @@ interface GraphSettingsPanelProps<T extends GraphSettings> {
   settings: T;
   onChange: (settings: T) => void;
   sliderRanges: SliderRanges;
+  embedded?: boolean;
 }
 
 export const GraphSettingsPanel = <T extends GraphSettings>({
   settings,
   onChange,
   sliderRanges,
+  embedded = false,
 }: GraphSettingsPanelProps<T>) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -101,11 +105,14 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
 
   return (
     <div
-      className="bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
-      style={{ width: '280px', maxHeight: '95vh' }}
+      className={embedded
+        ? "flex flex-col"
+        : "bg-card/95 border border-border rounded-lg shadow-xl flex flex-col"
+      }
+      style={embedded ? undefined : { width: '280px', maxHeight: '95vh' }}
     >
       {/* Content */}
-      <div className="overflow-y-auto overflow-x-hidden p-3 space-y-3">
+      <div className={`overflow-y-auto overflow-x-hidden ${embedded ? '' : 'p-3'} space-y-3`}>
         {/* Physics Section */}
         <div className="border-b border-border pb-3">
           <button
@@ -177,6 +184,23 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                       className="w-full"
                     />
                   </div>
+
+                  {settings.physics.warmth !== undefined && sliderRanges.physics.warmth && (
+                    <div>
+                      <label className="block text-xs text-foreground mb-1">
+                        Warmth: {settings.physics.warmth.toFixed(2)}
+                      </label>
+                      <input
+                        type="range"
+                        min={sliderRanges.physics.warmth.min}
+                        max={sliderRanges.physics.warmth.max}
+                        step={sliderRanges.physics.warmth.step}
+                        value={settings.physics.warmth}
+                        onChange={(e) => updatePhysics('warmth', parseFloat(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </div>

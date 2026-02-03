@@ -16,6 +16,7 @@ export interface ForceGraph2DSettings {
     linkDistance: number; // Target link distance (10-400)
     gravity: number; // Center gravity (0-1)
     friction: number; // Velocity decay (0-1)
+    warmth: number; // Initial simulation energy (0.1-1.0, lower = less scatter)
   };
 
   // Visual appearance
@@ -63,6 +64,7 @@ export const DEFAULT_SETTINGS: ForceGraph2DSettings = {
     linkDistance: 200,   // Longer links for better graph layout
     gravity: 0.1,
     friction: 0.9,
+    warmth: 0.3,        // Lower = gentler settle, higher = more scatter
   },
   visual: {
     nodeColorBy: 'ontology',
@@ -97,6 +99,7 @@ export const SLIDER_RANGES = {
     charge: { min: -1000, max: -100, step: 50 },
     linkDistance: { min: 10, max: 400, step: 10 },  // Extended range for larger graphs
     gravity: { min: 0, max: 1, step: 0.05 },
+    warmth: { min: 0.1, max: 1, step: 0.05 },
   },
   visual: {
     nodeSize: { min: 0.5, max: 3, step: 0.1 },

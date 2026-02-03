@@ -26,8 +26,6 @@ import {
   NodeInfoBox,
   EdgeInfoBox,
   StatsPanel,
-  Settings3DPanel,
-  GraphSettingsPanel,
   Legend,
   PanelStack,
   useGraphNavigation,
@@ -946,7 +944,7 @@ export const ForceGraph3D: React.FC<
   }, [graphData]);
 
   // Use common graph navigation hook
-  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
+  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation(mergeGraphData);
 
   // Pin/Unpin node functionality for 3D
   const isPinned = useCallback((nodeId: string): boolean => {
@@ -1301,6 +1299,73 @@ export const ForceGraph3D: React.FC<
     animate();
   }, [destinationNodeId, data.nodes]);
 
+  // Travel along a path — sequentially animate camera through each node
+  const travelAlongPath = useCallback((nodeIds: string[], reverse = false) => {
+    if (!fgRef.current || nodeIds.length === 0) return;
+
+    const orderedIds = reverse ? [...nodeIds].reverse() : nodeIds;
+
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    const travelToNode = (nodeId: string): Promise<void> => {
+      return new Promise(resolve => {
+        const node = data.nodes.find(n => n.id === nodeId);
+        if (!node || node.x === undefined || node.y === undefined || node.z === undefined) {
+          resolve();
+          return;
+        }
+
+        const camera = fgRef.current!.camera();
+        const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+
+        const distance = 200;
+        const angle = Math.atan2(startPos.z - node.z!, startPos.x - node.x!);
+        const targetPos = {
+          x: node.x! + Math.cos(angle) * distance,
+          y: node.y! + 50,
+          z: node.z! + Math.sin(angle) * distance,
+        };
+
+        const duration = 750;
+        const startTime = Date.now();
+
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeInOutCubic(progress);
+
+          const currentPos = {
+            x: startPos.x + (targetPos.x - startPos.x) * eased,
+            y: startPos.y + (targetPos.y - startPos.y) * eased,
+            z: startPos.z + (targetPos.z - startPos.z) * eased,
+          };
+
+          fgRef.current?.cameraPosition(
+            currentPos,
+            { x: node.x!, y: node.y!, z: node.z! },
+            0
+          );
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            setTimeout(resolve, 400);
+          }
+        };
+
+        animate();
+      });
+    };
+
+    (async () => {
+      for (const id of orderedIds) {
+        await travelToNode(id);
+      }
+    })();
+  }, [data.nodes]);
+
   // Dismiss node info box
   const handleDismissNodeInfo = useCallback((nodeId: string) => {
     setActiveNodeInfos(prev => prev.filter(info => info.nodeId !== nodeId));
@@ -1321,10 +1386,12 @@ export const ForceGraph3D: React.FC<
         {
           handleFollowConcept,
           handleAddToGraph,
+          handleRemoveFromGraph,
           setOriginNode: setOriginNodeId,
           setDestinationNode: setDestinationNodeId,
           travelToOrigin,
           travelToDestination,
+          travelAlongPath,
           setFocusedNode,
           focusedNodeId: focusedNode,
           isPinned,
@@ -1335,7 +1402,8 @@ export const ForceGraph3D: React.FC<
         },
         { onClose: () => setContextMenu(null) },
         originNodeId,
-        destinationNodeId
+        destinationNodeId,
+        { handleTravelPath, handleSendToPolarity, handleSendPathToReports }
       )
     : [];
 
@@ -1946,20 +2014,6 @@ export const ForceGraph3D: React.FC<
           )}
         </div>
 
-        {onSettingsChange && (
-          <GraphSettingsPanel
-            settings={settings}
-            onChange={onSettingsChange}
-            sliderRanges={SLIDER_RANGES}
-          />
-        )}
-
-        {onSettingsChange && (
-          <Settings3DPanel
-            camera={settings.camera}
-            onCameraChange={(camera) => onSettingsChange({ ...settings, camera })}
-          />
-        )}
       </PanelStack>
 
       {/* Unified Context Menu (context-aware for node vs background) */}

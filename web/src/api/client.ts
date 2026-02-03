@@ -98,7 +98,33 @@ class APIClient {
       }).then(r => r.data).catch(() => null)
     );
 
-    const allConceptDetails = (await Promise.all(conceptDetailsPromises)).filter(Boolean);
+    let allConceptDetails = (await Promise.all(conceptDetailsPromises)).filter(Boolean);
+
+    // Step 3b: Discover relationship targets missing from our set and fetch them.
+    // The /query/related traversal can miss neighbors (stale accelerator, etc.),
+    // but concept details include the actual relationships. Hydrate any targets
+    // we don't already have so the subgraph is complete.
+    const fetchedIds = new Set(allConceptIds);
+    const missingIds: string[] = [];
+    allConceptDetails.forEach((concept: any) => {
+      (concept.relationships || []).forEach((rel: any) => {
+        if (rel.to_id && !fetchedIds.has(rel.to_id)) {
+          fetchedIds.add(rel.to_id);
+          missingIds.push(rel.to_id);
+        }
+      });
+    });
+
+    if (missingIds.length > 0) {
+      const extraDetails = (await Promise.all(
+        missingIds.map(id =>
+          this.client.get(`/query/concept/${id}`, {
+            params: { include_grounding: false }
+          }).then(r => r.data).catch(() => null)
+        )
+      )).filter(Boolean);
+      allConceptDetails = [...allConceptDetails, ...extraDetails];
+    }
 
     // Step 4: Build nodes array (with grounding strength)
     const nodes = allConceptDetails.map((concept: any) => ({
@@ -111,7 +137,7 @@ class APIClient {
 
     // Step 5: Build links array from ALL concepts' relationships
     // Only include links where both source and target are in our node set
-    const nodeIdSet = new Set(allConceptIds);
+    const nodeIdSet = new Set(allConceptDetails.map((c: any) => c.concept_id));
     const links: any[] = [];
     const seenEdges = new Set<string>(); // Deduplicate edges
 
@@ -120,7 +146,9 @@ class APIClient {
         concept.relationships.forEach((rel: any) => {
           // Only include if target is in our subgraph
           if (nodeIdSet.has(rel.to_id)) {
-            const edgeKey = `${concept.concept_id}->${rel.to_id}-${rel.rel_type}`;
+            // Deduplicate: normalize edge key to treat A→B and B→A same-type as one edge
+            const [lo, hi] = [concept.concept_id, rel.to_id].sort();
+            const edgeKey = `${lo}<>${hi}-${rel.rel_type}`;
             if (!seenEdges.has(edgeKey)) {
               seenEdges.add(edgeKey);
               links.push({

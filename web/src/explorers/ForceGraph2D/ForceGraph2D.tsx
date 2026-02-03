@@ -20,7 +20,6 @@ import {
   NodeInfoBox,
   EdgeInfoBox,
   StatsPanel,
-  GraphSettingsPanel,
   Legend,
   PanelStack,
   useGraphNavigation,
@@ -546,10 +545,12 @@ export const ForceGraph2D: React.FC<
       .force('collision', d3.forceCollide().radius((d) => ((d as D3Node).size || 10) * settings.visual.nodeSize + 5))
       .velocityDecay(1 - settings.physics.friction);
 
-    // If nodes already have positions (merged graph), start with lower alpha
-    // to avoid explosive force effects
+    // Control initial simulation energy — lower warmth = less scatter on load
+    const warmth = settings.physics.warmth ?? 0.3;
     if (hasExistingPositions) {
-      simulation.alpha(0.3).alphaDecay(0.05);
+      simulation.alpha(warmth).alphaDecay(0.05);
+    } else {
+      simulation.alpha(warmth);
     }
 
     simulationRef.current = simulation;
@@ -1523,7 +1524,7 @@ export const ForceGraph2D: React.FC<
   }, [graphData]);
 
   // Use common graph navigation hook
-  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
+  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation(mergeGraphData);
 
   // Pin/Unpin node functionality
   const isPinned = useCallback((nodeId: string): boolean => {
@@ -1629,6 +1630,44 @@ export const ForceGraph2D: React.FC<
       );
   }, [destinationNodeId, data.nodes, dimensions]);
 
+  // Travel along a path — sequentially animate camera through each node
+  const travelAlongPath = useCallback((nodeIds: string[], reverse = false) => {
+    if (!svgRef.current || !zoomBehaviorRef.current || nodeIds.length === 0) return;
+
+    const orderedIds = reverse ? [...nodeIds].reverse() : nodeIds;
+    const svg = d3.select(svgRef.current);
+    const { width, height } = dimensions;
+    const scale = 1.5;
+
+    let step = 0;
+    const visitNext = () => {
+      if (step >= orderedIds.length) return;
+      const node = data.nodes.find(n => n.id === orderedIds[step]);
+      if (!node || node.x === undefined || node.y === undefined) {
+        step++;
+        visitNext();
+        return;
+      }
+
+      const x = width / 2 - node.x * scale;
+      const y = height / 2 - node.y * scale;
+
+      svg.transition()
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(
+          zoomBehaviorRef.current!.transform,
+          d3.zoomIdentity.translate(x, y).scale(scale)
+        )
+        .on('end', () => {
+          step++;
+          setTimeout(visitNext, 400);
+        });
+    };
+
+    visitNext();
+  }, [data.nodes, dimensions]);
+
   // Build unified context menu items (context-aware for node vs background)
   const contextMenuItems: ContextMenuItem[] = contextMenu
     ? buildContextMenuItems(
@@ -1639,10 +1678,12 @@ export const ForceGraph2D: React.FC<
         {
           handleFollowConcept,
           handleAddToGraph,
+          handleRemoveFromGraph,
           setOriginNode: setOriginNodeId,
           setDestinationNode: setDestinationNodeId,
           travelToOrigin,
           travelToDestination,
+          travelAlongPath,
           setFocusedNode,
           focusedNodeId: focusedNode,
           isPinned,
@@ -1653,7 +1694,8 @@ export const ForceGraph2D: React.FC<
         },
         { onClose: () => setContextMenu(null) },
         originNodeId,
-        destinationNodeId
+        destinationNodeId,
+        { handleTravelPath, handleSendToPolarity, handleSendPathToReports }
       )
     : [];
 
@@ -1750,13 +1792,6 @@ export const ForceGraph2D: React.FC<
           )}
         </div>
 
-        {onSettingsChange && (
-          <GraphSettingsPanel
-            settings={settings}
-            onChange={onSettingsChange}
-            sliderRanges={SLIDER_RANGES}
-          />
-        )}
       </PanelStack>
 
       {/* Unified Context Menu (context-aware for node vs background) */}

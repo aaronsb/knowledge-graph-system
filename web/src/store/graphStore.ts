@@ -6,11 +6,21 @@
  * - Graph data and filters
  * - UI settings
  * - Node/edge selection
+ * - Exploration session tracking (ordered Cypher statement log)
+ *
+ * The exploration session records each graph action as a step with an additive (+)
+ * or subtractive (-) operator and its equivalent Cypher statement. This enables:
+ * - Persistence across refresh (localStorage)
+ * - Saving named explorations as replayable query sets
+ * - Exporting to the Cypher editor for viewing/editing
+ * - Sharing explorations as copy/pasteable Cypher
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { VisualizationType } from '../types/explorer';
 import type { GraphData } from '../types/graph';
+import type { RawGraphData, RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 
 interface GraphFilters {
   relationshipTypes: string[];
@@ -26,40 +36,125 @@ interface UISettings {
   highlightNeighbors: boolean;
 }
 
-// Search parameters - describes WHAT to query, not HOW to query it
-// SearchBar sets these, App.tsx reacts to them
-export type SearchMode = 'concept' | 'neighborhood' | 'path' | null;
+// Search parameters — parameter-presence model where mode is derived, not declared.
+// SearchBar sets these, ExplorerView reacts to them.
 export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
 
 export interface SearchParams {
-  mode: SearchMode;
+  // Primary concept (always present for any search)
+  primaryConceptId?: string;
+  primaryConceptLabel?: string;
 
-  // Concept mode
+  // Neighborhood depth (1 = immediate neighbors, >1 = deeper expansion)
+  depth: number;
+
+  // Destination concept (presence triggers path mode)
+  destinationConceptId?: string;
+  destinationConceptLabel?: string;
+
+  // Path parameters (only relevant when destination is set)
+  maxHops: number;
+
+  // Load behavior
+  loadMode: 'clean' | 'add';
+}
+
+// Derived from which parameters are populated — never stored explicitly
+export type DerivedMode = 'idle' | 'explore' | 'path';
+
+export function deriveMode(params: SearchParams): DerivedMode {
+  if (!params.primaryConceptId) return 'idle';
+  if (params.destinationConceptId) return 'path';
+  return 'explore';
+}
+
+// --- Exploration Session Types ---
+//
+// All query modes (smart search, block editor, Cypher editor) compile to the
+// same intermediate representation: an ordered array of { op, cypher } pairs.
+// This is the "query program" — saved, loaded, and replayed uniformly.
+//
+// Smart search generates steps automatically from UI actions.
+// Block editor compiles visual blocks into steps.
+// Cypher editor lets the user write +/- prefixed statements directly.
+// generateCypher() serializes a session to text; parseCypherStatements() parses it back.
+
+/** The type of graph action performed */
+export type ExplorationAction = 'explore' | 'follow' | 'add-adjacent' | 'load-path' | 'cypher';
+
+/** Set algebra operator: additive (+) merges results, subtractive (-) removes them */
+export type ExplorationOp = '+' | '-';
+
+/**
+ * A single step in an exploration session.
+ *
+ * Each step records one intentional graph action — a discrete thought in the
+ * user's exploration sequence. The step includes both the semantic description
+ * (action, concept, depth) and the equivalent Cypher statement for replay.
+ */
+export interface ExplorationStep {
+  /** Unique step identifier */
+  id: string;
+  /** When this step was performed */
+  timestamp: number;
+  /** What kind of action was taken */
+  action: ExplorationAction;
+  /** Whether this step adds to or removes from the graph */
+  op: ExplorationOp;
+  /** The equivalent Cypher statement for this action */
+  cypher: string;
+
+  /** Primary concept ID (not applicable for raw cypher steps) */
   conceptId?: string;
-
-  // Neighborhood mode
-  centerConceptId?: string;
+  /** Human-readable concept label (or Cypher snippet for raw cypher steps) */
+  conceptLabel?: string;
+  /** Neighborhood traversal depth */
   depth?: number;
 
-  // Path mode
-  fromConceptId?: string;
-  toConceptId?: string;
+  /** Destination concept ID (path mode only) */
+  destinationConceptId?: string;
+  /** Destination concept label (path mode only) */
+  destinationConceptLabel?: string;
+  /** Maximum hops for path search (path mode only) */
   maxHops?: number;
-
-  // Shared parameters
-  loadMode?: 'clean' | 'add'; // Replace graph or add to existing
 }
+
+/**
+ * An exploration session — an ordered list of steps that together define
+ * a graph query. The sequence mirrors how the user actually explored.
+ * Replay executes steps in order, applying +/- operators.
+ */
+export interface ExplorationSession {
+  /** Unique session identifier */
+  id: string;
+  /** User-provided name (null until saved) */
+  name: string | null;
+  /** When the session started */
+  createdAt: number;
+  /** Ordered list of exploration steps */
+  steps: ExplorationStep[];
+}
+
+const createEmptySession = (): ExplorationSession => ({
+  id: crypto.randomUUID(),
+  name: null,
+  createdAt: Date.now(),
+  steps: [],
+});
 
 interface GraphStore {
   // Explorer selection
   selectedExplorer: VisualizationType;
   setSelectedExplorer: (type: VisualizationType) => void;
 
-  // Graph data (raw API format - cached to avoid re-fetching)
-  rawGraphData: { nodes: any[]; links: any[] } | null;
-  setRawGraphData: (data: { nodes: any[]; links: any[] } | null) => void;
-  // Merge new data into existing graph (deduplicating nodes by concept_id, links by from+type+to)
-  mergeRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
+  // Graph data (raw API format - cached to avoid re-fetching, persisted to localStorage)
+  rawGraphData: RawGraphData | null;
+  /** Replace raw graph data entirely (clean load) */
+  setRawGraphData: (data: RawGraphData | null) => void;
+  /** Merge new data into existing graph, deduplicating by concept_id / link key */
+  mergeRawGraphData: (data: RawGraphData) => void;
+  /** Remove matching nodes and their connected links from the graph (subtractive operator) */
+  subtractRawGraphData: (data: RawGraphData) => void;
 
   // Graph data (transformed for current explorer)
   graphData: GraphData | null;
@@ -142,6 +237,24 @@ interface GraphStore {
   addPolarityAnalysis: (analysis: GraphStore['polarityState']['analysisHistory'][0]) => void;
   removePolarityAnalysis: (id: string) => void;
   clearPolarityHistory: () => void;
+
+  // Exploration session — ordered list of graph actions with +/- operators
+  /** Current exploration session (persisted to localStorage) */
+  explorationSession: ExplorationSession;
+  /** Record a new step in the exploration session */
+  addExplorationStep: (step: Omit<ExplorationStep, 'id' | 'timestamp'>) => void;
+  /** Remove the last step from the session */
+  undoLastStep: () => void;
+  /** Clear the session and graph data, starting fresh */
+  clearExploration: () => void;
+  /** Reset session only (keeps graph data intact) — used when loading saved queries */
+  resetExplorationSession: () => void;
+  /** Set a name for the current exploration (for saving) */
+  setExplorationName: (name: string) => void;
+
+  /** Bridge for pushing generated Cypher scripts to the editor (consumed by SearchBar) */
+  cypherEditorContent: string | null;
+  setCypherEditorContent: (content: string | null) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -159,11 +272,14 @@ const defaultUISettings: UISettings = {
 };
 
 const defaultSearchParams: SearchParams = {
-  mode: null,
+  depth: 1,
+  maxHops: 5,
   loadMode: 'clean',
 };
 
-export const useGraphStore = create<GraphStore>((set) => ({
+export const useGraphStore = create<GraphStore>()(
+  persist(
+    (set) => ({
   // Explorer selection
   selectedExplorer: 'force-2d',
   setSelectedExplorer: (type) => set({ selectedExplorer: type }),
@@ -178,30 +294,55 @@ export const useGraphStore = create<GraphStore>((set) => ({
         return { rawGraphData: data };
       }
 
-      const existingNodeIds = new Set(current.nodes.map((n: any) => n.id || n.concept_id));
+      const existingNodeIds = new Set(current.nodes.map((n) => n.concept_id));
       const newNodes = (data.nodes || []).filter(
-        (n: any) => !existingNodeIds.has(n.id || n.concept_id)
+        (n) => !existingNodeIds.has(n.concept_id)
       );
 
       const existingLinkKeys = new Set(
-        current.links.map((l: any) => {
-          const from = l.from_id || l.source?.id || l.source;
-          const to = l.to_id || l.target?.id || l.target;
-          const type = l.relationship_type || l.type || '';
-          return `${from}-${type}-${to}`;
-        })
+        current.links.map((l) => `${l.from_id}-${l.relationship_type}-${l.to_id}`)
       );
-      const newLinks = (data.links || []).filter((l: any) => {
-        const from = l.from_id || l.source?.id || l.source;
-        const to = l.to_id || l.target?.id || l.target;
-        const type = l.relationship_type || l.type || '';
-        return !existingLinkKeys.has(`${from}-${type}-${to}`);
+      const newLinks = (data.links || []).filter((l) => {
+        return !existingLinkKeys.has(`${l.from_id}-${l.relationship_type}-${l.to_id}`);
       });
 
       return {
         rawGraphData: {
           nodes: [...current.nodes, ...newNodes],
           links: [...current.links, ...newLinks],
+        },
+      };
+    }),
+
+  subtractRawGraphData: (data) =>
+    set((state) => {
+      const current = state.rawGraphData;
+      if (!current || !current.nodes || current.nodes.length === 0) {
+        return {};
+      }
+
+      // Build set of node IDs to remove
+      const removeNodeIds = new Set(
+        (data.nodes || []).map((n) => n.concept_id)
+      );
+
+      // Remove matching nodes
+      const remainingNodes = current.nodes.filter(
+        (n) => !removeNodeIds.has(n.concept_id)
+      );
+
+      // Remove links that reference removed nodes
+      const remainingNodeIds = new Set(
+        remainingNodes.map((n) => n.concept_id)
+      );
+      const remainingLinks = current.links.filter((l) => {
+        return remainingNodeIds.has(l.from_id) && remainingNodeIds.has(l.to_id);
+      });
+
+      return {
+        rawGraphData: {
+          nodes: remainingNodes,
+          links: remainingLinks,
         },
       };
     }),
@@ -384,4 +525,62 @@ export const useGraphStore = create<GraphStore>((set) => ({
         selectedAnalysisId: null,
       },
     })),
-}));
+
+  // Exploration session
+  explorationSession: createEmptySession(),
+
+  addExplorationStep: (stepData) =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        steps: [
+          ...state.explorationSession.steps,
+          {
+            ...stepData,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+          },
+        ],
+      },
+    })),
+
+  undoLastStep: () =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        steps: state.explorationSession.steps.slice(0, -1),
+      },
+    })),
+
+  clearExploration: () =>
+    set({
+      explorationSession: createEmptySession(),
+      rawGraphData: null,
+      graphData: null,
+    }),
+
+  resetExplorationSession: () =>
+    set({ explorationSession: createEmptySession() }),
+
+  cypherEditorContent: null,
+  setCypherEditorContent: (content) => set({ cypherEditorContent: content }),
+
+  setExplorationName: (name) =>
+    set((state) => ({
+      explorationSession: {
+        ...state.explorationSession,
+        name,
+      },
+    })),
+    }),
+    {
+      name: 'kg-graph-exploration',
+      partialize: (state) => ({
+        rawGraphData: state.rawGraphData,
+        explorationSession: state.explorationSession,
+        searchParams: state.searchParams,
+        similarityThreshold: state.similarityThreshold,
+      }),
+    }
+  )
+);

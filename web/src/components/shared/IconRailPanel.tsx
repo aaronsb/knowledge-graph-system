@@ -15,6 +15,13 @@ interface PanelTab {
   content: React.ReactNode;
 }
 
+interface RailAction {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+}
+
 interface IconRailPanelProps {
   tabs: PanelTab[];
   activeTab: string;
@@ -22,6 +29,8 @@ interface IconRailPanelProps {
   defaultExpanded?: boolean;
   expandedWidth?: string;
   position?: 'left' | 'right';
+  /** Standalone action buttons rendered above tabs in the icon rail */
+  actions?: RailAction[];
 }
 
 export const IconRailPanel: React.FC<IconRailPanelProps> = ({
@@ -31,6 +40,7 @@ export const IconRailPanel: React.FC<IconRailPanelProps> = ({
   defaultExpanded = false,
   expandedWidth = 'w-72',
   position = 'left',
+  actions = [],
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -52,6 +62,22 @@ export const IconRailPanel: React.FC<IconRailPanelProps> = ({
     <div className={`${borderClass} border-border bg-card flex h-full`}>
       {/* Icon Rail - always visible */}
       <div className="w-12 flex flex-col border-r border-border">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              onClick={action.onClick}
+              className="p-3 transition-colors text-muted-foreground hover:text-foreground hover:bg-accent border-l-2 border-transparent"
+              title={action.label}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          );
+        })}
+        {actions.length > 0 && (
+          <div className="mx-2 border-b border-border" />
+        )}
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id && isExpanded;

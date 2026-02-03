@@ -27,6 +27,7 @@ import {
   Save,
   Eye,
   X,
+  Route,
 } from 'lucide-react';
 import * as d3 from 'd3';
 import { IconRailPanel } from '../shared/IconRailPanel';
@@ -39,6 +40,7 @@ import {
   type GraphReportData,
   type PolarityReportData,
   type DocumentReportData,
+  type TraversalReportData,
   type PreviousValues,
 } from '../../store/reportStore';
 
@@ -269,6 +271,36 @@ const documentToCSV = (data: DocumentReportData): string => {
   return lines.join('\n');
 };
 
+// Convert traversal report to CSV
+const traversalToCSV = (data: TraversalReportData): string => {
+  const lines: string[] = [];
+
+  lines.push(`# Traversal`);
+  lines.push(`Origin,${data.origin.label}`);
+  lines.push(`Destination,${data.destination.label}`);
+  lines.push(`Max Hops,${data.maxHops}`);
+  lines.push(`Paths Found,${data.pathCount}`);
+
+  data.paths.forEach((path, i) => {
+    lines.push('');
+    lines.push(`# Path ${i + 1} (${path.hops} hops)`);
+    lines.push('Step,Label,Description,Grounding,Diversity,Relationship');
+    path.nodes.forEach((n, j) => {
+      const relAfter = j < path.relationships.length ? path.relationships[j] : '';
+      lines.push([
+        j + 1,
+        `"${(n.label || '').replace(/"/g, '""')}"`,
+        `"${(n.description || '').replace(/"/g, '""')}"`,
+        n.grounding_strength?.toFixed(3) || '',
+        n.diversity_score?.toFixed(3) || '',
+        relAfter,
+      ].join(','));
+    });
+  });
+
+  return lines.join('\n');
+};
+
 // Convert to Markdown
 const toMarkdown = (report: Report): string => {
   const lines: string[] = [];
@@ -318,6 +350,25 @@ const toMarkdown = (report: Report): string => {
     lines.push('|-------|----------|-----------|');
     data.concepts.forEach(c => {
       lines.push(`| ${c.label} | ${c.position.toFixed(3)} | ${c.grounding_strength?.toFixed(2) || '-'} |`);
+    });
+  } else if (report.type === 'traversal') {
+    const data = report.data as TraversalReportData;
+
+    lines.push('## Traversal');
+    lines.push(`- **Origin:** ${data.origin.label}`);
+    lines.push(`- **Destination:** ${data.destination.label}`);
+    lines.push(`- **Paths Found:** ${data.pathCount}`);
+
+    data.paths.forEach((path, i) => {
+      lines.push('');
+      lines.push(`### Path ${i + 1} (${path.hops} hops)`);
+      lines.push('');
+      path.nodes.forEach((n, j) => {
+        lines.push(`${j + 1}. **${n.label}**${n.grounding_strength != null ? ` (grounding: ${n.grounding_strength.toFixed(2)})` : ''}`);
+        if (j < path.relationships.length) {
+          lines.push(`   *${path.relationships[j]}* ↓`);
+        }
+      });
     });
   } else {
     const data = report.data as DocumentReportData;
@@ -651,6 +702,7 @@ export const ReportWorkspace: React.FC = () => {
   const getReportIcon = (report: Report) => {
     if (report.type === 'polarity') return Compass;
     if (report.type === 'document') return FileText;
+    if (report.type === 'traversal') return Route;
     return GitBranch;
   };
 
@@ -678,6 +730,8 @@ export const ReportWorkspace: React.FC = () => {
               ? (report.data as GraphReportData).nodes.length
               : report.type === 'polarity'
               ? (report.data as PolarityReportData).concepts.length
+              : report.type === 'traversal'
+              ? (report.data as TraversalReportData).pathCount
               : (report.data as DocumentReportData).documents.length;
 
             return (
@@ -1149,6 +1203,106 @@ export const ReportWorkspace: React.FC = () => {
     );
   };
 
+  // Render table for traversal report
+  const renderTraversalTable = (data: TraversalReportData) => {
+    return (
+      <div className="space-y-6">
+        {/* Origin → Destination header */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-3 bg-muted/30 rounded-lg border text-center">
+            <div className="text-xs text-muted-foreground mb-1">Origin</div>
+            <div className="font-semibold text-sm">{data.origin.label}</div>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg border text-center flex items-center justify-center">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Paths</div>
+              <div className="font-semibold text-lg">{data.pathCount}</div>
+            </div>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg border text-center">
+            <div className="text-xs text-muted-foreground mb-1">Destination</div>
+            <div className="font-semibold text-sm">{data.destination.label}</div>
+          </div>
+        </div>
+
+        {/* Paths */}
+        {data.paths.map((path, pathIdx) => (
+          <div key={pathIdx}>
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <Route className="w-4 h-4" />
+              Path {pathIdx + 1} ({path.hops} hops)
+            </h3>
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground w-12">#</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Concept</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Description</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Grounding</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Diversity</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground w-32">Relationship</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {path.nodes.map((node, nodeIdx) => (
+                      <tr key={node.id} className="hover:bg-muted/30">
+                        <td className="px-3 py-2 text-muted-foreground font-mono text-xs">
+                          {nodeIdx + 1}
+                        </td>
+                        <td className="px-3 py-2 font-medium">
+                          {node.label}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground text-xs max-w-xs truncate" title={node.description}>
+                          {node.description || '-'}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {node.grounding_strength != null ? (
+                            <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
+                              node.grounding_strength >= 0.7
+                                ? 'bg-green-500/20 text-green-600'
+                                : node.grounding_strength >= 0.3
+                                ? 'bg-yellow-500/20 text-yellow-600'
+                                : 'bg-red-500/20 text-red-600'
+                            }`}>
+                              {(node.grounding_strength * 100).toFixed(0)}%
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-xs">
+                          {node.diversity_score?.toFixed(2) || '-'}
+                        </td>
+                        <td className="px-3 py-2">
+                          {nodeIdx < path.relationships.length ? (
+                            <span className="text-xs px-1.5 py-0.5 rounded"
+                              style={{
+                                backgroundColor: `${getCategoryColor(path.relationships[nodeIdx])}30`,
+                                color: getCategoryColor(path.relationships[nodeIdx]),
+                              }}
+                            >
+                              {path.relationships[nodeIdx]} ↓
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {data.pathCount === 0 && (
+          <div className="text-center text-muted-foreground py-8">
+            No paths found between origin and destination.
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Render table for document report
   const renderDocumentTable = (data: DocumentReportData) => {
     // Get all unique ontologies for color calculation
@@ -1335,6 +1489,8 @@ export const ReportWorkspace: React.FC = () => {
                     ? graphToCSV(selectedReport.data as GraphReportData)
                     : selectedReport.type === 'polarity'
                     ? polarityToCSV(selectedReport.data as PolarityReportData)
+                    : selectedReport.type === 'traversal'
+                    ? traversalToCSV(selectedReport.data as TraversalReportData)
                     : documentToCSV(selectedReport.data as DocumentReportData);
                   copyToClipboard(csv, 'csv', setCopiedFormat);
                 }}
@@ -1381,6 +1537,8 @@ export const ReportWorkspace: React.FC = () => {
               ? renderGraphTable(selectedReport.data as GraphReportData, selectedReport)
               : selectedReport.type === 'polarity'
               ? renderPolarityTable(selectedReport.data as PolarityReportData)
+              : selectedReport.type === 'traversal'
+              ? renderTraversalTable(selectedReport.data as TraversalReportData)
               : renderDocumentTable(selectedReport.data as DocumentReportData)
           ) : (
             <div className="h-full flex items-center justify-center">
