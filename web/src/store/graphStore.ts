@@ -68,9 +68,18 @@ export function deriveMode(params: SearchParams): DerivedMode {
 }
 
 // --- Exploration Session Types ---
+//
+// All query modes (smart search, block editor, Cypher editor) compile to the
+// same intermediate representation: an ordered array of { op, cypher } pairs.
+// This is the "query program" — saved, loaded, and replayed uniformly.
+//
+// Smart search generates steps automatically from UI actions.
+// Block editor compiles visual blocks into steps.
+// Cypher editor lets the user write +/- prefixed statements directly.
+// generateCypher() serializes a session to text; parseCypherStatements() parses it back.
 
 /** The type of graph action performed */
-export type ExplorationAction = 'explore' | 'follow' | 'add-adjacent' | 'load-path';
+export type ExplorationAction = 'explore' | 'follow' | 'add-adjacent' | 'load-path' | 'cypher';
 
 /** Set algebra operator: additive (+) merges results, subtractive (-) removes them */
 export type ExplorationOp = '+' | '-';
@@ -94,12 +103,12 @@ export interface ExplorationStep {
   /** The equivalent Cypher statement for this action */
   cypher: string;
 
-  /** Primary concept ID */
-  conceptId: string;
-  /** Human-readable concept label */
-  conceptLabel: string;
+  /** Primary concept ID (not applicable for raw cypher steps) */
+  conceptId?: string;
+  /** Human-readable concept label (or Cypher snippet for raw cypher steps) */
+  conceptLabel?: string;
   /** Neighborhood traversal depth */
-  depth: number;
+  depth?: number;
 
   /** Destination concept ID (path mode only) */
   destinationConceptId?: string;
@@ -237,8 +246,14 @@ interface GraphStore {
   undoLastStep: () => void;
   /** Clear the session and graph data, starting fresh */
   clearExploration: () => void;
+  /** Reset session only (keeps graph data intact) — used when loading saved queries */
+  resetExplorationSession: () => void;
   /** Set a name for the current exploration (for saving) */
   setExplorationName: (name: string) => void;
+
+  /** Bridge for pushing generated Cypher scripts to the editor (consumed by SearchBar) */
+  cypherEditorContent: string | null;
+  setCypherEditorContent: (content: string | null) => void;
 }
 
 const defaultFilters: GraphFilters = {
@@ -552,6 +567,12 @@ export const useGraphStore = create<GraphStore>()(
       rawGraphData: null,
       graphData: null,
     }),
+
+  resetExplorationSession: () =>
+    set({ explorationSession: createEmptySession() }),
+
+  cypherEditorContent: null,
+  setCypherEditorContent: (content) => set({ cypherEditorContent: content }),
 
   setExplorationName: (name) =>
     set((state) => ({

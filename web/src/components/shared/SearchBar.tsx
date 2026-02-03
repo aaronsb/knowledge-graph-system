@@ -22,7 +22,8 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
-import { stepToCypher } from '../../utils/cypherGenerator';
+import { stepToCypher, parseCypherStatements } from '../../utils/cypherGenerator';
+import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -32,7 +33,7 @@ import {
 
 export const SearchBar: React.FC = () => {
   // Top-level mode (dial)
-  const { queryMode, setQueryMode, blockBuilderExpanded, setBlockBuilderExpanded } = useGraphStore();
+  const { queryMode, setQueryMode, blockBuilderExpanded, setBlockBuilderExpanded, cypherEditorContent, setCypherEditorContent } = useGraphStore();
 
   // Collapsible state
   const [smartSearchExpanded, setSmartSearchExpanded] = useState(true);
@@ -114,6 +115,16 @@ LIMIT 50`);
       }
     }
   }, [searchParams.primaryConceptId, searchParams.primaryConceptLabel]);
+
+  // Consume exported Cypher from ExplorerView "Export to Editor" action
+  useEffect(() => {
+    if (cypherEditorContent !== null) {
+      setCypherQuery(cypherEditorContent);
+      setCypherEditorContent(null);
+      setQueryMode('cypher-editor');
+      setCypherEditorExpanded(true);
+    }
+  }, [cypherEditorContent, setCypherEditorContent, setQueryMode]);
 
   // === HANDLERS ===
 
@@ -287,7 +298,10 @@ LIMIT 50`);
     setSelectedPath(null);
   };
 
-  // Cypher execution
+  // Execute Cypher program — parses +/- prefixed multi-statement scripts,
+  // routes results through the rawGraphData pipeline (not setGraphData directly),
+  // and records each statement as an exploration step for save/export round-trip.
+  // Plain Cypher without operators is treated as a single additive statement.
   const handleExecuteCypher = async () => {
     if (!cypherQuery.trim()) return;
 
@@ -295,25 +309,47 @@ LIMIT 50`);
     setCypherError(null);
 
     try {
-      const result = await apiClient.executeCypherQuery({
-        query: cypherQuery,
-        limit: 100,
-      });
+      let statements = parseCypherStatements(cypherQuery);
 
-      const { transformForD3 } = await import('../../utils/graphTransform');
-      const graphNodes = result.nodes.map((n: any) => ({
-        concept_id: n.id,
-        label: n.label,
-        ontology: n.properties?.ontology || 'default',
-      }));
-      const graphLinks = result.relationships.map((r: any) => ({
-        from_id: r.from_id,
-        to_id: r.to_id,
-        relationship_type: r.type,
-      }));
+      // Plain Cypher without +/- operators → treat as single additive statement
+      if (statements.length === 0) {
+        const cypher = cypherQuery.trim().replace(/;\s*$/, '');
+        if (cypher) {
+          statements = [{ op: '+', cypher }];
+        }
+      }
 
-      const graphData = transformForD3(graphNodes, graphLinks);
-      useGraphStore.getState().setGraphData(graphData);
+      if (statements.length === 0) return;
+
+      const store = useGraphStore.getState();
+
+      // Start fresh — clear graph and reset exploration session
+      setGraphData(null);
+      setRawGraphData(null);
+      store.resetExplorationSession();
+
+      for (const stmt of statements) {
+        const result = await apiClient.executeCypherQuery({
+          query: stmt.cypher,
+          limit: 500,
+        });
+
+        const mapped = mapCypherResultToRawGraph(result);
+
+        // Record exploration step
+        store.addExplorationStep({
+          action: 'cypher',
+          op: stmt.op,
+          cypher: stmt.cypher,
+        });
+
+        // Apply through rawGraphData pipeline
+        if (stmt.op === '+') {
+          mergeRawGraphData(mapped);
+        } else {
+          store.subtractRawGraphData(mapped);
+        }
+      }
     } catch (error: any) {
       console.error('Failed to execute Cypher query:', error);
       setCypherError(error.response?.data?.detail || error.message || 'Query execution failed');
@@ -662,13 +698,16 @@ LIMIT 50`);
               </button>
 
               <div className="text-xs text-muted-foreground space-y-1">
-                <div className="font-medium">Example queries:</div>
-                <div className="font-mono bg-muted p-2 rounded">
-                  <div>MATCH (c:Concept) WHERE c.label CONTAINS 'organizational' RETURN c LIMIT 10</div>
-                  <div className="mt-1">{'MATCH (c:Concept)-[r:IMPLIES]->(n:Concept) RETURN c, r, n LIMIT 50'}</div>
+                <div className="font-medium">Syntax:</div>
+                <div className="font-mono bg-muted p-2 rounded space-y-1">
+                  <div className="text-muted-foreground/70">{'-- Single query (plain Cypher):'}</div>
+                  <div>{'MATCH (c:Concept)-[r]->(n) RETURN c, r, n LIMIT 50'}</div>
+                  <div className="text-muted-foreground/70 mt-2">{'-- Multi-statement with set operators:'}</div>
+                  <div>{'+ MATCH (c:Concept)-[r]-(n) WHERE c.label = \'X\' RETURN c, r, n;'}</div>
+                  <div>{'- MATCH (c:Concept) WHERE c.label = \'Noise\' RETURN c;'}</div>
                 </div>
                 <div className="text-muted-foreground/70 mt-2">
-                  Results are automatically loaded into the graph visualization.
+                  Prefix lines with <code className="bg-muted px-1 rounded">+</code> (add) or <code className="bg-muted px-1 rounded">-</code> (subtract) for set algebra. Statements execute in order.
                 </div>
               </div>
             </div>

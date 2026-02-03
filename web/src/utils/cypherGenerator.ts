@@ -1,23 +1,30 @@
 /**
- * Cypher Generator — converts exploration sessions to ordered Cypher statements.
+ * Cypher Generator — serializer/deserializer for the unified query program.
  *
- * Each exploration step maps to an equivalent Apache AGE openCypher statement.
- * Steps are prefixed with +/- operators indicating whether the result should
- * be merged into or subtracted from the graph.
+ * All three query modes (smart search, block editor, Cypher editor) compile
+ * to the same intermediate representation: { op: '+' | '-', cypher: string }[].
+ * This module converts between that IR and the human-readable text format.
  *
- * The generated output is human-readable, editable, and executable in the
- * openCypher editor. It preserves the user's exploration narrative — each
- * statement is a discrete thought in the sequence.
+ * Text format:
+ *   - Each statement is prefixed with + (add to graph) or - (subtract from graph)
+ *   - Statements execute in order, applying set algebra to the graph
+ *   - Comments (--) and blank lines are ignored during parsing
+ *   - Unprefixed statements default to + (additive)
+ *
+ * Functions:
+ *   - stepToCypher()            — single semantic action → Cypher statement
+ *   - generateCypher(session)   — exploration session → text script (serializer)
+ *   - parseCypherStatements(text) — text script → { op, cypher }[] (deserializer)
  *
  * @example
  * ```
  * -- Exploration: My Graph Query
  * -- Step 1: explore "Way"
- * + MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Way' RETURN c, r, n
+ * + MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Way' RETURN c, r, n;
  * -- Step 2: add-adjacent "Enterprise Operating Model"
- * + MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Enterprise Operating Model' RETURN c, r, n
+ * + MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Enterprise Operating Model' RETURN c, r, n;
  * -- Step 3: subtract "Noise"
- * - MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Noise' RETURN c, r, n
+ * - MATCH (c:Concept)-[r]-(n:Concept) WHERE c.label = 'Noise' RETURN c, r, n;
  * ```
  */
 
@@ -105,9 +112,16 @@ export function generateCypher(session: ExplorationSession): string {
 
   // Each step as an operator-prefixed statement
   steps.forEach((step, idx) => {
-    const actionLabel = step.action === 'load-path'
-      ? `${step.action} "${step.conceptLabel}" → "${step.destinationConceptLabel}"`
-      : `${step.action} "${step.conceptLabel}"`;
+    let actionLabel: string;
+    if (step.action === 'cypher') {
+      // Raw cypher steps — show truncated query as label
+      const snippet = step.cypher.replace(/\n/g, ' ').substring(0, 60);
+      actionLabel = `cypher "${snippet}${step.cypher.length > 60 ? '...' : ''}"`;
+    } else if (step.action === 'load-path') {
+      actionLabel = `${step.action} "${step.conceptLabel}" → "${step.destinationConceptLabel}"`;
+    } else {
+      actionLabel = `${step.action} "${step.conceptLabel}"`;
+    }
 
     lines.push(`-- Step ${idx + 1}: ${actionLabel}`);
     lines.push(`${step.op} ${step.cypher};`);

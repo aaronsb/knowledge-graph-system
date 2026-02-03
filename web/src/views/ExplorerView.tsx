@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, Save, Settings, Trash2 } from 'lucide-react';
+import { FolderOpen, Save, Settings, Trash2, Eraser, Code } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
 import { useGraphStore, deriveMode } from '../store/graphStore';
@@ -26,6 +26,7 @@ import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/typ
 import { getZIndexValue } from '../config/zIndex';
 import { apiClient } from '../api/client';
 import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
+import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
 import type { VisualizationType } from '../types/explorer';
 
 interface ExplorerViewProps {
@@ -45,9 +46,12 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     mergeRawGraphData,
     setSelectedExplorer,
     setSearchParams,
+    clearSearchParams,
     setSimilarityThreshold,
     explorationSession,
     subtractRawGraphData,
+    clearExploration,
+    resetExplorationSession,
   } = useGraphStore();
   const { addReport } = useReportStore();
   const {
@@ -122,8 +126,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       if (similarity) {
         setSimilarityThreshold(parseFloat(similarity));
       }
+    } else {
+      // No URL params — clear any persisted searchParams so stale queries
+      // don't re-fire. The graph data stays visible until the next search.
+      hasInitializedFromUrl.current = true;
+      clearSearchParams();
     }
-  }, [urlParams, setSearchParams, setSimilarityThreshold]);
+  }, [urlParams, setSearchParams, setSimilarityThreshold, clearSearchParams]);
 
   // Sync store state → URL parameters
   useEffect(() => {
@@ -352,6 +361,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     });
   }, [explorationSession, createSavedQuery, explorerType]);
 
+  // Export current exploration to Cypher editor
+  const handleExportToEditor = useCallback(() => {
+    if (!explorationSession || explorationSession.steps.length === 0) return;
+    const script = generateCypher(explorationSession);
+    useGraphStore.getState().setCypherEditorContent(script);
+  }, [explorationSession]);
+
   // Load a saved query
   const handleLoadQuery = useCallback(async (query: any) => {
     const definition = query.definition;
@@ -360,38 +376,25 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     if (query.definition_type === 'exploration' && definition?.statements) {
       setGraphData(null);
       setRawGraphData(null);
+      resetExplorationSession();
 
       for (const stmt of definition.statements as Array<{ op: '+' | '-'; cypher: string }>) {
         try {
           const result = await apiClient.executeCypherQuery({ query: stmt.cypher, limit: 500 });
-
-          // Build AGE internal ID → concept_id map
-          const internalToConceptId = new Map<string, string>();
-          (result.nodes || []).forEach((n: any) => {
-            const conceptId = n.properties?.concept_id || n.id;
-            internalToConceptId.set(n.id, conceptId);
-          });
-
-          const nodes = (result.nodes || []).map((n: any) => ({
-            concept_id: n.properties?.concept_id || n.id,
-            label: n.label,
-            ontology: n.properties?.ontology || 'default',
-            search_terms: n.properties?.search_terms || [],
-            grounding_strength: n.properties?.grounding_strength,
-          }));
-          const links = (result.relationships || []).map((r: any) => ({
-            from_id: internalToConceptId.get(r.from_id) || r.from_id,
-            to_id: internalToConceptId.get(r.to_id) || r.to_id,
-            relationship_type: r.type,
-            category: r.properties?.category,
-            confidence: r.confidence,
-          }));
+          const mapped = mapCypherResultToRawGraph(result);
 
           if (stmt.op === '+') {
-            mergeRawGraphData({ nodes, links });
+            mergeRawGraphData(mapped);
           } else {
-            subtractRawGraphData({ nodes, links });
+            subtractRawGraphData(mapped);
           }
+
+          // Reconstruct exploration session so Save/Export work after load
+          useGraphStore.getState().addExplorationStep({
+            action: 'cypher',
+            op: stmt.op,
+            cypher: stmt.cypher,
+          });
         } catch (error) {
           console.error('Failed to replay statement:', stmt.cypher, error);
         }
@@ -406,7 +409,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         setSimilarityThreshold(definition.similarityThreshold);
       }
     }
-  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, setSearchParams, setSimilarityThreshold]);
+  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold]);
 
   // Delete a saved query
   const handleDeleteQuery = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -420,13 +423,22 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const savedQueriesPanelContent = (
     <div className="p-3">
       {hasExploration && (
-        <button
-          onClick={handleSaveExploration}
-          className="w-full flex items-center gap-2 px-3 py-2 mb-3 text-sm font-medium rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
-        >
-          <Save className="w-4 h-4" />
-          Save Current Exploration ({explorationSession.steps.length} steps)
-        </button>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={handleSaveExploration}
+            className="flex-1 flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            Save ({explorationSession.steps.length} steps)
+          </button>
+          <button
+            onClick={handleExportToEditor}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-border hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title="Export to Cypher Editor"
+          >
+            <Code className="w-4 h-4" />
+          </button>
+        </div>
       )}
       {isLoadingQueries ? (
         <div className="text-center text-muted-foreground text-sm py-4">
@@ -501,6 +513,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     </div>
   );
 
+  // Clear graph and search state
+  const handleClearGraph = useCallback(() => {
+    clearExploration();
+    clearSearchParams();
+    setUrlParams(new URLSearchParams(), { replace: true });
+  }, [clearExploration, clearSearchParams, setUrlParams]);
+
   // Tab definitions for IconRailPanel
   const tabs = [
     {
@@ -525,6 +544,14 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         defaultExpanded={false}
+        actions={[
+          {
+            id: 'clear',
+            icon: Eraser,
+            label: 'Clear Graph',
+            onClick: handleClearGraph,
+          },
+        ]}
       />
 
       {/* Main visualization area */}
