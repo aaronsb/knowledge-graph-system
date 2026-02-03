@@ -15,10 +15,11 @@ DEFINITION_TYPES = [
     'cypher',
     'search',
     'polarity',
-    'connection'
+    'connection',
+    'exploration'
 ]
 
-DefinitionType = Literal['block_diagram', 'cypher', 'search', 'polarity', 'connection']
+DefinitionType = Literal['block_diagram', 'cypher', 'search', 'polarity', 'connection', 'exploration']
 
 
 class QueryDefinitionCreate(BaseModel):
