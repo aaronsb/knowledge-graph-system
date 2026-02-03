@@ -138,17 +138,24 @@ export const useQueryDefinitionStore = create<QueryDefinitionStore>()(
           const created = await apiClient.createQueryDefinition(definition);
 
           // Add to store (prepend to show newest first)
+          // The create response omits `definition` and `metadata` — merge from the request
           const existing = get().definitions;
           const existingIds = get().definitionIds;
+          const full = {
+            ...created,
+            definition: definition.definition,
+            metadata: definition.metadata || null,
+            owner_id: null,
+          };
 
           set({
-            definitions: { ...existing, [created.id]: created },
+            definitions: { ...existing, [created.id]: full },
             definitionIds: [created.id, ...existingIds],
             total: get().total + 1,
             isLoading: false,
           });
 
-          return created;
+          return full as any;
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : 'Failed to create query definition';
           set({ isLoading: false, error: message });
