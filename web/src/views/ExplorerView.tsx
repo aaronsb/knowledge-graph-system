@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { History, Settings, Trash2 } from 'lucide-react';
+import { FolderOpen, Save, Settings, Trash2 } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
 import { useGraphStore, deriveMode } from '../store/graphStore';
@@ -24,7 +24,8 @@ import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
-import { stepToCypher } from '../utils/cypherGenerator';
+import { apiClient } from '../api/client';
+import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import type { VisualizationType } from '../types/explorer';
 
 interface ExplorerViewProps {
@@ -45,12 +46,15 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     setSelectedExplorer,
     setSearchParams,
     setSimilarityThreshold,
+    explorationSession,
+    subtractRawGraphData,
   } = useGraphStore();
   const { addReport } = useReportStore();
   const {
     definitions: savedQueriesMap,
     definitionIds: savedQueryIds,
     loadDefinitions: loadSavedQueries,
+    createDefinition: createSavedQuery,
     deleteDefinition: deleteSavedQuery,
     isLoading: isLoadingQueries,
   } = useQueryDefinitionStore();
@@ -327,16 +331,73 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     navigate('/report');
   }, [rawGraphData, searchParams, mode, explorerType, addReport, navigate]);
 
+  // Save current exploration as a query definition
+  const handleSaveExploration = useCallback(async () => {
+    if (!explorationSession || explorationSession.steps.length === 0) return;
+
+    const cypherScript = generateCypher(explorationSession);
+    const statements = parseCypherStatements(cypherScript);
+
+    const name = explorationSession.name
+      || `Exploration ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+    await createSavedQuery({
+      name,
+      definition_type: 'exploration',
+      definition: { statements },
+      metadata: {
+        stepCount: explorationSession.steps.length,
+        createdFrom: explorerType,
+      },
+    });
+  }, [explorationSession, createSavedQuery, explorerType]);
+
   // Load a saved query
-  const handleLoadQuery = useCallback((query: any) => {
+  const handleLoadQuery = useCallback(async (query: any) => {
     const definition = query.definition;
+
+    // Exploration-type: replay +/- Cypher statements
+    if (query.definition_type === 'exploration' && definition?.statements) {
+      setGraphData(null);
+      setRawGraphData(null);
+
+      for (const stmt of definition.statements as Array<{ op: '+' | '-'; cypher: string }>) {
+        try {
+          const result = await apiClient.executeCypherQuery({ query: stmt.cypher, limit: 500 });
+          const nodes = (result.nodes || []).map((n: any) => ({
+            concept_id: n.id,
+            label: n.label,
+            ontology: n.properties?.ontology || 'default',
+            search_terms: n.properties?.search_terms || [],
+            grounding_strength: n.properties?.grounding_strength,
+          }));
+          const links = (result.relationships || []).map((r: any) => ({
+            from_id: r.from_id,
+            to_id: r.to_id,
+            relationship_type: r.type,
+            confidence: r.confidence,
+          }));
+
+          if (stmt.op === '+') {
+            mergeRawGraphData({ nodes, links });
+          } else {
+            subtractRawGraphData({ nodes, links });
+          }
+        } catch (error) {
+          console.error('Failed to replay statement:', stmt.cypher, error);
+        }
+      }
+      return;
+    }
+
+    // Legacy: searchParams-based queries
     if (definition?.searchParams) {
       setSearchParams(definition.searchParams);
       if (definition.similarityThreshold) {
         setSimilarityThreshold(definition.similarityThreshold);
       }
     }
-  }, [setSearchParams, setSimilarityThreshold]);
+  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, setSearchParams, setSimilarityThreshold]);
 
   // Delete a saved query
   const handleDeleteQuery = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -344,16 +405,27 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     await deleteSavedQuery(id);
   }, [deleteSavedQuery]);
 
+  const hasExploration = explorationSession && explorationSession.steps.length > 0;
+
   // Saved queries panel content
   const savedQueriesPanelContent = (
     <div className="p-3">
+      {hasExploration && (
+        <button
+          onClick={handleSaveExploration}
+          className="w-full flex items-center gap-2 px-3 py-2 mb-3 text-sm font-medium rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+        >
+          <Save className="w-4 h-4" />
+          Save Current Exploration ({explorationSession.steps.length} steps)
+        </button>
+      )}
       {isLoadingQueries ? (
         <div className="text-center text-muted-foreground text-sm py-4">
           Loading...
         </div>
       ) : savedQueries.length === 0 ? (
         <div className="text-center text-muted-foreground text-sm py-4">
-          <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p>No saved queries</p>
           <p className="text-xs mt-1">Save queries from the search panel</p>
         </div>
@@ -369,6 +441,10 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm truncate">{query.name}</div>
                   <div className="text-xs text-muted-foreground mt-1">
+                    {query.definition_type === 'exploration'
+                      ? `${(query.definition as any)?.statements?.length || 0} steps`
+                      : query.definition_type}
+                    {' \u00b7 '}
                     {new Date(query.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -421,7 +497,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     {
       id: 'history',
       label: 'Saved Queries',
-      icon: History,
+      icon: FolderOpen,
       content: savedQueriesPanelContent,
     },
     {

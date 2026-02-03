@@ -44,12 +44,12 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [x] Persist `rawGraphData` + `explorationSession` to localStorage (survive refresh)
 - [x] Add `subtractRawGraphData` and "Remove from Graph" context menu (op: '-')
 
-### Phase 2: Saved Queries Folder
-- [ ] Unify sidebar folder icon across all explorer views (consistent with report explorer pattern)
-- [ ] Saved query data model: `{ name, statements: { op, cypher }[] }`
-- [ ] Save exploration → creates QueryDefinition with `definition_type: 'exploration'`
-- [ ] Load saved query → executes statements in order with +/- semantics
-- [ ] Delete saved query
+### Phase 2: Saved Queries Folder ✓
+- [x] Unify sidebar folder icon across all explorer views (FolderOpen, consistent with report explorer)
+- [x] Saved query data model: `{ name, statements: { op, cypher }[] }` via QueryDefinition
+- [x] Save exploration → creates QueryDefinition with `definition_type: 'exploration'`
+- [x] Load saved query → replays statements in order with +/- semantics via executeCypherQuery
+- [x] Delete saved query (already worked via queryDefinitionStore)
 
 ### Phase 3: Editor Integration
 - [ ] "Export as Cypher" sends ordered statements to the Cypher editor
