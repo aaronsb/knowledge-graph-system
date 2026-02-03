@@ -24,7 +24,6 @@ import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
 import {
   ConceptSearchInput,
-  SelectedConceptChip,
   SliderControl,
   LoadButtons,
   PathResults,
@@ -109,7 +108,7 @@ LIMIT 50`);
           concept_id: searchParams.primaryConceptId,
           label: searchParams.primaryConceptLabel,
         });
-        setPrimaryQuery('');
+        setPrimaryQuery(searchParams.primaryConceptLabel);
         setDepth(searchParams.depth);
       }
     }
@@ -119,27 +118,12 @@ LIMIT 50`);
 
   const handleSelectPrimary = (concept: any) => {
     setSelectedPrimary(concept);
-    setPrimaryQuery('');
-  };
-
-  const handleClearPrimary = () => {
-    setSelectedPrimary(null);
-    setSelectedDestination(null);
-    setShowDestination(false);
-    setPathResults(null);
-    setSelectedPath(null);
-    setDepth(1);
+    setPrimaryQuery(concept.label);
   };
 
   const handleSelectDestination = (concept: any) => {
     setSelectedDestination(concept);
-    setDestinationQuery('');
-  };
-
-  const handleClearDestination = () => {
-    setSelectedDestination(null);
-    setPathResults(null);
-    setSelectedPath(null);
+    setDestinationQuery(concept.label);
   };
 
   const handleRemoveDestination = () => {
@@ -429,33 +413,34 @@ LIMIT 50`);
 
           {smartSearchExpanded && (
             <div className="space-y-3">
-              {/* Stage 1: Search for primary concept */}
-              {!selectedPrimary ? (
-                <div className="space-y-3">
-                  <ConceptSearchInput
-                    query={primaryQuery}
-                    onQueryChange={setPrimaryQuery}
-                    placeholder="Search for a concept..."
-                    icon={Search}
-                    isLoading={isLoadingPrimary}
-                    results={primaryResults?.results}
-                    debouncedQuery={debouncedPrimaryQuery}
-                    onSelect={handleSelectPrimary}
-                    noResultsContent={noResultsContent}
-                  />
-                  {similaritySlider}
-                </div>
-              ) : (
-                /* Stage 2+: Primary selected — show controls */
-                <div className="space-y-3">
-                  <SelectedConceptChip
-                    label="Concept:"
-                    conceptLabel={selectedPrimary.label}
-                    onClear={handleClearPrimary}
-                  />
+              {/* Search input — always visible */}
+              <ConceptSearchInput
+                query={primaryQuery}
+                onQueryChange={(q) => {
+                  setPrimaryQuery(q);
+                  if (selectedPrimary) {
+                    // User is typing — clear selection to restart search
+                    setSelectedPrimary(null);
+                    setSelectedDestination(null);
+                    setShowDestination(false);
+                    setPathResults(null);
+                    setSelectedPath(null);
+                  }
+                }}
+                placeholder="Search for a concept..."
+                icon={Search}
+                isLoading={isLoadingPrimary}
+                results={primaryResults?.results}
+                debouncedQuery={debouncedPrimaryQuery}
+                onSelect={handleSelectPrimary}
+                noResultsContent={noResultsContent}
+              />
 
-                  {similaritySlider}
+              {similaritySlider}
 
+              {/* Controls appear when a concept is selected */}
+              {selectedPrimary && (
+                <div className="space-y-3">
                   <SliderControl
                     label={showDestination ? "Context:" : "Depth:"}
                     value={depth}
@@ -499,27 +484,26 @@ LIMIT 50`);
                         </button>
                       </div>
 
-                      {!selectedDestination ? (
-                        /* Search for destination */
-                        <ConceptSearchInput
-                          query={destinationQuery}
-                          onQueryChange={setDestinationQuery}
-                          placeholder="Search for destination concept..."
-                          icon={GitBranch}
-                          isLoading={isLoadingDestination}
-                          results={destinationResults?.results}
-                          debouncedQuery={debouncedDestinationQuery}
-                          onSelect={handleSelectDestination}
-                        />
-                      ) : (
-                        /* Both selected — path controls */
-                        <div className="space-y-3">
-                          <SelectedConceptChip
-                            label="Destination:"
-                            conceptLabel={selectedDestination.label}
-                            onClear={handleClearDestination}
-                          />
+                      <ConceptSearchInput
+                        query={destinationQuery}
+                        onQueryChange={(q) => {
+                          setDestinationQuery(q);
+                          if (selectedDestination) {
+                            setSelectedDestination(null);
+                            setPathResults(null);
+                            setSelectedPath(null);
+                          }
+                        }}
+                        placeholder="Search for destination concept..."
+                        icon={GitBranch}
+                        isLoading={isLoadingDestination}
+                        results={destinationResults?.results}
+                        debouncedQuery={debouncedDestinationQuery}
+                        onSelect={handleSelectDestination}
+                      />
 
+                      {selectedDestination && (
+                        <div className="space-y-3">
                           <SliderControl
                             label="Max Hops:"
                             value={maxHops}

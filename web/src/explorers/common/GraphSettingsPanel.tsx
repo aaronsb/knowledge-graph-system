@@ -17,6 +17,7 @@ interface GraphSettings {
     linkDistance: number;
     gravity: number;
     friction: number;
+    warmth?: number;
   };
   visual: {
     nodeColorBy: string;
@@ -44,6 +45,7 @@ interface SliderRanges {
     charge: { min: number; max: number; step: number };
     linkDistance: { min: number; max: number; step: number };
     gravity: { min: number; max: number; step: number };
+    warmth?: { min: number; max: number; step: number };
   };
   visual: {
     nodeSize: { min: number; max: number; step: number };
@@ -182,6 +184,23 @@ export const GraphSettingsPanel = <T extends GraphSettings>({
                       className="w-full"
                     />
                   </div>
+
+                  {settings.physics.warmth !== undefined && sliderRanges.physics.warmth && (
+                    <div>
+                      <label className="block text-xs text-foreground mb-1">
+                        Warmth: {settings.physics.warmth.toFixed(2)}
+                      </label>
+                      <input
+                        type="range"
+                        min={sliderRanges.physics.warmth.min}
+                        max={sliderRanges.physics.warmth.max}
+                        step={sliderRanges.physics.warmth.step}
+                        value={settings.physics.warmth}
+                        onChange={(e) => updatePhysics('warmth', parseFloat(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </div>

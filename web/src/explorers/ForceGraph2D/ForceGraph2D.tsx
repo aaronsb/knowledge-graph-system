@@ -545,10 +545,12 @@ export const ForceGraph2D: React.FC<
       .force('collision', d3.forceCollide().radius((d) => ((d as D3Node).size || 10) * settings.visual.nodeSize + 5))
       .velocityDecay(1 - settings.physics.friction);
 
-    // If nodes already have positions (merged graph), start with lower alpha
-    // to avoid explosive force effects
+    // Control initial simulation energy — lower warmth = less scatter on load
+    const warmth = settings.physics.warmth ?? 0.3;
     if (hasExistingPositions) {
-      simulation.alpha(0.3).alphaDecay(0.05);
+      simulation.alpha(warmth).alphaDecay(0.05);
+    } else {
+      simulation.alpha(warmth);
     }
 
     simulationRef.current = simulation;

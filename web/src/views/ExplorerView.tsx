@@ -182,20 +182,46 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     { enabled: mode === 'path' && pathNodeIds.length > 0 }
   );
 
+  // Track loadMode via ref so the data effect reads the intended mode
+  // without re-running when loadMode changes independently of data.
+  const loadModeRef = React.useRef(searchParams.loadMode);
+  useEffect(() => {
+    console.log('[loadMode-ref] updated to:', searchParams.loadMode);
+    loadModeRef.current = searchParams.loadMode;
+  }, [searchParams.loadMode]);
+
+  // Track last-processed data to avoid re-processing on remount or unrelated rerenders.
+  // Initialize to current query data so cached results from a previous mount are skipped —
+  // this preserves rawGraphData in Zustand when toggling between 2D/3D/analysis views.
+  const lastProcessedData = React.useRef<any>(mode === 'path' ? pathData : exploreData);
+
   // Update rawGraphData when query results come back
   useEffect(() => {
     const newData = mode === 'path' ? pathData : exploreData;
-    if (!newData) return;
+    console.log('[data-effect] fired', {
+      mode,
+      hasNewData: !!newData,
+      isSameRef: newData === lastProcessedData.current,
+      loadMode: loadModeRef.current,
+      newDataNodes: newData?.nodes?.length,
+      newDataLinks: newData?.links?.length,
+      currentRawNodes: useGraphStore.getState().rawGraphData?.nodes?.length,
+    });
+    if (!newData || newData === lastProcessedData.current) return;
+    lastProcessedData.current = newData;
 
     const graphPayload = { nodes: newData.nodes || [], links: newData.links || [] };
 
-    if (searchParams.loadMode === 'clean') {
+    if (loadModeRef.current === 'add') {
+      console.log('[data-effect] MERGE', graphPayload.nodes.length, 'nodes', graphPayload.links.length, 'links');
+      mergeRawGraphData(graphPayload);
+      console.log('[data-effect] after merge, rawGraphData:', useGraphStore.getState().rawGraphData?.nodes?.length, 'nodes');
+    } else {
+      console.log('[data-effect] CLEAN SET', graphPayload.nodes.length, 'nodes', graphPayload.links.length, 'links');
       setGraphData(null);
       setRawGraphData(graphPayload);
-    } else if (searchParams.loadMode === 'add') {
-      mergeRawGraphData(graphPayload);
     }
-  }, [exploreData, pathData, searchParams.loadMode, mode]);
+  }, [exploreData, pathData, mode]);
 
   // Merge path enrichment data when it arrives
   useEffect(() => {
@@ -212,11 +238,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   // Transform rawGraphData using current explorer's dataTransformer
   useEffect(() => {
+    console.log('[transform] rawGraphData changed:', rawGraphData?.nodes?.length, 'nodes', rawGraphData?.links?.length, 'links');
     if (!rawGraphData || !explorerPlugin) {
       return;
     }
 
     const transformedData = explorerPlugin.dataTransformer(rawGraphData);
+    console.log('[transform] graphData set:', transformedData?.nodes?.length, 'nodes', transformedData?.links?.length, 'links');
     setGraphData(transformedData);
   }, [rawGraphData, explorerPlugin, explorerType]);
 

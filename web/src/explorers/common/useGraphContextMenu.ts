@@ -66,7 +66,7 @@ export interface GraphContextMenuCallbacks {
  * Hook providing generic graph navigation actions
  */
 export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
-  const { setGraphData, setFocusedNodeId } = useGraphStore();
+  const { setGraphData, setRawGraphData, mergeRawGraphData, setFocusedNodeId } = useGraphStore();
 
   // Handler: Follow concept (replace graph)
   const handleFollowConcept = useCallback(async (nodeId: string) => {
@@ -76,16 +76,16 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         depth: 1, // Load immediate neighbors
       });
 
-      const transformedData = transformForD3(response.nodes, response.links);
-      setGraphData(transformedData);
+      setGraphData(null);
+      setRawGraphData({ nodes: response.nodes, links: response.links });
       setFocusedNodeId(nodeId);
     } catch (error: any) {
       console.error('Failed to follow concept:', error);
       alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
     }
-  }, [setGraphData, setFocusedNodeId]);
+  }, [setGraphData, setRawGraphData, setFocusedNodeId]);
 
-  // Handler: Add concept to graph (merge)
+  // Handler: Add adjacent nodes to graph (merge neighbors)
   const handleAddToGraph = useCallback(async (nodeId: string) => {
     try {
       const response = await apiClient.getSubgraph({
@@ -93,14 +93,13 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         depth: 1, // Load immediate neighbors
       });
 
-      const transformedData = transformForD3(response.nodes, response.links);
-      setGraphData(mergeGraphData(transformedData));
+      mergeRawGraphData({ nodes: response.nodes, links: response.links });
       setFocusedNodeId(nodeId);
     } catch (error: any) {
-      console.error('Failed to add concept to graph:', error);
-      alert(`Failed to add concept to graph: ${error.message || 'Unknown error'}`);
+      console.error('Failed to add adjacent nodes:', error);
+      alert(`Failed to add adjacent nodes: ${error.message || 'Unknown error'}`);
     }
-  }, [mergeGraphData, setGraphData, setFocusedNodeId]);
+  }, [mergeRawGraphData, setFocusedNodeId]);
 
   return { handleFollowConcept, handleAddToGraph };
 }
@@ -340,7 +339,7 @@ export function buildContextMenuItems(
     });
 
     items.push({
-      label: `Add "${nodeLabel}" to Graph`,
+      label: `Add Adjacent Nodes`,
       icon: Plus,
       onClick: () => {
         handleAddToGraph(nodeId);
