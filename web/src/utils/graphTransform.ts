@@ -40,14 +40,14 @@ export function transformForD3(
       return d3.interpolateTurbo(t);
     }));
 
-  // Transform nodes (with grounding strength)
+  // Transform nodes — spread all API fields, add visualization aliases
   const nodes: D3Node[] = apiNodes.map(node => ({
+    ...node,
     id: node.concept_id,
-    label: node.label,
     group: node.ontology,
+    grounding: node.grounding_strength,
     size: 10, // Will be updated with degree
     color: colorScale(node.ontology),
-    grounding: node.grounding_strength, // -1.0 to +1.0
   }));
 
   // Transform links - enrich with vocabulary data from store
@@ -69,12 +69,13 @@ export function transformForD3(
     const categoryConfidence = vocabStore.getConfidence(link.relationship_type) || 1.0;
 
     return {
+      ...link,
       source: link.from_id,
       target: link.to_id,
       type: link.relationship_type,
-      value: categoryConfidence, // Use category confidence for visualization
+      value: categoryConfidence,
       color: getCategoryColor(category),
-      category, // Store category for info boxes
+      category,
     };
   });
 

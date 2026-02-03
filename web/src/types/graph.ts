@@ -37,33 +37,27 @@ export interface SubgraphResponse {
 }
 
 // D3 Visualization Types
-export interface D3Node {
-  id: string;
-  label: string;
-  group: string; // ontology
-  size: number; // node size (degree-based)
-  color: string;
-  grounding?: number; // grounding strength (-1.0 to +1.0)
-  centrality?: number; // centrality measure for graph analysis
-  fx?: number; // fixed position X
-  fy?: number; // fixed position Y
-  fz?: number; // fixed position Z (for 3D)
-  x?: number; // computed position X
-  y?: number; // computed position Y
-  z?: number; // computed position Z (for 3D)
-  vx?: number; // velocity X
-  vy?: number; // velocity Y
-  vz?: number; // velocity Z (for 3D)
+// Extend API types so the full API payload flows through to the renderer.
+// D3 only needs `id` for node identity — everything else is carried along
+// so UI components can read from the store without re-fetching.
+export interface D3Node extends APIGraphNode {
+  id: string;           // alias for concept_id (D3 requires `id`)
+  group: string;        // alias for ontology
+  grounding?: number;   // alias for grounding_strength
+  size: number;         // calculated from degree
+  color: string;        // calculated from ontology
+  centrality?: number;
+  fx?: number; fy?: number; fz?: number;  // fixed positions
+  x?: number;  y?: number;  z?: number;   // computed positions
+  vx?: number; vy?: number; vz?: number;  // velocities
 }
 
-export interface D3Link {
+export interface D3Link extends APIGraphLink {
   source: string | D3Node;
   target: string | D3Node;
-  type: string;
-  value: number; // category confidence or weight
-  color: string;
-  confidence?: number; // edge confidence score
-  category?: string; // relationship category from vocabulary
+  type: string;    // alias for relationship_type
+  value: number;   // category confidence for rendering
+  color: string;   // category color
 }
 
 export interface GraphData {

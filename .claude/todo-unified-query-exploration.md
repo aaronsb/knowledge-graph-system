@@ -36,12 +36,13 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 
 ## Implementation Phases
 
-### Phase 1: Exploration Tracking & Cypher Generation
-- [ ] Add `ExplorationStep` type and `explorationSession` to graphStore
-- [ ] Add `addExplorationStep()`, `clearExploration()` store actions
-- [ ] Record steps at action points: handleLoadExplore, handleLoadPath, handleFollowConcept, handleAddToGraph
-- [ ] Create `cypherGenerator.ts` — convert steps to ordered Cypher statements with +/- operators
-- [ ] Persist `rawGraphData` + `explorationSession` to localStorage (survive refresh)
+### Phase 1: Exploration Tracking & Cypher Generation ✓
+- [x] Add `ExplorationStep` type and `explorationSession` to graphStore
+- [x] Add `addExplorationStep()`, `clearExploration()` store actions
+- [x] Record steps at action points: handleLoadExplore, handleLoadPath, handleFollowConcept, handleAddToGraph
+- [x] Create `cypherGenerator.ts` — convert steps to ordered Cypher statements with +/- operators
+- [x] Persist `rawGraphData` + `explorationSession` to localStorage (survive refresh)
+- [x] Add `subtractRawGraphData` and "Remove from Graph" context menu (op: '-')
 
 ### Phase 2: Saved Queries Folder
 - [ ] Unify sidebar folder icon across all explorer views (consistent with report explorer pattern)
@@ -54,7 +55,7 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [ ] "Export as Cypher" sends ordered statements to the Cypher editor
 - [ ] Cypher editor displays +/- prefixed statements
 - [ ] Execute from editor replays the statement sequence
-- [ ] Subtractive operator: context menu "Remove from Graph" option
+- [x] Subtractive operator: context menu "Remove from Graph" option
 
 ### Phase 4: Cross-Explorer Flow
 - [ ] Vocabulary explorer reads same saved queries from folder
