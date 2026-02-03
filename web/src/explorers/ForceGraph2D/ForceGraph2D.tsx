@@ -1524,7 +1524,7 @@ export const ForceGraph2D: React.FC<
   }, [graphData]);
 
   // Use common graph navigation hook
-  const { handleFollowConcept, handleAddToGraph } = useGraphNavigation(mergeGraphData);
+  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph } = useGraphNavigation(mergeGraphData);
 
   // Pin/Unpin node functionality
   const isPinned = useCallback((nodeId: string): boolean => {
@@ -1640,6 +1640,7 @@ export const ForceGraph2D: React.FC<
         {
           handleFollowConcept,
           handleAddToGraph,
+          handleRemoveFromGraph,
           setOriginNode: setOriginNodeId,
           setDestinationNode: setDestinationNodeId,
           travelToOrigin,

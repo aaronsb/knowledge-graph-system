@@ -18,6 +18,7 @@ import type { ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
   ArrowRight,
   Plus,
+  Minus,
   MapPin,
   MapPinOff,
   Pin,
@@ -41,6 +42,7 @@ export interface GraphContextMenuHandlers {
   // Generic handlers (provided by hook)
   handleFollowConcept: (nodeId: string) => Promise<void>;
   handleAddToGraph: (nodeId: string) => Promise<void>;
+  handleRemoveFromGraph: (nodeId: string) => void;
   setOriginNode: (nodeId: string | null) => void;
   setDestinationNode: (nodeId: string | null) => void;
   travelToOrigin?: () => void;  // Optional navigation to origin node
@@ -130,7 +132,30 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     }
   }, [mergeRawGraphData, setFocusedNodeId]);
 
-  return { handleFollowConcept, handleAddToGraph };
+  /** Remove node and its connections from the graph, recording a subtractive step */
+  const handleRemoveFromGraph = useCallback((nodeId: string) => {
+    const store = useGraphStore.getState();
+    const node = store.rawGraphData?.nodes?.find(
+      (n: any) => (n.concept_id || n.id) === nodeId
+    );
+    const nodeLabel = node?.label || nodeId;
+
+    store.addExplorationStep({
+      action: 'add-adjacent',
+      op: '-',
+      cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 1 }),
+      conceptId: nodeId,
+      conceptLabel: nodeLabel,
+      depth: 1,
+    });
+
+    store.subtractRawGraphData({
+      nodes: [{ id: nodeId, concept_id: nodeId }],
+      links: [],
+    });
+  }, []);
+
+  return { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph };
 }
 
 /**
@@ -152,6 +177,7 @@ export function buildContextMenuItems(
     applyDestinationMarker,
     handleFollowConcept,
     handleAddToGraph,
+    handleRemoveFromGraph,
     setOriginNode,
     setDestinationNode,
     travelToOrigin,
@@ -372,6 +398,15 @@ export function buildContextMenuItems(
       icon: Plus,
       onClick: () => {
         handleAddToGraph(nodeId);
+        onClose();
+      },
+    });
+
+    items.push({
+      label: `Remove from Graph`,
+      icon: Minus,
+      onClick: () => {
+        handleRemoveFromGraph(nodeId);
         onClose();
       },
     });
