@@ -27,6 +27,7 @@ import { getZIndexValue } from '../config/zIndex';
 import { apiClient } from '../api/client';
 import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
+import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 import type { VisualizationType } from '../types/explorer';
 
 interface ExplorerViewProps {
@@ -186,7 +187,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const pathNodeIds = useMemo(() => {
     if (mode !== 'path' || !pathData?.nodes) return [];
     return pathData.nodes
-      .map((n: any) => n.concept_id || n.id)
+      .map((n: RawGraphNode) => n.concept_id)
       .filter(Boolean);
   }, [mode, pathData]);
 
@@ -206,7 +207,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Track last-processed data to avoid re-processing on remount or unrelated rerenders.
   // Initialize to current query data so cached results from a previous mount are skipped —
   // this preserves rawGraphData in Zustand when toggling between 2D/3D/analysis views.
-  const lastProcessedData = React.useRef<any>(mode === 'path' ? pathData : exploreData);
+  const lastProcessedData = React.useRef<{ nodes?: unknown[]; links?: unknown[] } | undefined>(mode === 'path' ? pathData : exploreData);
 
   // Update rawGraphData when query results come back
   useEffect(() => {
@@ -280,7 +281,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     const store = useGraphStore.getState();
 
     const nodeLabel = store.rawGraphData?.nodes?.find(
-      (n: any) => (n.concept_id || n.id) === nodeId
+      (n: RawGraphNode) => n.concept_id === nodeId
     )?.label || nodeId;
 
     store.addExplorationStep({
@@ -308,8 +309,8 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
     const reportData: GraphReportData = {
       type: 'graph',
-      nodes: rawGraphData.nodes.map((n: any) => ({
-        id: n.concept_id || n.id,
+      nodes: rawGraphData.nodes.map((n: RawGraphNode) => ({
+        id: n.concept_id,
         label: n.label,
         description: n.description,
         ontology: n.ontology,
@@ -317,10 +318,10 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         diversity_score: n.diversity_score,
         evidence_count: n.evidence_count,
       })),
-      links: rawGraphData.links.map((l: any) => ({
-        source: l.from_id || l.source,
-        target: l.to_id || l.target,
-        type: l.relationship_type || l.type || 'RELATED',
+      links: rawGraphData.links.map((l: RawGraphLink) => ({
+        source: l.from_id,
+        target: l.to_id,
+        type: l.relationship_type || 'RELATED',
         grounding_strength: l.grounding_strength,
       })),
       searchParams: {
@@ -369,7 +370,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   }, [explorationSession]);
 
   // Load a saved query
-  const handleLoadQuery = useCallback(async (query: any) => {
+  const handleLoadQuery = useCallback(async (query: { definition_type: string; definition: Record<string, unknown> }) => {
     const definition = query.definition;
 
     // Exploration-type: replay +/- Cypher statements

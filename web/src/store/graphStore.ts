@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { VisualizationType } from '../types/explorer';
 import type { GraphData } from '../types/graph';
+import type { RawGraphData, RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 
 interface GraphFilters {
   relationshipTypes: string[];
@@ -147,13 +148,13 @@ interface GraphStore {
   setSelectedExplorer: (type: VisualizationType) => void;
 
   // Graph data (raw API format - cached to avoid re-fetching, persisted to localStorage)
-  rawGraphData: { nodes: any[]; links: any[] } | null;
+  rawGraphData: RawGraphData | null;
   /** Replace raw graph data entirely (clean load) */
-  setRawGraphData: (data: { nodes: any[]; links: any[] } | null) => void;
+  setRawGraphData: (data: RawGraphData | null) => void;
   /** Merge new data into existing graph, deduplicating by concept_id / link key */
-  mergeRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
+  mergeRawGraphData: (data: RawGraphData) => void;
   /** Remove matching nodes and their connected links from the graph (subtractive operator) */
-  subtractRawGraphData: (data: { nodes: any[]; links: any[] }) => void;
+  subtractRawGraphData: (data: RawGraphData) => void;
 
   // Graph data (transformed for current explorer)
   graphData: GraphData | null;
@@ -293,24 +294,16 @@ export const useGraphStore = create<GraphStore>()(
         return { rawGraphData: data };
       }
 
-      const existingNodeIds = new Set(current.nodes.map((n: any) => n.id || n.concept_id));
+      const existingNodeIds = new Set(current.nodes.map((n) => n.concept_id));
       const newNodes = (data.nodes || []).filter(
-        (n: any) => !existingNodeIds.has(n.id || n.concept_id)
+        (n) => !existingNodeIds.has(n.concept_id)
       );
 
       const existingLinkKeys = new Set(
-        current.links.map((l: any) => {
-          const from = l.from_id || l.source?.id || l.source;
-          const to = l.to_id || l.target?.id || l.target;
-          const type = l.relationship_type || l.type || '';
-          return `${from}-${type}-${to}`;
-        })
+        current.links.map((l) => `${l.from_id}-${l.relationship_type}-${l.to_id}`)
       );
-      const newLinks = (data.links || []).filter((l: any) => {
-        const from = l.from_id || l.source?.id || l.source;
-        const to = l.to_id || l.target?.id || l.target;
-        const type = l.relationship_type || l.type || '';
-        return !existingLinkKeys.has(`${from}-${type}-${to}`);
+      const newLinks = (data.links || []).filter((l) => {
+        return !existingLinkKeys.has(`${l.from_id}-${l.relationship_type}-${l.to_id}`);
       });
 
       return {
@@ -330,22 +323,20 @@ export const useGraphStore = create<GraphStore>()(
 
       // Build set of node IDs to remove
       const removeNodeIds = new Set(
-        (data.nodes || []).map((n: any) => n.id || n.concept_id)
+        (data.nodes || []).map((n) => n.concept_id)
       );
 
       // Remove matching nodes
       const remainingNodes = current.nodes.filter(
-        (n: any) => !removeNodeIds.has(n.id || n.concept_id)
+        (n) => !removeNodeIds.has(n.concept_id)
       );
 
       // Remove links that reference removed nodes
       const remainingNodeIds = new Set(
-        remainingNodes.map((n: any) => n.id || n.concept_id)
+        remainingNodes.map((n) => n.concept_id)
       );
-      const remainingLinks = current.links.filter((l: any) => {
-        const from = l.from_id || l.source?.id || l.source;
-        const to = l.to_id || l.target?.id || l.target;
-        return remainingNodeIds.has(from) && remainingNodeIds.has(to);
+      const remainingLinks = current.links.filter((l) => {
+        return remainingNodeIds.has(l.from_id) && remainingNodeIds.has(l.to_id);
       });
 
       return {

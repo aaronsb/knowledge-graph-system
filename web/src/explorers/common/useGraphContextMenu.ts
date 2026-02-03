@@ -13,6 +13,8 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { stepToCypher } from '../../utils/cypherGenerator';
+import { extractGraphFromPath } from '../../utils/cypherResultMapper';
+import type { RawGraphNode, RawGraphData, PathResult } from '../../utils/cypherResultMapper';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore, type TraversalReportData } from '../../store/reportStore';
 import type { ContextMenuItem } from '../../components/shared/ContextMenu';
@@ -74,7 +76,7 @@ export interface GraphContextMenuCallbacks {
 /**
  * Hook providing generic graph navigation actions
  */
-export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
+export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => void) {
   const { setGraphData, setRawGraphData, mergeRawGraphData, setFocusedNodeId } = useGraphStore();
   const navigate = useNavigate();
 
@@ -83,7 +85,7 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     try {
       const store = useGraphStore.getState();
       const nodeLabel = store.rawGraphData?.nodes?.find(
-        (n: any) => (n.concept_id || n.id) === nodeId
+        (n: RawGraphNode) => n.concept_id === nodeId
       )?.label || nodeId;
 
       const response = await apiClient.getSubgraph({
@@ -103,9 +105,9 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
       setGraphData(null);
       setRawGraphData({ nodes: response.nodes, links: response.links });
       setFocusedNodeId(nodeId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to follow concept:', error);
-      alert(`Failed to follow concept: ${error.message || 'Unknown error'}`);
+      alert(`Failed to follow concept: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [setGraphData, setRawGraphData, setFocusedNodeId]);
 
@@ -114,7 +116,7 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     try {
       const store = useGraphStore.getState();
       const nodeLabel = store.rawGraphData?.nodes?.find(
-        (n: any) => (n.concept_id || n.id) === nodeId
+        (n: RawGraphNode) => n.concept_id === nodeId
       )?.label || nodeId;
 
       const response = await apiClient.getSubgraph({
@@ -133,9 +135,9 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
 
       mergeRawGraphData({ nodes: response.nodes, links: response.links });
       setFocusedNodeId(nodeId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to add adjacent nodes:', error);
-      alert(`Failed to add adjacent nodes: ${error.message || 'Unknown error'}`);
+      alert(`Failed to add adjacent nodes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [mergeRawGraphData, setFocusedNodeId]);
 
@@ -143,7 +145,7 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
   const handleRemoveFromGraph = useCallback((nodeId: string) => {
     const store = useGraphStore.getState();
     const node = store.rawGraphData?.nodes?.find(
-      (n: any) => (n.concept_id || n.id) === nodeId
+      (n: RawGraphNode) => n.concept_id === nodeId
     );
     const nodeLabel = node?.label || nodeId;
 
@@ -173,10 +175,10 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
       const store = useGraphStore.getState();
       const rawNodes = store.rawGraphData?.nodes || [];
       const originLabel = rawNodes.find(
-        (n: any) => (n.concept_id || n.id) === originId
+        (n: RawGraphNode) => n.concept_id === originId
       )?.label || originId;
       const destLabel = rawNodes.find(
-        (n: any) => (n.concept_id || n.id) === destinationId
+        (n: RawGraphNode) => n.concept_id === destinationId
       )?.label || destinationId;
 
       const result = await apiClient.findConnection({
@@ -190,43 +192,7 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         return;
       }
 
-      const path = result.paths[0];
-
-      // Extract concept nodes (skip empty relationship placeholders)
-      const conceptNodes: any[] = [];
-      const conceptRelTypes: string[][] = [];
-      let pendingRels: string[] = [];
-
-      for (let i = 0; i < path.nodes.length; i++) {
-        const node = path.nodes[i];
-        if (node.id && node.id !== '') {
-          conceptNodes.push(node);
-          conceptRelTypes.push(pendingRels);
-          pendingRels = [];
-        }
-        if (i < path.relationships.length) {
-          pendingRels.push(path.relationships[i]);
-        }
-      }
-
-      const nodes = conceptNodes.map((node: any) => ({
-        concept_id: node.id,
-        label: node.label,
-        description: node.description,
-        ontology: 'default',
-        grounding_strength: node.grounding_strength,
-      }));
-
-      const links: any[] = [];
-      for (let i = 0; i < conceptNodes.length - 1; i++) {
-        const rels = conceptRelTypes[i + 1];
-        const relType = rels.find(r => r !== 'APPEARS' && r !== 'SCOPED_BY') || rels[0] || 'CONNECTED';
-        links.push({
-          from_id: conceptNodes[i].id,
-          to_id: conceptNodes[i + 1].id,
-          relationship_type: relType,
-        });
-      }
+      const { nodes, links, conceptNodeIds } = extractGraphFromPath(result.paths[0]);
 
       // Record exploration step
       store.addExplorationStep({
@@ -253,11 +219,10 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
       // Wait for graph to re-render with new nodes, then animate
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const nodeIds = conceptNodes.map((n: any) => n.id);
-          travelAlongPath(nodeIds, reverse);
+          travelAlongPath(conceptNodeIds, reverse);
         });
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to travel path:', error);
     }
   }, [mergeRawGraphData]);
@@ -267,8 +232,8 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
     const store = useGraphStore.getState();
     const rawNodes = store.rawGraphData?.nodes || [];
 
-    const originNode = rawNodes.find((n: any) => (n.concept_id || n.id) === originId);
-    const destNode = rawNodes.find((n: any) => (n.concept_id || n.id) === destinationId);
+    const originNode = rawNodes.find((n: RawGraphNode) => n.concept_id === originId);
+    const destNode = rawNodes.find((n: RawGraphNode) => n.concept_id === destinationId);
 
     if (!originNode || !destNode) return;
 
@@ -292,8 +257,8 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
       const store = useGraphStore.getState();
       const rawNodes = store.rawGraphData?.nodes || [];
 
-      const originNode = rawNodes.find((n: any) => (n.concept_id || n.id) === originId);
-      const destNode = rawNodes.find((n: any) => (n.concept_id || n.id) === destinationId);
+      const originNode = rawNodes.find((n: RawGraphNode) => n.concept_id === originId);
+      const destNode = rawNodes.find((n: RawGraphNode) => n.concept_id === destinationId);
 
       if (!originNode || !destNode) return;
 
@@ -309,10 +274,10 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
         destination: { concept_id: destinationId, label: destNode.label },
         maxHops: 5,
         pathCount: result.count || result.paths?.length || 0,
-        paths: (result.paths || []).map((p: any) => {
+        paths: (result.paths || []).map((p: PathResult) => {
           const nodes = (p.nodes || [])
-            .filter((n: any) => n.id && n.id !== '')
-            .map((n: any) => ({
+            .filter((n) => n.id && n.id !== '')
+            .map((n) => ({
               id: n.id,
               label: n.label,
               description: n.description,
@@ -337,7 +302,7 @@ export function useGraphNavigation(mergeGraphData: (newData: any) => any) {
       });
 
       navigate('/report');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create traversal report:', error);
     }
   }, [navigate]);

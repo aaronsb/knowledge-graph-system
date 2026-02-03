@@ -23,7 +23,8 @@ import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
 import { stepToCypher, parseCypherStatements } from '../../utils/cypherGenerator';
-import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
+import { mapCypherResultToRawGraph, extractGraphFromPath } from '../../utils/cypherResultMapper';
+import type { PathResult } from '../../utils/cypherResultMapper';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -55,18 +56,18 @@ export const SearchBar: React.FC = () => {
   // === UNIFIED SEARCH STATE ===
   // Primary concept (the starting point for any search)
   const [primaryQuery, setPrimaryQuery] = useState('');
-  const [selectedPrimary, setSelectedPrimary] = useState<any>(null);
+  const [selectedPrimary, setSelectedPrimary] = useState<{ concept_id: string; label: string } | null>(null);
   const [depth, setDepth] = useState(1);
 
   // Destination concept (optional — triggers path mode)
   const [destinationQuery, setDestinationQuery] = useState('');
-  const [selectedDestination, setSelectedDestination] = useState<any>(null);
+  const [selectedDestination, setSelectedDestination] = useState<{ concept_id: string; label: string } | null>(null);
   const [showDestination, setShowDestination] = useState(false);
   const [maxHops, setMaxHops] = useState(5);
 
   // Path search state
-  const [pathResults, setPathResults] = useState<any>(null);
-  const [selectedPath, setSelectedPath] = useState<any>(null);
+  const [pathResults, setPathResults] = useState<{ paths: PathResult[]; count: number; error?: string } | null>(null);
+  const [selectedPath, setSelectedPath] = useState<PathResult | null>(null);
   const [isLoadingPath, setIsLoadingPath] = useState(false);
 
   // Cypher editor state
@@ -128,12 +129,12 @@ LIMIT 50`);
 
   // === HANDLERS ===
 
-  const handleSelectPrimary = (concept: any) => {
+  const handleSelectPrimary = (concept: { concept_id: string; label: string }) => {
     setSelectedPrimary(concept);
     setPrimaryQuery(concept.label);
   };
 
-  const handleSelectDestination = (concept: any) => {
+  const handleSelectDestination = (concept: { concept_id: string; label: string }) => {
     setSelectedDestination(concept);
     setDestinationQuery(concept.label);
   };
@@ -190,16 +191,17 @@ LIMIT 50`);
         max_hops: maxHops,
       });
       setPathResults(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to find paths:', error);
 
+      const err = error as { code?: string; response?: { data?: { detail?: string } }; message?: string };
       let errorMessage = 'Failed to find paths';
-      if (error.code === 'ECONNABORTED') {
+      if (err.code === 'ECONNABORTED') {
         errorMessage = `Search timed out. Try reducing max hops.`;
-      } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
 
       setPathResults({ error: errorMessage, count: 0, paths: [] });
@@ -232,40 +234,7 @@ LIMIT 50`);
       maxHops,
     });
 
-    const conceptNodes: any[] = [];
-    const conceptRelTypes: string[][] = [];
-    let pendingRels: string[] = [];
-
-    for (let i = 0; i < selectedPath.nodes.length; i++) {
-      const node = selectedPath.nodes[i];
-      if (node.id && node.id !== '') {
-        conceptNodes.push(node);
-        conceptRelTypes.push(pendingRels);
-        pendingRels = [];
-      }
-      if (i < selectedPath.relationships.length) {
-        pendingRels.push(selectedPath.relationships[i]);
-      }
-    }
-
-    const nodes = conceptNodes.map((node: any) => ({
-      concept_id: node.id,
-      label: node.label,
-      description: node.description,
-      ontology: 'default',
-      grounding_strength: node.grounding_strength,
-    }));
-
-    const links: any[] = [];
-    for (let i = 0; i < conceptNodes.length - 1; i++) {
-      const rels = conceptRelTypes[i + 1];
-      const relType = rels.find(r => r !== 'APPEARS' && r !== 'SCOPED_BY') || rels[0] || 'CONNECTED';
-      links.push({
-        from_id: conceptNodes[i].id,
-        to_id: conceptNodes[i + 1].id,
-        relationship_type: relType,
-      });
-    }
+    const { nodes, links, conceptNodeIds } = extractGraphFromPath(selectedPath);
 
     if (loadMode === 'clean') {
       setGraphData(null);
@@ -275,13 +244,12 @@ LIMIT 50`);
     }
 
     // Enrich path nodes with neighborhood context
-    if (depth > 0 && conceptNodes.length <= 50) {
+    if (depth > 0 && conceptNodeIds.length <= 50) {
       const enrichDepth = Math.min(depth, 2);
-      const idsToEnrich = conceptNodes.map((n) => n.id).filter(Boolean);
-      if (idsToEnrich.length > 0) {
+      if (conceptNodeIds.length > 0) {
         try {
           const enrichments = await Promise.all(
-            idsToEnrich.map((id: string) =>
+            conceptNodeIds.map((id) =>
               apiClient.getSubgraph({ center_concept_id: id, depth: enrichDepth })
             )
           );
@@ -350,9 +318,10 @@ LIMIT 50`);
           store.subtractRawGraphData(mapped);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to execute Cypher query:', error);
-      setCypherError(error.response?.data?.detail || error.message || 'Query execution failed');
+      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      setCypherError(err.response?.data?.detail || err.message || 'Query execution failed');
     } finally {
       setIsExecutingCypher(false);
     }
