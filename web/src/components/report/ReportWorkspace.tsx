@@ -28,6 +28,7 @@ import {
   Eye,
   X,
   Route,
+  Pencil,
 } from 'lucide-react';
 import * as d3 from 'd3';
 import { IconRailPanel } from '../shared/IconRailPanel';
@@ -602,82 +603,134 @@ export const ReportWorkspace: React.FC = () => {
   };
 
   // Recalculate data for a graph report (fetch full concept details and relationship grounding)
+  // Batch-enrich concept nodes with fresh grounding/diversity from API
+  const enrichConceptNodes = useCallback(async (
+    nodeIds: string[],
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<Map<string, any>> => {
+    const detailsMap = new Map<string, any>();
+    const batchSize = 5;
+
+    for (let i = 0; i < nodeIds.length; i += batchSize) {
+      const batch = nodeIds.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((id) => apiClient.getConceptDetails(id))
+      );
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          detailsMap.set(batch[idx], result.value);
+        }
+      });
+      onProgress?.(Math.min(i + batchSize, nodeIds.length), nodeIds.length);
+    }
+    return detailsMap;
+  }, []);
+
   const handleRecalculate = useCallback(async () => {
-    if (!selectedReport || selectedReport.type !== 'graph') return;
+    if (!selectedReport) return;
 
     setIsRecalculating(true);
-    const graphData = selectedReport.data as GraphReportData;
-    const totalNodes = graphData.nodes.length;
-    setRecalculateProgress({ current: 0, total: totalNodes });
+    setRecalculateProgress(null);
 
     try {
-      // Fetch details for all concepts in parallel (batched)
-      const enrichedNodes: GraphReportData['nodes'] = [];
-      const conceptDetailsMap = new Map<string, any>(); // Store full details for relationship lookup
-      const batchSize = 5; // Limit concurrent requests
+      if (selectedReport.type === 'graph') {
+        const graphData = selectedReport.data as GraphReportData;
+        setRecalculateProgress({ current: 0, total: graphData.nodes.length });
 
-      for (let i = 0; i < graphData.nodes.length; i += batchSize) {
-        const batch = graphData.nodes.slice(i, i + batchSize);
-        const batchResults = await Promise.all(
-          batch.map(async (node) => {
-            try {
-              const details = await apiClient.getConceptDetails(node.id);
-              conceptDetailsMap.set(node.id, details); // Store for relationship lookup
-              return {
-                id: node.id,
-                label: details.label || node.label,
-                description: details.description,
-                ontology: details.ontology || node.ontology,
-                grounding_strength: details.grounding_strength,
-                diversity_score: details.diversity_score,
-                evidence_count: details.evidence?.length || 0,
-              };
-            } catch (err) {
-              // If fetch fails, keep original data
-              return node;
-            }
-          })
+        const detailsMap = await enrichConceptNodes(
+          graphData.nodes.map((n) => n.id),
+          (current, total) => setRecalculateProgress({ current, total }),
         );
-        enrichedNodes.push(...batchResults);
-        setRecalculateProgress({ current: enrichedNodes.length, total: totalNodes });
-      }
 
-      // Build enriched links with grounding and category from concept relationships
-      const enrichedLinks = graphData.links.map((link) => {
-        // Look up relationship details from source concept's relationships
-        const sourceDetails = conceptDetailsMap.get(link.source);
-        if (sourceDetails?.relationships) {
-          const rel = sourceDetails.relationships.find(
-            (r: any) => r.to_id === link.target && r.rel_type === link.type
-          );
-          if (rel) {
-            // Use avg_grounding if available, otherwise fall back to confidence
-            const grounding = rel.avg_grounding ?? rel.confidence;
-            return {
-              ...link,
-              grounding_strength: grounding,
-              category: rel.category,
-              epistemic_status: rel.epistemic_status,
-            };
+        const enrichedNodes = graphData.nodes.map((node) => {
+          const details = detailsMap.get(node.id);
+          if (!details) return node;
+          return {
+            id: node.id,
+            label: details.label || node.label,
+            description: details.description,
+            ontology: details.ontology || node.ontology,
+            grounding_strength: details.grounding_strength,
+            diversity_score: details.diversity_score,
+            evidence_count: details.evidence?.length || 0,
+          };
+        });
+
+        const enrichedLinks = graphData.links.map((link) => {
+          const sourceDetails = detailsMap.get(link.source);
+          if (sourceDetails?.relationships) {
+            const rel = sourceDetails.relationships.find(
+              (r: any) => r.to_id === link.target && r.rel_type === link.type
+            );
+            if (rel) {
+              return {
+                ...link,
+                grounding_strength: rel.avg_grounding ?? rel.confidence,
+                category: rel.category,
+                epistemic_status: rel.epistemic_status,
+              };
+            }
           }
-        }
-        return link;
-      });
+          return link;
+        });
 
-      // Update report with enriched data
-      const newData: GraphReportData = {
-        ...graphData,
-        nodes: enrichedNodes,
-        links: enrichedLinks,
-      };
-      updateReportData(selectedReport.id, newData);
+        updateReportData(selectedReport.id, { ...graphData, nodes: enrichedNodes, links: enrichedLinks });
+
+      } else if (selectedReport.type === 'traversal') {
+        const travData = selectedReport.data as TraversalReportData;
+        // Collect unique node IDs across all paths
+        const allNodeIds = new Set<string>();
+        travData.paths.forEach((p) => p.nodes.forEach((n) => allNodeIds.add(n.id)));
+        setRecalculateProgress({ current: 0, total: allNodeIds.size });
+
+        const detailsMap = await enrichConceptNodes(
+          Array.from(allNodeIds),
+          (current, total) => setRecalculateProgress({ current, total }),
+        );
+
+        const enrichedPaths = travData.paths.map((path) => ({
+          ...path,
+          nodes: path.nodes.map((node) => {
+            const details = detailsMap.get(node.id);
+            if (!details) return node;
+            return {
+              ...node,
+              grounding_strength: details.grounding_strength,
+              diversity_score: details.diversity_score,
+              description: details.description || node.description,
+            };
+          }),
+        }));
+
+        updateReportData(selectedReport.id, { ...travData, paths: enrichedPaths });
+
+      } else if (selectedReport.type === 'polarity') {
+        const polarityData = selectedReport.data as PolarityReportData;
+        setRecalculateProgress({ current: 0, total: polarityData.concepts.length });
+
+        const detailsMap = await enrichConceptNodes(
+          polarityData.concepts.map((c) => c.concept_id),
+          (current, total) => setRecalculateProgress({ current, total }),
+        );
+
+        const enrichedConcepts = polarityData.concepts.map((concept) => {
+          const details = detailsMap.get(concept.concept_id);
+          if (!details) return concept;
+          return {
+            ...concept,
+            grounding_strength: details.grounding_strength,
+          };
+        });
+
+        updateReportData(selectedReport.id, { ...polarityData, concepts: enrichedConcepts });
+      }
     } catch (err) {
       console.error('Failed to recalculate:', err);
     } finally {
       setIsRecalculating(false);
       setRecalculateProgress(null);
     }
-  }, [selectedReport, updateReportData]);
+  }, [selectedReport, updateReportData, enrichConceptNodes]);
 
   const handleDeleteReport = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -686,17 +739,11 @@ export const ReportWorkspace: React.FC = () => {
     }
   };
 
-  const handleStartRename = (report: Report, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingName(report.id);
-    setEditNameValue(report.name);
-  };
-
   const handleFinishRename = async (id: string) => {
+    setEditingName(null);
     if (editNameValue.trim()) {
       await renameReport(id, editNameValue.trim());
     }
-    setEditingName(null);
   };
 
   const getReportIcon = (report: Report) => {
@@ -748,29 +795,10 @@ export const ReportWorkspace: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    {editingName === report.id ? (
-                      <input
-                        type="text"
-                        value={editNameValue}
-                        onChange={(e) => setEditNameValue(e.target.value)}
-                        onBlur={() => handleFinishRename(report.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleFinishRename(report.id);
-                          if (e.key === 'Escape') setEditingName(null);
-                        }}
-                        className="w-full px-1 py-0.5 text-sm bg-background text-foreground rounded border"
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div
-                        className="font-medium text-sm truncate"
-                        onDoubleClick={(e) => handleStartRename(report, e)}
-                      >
-                        <Icon className="w-3 h-3 inline mr-1.5" />
-                        {report.name}
-                      </div>
-                    )}
+                    <div className="font-medium text-sm truncate">
+                      <Icon className="w-3 h-3 inline mr-1.5" />
+                      {report.name}
+                    </div>
                     <div className="flex items-center gap-1.5 text-xs opacity-70 mt-0.5">
                       <span>{nodeCount} items</span>
                       <span>·</span>
@@ -1429,13 +1457,57 @@ export const ReportWorkspace: React.FC = () => {
       <div className="flex-1 flex flex-col bg-background">
         {/* Toolbar */}
         <div className="h-14 border-b border-border bg-card px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <div className="font-semibold">
-                {selectedReport?.name || 'No Report Selected'}
-              </div>
-              {selectedReport?.lastCalculatedAt && (
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              {selectedReport && editingName === selectedReport.id ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={editNameValue}
+                    onChange={(e) => setEditNameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleFinishRename(selectedReport.id);
+                      if (e.key === 'Escape') setEditingName(null);
+                    }}
+                    className="font-semibold text-sm px-2 py-1 bg-background border border-border rounded flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    onClick={() => handleFinishRename(selectedReport.id)}
+                    className="p-1 rounded hover:bg-accent text-primary"
+                    title="Save"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setEditingName(null)}
+                    className="p-1 rounded hover:bg-accent text-muted-foreground"
+                    title="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold truncate">
+                    {selectedReport?.name || 'No Report Selected'}
+                  </span>
+                  {selectedReport && (
+                    <button
+                      onClick={() => {
+                        setEditingName(selectedReport.id);
+                        setEditNameValue(selectedReport.name);
+                      }}
+                      className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                      title="Rename report"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+              {selectedReport?.lastCalculatedAt && !editingName && (
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Computed: {formatDate(selectedReport.lastCalculatedAt)}
@@ -1448,7 +1520,7 @@ export const ReportWorkspace: React.FC = () => {
           {selectedReport && (
             <div className="flex items-center gap-2">
               {/* Recalculate button */}
-              {selectedReport.type === 'graph' && (
+              {selectedReport.type !== 'document' && (
                 <button
                   onClick={handleRecalculate}
                   disabled={isRecalculating}
