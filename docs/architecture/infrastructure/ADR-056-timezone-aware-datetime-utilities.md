@@ -363,7 +363,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 
 **After (ADR-056 pattern):**
 ```python
-from src.api.lib.datetime_utils import utcnow, is_expired
+from api.app.lib.datetime_utils import utcnow, is_expired
 
 def is_token_expired(expires_at: datetime) -> bool:
     return is_expired(expires_at)
@@ -372,7 +372,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 **Even better (semantic naming):**
 ```python
 # oauth_utils.py
-from src.api.lib.datetime_utils import (
+from api.app.lib.datetime_utils import (
     timedelta_from_now,
     is_expired as is_datetime_expired
 )
@@ -414,7 +414,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 # tests/test_datetime_utils.py
 import pytest
 from datetime import datetime, timezone, timedelta
-from src.api.lib.datetime_utils import (
+from api.app.lib.datetime_utils import (
     utcnow,
     ensure_utc,
     is_expired,
@@ -478,7 +478,7 @@ def test_timedelta_from_now():
    - ✅ `is_expired()` handles comparisons safely
 
 2. **Consistent Patterns:**
-   - ✅ Single import: `from src.api.lib.datetime_utils import utcnow`
+   - ✅ Single import: `from api.app.lib.datetime_utils import utcnow`
    - ✅ Semantic function names (`is_expired` vs manual comparison)
    - ✅ Clear intent in code
 

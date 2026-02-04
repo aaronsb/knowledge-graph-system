@@ -322,7 +322,7 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 
 **Usage:**
 ```python
-from src.api.lib.backup_integrity import check_backup_integrity
+from api.app.lib.backup_integrity import check_backup_integrity
 
 result = check_backup_integrity("/path/to/backup.json")
 if result.valid:

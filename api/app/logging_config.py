@@ -106,7 +106,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     uvicorn_main.propagate = False
 
     # Get a named logger for this module
-    logger = logging.getLogger("src.api.main")
+    logger = logging.getLogger("api.app.main")
 
     # Log startup message
     logger.info("=" * 80)

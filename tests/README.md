@@ -290,7 +290,7 @@ def test_<what_is_being_tested>():
 
 ```python
 import pytest
-from src.api.lib.mock_ai_provider import MockAIProvider
+from api.app.lib.mock_ai_provider import MockAIProvider
 
 @pytest.mark.unit
 def test_embedding_determinism(mock_provider):

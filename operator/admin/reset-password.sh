@@ -97,7 +97,7 @@ while true; do
     VALIDATION_OUTPUT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
-from src.api.lib.auth import validate_password_strength
+from api.app.lib.auth import validate_password_strength
 
 is_valid, error = validate_password_strength("$NEW_PASSWORD")
 if is_valid:
@@ -134,7 +134,7 @@ echo -e "${BLUE}→${NC} Hashing password..."
 HASH_OUTPUT=$(python3 << EOF 2>&1
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
-from src.api.lib.auth import get_password_hash
+from api.app.lib.auth import get_password_hash
 print(get_password_hash("$NEW_PASSWORD"))
 EOF
 )

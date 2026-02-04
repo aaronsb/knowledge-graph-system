@@ -342,10 +342,10 @@ GET /jobs?status=completed&limit=10
 # Development
 cd /home/aaron/Projects/ai/knowledge-graph-system
 source venv/bin/activate
-uvicorn src.api.main:app --reload --port 8000
+uvicorn api.app.main:app --reload --port 8000
 
 # Production (future)
-uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 ### Job Queue Lifecycle

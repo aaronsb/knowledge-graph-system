@@ -129,7 +129,7 @@ if [ "$NON_INTERACTIVE" = false ]; then
         VALIDATION_RESULT=$($PYTHON << EOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
-from src.api.lib.auth import validate_password_strength
+from api.app.lib.auth import validate_password_strength
 
 is_valid, error = validate_password_strength("$ADMIN_PASSWORD")
 if is_valid:
@@ -189,7 +189,7 @@ try:
 except Exception as e:
     print(f"VERSION_CHECK_ERROR:{e}")
 
-from src.api.lib.auth import get_password_hash
+from api.app.lib.auth import get_password_hash
 print(get_password_hash("$ADMIN_PASSWORD"))
 EOF
 )

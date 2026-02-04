@@ -52,7 +52,7 @@ fi
 
 python3 << EOF
 try:
-    from src.api.lib.garage_client import get_garage_client
+    from api.app.lib.garage_client import get_garage_client
 
     ontology = "${ONTOLOGY}" if "${ONTOLOGY}" else None
     client = get_garage_client()

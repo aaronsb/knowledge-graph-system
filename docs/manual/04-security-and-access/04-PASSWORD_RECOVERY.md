@@ -142,7 +142,7 @@ docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c \
 Uses the same bcrypt hashing as the API:
 
 ```python
-from src.api.lib.auth import get_password_hash
+from api.app.lib.auth import get_password_hash
 hashed = get_password_hash("SecurePass123!")
 # Returns: $2b$12$abc123...xyz789
 ```
@@ -158,7 +158,7 @@ hashed = get_password_hash("SecurePass123!")
 Enforces the same requirements as user registration:
 
 ```python
-from src.api.lib.auth import validate_password_strength
+from api.app.lib.auth import validate_password_strength
 is_valid, error = validate_password_strength("weak")
 # Returns: (False, "Password must be at least 8 characters long")
 ```
@@ -309,7 +309,7 @@ while IFS=',' read -r username password; do
   HASH=$(python3 -c "
 import sys
 sys.path.insert(0, '.')
-from src.api.lib.auth import get_password_hash
+from api.app.lib.auth import get_password_hash
 print(get_password_hash('$password'))
 ")
 
@@ -354,7 +354,7 @@ EMERGENCY_PASS=$(openssl rand -base64 32)
 HASH=$(python3 -c "
 import sys
 sys.path.insert(0, '.')
-from src.api.lib.auth import get_password_hash
+from api.app.lib.auth import get_password_hash
 print(get_password_hash('$EMERGENCY_PASS'))
 ")
 
