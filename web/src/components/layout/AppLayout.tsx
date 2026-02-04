@@ -129,49 +129,42 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <SidebarItem
               icon={Network}
               label="2D Force Graph"
-              description="Interactive 2D visualization"
               isActive={isActive('/explore/2d')}
               onClick={() => navigate('/explore/2d')}
             />
             <SidebarItem
               icon={Box}
               label="3D Force Graph"
-              description="Immersive 3D exploration"
               isActive={isActive('/explore/3d')}
               onClick={() => navigate('/explore/3d')}
             />
             <SidebarItem
               icon={FileText}
               label="Document Explorer"
-              description="Radial document→concept view"
               isActive={isActive('/explore/documents')}
               onClick={() => navigate('/explore/documents')}
             />
             <SidebarItem
               icon={GitBranch}
               label="Polarity Explorer"
-              description="Bidirectional semantic dimensions"
               isActive={isActive('/polarity')}
               onClick={() => navigate('/polarity')}
             />
             <SidebarItem
               icon={Layers}
               label="Embedding Landscape"
-              description="3D t-SNE projection of concepts"
               isActive={isActive('/embeddings')}
               onClick={() => navigate('/embeddings')}
             />
             <SidebarItem
               icon={Waypoints}
               label="Edge Explorer"
-              description="System-wide vocabulary analysis"
               isActive={isActive('/vocabulary') && !location.pathname.includes('/chord')}
               onClick={() => navigate('/vocabulary')}
             />
             <SidebarItem
               icon={PieChart}
               label="Vocabulary Analysis"
-              description="Query-specific vocabulary breakdown"
               isActive={isActive('/vocabulary/chord')}
               onClick={() => navigate('/vocabulary/chord')}
             />

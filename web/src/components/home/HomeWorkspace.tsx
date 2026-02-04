@@ -24,6 +24,7 @@ import { useAuthStore } from '../../store/authStore';
 import { LoginModal } from '../auth/LoginModal';
 import { apiClient } from '../../api/client';
 import { GraphAnimation } from './GraphAnimation';
+import { NavigationGraph } from './NavigationGraph';
 
 interface SystemStatus {
   database?: {
@@ -68,9 +69,9 @@ export const HomeWorkspace: React.FC = () => {
         }),
       ]);
 
-      // Parse stats response: { nodes: { Concept: X, Source: Y }, relationships: { total: N } }
-      const concepts = stats?.nodes?.Concept || 0;
-      const sources = stats?.nodes?.Source || 0;
+      // Parse stats response: { nodes: { concepts: X, sources: Y }, relationships: { total: N } }
+      const concepts = stats?.nodes?.concepts || 0;
+      const sources = stats?.nodes?.sources || 0;
       const relationships = stats?.relationships?.total || 0;
       const ontologyCount = ontologies?.count || 0;
 
@@ -207,7 +208,7 @@ export const HomeWorkspace: React.FC = () => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
           {/* System Status */}
           <section>
             <h2 className="text-lg font-semibold text-foreground dark:text-gray-200 mb-4">
@@ -301,6 +302,19 @@ export const HomeWorkspace: React.FC = () => {
                   </button>
                 );
               })}
+            </div>
+          </section>
+
+          {/* Workstation Guide - the platform explaining itself as a graph */}
+          <section>
+            <h2 className="text-lg font-semibold text-foreground dark:text-gray-200 mb-2">
+              Workstation Guide
+            </h2>
+            <p className="text-sm text-muted-foreground dark:text-gray-400 mb-4">
+              Click any node to navigate. This is how your knowledge graph works.
+            </p>
+            <div className="p-4 rounded-lg bg-card border border-border dark:border-gray-800">
+              <NavigationGraph />
             </div>
           </section>
         </div>
