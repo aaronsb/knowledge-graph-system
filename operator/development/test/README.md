@@ -62,7 +62,7 @@ Run all tests across entire stack (Python + TypeScript + React + linters).
 
 ### `api.sh` - Python API Server Tests
 
-Test the Python API server (`src/api/`).
+Test the Python API server (`api/app/`).
 
 ```bash
 ./scripts/development/test/api.sh              # All API tests with coverage

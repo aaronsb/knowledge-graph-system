@@ -22,7 +22,7 @@ jobs:
 
       - name: Run query safety linter
         run: |
-          python3 scripts/development/diagnostics/lint_queries.py src/api || true
+          python3 scripts/development/lint/lint_queries.py api/app || true
 
       - name: Report baseline technical debt
         run: |
@@ -47,7 +47,7 @@ jobs:
 
       - name: Check Python syntax
         run: |
-          python3 -m py_compile $(find src/api scripts -name "*.py")
+          python3 -m py_compile $(find api/app scripts -name "*.py")
 
   # TODO: Add full test infrastructure in future
   # pytest-unit:

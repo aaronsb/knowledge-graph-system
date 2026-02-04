@@ -217,7 +217,7 @@ POST /ingest
 ### Directory Structure
 
 ```
-src/api/
+api/app/
 ├── main.py               # FastAPI app
 ├── routes/
 │   ├── ingest.py        # POST /ingest, /ingest/text

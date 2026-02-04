@@ -2,7 +2,7 @@
 #
 # Run Python API server tests
 #
-# Tests the API server codebase (src/api) including unit tests and integration tests.
+# Tests the API server codebase (api/app) including unit tests and integration tests.
 # Unit tests are fast and don't require external dependencies.
 # Integration tests require database to be running.
 #
@@ -72,7 +72,7 @@ else
     echo -e "${BLUE}Running unit tests with coverage...${NC}"
     python -m pytest tests/ \
         "${EXCLUDE_PATTERNS[@]}" \
-        --cov=src/api \
+        --cov=api/app \
         --cov-report=term-missing \
         --cov-report=html:htmlcov/unit \
         -v --tb=short \

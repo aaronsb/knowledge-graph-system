@@ -206,7 +206,7 @@ def main():
     parser.add_argument(
         '--path',
         type=Path,
-        default=Path('src/api'),
+        default=Path('api/app'),
         help='Path to lint (default: src/api)'
     )
 

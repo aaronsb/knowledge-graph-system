@@ -24,13 +24,13 @@ We have a **mature OAuth 2.0 + RBAC authentication system** (ADR-054, ADR-028):
 - Scope support (global, instance, filter-scoped)
 
 **Key Files:**
-- `src/api/dependencies/auth.py` - FastAPI dependency injection for auth
-- `src/api/lib/auth.py` - Core auth logic
-- `src/api/middleware/auth.py` - Legacy placeholder (Phase 1)
-- `src/api/models/auth.py` - Auth data models
-- `src/api/routes/auth.py` - Auth endpoints
-- `src/api/routes/oauth.py` - OAuth endpoints
-- `src/api/routes/rbac.py` - RBAC management
+- `api/app/dependencies/auth.py` - FastAPI dependency injection for auth
+- `api/app/lib/auth.py` - Core auth logic
+- `api/app/middleware/auth.py` - Legacy placeholder (Phase 1)
+- `api/app/models/auth.py` - Auth data models
+- `api/app/routes/auth.py` - Auth endpoints
+- `api/app/routes/oauth.py` - OAuth endpoints
+- `api/app/routes/rbac.py` - RBAC management
 
 ## FastAPI Auth Testing Best Practices (2025)
 
@@ -72,7 +72,7 @@ def anonymous_client(app):
 **Pattern:**
 ```python
 from fastapi import Depends
-from src.api.dependencies.auth import get_current_user
+from api.app.dependencies.auth import get_current_user
 
 @pytest.fixture
 def override_auth(app):
@@ -148,10 +148,10 @@ pip install pytest-cov
 **Usage:**
 ```bash
 # Run tests with coverage report
-pytest --cov=src/api --cov-report=html
+pytest --cov=api/app --cov-report=html
 
 # Focus on specific modules
-pytest tests/test_auth.py --cov=src/api/dependencies/auth --cov-report=term-missing
+pytest tests/test_auth.py --cov=api/app/dependencies/auth --cov-report=term-missing
 ```
 
 ### 6. Integration vs Unit Testing

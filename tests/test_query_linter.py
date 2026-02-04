@@ -259,7 +259,7 @@ class TestQueryLinterIntegration:
         This test documents the current technical debt.
         """
         linter = QueryLinter(verbose=False)
-        findings = linter.lint_directory(Path("src/api"))
+        findings = linter.lint_directory(Path("api/app"))
 
         # As of Phase 1 implementation, we have 3 known unsafe queries
         # (documented in QUERY_SAFETY_BASELINE.md)
