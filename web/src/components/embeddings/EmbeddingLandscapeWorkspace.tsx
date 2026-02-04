@@ -8,10 +8,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, Wand2 } from 'lucide-react';
+import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
 import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp } from './types';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
 import { NodeInfoBox } from '../../explorers/common/NodeInfoBox';
+import { IconRailPanel } from '../shared/IconRailPanel';
 
 // Vibrant color palette for ontologies (high saturation for dark backgrounds)
 const ONTOLOGY_COLORS = [
@@ -250,7 +251,7 @@ export function EmbeddingLandscapeWorkspace() {
 
   // t-SNE perplexity control (5-100, default 30)
   const [perplexity, setPerplexity] = useState(30);
-  const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState('ontologies');
 
   // Color scheme for visualization
   const [colorScheme, setColorScheme] = useState<ColorScheme>('ontology');
@@ -488,262 +489,252 @@ export function EmbeddingLandscapeWorkspace() {
 
   return (
     <div className="flex h-full bg-background">
-      {/* Sidebar */}
-      <div className="w-72 flex-shrink-0 border-r border-border bg-card flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Layers className="w-5 h-5 text-primary" />
-              Embedding Landscape
-            </h2>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-1.5 rounded transition-colors ${
-                showSettings
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-              title="Projection settings"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            t-SNE projection of concept embeddings
-          </p>
-        </div>
-
-        {/* Settings panel (collapsible) */}
-        {showSettings && (
-          <div className="p-4 border-b border-border bg-muted/30">
-            <div className="space-y-3">
-              {/* Color scheme selector */}
-              <div>
-                <label className="text-xs font-medium text-foreground block mb-2">
-                  Color Scheme
-                </label>
-                <div className="space-y-1">
-                  {(Object.keys(COLOR_SCHEME_INFO) as ColorScheme[]).map(scheme => (
+      {/* Sidebar — IconRailPanel with Ontologies + Settings tabs */}
+      <IconRailPanel
+        tabs={[
+          {
+            id: 'ontologies',
+            icon: Layers,
+            label: 'Ontologies',
+            content: (
+              <div className="flex flex-col h-full">
+                <div className="flex-1 overflow-y-auto min-h-0 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-foreground">Ontologies</span>
                     <button
-                      key={scheme}
-                      onClick={() => setColorScheme(scheme)}
-                      className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
-                        colorScheme === scheme
-                          ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
+                      onClick={loadGlobalProjection}
+                      disabled={loading}
+                      className="p-1 text-muted-foreground hover:text-foreground rounded"
+                      title="Reload projection"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="mb-4 p-2 bg-destructive/20 border border-destructive rounded text-sm text-destructive">
+                      {error}
+                    </div>
+                  )}
+
+                  {ontologyList.length === 0 && !loading && !error && (
+                    <div className="text-sm text-muted-foreground text-center py-4">
+                      No projection data. Use the regenerate action to generate.
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {ontologyList.map(ont => (
+                      <div
+                        key={ont.ontology}
+                        className={`p-3 rounded-lg border ${
+                          ont.enabled
+                            ? 'border-border bg-muted'
+                            : 'border-border bg-card opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleOntology(ont.ontology)}
+                            className="p-1 hover:bg-accent rounded"
+                          >
+                            {ont.enabled ? (
+                              <Eye className="w-4 h-4 text-foreground" />
+                            ) : (
+                              <EyeOff className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </button>
+
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: ont.color }}
+                          />
+
+                          <span className="text-sm text-foreground truncate flex-1">
+                            {ont.ontology}
+                          </span>
+
+                          <span className="text-xs text-muted-foreground">
+                            {ont.count}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stats footer pinned at bottom */}
+                <div className="flex-shrink-0 p-4 border-t border-border bg-muted/50">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Ontologies</span>
+                      <p className="text-foreground font-medium">
+                        {stats.enabledOntologies}/{stats.totalOntologies}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Total Points</span>
+                      <p className="text-foreground font-medium">{stats.totalConcepts}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: 'settings',
+            icon: SlidersHorizontal,
+            label: 'Settings',
+            content: (
+              <div className="p-4">
+                <div className="space-y-3">
+                  {/* Color scheme selector */}
+                  <div>
+                    <label className="text-xs font-medium text-foreground block mb-2">
+                      Color Scheme
+                    </label>
+                    <div className="space-y-1">
+                      {(Object.keys(COLOR_SCHEME_INFO) as ColorScheme[]).map(scheme => (
+                        <button
+                          key={scheme}
+                          onClick={() => setColorScheme(scheme)}
+                          className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
+                            colorScheme === scheme
+                              ? 'bg-primary/20 text-primary border border-primary/30'
+                              : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
+                          }`}
+                        >
+                          <div className="font-medium">{COLOR_SCHEME_INFO[scheme].label}</div>
+                          <div className="text-muted-foreground mt-0.5">
+                            {COLOR_SCHEME_INFO[scheme].description}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-border my-2" />
+
+                  {/* Perplexity slider */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-medium text-foreground">
+                        Perplexity
+                      </label>
+                      <span className="text-xs text-primary font-mono">{perplexity}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      value={perplexity}
+                      onChange={(e) => setPerplexity(Number(e.target.value))}
+                      className="w-full h-1.5 bg-accent rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>Local (5)</span>
+                      <span>Global (100)</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground/70 mt-2">
+                      Lower values emphasize local clusters, higher values reveal global patterns.
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-border my-2" />
+
+                  {/* Distance metric selector */}
+                  <div>
+                    <label className="text-xs font-medium text-foreground block mb-2">
+                      Distance Metric
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setMetric('cosine')}
+                        className={`flex-1 px-3 py-2 rounded text-xs transition-colors ${
+                          metric === 'cosine'
+                            ? 'bg-primary/20 text-primary border border-primary/30'
+                            : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
+                        }`}
+                      >
+                        <div className="font-medium">Cosine</div>
+                        <div className="text-muted-foreground mt-0.5">Angular (semantic)</div>
+                      </button>
+                      <button
+                        onClick={() => setMetric('euclidean')}
+                        className={`flex-1 px-3 py-2 rounded text-xs transition-colors ${
+                          metric === 'euclidean'
+                            ? 'bg-primary/20 text-primary border border-primary/30'
+                            : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
+                        }`}
+                      >
+                        <div className="font-medium">Euclidean</div>
+                        <div className="text-muted-foreground mt-0.5">L2 distance</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Refresh grounding toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-medium text-foreground">
+                        Refresh Grounding
+                      </label>
+                      <p className="text-xs text-muted-foreground/70">
+                        Compute fresh values (slower)
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setRefreshGrounding(!refreshGrounding)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        refreshGrounding ? 'bg-primary' : 'bg-accent'
                       }`}
                     >
-                      <div className="font-medium">{COLOR_SCHEME_INFO[scheme].label}</div>
-                      <div className="text-muted-foreground mt-0.5">
-                        {COLOR_SCHEME_INFO[scheme].description}
-                      </div>
+                      <span
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          refreshGrounding ? 'translate-x-4.5' : 'translate-x-0.5'
+                        }`}
+                        style={{ transform: refreshGrounding ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
                     </button>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Divider */}
-              <div className="border-t border-border my-2" />
-
-              {/* Perplexity slider */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-foreground">
-                    Perplexity
-                  </label>
-                  <span className="text-xs text-primary font-mono">{perplexity}</span>
-                </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="100"
-                  value={perplexity}
-                  onChange={(e) => setPerplexity(Number(e.target.value))}
-                  className="w-full h-1.5 bg-accent rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Local (5)</span>
-                  <span>Global (100)</span>
-                </div>
-                <p className="text-xs text-muted-foreground/70 mt-2">
-                  Lower values emphasize local clusters, higher values reveal global patterns.
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-border my-2" />
-
-              {/* Distance metric selector */}
-              <div>
-                <label className="text-xs font-medium text-foreground block mb-2">
-                  Distance Metric
-                </label>
-                <div className="flex gap-2">
+                  {/* Apply button */}
                   <button
-                    onClick={() => setMetric('cosine')}
-                    className={`flex-1 px-3 py-2 rounded text-xs transition-colors ${
-                      metric === 'cosine'
-                        ? 'bg-primary/20 text-primary border border-primary/30'
-                        : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
-                    }`}
+                    onClick={regenerateGlobalProjection}
+                    disabled={loading}
+                    className="w-full py-2 px-3 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <div className="font-medium">Cosine</div>
-                    <div className="text-muted-foreground mt-0.5">Angular (semantic)</div>
-                  </button>
-                  <button
-                    onClick={() => setMetric('euclidean')}
-                    className={`flex-1 px-3 py-2 rounded text-xs transition-colors ${
-                      metric === 'euclidean'
-                        ? 'bg-primary/20 text-primary border border-primary/30'
-                        : 'bg-accent/50 text-foreground hover:bg-accent border border-transparent'
-                    }`}
-                  >
-                    <div className="font-medium">Euclidean</div>
-                    <div className="text-muted-foreground mt-0.5">L2 distance</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Refresh grounding toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-xs font-medium text-foreground">
-                    Refresh Grounding
-                  </label>
-                  <p className="text-xs text-muted-foreground/70">
-                    Compute fresh values (slower)
-                  </p>
-                </div>
-                <button
-                  onClick={() => setRefreshGrounding(!refreshGrounding)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    refreshGrounding ? 'bg-primary' : 'bg-accent'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                      refreshGrounding ? 'translate-x-4.5' : 'translate-x-0.5'
-                    }`}
-                    style={{ transform: refreshGrounding ? 'translateX(18px)' : 'translateX(2px)' }}
-                  />
-                </button>
-              </div>
-
-              {/* Apply button */}
-              <button
-                onClick={regenerateGlobalProjection}
-                disabled={loading}
-                className="w-full py-2 px-3 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Regenerating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    Regenerate
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Ontology list (for visibility filtering) */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-foreground">Ontologies</span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={regenerateGlobalProjection}
-                disabled={loading}
-                className="p-1 text-muted-foreground hover:text-primary rounded disabled:opacity-50"
-                title="Regenerate global projection"
-              >
-                <Wand2 className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
-              </button>
-              <button
-                onClick={loadGlobalProjection}
-                disabled={loading}
-                className="p-1 text-muted-foreground hover:text-foreground rounded"
-                title="Reload projection"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-2 bg-destructive/20 border border-destructive rounded text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          {ontologyList.length === 0 && !loading && !error && (
-            <div className="text-sm text-muted-foreground text-center py-4">
-              No projection data. Click the wand to generate.
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {ontologyList.map(ont => (
-              <div
-                key={ont.ontology}
-                className={`p-3 rounded-lg border ${
-                  ont.enabled
-                    ? 'border-border bg-muted'
-                    : 'border-border bg-card opacity-60'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleOntology(ont.ontology)}
-                    className="p-1 hover:bg-accent rounded"
-                  >
-                    {ont.enabled ? (
-                      <Eye className="w-4 h-4 text-foreground" />
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Regenerating...
+                      </>
                     ) : (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        Regenerate
+                      </>
                     )}
                   </button>
-
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: ont.color }}
-                  />
-
-                  <span className="text-sm text-foreground truncate flex-1">
-                    {ont.ontology}
-                  </span>
-
-                  <span className="text-xs text-muted-foreground">
-                    {ont.count}
-                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats footer */}
-        <div className="p-4 border-t border-border bg-muted/50">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-muted-foreground">Ontologies</span>
-              <p className="text-foreground font-medium">
-                {stats.enabledOntologies}/{stats.totalOntologies}
-              </p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Total Points</span>
-              <p className="text-foreground font-medium">{stats.totalConcepts}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+            ),
+          },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        defaultExpanded={true}
+        actions={[
+          {
+            id: 'regenerate',
+            icon: RefreshCw,
+            label: 'Regenerate Projection',
+            onClick: regenerateGlobalProjection,
+          },
+        ]}
+      />
 
       {/* Main visualization area */}
       <div className="flex-1 relative">
