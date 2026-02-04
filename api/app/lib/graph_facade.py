@@ -4,9 +4,21 @@ GraphFacade - Unified graph traversal with graph_accel acceleration.
 Single facade for all graph topology operations. Uses graph_accel
 (ADR-201 in-memory extension) when available, falls back to Cypher.
 
-Two-phase pattern:
+Two-phase query pattern:
   Phase 1: Topology query (graph_accel sub-ms, or Cypher fallback)
   Phase 2: Property hydration (batch SQL for returned IDs)
+
+Connection architecture:
+  Uses a module-level pinned connection (_accel_conn) for graph_accel SQL
+  calls. graph_accel stores its in-memory graph per Postgres backend, so
+  pinning ensures the graph loads once and stays resident across requests.
+  On each call, ensure_fresh() checks the generation counter (~0.01ms)
+  and only reloads after graph_accel_invalidate() bumps the generation.
+
+  Callers at the route layer add a third phase — grounding/confidence
+  hydration — which uses its own generation-aware caches (see
+  _hydrate_grounding_batch in routes/queries.py and the two-tier cache
+  in age_client/query.py:calculate_grounding_strength_semantic).
 
 Replaces:
   - QueryService.build_related_concepts_query() → neighborhood()

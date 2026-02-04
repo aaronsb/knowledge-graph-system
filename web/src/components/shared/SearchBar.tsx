@@ -129,16 +129,19 @@ LIMIT 50`);
 
   // === HANDLERS ===
 
+  /** Select a primary concept from search results and lock the search input */
   const handleSelectPrimary = (concept: { concept_id: string; label: string }) => {
     setSelectedPrimary(concept);
     setPrimaryQuery(concept.label);
   };
 
+  /** Select a destination concept from search results (path mode) */
   const handleSelectDestination = (concept: { concept_id: string; label: string }) => {
     setSelectedDestination(concept);
     setDestinationQuery(concept.label);
   };
 
+  /** Clear the destination concept and collapse path mode back to explore mode */
   const handleRemoveDestination = () => {
     setShowDestination(false);
     setSelectedDestination(null);
@@ -176,7 +179,7 @@ LIMIT 50`);
     });
   };
 
-  // Path search (manual)
+  /** Find paths between primary and destination concepts via the API */
   const handleFindPaths = async () => {
     if (!selectedPrimary || !selectedDestination) return;
 
@@ -327,7 +330,7 @@ LIMIT 50`);
     }
   };
 
-  // Block builder → Cypher editor
+  /** Receive compiled Cypher from the block builder and switch to the Cypher editor */
   const handleSendToEditor = (compiledCypher: string) => {
     if (cypherQuery.trim().length > 0) {
       const confirmed = window.confirm(

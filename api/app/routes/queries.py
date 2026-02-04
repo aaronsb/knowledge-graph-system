@@ -170,6 +170,13 @@ def _build_connection_paths(
 
     Deduplicates: computes grounding and evidence once per unique concept
     across all paths, then reuses cached results.
+
+    Grounding computation is generation-aware (ADR-201 Phase 5f):
+    _hydrate_grounding_batch() delegates to batch grounding and batch
+    confidence, both of which cache results against graph_accel.generation.
+    On a warm cache (no graph mutations since last call), hydration adds
+    near-zero overhead. On a cold cache, it runs 2 grounding + 3 confidence
+    batch queries for all concepts in one pass, not per-concept.
     """
     # Pre-compute grounding and evidence for unique concepts across all paths
     grounding_cache: Dict[str, Dict] = {}
