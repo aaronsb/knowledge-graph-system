@@ -28,6 +28,12 @@ __pycache__/
 dist/
 build/
 !scripts/development/build/
+# graph_accel pre-built extension artifacts (committed for Docker builds)
+!graph-accel/dist/
+!graph-accel/dist/pg17/
+!graph-accel/dist/pg17/*.so
+!graph-accel/dist/pg17/*.control
+!graph-accel/dist/pg17/*.sql
 .pytest_cache/
 .coverage
 htmlcov/
