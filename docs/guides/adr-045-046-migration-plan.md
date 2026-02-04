@@ -80,7 +80,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
 **Risk:** MEDIUM - New service that could affect ingestion pipeline
 
 1. **Implement EmbeddingWorker Service**
-   - File: `src/api/services/embedding_worker.py`
+   - File: `api/app/services/embedding_worker.py`
    - Dependencies: `age_client.py`, `ai_providers.py`
    - Key methods:
      - `initialize_builtin_embeddings()` - Cold start
@@ -101,7 +101,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
    ```
 
 2. **Integrate EmbeddingWorker into Startup**
-   - File: `src/api/main.py`
+   - File: `api/app/main.py`
    - Add startup event handler
    - Call `embedding_worker.initialize_builtin_embeddings()` if needed
 
@@ -121,14 +121,14 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
 **Depends on:** Phase 2 (requires embeddings for all vocabulary)
 
 1. **Implement Grounding Calculation in AGEClient**
-   - File: `src/api/lib/age_client.py`
+   - File: `api/app/lib/age_client.py`
    - New method: `calculate_grounding_strength_semantic(concept_id: str) -> float`
    - Uses embedding similarity to SUPPORTS/CONTRADICTS prototypes
 
    **Testing:**
    ```python
    # Unit test
-   from src.api.lib.age_client import AGEClient
+   from api.app.lib.age_client import AGEClient
 
    client = AGEClient()
    grounding = client.calculate_grounding_strength_semantic("concept-123")
@@ -136,12 +136,12 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
    ```
 
 2. **Update API Models**
-   - File: `src/api/models/queries.py`
+   - File: `api/app/models/queries.py`
    - Add `grounding_strength` field to `ConceptDetailsResponse`
    - Add `grounding_strength` field to `ConceptSearchResult` (optional)
 
 3. **Update API Routes**
-   - File: `src/api/routes/queries.py`
+   - File: `api/app/routes/queries.py`
    - Update `/query/concepts/{concept_id}` to include grounding
    - Add query parameter `include_grounding` for search endpoints
 
@@ -159,7 +159,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
 **Risk:** LOW - New admin functionality, doesn't affect ingestion
 
 1. **Implement Enhanced VocabularyScorer**
-   - File: `src/api/lib/vocabulary_manager.py`
+   - File: `api/app/lib/vocabulary_manager.py`
    - Update `EdgeTypeScore` dataclass with new metrics
    - Implement `calculate_grounding_contribution()`
    - Implement `detect_synonym_clusters()`
@@ -178,7 +178,7 @@ This migration plan implements the ADR-044/045/046 trio for embedding-based grou
    ```
 
 2. **Update Merge System**
-   - File: `src/api/lib/age_client.py`
+   - File: `api/app/lib/age_client.py`
    - Update `merge_edge_types()` to handle embeddings
    - Ensure target type has embedding before merge
    - Store deprecated embedding for rollback

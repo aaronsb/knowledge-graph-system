@@ -99,4 +99,4 @@ echo -e "${BLUE}Root info:${NC}    http://localhost:$PORT/"
 
 echo -e "\n${YELLOW}Press Ctrl+C to stop${NC}\n"
 
-python -m uvicorn src.api.main:app --host 0.0.0.0 --port $PORT $RELOAD
+python -m uvicorn api.app.main:app --host 0.0.0.0 --port $PORT $RELOAD

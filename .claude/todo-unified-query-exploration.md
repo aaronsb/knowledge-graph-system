@@ -51,10 +51,10 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [x] Load saved query → replays statements in order with +/- semantics via executeCypherQuery
 - [x] Delete saved query (already worked via queryDefinitionStore)
 
-### Phase 3: Editor Integration
-- [ ] "Export as Cypher" sends ordered statements to the Cypher editor
-- [ ] Cypher editor displays +/- prefixed statements
-- [ ] Execute from editor replays the statement sequence
+### Phase 3: Editor Integration ✓
+- [x] "Export as Cypher" sends ordered statements to the Cypher editor
+- [x] Cypher editor displays +/- prefixed statements
+- [x] Execute from editor replays the statement sequence
 - [x] Subtractive operator: context menu "Remove from Graph" option
 
 ### Phase 4: Cross-Explorer Flow
@@ -64,11 +64,11 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [ ] Verify all explorers share the same folder state
 
 ### Phase 5: Documentation & Docstrings
-- [ ] Add JSDoc docstrings to new exploration tracking code
-- [ ] Add JSDoc docstrings to graphStore (actions, types)
-- [ ] Add JSDoc docstrings to cypherGenerator
-- [ ] Add JSDoc docstrings to SearchBar handlers
-- [ ] Add JSDoc docstrings to useGraphContextMenu handlers
+- [x] Add JSDoc docstrings to new exploration tracking code
+- [x] Add JSDoc docstrings to graphStore (actions, types)
+- [x] Add JSDoc docstrings to cypherGenerator
+- [x] Add JSDoc docstrings to SearchBar handlers
+- [x] Add JSDoc docstrings to useGraphContextMenu handlers
 - [ ] Document the unified query exploration workflow in user manual
 - [ ] Document the +/- operator algebra concept
 

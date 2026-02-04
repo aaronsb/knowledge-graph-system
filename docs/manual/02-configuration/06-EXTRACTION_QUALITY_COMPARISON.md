@@ -52,8 +52,8 @@
 **Controlled Variables:**
 - Same source document
 - Same chunking (semantic, ~1000 words per chunk)
-- Same extraction pipeline (`src/api/lib/ingestion.py`)
-- Same relationship normalization (`src/api/lib/relationship_mapper.py`)
+- Same extraction pipeline (`api/app/lib/ingestion.py`)
+- Same relationship normalization (`api/app/lib/relationship_mapper.py`)
 - Same embedding model (OpenAI text-embedding-3-small for all)
 
 **Measured Metrics:**

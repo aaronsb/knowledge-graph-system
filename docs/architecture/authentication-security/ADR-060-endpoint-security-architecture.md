@@ -80,7 +80,7 @@ ADMIN     # Admin role required
 ### 2. Type-Annotated Dependencies
 
 ```python
-# From src/api/dependencies/auth.py (already exists, needs refinement)
+# From api/app/dependencies/auth.py (already exists, needs refinement)
 
 # Type alias for authenticated user
 CurrentUser = Annotated[dict, Depends(get_current_user)]
@@ -130,7 +130,7 @@ async def reset_database(
 While the FastAPI template doesn't mandate a central config, we add one for auditability:
 
 ```python
-# src/api/config/endpoint_security.py
+# api/app/config/endpoint_security.py
 """
 Central documentation of endpoint security requirements.
 Actual enforcement happens via per-endpoint dependencies.
@@ -164,7 +164,7 @@ DEFAULT_SECURITY = "user"  # Secure by default
 ### 5. Startup Validation
 
 ```python
-# src/api/main.py
+# api/app/main.py
 
 @app.on_event("startup")
 async def validate_endpoint_security():
@@ -172,7 +172,7 @@ async def validate_endpoint_security():
     Validate all endpoints have appropriate dependencies.
     Logs warnings for endpoints missing auth.
     """
-    from src.api.config.endpoint_security import validate_security
+    from api.app.config.endpoint_security import validate_security
 
     results = validate_security(app)
 
@@ -193,13 +193,13 @@ async def validate_endpoint_security():
 ### Route Structure
 
 ```python
-# src/api/routes/admin.py
+# api/app/routes/admin.py
 """
 Admin routes - all require admin role.
 Pattern: CurrentUser + require_role("admin") on each endpoint.
 """
 from fastapi import APIRouter, Depends
-from src.api.dependencies.auth import CurrentUser, require_role
+from api.app.dependencies.auth import CurrentUser, require_role
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -221,13 +221,13 @@ async def reset_database(
 ```
 
 ```python
-# src/api/routes/users.py
+# api/app/routes/users.py
 """
 User routes - authenticated users can access their own data.
 Pattern: CurrentUser parameter with ownership checks in handler.
 """
 from fastapi import APIRouter, HTTPException
-from src.api.dependencies.auth import CurrentUser, require_role
+from api.app.dependencies.auth import CurrentUser, require_role
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -257,7 +257,7 @@ async def delete_user(
 ```
 
 ```python
-# src/api/routes/public.py
+# api/app/routes/public.py
 """
 Public routes - no authentication required.
 Pattern: No dependencies.
@@ -275,7 +275,7 @@ async def health():
 ### Dependency Definitions
 
 ```python
-# src/api/dependencies/auth.py (refine existing)
+# api/app/dependencies/auth.py (refine existing)
 """
 Authentication dependencies following FastAPI Full-Stack Template pattern.
 """
@@ -284,9 +284,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from src.api.core.config import settings
-from src.api.models.user import User
-from src.api.lib.db import get_db
+from api.app.core.config import settings
+from api.app.models.user import User
+from api.app.lib.db import get_db
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(
@@ -418,7 +418,7 @@ Add authentication to remaining endpoints:
 # tests/conftest.py
 import pytest
 from fastapi.testclient import TestClient
-from src.api.dependencies.auth import get_current_user
+from api.app.dependencies.auth import get_current_user
 
 @pytest.fixture
 def admin_user():

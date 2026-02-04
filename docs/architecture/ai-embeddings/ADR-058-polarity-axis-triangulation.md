@@ -209,7 +209,7 @@ Where does MOUNTED_ON fall on the support↔contradict axis?
 
 ### Implementation
 
-Location: `src/api/lib/age_client.py:1923-2156`
+Location: `api/app/lib/age_client.py:1923-2156`
 
 ```python
 def calculate_grounding_strength_semantic(self, concept_id: str) -> float:
@@ -572,5 +572,5 @@ See `media/ADR-058/README_VISUALIZATIONS.md` for complete documentation of the i
 
 **Implementation Status:** ✅ Complete
 **Branch:** `feature/polarity-axis-grounding`
-**Files Modified:** `src/api/lib/age_client.py` (lines 1923-2156)
+**Files Modified:** `api/app/lib/age_client.py` (lines 1923-2156)
 **Test Results:** Verified on 437 concepts from 4x4-Video ontology

@@ -125,7 +125,7 @@ Implement **three-phase architectural improvement**:
 **Add `GraphQueryFacade` to enforce namespace isolation.**
 
 ```python
-# src/api/lib/query_facade.py
+# api/app/lib/query_facade.py
 
 class GraphQueryFacade:
     """
@@ -293,7 +293,7 @@ if __name__ == "__main__":
 ```yaml
 # .github/workflows/lint.yml
 - name: Check query safety
-  run: python scripts/lint_queries.py src/api/**/*.py
+  run: python scripts/lint_queries.py api/app/**/*.py
 ```
 
 ### Phase 3: Vocabulary as Graph Nodes (Migration)
@@ -394,7 +394,7 @@ CREATE (v)-[:IN_CATEGORY]->(computed_category)
 ### Phase 1: Foundation (Week 1)
 
 **1.1 Add Query Facade**
-- [x] Create `src/api/lib/query_facade.py`
+- [x] Create `api/app/lib/query_facade.py`
 - [x] Implement core methods (match_concepts, match_vocab_types)
 - [x] Add audit logging
 - [x] Add to age_client as optional interface

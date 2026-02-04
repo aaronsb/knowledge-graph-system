@@ -582,7 +582,7 @@ viz-app/
 ### REST API Endpoints (New)
 
 ```python
-# src/api/routes/visualization.py
+# api/app/routes/visualization.py
 
 @router.get("/viz/graph/subgraph")
 async def get_subgraph(
@@ -648,7 +648,7 @@ async def get_adjacency_matrix(
 ### WebSocket for Real-Time Updates
 
 ```python
-# src/api/websocket/graph_events.py
+# api/app/websocket/graph_events.py
 
 @router.websocket("/ws/graph")
 async def graph_events_socket(websocket: WebSocket):
@@ -996,7 +996,7 @@ const useGraphData = (centerId: string, depth: number) => {
 ### CORS Configuration
 
 ```python
-# src/api/main.py
+# api/app/main.py
 
 from fastapi.middleware.cors import CORSMiddleware
 

@@ -26,7 +26,7 @@ All clients use OAuth 2.0 flows - NO JWT sessions, NO multiple auth systems.
 
 Future: External OAuth providers (Google, Microsoft, GitHub) for viz-app social login.
 
-For all OAuth endpoints, see src/api/routes/oauth.py
+For all OAuth endpoints, see api/app/routes/oauth.py
 """
 
 import os
@@ -154,7 +154,7 @@ async def register_user(user: UserCreate):
 #
 # Future: External OAuth providers (Google, Microsoft, GitHub) for viz-app social login.
 #
-# See src/api/routes/oauth.py for all OAuth endpoints.
+# See api/app/routes/oauth.py for all OAuth endpoints.
 
 
 # =============================================================================

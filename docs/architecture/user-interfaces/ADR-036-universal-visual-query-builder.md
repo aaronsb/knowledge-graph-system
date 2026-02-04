@@ -498,8 +498,8 @@ POST /api/query/cypher
 
 **Files:**
 - `viz-app/src/components/shared/SearchBar.tsx` (enhance)
-- `viz-app/src/api/client.ts` (add smartSearch method)
-- `src/api/routes/queries.py` (add smart_search endpoint)
+- `viz-app/api/app/client.ts` (add smartSearch method)
+- `api/app/routes/queries.py` (add smart_search endpoint)
 
 **Time Estimate:** 1-2 days
 
@@ -535,7 +535,7 @@ POST /api/query/cypher
 - `viz-app/src/components/query/CypherEditor.tsx` (new)
 - `viz-app/src/components/query/QueryBuilder.tsx` (new)
 - `viz-app/src/lib/monaco-opencypher.ts` (new language definition)
-- `src/api/routes/queries.py` (add cypher_query endpoint)
+- `api/app/routes/queries.py` (add cypher_query endpoint)
 
 **Dependencies:**
 ```json
@@ -569,7 +569,7 @@ POST /api/query/cypher
 - `viz-app/src/components/query/VisualBlockBuilder.tsx` (new)
 - `viz-app/src/components/query/blocks/` (new directory)
 - `viz-app/src/lib/block-compiler.ts` (AST → openCypher)
-- `src/api/routes/queries.py` (add visual_query endpoint)
+- `api/app/routes/queries.py` (add visual_query endpoint)
 
 **Dependencies:**
 ```json

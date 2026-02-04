@@ -52,7 +52,7 @@ See [ADR-044](ai-embeddings/ADR-044-probabilistic-truth-convergence.md) for prob
 
 ## Core Components
 
-### 1. API Server Layer (`src/api/`)
+### 1. API Server Layer (`api/app/`)
 
 **FastAPI REST Server** (Phase 1):
 - **Routes**: Ingestion (`POST /ingest`), job management (`GET/POST /jobs/*`)
@@ -81,7 +81,7 @@ class JobQueue(ABC):
 
 See [ADR-012](infrastructure/ADR-012-api-server-architecture.md) for detailed design.
 
-### 2. AI Provider Layer (`src/api/lib/ai_providers.py`)
+### 2. AI Provider Layer (`api/app/lib/ai_providers.py`)
 
 Modular abstraction for LLM providers:
 
@@ -93,7 +93,7 @@ Modular abstraction for LLM providers:
 - Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
 - Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)
 
-### 3. Ingestion Library (`src/api/lib/`)
+### 3. Ingestion Library (`api/app/lib/`)
 
 **Components:**
 - `parser.py` - Document parsing (text, PDF, DOCX)

@@ -428,7 +428,7 @@ kg_api.jobs:
 
 **What's in Python Code (Logic):**
 ```
-Launchers (src/api/launchers/):
+Launchers (api/app/launchers/):
   - Condition checking logic
   - Job data preparation
   - NOT API endpoints (internal only)
@@ -448,7 +448,7 @@ Example:
 **Adding a New Scheduled Task:**
 ```python
 # 1. Write launcher class (if custom logic needed)
-# src/api/launchers/my_task.py
+# api/app/launchers/my_task.py
 class MyTaskLauncher(JobLauncher):
     def check_conditions(self) -> bool:
         # Your condition logic here
@@ -850,7 +850,7 @@ ON CONFLICT (name) DO NOTHING;
 #### 2. Simple Scheduler Loop
 
 ```python
-# src/api/services/scheduler.py
+# api/app/services/scheduler.py
 
 import asyncio
 import logging
@@ -913,7 +913,7 @@ class JobScheduler:
         Uses PostgreSQL advisory lock to ensure only one worker checks
         schedules in multi-worker deployments (e.g., Gunicorn -w 4).
         """
-        from src.api.lib.age_client import AGEClient
+        from api.app.lib.age_client import AGEClient
 
         client = AGEClient()
         conn = client.pool.getconn()
@@ -1075,7 +1075,7 @@ class JobScheduler:
 #### 3. Job Launcher Base Class
 
 ```python
-# src/api/launchers/base.py
+# api/app/launchers/base.py
 
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
@@ -1182,10 +1182,10 @@ class JobLauncher(ABC):
 
 **Category Refresh Launcher:**
 ```python
-# src/api/launchers/category_refresh.py
+# api/app/launchers/category_refresh.py
 
 from .base import JobLauncher
-from src.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 from typing import Dict
 
 class CategoryRefreshLauncher(JobLauncher):
@@ -1222,10 +1222,10 @@ class CategoryRefreshLauncher(JobLauncher):
 
 **Vocabulary Consolidation Launcher:**
 ```python
-# src/api/launchers/vocab_consolidation.py
+# api/app/launchers/vocab_consolidation.py
 
 from .base import JobLauncher
-from src.api.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient
 from typing import Dict
 import logging
 
@@ -1289,11 +1289,11 @@ class VocabConsolidationLauncher(JobLauncher):
 #### 5. FastAPI Integration
 
 ```python
-# In src/api/main.py
+# In api/app/main.py
 
-from src.api.services.scheduler import JobScheduler
-from src.api.launchers.category_refresh import CategoryRefreshLauncher
-from src.api.launchers.vocab_consolidation import VocabConsolidationLauncher
+from api.app.services.scheduler import JobScheduler
+from api.app.launchers.category_refresh import CategoryRefreshLauncher
+from api.app.launchers.vocab_consolidation import VocabConsolidationLauncher
 
 # At startup
 @app.on_event("startup")
@@ -1334,7 +1334,7 @@ async def shutdown_event():
 
 **Problem:** In production, FastAPI runs with multiple Gunicorn workers:
 ```bash
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker api.app.main:app
 ```
 
 Each worker process runs the `startup_event`, creating **N separate scheduler loops**. Without coordination, all N schedulers will check schedules simultaneously, causing **duplicate job creation**.
@@ -1384,7 +1384,7 @@ cur.execute("SELECT pg_advisory_unlock(1050)")
 **Testing multi-worker safety:**
 ```bash
 # Start with 4 workers
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker api.app.main:app
 
 # Watch logs - you should see only ONE worker per minute logging:
 # "Acquired scheduler lock, proceeding with schedule check"
@@ -1621,7 +1621,7 @@ kg jobs list --limit 5
 ### Multi-Worker Testing (Critical)
 ```bash
 # 1. Start API with 4 workers
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.api.main:app
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker api.app.main:app
 
 # 2. Watch logs for lock acquisition pattern (should see only ONE worker per minute)
 tail -f logs/api_*.log | grep -i "scheduler lock"

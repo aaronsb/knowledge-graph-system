@@ -18,7 +18,7 @@ export class ApiServerHelper {
   constructor(baseUrl: string = 'http://localhost:8000') {
     this.baseUrl = baseUrl;
     // Path to API server relative to client/tests
-    this.serverPath = path.resolve(__dirname, '../../../src/api/main.py');
+    this.serverPath = path.resolve(__dirname, '../../../api/app/main.py');
   }
 
   /**
@@ -34,7 +34,7 @@ export class ApiServerHelper {
       'python3',
       [
         '-m', 'uvicorn',
-        'src.api.main:app',
+        'api.app.main:app',
         '--host', '0.0.0.0',
         '--port', '8000',
         '--log-level', 'warning'

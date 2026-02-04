@@ -32,7 +32,7 @@ TypeError: can't compare offset-naive and offset-aware datetimes
 ### Recent Incidents
 
 1. **OAuth Token Exchange (ADR-055 Implementation):**
-   - `src/api/lib/oauth_utils.py:253` - `is_token_expired()` function
+   - `api/app/lib/oauth_utils.py:253` - `is_token_expired()` function
    - Used `datetime.utcnow()` (naive) to compare with PostgreSQL timestamps (aware)
    - Result: 500 errors on `POST /auth/oauth/token`
    - Fixed: Replaced all `datetime.utcnow()` → `datetime.now(timezone.utc)`
@@ -94,7 +94,7 @@ datetime.now(timezone.utc) > row['expires_at']
 
 ### 1. Create Central Datetime Utility Module
 
-**New file: `src/api/lib/datetime_utils.py`**
+**New file: `api/app/lib/datetime_utils.py`**
 
 ```python
 """
@@ -298,7 +298,7 @@ def lint_file(file_path: Path) -> list[tuple[int, str, str]]:
 
 
 def main():
-    src_path = Path('src/api')
+    src_path = Path('api/app')
     errors_found = False
 
     for py_file in src_path.rglob('*.py'):
@@ -363,7 +363,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 
 **After (ADR-056 pattern):**
 ```python
-from src.api.lib.datetime_utils import utcnow, is_expired
+from api.app.lib.datetime_utils import utcnow, is_expired
 
 def is_token_expired(expires_at: datetime) -> bool:
     return is_expired(expires_at)
@@ -372,7 +372,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 **Even better (semantic naming):**
 ```python
 # oauth_utils.py
-from src.api.lib.datetime_utils import (
+from api.app.lib.datetime_utils import (
     timedelta_from_now,
     is_expired as is_datetime_expired
 )
@@ -402,11 +402,11 @@ def is_token_expired(expires_at: datetime) -> bool:
 ### File Changes
 
 **New files:**
-- `src/api/lib/datetime_utils.py` - Central datetime utilities
+- `api/app/lib/datetime_utils.py` - Central datetime utilities
 - `scripts/lint_datetimes.py` - Linter for unsafe patterns
 
 **Modified files:**
-- `src/api/lib/oauth_utils.py` - Use datetime_utils instead of direct datetime calls
+- `api/app/lib/oauth_utils.py` - Use datetime_utils instead of direct datetime calls
 
 ### Testing
 
@@ -414,7 +414,7 @@ def is_token_expired(expires_at: datetime) -> bool:
 # tests/test_datetime_utils.py
 import pytest
 from datetime import datetime, timezone, timedelta
-from src.api.lib.datetime_utils import (
+from api.app.lib.datetime_utils import (
     utcnow,
     ensure_utc,
     is_expired,
@@ -478,7 +478,7 @@ def test_timedelta_from_now():
    - ✅ `is_expired()` handles comparisons safely
 
 2. **Consistent Patterns:**
-   - ✅ Single import: `from src.api.lib.datetime_utils import utcnow`
+   - ✅ Single import: `from api.app.lib.datetime_utils import utcnow`
    - ✅ Semantic function names (`is_expired` vs manual comparison)
    - ✅ Clear intent in code
 
@@ -576,19 +576,19 @@ plugins = mypy_naive_datetime_plugin
 
 ### Immediate (ADR-056 Implementation) ✅ COMPLETED
 
-- [x] Create `src/api/lib/datetime_utils.py`
+- [x] Create `api/app/lib/datetime_utils.py`
 - [x] Create `scripts/lint_datetimes.py`
 - [x] Add comprehensive tests for datetime_utils (32 tests, 100% pass)
 - [x] Update critical security modules:
-  - [x] `src/api/lib/auth.py` (JWT token expiration) - 2 violations fixed
-  - [x] `src/api/routes/oauth.py` (OAuth token rotation) - 1 violation fixed
+  - [x] `api/app/lib/auth.py` (JWT token expiration) - 2 violations fixed
+  - [x] `api/app/routes/oauth.py` (OAuth token rotation) - 1 violation fixed
 - [x] Update audit/checkpoint modules:
-  - [x] `src/api/lib/checkpoint.py` - 1 violation fixed
-  - [x] `src/api/lib/query_facade.py` - 1 violation fixed
+  - [x] `api/app/lib/checkpoint.py` - 1 violation fixed
+  - [x] `api/app/lib/query_facade.py` - 1 violation fixed
 - [x] Update job management routes:
-  - [x] `src/api/routes/ingest.py` - 2 violations fixed
-  - [x] `src/api/routes/ingest_image.py` - 3 violations fixed
-  - [x] `src/api/routes/jobs.py` - 3 violations fixed
+  - [x] `api/app/routes/ingest.py` - 2 violations fixed
+  - [x] `api/app/routes/ingest_image.py` - 3 violations fixed
+  - [x] `api/app/routes/jobs.py` - 3 violations fixed
 - [x] Document in ADR-056 (this file)
 
 **Progress: 13 of 34 violations fixed (38% complete)**
@@ -598,16 +598,16 @@ plugins = mypy_naive_datetime_plugin
 ### Short-term (Next Sprint)
 
 - [ ] Migrate remaining utility modules:
-  - [ ] `src/api/lib/backup_streaming.py` (1 violation)
-  - [ ] `src/api/lib/gexf_exporter.py` (2 violations)
-  - [ ] `src/api/logging_config.py` (1 violation)
-  - [ ] `src/api/main.py` (3 violations)
-  - [ ] `src/api/services/admin_service.py` (1 violation)
-  - [ ] `src/api/services/scheduled_jobs_manager.py` (1 violation)
+  - [ ] `api/app/lib/backup_streaming.py` (1 violation)
+  - [ ] `api/app/lib/gexf_exporter.py` (2 violations)
+  - [ ] `api/app/logging_config.py` (1 violation)
+  - [ ] `api/app/main.py` (3 violations)
+  - [ ] `api/app/services/admin_service.py` (1 violation)
+  - [ ] `api/app/services/scheduled_jobs_manager.py` (1 violation)
 - [ ] Migrate worker modules:
-  - [ ] `src/api/services/embedding_worker.py` (10 violations - performance timing)
-  - [ ] `src/api/workers/ingestion_worker.py` (1 violation)
-  - [ ] `src/api/workers/restore_worker.py` (1 violation)
+  - [ ] `api/app/services/embedding_worker.py` (10 violations - performance timing)
+  - [ ] `api/app/workers/ingestion_worker.py` (1 violation)
+  - [ ] `api/app/workers/restore_worker.py` (1 violation)
 - [ ] Add linter to pre-commit hook (optional)
 - [ ] Document in `docs/guides/DEVELOPMENT.md`
 
@@ -632,7 +632,7 @@ plugins = mypy_naive_datetime_plugin
 - **2025-11-03:** Decided on utility module approach (simple, no dependencies)
 - **2025-11-03:** Linter chosen over mypy plugin (faster to implement)
 - **2025-11-04:** ADR-056 implementation completed
-  - Created `src/api/lib/datetime_utils.py` with 8 utility functions
+  - Created `api/app/lib/datetime_utils.py` with 8 utility functions
   - Created `scripts/lint_datetimes.py` linter (detects 3 unsafe patterns)
   - Fixed 13 critical violations in auth, OAuth, jobs, and audit modules
   - Added 32 comprehensive tests (100% pass rate)

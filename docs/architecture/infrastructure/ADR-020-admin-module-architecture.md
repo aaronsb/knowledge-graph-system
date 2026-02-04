@@ -55,7 +55,7 @@ src/admin/
 ├── prune.py           # Cleanup operations
 └── stitch.py          # Cross-ontology reconnection
 
-src/api/services/
+api/app/services/
 └── admin_service.py   # Thin delegation layer
 ```
 
@@ -256,7 +256,7 @@ async def configure_ai(self, provider, model):
 - Code: `src/admin/reset.py` (new)
 - Code: `src/admin/backup.py` (existing pattern)
 - Code: `src/admin/restore.py` (existing pattern)
-- Code: `src/api/services/admin_service.py` (simplified)
+- Code: `api/app/services/admin_service.py` (simplified)
 
 ## Decision Outcome
 

@@ -637,7 +637,7 @@ kg ontology list   # Should show only intended ontologies
 #### 1. Job Resumption Not Implemented (Production Critical)
 **Status:** Discovered during Phase 9.1 testing
 **Impact:** Jobs in "approved" or "processing" status are orphaned on API restart/hot reload
-**Root Cause:** No startup logic to resume pending jobs (see `src/api/main.py:221` TODO)
+**Root Cause:** No startup logic to resume pending jobs (see `api/app/main.py:221` TODO)
 
 **Current Behavior:**
 - Jobs persist in database but don't auto-resume

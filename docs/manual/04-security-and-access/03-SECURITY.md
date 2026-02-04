@@ -139,7 +139,7 @@ Workers will load keys from environment variables.
 
 **Prerequisites:**
 1. PostgreSQL container running: `docker-compose up -d`
-2. API server running: `python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000`
+2. API server running: `python -m uvicorn api.app.main:app --host 0.0.0.0 --port 8000`
 3. Encryption master key configured (auto-generated in development)
 
 **Steps:**
@@ -480,7 +480,7 @@ curl http://localhost:8000/admin/keys
 ```bash
 # Development: Auto-generated key (restart API)
 pkill -f uvicorn
-python -m uvicorn src.api.main:app --reload
+python -m uvicorn api.app.main:app --reload
 
 # Production: Configure persistent key
 # See "Production Deployment" section above
@@ -601,7 +601,7 @@ echo "INTERNAL_KEY_SERVICE_SECRET=$(openssl rand -hex 32)" >> .env
 # Restart all services
 docker-compose restart
 pkill -f uvicorn
-python -m uvicorn src.api.main:app --reload
+python -m uvicorn api.app.main:app --reload
 ```
 
 ---

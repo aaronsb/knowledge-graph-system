@@ -157,7 +157,7 @@ INSERT INTO kg_api.ai_extraction_config (
 ### Configuration Loading
 
 ```python
-# src/api/lib/ai_extraction_config.py
+# api/app/lib/ai_extraction_config.py
 """
 AI Extraction Provider Configuration Management.
 
@@ -353,7 +353,7 @@ def get_extraction_config_summary() -> Dict[str, Any]:
 ### API Provider Updates
 
 ```python
-# src/api/lib/ai_providers.py (Updated get_provider function)
+# api/app/lib/ai_providers.py (Updated get_provider function)
 
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
@@ -409,7 +409,7 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
 ### API Endpoints
 
 ```python
-# src/api/routes/ai_extraction.py
+# api/app/routes/ai_extraction.py
 """
 AI Extraction Provider Configuration API endpoints.
 """
@@ -870,7 +870,7 @@ system_api_keys
 **Startup validation with state updates:**
 
 ```python
-# src/api/main.py - Startup event
+# api/app/main.py - Startup event
 @app.on_event("startup")
 async def startup_validation():
     """Validate active provider configurations and update key status"""
@@ -910,7 +910,7 @@ async def startup_validation():
 **Validation function:**
 
 ```python
-# src/api/lib/encrypted_keys.py
+# api/app/lib/encrypted_keys.py
 def validate_and_update_key_status(
     provider: str,
     usage_type: str  # 'extraction' or 'embedding'
@@ -1015,7 +1015,7 @@ Update invalid keys:
 **Enhanced endpoints from ADR-031 with validation status:**
 
 ```python
-# src/api/routes/admin_keys.py (Updated)
+# api/app/routes/admin_keys.py (Updated)
 
 class APIKeyInfo(BaseModel):
     """API key information with validation status"""
@@ -1266,7 +1266,7 @@ DEVELOPMENT_MODE=false
 ### Implementation
 
 ```python
-# src/api/lib/config.py (New centralized config module)
+# api/app/lib/config.py (New centralized config module)
 import os
 import logging
 
@@ -1294,7 +1294,7 @@ if DEVELOPMENT_MODE:
 ```
 
 ```python
-# src/api/lib/ai_providers.py (Updated get_provider)
+# api/app/lib/ai_providers.py (Updated get_provider)
 from .config import DEVELOPMENT_MODE
 
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:

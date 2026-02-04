@@ -18,7 +18,7 @@ This session completed the MinIO integration for image storage (ADR-057) and mad
 1. **S3 Signature v4 Mismatch** (SignatureDoesNotMatch error)
    - Root cause: Missing `region` parameter for S3 signature calculation
    - Solution: Added `region='us-east-1'` to MinIO client initialization
-   - Location: `src/api/lib/minio_client.py:132,150`
+   - Location: `api/app/lib/minio_client.py:132,150`
 
 2. **Metadata Duplication Conflict**
    - Root cause: `content-type` set in both HTTP header AND metadata dict
@@ -29,13 +29,13 @@ This session completed the MinIO integration for image storage (ADR-057) and mad
 3. **Orphaned Objects on Ontology Deletion**
    - MinIO objects weren't cleaned up when deleting ontologies
    - Added MinIO cleanup before deleting sources
-   - Location: `src/api/routes/ontology.py:274-310`
+   - Location: `api/app/routes/ontology.py:274-310`
    - Queries `source.properties` for `minio_object_key`, deletes from MinIO, then deletes from database
 
 4. **AttributeError in Image Ingestion**
    - `visual_embedding.tolist()` failed because `generate_visual_embedding()` already returns a list
    - Fixed: Removed redundant `.tolist()` call
-   - Location: `src/api/routes/ingest_image.py:358`
+   - Location: `api/app/routes/ingest_image.py:358`
 
 **Final Working Stack:**
 - ✅ Encrypted credentials from database (ADR-031 pattern)
@@ -260,17 +260,17 @@ This demonstrates the power of the hairpin pattern: vision → prose → concept
 
 ### Files Modified
 
-1. **`src/api/lib/minio_client.py`**
+1. **`api/app/lib/minio_client.py`**
    - Added `region` parameter and initialization
    - Fixed metadata to exclude `content-type` (HTTP header only)
    - Updated `get_image_metadata()` to strip `x-amz-meta-` prefix
 
-2. **`src/api/routes/ontology.py`**
+2. **`api/app/routes/ontology.py`**
    - Added MinIO cleanup before deleting sources (lines 274-310)
    - Queries `source.properties` for `minio_object_key`
    - Deletes objects, logs counts
 
-3. **`src/api/routes/ingest_image.py`**
+3. **`api/app/routes/ingest_image.py`**
    - Fixed `.tolist()` redundancy (line 358)
 
 4. **`client/src/cli/ingest.ts`**
@@ -323,7 +323,7 @@ kg ontology delete "Test Images" --force
 # ✅ 10 MinIO objects deleted automatically
 
 # 4. MinIO verification
-python -c "from src.api.lib.minio_client import get_minio_client; \
+python -c "from api.app.lib.minio_client import get_minio_client; \
            print(len(get_minio_client().list_images()))"
 # ✅ 0 images (complete cleanup)
 ```

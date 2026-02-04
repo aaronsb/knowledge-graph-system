@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 def main():
-    auth_file = Path("src/api/routes/auth.py")
+    auth_file = Path("api/app/routes/auth.py")
     content = auth_file.read_text()
     
     print("🔒 Authentication Pattern Analysis")

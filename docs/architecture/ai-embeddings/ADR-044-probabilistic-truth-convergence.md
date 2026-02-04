@@ -929,7 +929,7 @@ SET v.usage_count_cached = 23  # Materialized value
 2. **Then:** Consider batch fetching (reduces round-trips, not staleness)
 3. **Last resort:** Accept eventual consistency and document the trade-offs explicitly
 
-**See also:** `src/api/routes/vocabulary.py:829` and `src/api/lib/age_client.py:1410` for implementation comments.
+**See also:** `api/app/routes/vocabulary.py:829` and `api/app/lib/age_client.py:1410` for implementation comments.
 
 ---
 

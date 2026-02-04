@@ -170,7 +170,7 @@ To prevent unauthorized key access within the application, we implement a **serv
 **Implementation:**
 
 ```python
-# src/api/lib/encrypted_keys.py
+# api/app/lib/encrypted_keys.py
 def get_system_api_key(
     db_connection,
     provider: str,
@@ -442,7 +442,7 @@ volumes:
 #### Load Secrets from Files
 
 ```python
-# src/api/lib/secrets.py
+# api/app/lib/secrets.py
 """
 Secrets management with Docker/Podman secrets support.
 Falls back to environment variables for development.
@@ -513,7 +513,7 @@ POSTGRES_PASSWORD = SecretManager.load_secret("postgres_password")
 #### Encrypted Key Storage
 
 ```python
-# src/api/lib/encrypted_keys.py
+# api/app/lib/encrypted_keys.py
 """
 System API key storage with encryption at rest (shard-scoped).
 """
@@ -630,7 +630,7 @@ class EncryptedKeyStore:
 #### API Endpoints
 
 ```python
-# src/api/routes/admin_keys.py
+# api/app/routes/admin_keys.py
 """
 Admin API endpoints for system-wide LLM API key management.
 """
@@ -904,7 +904,7 @@ The implementation uses an **abstraction layer** to allow swapping secret backen
 #### Abstract Interface
 
 ```python
-# src/api/lib/secret_backend.py
+# api/app/lib/secret_backend.py
 """
 Abstract interface for secret storage backends.
 Allows plugging in different implementations without code changes.
@@ -984,7 +984,7 @@ class SecretBackend(ABC):
 #### Implementation 1: Docker/Podman (Default)
 
 ```python
-# src/api/lib/backends/container_secrets.py
+# api/app/lib/backends/container_secrets.py
 """
 Docker/Podman secrets backend (ADR-031 Phase 1).
 Read-only access to /run/secrets/* files.
@@ -1042,7 +1042,7 @@ class ContainerSecretsBackend(SecretBackend):
 #### Implementation 2: HashiCorp Vault (Open Source)
 
 ```python
-# src/api/lib/backends/vault_secrets.py
+# api/app/lib/backends/vault_secrets.py
 """
 HashiCorp Vault backend (open source or enterprise).
 Supports dynamic secrets, rotation, and audit logging.
@@ -1145,7 +1145,7 @@ class VaultSecretsBackend(SecretBackend):
 #### Implementation 3: Cloud KMS (For Cloud Deployments)
 
 ```python
-# src/api/lib/backends/cloud_kms_secrets.py
+# api/app/lib/backends/cloud_kms_secrets.py
 """
 Cloud KMS backend - works with AWS, GCP, Azure.
 Uses cloud-provider SDKs (boto3, google-cloud-kms, azure-keyvault).
@@ -1218,7 +1218,7 @@ class CloudKMSSecretsBackend(SecretBackend):
 #### Factory Pattern for Backend Selection
 
 ```python
-# src/api/lib/secrets.py (Updated with backend support)
+# api/app/lib/secrets.py (Updated with backend support)
 """
 Secrets management with pluggable backends.
 """
@@ -1418,10 +1418,10 @@ This architecture ensures:
 - [ ] Update `.gitignore` to exclude secret temp files
 
 ### Backend (API Team)
-- [ ] Create `src/api/lib/secrets.py` (secret loading utility)
-- [ ] Create `src/api/lib/encrypted_keys.py` (encryption layer for system keys)
-- [ ] Update `src/api/lib/auth.py` to load JWT from secret
-- [ ] Create `src/api/routes/admin_keys.py` (admin key management endpoints)
+- [ ] Create `api/app/lib/secrets.py` (secret loading utility)
+- [ ] Create `api/app/lib/encrypted_keys.py` (encryption layer for system keys)
+- [ ] Update `api/app/lib/auth.py` to load JWT from secret
+- [ ] Create `api/app/routes/admin_keys.py` (admin key management endpoints)
 - [ ] Update database schema with `system_api_keys` table
 - [ ] Add key validation on upload (test with provider API)
 - [ ] Update AI provider initialization to check encrypted store first, then .env fallback

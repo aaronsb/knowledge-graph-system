@@ -1,7 +1,7 @@
 """
 OAuth Utility Functions Tests (ADR-054)
 
-Unit tests for OAuth 2.0 utility functions in src/api/lib/oauth_utils.py.
+Unit tests for OAuth 2.0 utility functions in api/app/lib/oauth_utils.py.
 
 Tests pure functions with no database or mocking required:
 - Token generation (various types)

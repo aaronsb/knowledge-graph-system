@@ -563,7 +563,7 @@ Don't shard prematurely. Shard when:
    - Ready for config.js injection
 
 2. **Hybrid OAuth Flow:**
-   - `POST /auth/oauth/login-and-authorize` endpoint (src/api/routes/oauth.py:961-1131)
+   - `POST /auth/oauth/login-and-authorize` endpoint (api/app/routes/oauth.py:961-1131)
    - Client-side LoginModal component (viz-app/src/components/auth/LoginModal.tsx)
    - PKCE implementation (viz-app/src/lib/auth/oauth-utils.ts)
    - Token exchange and refresh (viz-app/src/lib/auth/authorization-code-flow.ts)
@@ -574,7 +574,7 @@ Don't shard prematurely. Shard when:
    - Browser history routing
 
 4. **Timezone-Aware Datetimes:**
-   - Fixed `datetime.utcnow()` → `datetime.now(timezone.utc)` (src/api/lib/oauth_utils.py:10, 253)
+   - Fixed `datetime.utcnow()` → `datetime.now(timezone.utc)` (api/app/lib/oauth_utils.py:10, 253)
    - OAuth tokens now compatible with PostgreSQL timezone-aware columns
 
 ### 🚧 In Progress / Needed

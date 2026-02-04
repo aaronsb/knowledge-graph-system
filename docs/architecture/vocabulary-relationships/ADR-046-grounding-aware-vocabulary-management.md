@@ -795,7 +795,7 @@ recommendations = generate_merge_recommendations(190, age_client)
 
 **1. Extend `EdgeTypeScore` dataclass**
 
-File: `src/api/lib/vocabulary_scoring.py`
+File: `api/app/lib/vocabulary_scoring.py`
 
 Add new fields:
 - `grounding_contribution: float`
@@ -805,7 +805,7 @@ Add new fields:
 
 **2. Implement grounding contribution calculation**
 
-File: `src/api/lib/vocabulary_scoring.py`
+File: `api/app/lib/vocabulary_scoring.py`
 
 ```python
 def calculate_grounding_contribution(
@@ -824,7 +824,7 @@ Calculate all new metrics for each edge type.
 
 **1. Implement synonym clustering**
 
-File: `src/api/lib/synonym_detector.py`
+File: `api/app/lib/synonym_detector.py`
 
 Update to use embeddings instead of string similarity:
 
@@ -856,7 +856,7 @@ def select_canonical_type(
 
 **1. Implement vocabulary subset selection**
 
-File: `src/api/lib/vocabulary_curator.py` (new)
+File: `api/app/lib/vocabulary_curator.py` (new)
 
 ```python
 def get_extraction_vocabulary(
@@ -871,7 +871,7 @@ def get_extraction_vocabulary(
 
 **2. Update extraction prompt to use curated vocabulary**
 
-File: `src/api/lib/llm_extractor.py`
+File: `api/app/lib/llm_extractor.py`
 
 ```python
 # Current (shows all types)
@@ -894,7 +894,7 @@ formatted_prompt = EXTRACTION_PROMPT_TEMPLATE.format(
 
 **1. Update merge recommendation algorithm**
 
-File: `src/api/lib/pruning_strategies.py`
+File: `api/app/lib/pruning_strategies.py`
 
 ```python
 def generate_recommendations_grounding_aware(
@@ -907,7 +907,7 @@ def generate_recommendations_grounding_aware(
 
 **2. Update merge execution to preserve embeddings**
 
-File: `src/api/lib/age_client.py`
+File: `api/app/lib/age_client.py`
 
 Update `merge_edge_types()` to handle embeddings (per ADR-045):
 
@@ -936,7 +936,7 @@ def merge_edge_types(
 
 **1. Vocabulary analysis endpoint**
 
-File: `src/api/routes/vocabulary.py`
+File: `api/app/routes/vocabulary.py`
 
 ```python
 @router.get("/vocab/analysis")

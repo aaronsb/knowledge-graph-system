@@ -206,8 +206,8 @@ def main():
     parser.add_argument(
         'paths',
         nargs='*',
-        default=['src/api'],
-        help='Paths to lint (default: src/api)'
+        default=['api/app'],
+        help='Paths to lint (default: api/app)'
     )
     parser.add_argument(
         '-v', '--verbose',

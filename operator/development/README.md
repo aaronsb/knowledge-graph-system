@@ -97,7 +97,7 @@ name: Security Audit
 on:
   pull_request:
     paths:
-      - 'src/api/routes/**'
+      - 'api/app/routes/**'
   schedule:
     - cron: '0 0 * * 0'  # Weekly on Sunday
 
@@ -142,7 +142,7 @@ Add to `.git/hooks/pre-commit`:
 #!/bin/bash
 # Run auth audit if API routes changed
 
-if git diff --cached --name-only | grep -q "src/api/routes"; then
+if git diff --cached --name-only | grep -q "api/app/routes"; then
     echo "API routes changed, running auth audit..."
     ./scripts/development/audit-api-auth.sh
 

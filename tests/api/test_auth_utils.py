@@ -1,7 +1,7 @@
 """
 Authentication Utility Functions Tests (ADR-054, ADR-027)
 
-Unit tests for authentication utilities in src/api/lib/auth.py.
+Unit tests for authentication utilities in api/app/lib/auth.py.
 
 Tests pure functions with no database or mocking required:
 - Password hashing and verification

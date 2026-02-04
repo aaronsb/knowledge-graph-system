@@ -81,7 +81,7 @@ Current system has **four separate embedding paths:**
 
 **Path 1: Concept node embeddings (ingestion)**
 ```python
-# src/api/lib/llm_extractor.py
+# api/app/lib/llm_extractor.py
 def generate_embedding(text: str, provider_name: Optional[str] = None):
     provider = get_provider(provider_name)
     return provider.generate_embedding(text)
@@ -89,7 +89,7 @@ def generate_embedding(text: str, provider_name: Optional[str] = None):
 
 **Path 2: Vocabulary type embeddings (auto-generation on add)**
 ```python
-# src/api/lib/age_client.py
+# api/app/lib/age_client.py
 def add_edge_type(..., ai_provider=None):
     # ... add type to vocabulary table ...
     if ai_provider is not None:
@@ -99,7 +99,7 @@ def add_edge_type(..., ai_provider=None):
 
 **Path 3: Bulk vocabulary regeneration (manual)**
 ```python
-# src/api/lib/age_client.py
+# api/app/lib/age_client.py
 def generate_vocabulary_embeddings(ai_provider, force_regenerate=False):
     # Bulk regenerate embeddings for vocabulary types
 ```
@@ -127,7 +127,7 @@ Create a centralized `EmbeddingWorker` service that handles **all embedding gene
 ### Core Architecture
 
 ```python
-# src/api/services/embedding_worker.py
+# api/app/services/embedding_worker.py
 
 class EmbeddingWorker:
     """
@@ -311,7 +311,7 @@ class EmbeddingWorker:
 
 **1. System Initialization (Cold Start)**
 ```python
-# src/api/main.py - FastAPI startup event
+# api/app/main.py - FastAPI startup event
 
 @app.on_event("startup")
 async def startup_event():
@@ -332,7 +332,7 @@ async def startup_event():
 
 **2. Ingestion Pipeline**
 ```python
-# src/api/lib/ingestion.py
+# api/app/lib/ingestion.py
 
 def ingest_chunk(...):
     # ... existing ingestion logic ...
@@ -344,7 +344,7 @@ def ingest_chunk(...):
 
 **3. Vocabulary Expansion**
 ```python
-# src/api/services/vocabulary_manager.py
+# api/app/services/vocabulary_manager.py
 
 def add_new_edge_type(self, edge_type: str):
     # Add to vocabulary table
@@ -357,7 +357,7 @@ def add_new_edge_type(self, edge_type: str):
 
 **4. Admin Endpoints**
 ```python
-# src/api/routes/admin.py
+# api/app/routes/admin.py
 
 @router.post("/admin/embeddings/verify")
 async def verify_embeddings():
@@ -447,7 +447,7 @@ def calculate_grounding_strength_semantic(concept_id: str):
 
 ### Phase 1: EmbeddingWorker Core (Immediate)
 
-1. Create `src/api/services/embedding_worker.py`
+1. Create `api/app/services/embedding_worker.py`
 2. Implement core methods:
    - `initialize_builtin_embeddings()`
    - `generate_concept_embedding()`
@@ -587,7 +587,7 @@ def calculate_grounding_strength_semantic(concept_id: str):
 - [ ] Phase 4: Enable ADR-044 grounding
 
 **Next Steps:**
-1. Implement `EmbeddingWorker` class in `src/api/services/embedding_worker.py`
+1. Implement `EmbeddingWorker` class in `api/app/services/embedding_worker.py`
 2. Add startup event for cold start initialization
 3. Test with fresh database: verify 30 builtin embeddings generated
 4. Update ingestion pipeline to use worker

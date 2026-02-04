@@ -128,7 +128,7 @@ export const ConfidenceHeatmapExplorer: ExplorerPlugin = {
 ### REST API Endpoints (New)
 
 ```python
-# src/api/routes/visualization.py
+# api/app/routes/visualization.py
 
 @router.get("/viz/confidence/heatmap")
 async def get_confidence_heatmap(

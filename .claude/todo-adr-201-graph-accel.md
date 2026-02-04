@@ -197,7 +197,7 @@ edges — no cross-concept dependency. This makes per-concept caching safe.
 
 - [x] Code review: 8 findings, 0 blocking. Remediated #1 (cache comment) and #3 (shared constant).
       Remaining findings (#4 generation dedup, #6 file size, #7 warm-hit optimization) deferred to 5e.
-- [ ] Docstrings: document the two-tier cache invalidation model (deferred to 5e cleanup)
+- [x] Docstrings: document the two-tier cache invalidation model
   - `calculate_grounding_strength_semantic()` — explain polarity axis caching, vocab generation check
   - `_build_connection_paths()` — explain per-concept grounding cache, graph generation check
   - `GraphFacade._execute_sql()` — explain pinned connection, generation-based ensure_fresh

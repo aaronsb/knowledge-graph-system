@@ -218,7 +218,7 @@ Returns current embedding configuration so clients know what model to use:
 
 #### 3. LocalEmbeddingProvider Implementation
 
-**File:** `src/api/lib/ai_providers.py`
+**File:** `api/app/lib/ai_providers.py`
 
 ```python
 class LocalEmbeddingProvider(AIProvider):
@@ -814,7 +814,7 @@ curl -X POST http://localhost:8000/admin/embedding/config/reload \
 **Implementation Strategy:**
 ```bash
 # Supervisor manages multiple workers
-gunicorn src.api.main:app \
+gunicorn api.app.main:app \
   --workers 4 \
   --worker-class uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8000

@@ -267,8 +267,8 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 **Commits:** 8b1aac7, 654bb90, 88bd10d
 
 **Implemented:**
-- Server-side streaming backup generation (`src/api/lib/backup_streaming.py`)
-- Client-side streaming download with progress (`client/src/api/client.ts`)
+- Server-side streaming backup generation (`api/app/lib/backup_streaming.py`)
+- Client-side streaming download with progress (`client/api/app/client.ts`)
 - Ora spinner showing download progress (MB downloaded/total)
 - Automatic filename extraction from Content-Disposition header
 - Client-side storage in configured directory (`~/.local/share/kg/backups`)
@@ -285,13 +285,13 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 **Branch:** feature/api-restore-upload-streaming
 
 **Completed:**
-- ✅ Backup integrity checker (`src/api/lib/backup_integrity.py`) - commit d0553c4
+- ✅ Backup integrity checker (`api/app/lib/backup_integrity.py`) - commit d0553c4
   - Validates JSON format, required fields, data completeness
   - Checks reference integrity (concept_id, source_id consistency)
   - Detects external dependencies in ontology backups
   - Validates statistics consistency
   - 24 comprehensive tests (100% pass rate)
-- ✅ Data contract pattern (`src/api/constants.py`) - commit d0553c4
+- ✅ Data contract pattern (`api/app/constants.py`) - commit d0553c4
   - Centralized schema governance (RELATIONSHIP_TYPES, BACKUP_TYPES, etc.)
   - Single source of truth for graph schema
   - Supports forward compatibility (old backups remain valid)
@@ -309,7 +309,7 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 **Status:** Implemented with data contract pattern
 **Commit:** d0553c4 (2025-10-09)
 
-**Implementation:** `src/api/lib/backup_integrity.py` (175 lines, 72% coverage)
+**Implementation:** `api/app/lib/backup_integrity.py` (175 lines, 72% coverage)
 - `BackupIntegrityChecker` class with comprehensive validation
 - Validates format, references, statistics, external dependencies
 - Forward-compatible with schema evolution (warnings for unknown types)
@@ -322,7 +322,7 @@ def safe_operation_with_checkpoint(operation_func, *args, **kwargs):
 
 **Usage:**
 ```python
-from src.api.lib.backup_integrity import check_backup_integrity
+from api.app.lib.backup_integrity import check_backup_integrity
 
 result = check_backup_integrity("/path/to/backup.json")
 if result.valid:
@@ -357,7 +357,7 @@ else:
 
 **Client Changes:**
 ```typescript
-// client/src/api/client.ts
+// client/api/app/client.ts
 async createBackup(request: BackupRequest): Promise<void> {
   const response = await this.client.post('/admin/backup', request, {
     responseType: 'stream'
@@ -376,7 +376,7 @@ async createBackup(request: BackupRequest): Promise<void> {
 
 **Server Changes:**
 ```python
-# src/api/routes/admin.py
+# api/app/routes/admin.py
 @router.post("/admin/backup")
 async def create_backup(request: BackupRequest):
     # Create backup in memory or temp file
@@ -396,7 +396,7 @@ async def create_backup(request: BackupRequest):
 
 **Client Changes:**
 ```typescript
-// client/src/api/client.ts
+// client/api/app/client.ts
 async restoreBackup(request: RestoreRequest, filePath: string): Promise<RestoreResponse> {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
@@ -417,7 +417,7 @@ async restoreBackup(request: RestoreRequest, filePath: string): Promise<RestoreR
 
 **Server Changes:**
 ```python
-# src/api/routes/admin.py
+# api/app/routes/admin.py
 from fastapi import UploadFile
 
 @router.post("/admin/restore")
@@ -455,7 +455,7 @@ async def restore_backup(
 
 **Create separate module:**
 ```python
-# src/api/services/integrity_check.py
+# api/app/services/integrity_check.py
 class BackupIntegrity:
     valid: bool
     errors: List[str]
@@ -478,7 +478,7 @@ def check_backup_integrity(backup_path: str) -> BackupIntegrity:
 
 **Use existing job queue pattern:**
 ```python
-# src/api/workers/restore_worker.py
+# api/app/workers/restore_worker.py
 def run_restore_worker(job_data: Dict, job_id: str, job_queue):
     # Update progress during restore
     job_queue.update_job(job_id, {
@@ -506,7 +506,7 @@ const finalJob = await client.pollJob(restoreJobId, (job) => {
 
 **Cleanup strategy:**
 ```python
-# src/api/workers/restore_worker.py
+# api/app/workers/restore_worker.py
 def run_restore_worker(job_data: Dict, job_id: str, job_queue):
     temp_path = job_data["temp_file"]
 
@@ -523,7 +523,7 @@ def run_restore_worker(job_data: Dict, job_id: str, job_queue):
 
 **Startup cleanup:**
 ```python
-# src/api/main.py
+# api/app/main.py
 @app.on_event("startup")
 async def cleanup_old_temp_files():
     """Clean up abandoned restore files on startup"""
@@ -654,7 +654,7 @@ backup_b64 = base64.b64encode(backup_json)
 - **ADR-013:** Unified TypeScript Client (config management)
 - **File:** `docs/BACKUP_RESTORE.md` (user guide, TODO)
 - **File:** `client/src/cli/admin.ts` (implementation)
-- **File:** `src/api/routes/admin.py` (API endpoints)
+- **File:** `api/app/routes/admin.py` (API endpoints)
 
 ## Notes
 
@@ -875,7 +875,7 @@ When backup schema is significantly older than current (>5 migrations):
 
 ### Next Steps
 
-1. Create `src/api/lib/serialization.py` with schema_version support
+1. Create `api/app/lib/serialization.py` with schema_version support
 2. Add `schema_migrations` table in next migration
 3. Document type conversions in `schema/MIGRATION_COMPATIBILITY.md`
 4. Tag current release as `schema-v12`

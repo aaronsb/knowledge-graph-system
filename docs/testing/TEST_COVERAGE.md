@@ -496,7 +496,7 @@ describe('kg health', () => {
 
 ### ✅ 4.1 No API Keys Required
 
-**Location:** `src/api/lib/mock_ai_provider.py`
+**Location:** `api/app/lib/mock_ai_provider.py`
 
 **Features:**
 - **Deterministic responses** - Hash-based embeddings
@@ -626,17 +626,17 @@ Code Coverage: TBD
 ### Coverage Metrics (Python)
 
 **High Coverage (Tested Modules):**
-- `src/api/routes/jobs.py` - 95%
-- `src/api/services/job_analysis.py` - 92%
-- `src/api/main.py` - 86%
-- `src/api/routes/ingest.py` - 85%
-- `src/api/services/job_queue.py` - 82%
+- `api/app/routes/jobs.py` - 95%
+- `api/app/services/job_analysis.py` - 92%
+- `api/app/main.py` - 86%
+- `api/app/routes/ingest.py` - 85%
+- `api/app/services/job_queue.py` - 82%
 
 **Low Coverage (Needs Database):**
-- `src/api/routes/queries.py` - 18%
-- `src/api/routes/database.py` - 17%
-- `src/api/routes/ontology.py` - 21%
-- `src/api/lib/age_client.py` - 14%
+- `api/app/routes/queries.py` - 18%
+- `api/app/routes/database.py` - 17%
+- `api/app/routes/ontology.py` - 21%
+- `api/app/lib/age_client.py` - 14%
 
 **Overall:** 28-31% (expected given database-dependent features not yet tested)
 
@@ -942,7 +942,7 @@ grep AI_PROVIDER .env
 ```bash
 # Check Python venv
 source venv/bin/activate
-python -m uvicorn src.api.main:app --version
+python -m uvicorn api.app.main:app --version
 
 # Increase timeout in jest.config.js
 testTimeout: 60000

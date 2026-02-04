@@ -305,7 +305,7 @@ contextMenuItems = [
 
 ### Phase 2: API Endpoints (FastAPI)
 
-**File:** `src/api/routes/human_editing.py`
+**File:** `api/app/routes/human_editing.py`
 
 ```python
 from fastapi import APIRouter, HTTPException

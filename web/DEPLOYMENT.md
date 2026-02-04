@@ -143,7 +143,7 @@ WHERE client_id = 'kg-viz';
 The API server must allow requests from the viz-app origin:
 
 ```python
-# src/api/main.py
+# api/app/main.py
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

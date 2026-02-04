@@ -159,7 +159,7 @@ WHERE client_id = 'kg-viz';
 
 **API CORS Configuration:**
 ```python
-# src/api/main.py
+# api/app/main.py
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://viz.example.com"],

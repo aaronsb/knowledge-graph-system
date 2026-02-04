@@ -201,12 +201,12 @@ Two separate code paths for generating vocabulary embeddings:
 **Impact:** Duplicate logic, inconsistent logging, violates DRY principle
 
 ### Fix Applied
-**File:** `src/api/routes/vocabulary.py:483-558`
+**File:** `api/app/routes/vocabulary.py:483-558`
 - Updated `/vocabulary/generate-embeddings` endpoint to use `EmbeddingWorker`
 - Now calls `initialize_builtin_embeddings()` (same as cold start)
 - Removed obsolete `AGEClient.generate_vocabulary_embeddings()` method
 
-**File:** `src/api/lib/age_client.py`
+**File:** `api/app/lib/age_client.py`
 - Deleted 118 lines of duplicate embedding generation code (lines 1614-1731)
 
 **Result:**
@@ -222,8 +222,8 @@ kg vocab generate-embeddings
 
 **Log output:**
 ```
-2025-10-26 11:02:08 | INFO | src.api.services.embedding_worker:initialize_builtin_embeddings:125 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Starting cold start: Initializing builtin vocabulary embeddings
-2025-10-26 11:02:08 | INFO | src.api.services.embedding_worker:initialize_builtin_embeddings:130 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Cold start already completed, skipping
+2025-10-26 11:02:08 | INFO | api.app.services.embedding_worker:initialize_builtin_embeddings:125 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Starting cold start: Initializing builtin vocabulary embeddings
+2025-10-26 11:02:08 | INFO | api.app.services.embedding_worker:initialize_builtin_embeddings:130 | [2e685f7f-a044-405b-8c0f-5cd5cdd6008c] Cold start already completed, skipping
 ```
 
 **Status:** FIXED ✅
@@ -268,7 +268,7 @@ After running `kg admin embedding reload`, the EmbeddingWorker singleton continu
 - Subsequent calls to `get_embedding_worker()` returned cached instance with old provider
 
 ### Fix Applied
-**File:** `src/api/routes/embedding.py:222-229`
+**File:** `api/app/routes/embedding.py:222-229`
 - Added call to `reset_embedding_worker()` in hot reload endpoint
 - EmbeddingWorker singleton now resets when config changes
 - Next `get_embedding_worker()` call creates fresh instance with new provider
@@ -1360,7 +1360,7 @@ kg ingest file --ontology "ResumptionTest" docs/architecture/RECURSIVE_UPSERT_AR
 
 **Step 3: Trigger API restart (hot reload)**
 ```bash
-echo "# Test interrupt" >> src/api/main.py
+echo "# Test interrupt" >> api/app/main.py
 ```
 
 **API Startup Log Output:**
@@ -1441,18 +1441,18 @@ WHERE job_id = 'job_a49cd0638b5e'
 
 ### Files Modified
 
-**src/api/main.py (startup resume logic):**
+**api/app/main.py (startup resume logic):**
 - Check both "running" and "processing" statuses
 - Handle NULL progress field
 - Track resume_attempts in job_data
 - Fail jobs after 3 resume attempts
 - Reset interrupted jobs to "approved" and trigger execution
 
-**src/api/services/job_queue.py:**
+**api/app/services/job_queue.py:**
 - Added 'job_data' to PostgreSQL update_job() updatable fields
 - Enables checkpoint data persistence
 
-**src/api/workers/ingestion_worker.py (already implemented):**
+**api/app/workers/ingestion_worker.py (already implemented):**
 - Check for resume_from_chunk in job_data
 - Load saved stats and recent_concept_ids
 - Skip already-processed chunks
@@ -1583,9 +1583,9 @@ WHERE job_id = 'job_a49cd0638b5e'
 - `docs/testing/INTEGRATION_TEST_NOTES.md` - This document
 
 **Modified:**
-- `src/api/lib/age_client.py` - Removed duplicate embedding code (119 lines)
-- `src/api/routes/vocabulary.py` - Unified with EmbeddingWorker
-- `src/api/routes/embedding.py` - Added hot reload reset
+- `api/app/lib/age_client.py` - Removed duplicate embedding code (119 lines)
+- `api/app/routes/vocabulary.py` - Unified with EmbeddingWorker
+- `api/app/routes/embedding.py` - Added hot reload reset
 - `client/src/cli/vocabulary.ts` - Dynamic provider display
 - `client/src/mcp/formatters.ts` - Grounding formatting (unchanged, validated)
 
