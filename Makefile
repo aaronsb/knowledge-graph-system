@@ -3,7 +3,7 @@
 # Run `make` or `make help` to see available targets.
 
 .DEFAULT_GOAL := help
-.PHONY: help test test-quick test-unit test-api lint lint-queries \
+.PHONY: help test test-unit test-api test-verbose lint lint-queries \
         coverage coverage-verbose coverage-staleness \
         docs docs-cli docs-mcp docs-site \
         publish publish-status \
@@ -12,19 +12,19 @@
 
 SCRIPTS := scripts/development
 
-##@ Testing
+##@ Testing (runs inside kg-api-dev container)
 
-test: ## Run full test suite (Python, linters)
-	@$(SCRIPTS)/test/all.sh
+test: ## Run full test suite in container
+	@docker exec kg-api-dev pytest tests/ -x -q
 
-test-quick: ## Run tests without coverage
-	@$(SCRIPTS)/test/all.sh --quick
-
-test-unit: ## Run Python unit tests in container
+test-unit: ## Run unit tests only
 	@docker exec kg-api-dev pytest tests/unit/ -x -q
 
-test-api: ## Run Python route tests in container
+test-api: ## Run API route tests only
 	@docker exec kg-api-dev pytest tests/api/ -x -q
+
+test-verbose: ## Run full suite with verbose output
+	@docker exec kg-api-dev pytest tests/ -x -v --tb=short
 
 ##@ Static Analysis
 

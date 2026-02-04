@@ -126,12 +126,14 @@ def scan_python_ast(file_path: str) -> FileResult:
     except (SyntaxError, UnicodeDecodeError):
         return result
 
+    class_children = _build_class_children(tree)
+
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             # Skip private helpers (single underscore, not dunder)
             if node.name.startswith('_') and not node.name.startswith('__'):
                 continue
-            kind = 'method' if _is_method(node, tree) else 'function'
+            kind = 'method' if id(node) in class_children else 'function'
             docstring = _python_get_docstring(node)
             item = DocItem(
                 file_path=file_path,
@@ -164,13 +166,14 @@ def scan_python_ast(file_path: str) -> FileResult:
     return result
 
 
-def _is_method(node: ast.AST, tree: ast.Module) -> bool:
-    """Check if a function is a method (inside a class body)."""
-    for parent in ast.walk(tree):
-        if isinstance(parent, ast.ClassDef):
-            if node in parent.body:
-                return True
-    return False
+def _build_class_children(tree: ast.Module) -> set:
+    """Build set of AST nodes that are direct children of a class body."""
+    children = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                children.add(id(child))
+    return children
 
 
 def scan_python_interrogate(directories: List[str], project_root: str) -> Optional[LanguageResult]:
@@ -465,7 +468,9 @@ def scan_rust_file(file_path: str, project_root: str) -> FileResult:
     for i, line in enumerate(lines):
         stripped = line.strip()
 
-        # Track brace depth for #[cfg(test)] exclusion
+        # Track brace depth for #[cfg(test)] exclusion.
+        # Note: naive counting — braces in strings/comments could throw this
+        # off, but in practice Rust test modules are straightforward.
         brace_depth += stripped.count('{') - stripped.count('}')
 
         if _RUST_CFG_TEST_RE.search(stripped):
@@ -634,7 +639,7 @@ class StalenessEntry:
         # Prefix match: @verified hash may be short (7 chars)
         v = self.item.verified_commit
         f = self.file_last_commit or ''
-        if f.startswith(v) or v.startswith(f[:len(v)]):
+        if f.startswith(v) or v.startswith(f):
             return 'current'
         # Compare timestamps
         if self.verified_ts >= self.file_last_ts:
