@@ -523,8 +523,11 @@ class TestBatchOntologyIntegration:
         """Provide a mock embedding worker."""
         worker = MagicMock()
         worker.generate_concept_embedding.return_value = {
-            "success": True,
-            "embedding": [0.1] * 384
+            "embedding": [0.1] * 384,
+            "model": "mock",
+            "provider": "mock",
+            "dimensions": 384,
+            "tokens": 0
         }
         return worker
 

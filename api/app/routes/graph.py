@@ -73,8 +73,7 @@ async def create_batch(
 
     Requires `graph:import` permission.
     """
-    client = get_age_client()
-    service = BatchService(client)
+    service = get_batch_service()
 
     try:
         response = await service.execute_batch(
@@ -94,7 +93,7 @@ async def create_batch(
 
         # ADR-201: Invalidate graph_accel cache after graph mutations
         try:
-            client.graph.invalidate()
+            service.age_client.graph.invalidate()
         except Exception:
             pass  # Non-fatal — extension may not be installed
 

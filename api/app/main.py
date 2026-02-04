@@ -324,8 +324,22 @@ async def shutdown_event():
         await scheduled_jobs_manager.stop()
         logger.info("✅ Scheduled jobs manager stopped (maintenance tasks)")
 
-    # TODO: Gracefully finish pending jobs
+    # Shut down job queue executor and connection pool
+    try:
+        queue = get_job_queue()
+        queue.shutdown(wait=False)
+        logger.info("✅ Job queue shut down")
+    except RuntimeError:
+        pass  # Queue not initialized
+
     logger.info("Shutdown complete")
+
+    # Detach stream handlers so draining worker threads don't crash
+    # writing to closed stderr/stdout (common in test teardown).
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        if isinstance(handler, logging.StreamHandler):
+            root.removeHandler(handler)
 
 
 # Include routers
