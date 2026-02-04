@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10259,7 +10287,7 @@
 <a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
 </code></pre></div>
 <h3 id="configuration-loading">Configuration Loading</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># src/api/lib/ai_extraction_config.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># api/app/lib/ai_extraction_config.py</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">AI Extraction Provider Configuration Management.</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
@@ -10452,7 +10480,7 @@
 <a id="__codelineno-4-191" name="__codelineno-4-191" href="#__codelineno-4-191"></a>    <span class="p">}</span>
 </code></pre></div>
 <h3 id="api-provider-updates">API Provider Updates</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># src/api/lib/ai_providers.py (Updated get_provider function)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># api/app/lib/ai_providers.py (Updated get_provider function)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_provider</span><span class="p">(</span><span class="n">provider_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIProvider</span><span class="p">:</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -10505,7 +10533,7 @@
 <a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a>        <span class="p">)</span>
 </code></pre></div>
 <h3 id="api-endpoints">API Endpoints</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># src/api/routes/ai_extraction.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># api/app/routes/ai_extraction.py</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="sd">AI Extraction Provider Configuration API endpoints.</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="sd">&quot;&quot;&quot;</span>
@@ -10948,7 +10976,7 @@
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>└── validation_error ← NEW
 </code></pre></div></p>
 <p><strong>Startup validation with state updates:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># src/api/main.py - Startup event</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># api/app/main.py - Startup event</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nd">@app</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="s2">&quot;startup&quot;</span><span class="p">)</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">startup_validation</span><span class="p">():</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate active provider configurations and update key status&quot;&quot;&quot;</span>
@@ -10985,7 +11013,7 @@
 <a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   View details: kg admin keys list&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Validation function:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># src/api/lib/encrypted_keys.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># api/app/lib/encrypted_keys.py</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">validate_and_update_key_status</span><span class="p">(</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">usage_type</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &#39;extraction&#39; or &#39;embedding&#39;</span>
@@ -11082,7 +11110,7 @@
 - 📊 <strong>Visibility</strong>: Users see key status via <code>kg admin keys list</code></p>
 <h3 id="administrative-api-endpoints-for-key-management">Administrative API Endpoints for Key Management</h3>
 <p><strong>Enhanced endpoints from ADR-031 with validation status:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># src/api/routes/admin_keys.py (Updated)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># api/app/routes/admin_keys.py (Updated)</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">APIKeyInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;API key information with validation status&quot;&quot;&quot;</span>
@@ -11349,7 +11377,7 @@
 </code></pre></div>
 <p><strong>Key insight:</strong> Mode is about <strong>config source</strong>, not <strong>whether you have API keys</strong>.</p>
 <h3 id="implementation_1">Implementation</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># src/api/lib/config.py (New centralized config module)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># api/app/lib/config.py (New centralized config module)</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
@@ -11375,7 +11403,7 @@
 <a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Database configuration will be IGNORED&quot;</span><span class="p">)</span>
 <a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Set DEVELOPMENT_MODE=false for production&quot;</span><span class="p">)</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># src/api/lib/ai_providers.py (Updated get_provider)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># api/app/lib/ai_providers.py (Updated get_provider)</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEVELOPMENT_MODE</span>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_provider</span><span class="p">(</span><span class="n">provider_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIProvider</span><span class="p">:</span>

@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10065,7 +10093,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">ADMIN</span>     <span class="c1"># Admin role required</span>
 </code></pre></div>
 <h3 id="2-type-annotated-dependencies">2. Type-Annotated Dependencies</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># From src/api/dependencies/auth.py (already exists, needs refinement)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># From api/app/dependencies/auth.py (already exists, needs refinement)</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Type alias for authenticated user</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">CurrentUser</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)]</span>
@@ -10107,7 +10135,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <p><strong>Rationale:</strong> Per-endpoint dependencies appear in OpenAPI/Swagger documentation, making security requirements visible to API consumers.</p>
 <h3 id="4-central-security-policy-our-addition">4. Central Security Policy (Our Addition)</h3>
 <p>While the FastAPI template doesn't mandate a central config, we add one for auditability:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/config/endpoint_security.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># api/app/config/endpoint_security.py</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="sd">Central documentation of endpoint security requirements.</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="sd">Actual enforcement happens via per-endpoint dependencies.</span>
@@ -10138,7 +10166,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="n">DEFAULT_SECURITY</span> <span class="o">=</span> <span class="s2">&quot;user&quot;</span>  <span class="c1"># Secure by default</span>
 </code></pre></div>
 <h3 id="5-startup-validation">5. Startup Validation</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># src/api/main.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># api/app/main.py</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nd">@app</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="s2">&quot;startup&quot;</span><span class="p">)</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_endpoint_security</span><span class="p">():</span>
@@ -10146,7 +10174,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    Validate all endpoints have appropriate dependencies.</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="sd">    Logs warnings for endpoints missing auth.</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">src.api.config.endpoint_security</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_security</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">api.app.config.endpoint_security</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_security</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">validate_security</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
@@ -10162,13 +10190,13 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <hr />
 <h2 id="implementation-pattern">Implementation Pattern</h2>
 <h3 id="route-structure">Route Structure</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># src/api/routes/admin.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># api/app/routes/admin.py</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="sd">Admin routes - all require admin role.</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="sd">Pattern: CurrentUser + require_role(&quot;admin&quot;) on each endpoint.</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/admin&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">])</span>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
@@ -10188,13 +10216,13 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;DANGEROUS: Admin only&quot;&quot;&quot;</span>
 <a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">reset_db</span><span class="p">()</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># src/api/routes/users.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># api/app/routes/users.py</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="sd">User routes - authenticated users can access their own data.</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="sd">Pattern: CurrentUser parameter with ownership checks in handler.</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentUser</span><span class="p">,</span> <span class="n">require_role</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/users&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;users&quot;</span><span class="p">])</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
@@ -10222,7 +10250,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Admin only - delete any user&quot;&quot;&quot;</span>
 <a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># src/api/routes/public.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># api/app/routes/public.py</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">Public routes - no authentication required.</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">Pattern: No dependencies.</span>
@@ -10237,7 +10265,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="dependency-definitions">Dependency Definitions</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># src/api/dependencies/auth.py (refine existing)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># api/app/dependencies/auth.py (refine existing)</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">Authentication dependencies following FastAPI Full-Stack Template pattern.</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="sd">&quot;&quot;&quot;</span>
@@ -10246,9 +10274,9 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2PasswordBearer</span>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">jose</span><span class="w"> </span><span class="kn">import</span> <span class="n">jwt</span><span class="p">,</span> <span class="n">JWTError</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># OAuth2 scheme</span>
 <a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">oauth2_scheme</span> <span class="o">=</span> <span class="n">OAuth2PasswordBearer</span><span class="p">(</span>
@@ -10359,7 +10387,7 @@ Prior ADRs (ADR-028, ADR-054) implemented authentication and RBAC components but
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># tests/conftest.py</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.testclient</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestClient</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">admin_user</span><span class="p">():</span>

@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10179,8 +10207,8 @@ Result: <strong>29 permissions</strong> ✅</p>
 - Queue type should show "postgresql"
 - Jobs stored in <code>kg_api.ingestion_jobs</code> table</p>
 <p><strong>Action Required:</strong>
-- Implement <code>PostgreSQLJobQueue</code> class in <code>src/api/services/job_queue.py</code>
-- Update <code>src/api/main.py</code> to use PostgreSQL queue
+- Implement <code>PostgreSQLJobQueue</code> class in <code>api/app/services/job_queue.py</code>
+- Update <code>api/app/main.py</code> to use PostgreSQL queue
 - Migrate existing jobs from SQLite to PostgreSQL</p>
 <p><strong>Impact:</strong> Low priority - current SQLite implementation works, but lacks MVCC benefits</p>
 <h3 id="2-admin-user-auto-seeding">2. Admin User Auto-Seeding</h3>
@@ -10312,7 +10340,7 @@ Result: <strong>29 permissions</strong> ✅</p>
 <li>
 <p><strong>Update API Initialization</strong></p>
 </li>
-<li>Modify <code>src/api/main.py</code> to use PostgreSQL queue</li>
+<li>Modify <code>api/app/main.py</code> to use PostgreSQL queue</li>
 <li>
 <p>Add environment variable: <code>JOB_QUEUE_TYPE=postgresql</code></p>
 </li>

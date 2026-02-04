@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10964,7 +10992,7 @@
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>  - Deduplication via content_hash
 </code></pre></div></p>
 <p><strong>What's in Python Code (Logic):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Launchers (src/api/launchers/):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Launchers (api/app/launchers/):
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  - Condition checking logic
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  - Job data preparation
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  - NOT API endpoints (internal only)
@@ -10981,7 +11009,7 @@
 - ❌ <strong>NOT a universal job authoring system</strong> (too complex, not needed)</p>
 <p><strong>Adding a New Scheduled Task:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># 1. Write launcher class (if custom logic needed)</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># src/api/launchers/my_task.py</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># api/app/launchers/my_task.py</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyTaskLauncher</span><span class="p">(</span><span class="n">JobLauncher</span><span class="p">):</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">check_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>        <span class="c1"># Your condition logic here</span>
@@ -11329,7 +11357,7 @@
 <a id="__codelineno-36-23" name="__codelineno-36-23" href="#__codelineno-36-23"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
 </code></pre></div>
 <h4 id="2-simple-scheduler-loop">2. Simple Scheduler Loop</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># src/api/services/scheduler.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># api/app/services/scheduler.py</span>
 <a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -11392,7 +11420,7 @@
 <a id="__codelineno-37-61" name="__codelineno-37-61" href="#__codelineno-37-61"></a><span class="sd">        Uses PostgreSQL advisory lock to ensure only one worker checks</span>
 <a id="__codelineno-37-62" name="__codelineno-37-62" href="#__codelineno-37-62"></a><span class="sd">        schedules in multi-worker deployments (e.g., Gunicorn -w 4).</span>
 <a id="__codelineno-37-63" name="__codelineno-37-63" href="#__codelineno-37-63"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-37-64" name="__codelineno-37-64" href="#__codelineno-37-64"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
+<a id="__codelineno-37-64" name="__codelineno-37-64" href="#__codelineno-37-64"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
 <a id="__codelineno-37-65" name="__codelineno-37-65" href="#__codelineno-37-65"></a>
 <a id="__codelineno-37-66" name="__codelineno-37-66" href="#__codelineno-37-66"></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">AGEClient</span><span class="p">()</span>
 <a id="__codelineno-37-67" name="__codelineno-37-67" href="#__codelineno-37-67"></a>        <span class="n">conn</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">getconn</span><span class="p">()</span>
@@ -11551,7 +11579,7 @@
 <a id="__codelineno-37-220" name="__codelineno-37-220" href="#__codelineno-37-220"></a>            <span class="n">client</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">putconn</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="3-job-launcher-base-class">3. Job Launcher Base Class</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># src/api/launchers/base.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># api/app/launchers/base.py</span>
 <a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
@@ -11655,10 +11683,10 @@
 </code></pre></div>
 <h4 id="4-example-launchers">4. Example Launchers</h4>
 <p><strong>Category Refresh Launcher:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># src/api/launchers/category_refresh.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># api/app/launchers/category_refresh.py</span>
 <a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>
 <a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobLauncher</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
 <a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
 <a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">CategoryRefreshLauncher</span><span class="p">(</span><span class="n">JobLauncher</span><span class="p">):</span>
@@ -11693,10 +11721,10 @@
 <a id="__codelineno-39-36" name="__codelineno-39-36" href="#__codelineno-39-36"></a>        <span class="k">return</span> <span class="s2">&quot;vocab_refresh&quot;</span>
 </code></pre></div></p>
 <p><strong>Vocabulary Consolidation Launcher:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># src/api/launchers/vocab_consolidation.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># api/app/launchers/vocab_consolidation.py</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobLauncher</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
@@ -11757,11 +11785,11 @@
 <a id="__codelineno-40-62" name="__codelineno-40-62" href="#__codelineno-40-62"></a>        <span class="k">return</span> <span class="s2">&quot;vocab_consolidate&quot;</span>
 </code></pre></div></p>
 <h4 id="5-fastapi-integration">5. FastAPI Integration</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># In src/api/main.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># In api/app/main.py</span>
 <a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.services.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobScheduler</span>
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.launchers.category_refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoryRefreshLauncher</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.launchers.vocab_consolidation</span><span class="w"> </span><span class="kn">import</span> <span class="n">VocabConsolidationLauncher</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.services.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobScheduler</span>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.launchers.category_refresh</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoryRefreshLauncher</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.launchers.vocab_consolidation</span><span class="w"> </span><span class="kn">import</span> <span class="n">VocabConsolidationLauncher</span>
 <a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>
 <a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="c1"># At startup</span>
 <a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a><span class="nd">@app</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="s2">&quot;startup&quot;</span><span class="p">)</span>
@@ -11798,7 +11826,7 @@
 <h2 id="production-deployment-considerations">Production Deployment Considerations</h2>
 <h3 id="multi-worker-safety-critical">Multi-Worker Safety (Critical)</h3>
 <p><strong>Problem:</strong> In production, FastAPI runs with multiple Gunicorn workers:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>src.api.main:app
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>api.app.main:app
 </code></pre></div></p>
 <p>Each worker process runs the <code>startup_event</code>, creating <strong>N separate scheduler loops</strong>. Without coordination, all N schedulers will check schedules simultaneously, causing <strong>duplicate job creation</strong>.</p>
 <p><strong>Example (without advisory lock):</strong>
@@ -11837,7 +11865,7 @@
 - ✅ Zero configuration required</p>
 <p><strong>Testing multi-worker safety:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="c1"># Start with 4 workers</span>
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>src.api.main:app
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>api.app.main:app
 <a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>
 <a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="c1"># Watch logs - you should see only ONE worker per minute logging:</span>
 <a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a><span class="c1"># &quot;Acquired scheduler lock, proceeding with schedule check&quot;</span>
@@ -12035,7 +12063,7 @@
 </code></pre></div>
 <h3 id="multi-worker-testing-critical">Multi-Worker Testing (Critical)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># 1. Start API with 4 workers</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>src.api.main:app
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>gunicorn<span class="w"> </span>-w<span class="w"> </span><span class="m">4</span><span class="w"> </span>-k<span class="w"> </span>uvicorn.workers.UvicornWorker<span class="w"> </span>api.app.main:app
 <a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
 <a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># 2. Watch logs for lock acquisition pattern (should see only ONE worker per minute)</span>
 <a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;scheduler lock&quot;</span>

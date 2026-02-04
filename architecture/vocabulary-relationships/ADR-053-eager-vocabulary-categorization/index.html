@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9811,7 +9839,7 @@
 - <strong>After:</strong> <code>llm_generated</code> is transient (milliseconds), immediately becomes <code>computed</code></p>
 <h3 id="implementation">Implementation</h3>
 <p><strong>Modify ingestion pipeline:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/lib/ingestion.py (or llm_extractor.py)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># api/app/lib/ingestion.py (or llm_extractor.py)</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_extracted_relationships</span><span class="p">(</span><span class="n">relationships</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">db_client</span><span class="p">):</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Process and categorize LLM-extracted relationships.&quot;&quot;&quot;</span>

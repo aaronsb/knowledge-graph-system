@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10455,8 +10483,8 @@ Create a <strong>universal, explorer-agnostic query builder</strong> that produc
 </ul>
 <p><strong>Files:</strong>
 - <code>viz-app/src/components/shared/SearchBar.tsx</code> (enhance)
-- <code>viz-app/src/api/client.ts</code> (add smartSearch method)
-- <code>src/api/routes/queries.py</code> (add smart_search endpoint)</p>
+- <code>viz-app/api/app/client.ts</code> (add smartSearch method)
+- <code>api/app/routes/queries.py</code> (add smart_search endpoint)</p>
 <p><strong>Time Estimate:</strong> 1-2 days</p>
 <hr />
 <h3 id="phase-2-queryresult-refactoring">Phase 2: QueryResult Refactoring</h3>
@@ -10486,7 +10514,7 @@ Create a <strong>universal, explorer-agnostic query builder</strong> that produc
 - <code>viz-app/src/components/query/CypherEditor.tsx</code> (new)
 - <code>viz-app/src/components/query/QueryBuilder.tsx</code> (new)
 - <code>viz-app/src/lib/monaco-opencypher.ts</code> (new language definition)
-- <code>src/api/routes/queries.py</code> (add cypher_query endpoint)</p>
+- <code>api/app/routes/queries.py</code> (add cypher_query endpoint)</p>
 <p><strong>Dependencies:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;monaco-editor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^0.52.0&quot;</span><span class="p">,</span>
@@ -10514,7 +10542,7 @@ Create a <strong>universal, explorer-agnostic query builder</strong> that produc
 - <code>viz-app/src/components/query/VisualBlockBuilder.tsx</code> (new)
 - <code>viz-app/src/components/query/blocks/</code> (new directory)
 - <code>viz-app/src/lib/block-compiler.ts</code> (AST → openCypher)
-- <code>src/api/routes/queries.py</code> (add visual_query endpoint)</p>
+- <code>api/app/routes/queries.py</code> (add visual_query endpoint)</p>
 <p><strong>Dependencies:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;react-flow-renderer&quot;</span><span class="p">:</span><span class="w"> </span><span class="nt">&quot;^10.3.17&quot;</span>

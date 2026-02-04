@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -2951,10 +2979,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-api-server-layer-srcapi" class="md-nav__link">
+  <a href="#1-api-server-layer-apiapp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. API Server Layer (src/api/)
+        1. API Server Layer (api/app/)
       
     </span>
   </a>
@@ -2962,10 +2990,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-ai-provider-layer-srcapilibai_providerspy" class="md-nav__link">
+  <a href="#2-ai-provider-layer-apiapplibai_providerspy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. AI Provider Layer (src/api/lib/ai_providers.py)
+        2. AI Provider Layer (api/app/lib/ai_providers.py)
       
     </span>
   </a>
@@ -2973,10 +3001,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-ingestion-library-srcapilib" class="md-nav__link">
+  <a href="#3-ingestion-library-apiapplib" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Ingestion Library (src/api/lib/)
+        3. Ingestion Library (api/app/lib/)
       
     </span>
   </a>
@@ -9478,10 +9506,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-api-server-layer-srcapi" class="md-nav__link">
+  <a href="#1-api-server-layer-apiapp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. API Server Layer (src/api/)
+        1. API Server Layer (api/app/)
       
     </span>
   </a>
@@ -9489,10 +9517,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-ai-provider-layer-srcapilibai_providerspy" class="md-nav__link">
+  <a href="#2-ai-provider-layer-apiapplibai_providerspy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. AI Provider Layer (src/api/lib/ai_providers.py)
+        2. AI Provider Layer (api/app/lib/ai_providers.py)
       
     </span>
   </a>
@@ -9500,10 +9528,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-ingestion-library-srcapilib" class="md-nav__link">
+  <a href="#3-ingestion-library-apiapplib" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Ingestion Library (src/api/lib/)
+        3. Ingestion Library (api/app/lib/)
       
     </span>
   </a>
@@ -9828,7 +9856,7 @@
 <a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>         └────────────────┘  └────────────────────┘
 </code></pre></div>
 <h2 id="core-components">Core Components</h2>
-<h3 id="1-api-server-layer-srcapi">1. API Server Layer (<code>src/api/</code>)</h3>
+<h3 id="1-api-server-layer-apiapp">1. API Server Layer (<code>api/app/</code>)</h3>
 <p><strong>FastAPI REST Server</strong> (Phase 1):
 - <strong>Routes</strong>: Ingestion (<code>POST /ingest</code>), job management (<code>GET/POST /jobs/*</code>)
 - <strong>Services</strong>: Job queue (abstract interface), content hasher (deduplication)
@@ -9851,7 +9879,7 @@
 - Returns existing job results if already completed
 - Force flag to override when intentional</p>
 <p>See <a href="infrastructure/ADR-012-api-server-architecture.md">ADR-012</a> for detailed design.</p>
-<h3 id="2-ai-provider-layer-srcapilibai_providerspy">2. AI Provider Layer (<code>src/api/lib/ai_providers.py</code>)</h3>
+<h3 id="2-ai-provider-layer-apiapplibai_providerspy">2. AI Provider Layer (<code>api/app/lib/ai_providers.py</code>)</h3>
 <p>Modular abstraction for LLM providers:</p>
 <p><strong>OpenAI Provider:</strong>
 - Extraction: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
@@ -9859,7 +9887,7 @@
 <p><strong>Anthropic Provider:</strong>
 - Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
 - Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)</p>
-<h3 id="3-ingestion-library-srcapilib">3. Ingestion Library (<code>src/api/lib/</code>)</h3>
+<h3 id="3-ingestion-library-apiapplib">3. Ingestion Library (<code>api/app/lib/</code>)</h3>
 <p><strong>Components:</strong>
 - <code>parser.py</code> - Document parsing (text, PDF, DOCX)
 - <code>llm_extractor.py</code> - LLM-based concept extraction

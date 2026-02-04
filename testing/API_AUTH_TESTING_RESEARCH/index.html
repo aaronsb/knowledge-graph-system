@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9526,13 +9554,13 @@
 - Fine-grained permissions (<code>require_permission()</code>)
 - Scope support (global, instance, filter-scoped)</p>
 <p><strong>Key Files:</strong>
-- <code>src/api/dependencies/auth.py</code> - FastAPI dependency injection for auth
-- <code>src/api/lib/auth.py</code> - Core auth logic
-- <code>src/api/middleware/auth.py</code> - Legacy placeholder (Phase 1)
-- <code>src/api/models/auth.py</code> - Auth data models
-- <code>src/api/routes/auth.py</code> - Auth endpoints
-- <code>src/api/routes/oauth.py</code> - OAuth endpoints
-- <code>src/api/routes/rbac.py</code> - RBAC management</p>
+- <code>api/app/dependencies/auth.py</code> - FastAPI dependency injection for auth
+- <code>api/app/lib/auth.py</code> - Core auth logic
+- <code>api/app/middleware/auth.py</code> - Legacy placeholder (Phase 1)
+- <code>api/app/models/auth.py</code> - Auth data models
+- <code>api/app/routes/auth.py</code> - Auth endpoints
+- <code>api/app/routes/oauth.py</code> - OAuth endpoints
+- <code>api/app/routes/rbac.py</code> - RBAC management</p>
 <h2 id="fastapi-auth-testing-best-practices-2025">FastAPI Auth Testing Best Practices (2025)</h2>
 <h3 id="1-fixture-based-test-clients">1. Fixture-Based Test Clients</h3>
 <p><strong>Pattern:</strong>
@@ -9566,7 +9594,7 @@
 <h3 id="2-dependency-override-pattern">2. Dependency Override Pattern</h3>
 <p><strong>Pattern:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.dependencies.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">override_auth</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
@@ -9627,10 +9655,10 @@
 </code></pre></div></p>
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Run tests with coverage report</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>src/api<span class="w"> </span>--cov-report<span class="o">=</span>html
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>api/app<span class="w"> </span>--cov-report<span class="o">=</span>html
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Focus on specific modules</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>pytest<span class="w"> </span>tests/test_auth.py<span class="w"> </span>--cov<span class="o">=</span>src/api/dependencies/auth<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>pytest<span class="w"> </span>tests/test_auth.py<span class="w"> </span>--cov<span class="o">=</span>api/app/dependencies/auth<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
 </code></pre></div></p>
 <h3 id="6-integration-vs-unit-testing">6. Integration vs Unit Testing</h3>
 <p><strong>Unit Tests:</strong>

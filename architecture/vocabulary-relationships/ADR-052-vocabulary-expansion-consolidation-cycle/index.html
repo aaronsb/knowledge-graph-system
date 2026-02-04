@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10343,7 +10371,7 @@
 <p>The question is not <em>whether</em> to add vocabulary, but <strong>when and how</strong>.</p>
 <h2 id="the-two-phase-cycle">The Two-Phase Cycle</h2>
 <h3 id="phase-1-optimistic-expansion-learningwaking-state">Phase 1: Optimistic Expansion (Learning/Waking State)</h3>
-<p><strong>Location</strong>: <code>src/api/lib/ingestion.py:398-424</code></p>
+<p><strong>Location</strong>: <code>api/app/lib/ingestion.py:398-424</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LLM suggests new relationship type</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">canonical_type</span> <span class="o">=</span> <span class="n">llm_rel_type</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">category</span> <span class="o">=</span> <span class="s2">&quot;llm_generated&quot;</span>
@@ -10371,7 +10399,7 @@
 3. Low cost: vocabulary metadata is cheap (just a row + graph node)
 4. Aligns with Sutton's Bitter Lesson: general methods &gt; hand-coded restrictions</p>
 <h3 id="phase-2-consolidation-sleepdreaming-state">Phase 2: Consolidation (Sleep/Dreaming State)</h3>
-<p><strong>Location</strong>: <code>src/api/services/vocabulary_manager.py:871-964</code> (ADR-050, implemented 2025-10-31)</p>
+<p><strong>Location</strong>: <code>api/app/services/vocabulary_manager.py:871-964</code> (ADR-050, implemented 2025-10-31)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">prune_unused_concepts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    Prune vocabulary types with 0 uses (excludes protected builtin types).</span>
@@ -10498,22 +10526,22 @@
 <tbody>
 <tr>
 <td><strong>Expansion</strong></td>
-<td><code>src/api/lib/ingestion.py:408</code></td>
+<td><code>api/app/lib/ingestion.py:408</code></td>
 <td><code>age_client.add_edge_type()</code></td>
 </tr>
 <tr>
 <td><strong>Validation</strong></td>
-<td><code>src/api/lib/ingestion.py:438</code></td>
+<td><code>api/app/lib/ingestion.py:438</code></td>
 <td><code>create_concept_relationship()</code></td>
 </tr>
 <tr>
 <td><strong>Consolidation</strong></td>
-<td><code>src/api/services/vocabulary_manager.py:871</code></td>
+<td><code>api/app/services/vocabulary_manager.py:871</code></td>
 <td><code>prune_unused_concepts()</code></td>
 </tr>
 <tr>
 <td><strong>Integration</strong></td>
-<td><code>src/api/routes/vocabulary.py:429</code></td>
+<td><code>api/app/routes/vocabulary.py:429</code></td>
 <td>Consolidation endpoint</td>
 </tr>
 </tbody>

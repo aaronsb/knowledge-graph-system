@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10423,7 +10451,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Document → Chunking → LLM Extraction → Graph Upsert
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>           (1000w)    (GPT-4o/Claude)   (PostgreSQL+AGE)
 </code></pre></div></p>
-<p><strong>Chunking System</strong> (<code>src/api/lib/chunker.py</code>):
+<p><strong>Chunking System</strong> (<code>api/app/lib/chunker.py</code>):
 - <strong>Target:</strong> 1000 words/chunk (configurable: 800-1500)
 - <strong>Overlap:</strong> 200 words between chunks for context
 - <strong>Smart Boundaries:</strong> Paragraph &gt; Sentence &gt; Pause &gt; Hard cut
@@ -11423,7 +11451,7 @@
 <strong>Implemented:</strong> 2025-10-22</p>
 <h2 id="implementation-status">Implementation Status</h2>
 <p><strong>Phase 1 (MVP) - Completed:</strong>
-- ✅ OllamaProvider class extending AIProvider (<code>src/api/lib/ai_providers.py</code>)
+- ✅ OllamaProvider class extending AIProvider (<code>api/app/lib/ai_providers.py</code>)
 - ✅ Database migration 007 for extraction config fields (<code>schema/migrations/007_add_local_extraction_providers.sql</code>)
 - ✅ CLI commands for Ollama configuration (<code>client/src/cli/ai-config.ts</code>)
 - ✅ Hardware-optimized Docker Compose profiles (<code>docker-compose.ollama.yml</code>)

@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9829,7 +9857,7 @@
 <h3 id="recent-incidents">Recent Incidents</h3>
 <ol>
 <li><strong>OAuth Token Exchange (ADR-055 Implementation):</strong></li>
-<li><code>src/api/lib/oauth_utils.py:253</code> - <code>is_token_expired()</code> function</li>
+<li><code>api/app/lib/oauth_utils.py:253</code> - <code>is_token_expired()</code> function</li>
 <li>Used <code>datetime.utcnow()</code> (naive) to compare with PostgreSQL timestamps (aware)</li>
 <li>Result: 500 errors on <code>POST /auth/oauth/token</code></li>
 <li>
@@ -9895,7 +9923,7 @@
 </ol>
 <h2 id="decision">Decision</h2>
 <h3 id="1-create-central-datetime-utility-module">1. Create Central Datetime Utility Module</h3>
-<p><strong>New file: <code>src/api/lib/datetime_utils.py</code></strong></p>
+<p><strong>New file: <code>api/app/lib/datetime_utils.py</code></strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="sd">Timezone-Aware Datetime Utilities (ADR-056)</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
@@ -10093,7 +10121,7 @@
 <a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>
 <a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>
 <a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>    <span class="n">src_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;src/api&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>    <span class="n">src_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;api/app&#39;</span><span class="p">)</span>
 <a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    <span class="n">errors_found</span> <span class="o">=</span> <span class="kc">False</span>
 <a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
 <a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">for</span> <span class="n">py_file</span> <span class="ow">in</span> <span class="n">src_path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s1">&#39;*.py&#39;</span><span class="p">):</span>
@@ -10146,14 +10174,14 @@
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">expires_at</span>
 </code></pre></div></p>
 <p><strong>After (ADR-056 pattern):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">utcnow</span><span class="p">,</span> <span class="n">is_expired</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">utcnow</span><span class="p">,</span> <span class="n">is_expired</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_token_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="k">return</span> <span class="n">is_expired</span><span class="p">(</span><span class="n">expires_at</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Even better (semantic naming):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># oauth_utils.py</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">timedelta_from_now</span><span class="p">,</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">is_expired</span> <span class="k">as</span> <span class="n">is_datetime_expired</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span>
@@ -10180,15 +10208,15 @@
 <h2 id="implementation">Implementation</h2>
 <h3 id="file-changes">File Changes</h3>
 <p><strong>New files:</strong>
-- <code>src/api/lib/datetime_utils.py</code> - Central datetime utilities
+- <code>api/app/lib/datetime_utils.py</code> - Central datetime utilities
 - <code>scripts/lint_datetimes.py</code> - Linter for unsafe patterns</p>
 <p><strong>Modified files:</strong>
-- <code>src/api/lib/oauth_utils.py</code> - Use datetime_utils instead of direct datetime calls</p>
+- <code>api/app/lib/oauth_utils.py</code> - Use datetime_utils instead of direct datetime calls</p>
 <h3 id="testing">Testing</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># tests/test_datetime_utils.py</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">timedelta</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.datetime_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">utcnow</span><span class="p">,</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">ensure_utc</span><span class="p">,</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">is_expired</span><span class="p">,</span>
@@ -10253,7 +10281,7 @@
 <li>
 <p><strong>Consistent Patterns:</strong></p>
 </li>
-<li>✅ Single import: <code>from src.api.lib.datetime_utils import utcnow</code></li>
+<li>✅ Single import: <code>from api.app.lib.datetime_utils import utcnow</code></li>
 <li>✅ Semantic function names (<code>is_expired</code> vs manual comparison)</li>
 <li>
 <p>✅ Clear intent in code</p>
@@ -10345,19 +10373,19 @@
 <h2 id="migration-checklist">Migration Checklist</h2>
 <h3 id="immediate-adr-056-implementation-completed">Immediate (ADR-056 Implementation) ✅ COMPLETED</h3>
 <ul>
-<li>[x] Create <code>src/api/lib/datetime_utils.py</code></li>
+<li>[x] Create <code>api/app/lib/datetime_utils.py</code></li>
 <li>[x] Create <code>scripts/lint_datetimes.py</code></li>
 <li>[x] Add comprehensive tests for datetime_utils (32 tests, 100% pass)</li>
 <li>[x] Update critical security modules:</li>
-<li>[x] <code>src/api/lib/auth.py</code> (JWT token expiration) - 2 violations fixed</li>
-<li>[x] <code>src/api/routes/oauth.py</code> (OAuth token rotation) - 1 violation fixed</li>
+<li>[x] <code>api/app/lib/auth.py</code> (JWT token expiration) - 2 violations fixed</li>
+<li>[x] <code>api/app/routes/oauth.py</code> (OAuth token rotation) - 1 violation fixed</li>
 <li>[x] Update audit/checkpoint modules:</li>
-<li>[x] <code>src/api/lib/checkpoint.py</code> - 1 violation fixed</li>
-<li>[x] <code>src/api/lib/query_facade.py</code> - 1 violation fixed</li>
+<li>[x] <code>api/app/lib/checkpoint.py</code> - 1 violation fixed</li>
+<li>[x] <code>api/app/lib/query_facade.py</code> - 1 violation fixed</li>
 <li>[x] Update job management routes:</li>
-<li>[x] <code>src/api/routes/ingest.py</code> - 2 violations fixed</li>
-<li>[x] <code>src/api/routes/ingest_image.py</code> - 3 violations fixed</li>
-<li>[x] <code>src/api/routes/jobs.py</code> - 3 violations fixed</li>
+<li>[x] <code>api/app/routes/ingest.py</code> - 2 violations fixed</li>
+<li>[x] <code>api/app/routes/ingest_image.py</code> - 3 violations fixed</li>
+<li>[x] <code>api/app/routes/jobs.py</code> - 3 violations fixed</li>
 <li>[x] Document in ADR-056 (this file)</li>
 </ul>
 <p><strong>Progress: 13 of 34 violations fixed (38% complete)</strong>
@@ -10366,16 +10394,16 @@
 <h3 id="short-term-next-sprint">Short-term (Next Sprint)</h3>
 <ul>
 <li>[ ] Migrate remaining utility modules:</li>
-<li>[ ] <code>src/api/lib/backup_streaming.py</code> (1 violation)</li>
-<li>[ ] <code>src/api/lib/gexf_exporter.py</code> (2 violations)</li>
-<li>[ ] <code>src/api/logging_config.py</code> (1 violation)</li>
-<li>[ ] <code>src/api/main.py</code> (3 violations)</li>
-<li>[ ] <code>src/api/services/admin_service.py</code> (1 violation)</li>
-<li>[ ] <code>src/api/services/scheduled_jobs_manager.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/lib/backup_streaming.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/lib/gexf_exporter.py</code> (2 violations)</li>
+<li>[ ] <code>api/app/logging_config.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/main.py</code> (3 violations)</li>
+<li>[ ] <code>api/app/services/admin_service.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/services/scheduled_jobs_manager.py</code> (1 violation)</li>
 <li>[ ] Migrate worker modules:</li>
-<li>[ ] <code>src/api/services/embedding_worker.py</code> (10 violations - performance timing)</li>
-<li>[ ] <code>src/api/workers/ingestion_worker.py</code> (1 violation)</li>
-<li>[ ] <code>src/api/workers/restore_worker.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/services/embedding_worker.py</code> (10 violations - performance timing)</li>
+<li>[ ] <code>api/app/workers/ingestion_worker.py</code> (1 violation)</li>
+<li>[ ] <code>api/app/workers/restore_worker.py</code> (1 violation)</li>
 <li>[ ] Add linter to pre-commit hook (optional)</li>
 <li>[ ] Document in <code>docs/guides/DEVELOPMENT.md</code></li>
 </ul>
@@ -10400,7 +10428,7 @@
 <li><strong>2025-11-03:</strong> Decided on utility module approach (simple, no dependencies)</li>
 <li><strong>2025-11-03:</strong> Linter chosen over mypy plugin (faster to implement)</li>
 <li><strong>2025-11-04:</strong> ADR-056 implementation completed</li>
-<li>Created <code>src/api/lib/datetime_utils.py</code> with 8 utility functions</li>
+<li>Created <code>api/app/lib/datetime_utils.py</code> with 8 utility functions</li>
 <li>Created <code>scripts/lint_datetimes.py</code> linter (detects 3 unsafe patterns)</li>
 <li>Fixed 13 critical violations in auth, OAuth, jobs, and audit modules</li>
 <li>Added 32 comprehensive tests (100% pass rate)</li>

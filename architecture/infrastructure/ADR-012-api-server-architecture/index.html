@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10067,10 +10095,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Development</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">cd</span><span class="w"> </span>/home/aaron/Projects/ai/knowledge-graph-system
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>uvicorn<span class="w"> </span>src.api.main:app<span class="w"> </span>--reload<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--reload<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Production (future)</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>uvicorn<span class="w"> </span>src.api.main:app<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">4</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">4</span>
 </code></pre></div>
 <h3 id="job-queue-lifecycle">Job Queue Lifecycle</h3>
 <ol>

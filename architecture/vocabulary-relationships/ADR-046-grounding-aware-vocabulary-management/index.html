@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10595,14 +10623,14 @@
 <h2 id="implementation">Implementation</h2>
 <h3 id="phase-1-enhanced-scoring-week-1">Phase 1: Enhanced Scoring (Week 1)</h3>
 <p><strong>1. Extend <code>EdgeTypeScore</code> dataclass</strong></p>
-<p>File: <code>src/api/lib/vocabulary_scoring.py</code></p>
+<p>File: <code>api/app/lib/vocabulary_scoring.py</code></p>
 <p>Add new fields:
 - <code>grounding_contribution: float</code>
 - <code>synonym_cluster_size: int</code>
 - <code>avg_confidence: float</code>
 - <code>semantic_diversity: float</code></p>
 <p><strong>2. Implement grounding contribution calculation</strong></p>
-<p>File: <code>src/api/lib/vocabulary_scoring.py</code></p>
+<p>File: <code>api/app/lib/vocabulary_scoring.py</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_contribution</span><span class="p">(</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    <span class="n">edge_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="n">age_client</span>
@@ -10614,7 +10642,7 @@
 <p>Calculate all new metrics for each edge type.</p>
 <h3 id="phase-2-embedding-based-synonym-detection-week-2">Phase 2: Embedding-Based Synonym Detection (Week 2)</h3>
 <p><strong>1. Implement synonym clustering</strong></p>
-<p>File: <code>src/api/lib/synonym_detector.py</code></p>
+<p>File: <code>api/app/lib/synonym_detector.py</code></p>
 <p>Update to use embeddings instead of string similarity:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">detect_synonyms_semantic</span><span class="p">(</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">age_client</span><span class="p">,</span>
@@ -10637,7 +10665,7 @@
 </code></pre></div>
 <h3 id="phase-3-dynamic-vocabulary-curation-week-3">Phase 3: Dynamic Vocabulary Curation (Week 3)</h3>
 <p><strong>1. Implement vocabulary subset selection</strong></p>
-<p>File: <code>src/api/lib/vocabulary_curator.py</code> (new)</p>
+<p>File: <code>api/app/lib/vocabulary_curator.py</code> (new)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_extraction_vocabulary</span><span class="p">(</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">document_context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">max_types</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
@@ -10648,7 +10676,7 @@
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>2. Update extraction prompt to use curated vocabulary</strong></p>
-<p>File: <code>src/api/lib/llm_extractor.py</code></p>
+<p>File: <code>api/app/lib/llm_extractor.py</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Current (shows all types)</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">formatted_prompt</span> <span class="o">=</span> <span class="n">EXTRACTION_PROMPT_TEMPLATE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">relationship_types</span><span class="o">=</span><span class="n">RELATIONSHIP_TYPES_LIST</span>
@@ -10666,7 +10694,7 @@
 </code></pre></div>
 <h3 id="phase-4-grounding-aware-merge-recommendations-week-4">Phase 4: Grounding-Aware Merge Recommendations (Week 4)</h3>
 <p><strong>1. Update merge recommendation algorithm</strong></p>
-<p>File: <code>src/api/lib/pruning_strategies.py</code></p>
+<p>File: <code>api/app/lib/pruning_strategies.py</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_recommendations_grounding_aware</span><span class="p">(</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">age_client</span>
@@ -10675,7 +10703,7 @@
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>2. Update merge execution to preserve embeddings</strong></p>
-<p>File: <code>src/api/lib/age_client.py</code></p>
+<p>File: <code>api/app/lib/age_client.py</code></p>
 <p>Update <code>merge_edge_types()</code> to handle embeddings (per ADR-045):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">merge_edge_types</span><span class="p">(</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="bp">self</span><span class="p">,</span>
@@ -10698,7 +10726,7 @@
 </code></pre></div>
 <h3 id="phase-5-admin-endpoints-week-5">Phase 5: Admin Endpoints (Week 5)</h3>
 <p><strong>1. Vocabulary analysis endpoint</strong></p>
-<p>File: <code>src/api/routes/vocabulary.py</code></p>
+<p>File: <code>api/app/routes/vocabulary.py</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/vocab/analysis&quot;</span><span class="p">)</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_vocabulary</span><span class="p">():</span>
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

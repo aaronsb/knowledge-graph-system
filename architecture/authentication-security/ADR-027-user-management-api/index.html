@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10609,11 +10637,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pip<span class="w"> </span>install<span class="w"> </span>passlib<span class="o">[</span>bcrypt<span class="o">]</span><span class="w"> </span>python-jose<span class="o">[</span>cryptography<span class="o">]</span><span class="w"> </span>python-multipart
 </code></pre></div></p>
 <p><strong>Implementation Order:</strong>
-1. Create <code>src/api/lib/auth.py</code> - Password hashing, JWT utilities
-2. Create <code>src/api/models/auth.py</code> - Pydantic request/response models
-3. Create <code>src/api/routes/auth.py</code> - Public endpoints (register, login)
-4. Create <code>src/api/dependencies/auth.py</code> - <code>get_current_user</code> dependency
-5. Add auth router to <code>src/api/main.py</code>
+1. Create <code>api/app/lib/auth.py</code> - Password hashing, JWT utilities
+2. Create <code>api/app/models/auth.py</code> - Pydantic request/response models
+3. Create <code>api/app/routes/auth.py</code> - Public endpoints (register, login)
+4. Create <code>api/app/dependencies/auth.py</code> - <code>get_current_user</code> dependency
+5. Add auth router to <code>api/app/main.py</code>
 6. Test with curl/Postman</p>
 <h3 id="phase-2-user-management-week-1">Phase 2: User Management (Week 1)</h3>
 <p><strong>Implementation Order:</strong>

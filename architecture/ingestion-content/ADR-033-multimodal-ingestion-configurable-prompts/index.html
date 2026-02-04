@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10506,7 +10534,7 @@
 </code></pre></div>
 <h3 id="phase-1-multimodal-image-ingestion-immediate">Phase 1: Multimodal Image Ingestion (Immediate)</h3>
 <h4 id="image-detection-processing">Image Detection &amp; Processing</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># src/api/routes/ingest.py (line ~156)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># api/app/routes/ingest.py (line ~156)</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_image_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if file is a supported image format&quot;&quot;&quot;</span>
@@ -10539,7 +10567,7 @@
 <a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="c1"># ...</span>
 </code></pre></div>
 <h4 id="default-image-description-prompt-phase-1">Default Image Description Prompt (Phase 1)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># src/api/lib/ai_providers.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># api/app/lib/ai_providers.py</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">IMAGE_DESCRIPTION_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Analyze this image for knowledge extraction. Provide a detailed description:</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
@@ -10556,7 +10584,7 @@
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="s2">Be thorough - capture information density over brevity. Focus on facts and structure, not interpretation.&quot;&quot;&quot;</span>
 </code></pre></div>
 <h4 id="aiprovider-interface-extension">AIProvider Interface Extension</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/lib/ai_providers.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># api/app/lib/ai_providers.py</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">AIProvider</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="nd">@abstractmethod</span>
@@ -10698,7 +10726,7 @@
 <a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">);</span>
 </code></pre></div>
 <h4 id="api-endpoints-for-prompt-management">API Endpoints for Prompt Management</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># src/api/routes/admin_prompts.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># api/app/routes/admin_prompts.py</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/prompts&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">201</span><span class="p">)</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_prompt_profile</span><span class="p">(</span>
@@ -10758,7 +10786,7 @@
 <a id="__codelineno-7-58" name="__codelineno-7-58" href="#__codelineno-7-58"></a>    <span class="k">pass</span>
 </code></pre></div>
 <h4 id="prompt-resolution-logic">Prompt Resolution Logic</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># src/api/lib/prompt_resolver.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># api/app/lib/prompt_resolver.py</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">PromptResolver</span><span class="p">:</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve which prompt to use for a given operation&quot;&quot;&quot;</span>
@@ -10809,7 +10837,7 @@
 <a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a>        <span class="k">return</span> <span class="n">FALLBACK_PROMPTS</span><span class="p">[</span><span class="n">prompt_type</span><span class="p">]</span>
 </code></pre></div>
 <h4 id="usage-in-ingestion">Usage in Ingestion</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># src/api/routes/ingest.py (Phase 2 enhancement)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># api/app/routes/ingest.py (Phase 2 enhancement)</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_document</span><span class="p">(</span>
@@ -11190,7 +11218,7 @@
 <p><strong>Total time:</strong> Linear with number of images × (upload + vision + extraction)</p>
 <h3 id="proposed-media-type-abstraction-batch-queue">Proposed: Media Type Abstraction &amp; Batch Queue</h3>
 <h4 id="media-type-registry">Media Type Registry</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># src/api/lib/media_types.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># api/app/lib/media_types.py</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
@@ -11275,7 +11303,7 @@
 <a id="__codelineno-16-83" name="__codelineno-16-83" href="#__codelineno-16-83"></a>        <span class="p">}</span>
 </code></pre></div>
 <h4 id="temporary-media-cache">Temporary Media Cache</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># src/api/lib/media_cache.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># api/app/lib/media_cache.py</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -11369,7 +11397,7 @@
 <a id="__codelineno-17-92" name="__codelineno-17-92" href="#__codelineno-17-92"></a>                <span class="k">pass</span>  <span class="c1"># Corrupt file, skip</span>
 </code></pre></div>
 <h4 id="batch-ingestion-flow">Batch Ingestion Flow</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># src/api/routes/ingest.py - Enhanced batch endpoint</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># api/app/routes/ingest.py - Enhanced batch endpoint</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/batch&quot;</span><span class="p">)</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_batch</span><span class="p">(</span>
@@ -11475,7 +11503,7 @@
 <a id="__codelineno-18-104" name="__codelineno-18-104" href="#__codelineno-18-104"></a>    <span class="p">}</span>
 </code></pre></div>
 <h4 id="batch-worker">Batch Worker</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># src/api/workers/batch_ingestion_worker.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># api/app/workers/batch_ingestion_worker.py</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_batch_ingestion_worker</span><span class="p">(</span><span class="n">job_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">service_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

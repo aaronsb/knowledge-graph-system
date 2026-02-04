@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10542,7 +10570,7 @@
 <li>Each hop is a defense layer that can detect/block attack</li>
 </ol>
 <p><strong>Implementation:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># src/api/lib/encrypted_keys.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># api/app/lib/encrypted_keys.py</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_system_api_key</span><span class="p">(</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">db_connection</span><span class="p">,</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -10781,7 +10809,7 @@
 </code></pre></div>
 <h3 id="phase-3-application-code">Phase 3: Application Code</h3>
 <h4 id="load-secrets-from-files">Load Secrets from Files</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># src/api/lib/secrets.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># api/app/lib/secrets.py</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="sd">Secrets management with Docker/Podman secrets support.</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="sd">Falls back to environment variables for development.</span>
@@ -10849,7 +10877,7 @@
 <a id="__codelineno-11-66" name="__codelineno-11-66" href="#__codelineno-11-66"></a><span class="n">POSTGRES_PASSWORD</span> <span class="o">=</span> <span class="n">SecretManager</span><span class="o">.</span><span class="n">load_secret</span><span class="p">(</span><span class="s2">&quot;postgres_password&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="encrypted-key-storage">Encrypted Key Storage</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># src/api/lib/encrypted_keys.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># api/app/lib/encrypted_keys.py</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="sd">System API key storage with encryption at rest (shard-scoped).</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="sd">&quot;&quot;&quot;</span>
@@ -10963,7 +10991,7 @@
 <a id="__codelineno-12-112" name="__codelineno-12-112" href="#__codelineno-12-112"></a>            <span class="p">]</span>
 </code></pre></div>
 <h4 id="api-endpoints">API Endpoints</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># src/api/routes/admin_keys.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># api/app/routes/admin_keys.py</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="sd">Admin API endpoints for system-wide LLM API key management.</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="sd">&quot;&quot;&quot;</span>
@@ -11248,7 +11276,7 @@
 <h3 id="design-for-pluggability">Design for Pluggability</h3>
 <p>The implementation uses an <strong>abstraction layer</strong> to allow swapping secret backends without changing application code. This "knockout" preserves the open-source nature while enabling deployments adapted by operations teams to their specific environments.</p>
 <h4 id="abstract-interface">Abstract Interface</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># src/api/lib/secret_backend.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># api/app/lib/secret_backend.py</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="sd">Abstract interface for secret storage backends.</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="sd">Allows plugging in different implementations without code changes.</span>
@@ -11325,7 +11353,7 @@
 <a id="__codelineno-16-75" name="__codelineno-16-75" href="#__codelineno-16-75"></a>        <span class="k">pass</span>
 </code></pre></div>
 <h4 id="implementation-1-dockerpodman-default">Implementation 1: Docker/Podman (Default)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># src/api/lib/backends/container_secrets.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># api/app/lib/backends/container_secrets.py</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="sd">Docker/Podman secrets backend (ADR-031 Phase 1).</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="sd">Read-only access to /run/secrets/* files.</span>
@@ -11380,7 +11408,7 @@
 <a id="__codelineno-17-53" name="__codelineno-17-53" href="#__codelineno-17-53"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">secrets_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">secrets_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">R_OK</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="implementation-2-hashicorp-vault-open-source">Implementation 2: HashiCorp Vault (Open Source)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># src/api/lib/backends/vault_secrets.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># api/app/lib/backends/vault_secrets.py</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="sd">HashiCorp Vault backend (open source or enterprise).</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="sd">Supports dynamic secrets, rotation, and audit logging.</span>
@@ -11480,7 +11508,7 @@
 <a id="__codelineno-18-98" name="__codelineno-18-98" href="#__codelineno-18-98"></a>            <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
 <h4 id="implementation-3-cloud-kms-for-cloud-deployments">Implementation 3: Cloud KMS (For Cloud Deployments)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># src/api/lib/backends/cloud_kms_secrets.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># api/app/lib/backends/cloud_kms_secrets.py</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="sd">Cloud KMS backend - works with AWS, GCP, Azure.</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="sd">Uses cloud-provider SDKs (boto3, google-cloud-kms, azure-keyvault).</span>
@@ -11550,7 +11578,7 @@
 <a id="__codelineno-19-68" name="__codelineno-19-68" href="#__codelineno-19-68"></a>    <span class="c1"># ... (delete_secret, list_secrets, health_check implementations)</span>
 </code></pre></div>
 <h4 id="factory-pattern-for-backend-selection">Factory Pattern for Backend Selection</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># src/api/lib/secrets.py (Updated with backend support)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># api/app/lib/secrets.py (Updated with backend support)</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="sd">Secrets management with pluggable backends.</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="sd">&quot;&quot;&quot;</span>
@@ -11727,10 +11755,10 @@
 </ul>
 <h3 id="backend-api-team">Backend (API Team)</h3>
 <ul>
-<li>[ ] Create <code>src/api/lib/secrets.py</code> (secret loading utility)</li>
-<li>[ ] Create <code>src/api/lib/encrypted_keys.py</code> (encryption layer for system keys)</li>
-<li>[ ] Update <code>src/api/lib/auth.py</code> to load JWT from secret</li>
-<li>[ ] Create <code>src/api/routes/admin_keys.py</code> (admin key management endpoints)</li>
+<li>[ ] Create <code>api/app/lib/secrets.py</code> (secret loading utility)</li>
+<li>[ ] Create <code>api/app/lib/encrypted_keys.py</code> (encryption layer for system keys)</li>
+<li>[ ] Update <code>api/app/lib/auth.py</code> to load JWT from secret</li>
+<li>[ ] Create <code>api/app/routes/admin_keys.py</code> (admin key management endpoints)</li>
 <li>[ ] Update database schema with <code>system_api_keys</code> table</li>
 <li>[ ] Add key validation on upload (test with provider API)</li>
 <li>[ ] Update AI provider initialization to check encrypted store first, then .env fallback</li>

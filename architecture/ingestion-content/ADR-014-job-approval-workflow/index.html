@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10254,7 +10282,7 @@
 - Add <code>limit</code> and <code>offset</code> for pagination
 - Return jobs with analysis included</p>
 <h3 id="analysis-service">Analysis Service</h3>
-<p>Create <code>src/api/services/job_analysis.py</code>:
+<p>Create <code>api/app/services/job_analysis.py</code>:
 - Port cost estimation logic from <code>scripts/ingest.sh</code>
 - Calculate file stats (size, word count)
 - Estimate chunk count based on config
@@ -10378,7 +10406,7 @@
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nv">JOB_FAILED_RETENTION</span><span class="o">=</span><span class="m">168</span><span class="w">         </span><span class="c1"># Delete failed after 7 days (168 hours)</span>
 </code></pre></div></p>
 <p><strong>Scheduler Implementation:</strong></p>
-<p>Create <code>src/api/services/job_scheduler.py</code>:</p>
+<p>Create <code>api/app/services/job_scheduler.py</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="sd">Job lifecycle scheduler.</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
@@ -10684,7 +10712,7 @@
 </code></pre></div>
 <h4 id="alternative-approaches-considered">Alternative Approaches Considered</h4>
 <p><strong>Option 1: Filesystem checkpoints</strong>
-- Use existing <code>src/api/lib/checkpoint.py</code> (already implemented but unused)
+- Use existing <code>api/app/lib/checkpoint.py</code> (already implemented but unused)
 - Store chunks + progress in <code>.checkpoints/</code> directory
 - ❌ File management complexity
 - ❌ Orphaned files on incomplete cleanup
@@ -10730,12 +10758,12 @@
 - [x] ADR-014 documentation
 - [ ] Update API documentation with new endpoints</p>
 <p><strong>Backend Services:</strong>
-- [ ] Create <code>JobAnalyzer</code> service (src/api/services/job_analysis.py)
+- [ ] Create <code>JobAnalyzer</code> service (api/app/services/job_analysis.py)
   - Port cost estimation logic from ingest.sh
   - File stats calculation (size, word count, chunks)
   - Cost estimates (extraction + embeddings)
   - Warning generation
-- [ ] Create <code>JobScheduler</code> service (src/api/services/job_scheduler.py)
+- [ ] Create <code>JobScheduler</code> service (api/app/services/job_scheduler.py)
   - Periodic cleanup task (hourly)
   - Cancel unapproved jobs &gt;24h
   - Delete completed/cancelled &gt;48h
@@ -10815,8 +10843,8 @@
 <h2 id="references">References</h2>
 <ul>
 <li><code>scripts/ingest.sh</code> - Current pre-analysis implementation</li>
-<li><code>src/api/services/job_queue.py</code> - Job queue abstraction</li>
-<li><code>src/api/workers/ingestion_worker.py</code> - Ingestion execution</li>
+<li><code>api/app/services/job_queue.py</code> - Job queue abstraction</li>
+<li><code>api/app/workers/ingestion_worker.py</code> - Ingestion execution</li>
 <li>ADR-012: API Server Architecture</li>
 <li>ADR-013: Unified TypeScript Client</li>
 </ul>

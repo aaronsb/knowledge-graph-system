@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10360,7 +10388,7 @@
 <p><strong>Goal:</strong> Basic local extraction with Ollama, supporting 7-8B models.</p>
 <p><strong>Completed Tasks:</strong></p>
 <ol>
-<li><strong>OllamaProvider Class</strong> (<code>src/api/lib/ai_providers.py</code>)</li>
+<li><strong>OllamaProvider Class</strong> (<code>api/app/lib/ai_providers.py</code>)</li>
 <li>✅ Extends <code>AIProvider</code> abstract base class</li>
 <li>✅ Implements <code>extract_concepts()</code> using Ollama API</li>
 <li>✅ JSON mode configuration for structured output</li>
@@ -10473,7 +10501,7 @@
 <li><code>'low'</code>, <code>'medium'</code>, <code>'high'</code> → <code>think=true</code> (enabled, no level distinction)</li>
 </ul>
 <p>Standard models don't support graduated thinking levels.</p>
-<p><strong>Implementation</strong> (<code>src/api/lib/ai_providers.py</code>):</p>
+<p><strong>Implementation</strong> (<code>api/app/lib/ai_providers.py</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Map thinking_mode to model-specific parameter</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="s2">&quot;gpt-oss&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extraction_model</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="c1"># GPT-OSS: off→low, others pass through</span>
@@ -10663,7 +10691,7 @@
 2. <strong>Lazy loading</strong> - Load on first request
 3. <strong>Automatic unloading</strong> - Free VRAM when switching models
 4. <strong>Status endpoint</strong> - Show loaded models, VRAM usage</p>
-<p><strong>Create:</strong> <code>src/api/routes/models.py</code></p>
+<p><strong>Create:</strong> <code>api/app/routes/models.py</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/models/status&quot;</span><span class="p">)</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_model_status</span><span class="p">():</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Show loaded models and resource usage&quot;&quot;&quot;</span>

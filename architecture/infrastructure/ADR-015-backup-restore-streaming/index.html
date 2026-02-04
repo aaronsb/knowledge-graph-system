@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10643,8 +10671,8 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <p><strong>Status:</strong> Merged in PR #17 (2025-10-09)
 <strong>Commits:</strong> 8b1aac7, 654bb90, 88bd10d</p>
 <p><strong>Implemented:</strong>
-- Server-side streaming backup generation (<code>src/api/lib/backup_streaming.py</code>)
-- Client-side streaming download with progress (<code>client/src/api/client.ts</code>)
+- Server-side streaming backup generation (<code>api/app/lib/backup_streaming.py</code>)
+- Client-side streaming download with progress (<code>client/api/app/client.ts</code>)
 - Ora spinner showing download progress (MB downloaded/total)
 - Automatic filename extraction from Content-Disposition header
 - Client-side storage in configured directory (<code>~/.local/share/kg/backups</code>)
@@ -10658,13 +10686,13 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <p><strong>Status:</strong> Partially complete
 <strong>Branch:</strong> feature/api-restore-upload-streaming</p>
 <p><strong>Completed:</strong>
-- ✅ Backup integrity checker (<code>src/api/lib/backup_integrity.py</code>) - commit d0553c4
+- ✅ Backup integrity checker (<code>api/app/lib/backup_integrity.py</code>) - commit d0553c4
   - Validates JSON format, required fields, data completeness
   - Checks reference integrity (concept_id, source_id consistency)
   - Detects external dependencies in ontology backups
   - Validates statistics consistency
   - 24 comprehensive tests (100% pass rate)
-- ✅ Data contract pattern (<code>src/api/constants.py</code>) - commit d0553c4
+- ✅ Data contract pattern (<code>api/app/constants.py</code>) - commit d0553c4
   - Centralized schema governance (RELATIONSHIP_TYPES, BACKUP_TYPES, etc.)
   - Single source of truth for graph schema
   - Supports forward compatibility (old backups remain valid)
@@ -10679,7 +10707,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <h3 id="phase-3-integrity-checks-completed">Phase 3: Integrity Checks ✅ COMPLETED</h3>
 <p><strong>Status:</strong> Implemented with data contract pattern
 <strong>Commit:</strong> d0553c4 (2025-10-09)</p>
-<p><strong>Implementation:</strong> <code>src/api/lib/backup_integrity.py</code> (175 lines, 72% coverage)
+<p><strong>Implementation:</strong> <code>api/app/lib/backup_integrity.py</code> (175 lines, 72% coverage)
 - <code>BackupIntegrityChecker</code> class with comprehensive validation
 - Validates format, references, statistics, external dependencies
 - Forward-compatible with schema evolution (warnings for unknown types)
@@ -10689,7 +10717,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 - Integration tests: file operations, convenience functions
 - Edge cases: empty backups, missing fields, invalid JSON</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.backup_integrity</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_backup_integrity</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.backup_integrity</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_backup_integrity</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">check_backup_integrity</span><span class="p">(</span><span class="s2">&quot;/path/to/backup.json&quot;</span><span class="p">)</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
@@ -10716,7 +10744,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <h2 id="implementation-details">Implementation Details</h2>
 <h3 id="phase-1-backup-download-implementation">Phase 1: Backup Download (Implementation)</h3>
 <p><strong>Client Changes:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// client/src/api/client.ts</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// client/api/app/client.ts</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">async</span><span class="w"> </span><span class="nx">createBackup</span><span class="p">(</span><span class="nx">request</span><span class="o">:</span><span class="w"> </span><span class="kt">BackupRequest</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">&#39;/admin/backup&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nx">responseType</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;stream&#39;</span>
@@ -10733,7 +10761,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Server Changes:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># src/api/routes/admin.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># api/app/routes/admin.py</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/backup&quot;</span><span class="p">)</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_backup</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">BackupRequest</span><span class="p">):</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="c1"># Create backup in memory or temp file</span>
@@ -10750,7 +10778,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 </code></pre></div></p>
 <h3 id="phase-2-restore-upload-priority-high">Phase 2: Restore Upload (Priority: High)</h3>
 <p><strong>Client Changes:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// client/src/api/client.ts</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// client/api/app/client.ts</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">async</span><span class="w"> </span><span class="nx">restoreBackup</span><span class="p">(</span><span class="nx">request</span><span class="o">:</span><span class="w"> </span><span class="kt">RestoreRequest</span><span class="p">,</span><span class="w"> </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">RestoreResponse</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">form</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">FormData</span><span class="p">();</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nx">form</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">createReadStream</span><span class="p">(</span><span class="nx">filePath</span><span class="p">));</span>
@@ -10769,7 +10797,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Server Changes:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># src/api/routes/admin.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># api/app/routes/admin.py</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">UploadFile</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/restore&quot;</span><span class="p">)</span>
@@ -10804,7 +10832,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 </code></pre></div></p>
 <h3 id="phase-3-integrity-checks-priority-medium">Phase 3: Integrity Checks (Priority: Medium)</h3>
 <p><strong>Create separate module:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># src/api/services/integrity_check.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># api/app/services/integrity_check.py</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BackupIntegrity</span><span class="p">:</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">valid</span><span class="p">:</span> <span class="nb">bool</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">errors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -10824,7 +10852,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 </code></pre></div></p>
 <h3 id="phase-4-progress-tracking-priority-medium">Phase 4: Progress Tracking (Priority: Medium)</h3>
 <p><strong>Use existing job queue pattern:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># src/api/workers/restore_worker.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># api/app/workers/restore_worker.py</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_restore_worker</span><span class="p">(</span><span class="n">job_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">job_queue</span><span class="p">):</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="c1"># Update progress during restore</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">job_queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="p">{</span>
@@ -10847,7 +10875,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 </code></pre></div></p>
 <h3 id="phase-5-temp-file-cleanup-priority-high">Phase 5: Temp File Cleanup (Priority: High)</h3>
 <p><strong>Cleanup strategy:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># src/api/workers/restore_worker.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># api/app/workers/restore_worker.py</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_restore_worker</span><span class="p">(</span><span class="n">job_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">job_queue</span><span class="p">):</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">temp_path</span> <span class="o">=</span> <span class="n">job_data</span><span class="p">[</span><span class="s2">&quot;temp_file&quot;</span><span class="p">]</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
@@ -10862,7 +10890,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Startup cleanup:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># src/api/main.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># api/app/main.py</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nd">@app</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="s2">&quot;startup&quot;</span><span class="p">)</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cleanup_old_temp_files</span><span class="p">():</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clean up abandoned restore files on startup&quot;&quot;&quot;</span>
@@ -10996,7 +11024,7 @@ The original POC had excellent backup/restore UX with progress bars and detailed
 <li><strong>ADR-013:</strong> Unified TypeScript Client (config management)</li>
 <li><strong>File:</strong> <code>docs/BACKUP_RESTORE.md</code> (user guide, TODO)</li>
 <li><strong>File:</strong> <code>client/src/cli/admin.ts</code> (implementation)</li>
-<li><strong>File:</strong> <code>src/api/routes/admin.py</code> (API endpoints)</li>
+<li><strong>File:</strong> <code>api/app/routes/admin.py</code> (API endpoints)</li>
 </ul>
 <h2 id="notes">Notes</h2>
 <p><strong>Progress Bar Quality:</strong>
@@ -11184,7 +11212,7 @@ The backup directory is already configurable via <code>kg config</code>:
 - Major schema changes should be infrequent</p>
 <h3 id="next-steps">Next Steps</h3>
 <ol>
-<li>Create <code>src/api/lib/serialization.py</code> with schema_version support</li>
+<li>Create <code>api/app/lib/serialization.py</code> with schema_version support</li>
 <li>Add <code>schema_migrations</code> table in next migration</li>
 <li>Document type conversions in <code>schema/MIGRATION_COMPATIBILITY.md</code></li>
 <li>Tag current release as <code>schema-v12</code></li>

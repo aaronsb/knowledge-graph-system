@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9932,7 +9960,7 @@
 - No API authentication required</p>
 <h3 id="2-password-hashing">2. <strong>Password Hashing</strong></h3>
 <p>Uses the same bcrypt hashing as the API:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_password_hash</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_password_hash</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">hashed</span> <span class="o">=</span> <span class="n">get_password_hash</span><span class="p">(</span><span class="s2">&quot;SecurePass123!&quot;</span><span class="p">)</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Returns: $2b$12$abc123...xyz789</span>
 </code></pre></div>
@@ -9943,7 +9971,7 @@
 - Each hash includes random salt</p>
 <h3 id="3-password-validation">3. <strong>Password Validation</strong></h3>
 <p>Enforces the same requirements as user registration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_password_strength</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_password_strength</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">is_valid</span><span class="p">,</span> <span class="n">error</span> <span class="o">=</span> <span class="n">validate_password_strength</span><span class="p">(</span><span class="s2">&quot;weak&quot;</span><span class="p">)</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Returns: (False, &quot;Password must be at least 8 characters long&quot;)</span>
 </code></pre></div>
@@ -10053,7 +10081,7 @@
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span><span class="nv">HASH</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="s2">import sys</span>
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="s2">sys.path.insert(0, &#39;.&#39;)</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="s2">from src.api.lib.auth import get_password_hash</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="s2">from api.app.lib.auth import get_password_hash</span>
 <a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="s2">print(get_password_hash(&#39;</span><span class="nv">$password</span><span class="s2">&#39;))</span>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="s2">&quot;</span><span class="k">)</span>
 <a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>
@@ -10090,7 +10118,7 @@
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="nv">HASH</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="s2">import sys</span>
 <a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="s2">sys.path.insert(0, &#39;.&#39;)</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="s2">from src.api.lib.auth import get_password_hash</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="s2">from api.app.lib.auth import get_password_hash</span>
 <a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="s2">print(get_password_hash(&#39;</span><span class="nv">$EMERGENCY_PASS</span><span class="s2">&#39;))</span>
 <a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="s2">&quot;</span><span class="k">)</span>
 <a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>

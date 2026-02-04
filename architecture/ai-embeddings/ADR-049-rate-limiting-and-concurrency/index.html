@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10155,14 +10183,14 @@
 - Requires manual <code>./scripts/database/migrate-db.sh</code></p>
 <h2 id="implementation">Implementation</h2>
 <h3 id="rate-limiter-module">Rate Limiter Module</h3>
-<p><code>src/api/lib/rate_limiter.py</code>:
+<p><code>api/app/lib/rate_limiter.py</code>:
 - <code>get_provider_concurrency_limit()</code> - Load from DB/env/defaults
 - <code>get_provider_max_retries()</code> - Load from DB/env/defaults
 - <code>get_provider_semaphore()</code> - Thread-safe singleton
 - <code>exponential_backoff_retry()</code> - Decorator for retry logic
 - <code>_is_rate_limit_error()</code> - Detect 429/rate limit exceptions</p>
 <h3 id="provider-integration">Provider Integration</h3>
-<p><strong>OpenAI (<code>src/api/lib/ai_providers.py</code>):</strong>
+<p><strong>OpenAI (<code>api/app/lib/ai_providers.py</code>):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
@@ -10170,7 +10198,7 @@
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mf">120.0</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
 </code></pre></div></p>
-<p><strong>Anthropic (<code>src/api/lib/ai_providers.py</code>):</strong>
+<p><strong>Anthropic (<code>api/app/lib/ai_providers.py</code>):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">)</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Anthropic</span><span class="p">(</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
@@ -10178,7 +10206,7 @@
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mf">120.0</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
 </code></pre></div></p>
-<p><strong>Ollama (<code>src/api/lib/ai_providers.py</code>):</strong>
+<p><strong>Ollama (<code>api/app/lib/ai_providers.py</code>):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@exponential_backoff_retry</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_delay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">_make_request</span><span class="p">():</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
@@ -10188,7 +10216,7 @@
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">response</span> <span class="o">=</span> <span class="n">_make_request</span><span class="p">()</span>
 </code></pre></div></p>
 <h3 id="api-exposure">API Exposure</h3>
-<p><strong>Models (<code>src/api/models/extraction.py</code>):</strong>
+<p><strong>Models (<code>api/app/models/extraction.py</code>):</strong>
 - Added <code>max_concurrent_requests</code> to request/response models
 - Added <code>max_retries</code> to request/response models</p>
 <p><strong>Endpoints:</strong>
@@ -10544,7 +10572,7 @@ Unlike ADR-041 (provider/model selection), rate limiting loads database-first re
 - <strong>Local inference:</strong> 429 errors less common (single GPU bottleneck, not API rate limits)
 - <strong>Cloud models:</strong> 502 errors indicate network/upstream issues, retry appropriate</p>
 <h3 id="retry-logic-implementation">Retry Logic Implementation</h3>
-<p>Our rate limiter (<code>src/api/lib/rate_limiter.py</code>) detects retryable errors:</p>
+<p>Our rate limiter (<code>api/app/lib/rate_limiter.py</code>) detects retryable errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_rate_limit_error</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="sd">    Detect rate limit and retryable errors.</span>
@@ -10582,7 +10610,7 @@ Unlike ADR-041 (provider/model selection), rate limiting loads database-first re
 <li><strong>Industry Standard:</strong> Exponential backoff with jitter</li>
 <li><strong>ADR-041:</strong> AI Extraction Provider Configuration (database-first pattern)</li>
 <li><strong>Migration 018:</strong> <code>schema/migrations/018_add_rate_limiting_config.sql</code></li>
-<li><strong>Implementation:</strong> <code>src/api/lib/rate_limiter.py</code></li>
+<li><strong>Implementation:</strong> <code>api/app/lib/rate_limiter.py</code></li>
 </ul>
 
 

@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -11227,7 +11255,7 @@ Successfully detected contradictions from Neo4j → Apache AGE migration:</p>
 <h4 id="1-job-resumption-not-implemented-production-critical">1. Job Resumption Not Implemented (Production Critical)</h4>
 <p><strong>Status:</strong> Discovered during Phase 9.1 testing
 <strong>Impact:</strong> Jobs in "approved" or "processing" status are orphaned on API restart/hot reload
-<strong>Root Cause:</strong> No startup logic to resume pending jobs (see <code>src/api/main.py:221</code> TODO)</p>
+<strong>Root Cause:</strong> No startup logic to resume pending jobs (see <code>api/app/main.py:221</code> TODO)</p>
 <p><strong>Current Behavior:</strong>
 - Jobs persist in database but don't auto-resume
 - Requires manual intervention or job resubmission</p>

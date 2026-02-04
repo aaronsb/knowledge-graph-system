@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10060,7 +10088,7 @@
 <hr />
 <h2 id="complete-flow">Complete Flow</h2>
 <h3 id="1-discovery-during-ingestion">1. Discovery During Ingestion</h3>
-<p><strong>Location:</strong> <code>src/api/lib/ingestion.py:383-412</code></p>
+<p><strong>Location:</strong> <code>api/app/lib/ingestion.py:383-412</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LLM extracts relationship from text</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">llm_rel_type</span> <span class="o">=</span> <span class="s2">&quot;ENHANCES&quot;</span>  <span class="c1"># From LLM extraction</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
@@ -10089,7 +10117,7 @@
 <p><strong>Result:</strong> New type "ENHANCES" added with temporary category "llm_generated"</p>
 <hr />
 <h3 id="2-automatic-categorization">2. Automatic Categorization</h3>
-<p><strong>Location:</strong> <code>src/api/lib/age_client.py:1332-1419</code></p>
+<p><strong>Location:</strong> <code>api/app/lib/age_client.py:1332-1419</code></p>
 <h4 id="step-a-add-to-vocabulary-table">Step A: Add to Vocabulary Table</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="p">(</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">added_by</span><span class="p">,</span><span class="w"> </span><span class="n">is_builtin</span><span class="p">,</span><span class="w"> </span><span class="n">is_active</span><span class="p">)</span>
@@ -10114,7 +10142,7 @@
 <p><strong>Result:</strong> "ENHANCES" now has embedding for similarity matching</p>
 <h4 id="step-c-compute-semantic-category-adr-047">Step C: Compute Semantic Category (ADR-047)</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span> <span class="n">auto_categorize</span> <span class="ow">and</span> <span class="n">category</span> <span class="o">==</span> <span class="s2">&quot;llm_generated&quot;</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.vocabulary_categorizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">VocabularyCategorizer</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.vocabulary_categorizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">VocabularyCategorizer</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">categorizer</span> <span class="o">=</span> <span class="n">VocabularyCategorizer</span><span class="p">(</span><span class="n">age_client</span><span class="p">,</span> <span class="n">ai_provider</span><span class="p">)</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">assignment</span> <span class="o">=</span> <span class="k">await</span> <span class="n">categorizer</span><span class="o">.</span><span class="n">assign_category</span><span class="p">(</span><span class="s2">&quot;ENHANCES&quot;</span><span class="p">)</span>
@@ -10307,14 +10335,14 @@
 <hr />
 <h2 id="example-real-categorization">Example: Real Categorization</h2>
 <h3 id="discovery-log">Discovery Log</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>15:19:47 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: &#39;ADDRESSES&#39; (embedding generated)
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>15:19:47 | INFO | src.api.lib.age_client | 🎯 Auto-categorized &#39;ADDRESSES&#39; → causation (confidence: 72%)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>15:19:47 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: &#39;ADDRESSES&#39; (embedding generated)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>15:19:47 | INFO | api.app.lib.age_client | 🎯 Auto-categorized &#39;ADDRESSES&#39; → causation (confidence: 72%)
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>15:19:48 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: &#39;INCLUDES&#39; (embedding generated)
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>15:19:48 | INFO | src.api.lib.age_client | 🎯 Auto-categorized &#39;INCLUDES&#39; → composition (confidence: 88%)
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>15:19:48 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: &#39;INCLUDES&#39; (embedding generated)
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>15:19:48 | INFO | api.app.lib.age_client | 🎯 Auto-categorized &#39;INCLUDES&#39; → composition (confidence: 88%)
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>15:19:49 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: &#39;ENHANCES&#39; (embedding generated)
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>15:19:49 | INFO | src.api.lib.age_client | 🎯 Auto-categorized &#39;ENHANCES&#39; → causation (confidence: 85%)
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>15:19:49 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: &#39;ENHANCES&#39; (embedding generated)
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>15:19:49 | INFO | api.app.lib.age_client | 🎯 Auto-categorized &#39;ENHANCES&#39; → causation (confidence: 85%)
 </code></pre></div>
 <h3 id="verification">Verification</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;ADDRESSES|INCLUDES|ENHANCES&quot;</span>

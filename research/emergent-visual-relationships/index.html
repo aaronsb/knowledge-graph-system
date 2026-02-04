@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10077,7 +10105,7 @@
 <li>Root cause: Missing <code>region</code> parameter for S3 signature calculation</li>
 <li>Solution: Added <code>region='us-east-1'</code> to MinIO client initialization</li>
 <li>
-<p>Location: <code>src/api/lib/minio_client.py:132,150</code></p>
+<p>Location: <code>api/app/lib/minio_client.py:132,150</code></p>
 </li>
 <li>
 <p><strong>Metadata Duplication Conflict</strong></p>
@@ -10093,7 +10121,7 @@
 </li>
 <li>MinIO objects weren't cleaned up when deleting ontologies</li>
 <li>Added MinIO cleanup before deleting sources</li>
-<li>Location: <code>src/api/routes/ontology.py:274-310</code></li>
+<li>Location: <code>api/app/routes/ontology.py:274-310</code></li>
 <li>
 <p>Queries <code>source.properties</code> for <code>minio_object_key</code>, deletes from MinIO, then deletes from database</p>
 </li>
@@ -10102,7 +10130,7 @@
 </li>
 <li><code>visual_embedding.tolist()</code> failed because <code>generate_visual_embedding()</code> already returns a list</li>
 <li>Fixed: Removed redundant <code>.tolist()</code> call</li>
-<li>Location: <code>src/api/routes/ingest_image.py:358</code></li>
+<li>Location: <code>api/app/routes/ingest_image.py:358</code></li>
 </ol>
 <p><strong>Final Working Stack:</strong>
 - ✅ Encrypted credentials from database (ADR-031 pattern)
@@ -10308,14 +10336,14 @@
 <h2 id="code-changes">Code Changes</h2>
 <h3 id="files-modified">Files Modified</h3>
 <ol>
-<li><strong><code>src/api/lib/minio_client.py</code></strong></li>
+<li><strong><code>api/app/lib/minio_client.py</code></strong></li>
 <li>Added <code>region</code> parameter and initialization</li>
 <li>Fixed metadata to exclude <code>content-type</code> (HTTP header only)</li>
 <li>
 <p>Updated <code>get_image_metadata()</code> to strip <code>x-amz-meta-</code> prefix</p>
 </li>
 <li>
-<p><strong><code>src/api/routes/ontology.py</code></strong></p>
+<p><strong><code>api/app/routes/ontology.py</code></strong></p>
 </li>
 <li>Added MinIO cleanup before deleting sources (lines 274-310)</li>
 <li>Queries <code>source.properties</code> for <code>minio_object_key</code></li>
@@ -10323,7 +10351,7 @@
 <p>Deletes objects, logs counts</p>
 </li>
 <li>
-<p><strong><code>src/api/routes/ingest_image.py</code></strong></p>
+<p><strong><code>api/app/routes/ingest_image.py</code></strong></p>
 </li>
 <li>
 <p>Fixed <code>.tolist()</code> redundancy (line 358)</p>
@@ -10376,7 +10404,7 @@
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># ✅ 10 MinIO objects deleted automatically</span>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="c1"># 4. MinIO verification</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from src.api.lib.minio_client import get_minio_client; \</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from api.app.lib.minio_client import get_minio_client; \</span>
 <a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="s2">           print(len(get_minio_client().list_images()))&quot;</span>
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="c1"># ✅ 0 images (complete cleanup)</span>
 </code></pre></div>

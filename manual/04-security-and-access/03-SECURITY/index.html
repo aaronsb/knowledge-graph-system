@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -10295,7 +10323,7 @@
 - Supports key-per-provider without environment pollution</p>
 <p><strong>Prerequisites:</strong>
 1. PostgreSQL container running: <code>docker-compose up -d</code>
-2. API server running: <code>python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000</code>
+2. API server running: <code>python -m uvicorn api.app.main:app --host 0.0.0.0 --port 8000</code>
 3. Encryption master key configured (auto-generated in development)</p>
 <p><strong>Steps:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 1. Check API health</span>
@@ -10543,7 +10571,7 @@
 <p><strong>Solution:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Development: Auto-generated key (restart API)</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pkill<span class="w"> </span>-f<span class="w"> </span>uvicorn
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>src.api.main:app<span class="w"> </span>--reload
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--reload
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1"># Production: Configure persistent key</span>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># See &quot;Production Deployment&quot; section above</span>
@@ -10626,7 +10654,7 @@
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Restart all services</span>
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>docker-compose<span class="w"> </span>restart
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>pkill<span class="w"> </span>-f<span class="w"> </span>uvicorn
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>src.api.main:app<span class="w"> </span>--reload
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--reload
 </code></pre></div>
 <hr />
 <h2 id="security-best-practices">Security Best Practices</h2>

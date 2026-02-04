@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -8039,10 +8067,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-constants-structure-srcapiconstantspy" class="md-nav__link">
+  <a href="#1-constants-structure-apiappconstantspy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Constants Structure (src/api/constants.py)
+        1. Constants Structure (api/app/constants.py)
       
     </span>
   </a>
@@ -9515,10 +9543,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-constants-structure-srcapiconstantspy" class="md-nav__link">
+  <a href="#1-constants-structure-apiappconstantspy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Constants Structure (src/api/constants.py)
+        1. Constants Structure (api/app/constants.py)
       
     </span>
   </a>
@@ -9804,7 +9832,7 @@
 - <code>CONTRADICTS</code>: "All A CONTRADICTS Some not-A" (logical impossibility)
 - <code>CONTRASTS_WITH</code>: "Eastern philosophy CONTRASTS_WITH Western philosophy" (different perspectives)</p>
 <h2 id="implementation">Implementation</h2>
-<h3 id="1-constants-structure-srcapiconstantspy">1. Constants Structure (<code>src/api/constants.py</code>)</h3>
+<h3 id="1-constants-structure-apiappconstantspy">1. Constants Structure (<code>api/app/constants.py</code>)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">RELATIONSHIP_CATEGORIES</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">&quot;logical_truth&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span> <span class="s2">&quot;PRESUPPOSES&quot;</span><span class="p">,</span> <span class="s2">&quot;EQUIVALENT_TO&quot;</span><span class="p">],</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="s2">&quot;causal&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CAUSES&quot;</span><span class="p">,</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;PREVENTS&quot;</span><span class="p">,</span> <span class="s2">&quot;INFLUENCES&quot;</span><span class="p">,</span> <span class="s2">&quot;RESULTS_FROM&quot;</span><span class="p">],</span>
@@ -10002,10 +10030,10 @@
 <h2 id="references">References</h2>
 <ul>
 <li><strong>Code:</strong></li>
-<li><code>src/api/constants.py</code> - 30-type taxonomy definition</li>
-<li><code>src/api/lib/relationship_mapper.py</code> - Fuzzy matching logic</li>
+<li><code>api/app/constants.py</code> - 30-type taxonomy definition</li>
+<li><code>api/app/lib/relationship_mapper.py</code> - Fuzzy matching logic</li>
 <li>
-<p><code>src/api/lib/age_client.py</code> - Relationship creation with normalization</p>
+<p><code>api/app/lib/age_client.py</code> - Relationship creation with normalization</p>
 </li>
 <li>
 <p><strong>Related ADRs:</strong></p>

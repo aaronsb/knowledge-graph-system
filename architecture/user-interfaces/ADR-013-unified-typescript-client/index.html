@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -7376,10 +7404,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-api-client-srcapiclientts" class="md-nav__link">
+  <a href="#2-api-client-apiappclientts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. API Client (src/api/client.ts)
+        2. API Client (api/app/client.ts)
       
     </span>
   </a>
@@ -9576,10 +9604,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-api-client-srcapiclientts" class="md-nav__link">
+  <a href="#2-api-client-apiappclientts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. API Client (src/api/client.ts)
+        2. API Client (api/app/client.ts)
       
     </span>
   </a>
@@ -9949,7 +9977,7 @@
 <h2 id="shared-components">Shared Components</h2>
 <h3 id="1-type-definitions-srctypesindexts">1. Type Definitions (<code>src/types/index.ts</code>)</h3>
 <p><strong>Purpose</strong>: TypeScript interfaces matching FastAPI Pydantic models exactly.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Matches IngestRequest in src/api/models/requests.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Matches IngestRequest in api/app/models/requests.py</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">IngestRequest</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nx">filename?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
@@ -9960,7 +9988,7 @@
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="p">};</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">}</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1">// Matches JobStatus in src/api/models/responses.py</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1">// Matches JobStatus in api/app/models/responses.py</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">JobStatus</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">  </span><span class="nx">job_id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">  </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;queued&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;completed&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;failed&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;cancelled&#39;</span><span class="p">;</span>
@@ -9989,7 +10017,7 @@
 <a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="p">};</span>
 </code></pre></div>
 <p><strong>Benefit</strong>: Changes to API types propagate to both CLI and MCP modes automatically.</p>
-<h3 id="2-api-client-srcapiclientts">2. API Client (<code>src/api/client.ts</code>)</h3>
+<h3 id="2-api-client-apiappclientts">2. API Client (<code>api/app/client.ts</code>)</h3>
 <p><strong>Purpose</strong>: HTTP wrapper with typed requests/responses.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">client</span><span class="o">:</span><span class="w"> </span><span class="kt">AxiosInstance</span><span class="p">;</span>

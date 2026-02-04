@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9951,7 +9979,7 @@
 <p>Implement <strong>three-phase architectural improvement</strong>:</p>
 <h3 id="phase-1-namespace-safety-layer-foundation">Phase 1: Namespace Safety Layer (Foundation)</h3>
 <p><strong>Add <code>GraphQueryFacade</code> to enforce namespace isolation.</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/api/lib/query_facade.py</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># api/app/lib/query_facade.py</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphQueryFacade</span><span class="p">:</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -10109,7 +10137,7 @@
 <p><strong>CI Integration:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># .github/workflows/lint.yml</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Check query safety</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python scripts/lint_queries.py src/api/**/*.py</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python scripts/lint_queries.py api/app/**/*.py</span>
 </code></pre></div>
 <h3 id="phase-3-vocabulary-as-graph-nodes-migration">Phase 3: Vocabulary as Graph Nodes (Migration)</h3>
 <p><strong>Move vocabulary metadata from SQL to Apache AGE.</strong></p>
@@ -10196,7 +10224,7 @@
 <h2 id="implementation-plan">Implementation Plan</h2>
 <h3 id="phase-1-foundation-week-1">Phase 1: Foundation (Week 1)</h3>
 <p><strong>1.1 Add Query Facade</strong>
-- [x] Create <code>src/api/lib/query_facade.py</code>
+- [x] Create <code>api/app/lib/query_facade.py</code>
 - [x] Implement core methods (match_concepts, match_vocab_types)
 - [x] Add audit logging
 - [x] Add to age_client as optional interface</p>

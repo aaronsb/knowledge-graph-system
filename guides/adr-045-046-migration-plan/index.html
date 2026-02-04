@@ -772,6 +772,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../DOCSTRING_COVERAGE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage &amp; Staleness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
@@ -9849,7 +9877,7 @@
 <strong>Risk:</strong> MEDIUM - New service that could affect ingestion pipeline</p>
 <ol>
 <li><strong>Implement EmbeddingWorker Service</strong></li>
-<li>File: <code>src/api/services/embedding_worker.py</code></li>
+<li>File: <code>api/app/services/embedding_worker.py</code></li>
 <li>Dependencies: <code>age_client.py</code>, <code>ai_providers.py</code></li>
 <li>Key methods:<ul>
 <li><code>initialize_builtin_embeddings()</code> - Cold start</li>
@@ -9871,7 +9899,7 @@
 </code></pre></div></p>
 <ol>
 <li><strong>Integrate EmbeddingWorker into Startup</strong></li>
-<li>File: <code>src/api/main.py</code></li>
+<li>File: <code>api/app/main.py</code></li>
 <li>Add startup event handler</li>
 <li>Call <code>embedding_worker.initialize_builtin_embeddings()</code> if needed</li>
 </ol>
@@ -9888,13 +9916,13 @@
 <strong>Depends on:</strong> Phase 2 (requires embeddings for all vocabulary)</p>
 <ol>
 <li><strong>Implement Grounding Calculation in AGEClient</strong></li>
-<li>File: <code>src/api/lib/age_client.py</code></li>
+<li>File: <code>api/app/lib/age_client.py</code></li>
 <li>New method: <code>calculate_grounding_strength_semantic(concept_id: str) -&gt; float</code></li>
 <li>Uses embedding similarity to SUPPORTS/CONTRADICTS prototypes</li>
 </ol>
 <p><strong>Testing:</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Unit test</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.api.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">api.app.lib.age_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEClient</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">AGEClient</span><span class="p">()</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">grounding</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">calculate_grounding_strength_semantic</span><span class="p">(</span><span class="s2">&quot;concept-123&quot;</span><span class="p">)</span>
@@ -9902,7 +9930,7 @@
 </code></pre></div></p>
 <ol>
 <li><strong>Update API Models</strong></li>
-<li>File: <code>src/api/models/queries.py</code></li>
+<li>File: <code>api/app/models/queries.py</code></li>
 <li>Add <code>grounding_strength</code> field to <code>ConceptDetailsResponse</code></li>
 <li>
 <p>Add <code>grounding_strength</code> field to <code>ConceptSearchResult</code> (optional)</p>
@@ -9910,7 +9938,7 @@
 <li>
 <p><strong>Update API Routes</strong></p>
 </li>
-<li>File: <code>src/api/routes/queries.py</code></li>
+<li>File: <code>api/app/routes/queries.py</code></li>
 <li>Update <code>/query/concepts/{concept_id}</code> to include grounding</li>
 <li>Add query parameter <code>include_grounding</code> for search endpoints</li>
 </ol>
@@ -9925,7 +9953,7 @@
 <strong>Risk:</strong> LOW - New admin functionality, doesn't affect ingestion</p>
 <ol>
 <li><strong>Implement Enhanced VocabularyScorer</strong></li>
-<li>File: <code>src/api/lib/vocabulary_manager.py</code></li>
+<li>File: <code>api/app/lib/vocabulary_manager.py</code></li>
 <li>Update <code>EdgeTypeScore</code> dataclass with new metrics</li>
 <li>Implement <code>calculate_grounding_contribution()</code></li>
 <li>Implement <code>detect_synonym_clusters()</code></li>
@@ -9943,7 +9971,7 @@
 </code></pre></div></p>
 <ol>
 <li><strong>Update Merge System</strong></li>
-<li>File: <code>src/api/lib/age_client.py</code></li>
+<li>File: <code>api/app/lib/age_client.py</code></li>
 <li>Update <code>merge_edge_types()</code> to handle embeddings</li>
 <li>Ensure target type has embedding before merge</li>
 <li>Store deprecated embedding for rollback</li>
