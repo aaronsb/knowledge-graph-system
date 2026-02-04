@@ -7,8 +7,12 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { FolderOpen } from 'lucide-react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { getCategoryColor } from '../../config/categoryColors';
+import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 import { useGraphStore } from '../../store/graphStore';
 import { apiClient } from '../../api/client';
 import type { CategoryStats, EdgeTypeData, ViewMode, VocabularyStats } from './types';
@@ -21,21 +25,24 @@ interface SubgraphComparison {
   delta: number; // positive = overrepresented in subgraph
 }
 
+/** Query-specific vocabulary analysis showing chord diagram for the current subgraph.
+ *  Reads rawGraphData from graphStore; supports loading saved queries via IconRailPanel.
+ *  @verified 2fd1194f */
 export function VocabularyChordWorkspace() {
   const [viewMode, setViewMode] = useState<ViewMode>('chord');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<VocabularyStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('queries');
 
   // Get graph data from store
   const rawGraphData = useGraphStore((state) => state.rawGraphData);
+  const { replayQuery, isReplaying } = useQueryReplay();
 
   // Fetch system-wide vocabulary stats for comparison
   useEffect(() => {
     async function fetchSystemStats() {
       try {
-        setLoading(true);
         const response = await apiClient.getVocabularyTypes({
           include_inactive: false,
           include_builtin: true,
@@ -80,8 +87,6 @@ export function VocabularyChordWorkspace() {
         });
       } catch (err) {
         console.error('Failed to load system vocabulary stats:', err);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -215,22 +220,47 @@ export function VocabularyChordWorkspace() {
 
   const activeCategory = hoveredCategory || selectedCategory;
 
-  // No graph data loaded
-  if (!rawGraphData || rawGraphData.links.length === 0) {
+  const hasGraphData = rawGraphData && rawGraphData.links.length > 0;
+
+  const sidebar = (
+    <IconRailPanel
+      tabs={[{
+        id: 'queries',
+        icon: FolderOpen,
+        label: 'Saved Queries',
+        content: (
+          <SavedQueriesPanel
+            onLoadQuery={replayQuery}
+            definitionTypeFilter="exploration"
+          />
+        ),
+      }]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    />
+  );
+
+  if (!hasGraphData) {
     return (
-      <div className="h-full flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 border-b border-border bg-card px-4 py-3">
-          <h1 className="text-lg font-semibold">Vocabulary Analysis</h1>
-          <p className="text-sm text-muted-foreground">Query-specific vocabulary breakdown</p>
-        </div>
+      <div className="h-full flex overflow-hidden">
+        {sidebar}
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg mb-2">No Graph Data</p>
-            <p className="text-sm">
-              Load a concept neighborhood or path in the 2D/3D explorer first,
-              <br />
-              then switch to this view to analyze its vocabulary.
-            </p>
+            {isReplaying ? (
+              <>
+                <p className="text-lg mb-2">Loading Query...</p>
+                <p className="text-sm">Replaying exploration steps</p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg mb-2">No Graph Data</p>
+                <p className="text-sm">
+                  Load a saved query from the sidebar, or build a graph
+                  <br />
+                  in the 2D/3D explorer and switch to this view.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -238,37 +268,41 @@ export function VocabularyChordWorkspace() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold">Vocabulary Analysis</h1>
-            <p className="text-sm text-muted-foreground">
-              {rawGraphData.nodes?.length || 0} nodes, {rawGraphData.links?.length || 0} edges
-            </p>
-          </div>
-          {/* View mode tabs */}
-          <div className="flex gap-1 bg-muted rounded-lg p-1">
-            {(['chord', 'radial', 'matrix'] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  viewMode === mode
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-              </button>
-            ))}
+    <div className="h-full flex overflow-hidden">
+      {sidebar}
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex-shrink-0 border-b border-border bg-card px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold">Vocabulary Analysis</h1>
+              <p className="text-sm text-muted-foreground">
+                {rawGraphData.nodes?.length || 0} nodes, {rawGraphData.links?.length || 0} edges
+              </p>
+            </div>
+            {/* View mode tabs */}
+            <div className="flex gap-1 bg-muted rounded-lg p-1">
+              {(['chord', 'radial', 'matrix'] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    viewMode === mode
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+        {/* Visualization + side panel */}
+        <div className="flex-1 flex overflow-hidden">
         {/* Visualization area - fills available space */}
         <div className="flex-1 relative">
           {subgraphStats && viewMode === 'chord' && (
@@ -436,6 +470,7 @@ export function VocabularyChordWorkspace() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

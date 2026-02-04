@@ -10,9 +10,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, Save, Settings, Trash2, Eraser, Code } from 'lucide-react';
+import { FolderOpen, Settings, Eraser } from 'lucide-react';
 import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
+import { SavedQueriesPanel } from '../components/shared/SavedQueriesPanel';
+import { useQueryReplay } from '../hooks/useQueryReplay';
 import { useGraphStore, deriveMode } from '../store/graphStore';
 import { useReportStore } from '../store/reportStore';
 import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
@@ -24,9 +26,7 @@ import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
-import { apiClient } from '../api/client';
 import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
-import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
 import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 import type { VisualizationType } from '../types/explorer';
 
@@ -50,22 +50,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     clearSearchParams,
     setSimilarityThreshold,
     explorationSession,
-    subtractRawGraphData,
     clearExploration,
-    resetExplorationSession,
   } = useGraphStore();
   const { addReport } = useReportStore();
   const {
-    definitions: savedQueriesMap,
-    definitionIds: savedQueryIds,
-    loadDefinitions: loadSavedQueries,
     createDefinition: createSavedQuery,
-    deleteDefinition: deleteSavedQuery,
-    isLoading: isLoadingQueries,
   } = useQueryDefinitionStore();
-
-  // Convert to array for rendering
-  const savedQueries = savedQueryIds.map(id => savedQueriesMap[id]).filter(Boolean);
+  const { replayQuery, isReplaying } = useQueryReplay();
 
   // UI state for IconRailPanel
   const [activeTab, setActiveTab] = useState('history');
@@ -76,10 +67,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Derive mode from current params
   const mode = deriveMode(searchParams);
 
-  // Load saved queries on mount
-  useEffect(() => {
-    loadSavedQueries();
-  }, [loadSavedQueries]);
 
   // Set the explorer type when this view mounts
   useEffect(() => {
@@ -369,120 +356,15 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     useGraphStore.getState().setCypherEditorContent(script);
   }, [explorationSession]);
 
-  // Load a saved query
-  const handleLoadQuery = useCallback(async (query: { definition_type: string; definition: Record<string, unknown> }) => {
-    const definition = query.definition;
-
-    // Exploration-type: replay +/- Cypher statements
-    if (query.definition_type === 'exploration' && definition?.statements) {
-      setGraphData(null);
-      setRawGraphData(null);
-      resetExplorationSession();
-
-      for (const stmt of definition.statements as Array<{ op: '+' | '-'; cypher: string }>) {
-        try {
-          const result = await apiClient.executeCypherQuery({ query: stmt.cypher, limit: 500 });
-          const mapped = mapCypherResultToRawGraph(result);
-
-          if (stmt.op === '+') {
-            mergeRawGraphData(mapped);
-          } else {
-            subtractRawGraphData(mapped);
-          }
-
-          // Reconstruct exploration session so Save/Export work after load
-          useGraphStore.getState().addExplorationStep({
-            action: 'cypher',
-            op: stmt.op,
-            cypher: stmt.cypher,
-          });
-        } catch (error) {
-          console.error('Failed to replay statement:', stmt.cypher, error);
-        }
-      }
-      return;
-    }
-
-    // Legacy: searchParams-based queries
-    if (definition?.searchParams) {
-      setSearchParams(definition.searchParams);
-      if (definition.similarityThreshold) {
-        setSimilarityThreshold(definition.similarityThreshold);
-      }
-    }
-  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold]);
-
-  // Delete a saved query
-  const handleDeleteQuery = useCallback(async (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await deleteSavedQuery(id);
-  }, [deleteSavedQuery]);
-
-  const hasExploration = explorationSession && explorationSession.steps.length > 0;
-
-  // Saved queries panel content
+  // Saved queries panel content — uses shared SavedQueriesPanel component
   const savedQueriesPanelContent = (
-    <div className="p-3">
-      {hasExploration && (
-        <div className="flex gap-2 mb-3">
-          <button
-            onClick={handleSaveExploration}
-            className="flex-1 flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
-          >
-            <Save className="w-4 h-4" />
-            Save ({explorationSession.steps.length} steps)
-          </button>
-          <button
-            onClick={handleExportToEditor}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-border hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-            title="Export to Cypher Editor"
-          >
-            <Code className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-      {isLoadingQueries ? (
-        <div className="text-center text-muted-foreground text-sm py-4">
-          Loading...
-        </div>
-      ) : savedQueries.length === 0 ? (
-        <div className="text-center text-muted-foreground text-sm py-4">
-          <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p>No saved queries</p>
-          <p className="text-xs mt-1">Save queries from the search panel</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {savedQueries.map((query) => (
-            <div
-              key={query.id}
-              className="border rounded-lg p-3 bg-card hover:bg-accent/50 transition-colors cursor-pointer group"
-              onClick={() => handleLoadQuery(query)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{query.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {query.definition_type === 'exploration'
-                      ? `${(query.definition as any)?.statements?.length || 0} steps`
-                      : query.definition_type}
-                    {' \u00b7 '}
-                    {new Date(query.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => handleDeleteQuery(query.id, e)}
-                  className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
-                  title="Delete query"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <SavedQueriesPanel
+      onLoadQuery={replayQuery}
+      onSaveExploration={handleSaveExploration}
+      onExportToEditor={handleExportToEditor}
+      currentExploration={explorationSession?.steps.length ? { stepCount: explorationSession.steps.length } : null}
+      definitionTypeFilter="exploration"
+    />
   );
 
   // Settings panel content — graph settings (physics, visual, interaction)
@@ -572,11 +454,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
           className={`flex-1 relative ${!graphData && !isLoading ? 'pointer-events-none' : ''}`}
           style={{ zIndex: getZIndexValue('content') }}
         >
-          {isLoading && (
+          {(isLoading || isReplaying) && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading graph data...</p>
+                <p className="text-muted-foreground">
+                  {isReplaying ? 'Replaying exploration steps...' : 'Loading graph data...'}
+                </p>
               </div>
             </div>
           )}
