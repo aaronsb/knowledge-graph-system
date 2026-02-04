@@ -33,18 +33,16 @@ export function VocabularyChordWorkspace() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<VocabularyStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('queries');
 
   // Get graph data from store
   const rawGraphData = useGraphStore((state) => state.rawGraphData);
-  const { replayQuery } = useQueryReplay();
+  const { replayQuery, isReplaying } = useQueryReplay();
 
   // Fetch system-wide vocabulary stats for comparison
   useEffect(() => {
     async function fetchSystemStats() {
       try {
-        setLoading(true);
         const response = await apiClient.getVocabularyTypes({
           include_inactive: false,
           include_builtin: true,
@@ -89,8 +87,6 @@ export function VocabularyChordWorkspace() {
         });
       } catch (err) {
         console.error('Failed to load system vocabulary stats:', err);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -224,33 +220,47 @@ export function VocabularyChordWorkspace() {
 
   const activeCategory = hoveredCategory || selectedCategory;
 
-  // No graph data loaded
-  if (!rawGraphData || rawGraphData.links.length === 0) {
+  const hasGraphData = rawGraphData && rawGraphData.links.length > 0;
+
+  const sidebar = (
+    <IconRailPanel
+      tabs={[{
+        id: 'queries',
+        icon: FolderOpen,
+        label: 'Saved Queries',
+        content: (
+          <SavedQueriesPanel
+            onLoadQuery={replayQuery}
+            definitionTypeFilter="exploration"
+          />
+        ),
+      }]}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    />
+  );
+
+  if (!hasGraphData) {
     return (
       <div className="h-full flex overflow-hidden">
-        <IconRailPanel
-          tabs={[{
-            id: 'queries',
-            icon: FolderOpen,
-            label: 'Saved Queries',
-            content: (
-              <SavedQueriesPanel
-                onLoadQuery={replayQuery}
-                definitionTypeFilter="exploration"
-              />
-            ),
-          }]}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        {sidebar}
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg mb-2">No Graph Data</p>
-            <p className="text-sm">
-              Load a saved query from the sidebar, or build a graph
-              <br />
-              in the 2D/3D explorer and switch to this view.
-            </p>
+            {isReplaying ? (
+              <>
+                <p className="text-lg mb-2">Loading Query...</p>
+                <p className="text-sm">Replaying exploration steps</p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg mb-2">No Graph Data</p>
+                <p className="text-sm">
+                  Load a saved query from the sidebar, or build a graph
+                  <br />
+                  in the 2D/3D explorer and switch to this view.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -259,22 +269,7 @@ export function VocabularyChordWorkspace() {
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Saved Queries sidebar */}
-      <IconRailPanel
-        tabs={[{
-          id: 'queries',
-          icon: FolderOpen,
-          label: 'Saved Queries',
-          content: (
-            <SavedQueriesPanel
-              onLoadQuery={replayQuery}
-              definitionTypeFilter="exploration"
-            />
-          ),
-        }]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {sidebar}
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">

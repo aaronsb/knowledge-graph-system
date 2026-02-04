@@ -11,10 +11,11 @@
 import React, { useEffect } from 'react';
 import { FolderOpen, Save, Code, Trash2 } from 'lucide-react';
 import { useQueryDefinitionStore } from '../../store/queryDefinitionStore';
+import type { ReplayableDefinition } from '../../hooks/useQueryReplay';
 
 interface SavedQueriesPanelProps {
   /** Called when user clicks a saved query to load it */
-  onLoadQuery: (query: { id: number; name: string; definition_type: string; definition: Record<string, unknown> }) => void;
+  onLoadQuery: (query: ReplayableDefinition) => void;
   /** Called when user clicks Save — omit to hide the save button */
   onSaveExploration?: () => void;
   /** Called when user clicks Export to Editor — omit to hide the button */

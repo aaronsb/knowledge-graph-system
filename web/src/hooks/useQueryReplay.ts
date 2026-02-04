@@ -13,7 +13,9 @@ import { useGraphStore } from '../store/graphStore';
 import { apiClient } from '../api/client';
 import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
 
-interface ReplayableDefinition {
+export interface ReplayableDefinition {
+  id?: number;
+  name?: string;
   definition_type: string;
   definition: Record<string, unknown>;
 }
@@ -74,7 +76,7 @@ export function useQueryReplay() {
     // Legacy: searchParams-based queries
     if (definition?.searchParams) {
       setSearchParams(definition.searchParams);
-      if (definition.similarityThreshold) {
+      if (typeof definition.similarityThreshold === 'number') {
         setSimilarityThreshold(definition.similarityThreshold);
       }
     }
