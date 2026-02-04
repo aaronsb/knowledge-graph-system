@@ -36,6 +36,9 @@ interface SystemStatus {
   health?: boolean;
 }
 
+/** Welcome page showing login prompt (unauthenticated) or system status dashboard
+ *  with quick actions and NavigationGraph workstation guide (authenticated).
+ *  @verified b38d816f */
 export const HomeWorkspace: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();

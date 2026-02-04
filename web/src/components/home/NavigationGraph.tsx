@@ -87,6 +87,9 @@ const EDGES: GraphEdge[] = [
 const WIDTH = 1060;
 const HEIGHT = 460;
 
+/** Static SVG graph of workstation features as clickable nodes with category coloring.
+ *  Fixed positions (no physics) for deterministic rendering on the home page.
+ *  @verified b38d816f */
 export const NavigationGraph: React.FC = () => {
   const navigate = useNavigate();
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);

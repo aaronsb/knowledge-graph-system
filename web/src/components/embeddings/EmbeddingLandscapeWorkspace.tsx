@@ -227,6 +227,9 @@ function positionToColor(
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
+/** 3D t-SNE projection workspace for concept embeddings across ontologies.
+ *  Uses IconRailPanel with Ontologies (visibility) and Settings (projection params) tabs.
+ *  @verified b38d816f */
 export function EmbeddingLandscapeWorkspace() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
