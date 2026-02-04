@@ -5,6 +5,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help test test-unit test-api test-verbose lint lint-queries \
         coverage coverage-verbose coverage-staleness \
+        todos todos-verbose todos-age slopscan \
         docs docs-cli docs-mcp docs-site \
         publish publish-status \
         diagnose status logs rebuild-api rebuild-web rebuild-all \
@@ -41,6 +42,18 @@ coverage-verbose: ## Show each undocumented item with file:line
 
 coverage-staleness: ## Check docstring freshness via @verified tags
 	@python3 $(SCRIPTS)/lint/docstring_coverage.py --staleness
+
+todos: ## Scan for TODO/FIXME/HACK/XXX markers
+	@python3 $(SCRIPTS)/lint/todo_inventory.py
+
+todos-verbose: ## List every marker with file:line
+	@python3 $(SCRIPTS)/lint/todo_inventory.py -v
+
+todos-age: ## Include git blame age per marker
+	@python3 $(SCRIPTS)/lint/todo_inventory.py -v --age
+
+slopscan: ## SLOPSCAN 9000: detect agent antipatterns
+	@python3 $(SCRIPTS)/lint/todo_inventory.py --slop -v
 
 ##@ Documentation
 

@@ -22,6 +22,7 @@ Usage:
 
 import argparse
 import ast
+import json
 import os
 import re
 import shutil
@@ -883,6 +884,79 @@ def find_project_root() -> str:
     return str(cwd)
 
 
+def results_to_json(
+    results: List[LanguageResult],
+    staleness_entries: Optional[List[StalenessEntry]] = None,
+) -> dict:
+    """Build a JSON-serializable dict of coverage and staleness data."""
+    overall_total = sum(r.total for r in results)
+    overall_documented = sum(r.documented for r in results)
+    overall_pct = (overall_documented / overall_total * 100) if overall_total > 0 else 100.0
+
+    languages = []
+    for r in results:
+        lang = {
+            'language': r.language,
+            'total': r.total,
+            'documented': r.documented,
+            'percentage': round(r.percentage, 1),
+            'files': [],
+        }
+        if r.note:
+            lang['note'] = r.note
+        for f in r.files:
+            fdata = {
+                'path': f.path,
+                'total': f.total,
+                'documented': f.documented,
+                'percentage': round(f.percentage, 1),
+                'undocumented': [
+                    {'name': it.name, 'kind': it.kind, 'line': it.line}
+                    for it in f.items if not it.documented
+                ],
+            }
+            lang['files'].append(fdata)
+        languages.append(lang)
+
+    out: dict = {
+        'summary': {
+            'total': overall_total,
+            'documented': overall_documented,
+            'percentage': round(overall_pct, 1),
+        },
+        'languages': languages,
+    }
+
+    if staleness_entries is not None:
+        stale_list = []
+        for entry in staleness_entries:
+            if entry.status == 'stale':
+                stale_list.append({
+                    'file': entry.item.file_path,
+                    'line': entry.item.line,
+                    'name': entry.item.name,
+                    'kind': entry.item.kind,
+                    'drift_days': entry.drift_days,
+                    'verified_commit': entry.item.verified_commit,
+                    'file_last_commit': entry.file_last_commit,
+                })
+
+        current_count = sum(1 for e in staleness_entries if e.status == 'current')
+        stale_count = sum(1 for e in staleness_entries if e.status == 'stale')
+        unverified_count = sum(1 for e in staleness_entries if e.status == 'unverified')
+        unknown_count = sum(1 for e in staleness_entries if e.status == 'unknown')
+
+        out['staleness'] = {
+            'current': current_count,
+            'stale': stale_count,
+            'unverified': unverified_count,
+            'unknown': unknown_count,
+            'stale_items': sorted(stale_list, key=lambda x: -(x.get('drift_days') or 0)),
+        }
+
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Cross-language docstring coverage reporter',
@@ -906,6 +980,10 @@ def main():
         '--no-color', action='store_true',
         help='Disable ANSI color output',
     )
+    parser.add_argument(
+        '--json', action='store_true', dest='json_output',
+        help='Output as JSON (for CI or piping to other tools)',
+    )
     args = parser.parse_args()
 
     project_root = find_project_root()
@@ -916,9 +994,12 @@ def main():
 
     results: List[LanguageResult] = []
 
+    # JSON mode implies staleness scan (it includes both)
+    force_staleness = args.staleness or args.json_output
+
     if run_all or args.python_only:
         results.append(scan_python(
-            ['api/app'], project_root, force_ast=args.staleness,
+            ['api/app'], project_root, force_ast=force_staleness,
         ))
 
     if run_all or args.ts_only:
@@ -930,12 +1011,18 @@ def main():
             project_root,
         ))
 
-    print_results(results, verbose=args.verbose, use_color=use_color)
-
     # Staleness analysis
-    if args.staleness:
+    staleness_entries = None
+    if force_staleness:
         staleness_entries = compute_staleness(results, project_root)
-        print_staleness_report(staleness_entries, use_color=use_color)
+
+    # Output
+    if args.json_output:
+        print(json.dumps(results_to_json(results, staleness_entries), indent=2))
+    else:
+        print_results(results, verbose=args.verbose, use_color=use_color)
+        if args.staleness and staleness_entries is not None:
+            print_staleness_report(staleness_entries, use_color=use_color)
 
     # Exit code
     overall_total = sum(r.total for r in results)

@@ -95,6 +95,13 @@ class JobQueue(ABC):
         """
         pass
 
+    def shutdown(self, wait: bool = True) -> None:
+        """Shut down background workers and release resources.
+
+        Subclasses with thread pools or connection pools should override.
+        Default is a no-op for lightweight implementations.
+        """
+
     @abstractmethod
     def delete_jobs(
         self,
@@ -241,6 +248,17 @@ class PostgreSQLJobQueue(JobQueue):
             job_id: Job ID to execute
         """
         self.executor.submit(self.execute_job, job_id)
+
+    def shutdown(self, wait: bool = True) -> None:
+        """Shut down the thread pool executor and connection pool."""
+        try:
+            self.executor.shutdown(wait=wait, cancel_futures=True)
+        except Exception as e:
+            logger.debug(f"Executor shutdown: {e}")
+        try:
+            self.pool.closeall()
+        except Exception as e:
+            logger.debug(f"Connection pool close: {e}")
 
     def enqueue(self, job_type: str, job_data: Dict) -> str:
         """Add job to PostgreSQL queue"""

@@ -159,7 +159,7 @@ class BatchService:
                     if desc:
                         ont_text = f"{request.ontology}: {desc}"
                     result = self.embedding_worker.generate_concept_embedding(ont_text)
-                    emb_vector = result.get("embedding", []) if result.get("success") else []
+                    emb_vector = result.get("embedding", []) if result and result.get("embedding") else []
                     if emb_vector:
                         self.age_client.update_ontology_embedding(request.ontology, emb_vector)
                         logger.info(f"Generated embedding for ontology '{request.ontology}'")
@@ -244,8 +244,8 @@ class BatchService:
         embeddings = {}
         for concept in concepts:
             result = self.embedding_worker.generate_concept_embedding(concept.label)
-            if result.get("success"):
-                embeddings[concept.label] = result.get("embedding", [])
+            if result and result.get("embedding"):
+                embeddings[concept.label] = result["embedding"]
             else:
                 logger.error(f"Failed to generate embedding for '{concept.label}'")
         return embeddings
