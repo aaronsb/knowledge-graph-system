@@ -112,6 +112,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     minSimilarity,
     autoDiscover,
     activeTab,
+    pendingAnalysis,
   } = polarityState;
 
   // Temporary search state (not persisted)
@@ -239,6 +240,14 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       setIsAnalyzing(false);
     }
   };
+
+  // Auto-run analysis when sent from another explorer (e.g. "Send to Polarity")
+  useEffect(() => {
+    if (pendingAnalysis && selectedPositivePole && selectedNegativePole && !isAnalyzing) {
+      setPolarityState({ pendingAnalysis: false });
+      runAnalysis();
+    }
+  }, [pendingAnalysis, selectedPositivePole, selectedNegativePole, isAnalyzing]);
 
   const toggleSection = (section: 'positive' | 'neutral' | 'negative') => {
     setExpandedSections((prev) => ({

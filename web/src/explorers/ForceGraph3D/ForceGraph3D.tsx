@@ -1403,7 +1403,7 @@ export const ForceGraph3D: React.FC<
         { onClose: () => setContextMenu(null) },
         originNodeId,
         destinationNodeId,
-        { handleTravelPath, handleSendToPolarity, handleSendPathToReports }
+        { handleTravelPath, handleSendToPolarity, handleSendPathToReports, handleSendConceptToReports: onSendToReports }
       )
     : [];
 

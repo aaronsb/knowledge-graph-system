@@ -246,6 +246,7 @@ export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => vo
         concept_id: destinationId,
         label: destNode.label,
       },
+      pendingAnalysis: true,
     });
 
     navigate('/polarity');
@@ -336,6 +337,7 @@ export function buildContextMenuItems(
     ) => Promise<void>;
     handleSendToPolarity?: (originId: string, destinationId: string) => void;
     handleSendPathToReports?: (originId: string, destinationId: string) => Promise<void>;
+    handleSendConceptToReports?: () => void;
   }
 ): ContextMenuItem[] {
   const {
@@ -530,30 +532,56 @@ export function buildContextMenuItems(
     });
   }
 
-  // Send to Polarity Explorer — use origin/destination as poles
-  if (originNodeId && destinationNodeId && extraHandlers?.handleSendToPolarity) {
-    const { handleSendToPolarity } = extraHandlers;
-    items.push({
-      label: 'Send to Polarity Explorer',
-      icon: GitBranch,
-      onClick: () => {
-        onClose();
-        handleSendToPolarity(originNodeId, destinationNodeId);
-      },
-    });
-  }
+  // Report submenu — groups all report/analysis export actions
+  {
+    const reportSubmenu: ContextMenuItem[] = [];
 
-  // Send Path to Reports — create traversal report from origin/destination
-  if (originNodeId && destinationNodeId && extraHandlers?.handleSendPathToReports) {
-    const { handleSendPathToReports } = extraHandlers;
-    items.push({
-      label: 'Send Path to Reports',
-      icon: FileSpreadsheet,
-      onClick: () => {
-        onClose();
-        handleSendPathToReports(originNodeId, destinationNodeId);
-      },
-    });
+    // Polarity Explorer (requires origin + destination)
+    if (originNodeId && destinationNodeId && extraHandlers?.handleSendToPolarity) {
+      const { handleSendToPolarity } = extraHandlers;
+      reportSubmenu.push({
+        label: 'Polarity Axis',
+        icon: GitBranch,
+        onClick: () => {
+          onClose();
+          handleSendToPolarity(originNodeId, destinationNodeId);
+        },
+      });
+    }
+
+    // Path Report (requires origin + destination)
+    if (originNodeId && destinationNodeId && extraHandlers?.handleSendPathToReports) {
+      const { handleSendPathToReports } = extraHandlers;
+      reportSubmenu.push({
+        label: 'Path Report',
+        icon: Route,
+        onClick: () => {
+          onClose();
+          handleSendPathToReports(originNodeId, destinationNodeId);
+        },
+      });
+    }
+
+    // Concept Report (requires a node context — graph must have nodes)
+    if (nodeContext && extraHandlers?.handleSendConceptToReports) {
+      const { handleSendConceptToReports } = extraHandlers;
+      reportSubmenu.push({
+        label: 'Concept Report',
+        icon: FileSpreadsheet,
+        onClick: () => {
+          onClose();
+          handleSendConceptToReports();
+        },
+      });
+    }
+
+    if (reportSubmenu.length > 0) {
+      items.push({
+        label: 'Report',
+        icon: FileSpreadsheet,
+        submenu: reportSubmenu,
+      });
+    }
   }
 
   // Node-specific actions (only when right-clicking on a node)
