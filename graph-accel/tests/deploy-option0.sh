@@ -32,11 +32,8 @@ done
 
 # Resolve artifact source
 DIST_DIR="$ACCEL_DIR/dist/pg17"
-USE_DIST=false
-
 if [ -f "$DIST_DIR/graph_accel.so" ] && [ -f "$DIST_DIR/graph_accel.control" ] && ! $FORCE_HOST_BUILD; then
     # Use pre-built artifacts from build-in-container.sh
-    USE_DIST=true
     VERSION=$(grep 'default_version' "$DIST_DIR/graph_accel.control" | grep -oP "'\K[^']+")
     SO_FILE="$DIST_DIR/graph_accel.so"
     CONTROL_FILE="$DIST_DIR/graph_accel.control"

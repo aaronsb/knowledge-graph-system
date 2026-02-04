@@ -15,7 +15,9 @@
 # can use it by copying these three files to the PG extension directories.
 # ============================================================================
 
-FROM apache/age
+# Pin to the same base used by Dockerfile.build for ABI compatibility.
+# Update both files together when upgrading the base image.
+FROM apache/age@sha256:4ba7dd683fc83fcac0e603f76448f6afba0507cf4d7d21673cede0d6ff0265b2
 
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown

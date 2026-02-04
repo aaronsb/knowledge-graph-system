@@ -638,6 +638,7 @@ cmd_images() {
 
     for target in "${TARGETS[@]}"; do
         local context dockerfile image_name
+        local target_multi_arch="$use_multi_arch"
 
         case "$target" in
             api)
@@ -663,6 +664,9 @@ cmd_images() {
                     echo -e "  Skipping postgres target."
                     continue
                 fi
+                # Force single-arch: the .so is a pre-compiled native binary,
+                # buildx multi-arch would produce a broken arm64 image.
+                local target_multi_arch=false
                 context="."
                 dockerfile="./docker/Dockerfile.postgres"
                 image_name="kg-postgres"
@@ -686,7 +690,7 @@ cmd_images() {
             )
             [ -n "$DESCRIPTION" ] && label_args+=(--label "org.opencontainers.image.description=$DESCRIPTION")
 
-            if [ "$use_multi_arch" = "true" ]; then
+            if [ "$target_multi_arch" = "true" ]; then
                 # Multi-arch build with buildx (builds and pushes in one step)
                 local push_flag=""
                 [ "$DRY_RUN" = "false" ] && push_flag="--push"
@@ -722,7 +726,7 @@ cmd_images() {
         fi
 
         # Push for single-arch (multi-arch pushes during build)
-        if [ "$DRY_RUN" = "false" ] && [ "$use_multi_arch" = "false" ]; then
+        if [ "$DRY_RUN" = "false" ] && [ "$target_multi_arch" = "false" ]; then
             echo -e "${BLUE}→ Pushing $target...${NC}"
             docker push "$full_image:latest"
             docker push "$full_image:$VERSION"
