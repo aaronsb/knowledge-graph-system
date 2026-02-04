@@ -111,10 +111,19 @@ Merged: PR #274 → `main`
       pathfinding, degree, invalidation, hydration, match_sources
 - [x] Full suite: 975 passed, 0 failed
 
-### 5c: Deployment
-- [ ] Option A deployment: volume mount in docker-compose.yml
-- [ ] Option B deployment: custom Dockerfile extending apache/age
-- [ ] Update `operator.sh` for graph_accel-aware Postgres image
+### 5c: Deployment ✓
+- [x] Container build: `graph-accel/build-in-container.sh` compiles inside apache/age for ABI compatibility
+- [x] Pre-built artifacts: `graph-accel/dist/pg17/` (.so, .control, .sql) committed to repo
+- [x] `docker/Dockerfile.postgres`: thin image = apache/age + COPY artifacts + schema init
+- [x] `schema/11_graph_accel.sql`: conditional CREATE EXTENSION on fresh databases
+- [x] `schema/migrations/051_graph_accel_extension.sql`: conditional migration for existing databases
+- [x] docker-compose.yml: postgres now builds from Dockerfile.postgres
+- [x] docker-compose.ghcr.yml: kg-postgres GHCR image override
+- [x] docker-compose.dev.yml: stock apache/age + deploy-option0.sh pattern
+- [x] docker-compose.standalone.yml: volume reset for GHCR image
+- [x] docker-compose.prod.yml: kg-postgres GHCR image
+- [x] `scripts/publish.sh`: postgres added as build/push target
+- [x] `deploy-option0.sh`: updated to use dist/pg17/ artifacts when available
 - [x] Call `graph_accel_invalidate()` after batch ingestion + graph mutations
 - [x] Benchmark: compare AGE direct vs graph_accel for depths 1-5 on real data (see benchmark-findings.md)
 

@@ -241,54 +241,66 @@ cargo build --release -p graph-accel-bench
 ./target/release/graph_accel_bench scalefree 1000000
 ```
 
-## Deployment
+## Installation
 
-### Option 0: Manual copy (testing)
+### Pre-built artifacts (recommended)
 
-Copy artifacts directly into a running AGE container:
+Pre-built artifacts for `apache/age` (PostgreSQL 17, Debian trixie) are in `dist/pg17/`:
+
+```
+dist/pg17/
+├── graph_accel.so          # Shared library
+├── graph_accel.control     # Extension metadata
+└── graph_accel--0.5.0.sql  # Function definitions
+```
+
+Copy these three files into any `apache/age` container:
 
 ```bash
-# Build
-cargo pgrx package --pg-config /path/to/pg_config
+docker cp dist/pg17/graph_accel.so \
+  my-container:/usr/lib/postgresql/17/lib/
+docker cp dist/pg17/graph_accel.control \
+  my-container:/usr/share/postgresql/17/extension/
+docker cp dist/pg17/graph_accel--0.5.0.sql \
+  my-container:/usr/share/postgresql/17/extension/
 
-# Copy into container
-docker cp target/release/graph_accel-pg17/.../lib/postgresql/graph_accel.so \
-  my-postgres-container:/usr/lib/postgresql/17/lib/
-docker cp target/release/graph_accel-pg17/.../extension/graph_accel.control \
-  my-postgres-container:/usr/share/postgresql/17/extension/
-docker cp target/release/graph_accel-pg17/.../extension/graph_accel--0.4.0.sql \
-  my-postgres-container:/usr/share/postgresql/17/extension/
-
-# Activate
-psql -c "CREATE EXTENSION graph_accel;"
+docker exec my-container psql -U postgres -d mydb \
+  -c "CREATE EXTENSION graph_accel;"
 ```
 
-### Option A: Volume mount (development)
+**Compatibility:** The `.so` is built inside the official `apache/age` Docker image, so it is ABI-compatible with that exact image. If you use a different PostgreSQL build, rebuild from source (see Building below).
 
-```yaml
-# docker-compose.yml
-postgres:
-  image: apache/age
-  volumes:
-    - ./graph_accel.so:/usr/lib/postgresql/17/lib/graph_accel.so:ro
-    - ./graph_accel.control:/usr/share/postgresql/17/extension/graph_accel.control:ro
-    - ./graph_accel--0.4.0.sql:/usr/share/postgresql/17/extension/graph_accel--0.4.0.sql:ro
+### Building the artifacts
+
+To rebuild for the current `apache/age` image (guarantees ABI compatibility):
+
+```bash
+./build-in-container.sh
+# → produces dist/pg17/{graph_accel.so, .control, .sql}
 ```
 
-### Option B: Custom Dockerfile (production)
+This spins up a temporary Docker container with the `apache/age` base, installs the Rust toolchain + pgrx, compiles the extension, and extracts the artifacts. Docker layer caching makes rebuilds fast.
+
+### Dockerfile (bake into a custom image)
 
 ```dockerfile
-FROM apache/age AS base
+FROM apache/age
+COPY dist/pg17/graph_accel.so /usr/lib/postgresql/17/lib/
+COPY dist/pg17/graph_accel.control /usr/share/postgresql/17/extension/
+COPY dist/pg17/graph_accel--*.sql /usr/share/postgresql/17/extension/
+```
 
-FROM rust:latest AS builder
-RUN cargo install cargo-pgrx --version 0.16.1 --locked \
-    && cargo pgrx init --pg17=/usr/bin/pg_config
-COPY graph-accel/ /build/
-WORKDIR /build
-RUN cargo pgrx package --pg-config /usr/bin/pg_config
+### Development deployment
 
-FROM base
-COPY --from=builder /build/target/release/graph_accel-pg17/usr/ /usr/
+For rapid iteration with a host Rust toolchain:
+
+```bash
+# Build on host + deploy into running container
+./tests/deploy-option0.sh
+
+# Or build in container + deploy
+./build-in-container.sh
+./tests/deploy-option0.sh --skip-build
 ```
 
 ## Project Structure
@@ -296,6 +308,9 @@ COPY --from=builder /build/target/release/graph_accel-pg17/usr/ /usr/
 ```
 graph-accel/
 ├── Cargo.toml          # Workspace: core, bench, ext
+├── build-in-container.sh  # Build inside apache/age for ABI compatibility
+├── Dockerfile.build    # Multi-stage Dockerfile for container builds
+├── dist/pg17/          # Pre-built artifacts for apache/age (PG 17)
 ├── core/               # Pure Rust traversal engine
 │   └── src/
 │       ├── graph.rs    #   Adjacency list, node index, rel-type interning
@@ -357,7 +372,7 @@ $ ./target/release/graph_accel_bench scalefree 5000000
 | 2. pgrx extension | Done | SQL functions, SPI loading, GUCs, per-backend state |
 | 3. Cache invalidation | Done | Generation-based staleness, auto-reload, debouncing |
 | 4. Integration enablers | Done | Directed traversal, degree centrality, subgraph extraction, confidence filtering |
-| 5. API integration | Planned | Route queries through graph_accel when available |
+| 5. API integration | Done | GraphFacade with accel fast path + Cypher fallback, container deployment |
 | 6. Shared memory | Deferred | Cross-backend graph sharing, background worker reload |
 | 7. Publish | Planned | Standalone repo, PGXN submission |
 

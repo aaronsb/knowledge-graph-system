@@ -14,7 +14,7 @@
 
 services:
   postgres:
-    image: apache/age
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-postgres:latest
     container_name: kg-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-knowledge_graph}
@@ -22,7 +22,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - /srv/docker/data/knowledge-graph/postgres:/var/lib/postgresql/data
-      - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph}"]
       interval: 10s

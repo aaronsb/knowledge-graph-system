@@ -10,6 +10,9 @@
 # ============================================================================
 
 services:
+  postgres:
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-postgres:latest
+
   api:
     image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
 

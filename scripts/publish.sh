@@ -123,7 +123,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        api|web|operator)
+        api|web|operator|postgres)
             TARGETS+=("$1")
             shift
             ;;
@@ -591,7 +591,7 @@ cmd_images() {
     get_versions
 
     if [ ${#TARGETS[@]} -eq 0 ]; then
-        TARGETS=(api web operator)
+        TARGETS=(api web operator postgres)
     fi
 
     # Auto-enable multi-arch on release branch
@@ -654,6 +654,18 @@ cmd_images() {
                 context="."
                 dockerfile="./operator/Dockerfile"
                 image_name="kg-operator"
+                ;;
+            postgres)
+                # Requires pre-built artifacts in graph-accel/dist/pg17/
+                if [ ! -f "./graph-accel/dist/pg17/graph_accel.so" ]; then
+                    echo -e "${YELLOW}⚠ graph-accel/dist/pg17/ artifacts missing${NC}"
+                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh${NC}"
+                    echo -e "  Skipping postgres target."
+                    continue
+                fi
+                context="."
+                dockerfile="./docker/Dockerfile.postgres"
+                image_name="kg-postgres"
                 ;;
             *)
                 echo -e "${RED}Unknown target: $target${NC}"

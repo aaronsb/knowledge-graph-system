@@ -1,0 +1,36 @@
+# ============================================================================
+# kg-postgres — Apache AGE + graph_accel extension
+# ============================================================================
+# Extends the official apache/age image with the graph_accel in-memory
+# graph traversal acceleration extension (ADR-201).
+#
+# The extension artifacts (.so, .control, .sql) are pre-built using
+# graph-accel/build-in-container.sh which compiles inside the same
+# apache/age base image for guaranteed ABI compatibility.
+#
+# Build:
+#   docker build -f docker/Dockerfile.postgres -t kg-postgres:latest .
+#
+# The .so is independently distributable — any apache/age installation
+# can use it by copying these three files to the PG extension directories.
+# ============================================================================
+
+FROM apache/age
+
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+
+LABEL org.opencontainers.image.title="kg-postgres"
+LABEL org.opencontainers.image.description="Apache AGE + graph_accel acceleration extension"
+LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+
+# graph_accel extension artifacts (pre-built for PG 17)
+COPY graph-accel/dist/pg17/graph_accel.so /usr/lib/postgresql/17/lib/
+COPY graph-accel/dist/pg17/graph_accel.control /usr/share/postgresql/17/extension/
+COPY graph-accel/dist/pg17/graph_accel--*.sql /usr/share/postgresql/17/extension/
+
+# Schema initialization (runs on first database creation only)
+# 00-create-extension-age.sql is provided by the apache/age base image
+COPY schema/00_baseline.sql /docker-entrypoint-initdb.d/10-baseline.sql
+COPY schema/11_graph_accel.sql /docker-entrypoint-initdb.d/11-graph-accel.sql
