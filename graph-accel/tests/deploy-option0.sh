@@ -5,7 +5,7 @@
 # copies into the knowledge-graph-postgres container, and reinstalls the extension.
 #
 # Artifact sources (checked in order):
-#   1. graph-accel/dist/pg17/  (from build-in-container.sh — ABI-compatible)
+#   1. graph-accel/dist/pg17/<arch>/  (from build-in-container.sh — ABI-compatible)
 #   2. cargo pgrx package output (from host Rust toolchain)
 #
 # Usage:
@@ -30,15 +30,21 @@ for arg in "$@"; do
     esac
 done
 
-# Resolve artifact source
-DIST_DIR="$ACCEL_DIR/dist/pg17"
+# Resolve artifact source — check per-arch dist/ first
+CONTAINER_ARCH=$(docker exec "$CONTAINER" uname -m 2>/dev/null || echo "x86_64")
+case "$CONTAINER_ARCH" in
+    x86_64)  DIST_ARCH="amd64" ;;
+    aarch64) DIST_ARCH="arm64" ;;
+    *)       DIST_ARCH="amd64" ;;
+esac
+DIST_DIR="$ACCEL_DIR/dist/pg17/$DIST_ARCH"
 if [ -f "$DIST_DIR/graph_accel.so" ] && [ -f "$DIST_DIR/graph_accel.control" ] && ! $FORCE_HOST_BUILD; then
     # Use pre-built artifacts from build-in-container.sh
     VERSION=$(grep 'default_version' "$DIST_DIR/graph_accel.control" | grep -oP "'\K[^']+")
     SO_FILE="$DIST_DIR/graph_accel.so"
     CONTROL_FILE="$DIST_DIR/graph_accel.control"
     SQL_FILE="$DIST_DIR/graph_accel--${VERSION}.sql"
-    echo "--- Using pre-built artifacts from dist/pg17/ (v${VERSION}) ---"
+    echo "--- Using pre-built artifacts from dist/pg17/$DIST_ARCH/ (v${VERSION}) ---"
 else
     # Fall back to host cargo pgrx build
     PG_CONFIG=$(find ~/.pgrx -name pg_config -path "*/17.*/pgrx-install/bin/*" 2>/dev/null | head -1)

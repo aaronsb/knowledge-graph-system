@@ -55,7 +55,8 @@ RUN mkdir -p /artifacts && \
     find target/release/graph_accel-pg17 -name "graph_accel--*.sql" -exec cp {} /artifacts/ \;
 
 # ---------------------------------------------------------------------------
-# Stage 2: Minimal output (just the artifacts as a tar stream)
+# Stage 2: Minimal output (per-architecture subdirectory)
 # ---------------------------------------------------------------------------
 FROM scratch AS artifacts
-COPY --from=builder /artifacts/ /pg17/
+ARG TARGETARCH
+COPY --from=builder /artifacts/ /pg17/${TARGETARCH}/

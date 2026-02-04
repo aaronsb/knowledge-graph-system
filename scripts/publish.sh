@@ -657,16 +657,19 @@ cmd_images() {
                 image_name="kg-operator"
                 ;;
             postgres)
-                # Requires pre-built artifacts in graph-accel/dist/pg17/
-                if [ ! -f "./graph-accel/dist/pg17/graph_accel.so" ]; then
-                    echo -e "${YELLOW}⚠ graph-accel/dist/pg17/ artifacts missing${NC}"
-                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh${NC}"
+                # Requires per-arch pre-built artifacts in graph-accel/dist/pg17/
+                if [ ! -d "./graph-accel/dist/pg17/amd64" ]; then
+                    echo -e "${YELLOW}⚠ graph-accel/dist/pg17/amd64/ missing${NC}"
+                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
                     echo -e "  Skipping postgres target."
                     continue
                 fi
-                # Force single-arch: the .so is a pre-compiled native binary,
-                # buildx multi-arch would produce a broken arm64 image.
-                local target_multi_arch=false
+                if [ "$target_multi_arch" = "true" ] && [ ! -d "./graph-accel/dist/pg17/arm64" ]; then
+                    echo -e "${YELLOW}⚠ Multi-arch requested but graph-accel/dist/pg17/arm64/ missing${NC}"
+                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
+                    echo -e "  Building amd64 only."
+                    target_multi_arch=false
+                fi
                 context="."
                 dockerfile="./docker/Dockerfile.postgres"
                 image_name="kg-postgres"

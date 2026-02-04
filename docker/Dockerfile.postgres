@@ -21,16 +21,17 @@ FROM apache/age@sha256:4ba7dd683fc83fcac0e603f76448f6afba0507cf4d7d21673cede0d6f
 
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
+ARG TARGETARCH
 
 LABEL org.opencontainers.image.title="kg-postgres"
 LABEL org.opencontainers.image.description="Apache AGE + graph_accel acceleration extension"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
-# graph_accel extension artifacts (pre-built for PG 17)
-COPY graph-accel/dist/pg17/graph_accel.so /usr/lib/postgresql/17/lib/
-COPY graph-accel/dist/pg17/graph_accel.control /usr/share/postgresql/17/extension/
-COPY graph-accel/dist/pg17/graph_accel--*.sql /usr/share/postgresql/17/extension/
+# graph_accel extension artifacts (per-architecture, pre-built for PG 17)
+COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/17/lib/
+COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel.control /usr/share/postgresql/17/extension/
+COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel--*.sql /usr/share/postgresql/17/extension/
 
 # Schema initialization (runs on first database creation only)
 # 00-create-extension-age.sql is provided by the apache/age base image
