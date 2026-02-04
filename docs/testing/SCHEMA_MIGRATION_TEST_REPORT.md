@@ -196,8 +196,8 @@ Result: **29 permissions** ✅
 - Jobs stored in `kg_api.ingestion_jobs` table
 
 **Action Required:**
-- Implement `PostgreSQLJobQueue` class in `src/api/services/job_queue.py`
-- Update `src/api/main.py` to use PostgreSQL queue
+- Implement `PostgreSQLJobQueue` class in `api/app/services/job_queue.py`
+- Update `api/app/main.py` to use PostgreSQL queue
 - Migrate existing jobs from SQLite to PostgreSQL
 
 **Impact:** Low priority - current SQLite implementation works, but lacks MVCC benefits
@@ -337,7 +337,7 @@ FROM kg_auth.users;
    - Query `kg_api.ingestion_jobs` directly
 
 2. **Update API Initialization**
-   - Modify `src/api/main.py` to use PostgreSQL queue
+   - Modify `api/app/main.py` to use PostgreSQL queue
    - Add environment variable: `JOB_QUEUE_TYPE=postgresql`
 
 3. **Data Migration Script**

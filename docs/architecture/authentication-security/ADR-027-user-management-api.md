@@ -446,11 +446,11 @@ pip install passlib[bcrypt] python-jose[cryptography] python-multipart
 ```
 
 **Implementation Order:**
-1. Create `src/api/lib/auth.py` - Password hashing, JWT utilities
-2. Create `src/api/models/auth.py` - Pydantic request/response models
-3. Create `src/api/routes/auth.py` - Public endpoints (register, login)
-4. Create `src/api/dependencies/auth.py` - `get_current_user` dependency
-5. Add auth router to `src/api/main.py`
+1. Create `api/app/lib/auth.py` - Password hashing, JWT utilities
+2. Create `api/app/models/auth.py` - Pydantic request/response models
+3. Create `api/app/routes/auth.py` - Public endpoints (register, login)
+4. Create `api/app/dependencies/auth.py` - `get_current_user` dependency
+5. Add auth router to `api/app/main.py`
 6. Test with curl/Postman
 
 ### Phase 2: User Management (Week 1)

@@ -25,7 +25,7 @@ This transforms opaque "llm_generated" types into semantically meaningful catego
 
 ### 1. Discovery During Ingestion
 
-**Location:** `src/api/lib/ingestion.py:383-412`
+**Location:** `api/app/lib/ingestion.py:383-412`
 
 ```python
 # LLM extracts relationship from text
@@ -60,7 +60,7 @@ if not canonical_type:
 
 ### 2. Automatic Categorization
 
-**Location:** `src/api/lib/age_client.py:1332-1419`
+**Location:** `api/app/lib/age_client.py:1332-1419`
 
 #### Step A: Add to Vocabulary Table
 
@@ -95,7 +95,7 @@ WHERE relationship_type = 'ENHANCES'
 
 ```python
 if auto_categorize and category == "llm_generated":
-    from src.api.lib.vocabulary_categorizer import VocabularyCategorizer
+    from api.app.lib.vocabulary_categorizer import VocabularyCategorizer
 
     categorizer = VocabularyCategorizer(age_client, ai_provider)
     assignment = await categorizer.assign_category("ENHANCES")
@@ -258,14 +258,14 @@ The 8 semantic categories emerge from embedding similarity to 30 hand-validated 
 ### Discovery Log
 
 ```
-15:19:47 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: 'ADDRESSES' (embedding generated)
-15:19:47 | INFO | src.api.lib.age_client | 🎯 Auto-categorized 'ADDRESSES' → causation (confidence: 72%)
+15:19:47 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: 'ADDRESSES' (embedding generated)
+15:19:47 | INFO | api.app.lib.age_client | 🎯 Auto-categorized 'ADDRESSES' → causation (confidence: 72%)
 
-15:19:48 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: 'INCLUDES' (embedding generated)
-15:19:48 | INFO | src.api.lib.age_client | 🎯 Auto-categorized 'INCLUDES' → composition (confidence: 88%)
+15:19:48 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: 'INCLUDES' (embedding generated)
+15:19:48 | INFO | api.app.lib.age_client | 🎯 Auto-categorized 'INCLUDES' → composition (confidence: 88%)
 
-15:19:49 | INFO | src.api.lib.ingestion | 🆕 New edge type discovered: 'ENHANCES' (embedding generated)
-15:19:49 | INFO | src.api.lib.age_client | 🎯 Auto-categorized 'ENHANCES' → causation (confidence: 85%)
+15:19:49 | INFO | api.app.lib.ingestion | 🆕 New edge type discovered: 'ENHANCES' (embedding generated)
+15:19:49 | INFO | api.app.lib.age_client | 🎯 Auto-categorized 'ENHANCES' → causation (confidence: 85%)
 ```
 
 ### Verification

@@ -251,8 +251,8 @@ name: Concept Deduplication Quality
 on:
   push:
     paths:
-      - 'src/api/lib/llm_extractor.py'
-      - 'src/api/lib/ingestion.py'
+      - 'api/app/lib/llm_extractor.py'
+      - 'api/app/lib/ingestion.py'
       - 'tests/fixtures/**'
 
 jobs:
@@ -373,8 +373,8 @@ ORDER BY avg_hit_rate DESC;
 
 ## References
 
-- Concept matching implementation: `src/api/lib/ingestion.py:match_existing_concepts()`
-- Embedding generation: `src/api/lib/ai_providers.py:generate_embedding()`
+- Concept matching implementation: `api/app/lib/ingestion.py:match_existing_concepts()`
+- Embedding generation: `api/app/lib/ai_providers.py:generate_embedding()`
 - Job statistics: `kg job status <id>` shows hit rate
 - Current threshold: 80% cosine similarity (hardcoded)
 

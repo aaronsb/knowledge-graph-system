@@ -884,7 +884,7 @@ WITH (lists = 100);
 **Vector Search Implementation:**
 
 ```python
-# src/api/lib/age_client.py
+# api/app/lib/age_client.py
 def vector_search(
     self,
     embedding: List[float],

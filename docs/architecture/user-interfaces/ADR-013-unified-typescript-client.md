@@ -81,7 +81,7 @@ client/
 **Purpose**: TypeScript interfaces matching FastAPI Pydantic models exactly.
 
 ```typescript
-// Matches IngestRequest in src/api/models/requests.py
+// Matches IngestRequest in api/app/models/requests.py
 export interface IngestRequest {
   ontology: string;
   filename?: string;
@@ -92,7 +92,7 @@ export interface IngestRequest {
   };
 }
 
-// Matches JobStatus in src/api/models/responses.py
+// Matches JobStatus in api/app/models/responses.py
 export interface JobStatus {
   job_id: string;
   status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
@@ -123,7 +123,7 @@ export type DuplicateJobResponse = {
 
 **Benefit**: Changes to API types propagate to both CLI and MCP modes automatically.
 
-### 2. API Client (`src/api/client.ts`)
+### 2. API Client (`api/app/client.ts`)
 
 **Purpose**: HTTP wrapper with typed requests/responses.
 

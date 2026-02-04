@@ -112,7 +112,7 @@ LLM Extraction → llm_generated → Immediate Categorization → computed
 **Modify ingestion pipeline:**
 
 ```python
-# src/api/lib/ingestion.py (or llm_extractor.py)
+# api/app/lib/ingestion.py (or llm_extractor.py)
 
 async def process_extracted_relationships(relationships: List[str], db_client):
     """Process and categorize LLM-extracted relationships."""

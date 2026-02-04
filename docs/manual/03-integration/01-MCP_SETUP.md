@@ -371,7 +371,7 @@ The kg CLI uses the same REST API as the MCP server.
 
 ### Adding New Tools
 
-1. Add API endpoint to `src/api/routes/` (if needed)
+1. Add API endpoint to `api/app/routes/` (if needed)
 2. Add client method to `client/src/api/client.ts`
 3. Add tool definition to `client/src/mcp-server.ts` (ListToolsRequestSchema handler)
 4. Add case handler to CallToolRequestSchema handler

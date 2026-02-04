@@ -182,7 +182,7 @@ Add `analysis` field to job model:
 
 ### Analysis Service
 
-Create `src/api/services/job_analysis.py`:
+Create `api/app/services/job_analysis.py`:
 - Port cost estimation logic from `scripts/ingest.sh`
 - Calculate file stats (size, word count)
 - Estimate chunk count based on config
@@ -331,7 +331,7 @@ JOB_FAILED_RETENTION=168         # Delete failed after 7 days (168 hours)
 
 **Scheduler Implementation:**
 
-Create `src/api/services/job_scheduler.py`:
+Create `api/app/services/job_scheduler.py`:
 
 ```python
 """
@@ -664,7 +664,7 @@ for job in approved_jobs:
 #### Alternative Approaches Considered
 
 **Option 1: Filesystem checkpoints**
-- Use existing `src/api/lib/checkpoint.py` (already implemented but unused)
+- Use existing `api/app/lib/checkpoint.py` (already implemented but unused)
 - Store chunks + progress in `.checkpoints/` directory
 - ❌ File management complexity
 - ❌ Orphaned files on incomplete cleanup
@@ -717,12 +717,12 @@ for job in approved_jobs:
 - [ ] Update API documentation with new endpoints
 
 **Backend Services:**
-- [ ] Create `JobAnalyzer` service (src/api/services/job_analysis.py)
+- [ ] Create `JobAnalyzer` service (api/app/services/job_analysis.py)
   - Port cost estimation logic from ingest.sh
   - File stats calculation (size, word count, chunks)
   - Cost estimates (extraction + embeddings)
   - Warning generation
-- [ ] Create `JobScheduler` service (src/api/services/job_scheduler.py)
+- [ ] Create `JobScheduler` service (api/app/services/job_scheduler.py)
   - Periodic cleanup task (hourly)
   - Cancel unapproved jobs >24h
   - Delete completed/cancelled >48h
@@ -829,8 +829,8 @@ if estimated_cost < threshold:
 ## References
 
 - `scripts/ingest.sh` - Current pre-analysis implementation
-- `src/api/services/job_queue.py` - Job queue abstraction
-- `src/api/workers/ingestion_worker.py` - Ingestion execution
+- `api/app/services/job_queue.py` - Job queue abstraction
+- `api/app/workers/ingestion_worker.py` - Ingestion execution
 - ADR-012: API Server Architecture
 - ADR-013: Unified TypeScript Client
 

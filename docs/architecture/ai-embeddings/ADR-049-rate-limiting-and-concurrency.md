@@ -179,7 +179,7 @@ Enforce reasonable limits to prevent misconfiguration:
 ## Implementation
 
 ### Rate Limiter Module
-`src/api/lib/rate_limiter.py`:
+`api/app/lib/rate_limiter.py`:
 - `get_provider_concurrency_limit()` - Load from DB/env/defaults
 - `get_provider_max_retries()` - Load from DB/env/defaults
 - `get_provider_semaphore()` - Thread-safe singleton
@@ -187,7 +187,7 @@ Enforce reasonable limits to prevent misconfiguration:
 - `_is_rate_limit_error()` - Detect 429/rate limit exceptions
 
 ### Provider Integration
-**OpenAI (`src/api/lib/ai_providers.py`):**
+**OpenAI (`api/app/lib/ai_providers.py`):**
 ```python
 max_retries = get_provider_max_retries("openai")
 self.client = OpenAI(
@@ -197,7 +197,7 @@ self.client = OpenAI(
 )
 ```
 
-**Anthropic (`src/api/lib/ai_providers.py`):**
+**Anthropic (`api/app/lib/ai_providers.py`):**
 ```python
 max_retries = get_provider_max_retries("anthropic")
 self.client = Anthropic(
@@ -207,7 +207,7 @@ self.client = Anthropic(
 )
 ```
 
-**Ollama (`src/api/lib/ai_providers.py`):**
+**Ollama (`api/app/lib/ai_providers.py`):**
 ```python
 @exponential_backoff_retry(max_retries=3, base_delay=0.5)
 def _make_request():
@@ -219,7 +219,7 @@ response = _make_request()
 ```
 
 ### API Exposure
-**Models (`src/api/models/extraction.py`):**
+**Models (`api/app/models/extraction.py`):**
 - Added `max_concurrent_requests` to request/response models
 - Added `max_retries` to request/response models
 
@@ -456,7 +456,7 @@ Exceeding these limits returns **413 request_too_large** from Cloudflare before 
 
 ### Retry Logic Implementation
 
-Our rate limiter (`src/api/lib/rate_limiter.py`) detects retryable errors:
+Our rate limiter (`api/app/lib/rate_limiter.py`) detects retryable errors:
 
 ```python
 def _is_rate_limit_error(e: Exception) -> bool:
@@ -500,4 +500,4 @@ These errors indicate configuration or request problems that won't resolve with 
 - **Industry Standard:** Exponential backoff with jitter
 - **ADR-041:** AI Extraction Provider Configuration (database-first pattern)
 - **Migration 018:** `schema/migrations/018_add_rate_limiting_config.sql`
-- **Implementation:** `src/api/lib/rate_limiter.py`
+- **Implementation:** `api/app/lib/rate_limiter.py`

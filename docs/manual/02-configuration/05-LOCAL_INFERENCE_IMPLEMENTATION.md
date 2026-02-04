@@ -25,7 +25,7 @@ This guide documents the phased implementation of local LLM inference for concep
 
 **Completed Tasks:**
 
-1. **OllamaProvider Class** (`src/api/lib/ai_providers.py`)
+1. **OllamaProvider Class** (`api/app/lib/ai_providers.py`)
    - ✅ Extends `AIProvider` abstract base class
    - ✅ Implements `extract_concepts()` using Ollama API
    - ✅ JSON mode configuration for structured output
@@ -145,7 +145,7 @@ CHECK (thinking_mode IN ('off', 'low', 'medium', 'high'));
 
 Standard models don't support graduated thinking levels.
 
-**Implementation** (`src/api/lib/ai_providers.py`):
+**Implementation** (`api/app/lib/ai_providers.py`):
 
 ```python
 # Map thinking_mode to model-specific parameter
@@ -369,7 +369,7 @@ def test_relationship_type_accuracy():
 3. **Automatic unloading** - Free VRAM when switching models
 4. **Status endpoint** - Show loaded models, VRAM usage
 
-**Create:** `src/api/routes/models.py`
+**Create:** `api/app/routes/models.py`
 
 ```python
 @router.get("/models/status")

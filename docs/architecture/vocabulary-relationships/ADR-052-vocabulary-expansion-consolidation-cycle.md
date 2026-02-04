@@ -53,7 +53,7 @@ The question is not *whether* to add vocabulary, but **when and how**.
 
 ### Phase 1: Optimistic Expansion (Learning/Waking State)
 
-**Location**: `src/api/lib/ingestion.py:398-424`
+**Location**: `api/app/lib/ingestion.py:398-424`
 
 ```python
 # LLM suggests new relationship type
@@ -87,7 +87,7 @@ age_client.create_concept_relationship(...)
 
 ### Phase 2: Consolidation (Sleep/Dreaming State)
 
-**Location**: `src/api/services/vocabulary_manager.py:871-964` (ADR-050, implemented 2025-10-31)
+**Location**: `api/app/services/vocabulary_manager.py:871-964` (ADR-050, implemented 2025-10-31)
 
 ```python
 async def prune_unused_concepts(self, dry_run: bool = False):
@@ -236,10 +236,10 @@ Breakdown:
 
 | Phase | Location | Function |
 |-------|----------|----------|
-| **Expansion** | `src/api/lib/ingestion.py:408` | `age_client.add_edge_type()` |
-| **Validation** | `src/api/lib/ingestion.py:438` | `create_concept_relationship()` |
-| **Consolidation** | `src/api/services/vocabulary_manager.py:871` | `prune_unused_concepts()` |
-| **Integration** | `src/api/routes/vocabulary.py:429` | Consolidation endpoint |
+| **Expansion** | `api/app/lib/ingestion.py:408` | `age_client.add_edge_type()` |
+| **Validation** | `api/app/lib/ingestion.py:438` | `create_concept_relationship()` |
+| **Consolidation** | `api/app/services/vocabulary_manager.py:871` | `prune_unused_concepts()` |
+| **Integration** | `api/app/routes/vocabulary.py:429` | Consolidation endpoint |
 
 ## Consequences
 

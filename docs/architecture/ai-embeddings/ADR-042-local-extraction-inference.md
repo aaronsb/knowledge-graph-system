@@ -62,7 +62,7 @@ Document → Chunking → LLM Extraction → Graph Upsert
            (1000w)    (GPT-4o/Claude)   (PostgreSQL+AGE)
 ```
 
-**Chunking System** (`src/api/lib/chunker.py`):
+**Chunking System** (`api/app/lib/chunker.py`):
 - **Target:** 1000 words/chunk (configurable: 800-1500)
 - **Overlap:** 200 words between chunks for context
 - **Smart Boundaries:** Paragraph > Sentence > Pause > Hard cut
@@ -916,7 +916,7 @@ Performance:
 ## Implementation Status
 
 **Phase 1 (MVP) - Completed:**
-- ✅ OllamaProvider class extending AIProvider (`src/api/lib/ai_providers.py`)
+- ✅ OllamaProvider class extending AIProvider (`api/app/lib/ai_providers.py`)
 - ✅ Database migration 007 for extraction config fields (`schema/migrations/007_add_local_extraction_providers.sql`)
 - ✅ CLI commands for Ollama configuration (`client/src/cli/ai-config.ts`)
 - ✅ Hardware-optimized Docker Compose profiles (`docker-compose.ollama.yml`)

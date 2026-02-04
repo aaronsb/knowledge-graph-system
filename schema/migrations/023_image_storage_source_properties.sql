@@ -30,8 +30,8 @@
 -- Related:
 --   - ADR-057: Multimodal Image Ingestion
 --   - Garage object storage (docker-compose.yml)
---   - src/api/lib/garage_client.py
---   - src/api/lib/visual_embeddings.py
+--   - api/app/lib/garage_client.py
+--   - api/app/lib/visual_embeddings.py
 -- ============================================================================
 
 -- No schema changes needed - AGE graph nodes are schemaless JSON

@@ -428,7 +428,7 @@ kg_api.jobs:
 
 **What's in Python Code (Logic):**
 ```
-Launchers (src/api/launchers/):
+Launchers (api/app/launchers/):
   - Condition checking logic
   - Job data preparation
   - NOT API endpoints (internal only)
@@ -448,7 +448,7 @@ Example:
 **Adding a New Scheduled Task:**
 ```python
 # 1. Write launcher class (if custom logic needed)
-# src/api/launchers/my_task.py
+# api/app/launchers/my_task.py
 class MyTaskLauncher(JobLauncher):
     def check_conditions(self) -> bool:
         # Your condition logic here
@@ -850,7 +850,7 @@ ON CONFLICT (name) DO NOTHING;
 #### 2. Simple Scheduler Loop
 
 ```python
-# src/api/services/scheduler.py
+# api/app/services/scheduler.py
 
 import asyncio
 import logging
@@ -1075,7 +1075,7 @@ class JobScheduler:
 #### 3. Job Launcher Base Class
 
 ```python
-# src/api/launchers/base.py
+# api/app/launchers/base.py
 
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
@@ -1182,7 +1182,7 @@ class JobLauncher(ABC):
 
 **Category Refresh Launcher:**
 ```python
-# src/api/launchers/category_refresh.py
+# api/app/launchers/category_refresh.py
 
 from .base import JobLauncher
 from src.api.lib.age_client import AGEClient
@@ -1222,7 +1222,7 @@ class CategoryRefreshLauncher(JobLauncher):
 
 **Vocabulary Consolidation Launcher:**
 ```python
-# src/api/launchers/vocab_consolidation.py
+# api/app/launchers/vocab_consolidation.py
 
 from .base import JobLauncher
 from src.api.lib.age_client import AGEClient
@@ -1289,7 +1289,7 @@ class VocabConsolidationLauncher(JobLauncher):
 #### 5. FastAPI Integration
 
 ```python
-# In src/api/main.py
+# In api/app/main.py
 
 from src.api.services.scheduler import JobScheduler
 from src.api.launchers.category_refresh import CategoryRefreshLauncher

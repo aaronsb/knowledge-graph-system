@@ -17,13 +17,13 @@
 All 3 unsafe queries have been migrated to namespace-aware alternatives:
 
 ### Fix 1: Database Health Check ✅
-**File:** `src/api/routes/database.py:195`
+**File:** `api/app/routes/database.py:195`
 **Before:** `MATCH (n) RETURN count(n)` (counted ALL nodes)
 **After:** `client.facade.count_concepts()` (namespace-aware)
 **Impact:** Health check now returns correct concept count, won't be affected by vocabulary nodes
 
 ### Fix 2: Restore Worker - Delete Relationships ✅
-**File:** `src/api/workers/restore_worker.py:230`
+**File:** `api/app/workers/restore_worker.py:230`
 **Before:** `MATCH (n)-[r]-() DELETE r` (deleted ALL relationships)
 **After:** Explicit deletion by namespace:
 ```python
@@ -34,7 +34,7 @@ client._execute_cypher("MATCH (i:Instance)-[r]-() DELETE r")
 **Impact:** Restore preserves vocabulary metadata, only clears concept graph
 
 ### Fix 3: Restore Worker - Delete Nodes ✅
-**File:** `src/api/workers/restore_worker.py:233`
+**File:** `api/app/workers/restore_worker.py:233`
 **Before:** `MATCH (n) DELETE n` (deleted ALL nodes)
 **After:** Explicit deletion by namespace:
 ```python
@@ -47,7 +47,7 @@ client._execute_cypher("MATCH (i:Instance) DELETE i")
 ## Original Findings (Phase 1)
 
 ### 1. Health Check Node Count
-**File:** `src/api/routes/database.py:195`
+**File:** `api/app/routes/database.py:195`
 **Query:** `MATCH (n) RETURN count(n) as node_count LIMIT 1`
 **Purpose:** Verify graph is accessible
 **Risk:** Once vocabulary is in graph, counts ALL nodes (concepts + vocabulary)
@@ -68,7 +68,7 @@ graph_check = client._execute_cypher(
 ```
 
 ### 2. Restore Worker - Delete All Relationships
-**File:** `src/api/workers/restore_worker.py:230`
+**File:** `api/app/workers/restore_worker.py:230`
 **Query:** `MATCH (n)-[r]-() DELETE r`
 **Purpose:** Clear database before restore
 **Risk:** CRITICAL - Would delete vocabulary relationships in Phase 3
@@ -86,7 +86,7 @@ client._execute_cypher("MATCH (n:Instance)-[r]-() DELETE r")
 ```
 
 ### 3. Restore Worker - Delete All Nodes
-**File:** `src/api/workers/restore_worker.py:233`
+**File:** `api/app/workers/restore_worker.py:233`
 **Query:** `MATCH (n) DELETE n`
 **Purpose:** Clear database before restore
 **Risk:** CRITICAL - Would delete vocabulary nodes in Phase 3

@@ -126,7 +126,7 @@ Implement a **semantically sparse 30-type relationship taxonomy** organized into
 
 ## Implementation
 
-### 1. Constants Structure (`src/api/constants.py`)
+### 1. Constants Structure (`api/app/constants.py`)
 
 ```python
 RELATIONSHIP_CATEGORIES: Dict[str, List[str]] = {
@@ -341,9 +341,9 @@ The LLM can now express: "This is an analogy" vs "This provides evidence"
 ## References
 
 - **Code:**
-  - `src/api/constants.py` - 30-type taxonomy definition
-  - `src/api/lib/relationship_mapper.py` - Fuzzy matching logic
-  - `src/api/lib/age_client.py` - Relationship creation with normalization
+  - `api/app/constants.py` - 30-type taxonomy definition
+  - `api/app/lib/relationship_mapper.py` - Fuzzy matching logic
+  - `api/app/lib/age_client.py` - Relationship creation with normalization
 
 - **Related ADRs:**
   - ADR-004: Pure Graph Design

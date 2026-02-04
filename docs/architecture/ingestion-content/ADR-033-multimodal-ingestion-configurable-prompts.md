@@ -108,7 +108,7 @@ Implement **multimodal image ingestion** with **database-stored configurable pro
 #### Image Detection & Processing
 
 ```python
-# src/api/routes/ingest.py (line ~156)
+# api/app/routes/ingest.py (line ~156)
 
 def _is_image_file(filename: str) -> bool:
     """Check if file is a supported image format"""
@@ -144,7 +144,7 @@ content_hash = hasher.hash_content(content)
 #### Default Image Description Prompt (Phase 1)
 
 ```python
-# src/api/lib/ai_providers.py
+# api/app/lib/ai_providers.py
 
 IMAGE_DESCRIPTION_PROMPT = """Analyze this image for knowledge extraction. Provide a detailed description:
 
@@ -164,7 +164,7 @@ Be thorough - capture information density over brevity. Focus on facts and struc
 #### AIProvider Interface Extension
 
 ```python
-# src/api/lib/ai_providers.py
+# api/app/lib/ai_providers.py
 
 class AIProvider(ABC):
     @abstractmethod
@@ -319,7 +319,7 @@ INSERT INTO prompt_profiles (profile_name, prompt_type, prompt_text, is_default,
 #### API Endpoints for Prompt Management
 
 ```python
-# src/api/routes/admin_prompts.py
+# api/app/routes/admin_prompts.py
 
 @router.post("/admin/prompts", status_code=201)
 async def create_prompt_profile(
@@ -382,7 +382,7 @@ async def assign_ontology_prompt(
 #### Prompt Resolution Logic
 
 ```python
-# src/api/lib/prompt_resolver.py
+# api/app/lib/prompt_resolver.py
 
 class PromptResolver:
     """Resolve which prompt to use for a given operation"""
@@ -436,7 +436,7 @@ class PromptResolver:
 #### Usage in Ingestion
 
 ```python
-# src/api/routes/ingest.py (Phase 2 enhancement)
+# api/app/routes/ingest.py (Phase 2 enhancement)
 
 @router.post("")
 async def ingest_document(
@@ -850,7 +850,7 @@ Each iteration:
 #### Media Type Registry
 
 ```python
-# src/api/lib/media_types.py
+# api/app/lib/media_types.py
 
 from enum import Enum
 from typing import Protocol, Dict, Any
@@ -938,7 +938,7 @@ class AudioProcessor(MediaProcessor):
 #### Temporary Media Cache
 
 ```python
-# src/api/lib/media_cache.py
+# api/app/lib/media_cache.py
 
 from pathlib import Path
 import hashlib
@@ -1035,7 +1035,7 @@ class MediaCache:
 #### Batch Ingestion Flow
 
 ```python
-# src/api/routes/ingest.py - Enhanced batch endpoint
+# api/app/routes/ingest.py - Enhanced batch endpoint
 
 @router.post("/batch")
 async def ingest_batch(
@@ -1144,7 +1144,7 @@ async def ingest_batch(
 #### Batch Worker
 
 ```python
-# src/api/workers/batch_ingestion_worker.py
+# api/app/workers/batch_ingestion_worker.py
 
 def run_batch_ingestion_worker(job_data: Dict, job_id: str, queue, service_token: str):
     """

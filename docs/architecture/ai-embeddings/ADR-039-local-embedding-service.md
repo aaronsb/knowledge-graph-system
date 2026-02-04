@@ -218,7 +218,7 @@ Returns current embedding configuration so clients know what model to use:
 
 #### 3. LocalEmbeddingProvider Implementation
 
-**File:** `src/api/lib/ai_providers.py`
+**File:** `api/app/lib/ai_providers.py`
 
 ```python
 class LocalEmbeddingProvider(AIProvider):

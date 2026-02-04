@@ -103,7 +103,7 @@ HTTP-based unidirectional event streaming from server to client.
 
 #### Server (FastAPI)
 ```python
-# src/api/routes/jobs.py
+# api/app/routes/jobs.py
 
 @router.get("/jobs/{job_id}/stream")
 async def stream_job_progress(job_id: str):
@@ -284,7 +284,7 @@ def import_backup(
 Restore worker uses callback:
 
 ```python
-# src/api/workers/restore_worker.py
+# api/app/workers/restore_worker.py
 
 def _execute_restore(...):
     def progress_callback(stage: str, current: int, total: int, percent: float):
