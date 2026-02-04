@@ -186,8 +186,8 @@ const generateDefaultName = (type: ReportType, data: ReportData): string => {
   if (type === 'graph') {
     const graphData = data as GraphReportData;
     const nodeCount = graphData.nodes.length;
-    const mode = graphData.searchParams?.mode || 'graph';
-    return `${mode} (${nodeCount} nodes) - ${timestamp}`;
+    const label = graphData.searchParams?.query || graphData.searchParams?.mode || 'graph';
+    return `${label} (${nodeCount} nodes) - ${timestamp}`;
   } else if (type === 'polarity') {
     const polarityData = data as PolarityReportData;
     return `${polarityData.positivePole.label} ↔ ${polarityData.negativePole.label} - ${timestamp}`;

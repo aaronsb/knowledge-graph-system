@@ -312,7 +312,8 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
         grounding_strength: l.grounding_strength,
       })),
       searchParams: {
-        mode: mode === 'idle' ? 'unknown' : mode,
+        mode: mode === 'idle' ? 'graph' : mode,
+        query: searchParams.primaryConceptLabel || undefined,
         conceptId: searchParams.primaryConceptId,
         depth: searchParams.depth,
       },
