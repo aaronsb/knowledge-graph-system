@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook: SLOPSCAN 9000
+#
+# Scans staged files for agent antipatterns. Hard-fail patterns (TRUNCATED,
+# STUB) block the commit. Soft-fail patterns (ATTRIB, DUMMY, LGTM) warn
+# but allow it through.
+#
+# Install:  git config core.hooksPath .githooks
+# Bypass:   git commit --no-verify
+#
+
+set -euo pipefail
+
+SCANNER="scripts/development/lint/todo_inventory.py"
+
+# Only run if the scanner exists
+if [[ ! -f "$SCANNER" ]]; then
+    exit 0
+fi
+
+# Code extensions we care about (matches SLOP_CODE_EXTENSIONS in scanner)
+CODE_EXT_PATTERN='\.(py|ts|tsx|js|jsx|rs|sh|bash|zsh|yml|yaml|toml|ini|cfg|html|css|scss|sql|cypher)$'
+
+# Get staged files (added, copied, modified) filtered to code extensions
+mapfile -t staged < <(
+    git diff --cached --name-only --diff-filter=ACM \
+        | grep -E "$CODE_EXT_PATTERN" \
+        || true
+)
+
+if [[ ${#staged[@]} -eq 0 ]]; then
+    exit 0
+fi
+
+exit_code=0
+
+# --- Hard fail: TRUNCATED, STUB (these are almost never intentional) ---
+hard_output=$(
+    python3 "$SCANNER" --slop-only --marker TRUNCATED --marker STUB \
+        --json "${staged[@]}" 2>/dev/null
+)
+
+hard_count=$(echo "$hard_output" | python3 -c "
+import sys, json
+items = json.load(sys.stdin)
+print(len(items))
+" 2>/dev/null || echo "0")
+
+if [[ "$hard_count" -gt 0 ]]; then
+    echo ""
+    echo "  (O) SLOPSCAN 9000: ${hard_count} hard-fail antipattern(s) in staged files"
+    echo ""
+    echo "$hard_output" | python3 -c "
+import sys, json
+for item in json.load(sys.stdin):
+    print(f\"    {item['file']}:{item['line']}  [{item['marker']}]  {item['text'][:80]}\")
+" 2>/dev/null
+    echo ""
+    echo "  These look like truncated or stubbed code left by an agent."
+    echo "  Fix them, or bypass with: git commit --no-verify"
+    echo ""
+    exit_code=1
+fi
+
+# --- Soft warn: ATTRIB, DUMMY, LGTM (flag but don't block) ---
+soft_output=$(
+    python3 "$SCANNER" --slop-only --marker ATTRIB --marker DUMMY --marker LGTM \
+        --json "${staged[@]}" 2>/dev/null
+)
+
+soft_count=$(echo "$soft_output" | python3 -c "
+import sys, json
+items = json.load(sys.stdin)
+print(len(items))
+" 2>/dev/null || echo "0")
+
+if [[ "$soft_count" -gt 0 ]]; then
+    echo ""
+    echo "  (O) SLOPSCAN 9000: ${soft_count} soft warning(s) in staged files"
+    echo ""
+    echo "$soft_output" | python3 -c "
+import sys, json
+for item in json.load(sys.stdin):
+    print(f\"    {item['file']}:{item['line']}  [{item['marker']}]  {item['text'][:80]}\")
+" 2>/dev/null
+    echo ""
+fi
+
+exit $exit_code
