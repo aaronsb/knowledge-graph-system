@@ -1695,7 +1695,7 @@ export const ForceGraph2D: React.FC<
         { onClose: () => setContextMenu(null) },
         originNodeId,
         destinationNodeId,
-        { handleTravelPath, handleSendToPolarity, handleSendPathToReports }
+        { handleTravelPath, handleSendToPolarity, handleSendPathToReports, handleSendConceptToReports: onSendToReports }
       )
     : [];
 
