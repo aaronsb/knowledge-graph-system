@@ -562,8 +562,8 @@ export function buildContextMenuItems(
       });
     }
 
-    // Concept Report (always available if handler provided)
-    if (extraHandlers?.handleSendConceptToReports) {
+    // Concept Report (requires a node context — graph must have nodes)
+    if (nodeContext && extraHandlers?.handleSendConceptToReports) {
       const { handleSendConceptToReports } = extraHandlers;
       reportSubmenu.push({
         label: 'Concept Report',

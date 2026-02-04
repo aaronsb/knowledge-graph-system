@@ -247,8 +247,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       setPolarityState({ pendingAnalysis: false });
       runAnalysis();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingAnalysis]);
+  }, [pendingAnalysis, selectedPositivePole, selectedNegativePole, isAnalyzing]);
 
   const toggleSection = (section: 'positive' | 'neutral' | 'negative') => {
     setExpandedSections((prev) => ({

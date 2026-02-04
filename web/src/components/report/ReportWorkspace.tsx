@@ -616,11 +616,17 @@ export const ReportWorkspace: React.FC = () => {
       const results = await Promise.allSettled(
         batch.map((id) => apiClient.getConceptDetails(id))
       );
+      let failCount = 0;
       results.forEach((result, idx) => {
         if (result.status === 'fulfilled') {
           detailsMap.set(batch[idx], result.value);
+        } else {
+          failCount++;
         }
       });
+      if (failCount > 0) {
+        console.warn(`enrichConceptNodes: ${failCount} concept(s) failed to fetch in batch`);
+      }
       onProgress?.(Math.min(i + batchSize, nodeIds.length), nodeIds.length);
     }
     return detailsMap;
@@ -740,10 +746,10 @@ export const ReportWorkspace: React.FC = () => {
   };
 
   const handleFinishRename = async (id: string) => {
-    setEditingName(null);
     if (editNameValue.trim()) {
       await renameReport(id, editNameValue.trim());
     }
+    setEditingName(null);
   };
 
   const getReportIcon = (report: Report) => {
