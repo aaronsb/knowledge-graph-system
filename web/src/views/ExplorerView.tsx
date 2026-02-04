@@ -67,10 +67,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // Derive mode from current params
   const mode = deriveMode(searchParams);
 
-  // Load saved queries on mount
-  useEffect(() => {
-    loadSavedQueries();
-  }, [loadSavedQueries]);
 
   // Set the explorer type when this view mounts
   useEffect(() => {
