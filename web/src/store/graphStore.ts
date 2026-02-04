@@ -232,6 +232,7 @@ interface GraphStore {
     minSimilarity: number; // Similarity threshold for pole search
     autoDiscover: boolean;
     activeTab: string;
+    pendingAnalysis: boolean; // Set by "Send to Polarity" to auto-run on mount
   };
   setPolarityState: (state: Partial<GraphStore['polarityState']>) => void;
   addPolarityAnalysis: (analysis: GraphStore['polarityState']['analysisHistory'][0]) => void;
@@ -490,6 +491,7 @@ export const useGraphStore = create<GraphStore>()(
     minSimilarity: 0.6, // Similarity threshold for pole search
     autoDiscover: true,
     activeTab: 'search',
+    pendingAnalysis: false,
   },
   setPolarityState: (newState) =>
     set((state) => ({

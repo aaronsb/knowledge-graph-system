@@ -246,6 +246,7 @@ export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => vo
         concept_id: destinationId,
         label: destNode.label,
       },
+      pendingAnalysis: true,
     });
 
     navigate('/polarity');
