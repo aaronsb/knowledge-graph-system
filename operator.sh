@@ -47,6 +47,7 @@ fi
 CONFIG_FILE="$SCRIPT_DIR/.operator.conf"
 ENV_FILE="$SCRIPT_DIR/.env"
 OPERATOR_CONTAINER="kg-operator"
+POSTGRES_CONTAINER="knowledge-graph-postgres"
 
 # ============================================================================
 # Configuration
@@ -267,9 +268,21 @@ cmd_upgrade() {
     fi
     echo ""
 
-    # Stop app containers (keep infra running)
+    # Stop app containers
     echo -e "${BLUE}→ Stopping application containers...${NC}"
     run_compose stop api web 2>/dev/null || true
+    echo ""
+
+    # Update infra containers (recreates if image changed, no-op otherwise)
+    echo -e "${BLUE}→ Updating infrastructure...${NC}"
+    run_compose up -d postgres garage
+    echo -e "${BLUE}→ Waiting for postgres...${NC}"
+    if wait_for_container "$POSTGRES_CONTAINER" 30; then
+        echo -e "${GREEN}  ✓ Postgres ready${NC}"
+    else
+        echo -e "${RED}  ✗ Postgres failed to start${NC}"
+        exit 1
+    fi
     echo ""
 
     # Run migrations via operator container (uses psql)
@@ -281,9 +294,9 @@ cmd_upgrade() {
     fi
     echo ""
 
-    # Start services
-    echo -e "${BLUE}→ Starting services...${NC}"
-    run_compose up -d postgres garage api web
+    # Start application
+    echo -e "${BLUE}→ Starting application...${NC}"
+    run_compose up -d api web
 
     # Health check
     echo -e "${BLUE}→ Waiting for API health...${NC}"
