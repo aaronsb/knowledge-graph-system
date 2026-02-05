@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useGraphStore } from '../store/graphStore';
+import { useGraphStore, type SearchParams } from '../store/graphStore';
 import { apiClient } from '../api/client';
 import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
 
@@ -75,7 +75,7 @@ export function useQueryReplay() {
 
     // Legacy: searchParams-based queries
     if (definition?.searchParams) {
-      setSearchParams(definition.searchParams);
+      setSearchParams(definition.searchParams as SearchParams);
       if (typeof definition.similarityThreshold === 'number') {
         setSimilarityThreshold(definition.similarityThreshold);
       }

@@ -114,7 +114,7 @@ export function VocabularyChordWorkspace() {
     // Count edges by relationship type
     const typeCountMap = new Map<string, number>();
     for (const link of rawGraphData.links) {
-      const type = link.relationship_type || link.type || 'UNKNOWN';
+      const type = link.relationship_type || 'UNKNOWN';
       typeCountMap.set(type, (typeCountMap.get(type) || 0) + 1);
     }
 

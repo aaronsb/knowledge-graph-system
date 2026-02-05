@@ -159,7 +159,7 @@ export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => vo
     });
 
     store.subtractRawGraphData({
-      nodes: [{ id: nodeId, concept_id: nodeId }],
+      nodes: [{ concept_id: nodeId, label: nodeLabel }],
       links: [],
     });
   }, []);
