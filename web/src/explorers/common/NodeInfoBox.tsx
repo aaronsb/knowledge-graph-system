@@ -86,9 +86,11 @@ export interface NodeInfoBoxProps {
     y: number;
   };
   onDismiss: () => void;
+  /** Optional content injected between the header and collapsible sections. */
+  headerExtra?: React.ReactNode;
 }
 
-export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => {
+export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss, headerExtra }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
   const [detailedData, setDetailedData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -163,6 +165,9 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss }) => 
               Click to dismiss
             </div>
           </div>
+
+          {/* Injected header content (e.g. query hit indicators) */}
+          {headerExtra}
 
           {/* Collapsible sections */}
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>

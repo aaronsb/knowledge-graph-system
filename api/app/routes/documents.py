@@ -708,10 +708,10 @@ async def get_document_content(
                     content['document'] = None
                     content['error'] = str(e)
 
-        # 3. Fetch source chunks
+        # 3. Fetch source chunks (DISTINCT handles duplicate DocumentMeta nodes / edges)
         chunks_query = """
         MATCH (d:DocumentMeta {document_id: $doc_id})-[:HAS_SOURCE]->(s:Source)
-        RETURN s.source_id as source_id,
+        RETURN DISTINCT s.source_id as source_id,
                s.paragraph as paragraph,
                s.full_text as full_text,
                s.char_offset_start as char_offset_start,
@@ -793,45 +793,41 @@ async def list_documents(
 
         if ontology:
             params["ontology_pattern"] = f"(?i).*{ontology}.*"
-            # Main query with counts
+            # Main query with counts (aggregate by document_id to handle duplicate nodes)
             query = """
             MATCH (d:DocumentMeta)
             WHERE d.ontology =~ $ontology_pattern
             OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
             OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
-            WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
-            RETURN d.document_id as document_id,
-                   d.filename as filename,
-                   d.ontology as ontology,
-                   d.content_type as content_type,
-                   source_count,
-                   concept_count
-            ORDER BY d.ontology, d.filename
+            WITH d.document_id as document_id, d.filename as filename,
+                 d.ontology as ontology, d.content_type as content_type,
+                 count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
+            RETURN document_id, filename, ontology, content_type,
+                   source_count, concept_count
+            ORDER BY ontology, filename
             SKIP $offset LIMIT $limit
             """
             count_query = """
             MATCH (d:DocumentMeta)
             WHERE d.ontology =~ $ontology_pattern
-            RETURN count(d) as total
+            RETURN count(DISTINCT d.document_id) as total
             """
         else:
             query = """
             MATCH (d:DocumentMeta)
             OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
             OPTIONAL MATCH (s)<-[:APPEARS_IN]-(c:Concept)
-            WITH d, count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
-            RETURN d.document_id as document_id,
-                   d.filename as filename,
-                   d.ontology as ontology,
-                   d.content_type as content_type,
-                   source_count,
-                   concept_count
-            ORDER BY d.ontology, d.filename
+            WITH d.document_id as document_id, d.filename as filename,
+                 d.ontology as ontology, d.content_type as content_type,
+                 count(DISTINCT s) as source_count, count(DISTINCT c) as concept_count
+            RETURN document_id, filename, ontology, content_type,
+                   source_count, concept_count
+            ORDER BY ontology, filename
             SKIP $offset LIMIT $limit
             """
             count_query = """
             MATCH (d:DocumentMeta)
-            RETURN count(d) as total
+            RETURN count(DISTINCT d.document_id) as total
             """
 
         results = client._execute_cypher(query, params=params)

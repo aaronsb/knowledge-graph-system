@@ -912,7 +912,7 @@ async def search_sources(
         if request.document_ids:
             client = get_age_client()
             try:
-                rows = client.graph.execute_cypher(
+                rows = client._execute_cypher(
                     "MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source) "
                     "WHERE d.document_id IN $doc_ids "
                     "RETURN s.source_id as source_id",

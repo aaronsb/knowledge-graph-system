@@ -4,12 +4,26 @@
  * Displays document content in a modal with download capability.
  * Used by ReportWorkspace, DocumentExplorer, and other views.
  * Renders markdown files with proper formatting.
+ * Supports passage search highlighting via the highlights prop.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { FileText, Download, X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, type MouseEvent } from 'react';
+import { FileText, Download, X, Loader2, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { apiClient } from '../../api/client';
+
+/** Sanitization schema: default markdown + our highlight <mark> tags only. */
+const highlightSanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames || []), 'mark'],
+  attributes: {
+    ...defaultSchema.attributes,
+    mark: ['style', 'data-hl-color', 'data-hl-idx'],
+  },
+};
+import type { DocumentHighlight } from '../../explorers/DocumentExplorer/types';
 
 export interface DocumentViewerProps {
   /** Document to view */
@@ -20,6 +34,12 @@ export interface DocumentViewerProps {
   } | null;
   /** Called when the modal should close */
   onClose: () => void;
+  /** Passage search highlights to apply */
+  highlights?: DocumentHighlight[];
+  /** Optional content injected below the header (e.g. query hit indicators). */
+  headerExtra?: React.ReactNode;
+  /** Color → query text lookup for the internal query hit bar with scroll-to cycling. */
+  queryLabels?: Map<string, string>;
 }
 
 interface DocumentContent {
@@ -31,13 +51,156 @@ interface DocumentContent {
   }>;
 }
 
+// TODO: escapeRegex + needle matching is fragile — consider offset-based highlight matching
+/** Escape special regex characters in a string. */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Escape HTML special characters to prevent tag corruption in raw HTML injection. */
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+interface HighlightRange { start: number; end: number; color: string }
+
+/**
+ * Find highlight positions in text via substring matching.
+ * Uses first 100 chars as needle, returns sorted non-overlapping ranges.
+ */
+function buildHighlightRanges(
+  text: string,
+  highlights: Array<{ chunkText: string; color: string }>,
+  mode: 'all' | 'first' = 'all',
+): HighlightRange[] {
+  const ranges: HighlightRange[] = [];
+
+  for (const h of highlights) {
+    if (!h.chunkText) continue;
+    const needle = h.chunkText.substring(0, 100);
+
+    if (mode === 'all') {
+      const escapedNeedle = escapeRegex(needle);
+      try {
+        const regex = new RegExp(escapedNeedle, 'g');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          ranges.push({
+            start: match.index,
+            end: Math.min(match.index + h.chunkText.length, text.length),
+            color: h.color,
+          });
+        }
+      } catch {
+        // Skip invalid regex
+      }
+    } else {
+      const idx = text.indexOf(needle);
+      if (idx >= 0) {
+        ranges.push({
+          start: idx,
+          end: Math.min(idx + h.chunkText.length, text.length),
+          color: h.color,
+        });
+      }
+    }
+  }
+
+  ranges.sort((a, b) => a.start - b.start);
+  return ranges;
+}
+
+/**
+ * Insert <mark> tags into text for each highlight match.
+ * Used for markdown rendering where we inject raw HTML.
+ */
+function applyHighlightsToText(
+  text: string,
+  highlights: Array<{ chunkText: string; color: string }>
+): string {
+  if (!highlights.length) return text;
+
+  const ranges = buildHighlightRanges(text, highlights, 'all');
+  if (ranges.length === 0) return text;
+
+  let result = '';
+  let cursor = 0;
+  const colorIndexCounters = new Map<string, number>();
+
+  for (const range of ranges) {
+    if (range.start < cursor) continue;
+    const idx = colorIndexCounters.get(range.color) || 0;
+    colorIndexCounters.set(range.color, idx + 1);
+    result += text.slice(cursor, range.start);
+    result += `<mark data-hl-color="${range.color}" data-hl-idx="${idx}" style="background-color: ${range.color}40; padding: 1px 0;">`;
+    // Escape HTML inside <mark> to prevent stray < > from corrupting the tag tree
+    result += escapeHtml(text.slice(range.start, range.end));
+    result += '</mark>';
+    cursor = range.end;
+  }
+
+  result += text.slice(cursor);
+  return result;
+}
+
+/**
+ * Render text with inline highlight <mark> elements (for non-markdown chunks).
+ */
+function HighlightedText({ text, highlights }: {
+  text: string;
+  highlights: Array<{ chunkText: string; color: string }>;
+}): React.ReactElement {
+  if (!highlights.length) {
+    return <>{text}</>;
+  }
+
+  const ranges = buildHighlightRanges(text, highlights, 'first');
+  if (ranges.length === 0) return <>{text}</>;
+
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  const colorIndexCounters = new Map<string, number>();
+
+  for (let i = 0; i < ranges.length; i++) {
+    const range = ranges[i];
+    if (range.start < cursor) continue;
+    if (range.start > cursor) {
+      parts.push(text.slice(cursor, range.start));
+    }
+    const idx = colorIndexCounters.get(range.color) || 0;
+    colorIndexCounters.set(range.color, idx + 1);
+    parts.push(
+      <mark
+        key={`hl-${i}`}
+        data-hl-color={range.color}
+        data-hl-idx={idx}
+        style={{ backgroundColor: `${range.color}40`, padding: '1px 0' }}
+      >
+        {text.slice(range.start, range.end)}
+      </mark>
+    );
+    cursor = range.end;
+  }
+
+  if (cursor < text.length) {
+    parts.push(text.slice(cursor));
+  }
+
+  return <>{parts}</>;
+}
+
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
   onClose,
+  highlights,
+  headerExtra,
+  queryLabels,
 }) => {
   const [content, setContent] = useState<DocumentContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollIndexRef = useRef<Record<string, number>>({});
 
   // Load document content when document changes
   useEffect(() => {
@@ -65,6 +228,65 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     loadContent();
   }, [document]);
 
+  // Build per-chunk highlight lookup from sourceId
+  const chunkHighlights = useMemo(() => {
+    if (!highlights?.length || !content?.chunks.length) return new Map<string, Array<{ chunkText: string; color: string }>>();
+
+    const map = new Map<string, Array<{ chunkText: string; color: string }>>();
+    for (const h of highlights) {
+      const existing = map.get(h.sourceId) || [];
+      existing.push({ chunkText: h.chunkText, color: h.color });
+      map.set(h.sourceId, existing);
+    }
+    return map;
+  }, [highlights, content]);
+
+  // All highlights flattened (for markdown full-text highlighting)
+  const allHighlightTexts = useMemo(() => {
+    if (!highlights?.length) return [];
+    return highlights.map(h => ({ chunkText: h.chunkText, color: h.color }));
+  }, [highlights]);
+
+  // Count highlights per query color for the internal hit bar
+  const hitCountsByColor = useMemo(() => {
+    if (!highlights?.length || !queryLabels?.size) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    for (const h of highlights) {
+      counts.set(h.color, (counts.get(h.color) || 0) + 1);
+    }
+    return counts;
+  }, [highlights, queryLabels]);
+
+  // Reset scroll indices when document changes
+  useEffect(() => {
+    scrollIndexRef.current = {};
+  }, [document]);
+
+  // Scroll to highlight by color, cycling through matches.
+  // Uses a ref for the index to avoid stale closures on rapid clicks.
+  const handleScrollToHighlight = useCallback((color: string, _e: MouseEvent) => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const marks = container.querySelectorAll<HTMLElement>(`mark[data-hl-color="${color}"]`);
+    if (marks.length === 0) return;
+
+    const currentIdx = scrollIndexRef.current[color] ?? -1;
+    const nextIdx = (currentIdx + 1) % marks.length;
+    scrollIndexRef.current = { ...scrollIndexRef.current, [color]: nextIdx };
+
+    // Remove previous "active" ring from all marks of this color
+    marks.forEach(m => m.style.outline = '');
+
+    const target = marks[nextIdx];
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.style.outline = `2px solid ${color}`;
+    target.style.outlineOffset = '1px';
+
+    // Clear outline after a brief moment
+    setTimeout(() => { target.style.outline = ''; }, 2000);
+  }, []);
+
   // Download document
   const handleDownload = useCallback(() => {
     if (!document || !content) return;
@@ -80,7 +302,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       mimeType = 'application/json';
       extension = '.json';
     } else {
-      // For text content, concatenate chunks
       downloadContent = content.chunks.length > 0
         ? content.chunks.map(c => c.full_text).join('\n\n')
         : String(content.content);
@@ -124,6 +345,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return typeof content.content === 'string' ? content.content : '';
   };
 
+  // Get highlighted markdown (with <mark> tags injected)
+  const getHighlightedMarkdown = (): string => {
+    const text = getFullText();
+    if (!allHighlightTexts.length) return text;
+    return applyHighlightsToText(text, allHighlightTexts);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -162,8 +390,30 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </div>
         </div>
 
+        {/* Injected header content (e.g. query hit indicators) */}
+        {headerExtra}
+
+        {/* Internal query hit bar with scroll-to cycling */}
+        {queryLabels && hitCountsByColor.size > 0 && (
+          <div className="flex border-b">
+            {Array.from(hitCountsByColor.entries()).map(([color, count]) => (
+              <button
+                key={color}
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[10px] font-medium cursor-pointer hover:brightness-110 transition-all"
+                style={{ backgroundColor: `${color}25`, color }}
+                onClick={(e) => handleScrollToHighlight(color, e)}
+                title={`Click to cycle through "${queryLabels.get(color) || '?'}" highlights`}
+              >
+                <span className="truncate">{queryLabels.get(color) || '?'}</span>
+                <span className="opacity-70">{count}</span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Content */}
-        <div className="flex-1 overflow-auto p-4">
+        <div ref={contentRef} className="flex-1 overflow-auto p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -176,16 +426,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             <div className="space-y-4">
               {isMarkdown ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{getFullText()}</ReactMarkdown>
+                  <ReactMarkdown rehypePlugins={[rehypeRaw, [rehypeSanitize, highlightSanitizeSchema]]}>
+                    {getHighlightedMarkdown()}
+                  </ReactMarkdown>
                 </div>
               ) : content.chunks.length > 0 ? (
-                content.chunks.map((chunk) => (
-                  <div key={chunk.source_id} className="border rounded-lg p-4">
+                content.chunks.map((chunk, idx) => (
+                  <div key={`${chunk.source_id}-${idx}`} className="border rounded-lg p-4">
                     <div className="text-xs text-muted-foreground mb-2">
                       Paragraph {chunk.paragraph + 1}
                     </div>
                     <div className="text-sm whitespace-pre-wrap">
-                      {chunk.full_text}
+                      <HighlightedText
+                        text={chunk.full_text}
+                        highlights={chunkHighlights.get(chunk.source_id) || []}
+                      />
                     </div>
                   </div>
                 ))
