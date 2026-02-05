@@ -105,5 +105,26 @@ export interface PassageSearchResult {
   paragraph: number;
   chunkText: string;
   similarity: number;
+  startOffset: number;
+  endOffset: number;
   concepts: Array<{ conceptId: string; label: string }>;
+}
+
+/** A committed passage search query with assigned color. */
+export interface PassageQuery {
+  id: string;
+  text: string;
+  color: string;
+  visible: boolean;
+  results: PassageSearchResult[];
+}
+
+/** A highlight range for the document viewer. */
+export interface DocumentHighlight {
+  queryId: string;
+  color: string;
+  sourceId: string;
+  chunkText: string;
+  startOffset: number;
+  endOffset: number;
 }

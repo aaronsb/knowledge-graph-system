@@ -67,11 +67,13 @@ interface DocumentExplorerExtraProps {
   focusedDocumentId?: string | null;
   onFocusChange?: (docId: string | null) => void;
   onViewDocument?: (docId: string) => void;
+  /** Passage search rings — Map<nodeId, Array<{ color, hitCount, maxHitCount, bestSimilarity }>> */
+  passageRings?: Map<string, Array<{ color: string; hitCount: number; maxHitCount: number; bestSimilarity: number }>>;
 }
 
 export const DocumentExplorer: React.FC<
   ExplorerProps<DocumentExplorerData, DocumentExplorerSettings> & DocumentExplorerExtraProps
-> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument }) => {
+> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument, passageRings }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -407,7 +409,7 @@ export const DocumentExplorer: React.FC<
     const renderSize = (d: SimNode) =>
       d.type === 'document' ? settings.layout.documentSize : d.size * settings.visual.nodeSize;
 
-    d3.select(svgRef.current).selectAll<SVGCircleElement, SimNode>('g.nodes g circle')
+    d3.select(svgRef.current).selectAll<SVGCircleElement, SimNode>('g.nodes g circle:not(.query-ring)')
       .attr('r', renderSize);
     d3.select(svgRef.current).selectAll<SVGTextElement, SimNode>('g.nodes g text')
       .attr('dy', (d: SimNode) => renderSize(d) + 12);
@@ -417,6 +419,54 @@ export const DocumentExplorer: React.FC<
         return `M${-s / 2},${-s / 2} L${s / 3},${-s / 2} L${s / 2},${-s / 3} L${s / 2},${s / 2} L${-s / 2},${s / 2} Z`;
       });
   }, [settings.layout.documentSize, settings.visual.nodeSize]);
+
+  // -----------------------------------------------------------------------
+  // Passage search rings — concentric colored rings around matching nodes.
+  // Rings are children of node <g> groups so they inherit transform position.
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Clear existing rings
+    svg.selectAll('.query-ring').remove();
+
+    if (!passageRings || passageRings.size === 0) return;
+
+    const renderSize = (d: SimNode) => {
+      const s = settingsRef.current;
+      return d.type === 'document' ? s.layout.documentSize : d.size * s.visual.nodeSize;
+    };
+
+    svg.selectAll<SVGGElement, SimNode>('g.nodes g').each(function(d) {
+      const rings = passageRings.get(d.id);
+      if (!rings) return;
+
+      const g = d3.select(this);
+      const baseR = renderSize(d);
+      const ringWidth = 3;
+      const gap = 2;
+
+      rings.forEach((ring, i) => {
+        // Thickness encodes hit frequency: min 1.5px (1 hit) → max 5px (max hits)
+        const MIN_WIDTH = 1.5;
+        const MAX_WIDTH = 5;
+        const t = ring.maxHitCount > 1
+          ? (ring.hitCount - 1) / (ring.maxHitCount - 1)  // 0..1 normalized
+          : 0;
+        const strokeWidth = MIN_WIDTH + t * (MAX_WIDTH - MIN_WIDTH);
+
+        const r = baseR + gap + (i * (ringWidth + 1));
+        g.insert('circle', ':first-child')
+          .attr('class', 'query-ring')
+          .attr('r', r)
+          .attr('fill', 'none')
+          .attr('stroke', ring.color)
+          .attr('stroke-width', strokeWidth)
+          .attr('stroke-opacity', 0.75);
+      });
+    });
+  }, [passageRings]);
 
   // Focus mode: update opacity when focusedDocumentId changes
   useEffect(() => {
@@ -434,7 +484,7 @@ export const DocumentExplorer: React.FC<
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
-    svg.selectAll<SVGCircleElement, SimNode>('g.nodes g circle')
+    svg.selectAll<SVGCircleElement, SimNode>('g.nodes g circle:not(.query-ring)')
       .attr('stroke-width', (d: SimNode) => {
         if (d.id === hoveredNode || d.id === selectedConceptId) return 3;
         return d.type === 'document' ? 3 : 1.5;
