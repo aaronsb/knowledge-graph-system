@@ -440,19 +440,22 @@ export const DocumentExplorer: React.FC<
       return d.type === 'document' ? s.layout.documentSize : d.size * s.visual.nodeSize;
     };
 
+    // Scale ring spacing proportionally to the node size multiplier
+    const sizeScale = settingsRef.current.visual.nodeSize;
+
     svg.selectAll<SVGGElement, SimNode>('g.nodes g').each(function(d) {
       const rings = passageRings.get(d.id);
       if (!rings) return;
 
       const g = d3.select(this);
       const baseR = renderSize(d);
-      const ringWidth = 3;
-      const gap = 2;
+      const ringWidth = 3 * sizeScale;
+      const gap = 2 * sizeScale;
 
       rings.forEach((ring, i) => {
         // Thickness encodes hit frequency: min 1.5px (1 hit) → max 5px (max hits)
-        const MIN_WIDTH = 1.5;
-        const MAX_WIDTH = 5;
+        const MIN_WIDTH = 1.5 * sizeScale;
+        const MAX_WIDTH = 5 * sizeScale;
         const t = ring.maxHitCount > 1
           ? (ring.hitCount - 1) / (ring.maxHitCount - 1)  // 0..1 normalized
           : 0;
@@ -468,7 +471,7 @@ export const DocumentExplorer: React.FC<
           .attr('stroke-opacity', 0.75);
       });
     });
-  }, [passageRings]);
+  }, [passageRings, settings]);
 
   // Focus mode: update opacity when focusedDocumentId changes
   useEffect(() => {

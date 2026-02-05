@@ -19,15 +19,12 @@ import type {
   DocExplorerDocument,
   DocGraphNode,
   DocGraphLink,
-  PassageSearchResult,
-  PassageQuery,
-  DocumentHighlight,
 } from '../../explorers/DocumentExplorer/types';
-import { getNextQueryColor } from '../../utils/queryColors';
 import { DocumentViewer } from '../shared/DocumentViewer';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
+import { usePassageSearch } from '../../hooks/usePassageSearch';
 import { useGraphStore } from '../../store/graphStore';
 import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
 
@@ -40,8 +37,6 @@ interface SidebarDocument {
   concept_ids: string[];       // concepts overlapping with query
   totalConceptCount: number;   // ALL concepts for this doc (after hydration)
 }
-
-let queryIdCounter = 0;
 
 export const DocumentExplorerWorkspace: React.FC = () => {
   const { replayQuery } = useQueryReplay();
@@ -71,10 +66,21 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   // Settings
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
 
-  // Multi-query passage search
-  const [passageQueries, setPassageQueries] = useState<PassageQuery[]>([]);
-  const [pendingQueryText, setPendingQueryText] = useState('');
-  const [isCommittingQuery, setIsCommittingQuery] = useState(false);
+  // Multi-query passage search (extracted hook)
+  const {
+    passageQueries,
+    pendingQueryText,
+    setPendingQueryText,
+    isCommittingQuery,
+    handleCommitQuery,
+    handleToggleQuery,
+    handleDeleteQuery,
+    resetQueries,
+    passageRings,
+    queryColorLabels,
+    documentHighlights,
+    allVisibleResults,
+  } = usePassageSearch(sidebarDocs, viewingDocument?.document_id ?? null);
 
   /**
    * Load a saved exploration query and build the full multi-document graph.
@@ -85,8 +91,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     setFocusedDocId(null);
     setExplorerData(null);
     setSidebarDocs([]);
-    setPassageQueries([]);
-    setPendingQueryText('');
+    resetQueries();
 
     try {
       // Step 1: Replay the saved query
@@ -256,208 +261,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [replayQuery]);
-
-  // ---------------------------------------------------------------------------
-  // Multi-query passage search
-  // ---------------------------------------------------------------------------
-
-  /** Commit a passage search query — Enter key handler. */
-  const handleCommitQuery = useCallback(async () => {
-    const text = pendingQueryText.trim();
-    if (!text || sidebarDocs.length === 0) return;
-
-    // Skip duplicates
-    if (passageQueries.some(q => q.text === text)) {
-      setPendingQueryText('');
-      return;
-    }
-
-    setIsCommittingQuery(true);
-    try {
-      const docIds = sidebarDocs.map(d => d.document_id);
-      // Very short queries (1-2 chars) produce noisy embeddings — raise threshold
-      const minSim = text.length <= 2 ? 0.7 : 0.5;
-      // Over-fetch to allow per-document diversification
-      const response = await apiClient.searchSources({
-        query: text,
-        document_ids: docIds,
-        limit: 50,
-        min_similarity: minSim,
-        include_concepts: true,
-        include_full_text: false,
-      });
-
-      const docLookup = new Map(sidebarDocs.map(d => [d.document_id, d]));
-      const allResults: PassageSearchResult[] = (response.results || []).map((r: any) => {
-        const doc = docLookup.get(r.document_id) || sidebarDocs.find(d => d.ontology === r.document);
-        return {
-          sourceId: r.source_id,
-          documentId: doc?.document_id || '',
-          documentFilename: doc?.filename || r.document,
-          paragraph: r.paragraph,
-          chunkText: r.matched_chunk?.chunk_text || '',
-          similarity: r.similarity,
-          startOffset: r.matched_chunk?.start_offset ?? 0,
-          endOffset: r.matched_chunk?.end_offset ?? 0,
-          concepts: (r.concepts || []).map((c: any) => ({
-            conceptId: c.concept_id,
-            label: c.label,
-          })),
-        };
-      });
-
-      // Per-document cap: max 3 passages per document to prevent large-doc bias.
-      // Results are already sorted by similarity from the API.
-      const perDocCount = new Map<string, number>();
-      const MAX_PER_DOC = 3;
-      const results = allResults.filter(r => {
-        const count = perDocCount.get(r.documentId) || 0;
-        if (count >= MAX_PER_DOC) return false;
-        perDocCount.set(r.documentId, count + 1);
-        return true;
-      }).slice(0, 20);
-
-      const newQuery: PassageQuery = {
-        id: String(++queryIdCounter),
-        text,
-        color: getNextQueryColor(passageQueries),
-        visible: true,
-        results,
-      };
-
-      setPassageQueries(prev => [...prev, newQuery]);
-      setPendingQueryText('');
-    } catch (err) {
-      console.warn('Passage search failed:', err);
-    } finally {
-      setIsCommittingQuery(false);
-    }
-  }, [pendingQueryText, sidebarDocs, passageQueries]);
-
-  const handleToggleQuery = useCallback((id: string) => {
-    setPassageQueries(prev =>
-      prev.map(q => q.id === id ? { ...q, visible: !q.visible } : q)
-    );
-  }, []);
-
-  const handleDeleteQuery = useCallback((id: string) => {
-    setPassageQueries(prev => prev.filter(q => q.id !== id));
-  }, []);
-
-  // ---------------------------------------------------------------------------
-  // Ring data — derived from visible queries
-  // ---------------------------------------------------------------------------
-
-  const passageRings = useMemo(() => {
-    // Accumulate hit counts per (nodeId, queryColor) pair
-    const countMap = new Map<string, Map<string, { color: string; hitCount: number; bestSimilarity: number }>>();
-
-    for (const query of passageQueries) {
-      if (!query.visible) continue;
-
-      // Build word-boundary regex from query text for concept filtering
-      const queryWords = query.text.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-      const wordPatterns = queryWords.map(w =>
-        new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-      );
-
-      const addHit = (nodeId: string, similarity: number) => {
-        let nodeEntries = countMap.get(nodeId);
-        if (!nodeEntries) { nodeEntries = new Map(); countMap.set(nodeId, nodeEntries); }
-        const existing = nodeEntries.get(query.color);
-        if (existing) {
-          existing.hitCount++;
-          existing.bestSimilarity = Math.max(existing.bestSimilarity, similarity);
-        } else {
-          nodeEntries.set(query.color, { color: query.color, hitCount: 1, bestSimilarity: similarity });
-        }
-      };
-
-      for (const result of query.results) {
-        // Document nodes always get rings
-        if (result.documentId) addHit(result.documentId, result.similarity);
-
-        // Concept nodes — only if label contains a query word
-        for (const concept of result.concepts) {
-          if (wordPatterns.some(p => p.test(concept.label))) {
-            addHit(concept.conceptId, result.similarity);
-          }
-        }
-      }
-    }
-
-    // Find global max hit count for normalization
-    let maxHitCount = 1;
-    for (const nodeEntries of countMap.values()) {
-      for (const entry of nodeEntries.values()) {
-        if (entry.hitCount > maxHitCount) maxHitCount = entry.hitCount;
-      }
-    }
-
-    // Build final ring map with normalized hit counts
-    const ringMap = new Map<string, Array<{ color: string; hitCount: number; maxHitCount: number; bestSimilarity: number }>>();
-    for (const [nodeId, nodeEntries] of countMap) {
-      ringMap.set(nodeId, Array.from(nodeEntries.values()).map(e => ({
-        ...e,
-        maxHitCount,
-      })));
-    }
-
-    return ringMap;
-  }, [passageQueries]);
-
-  // Color → query text lookup for labeling rings in info dialogs
-  const queryColorLabels = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const q of passageQueries) {
-      if (q.visible) map.set(q.color, q.text);
-    }
-    return map;
-  }, [passageQueries]);
-
-  // ---------------------------------------------------------------------------
-  // Document highlights — derived from visible queries for the open document
-  // ---------------------------------------------------------------------------
-
-  const documentHighlights = useMemo<DocumentHighlight[]>(() => {
-    if (!viewingDocument) return [];
-
-    const highlights: DocumentHighlight[] = [];
-    for (const query of passageQueries) {
-      if (!query.visible) continue;
-      for (const result of query.results) {
-        if (result.documentId === viewingDocument.document_id && result.chunkText) {
-          highlights.push({
-            queryId: query.id,
-            color: query.color,
-            sourceId: result.sourceId,
-            chunkText: result.chunkText,
-            startOffset: result.startOffset,
-            endOffset: result.endOffset,
-          });
-        }
-      }
-    }
-    return highlights;
-  }, [passageQueries, viewingDocument]);
-
-  // queryColorLabels is passed directly to DocumentViewer for its internal hit bar
-
-  // ---------------------------------------------------------------------------
-  // All passage results from visible queries (for sidebar display)
-  // ---------------------------------------------------------------------------
-
-  const allVisibleResults = useMemo(() => {
-    const results: Array<PassageSearchResult & { queryColor: string }> = [];
-    for (const query of passageQueries) {
-      if (!query.visible) continue;
-      for (const result of query.results) {
-        results.push({ ...result, queryColor: query.color });
-      }
-    }
-    return results;
-  }, [passageQueries]);
+  }, [replayQuery, resetQueries]);
 
   // ---------------------------------------------------------------------------
   // Callbacks

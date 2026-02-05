@@ -675,13 +675,15 @@ class IngestionMixin:
                 MATCH (d:DocumentMeta {document_id: $doc_id})
                 MATCH (s:Source)
                 WHERE s.source_id IN $source_ids
-                MERGE (d)-[:HAS_SOURCE]->(s)
+                MERGE (d)-[r:HAS_SOURCE]->(s)
+                SET r.linked_at = $linked_at
                 RETURN count(s) as linked_count
                 """
 
                 link_results = self._execute_cypher(link_query, {
                     "doc_id": document_id,
                     "source_ids": source_ids,
+                    "linked_at": properties["ingested_at"],
                 })
 
                 if link_results:

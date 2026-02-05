@@ -20,6 +20,7 @@ export const QUERY_PALETTE = [
   '#8b5cf6',  // violet
 ];
 
+// TODO: simplify getNextQueryColor to use a module-level counter instead of scanning existing queries
 /** Pick the next unused color, cycling through the palette. */
 export function getNextQueryColor(existingQueries: PassageQuery[]): string {
   const usedColors = new Set(existingQueries.map(q => q.color));

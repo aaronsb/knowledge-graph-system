@@ -51,14 +51,63 @@ interface DocumentContent {
   }>;
 }
 
+// TODO: escapeRegex + needle matching is fragile — consider offset-based highlight matching
 /** Escape special regex characters in a string. */
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+interface HighlightRange { start: number; end: number; color: string }
+
+/**
+ * Find highlight positions in text via substring matching.
+ * Uses first 100 chars as needle, returns sorted non-overlapping ranges.
+ */
+function buildHighlightRanges(
+  text: string,
+  highlights: Array<{ chunkText: string; color: string }>,
+  mode: 'all' | 'first' = 'all',
+): HighlightRange[] {
+  const ranges: HighlightRange[] = [];
+
+  for (const h of highlights) {
+    if (!h.chunkText) continue;
+    const needle = h.chunkText.substring(0, 100);
+
+    if (mode === 'all') {
+      const escapedNeedle = escapeRegex(needle);
+      try {
+        const regex = new RegExp(escapedNeedle, 'g');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          ranges.push({
+            start: match.index,
+            end: Math.min(match.index + h.chunkText.length, text.length),
+            color: h.color,
+          });
+        }
+      } catch {
+        // Skip invalid regex
+      }
+    } else {
+      const idx = text.indexOf(needle);
+      if (idx >= 0) {
+        ranges.push({
+          start: idx,
+          end: Math.min(idx + h.chunkText.length, text.length),
+          color: h.color,
+        });
+      }
+    }
+  }
+
+  ranges.sort((a, b) => a.start - b.start);
+  return ranges;
+}
+
 /**
  * Insert <mark> tags into text for each highlight match.
- * Uses string matching on chunkText to find highlight positions.
+ * Used for markdown rendering where we inject raw HTML.
  */
 function applyHighlightsToText(
   text: string,
@@ -66,41 +115,15 @@ function applyHighlightsToText(
 ): string {
   if (!highlights.length) return text;
 
-  // Build ranges: find each chunkText in the source text
-  const ranges: Array<{ start: number; end: number; color: string }> = [];
-
-  for (const h of highlights) {
-    if (!h.chunkText) continue;
-    // Search for the chunk text — use first 100 chars for matching to avoid huge regex
-    const needle = h.chunkText.substring(0, 100);
-    const escapedNeedle = escapeRegex(needle);
-    try {
-      const regex = new RegExp(escapedNeedle, 'g');
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        ranges.push({
-          start: match.index,
-          end: Math.min(match.index + h.chunkText.length, text.length),
-          color: h.color,
-        });
-      }
-    } catch {
-      // Skip invalid regex
-    }
-  }
-
+  const ranges = buildHighlightRanges(text, highlights, 'all');
   if (ranges.length === 0) return text;
 
-  // Sort ranges by start position
-  ranges.sort((a, b) => a.start - b.start);
-
-  // Build highlighted text by inserting <mark> tags with scroll-target attributes
   let result = '';
   let cursor = 0;
   const colorIndexCounters = new Map<string, number>();
 
   for (const range of ranges) {
-    if (range.start < cursor) continue; // skip overlapping
+    if (range.start < cursor) continue;
     const idx = colorIndexCounters.get(range.color) || 0;
     colorIndexCounters.set(range.color, idx + 1);
     result += text.slice(cursor, range.start);
@@ -125,25 +148,8 @@ function HighlightedText({ text, highlights }: {
     return <>{text}</>;
   }
 
-  // Build ranges
-  const ranges: Array<{ start: number; end: number; color: string }> = [];
-
-  for (const h of highlights) {
-    if (!h.chunkText) continue;
-    const needle = h.chunkText.substring(0, 100);
-    const idx = text.indexOf(needle);
-    if (idx >= 0) {
-      ranges.push({
-        start: idx,
-        end: Math.min(idx + h.chunkText.length, text.length),
-        color: h.color,
-      });
-    }
-  }
-
+  const ranges = buildHighlightRanges(text, highlights, 'first');
   if (ranges.length === 0) return <>{text}</>;
-
-  ranges.sort((a, b) => a.start - b.start);
 
   const parts: React.ReactNode[] = [];
   let cursor = 0;
@@ -188,7 +194,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [scrollIndex, setScrollIndex] = useState<Record<string, number>>({});
+  const scrollIndexRef = useRef<Record<string, number>>({});
 
   // Load document content when document changes
   useEffect(() => {
@@ -247,10 +253,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   // Reset scroll indices when document changes
   useEffect(() => {
-    setScrollIndex({});
+    scrollIndexRef.current = {};
   }, [document]);
 
-  // Scroll to highlight by color, cycling through matches
+  // Scroll to highlight by color, cycling through matches.
+  // Uses a ref for the index to avoid stale closures on rapid clicks.
   const handleScrollToHighlight = useCallback((color: string, _e: MouseEvent) => {
     const container = contentRef.current;
     if (!container) return;
@@ -258,10 +265,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const marks = container.querySelectorAll<HTMLElement>(`mark[data-hl-color="${color}"]`);
     if (marks.length === 0) return;
 
-    const currentIdx = scrollIndex[color] ?? -1;
+    const currentIdx = scrollIndexRef.current[color] ?? -1;
     const nextIdx = (currentIdx + 1) % marks.length;
-
-    setScrollIndex(prev => ({ ...prev, [color]: nextIdx }));
+    scrollIndexRef.current = { ...scrollIndexRef.current, [color]: nextIdx };
 
     // Remove previous "active" ring from all marks of this color
     marks.forEach(m => m.style.outline = '');
@@ -273,7 +279,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
     // Clear outline after a brief moment
     setTimeout(() => { target.style.outline = ''; }, 2000);
-  }, [scrollIndex]);
+  }, []);
 
   // Download document
   const handleDownload = useCallback(() => {
