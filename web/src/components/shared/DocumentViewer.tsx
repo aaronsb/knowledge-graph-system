@@ -57,6 +57,11 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Escape HTML special characters to prevent tag corruption in raw HTML injection. */
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 interface HighlightRange { start: number; end: number; color: string }
 
 /**
@@ -128,7 +133,8 @@ function applyHighlightsToText(
     colorIndexCounters.set(range.color, idx + 1);
     result += text.slice(cursor, range.start);
     result += `<mark data-hl-color="${range.color}" data-hl-idx="${idx}" style="background-color: ${range.color}40; padding: 1px 0;">`;
-    result += text.slice(range.start, range.end);
+    // Escape HTML inside <mark> to prevent stray < > from corrupting the tag tree
+    result += escapeHtml(text.slice(range.start, range.end));
     result += '</mark>';
     cursor = range.end;
   }

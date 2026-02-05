@@ -5,7 +5,7 @@
  * and visible result aggregation for the Document Explorer workspace.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { apiClient } from '../api/client';
 import { getNextQueryColor } from '../utils/queryColors';
 import type { PassageQuery, PassageSearchResult, DocumentHighlight } from '../explorers/DocumentExplorer/types';
@@ -25,8 +25,6 @@ export interface NodeRingEntry {
   bestSimilarity: number;
 }
 
-let queryIdCounter = 0;
-
 export function usePassageSearch(
   sidebarDocs: SearchableDocument[],
   viewingDocumentId: string | null,
@@ -34,6 +32,9 @@ export function usePassageSearch(
   const [passageQueries, setPassageQueries] = useState<PassageQuery[]>([]);
   const [pendingQueryText, setPendingQueryText] = useState('');
   const [isCommittingQuery, setIsCommittingQuery] = useState(false);
+  const queriesRef = useRef(passageQueries);
+  queriesRef.current = passageQueries;
+  const queryIdRef = useRef(0);
 
   /** Reset all queries (e.g. when a new exploration loads). */
   const resetQueries = useCallback(() => {
@@ -46,8 +47,9 @@ export function usePassageSearch(
     const text = pendingQueryText.trim();
     if (!text || sidebarDocs.length === 0) return;
 
-    // Skip duplicates
-    if (passageQueries.some(q => q.text === text)) {
+    // Read current queries from ref to avoid stale closure on rapid commits
+    const currentQueries = queriesRef.current;
+    if (currentQueries.some(q => q.text === text)) {
       setPendingQueryText('');
       return;
     }
@@ -98,9 +100,9 @@ export function usePassageSearch(
       }).slice(0, 20);
 
       const newQuery: PassageQuery = {
-        id: String(++queryIdCounter),
+        id: String(++queryIdRef.current),
         text,
-        color: getNextQueryColor(passageQueries),
+        color: getNextQueryColor(queriesRef.current),
         visible: true,
         results,
       };
@@ -112,7 +114,7 @@ export function usePassageSearch(
     } finally {
       setIsCommittingQuery(false);
     }
-  }, [pendingQueryText, sidebarDocs, passageQueries]);
+  }, [pendingQueryText, sidebarDocs]);
 
   const handleToggleQuery = useCallback((id: string) => {
     setPassageQueries(prev =>
