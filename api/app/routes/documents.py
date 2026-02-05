@@ -66,6 +66,12 @@ class DocumentSearchResponse(BaseModel):
     total_matches: int = Field(..., description="Total documents matching threshold")
 
 
+class DocumentsByConceptsRequest(BaseModel):
+    """Request body for finding documents by concept IDs (reverse lookup)."""
+    concept_ids: List[str] = Field(..., min_length=1, description="Concept IDs to find documents for")
+    limit: int = Field(default=50, ge=1, le=200, description="Maximum results")
+
+
 class DocumentChunk(BaseModel):
     """A source chunk from a document."""
     source_id: str
@@ -449,6 +455,102 @@ async def search_documents(
     except Exception as e:
         logger.error(f"Document search failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@query_router.post("/by-concepts", response_model=DocumentSearchResponse)
+async def find_documents_by_concepts(
+    request: DocumentsByConceptsRequest,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Find documents that contain the given concepts (reverse lookup).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Traverses Concept → APPEARS → Source ← HAS_SOURCE ← DocumentMeta
+    to find which documents contributed to the given concepts.
+    Documents are ranked by number of matching concepts (most relevant first).
+    """
+    try:
+        client = AGEClient()
+        try:
+            # 1. Find documents linked to these concepts via Source nodes
+            query = """
+            MATCH (c:Concept)-[:APPEARS]->(s:Source)<-[:HAS_SOURCE]-(d:DocumentMeta)
+            WHERE c.concept_id IN $concept_ids
+            WITH d, collect(DISTINCT s.source_id) as source_ids,
+                 count(DISTINCT c.concept_id) as matching_concepts
+            RETURN d.document_id as document_id,
+                   d.filename as filename,
+                   d.ontology as ontology,
+                   d.content_type as content_type,
+                   d.garage_key as garage_key,
+                   d.storage_key as storage_key,
+                   size(source_ids) as source_count,
+                   matching_concepts
+            ORDER BY matching_concepts DESC
+            LIMIT $limit
+            """
+
+            results = client._execute_cypher(
+                query,
+                params={"concept_ids": request.concept_ids, "limit": request.limit}
+            )
+
+            if not results:
+                return DocumentSearchResponse(
+                    documents=[],
+                    returned=0,
+                    total_matches=0
+                )
+
+            # 2. Fetch concept_ids for each document
+            doc_ids = [r['document_id'] for r in results]
+            concepts_by_doc = _get_concepts_for_documents(client, doc_ids)
+
+            # 3. Build results
+            documents = []
+            for row in results:
+                doc_id = row['document_id']
+
+                resources = []
+                if row.get('garage_key'):
+                    resources.append(DocumentResource(
+                        type="document",
+                        garage_key=row['garage_key']
+                    ))
+                if row.get('storage_key'):
+                    resources.append(DocumentResource(
+                        type="image",
+                        garage_key=row['storage_key']
+                    ))
+
+                documents.append(DocumentSearchResult(
+                    document_id=doc_id,
+                    filename=row.get('filename') or 'unknown',
+                    ontology=row.get('ontology') or 'unknown',
+                    content_type=row.get('content_type') or 'document',
+                    best_similarity=row.get('matching_concepts', 0) / max(len(request.concept_ids), 1),
+                    source_count=row.get('source_count') or 0,
+                    resources=resources,
+                    concept_ids=concepts_by_doc.get(doc_id, [])
+                ))
+
+            return DocumentSearchResponse(
+                documents=documents,
+                returned=len(documents),
+                total_matches=len(documents)
+            )
+
+        finally:
+            client.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Find documents by concepts failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to find documents: {str(e)}")
 
 
 # ============================================================================

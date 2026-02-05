@@ -33,6 +33,7 @@ export function useQueryReplay() {
     resetExplorationSession,
     setSearchParams,
     setSimilarityThreshold,
+    setPolarityState,
   } = useGraphStore();
 
   const replayQuery = useCallback(async (query: ReplayableDefinition) => {
@@ -73,6 +74,25 @@ export function useQueryReplay() {
       return;
     }
 
+    // Polarity-type: restore pole selections and trigger auto-run
+    if (query.definition_type === 'polarity' && definition?.positive_pole_id) {
+      setPolarityState({
+        selectedPositivePole: {
+          concept_id: definition.positive_pole_id as string,
+          label: (definition.positive_pole_label as string) || 'Positive',
+        },
+        selectedNegativePole: {
+          concept_id: definition.negative_pole_id as string,
+          label: (definition.negative_pole_label as string) || 'Negative',
+        },
+        maxCandidates: typeof definition.maxCandidates === 'number' ? definition.maxCandidates : 20,
+        maxHops: typeof definition.maxHops === 'number' ? definition.maxHops : 1,
+        autoDiscover: typeof definition.autoDiscover === 'boolean' ? definition.autoDiscover : true,
+        pendingAnalysis: true,
+      });
+      return;
+    }
+
     // Legacy: searchParams-based queries
     if (definition?.searchParams) {
       setSearchParams(definition.searchParams as SearchParams);
@@ -80,7 +100,7 @@ export function useQueryReplay() {
         setSimilarityThreshold(definition.similarityThreshold);
       }
     }
-  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold]);
+  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold, setPolarityState]);
 
   return { replayQuery, isReplaying };
 }

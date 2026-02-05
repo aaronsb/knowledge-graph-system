@@ -57,11 +57,15 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [x] Execute from editor replays the statement sequence
 - [x] Subtractive operator: context menu "Remove from Graph" option
 
-### Phase 4: Cross-Explorer Flow
-- [ ] Vocabulary explorer reads same saved queries from folder
-- [ ] Document explorer reads same saved queries
-- [ ] Polarity explorer loads graph from saved query
-- [ ] Verify all explorers share the same folder state
+### Phase 4: Cross-Explorer Flow ✓
+- [x] Vocabulary explorer reads same saved queries from folder (EdgeExplorerWorkspace)
+- [x] Document explorer reads same saved queries (DocumentExplorerWorkspace)
+- [x] Polarity explorer loads graph from saved query (PolarityExplorerWorkspace)
+- [x] Embedding landscape loads graph from saved query (EmbeddingLandscapeWorkspace)
+- [x] Verify all explorers share the same folder state (queryDefinitionStore)
+- [x] Type dataTransformer contract with RawGraphData
+- [x] Extract color computation from graphTransform.ts into colorScale.ts
+- [x] Rename D3Node/D3Link to RenderNode/RenderLink (renderer-agnostic)
 
 ### Phase 5: Documentation & Docstrings
 - [x] Add JSDoc docstrings to new exploration tracking code
@@ -71,6 +75,15 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [x] Add JSDoc docstrings to useGraphContextMenu handlers
 - [ ] Document the unified query exploration workflow in user manual
 - [ ] Document the +/- operator algebra concept
+
+### Phase 6: Type-Aware Saved Queries ✓
+- [x] Backend: `POST /query/documents/by-concepts` endpoint (concept→document reverse lookup)
+- [x] Frontend: `findDocumentsByConcepts` API client method
+- [x] SavedQueriesPanel: type-aware subtitles (exploration→steps, polarity→poles, block→nodes)
+- [x] SavedQueriesPanel: `saveButtonLabel` prop for per-explorer save button text
+- [x] useQueryReplay: polarity handler (restores pole selections, triggers auto-analysis)
+- [x] PolarityExplorerWorkspace: save/load pole selections as `definition_type: 'polarity'`
+- [x] DocumentExplorerWorkspace: load exploration query → concept→document reverse lookup
 
 ## Notes
 

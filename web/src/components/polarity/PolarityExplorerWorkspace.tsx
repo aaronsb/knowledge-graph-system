@@ -27,6 +27,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore } from '../../store/reportStore';
 import { useArtifactStore } from '../../store/artifactStore';
+import { useQueryDefinitionStore } from '../../store/queryDefinitionStore';
 import type { PolarityReportData } from '../../store/reportStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
@@ -149,6 +150,29 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const selectedAnalysis = selectedAnalysisId
     ? analysisHistory.find((a) => a.id === selectedAnalysisId)
     : null;
+
+  const { createDefinition } = useQueryDefinitionStore();
+
+  /** Save current pole selections as a polarity query definition. */
+  const handleSavePolarity = useCallback(async () => {
+    if (!selectedPositivePole || !selectedNegativePole) return;
+    const name = `${selectedPositivePole.label} \u2194 ${selectedNegativePole.label}`;
+    await createDefinition({
+      name,
+      definition_type: 'polarity',
+      definition: {
+        positive_pole_id: selectedPositivePole.concept_id,
+        positive_pole_label: selectedPositivePole.label,
+        negative_pole_id: selectedNegativePole.concept_id,
+        negative_pole_label: selectedNegativePole.label,
+        maxCandidates,
+        maxHops,
+        autoDiscover,
+      },
+    });
+  }, [selectedPositivePole, selectedNegativePole, maxCandidates, maxHops, autoDiscover, createDefinition]);
+
+  const hasPoles = !!(selectedPositivePole && selectedNegativePole);
 
   const searchConcepts = useCallback(async (query: string, pole: 'positive' | 'negative') => {
     if (query.trim().length < 2) {
@@ -975,7 +999,10 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const savedQueriesPanelContent = (
     <SavedQueriesPanel
       onLoadQuery={replayQuery}
-      definitionTypeFilter="exploration"
+      onSaveExploration={handleSavePolarity}
+      currentExploration={hasPoles ? { stepCount: 2 } : null}
+      saveButtonLabel="Save Poles"
+      definitionTypeFilter="polarity"
     />
   );
 

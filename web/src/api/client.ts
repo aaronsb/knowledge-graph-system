@@ -1586,6 +1586,30 @@ class APIClient {
   }
 
   /**
+   * Find documents that contain the given concepts (reverse lookup).
+   * Traverses Concept → Source → DocumentMeta in the graph.
+   */
+  async findDocumentsByConcepts(params: {
+    concept_ids: string[];
+    limit?: number;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      best_similarity: number;
+      source_count: number;
+      concept_ids: string[];
+    }>;
+    returned: number;
+    total_matches: number;
+  }> {
+    const response = await this.client.post('/query/documents/by-concepts', params);
+    return response.data;
+  }
+
+  /**
    * List all documents with optional ontology filter
    */
   async listDocuments(params?: {

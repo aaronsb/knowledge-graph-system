@@ -15,7 +15,8 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { DocumentViewer } from '../shared/DocumentViewer';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
-import { useQueryReplay } from '../../hooks/useQueryReplay';
+import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
+import { useGraphStore } from '../../store/graphStore';
 
 interface DocumentSearchResult {
   document_id: string;
@@ -30,6 +31,7 @@ interface DocumentSearchResult {
 export const DocumentExplorerWorkspace: React.FC = () => {
   const { replayQuery } = useQueryReplay();
   const [activeRailTab, setActiveRailTab] = useState('savedQueries');
+  const [isLoadingFromQuery, setIsLoadingFromQuery] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +90,46 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   React.useEffect(() => {
     handleSearch();
   }, [handleSearch]);
+
+  /**
+   * Load a saved exploration query, then reverse-lookup documents
+   * from the concepts in the resulting working graph (W).
+   */
+  const handleLoadExplorationQuery = useCallback(async (query: ReplayableDefinition) => {
+    setIsLoadingFromQuery(true);
+    setSearchError(null);
+    setSearchQuery('');
+    setSelectedDocument(null);
+    setExplorerData(null);
+
+    try {
+      // 1. Replay the exploration → populates rawGraphData (W)
+      await replayQuery(query);
+
+      // 2. Extract concept_ids from the working graph
+      const rawData = useGraphStore.getState().rawGraphData;
+      if (!rawData || rawData.nodes.length === 0) {
+        setSearchResults([]);
+        return;
+      }
+
+      const conceptIds = rawData.nodes.map(n => n.concept_id);
+
+      // 3. Reverse-lookup: find documents containing these concepts
+      const response = await apiClient.findDocumentsByConcepts({
+        concept_ids: conceptIds,
+        limit: 50,
+      });
+
+      setSearchResults(response.documents);
+    } catch (error) {
+      console.error('Failed to load documents from exploration query:', error);
+      setSearchError('Failed to find documents for exploration');
+      setSearchResults([]);
+    } finally {
+      setIsLoadingFromQuery(false);
+    }
+  }, [replayQuery]);
 
   // Load document concepts with hop expansion
   const loadDocumentData = useCallback(async (doc: DocumentSearchResult, hops: number) => {
@@ -264,7 +306,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             label: 'Saved Queries',
             content: (
               <SavedQueriesPanel
-                onLoadQuery={replayQuery}
+                onLoadQuery={handleLoadExplorationQuery}
                 definitionTypeFilter="exploration"
               />
             ),
@@ -323,7 +365,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
         {/* Search results */}
         <div className="flex-1 overflow-y-auto">
-          {isSearching ? (
+          {(isSearching || isLoadingFromQuery) ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
