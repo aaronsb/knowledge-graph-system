@@ -407,6 +407,15 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     return ringMap;
   }, [passageQueries]);
 
+  // Color → query text lookup for labeling rings in info dialogs
+  const queryColorLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const q of passageQueries) {
+      if (q.visible) map.set(q.color, q.text);
+    }
+    return map;
+  }, [passageQueries]);
+
   // ---------------------------------------------------------------------------
   // Document highlights — derived from visible queries for the open document
   // ---------------------------------------------------------------------------
@@ -432,6 +441,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     }
     return highlights;
   }, [passageQueries, viewingDocument]);
+
+  // queryColorLabels is passed directly to DocumentViewer for its internal hit bar
 
   // ---------------------------------------------------------------------------
   // All passage results from visible queries (for sidebar display)
@@ -675,6 +686,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             onFocusChange={setFocusedDocId}
             onViewDocument={handleViewDocumentById}
             passageRings={passageRings}
+            queryColorLabels={queryColorLabels}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-background">
@@ -695,6 +707,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
         document={viewingDocument}
         onClose={() => setViewingDocument(null)}
         highlights={documentHighlights}
+        queryLabels={queryColorLabels}
       />
     </div>
   );

@@ -69,11 +69,13 @@ interface DocumentExplorerExtraProps {
   onViewDocument?: (docId: string) => void;
   /** Passage search rings — Map<nodeId, Array<{ color, hitCount, maxHitCount, bestSimilarity }>> */
   passageRings?: Map<string, Array<{ color: string; hitCount: number; maxHitCount: number; bestSimilarity: number }>>;
+  /** Color → query text lookup for labeling rings in info dialogs. */
+  queryColorLabels?: Map<string, string>;
 }
 
 export const DocumentExplorer: React.FC<
   ExplorerProps<DocumentExplorerData, DocumentExplorerSettings> & DocumentExplorerExtraProps
-> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument, passageRings }) => {
+> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument, passageRings, queryColorLabels }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -501,6 +503,28 @@ export const DocumentExplorer: React.FC<
     return simNodes.find(n => n.id === selectedConceptId);
   }, [selectedConceptId, simNodes]);
 
+  // Query hit bar for the selected concept's NodeInfoBox
+  const selectedNodeQueryBar = useMemo(() => {
+    if (!selectedConceptId || !passageRings || !queryColorLabels) return undefined;
+    const rings = passageRings.get(selectedConceptId);
+    if (!rings || rings.length === 0) return undefined;
+
+    return (
+      <div className="flex border-b border-border">
+        {rings.map((ring) => (
+          <div
+            key={ring.color}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[10px] font-medium"
+            style={{ backgroundColor: `${ring.color}25`, color: ring.color }}
+          >
+            <span className="truncate">{queryColorLabels.get(ring.color) || '?'}</span>
+            <span className="opacity-70">{ring.hitCount}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }, [selectedConceptId, passageRings, queryColorLabels]);
+
   return (
     <div className={`relative w-full h-full overflow-hidden ${className || ''}`}>
       <svg
@@ -567,6 +591,7 @@ export const DocumentExplorer: React.FC<
             y: (selectedNodeData.y || 0) * zoomTransform.k + zoomTransform.y,
           }}
           onDismiss={() => setSelectedConceptId(null)}
+          headerExtra={selectedNodeQueryBar}
         />
       )}
     </div>

@@ -7,8 +7,8 @@
  * Supports passage search highlighting via the highlights prop.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { FileText, Download, X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, type MouseEvent } from 'react';
+import { FileText, Download, X, Loader2, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { apiClient } from '../../api/client';
@@ -25,6 +25,10 @@ export interface DocumentViewerProps {
   onClose: () => void;
   /** Passage search highlights to apply */
   highlights?: DocumentHighlight[];
+  /** Optional content injected below the header (e.g. query hit indicators). */
+  headerExtra?: React.ReactNode;
+  /** Color → query text lookup for the internal query hit bar with scroll-to cycling. */
+  queryLabels?: Map<string, string>;
 }
 
 interface DocumentContent {
@@ -79,14 +83,17 @@ function applyHighlightsToText(
   // Sort ranges by start position
   ranges.sort((a, b) => a.start - b.start);
 
-  // Build highlighted text by inserting <mark> tags
+  // Build highlighted text by inserting <mark> tags with scroll-target attributes
   let result = '';
   let cursor = 0;
+  const colorIndexCounters = new Map<string, number>();
 
   for (const range of ranges) {
     if (range.start < cursor) continue; // skip overlapping
+    const idx = colorIndexCounters.get(range.color) || 0;
+    colorIndexCounters.set(range.color, idx + 1);
     result += text.slice(cursor, range.start);
-    result += `<mark style="background-color: ${range.color}40; padding: 1px 0;">`;
+    result += `<mark data-hl-color="${range.color}" data-hl-idx="${idx}" style="background-color: ${range.color}40; padding: 1px 0;">`;
     result += text.slice(range.start, range.end);
     result += '</mark>';
     cursor = range.end;
@@ -129,6 +136,7 @@ function HighlightedText({ text, highlights }: {
 
   const parts: React.ReactNode[] = [];
   let cursor = 0;
+  const colorIndexCounters = new Map<string, number>();
 
   for (let i = 0; i < ranges.length; i++) {
     const range = ranges[i];
@@ -136,9 +144,13 @@ function HighlightedText({ text, highlights }: {
     if (range.start > cursor) {
       parts.push(text.slice(cursor, range.start));
     }
+    const idx = colorIndexCounters.get(range.color) || 0;
+    colorIndexCounters.set(range.color, idx + 1);
     parts.push(
       <mark
         key={`hl-${i}`}
+        data-hl-color={range.color}
+        data-hl-idx={idx}
         style={{ backgroundColor: `${range.color}40`, padding: '1px 0' }}
       >
         {text.slice(range.start, range.end)}
@@ -158,10 +170,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
   onClose,
   highlights,
+  headerExtra,
+  queryLabels,
 }) => {
   const [content, setContent] = useState<DocumentContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollIndex, setScrollIndex] = useState<Record<string, number>>({});
 
   // Load document content when document changes
   useEffect(() => {
@@ -207,6 +223,46 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (!highlights?.length) return [];
     return highlights.map(h => ({ chunkText: h.chunkText, color: h.color }));
   }, [highlights]);
+
+  // Count highlights per query color for the internal hit bar
+  const hitCountsByColor = useMemo(() => {
+    if (!highlights?.length || !queryLabels?.size) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    for (const h of highlights) {
+      counts.set(h.color, (counts.get(h.color) || 0) + 1);
+    }
+    return counts;
+  }, [highlights, queryLabels]);
+
+  // Reset scroll indices when document changes
+  useEffect(() => {
+    setScrollIndex({});
+  }, [document]);
+
+  // Scroll to highlight by color, cycling through matches
+  const handleScrollToHighlight = useCallback((color: string, _e: MouseEvent) => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const marks = container.querySelectorAll<HTMLElement>(`mark[data-hl-color="${color}"]`);
+    if (marks.length === 0) return;
+
+    const currentIdx = scrollIndex[color] ?? -1;
+    const nextIdx = (currentIdx + 1) % marks.length;
+
+    setScrollIndex(prev => ({ ...prev, [color]: nextIdx }));
+
+    // Remove previous "active" ring from all marks of this color
+    marks.forEach(m => m.style.outline = '');
+
+    const target = marks[nextIdx];
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.style.outline = `2px solid ${color}`;
+    target.style.outlineOffset = '1px';
+
+    // Clear outline after a brief moment
+    setTimeout(() => { target.style.outline = ''; }, 2000);
+  }, [scrollIndex]);
 
   // Download document
   const handleDownload = useCallback(() => {
@@ -311,8 +367,30 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </div>
         </div>
 
+        {/* Injected header content (e.g. query hit indicators) */}
+        {headerExtra}
+
+        {/* Internal query hit bar with scroll-to cycling */}
+        {queryLabels && hitCountsByColor.size > 0 && (
+          <div className="flex border-b">
+            {Array.from(hitCountsByColor.entries()).map(([color, count]) => (
+              <button
+                key={color}
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[10px] font-medium cursor-pointer hover:brightness-110 transition-all"
+                style={{ backgroundColor: `${color}25`, color }}
+                onClick={(e) => handleScrollToHighlight(color, e)}
+                title={`Click to cycle through "${queryLabels.get(color) || '?'}" highlights`}
+              >
+                <span className="truncate">{queryLabels.get(color) || '?'}</span>
+                <span className="opacity-70">{count}</span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Content */}
-        <div className="flex-1 overflow-auto p-4">
+        <div ref={contentRef} className="flex-1 overflow-auto p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
