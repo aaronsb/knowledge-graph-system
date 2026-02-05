@@ -33,16 +33,18 @@ export const DocumentExplorerPlugin: ExplorerPlugin<DocumentExplorerData, Docume
 
   dataTransformer: (apiData) => {
     // Transform API response to DocumentExplorerData
-    // Expected input: { document: {...}, concepts: [...], links: [...] }
+    // Note: This transformer is not called from ExplorerView (DocumentExplorerWorkspace
+    // builds its own data). It exists for plugin interface completeness.
+    const data = apiData as unknown as Record<string, any>;
     return {
-      document: apiData.document || {
+      document: data.document || {
         id: 'unknown',
         type: 'document',
         label: 'Unknown Document',
         ontology: 'unknown',
         conceptCount: 0,
       },
-      concepts: (apiData.concepts || []).map((c: any, i: number) => ({
+      concepts: (data.concepts || []).map((c: any, i: number) => ({
         id: c.concept_id || c.id,
         type: 'concept' as const,
         label: c.label || c.name || 'Unknown',
@@ -52,7 +54,7 @@ export const DocumentExplorerPlugin: ExplorerPlugin<DocumentExplorerData, Docume
         grounding_display: c.grounding_display,
         instanceCount: c.instance_count || c.instanceCount || 1,
       })),
-      links: (apiData.links || []).map((l: any) => ({
+      links: (data.links || []).map((l: any) => ({
         source: l.source || l.from_id,
         target: l.target || l.to_id,
         type: l.type || l.relationship_type || 'RELATED',

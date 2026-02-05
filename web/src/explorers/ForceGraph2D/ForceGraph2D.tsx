@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import type { ExplorerProps } from '../../types/explorer';
-import type { D3Node, D3Link } from '../../types/graph';
+import type { RenderNode, RenderLink } from '../../types/graph';
 import type { ForceGraph2DSettings, ForceGraph2DData } from './types';
 import { getNeighbors, transformForD3, filterByEdgeCategory } from '../../utils/graphTransform';
 import { useGraphStore } from '../../store/graphStore';
@@ -37,7 +37,7 @@ import { SLIDER_RANGES } from './types';
  */
 function calculateNodePosition(
   nodeId: string,
-  nodes: D3Node[],
+  nodes: RenderNode[],
   draggedNodeId?: string,
   draggedNodeX?: number,
   draggedNodeY?: number
@@ -60,7 +60,7 @@ function calculateNodePosition(
  * Handles both straight and curved edges (quadratic Bezier)
  */
 function calculateEdgeMidpoint(
-  link: D3Link,
+  link: RenderLink,
   curveOffset: number,
   draggedNodeId?: string,
   draggedNodeX?: number,
@@ -126,7 +126,7 @@ export const ForceGraph2D: React.FC<
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const [focusedNode, setFocusedNode] = useState<string | null>(null);
-  const simulationRef = useRef<d3.Simulation<D3Node, D3Link> | null>(null);
+  const simulationRef = useRef<d3.Simulation<RenderNode, RenderLink> | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
   // Get current theme for label colors (use appliedTheme which resolves 'system' to actual theme)
@@ -177,7 +177,7 @@ export const ForceGraph2D: React.FC<
     svg.selectAll('circle.origin-node')
       .interrupt()
       .attr('stroke', function() {
-        const d = d3.select(this).datum() as D3Node;
+        const d = d3.select(this).datum() as RenderNode;
         const color = nodeColors.get(d.id) || d.color;
         return d3.color(color)?.brighter(0.4).toString() || color;
       })
@@ -221,7 +221,7 @@ export const ForceGraph2D: React.FC<
     svg.selectAll('circle.destination-node')
       .interrupt()
       .attr('stroke', function() {
-        const d = d3.select(this).datum() as D3Node;
+        const d = d3.select(this).datum() as RenderNode;
         const color = nodeColors.get(d.id) || d.color;
         return d3.color(color)?.brighter(0.4).toString() || color;
       })
@@ -380,7 +380,7 @@ export const ForceGraph2D: React.FC<
     const offsets = new Map<string, number>();
 
     // Group links by node pair (undirected)
-    const linkGroups = new Map<string, D3Link[]>();
+    const linkGroups = new Map<string, RenderLink[]>();
 
     data.links.forEach(link => {
       const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
@@ -532,17 +532,17 @@ export const ForceGraph2D: React.FC<
 
     // Create force simulation
     const simulation = d3
-      .forceSimulation<D3Node>(filteredData.nodes)
+      .forceSimulation<RenderNode>(filteredData.nodes)
       .force(
         'link',
         d3
-          .forceLink<D3Node, D3Link>(filteredData.links)
+          .forceLink<RenderNode, RenderLink>(filteredData.links)
           .id((d) => d.id)
           .distance(settings.physics.linkDistance)
       )
       .force('charge', d3.forceManyBody().strength(settings.physics.charge))
       .force('center', d3.forceCenter(width / 2, height / 2).strength(settings.physics.gravity))
-      .force('collision', d3.forceCollide().radius((d) => ((d as D3Node).size || 10) * settings.visual.nodeSize + 5))
+      .force('collision', d3.forceCollide().radius((d) => ((d as RenderNode).size || 10) * settings.visual.nodeSize + 5))
       .velocityDecay(1 - settings.physics.friction);
 
     // Control initial simulation energy — lower warmth = less scatter on load
@@ -565,7 +565,7 @@ export const ForceGraph2D: React.FC<
 
     // Draw links as paths (supports curves for multiple edges)
     const link = linksGroup
-      .selectAll<SVGPathElement, D3Link>('path')
+      .selectAll<SVGPathElement, RenderLink>('path')
       .data(filteredData.links)
       .join('path')
       .attr('stroke', (d) => {
@@ -714,7 +714,7 @@ export const ForceGraph2D: React.FC<
 
     // Add edge labels showing relationship types
     const edgeLabels = linksGroup
-      .selectAll<SVGTextElement, D3Link>('text')
+      .selectAll<SVGTextElement, RenderLink>('text')
       .data(filteredData.links)
       .join('text')
       .text((d) => d.type)
@@ -797,7 +797,7 @@ export const ForceGraph2D: React.FC<
 
     // Draw nodes (AFTER highlights so they're on top and receive events)
     const node = nodesGroup
-      .selectAll<SVGCircleElement, D3Node>('circle')
+      .selectAll<SVGCircleElement, RenderNode>('circle')
       .data(filteredData.nodes)
       .join('circle')
       .attr('r', (d) => (d.size || 10) * settings.visual.nodeSize)
@@ -859,10 +859,10 @@ export const ForceGraph2D: React.FC<
       });
 
     // Add labels if enabled
-    let labels: d3.Selection<SVGTextElement, D3Node, SVGGElement, unknown> | null = null;
+    let labels: d3.Selection<SVGTextElement, RenderNode, SVGGElement, unknown> | null = null;
     if (settings.visual.showLabels) {
       labels = nodesGroup
-        .selectAll<SVGTextElement, D3Node>('text')
+        .selectAll<SVGTextElement, RenderNode>('text')
         .data(filteredData.nodes)
         .join('text')
         .text((d) => d.label)
@@ -891,7 +891,7 @@ export const ForceGraph2D: React.FC<
     // Enable dragging if configured
     if (settings.interaction.enableDrag) {
       const drag = d3
-        .drag<SVGCircleElement, D3Node>()
+        .drag<SVGCircleElement, RenderNode>()
         .on('start', (event, d) => {
           if (!event.active && settings.physics.enabled) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
@@ -1308,7 +1308,7 @@ export const ForceGraph2D: React.FC<
     const svg = d3.select(svgRef.current);
 
     // Node highlighting (focus takes priority over hover)
-    svg.selectAll<SVGCircleElement, D3Node>('circle').attr('opacity', (d) => {
+    svg.selectAll<SVGCircleElement, RenderNode>('circle').attr('opacity', (d) => {
       if (!d) return 1;
 
       // Focus mode (stronger fade)
@@ -1329,7 +1329,7 @@ export const ForceGraph2D: React.FC<
     });
 
     // Edge highlighting (paths not lines) - focus takes priority
-    svg.selectAll<SVGPathElement, D3Link>('path').each(function(link) {
+    svg.selectAll<SVGPathElement, RenderLink>('path').each(function(link) {
       const path = d3.select(this);
       const linkKey = path.attr('data-link-key');
 
@@ -1395,7 +1395,7 @@ export const ForceGraph2D: React.FC<
           .selectAll('circle.origin-node')
           .interrupt()
           .attr('stroke', function() {
-            const d = d3.select(this).datum() as D3Node;
+            const d = d3.select(this).datum() as RenderNode;
             const color = nodeColors.get(d.id) || d.color;
             return d3.color(color)?.brighter(0.4).toString() || color;
           })
@@ -1426,7 +1426,7 @@ export const ForceGraph2D: React.FC<
           .selectAll('circle.destination-node')
           .interrupt()
           .attr('stroke', function() {
-            const d = d3.select(this).datum() as D3Node;
+            const d = d3.select(this).datum() as RenderNode;
             const color = nodeColors.get(d.id) || d.color;
             return d3.color(color)?.brighter(0.4).toString() || color;
           })
@@ -1539,7 +1539,7 @@ export const ForceGraph2D: React.FC<
     const nodeSelection = svg.select<SVGCircleElement>(`circle[data-node-id="${nodeId}"]`);
 
     if (!nodeSelection.empty()) {
-      const nodeData = nodeSelection.datum() as D3Node;
+      const nodeData = nodeSelection.datum() as RenderNode;
 
       if (nodeData.fx !== undefined && nodeData.fx !== null) {
         // Unpin: remove fixed position
@@ -1564,8 +1564,8 @@ export const ForceGraph2D: React.FC<
     const svg = d3.select(svgRef.current);
 
     // Unpin all nodes
-    svg.selectAll<SVGCircleElement, D3Node>('circle[data-node-id]').each(function() {
-      const nodeData = d3.select(this).datum() as D3Node;
+    svg.selectAll<SVGCircleElement, RenderNode>('circle[data-node-id]').each(function() {
+      const nodeData = d3.select(this).datum() as RenderNode;
       nodeData.fx = null;
       nodeData.fy = null;
     });

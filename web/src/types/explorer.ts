@@ -6,6 +6,7 @@
  */
 
 import type { ComponentType } from 'react';
+import type { RawGraphData } from '../utils/cypherResultMapper';
 
 export type VisualizationType =
   | 'force-2d'
@@ -47,6 +48,6 @@ export interface ExplorerPlugin<TData = any, TSettings = any> {
   config: ExplorerConfig;
   component: ComponentType<ExplorerProps<TData, TSettings>>;
   settingsPanel: ComponentType<SettingsPanelProps<TSettings>>;
-  dataTransformer: (apiData: any) => TData;
+  dataTransformer: (apiData: RawGraphData) => TData;
   defaultSettings: TSettings;
 }

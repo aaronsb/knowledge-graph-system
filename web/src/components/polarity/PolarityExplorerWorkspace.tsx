@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   Save,
   CheckCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
@@ -28,6 +29,8 @@ import { useReportStore } from '../../store/reportStore';
 import { useArtifactStore } from '../../store/artifactStore';
 import type { PolarityReportData } from '../../store/reportStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 import { PolarityHelpModal } from './PolarityHelpModal';
 import { PolarityScatterPlot } from './PolarityScatterPlot';
 
@@ -92,6 +95,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const { addReport } = useReportStore();
   const { persistArtifact } = useArtifactStore();
+  const { replayQuery } = useQueryReplay();
 
   // Get polarity state from Zustand store
   const {
@@ -967,6 +971,14 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     </div>
   );
 
+  // Saved queries panel content
+  const savedQueriesPanelContent = (
+    <SavedQueriesPanel
+      onLoadQuery={replayQuery}
+      definitionTypeFilter="exploration"
+    />
+  );
+
   // Tab definitions
   const tabs = [
     {
@@ -986,6 +998,12 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       label: 'Results History',
       icon: GitBranch,
       content: resultsListContent, // Results list shown in sidebar
+    },
+    {
+      id: 'savedQueries',
+      label: 'Saved Queries',
+      icon: FolderOpen,
+      content: savedQueriesPanelContent,
     },
   ];
 

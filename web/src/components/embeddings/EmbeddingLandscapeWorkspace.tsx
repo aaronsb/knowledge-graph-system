@@ -8,11 +8,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
+import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, FolderOpen } from 'lucide-react';
 import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp } from './types';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
 import { NodeInfoBox } from '../../explorers/common/NodeInfoBox';
 import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 
 // Vibrant color palette for ontologies (high saturation for dark backgrounds)
 const ONTOLOGY_COLORS = [
@@ -232,6 +234,7 @@ function positionToColor(
  *  @verified b38d816f */
 export function EmbeddingLandscapeWorkspace() {
   const navigate = useNavigate();
+  const { replayQuery } = useQueryReplay();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -723,6 +726,17 @@ export function EmbeddingLandscapeWorkspace() {
                   </button>
                 </div>
               </div>
+            ),
+          },
+          {
+            id: 'savedQueries',
+            icon: FolderOpen,
+            label: 'Saved Queries',
+            content: (
+              <SavedQueriesPanel
+                onLoadQuery={replayQuery}
+                definitionTypeFilter="exploration"
+              />
             ),
           },
         ]}

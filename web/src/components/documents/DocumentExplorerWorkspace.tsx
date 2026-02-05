@@ -6,13 +6,16 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Search, FileText, Loader2, Layers } from 'lucide-react';
+import { Search, FileText, Loader2, Layers, FolderOpen } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
 import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { DocumentViewer } from '../shared/DocumentViewer';
+import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 
 interface DocumentSearchResult {
   document_id: string;
@@ -25,6 +28,9 @@ interface DocumentSearchResult {
 }
 
 export const DocumentExplorerWorkspace: React.FC = () => {
+  const { replayQuery } = useQueryReplay();
+  const [activeRailTab, setActiveRailTab] = useState('savedQueries');
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<DocumentSearchResult[]>([]);
@@ -249,6 +255,25 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
   return (
     <div className="flex h-full">
+      {/* Left rail with saved queries */}
+      <IconRailPanel
+        tabs={[
+          {
+            id: 'savedQueries',
+            icon: FolderOpen,
+            label: 'Saved Queries',
+            content: (
+              <SavedQueriesPanel
+                onLoadQuery={replayQuery}
+                definitionTypeFilter="exploration"
+              />
+            ),
+          },
+        ]}
+        activeTab={activeRailTab}
+        onTabChange={setActiveRailTab}
+      />
+
       {/* Left sidebar - search and results */}
       <div className="w-80 border-r border-border bg-card flex flex-col">
         {/* Search input */}
