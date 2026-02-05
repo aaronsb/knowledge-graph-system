@@ -51,8 +51,18 @@ export function transformForD3(
     };
   });
 
+  // Build node ID set for defensive link filtering
+  const nodeIdSet = new Set(nodes.map(n => n.id));
+
+  // Filter out links referencing non-existent nodes (defense in depth —
+  // cypherResultMapper should already drop these, but upstream data
+  // sources may also produce orphan references).
+  const validLinks = apiLinks.filter(link => {
+    return nodeIdSet.has(link.from_id) && nodeIdSet.has(link.to_id);
+  });
+
   // Transform links - enrich with vocabulary data from store
-  const links: RenderLink[] = apiLinks.map(link => {
+  const links: RenderLink[] = validLinks.map(link => {
     // Look up category from vocabulary store
     let category = vocabStore.getCategory(link.relationship_type);
 
