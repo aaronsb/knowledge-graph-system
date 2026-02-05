@@ -642,15 +642,18 @@ class IngestionMixin:
         else:
             properties["ingested_at"] = datetime.now(timezone.utc).isoformat()
 
-        # Create DocumentMeta node with explicit properties
-        # Build property assignments dynamically
-        prop_assignments = []
+        # MERGE DocumentMeta on document_id to prevent duplicate nodes on re-ingest.
+        # SET remaining properties so metadata updates on force re-ingest.
+        merge_key_props = f"document_id: $document_id"
+        set_assignments = []
         for key, value in properties.items():
-            prop_assignments.append(f"{key}: ${key}")
-        props_str = ", ".join(prop_assignments)
+            if key != "document_id":
+                set_assignments.append(f"d.{key} = ${key}")
+        set_str = ", ".join(set_assignments)
 
         create_query = f"""
-        CREATE (d:DocumentMeta {{{props_str}}})
+        MERGE (d:DocumentMeta {{{merge_key_props}}})
+        SET {set_str}
         RETURN d
         """
 
@@ -666,21 +669,19 @@ class IngestionMixin:
             created_doc = parsed.get('properties', {}) if isinstance(parsed, dict) else {}
 
             # Link to Source nodes if source_ids provided
+            # MERGE prevents duplicate edges on re-ingest
             if source_ids and len(source_ids) > 0:
                 link_query = """
                 MATCH (d:DocumentMeta {document_id: $doc_id})
                 MATCH (s:Source)
                 WHERE s.source_id IN $source_ids
-                CREATE (d)-[:HAS_SOURCE {
-                    created_at: $created_at
-                }]->(s)
+                MERGE (d)-[:HAS_SOURCE]->(s)
                 RETURN count(s) as linked_count
                 """
 
                 link_results = self._execute_cypher(link_query, {
                     "doc_id": document_id,
                     "source_ids": source_ids,
-                    "created_at": properties["ingested_at"]
                 })
 
                 if link_results:
