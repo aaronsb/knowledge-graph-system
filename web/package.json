@@ -31,6 +31,7 @@
     "reactflow": "^11.11.4",
     "recharts": "^3.5.1",
     "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
     "three": "^0.180.0",
     "three-spritetext": "^1.10.0",
     "zustand": "^5.0.8"

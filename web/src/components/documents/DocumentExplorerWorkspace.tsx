@@ -669,6 +669,11 @@ export const DocumentExplorerWorkspace: React.FC = () => {
 
       {/* Main area — graph */}
       <div className="flex-1 relative">
+        {error && (
+          <div className="absolute top-2 left-2 right-2 z-10 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded px-3 py-2">
+            {error}
+          </div>
+        )}
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background">
             <div className="text-center">

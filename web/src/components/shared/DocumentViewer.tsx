@@ -11,7 +11,18 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, type MouseEve
 import { FileText, Download, X, Loader2, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { apiClient } from '../../api/client';
+
+/** Sanitization schema: default markdown + our highlight <mark> tags only. */
+const highlightSanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames || []), 'mark'],
+  attributes: {
+    ...defaultSchema.attributes,
+    mark: ['style', 'data-hl-color', 'data-hl-idx'],
+  },
+};
 import type { DocumentHighlight } from '../../explorers/DocumentExplorer/types';
 
 export interface DocumentViewerProps {
@@ -403,7 +414,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             <div className="space-y-4">
               {isMarkdown ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                  <ReactMarkdown rehypePlugins={[rehypeRaw, [rehypeSanitize, highlightSanitizeSchema]]}>
                     {getHighlightedMarkdown()}
                   </ReactMarkdown>
                 </div>
