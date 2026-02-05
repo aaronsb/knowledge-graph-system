@@ -405,6 +405,7 @@ class APIClient {
     limit?: number;
     min_similarity?: number;
     ontology?: string;
+    document_ids?: string[];
     include_concepts?: boolean;
     include_full_text?: boolean;
   }): Promise<any> {
@@ -1648,6 +1649,19 @@ class APIClient {
     total: number;
   }> {
     const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
+  /**
+   * Bulk fetch concepts for multiple documents in one request.
+   * Returns map of document_id → concept list (deduplicated).
+   */
+  async getDocumentConceptsBulk(documentIds: string[]): Promise<{
+    documents: Record<string, Array<{ concept_id: string; label: string }>>;
+  }> {
+    const response = await this.client.post('/documents/concepts/bulk', {
+      document_ids: documentIds,
+    });
     return response.data;
   }
 

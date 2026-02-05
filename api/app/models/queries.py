@@ -353,6 +353,7 @@ class SourceSearchRequest(BaseModel):
         le=1.0
     )
     ontology: Optional[str] = Field(None, description="Filter by ontology/document name")
+    document_ids: Optional[List[str]] = Field(None, description="Scope search to sources belonging to these documents")
     include_concepts: bool = Field(True, description="Include concepts extracted from matched sources")
     include_full_text: bool = Field(True, description="Include full source text (not just matched chunk)")
 

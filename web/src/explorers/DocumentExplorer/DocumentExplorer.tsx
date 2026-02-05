@@ -1,18 +1,24 @@
 /**
- * Document Explorer - Force-Directed Concept Cloud
+ * Document Explorer — Multi-Document Concept Graph
  *
- * Visualizes a single document's concepts as a force-directed graph.
- * Two-tone coloring: amber for query-matched concepts, indigo for others.
- * Inter-concept edges show the document's internal conceptual structure.
+ * Force-directed graph showing concepts from multiple documents.
+ * Documents are "celebrity" hub nodes; concepts cluster around them.
+ *
+ * Three node types:
+ * - Document (golden, large) — hub nodes with high charge
+ * - Query concept (amber) — from the saved exploration query
+ * - Extended concept (indigo) — connected to documents but not in query
+ *
+ * Focus mode: clicking a document dims everything else.
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import type { ExplorerProps } from '../../types/explorer';
 import type {
   DocumentExplorerSettings,
   DocumentExplorerData,
-  ConceptNode,
+  DocNodeType,
 } from './types';
 import { useThemeStore } from '../../store/themeStore';
 import {
@@ -22,73 +28,96 @@ import {
   LABEL_FONTS,
 } from '../common';
 
-// Two-tone palette
-const COLORS = {
-  queryMatch: '#f59e0b',     // Amber — concept overlaps with exploration query
-  documentOnly: '#6366f1',   // Indigo — concept only in this document
-  document: '#f59e0b',       // Amber — the document node
+// ---------------------------------------------------------------------------
+// Colors
+// ---------------------------------------------------------------------------
+
+const COLORS: Record<DocNodeType, { fill: string; stroke: string }> = {
+  'document':         { fill: '#f59e0b', stroke: '#fbbf24' },
+  'query-concept':    { fill: '#d97706', stroke: '#fcd34d' },
+  'extended-concept': { fill: '#6366f1', stroke: '#818cf8' },
 };
 
-/** Force simulation node (extends ConceptNode with mutable position). */
+const DIMMED_OPACITY = 0.08;
+
+// ---------------------------------------------------------------------------
+// Force simulation types
+// ---------------------------------------------------------------------------
+
 interface SimNode extends d3.SimulationNodeDatum {
   id: string;
   label: string;
-  type: 'concept' | 'document';
-  isQueryMatch: boolean;
+  type: DocNodeType;
+  documentIds: string[];
   size: number;
 }
 
-/** Force simulation link. */
 interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   type: string;
+  visible: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Extended props (workspace passes focus state)
+// ---------------------------------------------------------------------------
+
+interface DocumentExplorerExtraProps {
+  focusedDocumentId?: string | null;
+  onFocusChange?: (docId: string | null) => void;
+  onViewDocument?: (docId: string) => void;
 }
 
 export const DocumentExplorer: React.FC<
-  ExplorerProps<DocumentExplorerData, DocumentExplorerSettings>
-> = ({ data, settings, onNodeClick, className }) => {
+  ExplorerProps<DocumentExplorerData, DocumentExplorerSettings> & DocumentExplorerExtraProps
+> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
   const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
 
   const { appliedTheme: theme } = useThemeStore();
 
-  // Build simulation data from explorer data
+  // Focused document's concept set (for dimming)
+  const focusedConceptSet = useMemo(() => {
+    if (!focusedDocumentId || !data) return null;
+    const doc = data.documents.find(d => d.id === focusedDocumentId);
+    if (!doc) return null;
+    return new Set(doc.conceptIds);
+  }, [focusedDocumentId, data]);
+
+  // Build simulation data
   const { simNodes, simLinks } = useMemo(() => {
     if (!data) return { simNodes: [] as SimNode[], simLinks: [] as SimLink[] };
 
-    const querySet = new Set(data.queryConceptIds || []);
-
-    // Document node
-    const docNode: SimNode = {
-      id: data.document.id,
-      label: data.document.label,
-      type: 'document',
-      isQueryMatch: true,
-      size: settings.layout.centerSize,
-    };
-
-    // Concept nodes
-    const conceptNodes: SimNode[] = data.concepts.map(c => ({
-      id: c.id,
-      label: c.label,
-      type: 'concept' as const,
-      isQueryMatch: querySet.has(c.id),
-      size: 6 * settings.visual.nodeSize,
+    const simNodes: SimNode[] = data.nodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      type: n.type,
+      documentIds: n.documentIds,
+      size: n.type === 'document' ? settings.layout.documentSize : n.size * settings.visual.nodeSize,
     }));
 
-    const nodes = [docNode, ...conceptNodes];
-    const nodeIds = new Set(nodes.map(n => n.id));
+    const nodeIds = new Set(simNodes.map(n => n.id));
 
-    // Only keep edges where both endpoints exist
-    const links: SimLink[] = data.links
+    const simLinks: SimLink[] = data.links
       .filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
-      .map(l => ({ source: l.source, target: l.target, type: l.type }));
+      .map(l => ({
+        source: l.source,
+        target: l.target,
+        type: l.type,
+        visible: l.visible,
+      }));
 
-    return { simNodes: nodes, simLinks: links };
-  }, [data, settings.layout.centerSize, settings.visual.nodeSize]);
+    return { simNodes, simLinks };
+  }, [data, settings.layout.documentSize, settings.visual.nodeSize]);
+
+  // Visible stats (exclude clustering links)
+  const visibleLinkCount = useMemo(
+    () => simLinks.filter(l => l.visible).length,
+    [simLinks]
+  );
 
   // Track container dimensions
   useEffect(() => {
@@ -107,6 +136,24 @@ export const DocumentExplorer: React.FC<
     return () => observer.disconnect();
   }, []);
 
+  // Is a node visible in focus mode?
+  const isNodeInFocus = useCallback((node: SimNode): boolean => {
+    if (!focusedConceptSet) return true; // no focus → all visible
+    if (node.id === focusedDocumentId) return true;
+    if (node.type === 'document') return false; // other documents dimmed
+    return focusedConceptSet.has(node.id);
+  }, [focusedConceptSet, focusedDocumentId]);
+
+  // Is a link visible in focus mode?
+  const isLinkInFocus = useCallback((link: SimLink): boolean => {
+    if (!focusedConceptSet) return true;
+    const sourceId = (link.source as SimNode).id ?? link.source;
+    const targetId = (link.target as SimNode).id ?? link.target;
+    const sInFocus = sourceId === focusedDocumentId || focusedConceptSet.has(sourceId as string);
+    const tInFocus = targetId === focusedDocumentId || focusedConceptSet.has(targetId as string);
+    return sInFocus && tInFocus;
+  }, [focusedConceptSet, focusedDocumentId]);
+
   // Main D3 rendering + force simulation
   useEffect(() => {
     if (!svgRef.current || simNodes.length === 0) return;
@@ -114,14 +161,13 @@ export const DocumentExplorer: React.FC<
     const svg = d3.select(svgRef.current);
     const { width, height } = dimensions;
 
-    // Clear previous content
     svg.selectAll('*').remove();
 
     const g = svg.append('g').attr('class', 'main-group');
 
     // Zoom/pan
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
+      .scaleExtent([0.05, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform.toString());
         setZoomTransform({ x: event.transform.x, y: event.transform.y, k: event.transform.k });
@@ -131,13 +177,19 @@ export const DocumentExplorer: React.FC<
       svg.call(zoom);
     }
 
-    // Edges
+    // Click background to clear focus
+    svg.on('click', () => {
+      onFocusChange?.(null);
+      setSelectedConceptId(null);
+    });
+
+    // Edges (only visible ones rendered)
     const linkGroup = g.append('g').attr('class', 'links');
     const linkElements = linkGroup.selectAll<SVGLineElement, SimLink>('line')
-      .data(simLinks)
+      .data(simLinks.filter(l => l.visible))
       .join('line')
-      .attr('stroke', theme === 'dark' ? 'rgba(107, 114, 128, 0.4)' : 'rgba(85, 85, 85, 0.3)')
-      .attr('stroke-width', 1);
+      .attr('stroke', theme === 'dark' ? 'rgba(107, 114, 128, 0.35)' : 'rgba(85, 85, 85, 0.25)')
+      .attr('stroke-width', 0.8);
 
     // Nodes
     const nodeGroup = g.append('g').attr('class', 'nodes');
@@ -151,25 +203,29 @@ export const DocumentExplorer: React.FC<
       .on('mouseleave', () => setHoveredNode(null))
       .on('click', (event: MouseEvent, d: SimNode) => {
         event.stopPropagation();
-        setSelectedNode(d.id);
-        onNodeClick?.(d.id);
+        if (d.type === 'document') {
+          onFocusChange?.(d.id);
+          onNodeClick?.(d.id);
+        } else {
+          setSelectedConceptId(d.id);
+        }
+      })
+      .on('dblclick', (event: MouseEvent, d: SimNode) => {
+        event.stopPropagation();
+        if (d.type === 'document') {
+          onViewDocument?.(d.id);
+        }
       });
 
     // Node circles
     nodeElements.append('circle')
       .attr('r', (d: SimNode) => d.size)
-      .attr('fill', (d: SimNode) => {
-        if (d.type === 'document') return COLORS.document;
-        return d.isQueryMatch ? COLORS.queryMatch : COLORS.documentOnly;
-      })
-      .attr('stroke', (d: SimNode) => {
-        if (d.type === 'document') return '#fbbf24';
-        return d.isQueryMatch ? '#fcd34d' : '#818cf8';
-      })
+      .attr('fill', (d: SimNode) => COLORS[d.type].fill)
+      .attr('stroke', (d: SimNode) => COLORS[d.type].stroke)
       .attr('stroke-width', (d: SimNode) => d.type === 'document' ? 3 : 1.5)
-      .attr('opacity', (d: SimNode) => d.type === 'document' ? 0.95 : 0.85);
+      .attr('opacity', (d: SimNode) => d.type === 'document' ? 0.95 : 0.8);
 
-    // Document icon (file shape inside document node)
+    // Document icon (file shape)
     nodeElements.filter((d: SimNode) => d.type === 'document')
       .append('path')
       .attr('d', (d: SimNode) => {
@@ -186,11 +242,14 @@ export const DocumentExplorer: React.FC<
         .attr('dy', (d: SimNode) => d.size + 12)
         .attr('text-anchor', 'middle')
         .attr('font-family', LABEL_FONTS.family)
-        .attr('font-size', (d: SimNode) => d.type === 'document' ? '12px' : '10px')
+        .attr('font-size', (d: SimNode) => {
+          if (d.type === 'document') return '11px';
+          return d.type === 'query-concept' ? '9px' : '8px';
+        })
         .attr('font-weight', (d: SimNode) => d.type === 'document' ? '600' : '400')
         .attr('fill', (d: SimNode) => {
           if (d.type === 'document') return theme === 'dark' ? '#fbbf24' : '#d97706';
-          return theme === 'dark' ? '#e5e7eb' : '#374151';
+          return theme === 'dark' ? '#d1d5db' : '#4b5563';
         })
         .attr('pointer-events', 'none')
         .style('text-shadow', theme === 'dark'
@@ -199,20 +258,27 @@ export const DocumentExplorer: React.FC<
         );
     }
 
-    // Force simulation
+    // Force simulation — "celebrity hub" pattern
     const simulation = d3.forceSimulation<SimNode, SimLink>(simNodes)
       .force('link',
         d3.forceLink<SimNode, SimLink>(simLinks)
           .id(d => d.id)
-          .distance(80)
+          .distance((l) => (l as SimLink).visible ? 80 : 40)
+          .strength((l) => (l as SimLink).visible ? 0.3 : 0.05)
       )
-      .force('charge', d3.forceManyBody().strength(-150))
-      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.1))
-      .force('collision', d3.forceCollide<SimNode>().radius(d => d.size + 8));
+      .force('charge', d3.forceManyBody<SimNode>().strength((d) => {
+        if (d.type === 'document') return -500;
+        if (d.type === 'query-concept') return -150;
+        return -100;
+      }))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+      .force('collision', d3.forceCollide<SimNode>().radius((d) => {
+        if (d.type === 'document') return d.size + 20;
+        return d.size + 6;
+      }));
 
     simulationRef.current = simulation;
 
-    // Tick handler — update positions
     simulation.on('tick', () => {
       linkElements
         .attr('x1', d => (d.source as SimNode).x || 0)
@@ -224,7 +290,7 @@ export const DocumentExplorer: React.FC<
         .attr('transform', d => `translate(${d.x || 0},${d.y || 0})`);
     });
 
-    // Drag behavior
+    // Drag
     const drag = d3.drag<SVGGElement, SimNode>()
       .on('start', (event, d) => {
         if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -246,29 +312,40 @@ export const DocumentExplorer: React.FC<
     return () => {
       simulation.stop();
     };
-  }, [simNodes, simLinks, dimensions, settings, theme, onNodeClick]);
+  }, [simNodes, simLinks, dimensions, settings, theme, onNodeClick, onFocusChange, onViewDocument]);
 
-  // Hover/selection highlighting
+  // Focus mode: update opacity when focusedDocumentId changes
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    svg.selectAll<SVGGElement, SimNode>('g.nodes g')
+      .attr('opacity', (d: SimNode) => isNodeInFocus(d) ? 1 : DIMMED_OPACITY);
+
+    svg.selectAll<SVGLineElement, SimLink>('g.links line')
+      .attr('opacity', (d: SimLink) => isLinkInFocus(d) ? 0.6 : DIMMED_OPACITY);
+  }, [focusedDocumentId, focusedConceptSet, isNodeInFocus, isLinkInFocus]);
+
+  // Hover highlighting
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll<SVGCircleElement, SimNode>('g.nodes g circle')
       .attr('stroke-width', (d: SimNode) => {
-        if (d.id === hoveredNode || d.id === selectedNode) return 3;
+        if (d.id === hoveredNode || d.id === selectedConceptId) return 3;
         return d.type === 'document' ? 3 : 1.5;
       })
       .attr('stroke', (d: SimNode) => {
-        if (d.id === hoveredNode || d.id === selectedNode) return '#fff';
-        if (d.type === 'document') return '#fbbf24';
-        return d.isQueryMatch ? '#fcd34d' : '#818cf8';
+        if (d.id === hoveredNode || d.id === selectedConceptId) return '#fff';
+        return COLORS[d.type].stroke;
       });
-  }, [hoveredNode, selectedNode]);
+  }, [hoveredNode, selectedConceptId]);
 
-  // Selected node data for info box
+  // Selected concept data for NodeInfoBox
   const selectedNodeData = useMemo(() => {
-    if (!selectedNode) return null;
-    return simNodes.find(n => n.id === selectedNode);
-  }, [selectedNode, simNodes]);
+    if (!selectedConceptId) return null;
+    return simNodes.find(n => n.id === selectedConceptId);
+  }, [selectedConceptId, simNodes]);
 
   return (
     <div className={`relative w-full h-full overflow-hidden ${className || ''}`}>
@@ -282,23 +359,43 @@ export const DocumentExplorer: React.FC<
       <PanelStack side="right">
         <StatsPanel
           nodeCount={simNodes.length}
-          edgeCount={simLinks.length}
+          edgeCount={visibleLinkCount}
         />
       </PanelStack>
 
-      {selectedNodeData && (
+      {/* Legend */}
+      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg p-3 text-xs space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: COLORS.document.fill }} />
+          <span>Document</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: COLORS['query-concept'].fill }} />
+          <span>Query concept</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS['extended-concept'].fill }} />
+          <span>Extended concept</span>
+        </div>
+      </div>
+
+      {/* NodeInfoBox for selected concept */}
+      {selectedNodeData && selectedNodeData.type !== 'document' && (
         <NodeInfoBox
           info={{
-            nodeId: selectedNode!,
+            nodeId: selectedConceptId!,
             label: selectedNodeData.label || 'Unknown',
-            group: selectedNodeData.type === 'document' ? 'document' : (selectedNodeData.isQueryMatch ? 'query match' : 'document only'),
+            group: selectedNodeData.type === 'query-concept' ? 'query match' : 'document extended',
             degree: simLinks.filter(l =>
-              (l.source as SimNode).id === selectedNode || (l.target as SimNode).id === selectedNode
+              l.visible && (
+                ((l.source as SimNode).id === selectedConceptId) ||
+                ((l.target as SimNode).id === selectedConceptId)
+              )
             ).length,
             x: (selectedNodeData.x || 0) * zoomTransform.k + zoomTransform.x,
             y: (selectedNodeData.y || 0) * zoomTransform.k + zoomTransform.y,
           }}
-          onDismiss={() => setSelectedNode(null)}
+          onDismiss={() => setSelectedConceptId(null)}
         />
       )}
     </div>

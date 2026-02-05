@@ -123,6 +123,25 @@ class DocumentConceptsResponse(BaseModel):
     total: int
 
 
+class BulkDocumentConceptsRequest(BaseModel):
+    """Request for bulk document concepts lookup."""
+    document_ids: List[str] = Field(..., min_length=1, max_length=100, description="Document IDs to fetch concepts for")
+
+
+class BulkDocumentConcept(BaseModel):
+    """Concept with label for bulk response (no per-source detail)."""
+    concept_id: str
+    label: str
+
+
+class BulkDocumentConceptsResponse(BaseModel):
+    """Response with concepts grouped by document."""
+    documents: Dict[str, List[BulkDocumentConcept]] = Field(
+        default_factory=dict,
+        description="Map of document_id to its concepts"
+    )
+
+
 # ============================================================================
 # Helper Functions
 # ============================================================================
@@ -930,5 +949,57 @@ async def get_document_concepts(
     except Exception as e:
         logger.error(f"Failed to get document concepts: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get concepts: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/concepts/bulk", response_model=BulkDocumentConceptsResponse)
+async def get_document_concepts_bulk(
+    request: BulkDocumentConceptsRequest,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Bulk fetch concepts for multiple documents in a single query.
+
+    Returns deduplicated concepts (concept_id + label) per document.
+    Used by the Document Explorer to hydrate all documents from a saved query.
+    """
+    client = AGEClient()
+
+    try:
+        query = """
+        MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)<-[:APPEARS]-(c:Concept)
+        WHERE d.document_id IN $doc_ids
+        RETURN d.document_id as document_id,
+               c.concept_id as concept_id,
+               c.label as label
+        """
+
+        results = client._execute_cypher(query, params={"doc_ids": request.document_ids})
+
+        # Aggregate by document, deduplicate concepts per document
+        docs: Dict[str, Dict[str, str]] = {}  # doc_id -> {concept_id: label}
+        for row in results:
+            doc_id = row.get('document_id')
+            concept_id = row.get('concept_id')
+            label = row.get('label')
+            if doc_id and concept_id:
+                if doc_id not in docs:
+                    docs[doc_id] = {}
+                docs[doc_id][concept_id] = label or concept_id
+
+        response_docs = {
+            doc_id: [
+                BulkDocumentConcept(concept_id=cid, label=lbl)
+                for cid, lbl in concepts.items()
+            ]
+            for doc_id, concepts in docs.items()
+        }
+
+        return BulkDocumentConceptsResponse(documents=response_docs)
+
+    except Exception as e:
+        logger.error(f"Failed to get bulk document concepts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get bulk concepts: {str(e)}")
     finally:
         client.close()

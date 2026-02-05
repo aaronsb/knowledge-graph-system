@@ -15,11 +15,12 @@ export const ProfilePanel: React.FC<SettingsPanelProps<DocumentExplorerSettings>
       <section>
         <h3 className="text-lg font-semibold mb-3">Document Explorer</h3>
         <p className="text-sm text-muted-foreground">
-          Tree visualization of document→concept relationships.
+          Multi-document concept graph driven by saved queries.
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          Select a document to explore its extracted concepts.
-          The tree shows the document at top with concepts branching below.
+          Load a saved exploration query to see all related documents
+          and their concepts as a force-directed graph.
+          Click a document to focus on its concept neighborhood.
         </p>
       </section>
     </div>
