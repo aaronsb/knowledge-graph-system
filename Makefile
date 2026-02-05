@@ -9,6 +9,8 @@
         docs docs-cli docs-mcp docs-site \
         publish publish-status \
         diagnose status logs rebuild-api rebuild-web rebuild-all \
+        build-operator push-operator \
+        build-graph-accel build-postgres push-postgres \
         start stop restart
 
 SCRIPTS := scripts/development
@@ -108,6 +110,24 @@ rebuild-web: ## Rebuild and restart the web container
 
 rebuild-all: ## Rebuild all containers
 	@$(SCRIPTS)/build/rebuild-all.sh
+
+GHCR := ghcr.io/aaronsb/knowledge-graph-system
+
+build-operator: ## Build the operator container
+	@docker build -t $(GHCR)/kg-operator:latest -f operator/Dockerfile .
+
+push-operator: ## Build and push the operator container to GHCR
+	@docker build -t $(GHCR)/kg-operator:latest -f operator/Dockerfile .
+	@docker push $(GHCR)/kg-operator:latest
+
+build-graph-accel: ## Compile graph_accel extension (current arch)
+	@./graph-accel/build-in-container.sh
+
+build-postgres: ## Build the postgres container (requires graph-accel dist/)
+	@docker build -t $(GHCR)/kg-postgres:latest -f docker/Dockerfile.postgres .
+
+push-postgres: build-graph-accel build-postgres ## Compile graph_accel, build and push postgres to GHCR
+	@docker push $(GHCR)/kg-postgres:latest
 
 ##@ Help
 
