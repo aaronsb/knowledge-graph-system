@@ -220,13 +220,13 @@ cmd_upgrade() {
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --dry-run) dry_run=true; shift ;;
+            --dry-run|--whatif) dry_run=true; shift ;;
             --no-backup) no_backup=true; shift ;;
             --help|-h)
                 echo "Usage: ./operator.sh upgrade [OPTIONS]"
                 echo ""
                 echo "Options:"
-                echo "  --dry-run     Show what would be done"
+                echo "  --dry-run     Show what would be done (also: --whatif)"
                 echo "  --no-backup   Skip pre-upgrade backup"
                 exit 0
                 ;;
@@ -244,9 +244,12 @@ cmd_upgrade() {
     docker ps >/dev/null 2>&1 && echo -e "${GREEN}  ✓ Docker available${NC}" || { echo -e "${RED}  ✗ Docker not running${NC}"; exit 1; }
     echo ""
 
-    # Show config
+    # Show config and versions
     echo -e "${BOLD}Configuration:${NC}"
     echo -e "  Image source: ${BLUE}$IMAGE_SOURCE${NC}"
+    echo ""
+    echo -e "${BOLD}Running versions:${NC}"
+    show_versions_table false
     echo ""
 
     if [ "$dry_run" = true ]; then
@@ -308,6 +311,10 @@ cmd_upgrade() {
         [ $i -eq 30 ] && echo -e "${YELLOW}  ⚠ API may still be starting${NC}"
         sleep 2
     done
+    echo ""
+
+    echo -e "${BOLD}Current versions:${NC}"
+    show_versions_table false
     echo ""
 
     echo -e "${GREEN}${BOLD}✅ Upgrade complete${NC}"
@@ -375,6 +382,94 @@ get_container_name() {
     esac
 }
 
+# Read an OCI label from a running container
+inspect_label() {
+    local container=$1 label=$2
+    docker inspect --format "{{index .Config.Labels \"$label\"}}" "$container" 2>/dev/null
+}
+
+# Get the target image name for a service (respects IMAGE_SOURCE)
+get_image_ref() {
+    local service=$1
+    if [ "$IMAGE_SOURCE" = "ghcr" ]; then
+        echo "${KG_GHCR}/kg-${service}:latest"
+    else
+        echo "kg-${service}:latest"
+    fi
+}
+
+# Display version table for platform services
+show_versions_table() {
+    local show_stale=${1:-false}
+
+    printf "  %-14s %-10s %-10s %-12s %s\n" "Service" "Version" "Commit" "Built" "Image"
+    printf "  %-14s %-10s %-10s %-12s %s\n" "-------" "-------" "------" "-----" "-----"
+
+    local any_stale=false
+    for service in postgres api web operator; do
+        local container=$(get_container_name "$service")
+
+        # Check if running
+        if ! docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
+            printf "  %-14s ${YELLOW}%-10s${NC}\n" "$service" "(stopped)"
+            continue
+        fi
+
+        local ver=$(inspect_label "$container" "org.opencontainers.image.version")
+        local rev=$(inspect_label "$container" "org.opencontainers.image.revision")
+        local blt=$(inspect_label "$container" "org.opencontainers.image.created")
+
+        # Normalize "unknown" to empty
+        [ "$ver" = "unknown" ] && ver=""
+        [ "$rev" = "unknown" ] && rev=""
+        [ "$blt" = "unknown" ] && blt=""
+
+        # Truncate built date to date-only
+        [ -n "$blt" ] && blt="${blt%%T*}"
+
+        # Short image SHA for display
+        local img_sha=$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null)
+        local short_sha=""
+        [ -n "$img_sha" ] && short_sha="${img_sha:7:12}"
+
+        # Stale detection: compare running image vs locally available image
+        local stale_flag=""
+        if [ "$show_stale" = "true" ]; then
+            local image_ref
+            # Dev-mode postgres uses stock apache/age, not kg-postgres
+            if [ "$service" = "postgres" ] && [ "$DEV_MODE" = "true" ]; then
+                image_ref="apache/age"
+            else
+                image_ref=$(get_image_ref "$service")
+            fi
+            local local_sha=$(docker image inspect --format '{{.Id}}' "$image_ref" 2>/dev/null)
+            if [ -n "$local_sha" ] && [ -n "$img_sha" ] && [ "$img_sha" != "$local_sha" ]; then
+                stale_flag=" ${YELLOW}↑${NC}"
+                any_stale=true
+            fi
+        fi
+
+        printf "  %-14s %-10s %-10s %-12s %s%b\n" \
+            "$service" "${ver:--}" "${rev:--}" "${blt:--}" "${short_sha:--}" "$stale_flag"
+    done
+
+    # operator.sh script version
+    printf "  %-14s %-10s %s\n" "operator.sh" "$OPERATOR_VERSION" "(host script)"
+
+    if [ "$show_stale" = "true" ] && [ "$any_stale" = "true" ]; then
+        echo ""
+        echo -e "  ${YELLOW}↑ = newer image available, run './operator.sh upgrade' to apply${NC}"
+    fi
+}
+
+cmd_versions() {
+    load_config
+    echo ""
+    echo -e "${BOLD}Platform Versions${NC} (operator.sh v${OPERATOR_VERSION})"
+    echo ""
+    show_versions_table true
+}
+
 cmd_logs() {
     local service="${1:-api}"
     shift 2>/dev/null || true
@@ -397,15 +492,40 @@ cmd_update() {
     load_config
     cd "$DOCKER_DIR"
 
+    local dry_run=false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run|--whatif) dry_run=true; shift ;;
+            *) break ;;
+        esac
+    done
+
+    echo -e "\n${BOLD}Current versions:${NC}"
+    show_versions_table false
+    echo ""
+
+    if [ "$dry_run" = true ]; then
+        if [ "$IMAGE_SOURCE" = "local" ]; then
+            echo -e "${YELLOW}[WHATIF] Would rebuild local images${NC}"
+        else
+            echo -e "${YELLOW}[WHATIF] Would pull latest images from GHCR${NC}"
+        fi
+        return
+    fi
+
     if [ "$IMAGE_SOURCE" = "local" ]; then
         echo -e "${BLUE}→ Building local images...${NC}"
         run_compose build "$@"
-        echo -e "${GREEN}✓ Images built. Run './operator.sh upgrade' to apply.${NC}"
     else
         echo -e "${BLUE}→ Pulling images...${NC}"
         run_compose pull "$@"
-        echo -e "${GREEN}✓ Images updated. Run './operator.sh upgrade' to apply.${NC}"
     fi
+
+    echo ""
+    echo -e "${BOLD}Updated images:${NC}"
+    show_versions_table true
+    echo ""
+    echo -e "${GREEN}✓ Images updated. Run './operator.sh upgrade' to apply.${NC}"
 }
 
 # ============================================================================
@@ -465,6 +585,7 @@ ${BOLD}Lifecycle:${NC}
 
 ${BOLD}Management:${NC}
   status             Show container status
+  versions           Show version info for all containers
   logs <service> [-f] View logs (default: api)
   shell              Open shell in operator container
 
@@ -515,8 +636,9 @@ case "${1:-help}" in
     teardown) shift; cmd_teardown "$@" ;;
 
     # Management
-    status) cmd_status ;;
-    logs)   shift; cmd_logs "$@" ;;
+    status)   cmd_status ;;
+    versions) cmd_versions ;;
+    logs)     shift; cmd_logs "$@" ;;
     shell)  check_operator; docker exec -it "$OPERATOR_CONTAINER" /bin/bash ;;
 
     # Config (delegated)
