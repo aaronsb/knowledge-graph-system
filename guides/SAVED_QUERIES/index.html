@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../../features/rest-api/">
+        <link rel="prev" href="../QUERY_SAFETY_BASELINE/">
       
       
-        <link rel="next" href="../CONTAINER_IMAGES/">
+        <link rel="next" href="../SCHEDULED-JOBS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>CLI Development Guide - Knowledge Graph System</title>
+        <title>Saved Queries - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cli-development-guide" class="md-skip">
+        <a href="#saved-queries" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI Development Guide
+              Saved Queries
             
           </span>
         </div>
@@ -657,37 +657,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CLI Development Guide
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -703,431 +676,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design Principles
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture-layers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture Layers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Flow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#login-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Login Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#challenge-flow-sensitive-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Challenge Flow (Sensitive Operations)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-storage-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Storage Format
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-authentication-to-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding Authentication to Commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding Authentication to Commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pattern-1-protected-command-requires-auth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 1: Protected Command (Requires Auth)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-2-optional-auth-public-endpoint" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 2: Optional Auth (Public Endpoint)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-3-sensitive-operation-challenge-required" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 3: Sensitive Operation (Challenge Required)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-expiration-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Expiration Handling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token Expiration Handling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#automatic-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Automatic Detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-experience" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Experience
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-we-store" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What We Store
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-we-dont-store" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What We DON'T Store
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#file-permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Security
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-priority" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Priority
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-authentication-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Authentication Code
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Authentication Code">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unit Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual Testing
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common Patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#reading-current-user-info" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading Current User Info
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#handling-401-errors-gracefully" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling 401 Errors Gracefully
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompting-for-re-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prompting for Re-authentication
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Future Enhancements
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Future Enhancements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#oauth-20-support-adr-054" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OAuth 2.0 Support (ADR-054)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refresh-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Refresh Tokens
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1361,10 +909,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../SAVED_QUERIES/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Saved Queries
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1380,6 +955,192 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-saved-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is a Saved Query?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-saved-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Saved Query
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a Saved Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-smart-search-2d3d-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Smart Search (2D/3D Graph)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-the-cypher-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the Cypher Editor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-the-block-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the Block Editor
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-a-saved-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading a Saved Query
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-explorer-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Explorer Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-operator-algebra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The +/- Operator Algebra
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The +/- Operator Algebra">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-building-a-focused-subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Building a Focused Subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exporting-to-cypher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting to Cypher
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#document-explorer-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Explorer Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -9583,10 +9344,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
+  <a href="#what-is-a-saved-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design Principles
+        What is a Saved Query?
       
     </span>
   </a>
@@ -9594,33 +9355,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-layers" class="md-nav__link">
+  <a href="#creating-a-saved-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture Layers
+        Creating a Saved Query
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Flow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication Flow">
+    <nav class="md-nav" aria-label="Creating a Saved Query">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#login-flow" class="md-nav__link">
+  <a href="#from-smart-search-2d3d-graph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Login Flow
+        From Smart Search (2D/3D Graph)
       
     </span>
   </a>
@@ -9628,10 +9378,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#token-usage" class="md-nav__link">
+  <a href="#from-the-cypher-editor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Usage
+        From the Cypher Editor
       
     </span>
   </a>
@@ -9639,10 +9389,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#challenge-flow-sensitive-operations" class="md-nav__link">
+  <a href="#from-the-block-editor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Challenge Flow (Sensitive Operations)
+        From the Block Editor
       
     </span>
   </a>
@@ -9655,10 +9405,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-storage-format" class="md-nav__link">
+  <a href="#loading-a-saved-query" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Storage Format
+        Loading a Saved Query
       
     </span>
   </a>
@@ -9666,44 +9416,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-authentication-to-commands" class="md-nav__link">
+  <a href="#cross-explorer-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding Authentication to Commands
+        Cross-Explorer Flow
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Adding Authentication to Commands">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-operator-algebra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The +/- Operator Algebra
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The +/- Operator Algebra">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pattern-1-protected-command-requires-auth" class="md-nav__link">
+  <a href="#example-building-a-focused-subgraph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 1: Protected Command (Requires Auth)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-2-optional-auth-public-endpoint" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 2: Optional Auth (Public Endpoint)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-3-sensitive-operation-challenge-required" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern 3: Sensitive Operation (Challenge Required)
+        Example: Building a Focused Subgraph
       
     </span>
   </a>
@@ -9716,110 +9466,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#token-expiration-handling" class="md-nav__link">
+  <a href="#exporting-to-cypher" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Token Expiration Handling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token Expiration Handling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#automatic-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Automatic Detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-experience" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Experience
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-we-store" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What We Store
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-we-dont-store" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What We DON'T Store
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#file-permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        File Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-security" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Security
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-priority" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Priority
+        Exporting to Cypher
       
     </span>
   </a>
@@ -9827,160 +9477,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing-authentication-code" class="md-nav__link">
+  <a href="#document-explorer-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing Authentication Code
+        Document Explorer Integration
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Testing Authentication Code">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unit Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual Testing
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
+  <a href="#tips" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Patterns
+        Tips
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Common Patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#reading-current-user-info" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reading Current User Info
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#handling-401-errors-gracefully" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling 401 Errors Gracefully
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompting-for-re-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prompting for Re-authentication
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#future-enhancements" class="md-nav__link">
+  <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Future Enhancements
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Future Enhancements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#oauth-20-support-adr-054" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OAuth 2.0 Support (ADR-054)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refresh-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Refresh Tokens
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Reference
+        Next Steps
       
     </span>
   </a>
@@ -10007,336 +9529,163 @@
   
 
 
-<h1 id="cli-development-guide">CLI Development Guide</h1>
-<p><strong>Purpose:</strong> Guide for developers working on the <code>kg</code> TypeScript CLI client</p>
-<p><strong>Related ADRs:</strong>
-- <a href="../architecture/ADR-027-user-management-api.md">ADR-027: User Management API</a> - Server-side authentication
-- <a href="../architecture/ADR-029-cli-theory-of-operation.md">ADR-029: CLI Theory of Operation</a> - Command structure
-- <a href="../architecture/ADR-031-encrypted-api-key-storage.md">ADR-031: Encrypted API Key Storage</a> - API key management
-- <a href="../architecture/ADR-054-oauth-client-management.md">ADR-054: OAuth Client Management</a> - OAuth flows</p>
-<hr />
-<h2 id="design-principles">Design Principles</h2>
+<h1 id="saved-queries">Saved Queries</h1>
+<p>How to save, load, and share graph explorations across explorer views.</p>
+<h2 id="what-is-a-saved-query">What is a Saved Query?</h2>
+<p>A saved query is an ordered list of graph operations — each tagged as additive (+) or subtractive (-). This is the universal unit of work across all explorer views.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+ MATCH (c:Concept)-[r*1..1]-(n:Concept) WHERE c.concept_id = &#39;abc&#39; RETURN c, r, n;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>+ MATCH (c:Concept)-[r*1..1]-(n:Concept) WHERE c.concept_id = &#39;def&#39; RETURN c, r, n;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>- MATCH (c:Concept) WHERE c.concept_id = &#39;xyz&#39; RETURN c;
+</code></pre></div>
+<p>The <code>+</code> operator merges results into the graph. The <code>-</code> operator removes nodes and their edges. This lets you sculpt a graph by building it up and trimming it down.</p>
+<h2 id="creating-a-saved-query">Creating a Saved Query</h2>
+<h3 id="from-smart-search-2d3d-graph">From Smart Search (2D/3D Graph)</h3>
+<p>Every action you take in the graph explorer is recorded as a step:</p>
 <ol>
-<li><strong>Modular Architecture</strong>: Separate concerns into reusable TypeScript modules</li>
-<li><strong>Security First</strong>: No plaintext password storage, secure token management</li>
-<li><strong>User Experience</strong>: Remember username, persistent token storage, graceful error handling</li>
-<li><strong>Multi-Client Support</strong>: Modules designed for CLI, MCP server, and future clients</li>
-<li><strong>Backwards Compatibility</strong>: Existing API key authentication continues to work</li>
+<li><strong>Search</strong> for a concept — step recorded as <code>+ MATCH ...</code></li>
+<li><strong>Right-click a node</strong> and choose "Add Adjacent" — step recorded as <code>+</code></li>
+<li><strong>Right-click a node</strong> and choose "Remove from Graph" — step recorded as <code>-</code></li>
+<li><strong>Follow</strong> a concept (double-click) — step recorded as <code>+</code></li>
 </ol>
-<hr />
-<h2 id="architecture-layers">Architecture Layers</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                     CLI Commands Layer                       │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  kg login, kg logout, kg admin user [commands]              │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                       │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                   Auth Client Layer                          │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  AuthClient: login(), logout(), validateToken()            │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                       │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                  Token Manager Layer                         │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  TokenManager: store(), retrieve(), validate(), clear()    │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>└──────────────────────┬──────────────────────────────────────┘
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                       │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>┌──────────────────────▼──────────────────────────────────────┐
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│                 Config Storage Layer                         │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  ConfigManager: Auth token storage (~/.config/kg/)         │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>└─────────────────────────────────────────────────────────────┘
+<p>When you have a graph you want to keep:
+1. Open the <strong>Saved Queries</strong> panel (folder icon in the left rail)
+2. Click <strong>Save Exploration</strong>
+3. Give it a name
+4. The full step sequence is saved as a replayable program</p>
+<h3 id="from-the-cypher-editor">From the Cypher Editor</h3>
+<p>Write <code>+</code> and <code>-</code> prefixed statements directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>+ MATCH (c:Concept)-[r*1..2]-(n:Concept) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;deprecated&#39; RETURN c;
 </code></pre></div>
-<p><strong>Key modules:</strong>
-- <code>client/src/lib/auth/token-manager.ts</code> - JWT token lifecycle
-- <code>client/src/lib/auth/auth-client.ts</code> - HTTP client for auth endpoints
-- <code>client/src/lib/auth/challenge.ts</code> - Re-auth prompt for sensitive ops
-- <code>client/src/lib/config.ts</code> - Config file management (extended for auth)
-- <code>client/src/api/client.ts</code> - Main API client (with auth interceptors)</p>
-<hr />
-<h2 id="authentication-flow">Authentication Flow</h2>
-<h3 id="login-flow">Login Flow</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. User runs: kg login
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. Prompt for username (remember from last login)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. Prompt for password (hidden input, not stored)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. POST /auth/login with credentials
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. Receive JWT token + user info
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>6. Store token in ~/.config/kg/config.json
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>7. Store expiration timestamp (not just duration)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>8. Store username + role for quick access
-</code></pre></div>
-<h3 id="token-usage">Token Usage</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. User runs any command: kg search query &quot;concept&quot;
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. TokenManager checks for valid token
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. If expired → prompt re-login
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>4. If valid → add to request: Authorization: Bearer &lt;token&gt;
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>5. API validates token → returns data
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>6. If 401 → token expired, prompt re-login
-</code></pre></div>
-<h3 id="challenge-flow-sensitive-operations">Challenge Flow (Sensitive Operations)</h3>
-<p>For destructive operations (delete user, reset database):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. User runs: kg admin user delete &lt;id&gt;
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. System prompts: &quot;This is a sensitive operation. Re-enter password:&quot;
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. Pre-fill username, prompt password only
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>4. Validate credentials → get fresh token
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>5. Execute operation with fresh token
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>6. Discard fresh token (keep original session)
-</code></pre></div>
-<hr />
-<h2 id="token-storage-format">Token Storage Format</h2>
-<p><strong>Location:</strong> <code>~/.config/kg/config.json</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;auth&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eyJhbGciOiJIUzI1NiIs...&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;expires_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1760230000</span><span class="p">,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nt">&quot;api_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Key points:</strong>
-- Store <strong>expiration timestamp</strong> (Unix timestamp), not duration
-- Store <strong>username</strong> and <strong>role</strong> for quick access (avoid JWT decode)
-- NEVER store passwords
-- Backwards compatible with <code>secret</code> (API key) field</p>
-<hr />
-<h2 id="adding-authentication-to-commands">Adding Authentication to Commands</h2>
-<h3 id="pattern-1-protected-command-requires-auth">Pattern 1: Protected Command (Requires Auth)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">TokenManager</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/token-manager&#39;</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../api/client&#39;</span><span class="p">;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">myCommand</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="c1">// Check authentication</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">isLoggedIn</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Not logged in. Run: kg login&#39;</span><span class="p">);</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span><span class="c1">// Create client with token</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">  </span><span class="c1">// Make API call (token added automatically)</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">myApiCall</span><span class="p">();</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="pattern-2-optional-auth-public-endpoint">Pattern 2: Optional Auth (Public Endpoint)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">myCommand</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="c1">// Create client (will use token if available)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">KnowledgeGraphClient</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="c1">// API call works with or without auth</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">publicApiCall</span><span class="p">();</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="pattern-3-sensitive-operation-challenge-required">Pattern 3: Sensitive Operation (Challenge Required)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/challenge&#39;</span><span class="p">;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">deleteUser</span><span class="p">(</span><span class="nx">userId</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ConfigManager</span><span class="p">.</span><span class="nx">load</span><span class="p">();</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">authClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthClient</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">api_url</span><span class="p">);</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="c1">// Require challenge for sensitive operation</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">challenge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="p">(</span><span class="nx">authClient</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">freshToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">challenge</span><span class="p">.</span><span class="nx">challenge</span><span class="p">({</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Delete user account&#39;</span><span class="p">,</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="nx">username</span><span class="o">:</span><span class="w"> </span><span class="kt">tokenManager.getUsername</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="kc">undefined</span><span class="p">,</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span><span class="nx">allowCancel</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">freshToken</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Operation cancelled&#39;</span><span class="p">);</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="k">return</span><span class="p">;</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span><span class="c1">// Execute with fresh token</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">authClient</span><span class="p">.</span><span class="nx">deleteUser</span><span class="p">(</span><span class="nx">freshToken</span><span class="p">.</span><span class="nx">access_token</span><span class="p">,</span><span class="w"> </span><span class="nx">userId</span><span class="p">);</span>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;User deleted&#39;</span><span class="p">);</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="p">}</span>
-</code></pre></div>
-<hr />
-<h2 id="token-expiration-handling">Token Expiration Handling</h2>
-<h3 id="automatic-detection">Automatic Detection</h3>
-<p>Tokens are checked before each request:
-- <strong>5-minute buffer:</strong> Token considered expired 5 minutes before actual expiration
-- <strong>Interceptor:</strong> Axios interceptor catches 401 responses
-- <strong>User prompt:</strong> Clear error message directing user to re-login</p>
-<h3 id="user-experience">User Experience</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a># Token valid - command succeeds
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Found 5 concepts...
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a># Token expired - prompt re-login
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Error: Authentication expired. Please run: kg login
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a># User logs in again
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>$ kg login
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>Username: admin
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>Password: ********
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>Logged in successfully as admin (role: admin)
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a># Command works again
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>$ kg search query &quot;concept&quot;
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>Found 5 concepts...
-</code></pre></div>
-<hr />
-<h2 id="security-considerations">Security Considerations</h2>
-<h3 id="what-we-store">What We Store</h3>
+<p>Save via the Saved Queries panel.</p>
+<h3 id="from-the-block-editor">From the Block Editor</h3>
+<p>Block diagrams compile to Cypher statements. Save via the panel as a block diagram definition.</p>
+<h2 id="loading-a-saved-query">Loading a Saved Query</h2>
+<ol>
+<li>Open any explorer view</li>
+<li>Open the <strong>Saved Queries</strong> panel (folder icon)</li>
+<li>Click a saved query</li>
+</ol>
+<p>The system replays each statement in order, applying <code>+/-</code> operators to build the graph state. The result is identical to the original exploration.</p>
+<h2 id="cross-explorer-flow">Cross-Explorer Flow</h2>
+<p>Saved queries are shared across all explorer views. Save in one, load in another:</p>
+<table>
+<thead>
+<tr>
+<th>Explorer</th>
+<th>What it shows from the same query</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2D Graph</td>
+<td>Force-directed node/edge visualization</td>
+</tr>
+<tr>
+<td>3D Graph</td>
+<td>Spatial perspective of the same graph</td>
+</tr>
+<tr>
+<td>Cypher Editor</td>
+<td>The <code>+/-</code> statements as editable text</td>
+</tr>
+<tr>
+<td>Vocabulary Analysis</td>
+<td>Relationship type breakdown of query results</td>
+</tr>
+<tr>
+<td>Document Explorer</td>
+<td>Source documents for the query's concepts</td>
+</tr>
+<tr>
+<td>Polarity Explorer</td>
+<td>Semantic axis analysis of query concepts</td>
+</tr>
+<tr>
+<td>Embedding Landscape</td>
+<td>Embedding space projection of query concepts</td>
+</tr>
+</tbody>
+</table>
+<p>Switching views preserves the graph. The folder icon appears consistently in all rails.</p>
+<h2 id="query-types">Query Types</h2>
+<p>Each saved query has a type that determines how it replays:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Saved From</th>
+<th>Contains</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exploration</code></td>
+<td>Smart search, Cypher editor</td>
+<td><code>{ op, cypher }[]</code> statements</td>
+</tr>
+<tr>
+<td><code>polarity</code></td>
+<td>Polarity explorer</td>
+<td>Pole concept IDs + analysis params</td>
+</tr>
+<tr>
+<td><code>block_diagram</code></td>
+<td>Block editor</td>
+<td>ReactFlow nodes/edges layout</td>
+</tr>
+</tbody>
+</table>
+<p>The Saved Queries panel shows type-aware subtitles (e.g., "3 steps" for explorations, "2 poles" for polarity).</p>
+<h2 id="the-operator-algebra">The +/- Operator Algebra</h2>
+<p>The operators work like set arithmetic on graph results:</p>
 <ul>
-<li>✅ JWT token (time-limited, signed by server)</li>
-<li>✅ Token expiration timestamp</li>
-<li>✅ Username and role (decoded from JWT)</li>
-<li>✅ API URL</li>
+<li><strong><code>+</code> (union)</strong>: Execute the Cypher statement and merge its nodes/edges into the current graph. Duplicate nodes are deduplicated by ID.</li>
+<li><strong><code>-</code> (difference)</strong>: Execute the Cypher statement and remove matching nodes from the current graph. Edges connected to removed nodes are also removed.</li>
 </ul>
-<h3 id="what-we-dont-store">What We DON'T Store</h3>
+<h3 id="example-building-a-focused-subgraph">Example: Building a Focused Subgraph</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a># Start with everything related to &quot;governance&quot;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>+ MATCH (c:Concept)-[r*1..2]-(n) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a># Add concepts about &quot;compliance&quot;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>+ MATCH (c:Concept)-[r*1..1]-(n) WHERE c.label CONTAINS &#39;compliance&#39; RETURN c, r, n;
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a># Remove noise — concepts about &quot;legacy systems&quot;
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;legacy&#39; RETURN c;
+</code></pre></div>
+<p>This produces a graph focused on governance + compliance, with legacy system noise trimmed out.</p>
+<h2 id="exporting-to-cypher">Exporting to Cypher</h2>
+<p>From the 2D/3D graph explorer, your exploration can be sent to the Cypher editor:</p>
+<ol>
+<li>Build your graph through search and navigation</li>
+<li>The exploration session is automatically tracked</li>
+<li>Switch to the Cypher editor tab</li>
+<li>Your steps appear as <code>+/-</code> prefixed statements</li>
+<li>Edit, rearrange, or share the text</li>
+</ol>
+<p>The text format is designed to be copy/pasteable between users.</p>
+<h2 id="document-explorer-integration">Document Explorer Integration</h2>
+<p>The Document Explorer uses saved exploration queries differently:</p>
+<ol>
+<li>Load an exploration query</li>
+<li>The system finds all documents containing those concepts</li>
+<li>A multi-document concept graph is built automatically</li>
+<li>Passage search adds colored rings to matching nodes</li>
+<li>Double-click a document to view it with highlighted passages</li>
+</ol>
+<h2 id="tips">Tips</h2>
 <ul>
-<li>❌ <strong>Passwords</strong> (NEVER stored, only used during login)</li>
-<li>❌ Private keys (if using OAuth, keys stay server-side)</li>
-<li>❌ Unencrypted secrets</li>
+<li><strong>Name queries descriptively</strong> — "Governance + Compliance minus Legacy" is better than "Query 1"</li>
+<li><strong>Start broad, then subtract</strong> — it's easier to remove noise than to find everything piecemeal</li>
+<li><strong>Use the Cypher editor to inspect</strong> — seeing the statements helps understand what an exploration actually does</li>
+<li><strong>Cross-explorer replay is instant</strong> — saved queries don't re-fetch from the API, they replay the recorded operations</li>
 </ul>
-<h3 id="file-permissions">File Permissions</h3>
+<h2 id="next-steps">Next Steps</h2>
 <ul>
-<li>Config file: <code>~/.config/kg/config.json</code> set to <strong>0600</strong> (owner read/write only)</li>
-<li>Automatic permission check on write</li>
-<li>Warning if permissions too permissive</li>
+<li><a href="../exploring/">Exploring Knowledge</a> — General search and navigation</li>
+<li><a href="../querying/">Querying</a> — CLI, API, and MCP query access</li>
+<li><a href="../POLARITY_AXIS_ANALYSIS/">Polarity Axis Analysis</a> — Semantic dimension analysis</li>
 </ul>
-<h3 id="token-security">Token Security</h3>
-<ul>
-<li><strong>Short-lived:</strong> 60 minutes default (configurable server-side)</li>
-<li><strong>Single-use sensitive ops:</strong> Challenge flow generates fresh token</li>
-<li><strong>Stateless:</strong> Server validates signature, no revocation (use short expiry)</li>
-<li><strong>Future:</strong> Refresh tokens for longer sessions (ADR-054)</li>
-</ul>
-<hr />
-<h2 id="authentication-priority">Authentication Priority</h2>
-<p>When multiple auth methods are available:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>1. JWT token (if logged in via kg login)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>   → Authorization: Bearer &lt;jwt_token&gt;
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>2. API key (if configured via kg config set secret)
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>   → X-API-Key: &lt;api_key&gt;
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>3. None (unauthenticated)
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>   → Some endpoints allow public access
-</code></pre></div>
-<p><strong>Implementation:</strong> Request interceptor in <code>KnowledgeGraphClient</code> checks in this order.</p>
-<hr />
-<h2 id="testing-authentication-code">Testing Authentication Code</h2>
-<h3 id="unit-tests">Unit Tests</h3>
-<p>Test individual modules in isolation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// Test token expiration logic</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;TokenManager&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should detect expired tokens&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">expired</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">expires_at</span><span class="o">:</span><span class="w"> </span><span class="kt">Math.floor</span><span class="p">(</span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">100</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">isTokenExpired</span><span class="p">(</span><span class="nx">expired</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">});</span>
-</code></pre></div>
-<h3 id="integration-tests">Integration Tests</h3>
-<p>Test full authentication flow:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Test login flow</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>login
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Enter credentials</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should work</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>kg<span class="w"> </span><span class="nb">logout</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should fail with auth error</span>
-</code></pre></div>
-<h3 id="manual-testing">Manual Testing</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 1. Fresh login</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>rm<span class="w"> </span>~/.config/kg/config.json
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kg<span class="w"> </span>login
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># 2. Token persistence</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should work without re-login</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># 3. Token expiration (wait 60+ minutes or modify config)</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w">  </span><span class="c1"># Should prompt re-login</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1"># 4. Challenge flow</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;<span class="w">  </span><span class="c1"># Should prompt password</span>
-</code></pre></div>
-<hr />
-<h2 id="common-patterns">Common Patterns</h2>
-<h3 id="reading-current-user-info">Reading Current User Info</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">tokenManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">TokenManager</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">getUsername</span><span class="p">();</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">role</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">.</span><span class="nx">getRole</span><span class="p">();</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">role</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="c1">// Admin-only functionality</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="handling-401-errors-gracefully">Handling 401 Errors Gracefully</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">someApiCall</span><span class="p">();</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">response</span><span class="o">?</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">401</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;Authentication expired. Run: kg login&#39;</span><span class="p">);</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="prompting-for-re-authentication">Prompting for Re-authentication</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../lib/auth/challenge&#39;</span><span class="p">;</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">challenge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">AuthChallenge</span><span class="p">(</span><span class="nx">authClient</span><span class="p">,</span><span class="w"> </span><span class="nx">tokenManager</span><span class="p">);</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">challenge</span><span class="p">.</span><span class="nx">challenge</span><span class="p">({</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Perform sensitive operation&#39;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="nx">allowCancel</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">});</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="c1">// User cancelled</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">  </span><span class="k">return</span><span class="p">;</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="p">}</span>
-</code></pre></div>
-<hr />
-<h2 id="future-enhancements">Future Enhancements</h2>
-<h3 id="oauth-20-support-adr-054">OAuth 2.0 Support (ADR-054)</h3>
-<ul>
-<li><strong>Device Authorization Grant</strong> for CLI</li>
-<li>Better for headless environments</li>
-<li>Longer-lived sessions with refresh tokens</li>
-</ul>
-<h3 id="refresh-tokens">Refresh Tokens</h3>
-<ul>
-<li>Extend sessions without re-entering password</li>
-<li>Background token refresh</li>
-<li>Revocable at server-side</li>
-</ul>
-<h3 id="mcp-server-integration">MCP Server Integration</h3>
-<ul>
-<li>Share token management modules</li>
-<li>Same security model across clients</li>
-</ul>
-<hr />
-<h2 id="quick-reference">Quick Reference</h2>
-<p><strong>Key Files:</strong>
-- <code>client/src/lib/auth/</code> - Authentication modules
-- <code>client/src/cli/login.ts</code> - Login command
-- <code>client/src/cli/admin/user.ts</code> - User management commands
-- <code>client/src/api/client.ts</code> - Main API client</p>
-<p><strong>Key Commands:</strong>
-- <code>kg login</code> - Authenticate user
-- <code>kg logout</code> - Clear stored token
-- <code>kg admin user list</code> - List users (admin only)
-- <code>kg admin user create</code> - Create user (admin only)</p>
-<p><strong>Config Location:</strong>
-- <code>~/.config/kg/config.json</code> (Linux/macOS)
-- <code>%APPDATA%\kg\config.json</code> (Windows)</p>
-<p><strong>Token Lifespan:</strong>
-- Default: 60 minutes
-- Buffer: 5 minutes (55 minutes effective)
-- Configurable server-side: <code>JWT_EXPIRATION_MINUTES</code></p>
 
 
 
