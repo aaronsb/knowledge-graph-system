@@ -95,9 +95,11 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     try {
       // Step 1: Replay the saved query
       setLoadingMessage('Replaying query...');
+      // Read graphStore state ref before await to avoid stale closure
+      const getGraphState = () => useGraphStore.getState().rawGraphData;
       await replayQuery(query);
 
-      const rawData = useGraphStore.getState().rawGraphData;
+      const rawData = getGraphState();
       if (!rawData || rawData.nodes.length === 0) {
         setError('Query produced no results');
         return;
@@ -176,14 +178,14 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       // Build nodes
       const nodes: DocGraphNode[] = [];
 
-      // Document nodes
+      // Document nodes — base size; actual render size computed by renderer via settings
       for (const doc of docResponse.documents) {
         nodes.push({
           id: doc.document_id,
           label: doc.filename,
           type: 'document',
           documentIds: [],
-          size: settings.layout.documentSize,
+          size: 24,
         });
       }
 
@@ -219,7 +221,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       const allConceptIds = Array.from(allConceptsMap.keys());
       try {
         // Inline concept IDs — the /query/cypher endpoint doesn't support parameter binding.
-        const idList = allConceptIds.map(id => `'${id.replace(/'/g, "\\'")}'`).join(', ');
+        const idList = allConceptIds.map(id => `'${id.replace(/'/g, "''")}'`).join(', ');
         const edgeResult = await apiClient.executeCypherQuery({
           query: `MATCH (c1:Concept)-[r]->(c2:Concept)
                   WHERE c1.concept_id IN [${idList}] AND c2.concept_id IN [${idList}]
@@ -267,7 +269,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [replayQuery, settings.layout.documentSize]);
+  }, [replayQuery]);
 
   /** Passage search — scoped to in-view documents. */
   const handlePassageSearch = useCallback(async () => {
@@ -289,9 +291,9 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       });
 
       // Map source search results to PassageSearchResult
-      const docLookup = new Map(sidebarDocs.map(d => [d.ontology, d]));
+      const docLookup = new Map(sidebarDocs.map(d => [d.document_id, d]));
       const results: PassageSearchResult[] = (response.results || []).map((r: any) => {
-        const doc = docLookup.get(r.document);
+        const doc = docLookup.get(r.document_id) || sidebarDocs.find(d => d.ontology === r.document);
         return {
           sourceId: r.source_id,
           documentId: doc?.document_id || '',
@@ -310,6 +312,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     } catch (err) {
       console.warn('Passage search failed:', err);
       setPassageResults([]);
+      setPassageQuery('');
     } finally {
       setIsSearchingPassages(false);
     }

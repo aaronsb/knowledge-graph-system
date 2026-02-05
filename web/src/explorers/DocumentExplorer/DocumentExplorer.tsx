@@ -111,7 +111,9 @@ export const DocumentExplorer: React.FC<
     return new Set(doc.conceptIds);
   }, [focusedDocumentId, data]);
 
-  // Build simulation data
+  // Build simulation data — depends only on data, NOT settings.
+  // Settings-driven sizes are computed at render time via settingsRef so
+  // changing a slider never restarts the simulation.
   const { simNodes, simLinks } = useMemo(() => {
     if (!data) return { simNodes: [] as SimNode[], simLinks: [] as SimLink[] };
 
@@ -120,7 +122,7 @@ export const DocumentExplorer: React.FC<
       label: n.label,
       type: n.type,
       documentIds: n.documentIds,
-      size: n.type === 'document' ? settings.layout.documentSize : n.size * settings.visual.nodeSize,
+      size: n.size,  // base size — render-time scaling applied separately
     }));
 
     const nodeIds = new Set(simNodes.map(n => n.id));
@@ -135,7 +137,7 @@ export const DocumentExplorer: React.FC<
       }));
 
     return { simNodes, simLinks };
-  }, [data, settings.layout.documentSize, settings.visual.nodeSize]);
+  }, [data]);
 
   // Visible stats (exclude clustering links)
   const visibleLinkCount = useMemo(
@@ -263,9 +265,15 @@ export const DocumentExplorer: React.FC<
 
     nodeElementsRef.current = nodeElements;
 
+    // Render-time size helper — reads settings from ref, never triggers simulation restart
+    const renderSize = (d: SimNode) => {
+      const s = settingsRef.current;
+      return d.type === 'document' ? s.layout.documentSize : d.size * s.visual.nodeSize;
+    };
+
     // Node circles
     nodeElements.append('circle')
-      .attr('r', (d: SimNode) => d.size)
+      .attr('r', (d: SimNode) => renderSize(d))
       .attr('fill', (d: SimNode) => COLORS[d.type].fill)
       .attr('stroke', (d: SimNode) => COLORS[d.type].stroke)
       .attr('stroke-width', (d: SimNode) => d.type === 'document' ? 3 : 1.5)
@@ -275,7 +283,7 @@ export const DocumentExplorer: React.FC<
     nodeElements.filter((d: SimNode) => d.type === 'document')
       .append('path')
       .attr('d', (d: SimNode) => {
-        const s = d.size * 0.45;
+        const s = renderSize(d) * 0.45;
         return `M${-s / 2},${-s / 2} L${s / 3},${-s / 2} L${s / 2},${-s / 3} L${s / 2},${s / 2} L${-s / 2},${s / 2} Z`;
       })
       .attr('fill', '#fff')
@@ -284,7 +292,7 @@ export const DocumentExplorer: React.FC<
     // Labels
     nodeElements.append('text')
       .text((d: SimNode) => d.label)
-      .attr('dy', (d: SimNode) => d.size + 12)
+      .attr('dy', (d: SimNode) => renderSize(d) + 12)
       .attr('text-anchor', 'middle')
       .attr('font-family', LABEL_FONTS.family)
       .attr('font-size', (d: SimNode) => {
@@ -324,8 +332,9 @@ export const DocumentExplorer: React.FC<
       }))
       .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
       .force('collision', d3.forceCollide<SimNode>().radius((d) => {
-        if (d.type === 'document') return d.size + 20;
-        return d.size + 4;
+        const sz = renderSize(d);
+        if (d.type === 'document') return sz + 20;
+        return sz + 4;
       }));
 
     simulationRef.current = simulation;
@@ -349,8 +358,13 @@ export const DocumentExplorer: React.FC<
       .on('end', (_event, d) => {
         d.x = d.fx!;
         d.y = d.fy!;
-        d.fx = null;
-        d.fy = null;
+        // Only release fixed position if simulation is stopped.
+        // If sim is still running (e.g. after reheat), keep pinned to avoid drift.
+        const sim = simulationRef.current;
+        if (!sim || sim.alpha() < sim.alphaMin()) {
+          d.fx = null;
+          d.fy = null;
+        }
       });
 
     nodeElements.call(drag);
@@ -386,6 +400,23 @@ export const DocumentExplorer: React.FC<
     d3.select(svgRef.current).selectAll<SVGTextElement, SimNode>('g.nodes g text')
       .attr('display', settings.visual.showLabels ? null : 'none');
   }, [settings.visual.showLabels]);
+
+  // Update node sizes when settings change (no simulation restart)
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const renderSize = (d: SimNode) =>
+      d.type === 'document' ? settings.layout.documentSize : d.size * settings.visual.nodeSize;
+
+    d3.select(svgRef.current).selectAll<SVGCircleElement, SimNode>('g.nodes g circle')
+      .attr('r', renderSize);
+    d3.select(svgRef.current).selectAll<SVGTextElement, SimNode>('g.nodes g text')
+      .attr('dy', (d: SimNode) => renderSize(d) + 12);
+    d3.select(svgRef.current).selectAll<SVGPathElement, SimNode>('g.nodes g path')
+      .attr('d', (d: SimNode) => {
+        const s = renderSize(d) * 0.45;
+        return `M${-s / 2},${-s / 2} L${s / 3},${-s / 2} L${s / 2},${-s / 3} L${s / 2},${s / 2} L${-s / 2},${s / 2} Z`;
+      });
+  }, [settings.layout.documentSize, settings.visual.nodeSize]);
 
   // Focus mode: update opacity when focusedDocumentId changes
   useEffect(() => {

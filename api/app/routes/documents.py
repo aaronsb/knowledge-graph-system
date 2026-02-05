@@ -68,7 +68,7 @@ class DocumentSearchResponse(BaseModel):
 
 class DocumentsByConceptsRequest(BaseModel):
     """Request body for finding documents by concept IDs (reverse lookup)."""
-    concept_ids: List[str] = Field(..., min_length=1, description="Concept IDs to find documents for")
+    concept_ids: List[str] = Field(..., min_length=1, max_length=500, description="Concept IDs to find documents for")
     limit: int = Field(default=50, ge=1, le=200, description="Maximum results")
 
 
