@@ -22,8 +22,33 @@ interface SavedQueriesPanelProps {
   onExportToEditor?: () => void;
   /** Current exploration info for save button label (e.g. step count) */
   currentExploration?: { stepCount: number } | null;
-  /** Filter by definition_type (e.g. 'exploration', 'block_diagram') */
+  /** Filter by definition_type (e.g. 'exploration', 'block_diagram', 'polarity') */
   definitionTypeFilter?: string;
+  /** Override the save button label (default: "Save (N steps)") */
+  saveButtonLabel?: string;
+}
+
+/**
+ * Format a type-aware subtitle for a saved query definition.
+ * Each definition_type gets a meaningful summary instead of just the type name.
+ */
+function formatQuerySubtitle(query: ReplayableDefinition): string {
+  const def = query.definition as Record<string, any>;
+  switch (query.definition_type) {
+    case 'exploration':
+      return `${def?.statements?.length || 0} steps`;
+    case 'polarity': {
+      const pos = def?.positive_pole_label || 'A';
+      const neg = def?.negative_pole_label || 'B';
+      return `${pos} \u2194 ${neg}`;
+    }
+    case 'block_diagram':
+      return `${def?.nodes?.length || 0} nodes`;
+    case 'cypher':
+      return `${def?.statements?.length || 1} statement${(def?.statements?.length || 1) !== 1 ? 's' : ''}`;
+    default:
+      return query.definition_type;
+  }
 }
 
 /** Reusable saved queries list for any explorer's IconRailPanel sidebar.
@@ -34,6 +59,7 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
   onExportToEditor,
   currentExploration,
   definitionTypeFilter,
+  saveButtonLabel,
 }) => {
   const {
     definitions: savedQueriesMap,
@@ -69,7 +95,7 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
               className="flex-1 flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
             >
               <Save className="w-4 h-4" />
-              Save ({currentExploration!.stepCount} steps)
+              {saveButtonLabel || `Save (${currentExploration!.stepCount} steps)`}
             </button>
           )}
           {onExportToEditor && (
@@ -107,9 +133,7 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm truncate">{query.name}</div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {query.definition_type === 'exploration'
-                      ? `${(query.definition as any)?.statements?.length || 0} steps`
-                      : query.definition_type}
+                    {formatQuerySubtitle(query)}
                     {' \u00b7 '}
                     {new Date(query.created_at).toLocaleDateString()}
                   </div>

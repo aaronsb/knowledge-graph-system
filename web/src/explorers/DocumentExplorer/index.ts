@@ -1,8 +1,7 @@
 /**
  * Document Explorer - Plugin Definition
  *
- * Radial visualization of document→concept relationships (ADR-085).
- * Uses spreading activation decay for opacity visualization.
+ * Multi-document concept graph driven by saved exploration queries.
  */
 
 import { FileText } from 'lucide-react';
@@ -12,18 +11,13 @@ import { ProfilePanel } from './ProfilePanel';
 import type { DocumentExplorerSettings, DocumentExplorerData } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
-/**
- * Document Explorer Plugin
- *
- * Radial visualization with document at center, concepts in orbital rings.
- * Intensity (opacity) decreases with hop distance following spreading activation decay.
- */
+/** Document Explorer Plugin — multi-document concept graph. */
 export const DocumentExplorerPlugin: ExplorerPlugin<DocumentExplorerData, DocumentExplorerSettings> = {
   config: {
     id: 'document',
     type: 'document',
     name: 'Document Explorer',
-    description: 'Radial view of document→concept relationships with decay',
+    description: 'Multi-document concept graph from saved queries',
     icon: FileText,
     requiredDataShape: 'graph',
   },
@@ -32,32 +26,24 @@ export const DocumentExplorerPlugin: ExplorerPlugin<DocumentExplorerData, Docume
   settingsPanel: ProfilePanel,
 
   dataTransformer: (apiData) => {
-    // Transform API response to DocumentExplorerData
-    // Expected input: { document: {...}, concepts: [...], links: [...] }
+    // Not called — DocumentExplorerWorkspace builds its own data.
+    const data = apiData as unknown as Record<string, any>;
     return {
-      document: apiData.document || {
-        id: 'unknown',
-        type: 'document',
-        label: 'Unknown Document',
-        ontology: 'unknown',
-        conceptCount: 0,
-      },
-      concepts: (apiData.concepts || []).map((c: any, i: number) => ({
-        id: c.concept_id || c.id,
-        type: 'concept' as const,
-        label: c.label || c.name || 'Unknown',
-        ontology: c.ontology || 'unknown',
-        hop: c.hop ?? 0,
-        grounding_strength: c.grounding_strength ?? 0.5,
-        grounding_display: c.grounding_display,
-        instanceCount: c.instance_count || c.instanceCount || 1,
+      documents: [],
+      nodes: (data.nodes || []).map((n: any) => ({
+        id: n.concept_id || n.id,
+        label: n.label || 'Unknown',
+        type: 'query-concept' as const,
+        documentIds: [],
+        size: 6,
       })),
-      links: (apiData.links || []).map((l: any) => ({
+      links: (data.links || []).map((l: any) => ({
         source: l.source || l.from_id,
         target: l.target || l.to_id,
         type: l.type || l.relationship_type || 'RELATED',
-        confidence: l.confidence,
+        visible: true,
       })),
+      queryConceptIds: [],
     };
   },
 

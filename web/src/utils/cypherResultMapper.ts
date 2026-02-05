@@ -106,13 +106,19 @@ export function mapCypherResultToRawGraph(result: CypherQueryResult): {
     grounding_strength: n.properties?.grounding_strength,
   }));
 
-  const links: RawGraphLink[] = (result.relationships || []).map((r) => ({
-    from_id: internalToConceptId.get(r.from_id) || r.from_id,
-    to_id: internalToConceptId.get(r.to_id) || r.to_id,
-    relationship_type: r.type,
-    category: r.properties?.category,
-    confidence: r.confidence,
-  }));
+  const links: RawGraphLink[] = (result.relationships || [])
+    .filter((r) => {
+      // Drop links whose endpoints aren't in the result node set —
+      // AGE internal IDs would leak through and crash d3 forceLink.
+      return internalToConceptId.has(r.from_id) && internalToConceptId.has(r.to_id);
+    })
+    .map((r) => ({
+      from_id: internalToConceptId.get(r.from_id)!,
+      to_id: internalToConceptId.get(r.to_id)!,
+      relationship_type: r.type,
+      category: r.properties?.category,
+      confidence: r.confidence,
+    }));
 
   return { nodes, links };
 }

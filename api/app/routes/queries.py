@@ -348,7 +348,8 @@ def _generate_source_search_embedding(query: str) -> np.ndarray:
 def _search_source_embeddings_by_similarity(
     query_embedding: np.ndarray,
     min_similarity: float,
-    limit: int
+    limit: int,
+    source_ids: Optional[List[str]] = None
 ) -> Dict[str, Dict]:
     """
     Search source_embeddings table for similar chunks.
@@ -357,6 +358,7 @@ def _search_source_embeddings_by_similarity(
         query_embedding: Query vector
         min_similarity: Minimum similarity threshold (0.0-1.0)
         limit: Maximum sources to return
+        source_ids: Optional list to scope search to specific sources
 
     Returns:
         Dict mapping source_id to best matching chunk data:
@@ -384,20 +386,36 @@ def _search_source_embeddings_by_similarity(
 
     try:
         with conn.cursor() as cursor:
-            # Fetch all source embeddings
-            cursor.execute("""
-                SELECT
-                    se.source_id,
-                    se.chunk_index,
-                    se.chunk_text,
-                    se.start_offset,
-                    se.end_offset,
-                    se.source_hash,
-                    se.embedding
-                FROM kg_api.source_embeddings se
-                WHERE se.chunk_strategy = 'sentence'
-                ORDER BY se.source_id, se.chunk_index
-            """)
+            # Fetch source embeddings (optionally scoped to specific sources)
+            if source_ids:
+                cursor.execute("""
+                    SELECT
+                        se.source_id,
+                        se.chunk_index,
+                        se.chunk_text,
+                        se.start_offset,
+                        se.end_offset,
+                        se.source_hash,
+                        se.embedding
+                    FROM kg_api.source_embeddings se
+                    WHERE se.chunk_strategy = 'sentence'
+                      AND se.source_id = ANY(%s)
+                    ORDER BY se.source_id, se.chunk_index
+                """, (source_ids,))
+            else:
+                cursor.execute("""
+                    SELECT
+                        se.source_id,
+                        se.chunk_index,
+                        se.chunk_text,
+                        se.start_offset,
+                        se.end_offset,
+                        se.source_hash,
+                        se.embedding
+                    FROM kg_api.source_embeddings se
+                    WHERE se.chunk_strategy = 'sentence'
+                    ORDER BY se.source_id, se.chunk_index
+                """)
 
             # Calculate similarities using utility
             chunk_matches = []
@@ -889,11 +907,32 @@ async def search_sources(
         # 1. Generate embedding for query
         query_embedding = _generate_source_search_embedding(request.query)
 
+        # 1b. Resolve document_ids → source_ids scope (if provided)
+        scope_source_ids = None
+        if request.document_ids:
+            client = get_age_client()
+            try:
+                rows = client.graph.execute_cypher(
+                    "MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source) "
+                    "WHERE d.document_id IN $doc_ids "
+                    "RETURN s.source_id as source_id",
+                    params={"doc_ids": request.document_ids}
+                )
+                scope_source_ids = [r['source_id'] for r in rows if r.get('source_id')]
+                if not scope_source_ids:
+                    return SourceSearchResponse(
+                        query=request.query, count=0, results=[],
+                        threshold_used=request.min_similarity
+                    )
+            finally:
+                client.close()
+
         # 2. Search source embeddings for similar chunks
         source_best_matches = _search_source_embeddings_by_similarity(
             query_embedding=query_embedding,
             min_similarity=request.min_similarity,
-            limit=request.limit
+            limit=request.limit,
+            source_ids=scope_source_ids
         )
 
         # 3. Get top source IDs sorted by similarity

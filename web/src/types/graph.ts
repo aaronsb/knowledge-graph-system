@@ -36,11 +36,11 @@ export interface SubgraphResponse {
   };
 }
 
-// D3 Visualization Types
+// Render Types (renderer-agnostic)
 // Extend API types so the full API payload flows through to the renderer.
-// D3 only needs `id` for node identity — everything else is carried along
+// Renderers need `id` for node identity — everything else is carried along
 // so UI components can read from the store without re-fetching.
-export interface D3Node extends APIGraphNode {
+export interface RenderNode extends APIGraphNode {
   id: string;           // alias for concept_id (D3 requires `id`)
   group: string;        // alias for ontology
   grounding?: number;   // alias for grounding_strength
@@ -52,27 +52,27 @@ export interface D3Node extends APIGraphNode {
   vx?: number; vy?: number; vz?: number;  // velocities
 }
 
-export interface D3Link extends APIGraphLink {
-  source: string | D3Node;
-  target: string | D3Node;
+export interface RenderLink extends APIGraphLink {
+  source: string | RenderNode;
+  target: string | RenderNode;
   type: string;    // alias for relationship_type
   value: number;   // category confidence for rendering
   color: string;   // category color
 }
 
 export interface GraphData {
-  nodes: D3Node[];
-  links: D3Link[];
+  nodes: RenderNode[];
+  links: RenderLink[];
 }
 
 // Three.js 3D Types
-export interface Node3D extends D3Node {
+export interface Node3D extends RenderNode {
   z?: number; // 3D position
   vz?: number; // 3D velocity
   fz?: number; // fixed position Z
 }
 
-export interface Link3D extends D3Link {
+export interface Link3D extends RenderLink {
   source: string | Node3D;
   target: string | Node3D;
 }

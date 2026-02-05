@@ -8,11 +8,17 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FolderOpen } from 'lucide-react';
 import { ChordDiagram } from './visualizations/ChordDiagram';
 import { RadialEdgeTypes } from './visualizations/RadialEdgeTypes';
 import { CategoryMatrix } from './visualizations/CategoryMatrix';
 import { getCategoryColor } from '../../config/categoryColors';
 import { apiClient } from '../../api/client';
+import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
+import type { ReplayableDefinition } from '../../hooks/useQueryReplay';
 import type { CategoryStats, EdgeTypeData, ViewMode, VocabularyStats } from './types';
 
 // Category flows data from API
@@ -22,8 +28,11 @@ interface CategoryFlowData {
 }
 
 export function EdgeExplorerWorkspace() {
+  const navigate = useNavigate();
+  const { replayQuery } = useQueryReplay();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeRailTab, setActiveRailTab] = useState('savedQueries');
   const [viewMode, setViewMode] = useState<ViewMode>('chord');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -123,6 +132,12 @@ export function EdgeExplorerWorkspace() {
     setSelectedCategory(prev => prev === category ? null : category);
   }, []);
 
+  /** Load a saved query and navigate to the chord view (subgraph-scoped). */
+  const handleLoadQuery = useCallback(async (query: ReplayableDefinition) => {
+    await replayQuery(query);
+    navigate('/vocabulary/chord');
+  }, [replayQuery, navigate]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -148,7 +163,27 @@ export function EdgeExplorerWorkspace() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex overflow-hidden">
+      {/* Left rail with saved queries */}
+      <IconRailPanel
+        tabs={[
+          {
+            id: 'savedQueries',
+            icon: FolderOpen,
+            label: 'Saved Queries',
+            content: (
+              <SavedQueriesPanel
+                onLoadQuery={handleLoadQuery}
+                definitionTypeFilter="exploration"
+              />
+            ),
+          },
+        ]}
+        activeTab={activeRailTab}
+        onTabChange={setActiveRailTab}
+      />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex items-center justify-between">
@@ -333,6 +368,7 @@ export function EdgeExplorerWorkspace() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

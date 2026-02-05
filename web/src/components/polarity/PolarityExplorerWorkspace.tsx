@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   Save,
   CheckCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
@@ -26,8 +27,11 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore } from '../../store/reportStore';
 import { useArtifactStore } from '../../store/artifactStore';
+import { useQueryDefinitionStore } from '../../store/queryDefinitionStore';
 import type { PolarityReportData } from '../../store/reportStore';
 import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 import { PolarityHelpModal } from './PolarityHelpModal';
 import { PolarityScatterPlot } from './PolarityScatterPlot';
 
@@ -92,6 +96,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const { addReport } = useReportStore();
   const { persistArtifact } = useArtifactStore();
+  const { replayQuery } = useQueryReplay();
 
   // Get polarity state from Zustand store
   const {
@@ -145,6 +150,29 @@ export const PolarityExplorerWorkspace: React.FC = () => {
   const selectedAnalysis = selectedAnalysisId
     ? analysisHistory.find((a) => a.id === selectedAnalysisId)
     : null;
+
+  const { createDefinition } = useQueryDefinitionStore();
+
+  /** Save current pole selections as a polarity query definition. */
+  const handleSavePolarity = useCallback(async () => {
+    if (!selectedPositivePole || !selectedNegativePole) return;
+    const name = `${selectedPositivePole.label} \u2194 ${selectedNegativePole.label}`;
+    await createDefinition({
+      name,
+      definition_type: 'polarity',
+      definition: {
+        positive_pole_id: selectedPositivePole.concept_id,
+        positive_pole_label: selectedPositivePole.label,
+        negative_pole_id: selectedNegativePole.concept_id,
+        negative_pole_label: selectedNegativePole.label,
+        maxCandidates,
+        maxHops,
+        autoDiscover,
+      },
+    });
+  }, [selectedPositivePole, selectedNegativePole, maxCandidates, maxHops, autoDiscover, createDefinition]);
+
+  const hasPoles = !!(selectedPositivePole && selectedNegativePole);
 
   const searchConcepts = useCallback(async (query: string, pole: 'positive' | 'negative') => {
     if (query.trim().length < 2) {
@@ -967,6 +995,17 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     </div>
   );
 
+  // Saved queries panel content
+  const savedQueriesPanelContent = (
+    <SavedQueriesPanel
+      onLoadQuery={replayQuery}
+      onSaveExploration={handleSavePolarity}
+      currentExploration={hasPoles ? { stepCount: 2 } : null}
+      saveButtonLabel="Save Poles"
+      definitionTypeFilter="polarity"
+    />
+  );
+
   // Tab definitions
   const tabs = [
     {
@@ -986,6 +1025,12 @@ export const PolarityExplorerWorkspace: React.FC = () => {
       label: 'Results History',
       icon: GitBranch,
       content: resultsListContent, // Results list shown in sidebar
+    },
+    {
+      id: 'savedQueries',
+      label: 'Saved Queries',
+      icon: FolderOpen,
+      content: savedQueriesPanelContent,
     },
   ];
 

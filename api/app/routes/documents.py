@@ -66,6 +66,12 @@ class DocumentSearchResponse(BaseModel):
     total_matches: int = Field(..., description="Total documents matching threshold")
 
 
+class DocumentsByConceptsRequest(BaseModel):
+    """Request body for finding documents by concept IDs (reverse lookup)."""
+    concept_ids: List[str] = Field(..., min_length=1, max_length=500, description="Concept IDs to find documents for")
+    limit: int = Field(default=50, ge=1, le=200, description="Maximum results")
+
+
 class DocumentChunk(BaseModel):
     """A source chunk from a document."""
     source_id: str
@@ -115,6 +121,25 @@ class DocumentConceptsResponse(BaseModel):
     filename: str
     concepts: List[DocumentConceptItem] = Field(default_factory=list)
     total: int
+
+
+class BulkDocumentConceptsRequest(BaseModel):
+    """Request for bulk document concepts lookup."""
+    document_ids: List[str] = Field(..., min_length=1, max_length=100, description="Document IDs to fetch concepts for")
+
+
+class BulkDocumentConcept(BaseModel):
+    """Concept with label for bulk response (no per-source detail)."""
+    concept_id: str
+    label: str
+
+
+class BulkDocumentConceptsResponse(BaseModel):
+    """Response with concepts grouped by document."""
+    documents: Dict[str, List[BulkDocumentConcept]] = Field(
+        default_factory=dict,
+        description="Map of document_id to its concepts"
+    )
 
 
 # ============================================================================
@@ -449,6 +474,124 @@ async def search_documents(
     except Exception as e:
         logger.error(f"Document search failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@query_router.post("/by-concepts", response_model=DocumentSearchResponse)
+async def find_documents_by_concepts(
+    request: DocumentsByConceptsRequest,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Find documents that contain the given concepts (reverse lookup).
+
+    **Authentication:** Requires valid OAuth token
+    **Authorization:** Requires `graph:read` permission
+
+    Traverses Concept → APPEARS → Source ← HAS_SOURCE ← DocumentMeta
+    to find which documents contributed to the given concepts.
+    Documents are ranked by number of matching concepts (most relevant first).
+    """
+    try:
+        client = AGEClient()
+        try:
+            # 1. Find documents linked to these concepts via Source nodes
+            # Group by document_id string (not node identity) to avoid
+            # AGE returning duplicate rows for the same document.
+            query = """
+            MATCH (c:Concept)-[:APPEARS]->(s:Source)<-[:HAS_SOURCE]-(d:DocumentMeta)
+            WHERE c.concept_id IN $concept_ids
+            RETURN d.document_id as document_id,
+                   d.filename as filename,
+                   d.ontology as ontology,
+                   d.content_type as content_type,
+                   d.garage_key as garage_key,
+                   d.storage_key as storage_key,
+                   s.source_id as source_id,
+                   c.concept_id as concept_id
+            """
+
+            results = client._execute_cypher(
+                query,
+                params={"concept_ids": request.concept_ids}
+            )
+
+            if not results:
+                return DocumentSearchResponse(
+                    documents=[],
+                    returned=0,
+                    total_matches=0
+                )
+
+            # 2. Aggregate in Python — deduplicate by document_id
+            doc_aggregates: Dict[str, Dict] = {}
+            for row in results:
+                doc_id = row.get('document_id')
+                if not doc_id:
+                    continue
+
+                if doc_id not in doc_aggregates:
+                    doc_aggregates[doc_id] = {
+                        'filename': row.get('filename') or 'unknown',
+                        'ontology': row.get('ontology') or 'unknown',
+                        'content_type': row.get('content_type') or 'document',
+                        'garage_key': row.get('garage_key'),
+                        'storage_key': row.get('storage_key'),
+                        'source_ids': set(),
+                        'concept_ids': set(),
+                    }
+
+                doc_aggregates[doc_id]['source_ids'].add(row.get('source_id'))
+                doc_aggregates[doc_id]['concept_ids'].add(row.get('concept_id'))
+
+            # 3. Sort by matching concept count, limit
+            sorted_docs = sorted(
+                doc_aggregates.items(),
+                key=lambda item: len(item[1]['concept_ids']),
+                reverse=True
+            )[:request.limit]
+
+            total_concept_count = len(request.concept_ids)
+
+            # 4. Build results
+            documents = []
+            for doc_id, agg in sorted_docs:
+                resources = []
+                if agg.get('garage_key'):
+                    resources.append(DocumentResource(
+                        type="document",
+                        garage_key=agg['garage_key']
+                    ))
+                if agg.get('storage_key'):
+                    resources.append(DocumentResource(
+                        type="image",
+                        garage_key=agg['storage_key']
+                    ))
+
+                documents.append(DocumentSearchResult(
+                    document_id=doc_id,
+                    filename=agg['filename'],
+                    ontology=agg['ontology'],
+                    content_type=agg['content_type'],
+                    best_similarity=len(agg['concept_ids']) / max(total_concept_count, 1),
+                    source_count=len(agg['source_ids']),
+                    resources=resources,
+                    concept_ids=list(agg['concept_ids']),
+                ))
+
+            return DocumentSearchResponse(
+                documents=documents,
+                returned=len(documents),
+                total_matches=len(doc_aggregates)
+            )
+
+        finally:
+            client.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Find documents by concepts failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to find documents: {str(e)}")
 
 
 # ============================================================================
@@ -806,5 +949,57 @@ async def get_document_concepts(
     except Exception as e:
         logger.error(f"Failed to get document concepts: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get concepts: {str(e)}")
+    finally:
+        client.close()
+
+
+@router.post("/concepts/bulk", response_model=BulkDocumentConceptsResponse)
+async def get_document_concepts_bulk(
+    request: BulkDocumentConceptsRequest,
+    current_user: UserInDB = Depends(get_current_active_user)
+):
+    """
+    Bulk fetch concepts for multiple documents in a single query.
+
+    Returns deduplicated concepts (concept_id + label) per document.
+    Used by the Document Explorer to hydrate all documents from a saved query.
+    """
+    client = AGEClient()
+
+    try:
+        query = """
+        MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)<-[:APPEARS]-(c:Concept)
+        WHERE d.document_id IN $doc_ids
+        RETURN d.document_id as document_id,
+               c.concept_id as concept_id,
+               c.label as label
+        """
+
+        results = client._execute_cypher(query, params={"doc_ids": request.document_ids})
+
+        # Aggregate by document, deduplicate concepts per document
+        docs: Dict[str, Dict[str, str]] = {}  # doc_id -> {concept_id: label}
+        for row in results:
+            doc_id = row.get('document_id')
+            concept_id = row.get('concept_id')
+            label = row.get('label')
+            if doc_id and concept_id:
+                if doc_id not in docs:
+                    docs[doc_id] = {}
+                docs[doc_id][concept_id] = label or concept_id
+
+        response_docs = {
+            doc_id: [
+                BulkDocumentConcept(concept_id=cid, label=lbl)
+                for cid, lbl in concepts.items()
+            ]
+            for doc_id, concepts in docs.items()
+        }
+
+        return BulkDocumentConceptsResponse(documents=response_docs)
+
+    except Exception as e:
+        logger.error(f"Failed to get bulk document concepts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get bulk concepts: {str(e)}")
     finally:
         client.close()

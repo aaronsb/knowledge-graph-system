@@ -1,22 +1,22 @@
 /**
- * DocumentExplorer Types
+ * DocumentExplorer Types — Multi-Document Concept Graph
  *
- * Radial visualization of document→concept relationships with
- * spreading activation decay (ADR-085).
+ * Query-driven concept graph with document hydration.
+ * Three node types: document (golden), query-concept (amber), extended-concept (indigo).
  */
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
 
 export interface DocumentExplorerSettings {
   visual: {
-    maxHops: 1 | 2 | 3;
-    decayFactor: number;        // 0.5-0.9, default 0.7
-    minOpacity: number;         // 0.2-0.5, default 0.2
     showLabels: boolean;
-    colorBy: 'grounding' | 'ontology';
+    showEdges: boolean;
     nodeSize: number;           // Base size multiplier
   };
   layout: {
-    ringRadius: number;         // Distance between rings (50-200)
-    centerSize: number;         // Document node size (20-60)
+    documentSize: number;       // Document node size (20-60)
   };
   interaction: {
     enableZoom: boolean;
@@ -27,16 +27,12 @@ export interface DocumentExplorerSettings {
 
 export const DEFAULT_SETTINGS: DocumentExplorerSettings = {
   visual: {
-    maxHops: 2,
-    decayFactor: 0.7,
-    minOpacity: 0.2,
     showLabels: true,
-    colorBy: 'grounding',
+    showEdges: true,
     nodeSize: 1.0,
   },
   layout: {
-    ringRadius: 120,
-    centerSize: 40,
+    documentSize: 24,
   },
   interaction: {
     enableZoom: true,
@@ -47,70 +43,67 @@ export const DEFAULT_SETTINGS: DocumentExplorerSettings = {
 
 export const SLIDER_RANGES = {
   visual: {
-    decayFactor: { min: 0.5, max: 0.9, step: 0.05 },
-    minOpacity: { min: 0.1, max: 0.5, step: 0.05 },
     nodeSize: { min: 0.5, max: 2.0, step: 0.1 },
   },
   layout: {
-    ringRadius: { min: 50, max: 200, step: 10 },
-    centerSize: { min: 20, max: 60, step: 5 },
+    documentSize: { min: 16, max: 48, step: 4 },
   },
 };
 
-// Data structures for the visualization
-export interface DocumentNode {
+// ---------------------------------------------------------------------------
+// Graph data
+// ---------------------------------------------------------------------------
+
+export type DocNodeType = 'document' | 'query-concept' | 'extended-concept';
+
+/** A node in the multi-document concept graph. */
+export interface DocGraphNode {
   id: string;
-  type: 'document';
   label: string;
-  ontology: string;
-  conceptCount: number;
+  type: DocNodeType;
+  /** Which documents own this concept (empty for document nodes). */
+  documentIds: string[];
+  /** Base render size (before settings multiplier). */
+  size: number;
 }
 
-export interface ConceptNode {
-  id: string;
-  type: 'concept';
-  label: string;
-  ontology: string;
-  hop: number;
-  grounding_strength: number;
-  grounding_display?: string;
-  instanceCount: number;
-  // Fixed positions for radial layout
-  fx?: number;
-  fy?: number;
-  // Parent concept ID (for tree structure)
-  parentId?: string;
-}
-
-// Tree node for hierarchical layout
-export interface ConceptTreeNode {
-  id: string;
-  type: 'concept' | 'document';
-  label: string;
-  ontology: string;
-  hop: number;
-  grounding_strength: number;
-  grounding_display?: string;
-  instanceCount?: number;
-  children: ConceptTreeNode[];
-  // Computed by d3.tree layout
-  x?: number;  // angle in radians
-  y?: number;  // radius
-  fx?: number; // cartesian x
-  fy?: number; // cartesian y
-}
-
-export interface ConceptLink {
+/** An edge in the graph. */
+export interface DocGraphLink {
   source: string;
   target: string;
-  type: string;           // Relationship type
-  confidence?: number;
+  /** Relationship type (e.g. IMPLIES) or '__doc_cluster__' for invisible clustering links. */
+  type: string;
+  /** False for document→concept clustering links (not rendered). */
+  visible: boolean;
 }
 
+/** Document metadata for the sidebar list. */
+export interface DocExplorerDocument {
+  id: string;
+  label: string;
+  ontology: string;
+  /** ALL concept IDs for this document (from bulk fetch). */
+  conceptIds: string[];
+  /** Concept IDs that overlap with the exploration query. */
+  queryConceptIds: string[];
+}
+
+/** Full data structure for the multi-document concept graph. */
 export interface DocumentExplorerData {
-  document: DocumentNode;
-  concepts: ConceptNode[];
-  links: ConceptLink[];
-  // Tree structure for radial tidy tree layout
-  treeRoot?: ConceptTreeNode;
+  documents: DocExplorerDocument[];
+  nodes: DocGraphNode[];
+  links: DocGraphLink[];
+  /** Global set of concept IDs from the exploration query. */
+  queryConceptIds: string[];
+}
+
+/** A passage search result from scoped source search. */
+export interface PassageSearchResult {
+  sourceId: string;
+  documentId: string;
+  documentFilename: string;
+  paragraph: number;
+  chunkText: string;
+  similarity: number;
+  concepts: Array<{ conceptId: string; label: string }>;
 }

@@ -405,6 +405,7 @@ class APIClient {
     limit?: number;
     min_similarity?: number;
     ontology?: string;
+    document_ids?: string[];
     include_concepts?: boolean;
     include_full_text?: boolean;
   }): Promise<any> {
@@ -1586,6 +1587,30 @@ class APIClient {
   }
 
   /**
+   * Find documents that contain the given concepts (reverse lookup).
+   * Traverses Concept → Source → DocumentMeta in the graph.
+   */
+  async findDocumentsByConcepts(params: {
+    concept_ids: string[];
+    limit?: number;
+  }): Promise<{
+    documents: Array<{
+      document_id: string;
+      filename: string;
+      ontology: string;
+      content_type: string;
+      best_similarity: number;
+      source_count: number;
+      concept_ids: string[];
+    }>;
+    returned: number;
+    total_matches: number;
+  }> {
+    const response = await this.client.post('/query/documents/by-concepts', params);
+    return response.data;
+  }
+
+  /**
    * List all documents with optional ontology filter
    */
   async listDocuments(params?: {
@@ -1624,6 +1649,19 @@ class APIClient {
     total: number;
   }> {
     const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/concepts`);
+    return response.data;
+  }
+
+  /**
+   * Bulk fetch concepts for multiple documents in one request.
+   * Returns map of document_id → concept list (deduplicated).
+   */
+  async getDocumentConceptsBulk(documentIds: string[]): Promise<{
+    documents: Record<string, Array<{ concept_id: string; label: string }>>;
+  }> {
+    const response = await this.client.post('/documents/concepts/bulk', {
+      document_ids: documentIds,
+    });
     return response.data;
   }
 

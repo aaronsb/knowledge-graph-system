@@ -4,54 +4,65 @@
  * Transforms API graph data to D3/Three.js visualization formats.
  */
 
-import * as d3 from 'd3';
 import { useVocabularyStore } from '../store/vocabularyStore';
 import { getCategoryColor } from '../config/categoryColors';
+import { createOntologyColorScale } from './colorScale';
 import type {
   APIGraphNode,
   APIGraphLink,
-  D3Node,
-  D3Link,
+  RenderNode,
+  RenderLink,
   GraphData,
   Node3D,
   Link3D,
   Graph3DData,
 } from '../types/graph';
+import type { RawGraphNode, RawGraphLink } from './cypherResultMapper';
 
 /**
- * Transform API data to D3 2D format
- * Automatically enriches links with vocabulary category data
+ * Transform API data to D3 2D format.
+ * Accepts both APIGraphNode/APIGraphLink (from API calls) and
+ * RawGraphNode/RawGraphLink (from graphStore/dataTransformer pipeline).
+ * Automatically enriches links with vocabulary category data.
  */
 export function transformForD3(
-  apiNodes: APIGraphNode[],
-  apiLinks: APIGraphLink[]
+  apiNodes: (APIGraphNode | RawGraphNode)[],
+  apiLinks: (APIGraphLink | RawGraphLink)[]
 ): GraphData {
   // Get vocabulary data from store
   const vocabStore = useVocabularyStore.getState();
 
   // Create color scale for ontologies using equidistant points on a color ramp
-  const ontologies = [...new Set(apiNodes.map(n => n.ontology))].sort();
-  const colorScale = d3.scaleOrdinal<string>()
-    .domain(ontologies)
-    .range(ontologies.map((_, i) => {
-      // Distribute ontologies evenly across the Turbo color ramp [0, 1]
-      // Avoid extreme ends (0.1 to 0.9) for better visibility
-      const t = ontologies.length === 1 ? 0.5 : 0.1 + (i / (ontologies.length - 1)) * 0.8;
-      return d3.interpolateTurbo(t);
-    }));
+  const ontologies = [...new Set(apiNodes.map(n => n.ontology || 'Unknown'))].sort();
+  const colorScale = createOntologyColorScale(ontologies);
 
   // Transform nodes — spread all API fields, add visualization aliases
-  const nodes: D3Node[] = apiNodes.map(node => ({
-    ...node,
-    id: node.concept_id,
-    group: node.ontology,
-    grounding: node.grounding_strength,
-    size: 10, // Will be updated with degree
-    color: colorScale(node.ontology),
-  }));
+  const nodes: RenderNode[] = apiNodes.map(node => {
+    const ontology = node.ontology || 'Unknown';
+    return {
+      ...node,
+      id: node.concept_id,
+      ontology,
+      search_terms: node.search_terms || [],
+      group: ontology,
+      grounding: node.grounding_strength,
+      size: 10, // Will be updated with degree
+      color: colorScale(ontology),
+    };
+  });
+
+  // Build node ID set for defensive link filtering
+  const nodeIdSet = new Set(nodes.map(n => n.id));
+
+  // Filter out links referencing non-existent nodes (defense in depth —
+  // cypherResultMapper should already drop these, but upstream data
+  // sources may also produce orphan references).
+  const validLinks = apiLinks.filter(link => {
+    return nodeIdSet.has(link.from_id) && nodeIdSet.has(link.to_id);
+  });
 
   // Transform links - enrich with vocabulary data from store
-  const links: D3Link[] = apiLinks.map(link => {
+  const links: RenderLink[] = validLinks.map(link => {
     // Look up category from vocabulary store
     let category = vocabStore.getCategory(link.relationship_type);
 
@@ -102,8 +113,8 @@ export function transformForD3(
  * Transform API data to Three.js 3D format
  */
 export function transformFor3D(
-  apiNodes: APIGraphNode[],
-  apiLinks: APIGraphLink[]
+  apiNodes: (APIGraphNode | RawGraphNode)[],
+  apiLinks: (APIGraphLink | RawGraphLink)[]
 ): Graph3DData {
   // Start with 2D transform
   const { nodes: nodes2d, links: links2d } = transformForD3(apiNodes, apiLinks);
@@ -202,7 +213,7 @@ export function filterByEdgeCategory(
 /**
  * Get neighbors of a node
  */
-export function getNeighbors(nodeId: string, links: D3Link[]): Set<string> {
+export function getNeighbors(nodeId: string, links: RenderLink[]): Set<string> {
   const neighbors = new Set<string>();
 
   links.forEach(link => {
@@ -223,7 +234,7 @@ export function getNeighbors(nodeId: string, links: D3Link[]): Set<string> {
 /**
  * Find hub nodes (high degree centrality)
  */
-export function findHubNodes(data: GraphData, topN: number = 10): D3Node[] {
+export function findHubNodes(data: GraphData, topN: number = 10): RenderNode[] {
   // Calculate degrees
   const degrees = new Map<string, number>();
 

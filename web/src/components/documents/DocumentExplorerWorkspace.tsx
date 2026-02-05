@@ -1,358 +1,507 @@
 /**
- * Document Explorer Workspace (ADR-085)
+ * Document Explorer Workspace v2
  *
- * Radial visualization of document→concept relationships with
- * spreading activation decay.
+ * Query-driven multi-document concept graph.
+ * The saved exploration query drives everything: concepts, documents, edges.
+ * Sidebar shows document list + passage search scoped to in-view documents.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Search, FileText, Loader2, Layers } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Search, FileText, Loader2, FolderOpen, BookOpen, Settings } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
+import { ProfilePanel } from '../../explorers/DocumentExplorer/ProfilePanel';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
-import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
+import type {
+  DocumentExplorerData,
+  DocumentExplorerSettings,
+  DocExplorerDocument,
+  DocGraphNode,
+  DocGraphLink,
+  PassageSearchResult,
+} from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { DocumentViewer } from '../shared/DocumentViewer';
+import { IconRailPanel } from '../shared/IconRailPanel';
+import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
+import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
+import { useGraphStore } from '../../store/graphStore';
+import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
 
-interface DocumentSearchResult {
+/** Sidebar document entry (from findDocumentsByConcepts). */
+interface SidebarDocument {
   document_id: string;
   filename: string;
   ontology: string;
   content_type: string;
-  best_similarity: number;
-  source_count: number;
-  concept_ids: string[];
+  concept_ids: string[];       // concepts overlapping with query
+  totalConceptCount: number;   // ALL concepts for this doc (after hydration)
 }
 
 export const DocumentExplorerWorkspace: React.FC = () => {
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<DocumentSearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const { replayQuery } = useQueryReplay();
+  const [activeRailTab, setActiveRailTab] = useState('savedQueries');
 
-  // Selected document state
-  const [selectedDocument, setSelectedDocument] = useState<DocumentSearchResult | null>(null);
+  // Pipeline state
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Document list (populated from query)
+  const [sidebarDocs, setSidebarDocs] = useState<SidebarDocument[]>([]);
+
+  // Graph data
   const [explorerData, setExplorerData] = useState<DocumentExplorerData | null>(null);
-  const [isLoadingConcepts, setIsLoadingConcepts] = useState(false);
 
-  // Hop expansion control
-  const [maxHops, setMaxHops] = useState<0 | 1 | 2>(0);
+  // Focus state — which document is focused in the graph
+  const [focusedDocId, setFocusedDocId] = useState<string | null>(null);
 
-  // Document viewer state
+  // Document viewer
   const [viewingDocument, setViewingDocument] = useState<{
     document_id: string;
     filename: string;
     content_type: string;
   } | null>(null);
 
-  // Explorer settings
+  // Settings
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
 
-  // Debounced search
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
+  // Passage search
+  const [passageQuery, setPassageQuery] = useState('');
+  const debouncedPassageQuery = useDebouncedValue(passageQuery, 400);
+  const [passageResults, setPassageResults] = useState<PassageSearchResult[]>([]);
+  const [isSearchingPassages, setIsSearchingPassages] = useState(false);
 
-  // Search documents
-  const handleSearch = useCallback(async () => {
-    if (!debouncedQuery.trim()) {
-      setSearchResults([]);
+  /**
+   * Load a saved exploration query and build the full multi-document graph.
+   *
+   * Pipeline:
+   * 1. Replay query → query concepts + edges
+   * 2. Find documents from those concepts
+   * 3. Bulk fetch ALL concepts for each document
+   * 4. Classify: query concepts vs extended concepts
+   * 5. Fetch complete edge set
+   * 6. Build unified graph
+   */
+  const handleLoadExplorationQuery = useCallback(async (query: ReplayableDefinition) => {
+    setIsLoading(true);
+    setError(null);
+    setFocusedDocId(null);
+    setExplorerData(null);
+    setSidebarDocs([]);
+    setPassageResults([]);
+    setPassageQuery('');
+
+    try {
+      // Step 1: Replay the saved query
+      setLoadingMessage('Replaying query...');
+      // Read graphStore state ref before await to avoid stale closure
+      const getGraphState = () => useGraphStore.getState().rawGraphData;
+      await replayQuery(query);
+
+      const rawData = getGraphState();
+      if (!rawData || rawData.nodes.length === 0) {
+        setError('Query produced no results');
+        return;
+      }
+
+      const queryConceptIds = new Set(rawData.nodes.map(n => n.concept_id));
+
+      // Step 2: Find documents
+      setLoadingMessage('Finding documents...');
+      const docResponse = await apiClient.findDocumentsByConcepts({
+        concept_ids: Array.from(queryConceptIds),
+        limit: 50,
+      });
+
+      if (docResponse.documents.length === 0) {
+        setError('No documents found for these concepts');
+        return;
+      }
+
+      const documentIds = docResponse.documents.map(d => d.document_id);
+
+      // Step 3: Bulk fetch all concepts for each document
+      setLoadingMessage('Hydrating document concepts...');
+      const bulkResponse = await apiClient.getDocumentConceptsBulk(documentIds);
+
+      // Build document metadata with concept counts
+      const docsForSidebar: SidebarDocument[] = docResponse.documents.map(d => ({
+        document_id: d.document_id,
+        filename: d.filename,
+        ontology: d.ontology,
+        content_type: d.content_type,
+        concept_ids: d.concept_ids || [],
+        totalConceptCount: (bulkResponse.documents[d.document_id] || []).length,
+      }));
+      setSidebarDocs(docsForSidebar);
+
+      // Step 4: Classify concepts
+      setLoadingMessage('Building graph...');
+      const allConceptsMap = new Map<string, { id: string; label: string; documentIds: string[] }>();
+
+      // Add query concepts first
+      for (const node of rawData.nodes) {
+        allConceptsMap.set(node.concept_id, {
+          id: node.concept_id,
+          label: node.label,
+          documentIds: [],
+        });
+      }
+
+      // Add document concepts (may overlap with query concepts)
+      for (const [docId, concepts] of Object.entries(bulkResponse.documents)) {
+        for (const c of concepts) {
+          const existing = allConceptsMap.get(c.concept_id);
+          if (existing) {
+            existing.documentIds.push(docId);
+          } else {
+            allConceptsMap.set(c.concept_id, {
+              id: c.concept_id,
+              label: c.label,
+              documentIds: [docId],
+            });
+          }
+        }
+      }
+
+      // Also tag query concepts with their documents
+      for (const doc of docResponse.documents) {
+        for (const cid of doc.concept_ids || []) {
+          const existing = allConceptsMap.get(cid);
+          if (existing && !existing.documentIds.includes(doc.document_id)) {
+            existing.documentIds.push(doc.document_id);
+          }
+        }
+      }
+
+      // Build nodes
+      const nodes: DocGraphNode[] = [];
+
+      // Document nodes — base size; actual render size computed by renderer via settings
+      for (const doc of docResponse.documents) {
+        nodes.push({
+          id: doc.document_id,
+          label: doc.filename,
+          type: 'document',
+          documentIds: [],
+          size: 24,
+        });
+      }
+
+      // Concept nodes (query vs extended)
+      for (const [cid, data] of allConceptsMap) {
+        nodes.push({
+          id: cid,
+          label: data.label,
+          type: queryConceptIds.has(cid) ? 'query-concept' : 'extended-concept',
+          documentIds: data.documentIds,
+          size: queryConceptIds.has(cid) ? 6 : 4,
+        });
+      }
+
+      // Build links
+      const links: DocGraphLink[] = [];
+
+      // Invisible document→concept clustering links
+      for (const [docId, concepts] of Object.entries(bulkResponse.documents)) {
+        for (const c of concepts) {
+          if (allConceptsMap.has(c.concept_id)) {
+            links.push({
+              source: docId,
+              target: c.concept_id,
+              type: '__doc_cluster__',
+              visible: false,
+            });
+          }
+        }
+      }
+
+      // Step 5: Fetch all concept↔concept edges
+      const allConceptIds = Array.from(allConceptsMap.keys());
+      try {
+        // Inline concept IDs — the /query/cypher endpoint doesn't support parameter binding.
+        const idList = allConceptIds.map(id => `'${id.replace(/'/g, "''")}'`).join(', ');
+        const edgeResult = await apiClient.executeCypherQuery({
+          query: `MATCH (c1:Concept)-[r]->(c2:Concept)
+                  WHERE c1.concept_id IN [${idList}] AND c2.concept_id IN [${idList}]
+                  RETURN c1, r, c2`,
+          limit: 1000,
+        });
+
+        // Translate AGE internal IDs → concept_ids via the standard mapper.
+        const mapped = mapCypherResultToRawGraph(edgeResult);
+        const nodeIdSet = new Set(nodes.map(n => n.id));
+        for (const link of mapped.links) {
+          if (nodeIdSet.has(link.from_id) && nodeIdSet.has(link.to_id)) {
+            links.push({
+              source: link.from_id,
+              target: link.to_id,
+              type: link.relationship_type || 'RELATED',
+              visible: true,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch inter-concept edges:', e);
+      }
+
+      // Step 6: Build DocumentExplorerData for documents in sidebar
+      const docExplorerDocuments: DocExplorerDocument[] = docResponse.documents.map(d => ({
+        id: d.document_id,
+        label: d.filename,
+        ontology: d.ontology,
+        conceptIds: (bulkResponse.documents[d.document_id] || []).map(c => c.concept_id),
+        queryConceptIds: d.concept_ids || [],
+      }));
+
+      setExplorerData({
+        documents: docExplorerDocuments,
+        nodes,
+        links,
+        queryConceptIds: Array.from(queryConceptIds),
+      });
+
+    } catch (err) {
+      console.error('Failed to build document graph:', err);
+      setError('Failed to build document graph');
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
+    }
+  }, [replayQuery]);
+
+  /** Passage search — scoped to in-view documents. */
+  const handlePassageSearch = useCallback(async () => {
+    if (!debouncedPassageQuery.trim() || sidebarDocs.length === 0) {
+      setPassageResults([]);
       return;
     }
 
-    setIsSearching(true);
-    setSearchError(null);
-
+    setIsSearchingPassages(true);
     try {
-      const response = await apiClient.searchDocuments({
-        query: debouncedQuery,
-        limit: 20,
+      const docIds = sidebarDocs.map(d => d.document_id);
+      const response = await apiClient.searchSources({
+        query: debouncedPassageQuery,
+        document_ids: docIds,
+        limit: 15,
         min_similarity: 0.5,
+        include_concepts: true,
+        include_full_text: false,
       });
-      setSearchResults(response.documents);
-    } catch (error) {
-      console.error('Document search failed:', error);
-      setSearchError('Failed to search documents');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [debouncedQuery]);
 
-  // Trigger search on debounced query change
-  React.useEffect(() => {
-    handleSearch();
-  }, [handleSearch]);
-
-  // Load document concepts with hop expansion
-  const loadDocumentData = useCallback(async (doc: DocumentSearchResult, hops: number) => {
-    setIsLoadingConcepts(true);
-
-    try {
-      const response = await apiClient.getDocumentConcepts(doc.document_id);
-
-      // Base concepts (hop 0) - deduplicate by name (same concept from multiple chunks)
-      const conceptsByName = new Map<string, typeof response.concepts[0]>();
-      for (const c of response.concepts) {
-        const name = c.name || c.concept_id;
-        const existing = conceptsByName.get(name);
-        if (!existing || c.instance_count > existing.instance_count) {
-          // Keep the one with more instances (more significant)
-          conceptsByName.set(name, c);
-        }
-      }
-
-      const hop0Concepts = Array.from(conceptsByName.values()).map((c) => ({
-        id: c.concept_id,
-        type: 'concept' as const,
-        label: c.name || c.concept_id,
-        ontology: doc.ontology,
-        hop: 0,
-        grounding_strength: 0.5,
-        grounding_display: undefined,
-        instanceCount: c.instance_count,
-        parentId: doc.document_id, // Parent is the document
-      }));
-
-      const allConcepts = [...hop0Concepts];
-      const allLinks = response.concepts.map(c => ({
-        source: doc.document_id,
-        target: c.concept_id,
-        type: 'EXTRACTED_FROM',
-      }));
-
-      // Map to track children for each concept (for tree building)
-      const childrenMap = new Map<string, typeof allConcepts>();
-      hop0Concepts.forEach(c => childrenMap.set(c.id, []));
-
-      // Fetch related concepts for hop 1-2 if requested
-      if (hops > 0 && hop0Concepts.length > 0) {
-        const seenIds = new Set(hop0Concepts.map(c => c.id));
-        seenIds.add(doc.document_id);
-
-        // Fetch related for all hop-0 concepts in parallel for performance
-        const relatedResults = await Promise.all(
-          hop0Concepts.map(async (concept) => {
-            try {
-              const related = await apiClient.getRelatedConcepts({
-                concept_id: concept.id,
-                max_depth: hops,
-              });
-              return { concept, related };
-            } catch (e) {
-              console.warn(`Failed to get related for ${concept.id}:`, e);
-              return { concept, related: { nodes: [], links: [] } };
-            }
-          })
-        );
-
-        // Process results
-        for (const { concept, related } of relatedResults) {
-          // Add hop-1 concepts
-          if (related.nodes) {
-            for (const node of related.nodes) {
-              if (!seenIds.has(node.concept_id)) {
-                seenIds.add(node.concept_id);
-                const newConcept = {
-                  id: node.concept_id,
-                  type: 'concept' as const,
-                  label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
-                  ontology: node.ontology || doc.ontology,
-                  hop: 1,
-                  grounding_strength: node.grounding_strength ?? 0.5,
-                  grounding_display: node.grounding_display,
-                  instanceCount: 1,
-                  parentId: concept.id, // Parent is the hop-0 concept
-                };
-                allConcepts.push(newConcept);
-
-                // Track as child of parent concept
-                const siblings = childrenMap.get(concept.id) || [];
-                siblings.push(newConcept);
-                childrenMap.set(concept.id, siblings);
-              }
-            }
-          }
-
-          // Add links
-          if (related.links) {
-            for (const link of related.links) {
-              allLinks.push({
-                source: link.from_id || link.source,
-                target: link.to_id || link.target,
-                type: link.relationship_type || link.type || 'RELATED',
-              });
-            }
-          }
-        }
-      }
-
-      // Build tree structure for radial tidy tree layout
-      const buildTreeNode = (concept: typeof allConcepts[0]): ConceptTreeNode => {
-        const children = childrenMap.get(concept.id) || [];
+      // Map source search results to PassageSearchResult
+      const docLookup = new Map(sidebarDocs.map(d => [d.document_id, d]));
+      const results: PassageSearchResult[] = (response.results || []).map((r: any) => {
+        const doc = docLookup.get(r.document_id) || sidebarDocs.find(d => d.ontology === r.document);
         return {
-          id: concept.id,
-          type: 'concept',
-          label: concept.label,
-          ontology: concept.ontology,
-          hop: concept.hop,
-          grounding_strength: concept.grounding_strength,
-          grounding_display: concept.grounding_display,
-          instanceCount: concept.instanceCount,
-          children: children.map(buildTreeNode),
+          sourceId: r.source_id,
+          documentId: doc?.document_id || '',
+          documentFilename: doc?.filename || r.document,
+          paragraph: r.paragraph,
+          chunkText: r.matched_chunk?.chunk_text || '',
+          similarity: r.similarity,
+          concepts: (r.concepts || []).map((c: any) => ({
+            conceptId: c.concept_id,
+            label: c.label,
+          })),
         };
-      };
+      });
 
-      const treeRoot: ConceptTreeNode = {
-        id: doc.document_id,
-        type: 'document',
-        label: doc.filename,
-        ontology: doc.ontology,
-        hop: -1, // Document is "before" hop 0
-        grounding_strength: 1.0,
-        children: hop0Concepts.map(buildTreeNode),
-      };
-
-      const data: DocumentExplorerData = {
-        document: {
-          id: doc.document_id,
-          type: 'document',
-          label: doc.filename,
-          ontology: doc.ontology,
-          conceptCount: allConcepts.length,
-        },
-        concepts: allConcepts,
-        links: allLinks,
-        treeRoot,
-      };
-
-      setExplorerData(data);
-    } catch (error) {
-      console.error('Failed to load document concepts:', error);
-      setSearchError('Failed to load document concepts');
+      setPassageResults(results);
+    } catch (err) {
+      console.warn('Passage search failed:', err);
+      setPassageResults([]);
+      setPassageQuery('');
     } finally {
-      setIsLoadingConcepts(false);
+      setIsSearchingPassages(false);
     }
+  }, [debouncedPassageQuery, sidebarDocs]);
+
+  React.useEffect(() => {
+    handlePassageSearch();
+  }, [handlePassageSearch]);
+
+  /** Focus a document in the graph. */
+  const handleFocusDocument = useCallback((docId: string) => {
+    setFocusedDocId(prev => prev === docId ? null : docId);
   }, []);
 
-  // Handle document selection
-  const handleSelectDocument = useCallback(async (doc: DocumentSearchResult) => {
-    setSelectedDocument(doc);
-    await loadDocumentData(doc, maxHops);
-  }, [loadDocumentData, maxHops]);
+  /** Open the document viewer modal. */
+  const handleViewDocument = useCallback((doc: SidebarDocument) => {
+    setViewingDocument({
+      document_id: doc.document_id,
+      filename: doc.filename,
+      content_type: doc.content_type,
+    });
+  }, []);
 
-  // Reload when maxHops changes
-  useEffect(() => {
-    if (selectedDocument) {
-      loadDocumentData(selectedDocument, maxHops);
+  /** Open the document viewer from a document ID (used by graph renderer). */
+  const handleViewDocumentById = useCallback((docId: string) => {
+    const doc = sidebarDocs.find(d => d.document_id === docId);
+    if (doc) handleViewDocument(doc);
+  }, [sidebarDocs, handleViewDocument]);
+
+  /** Handle node click from the graph renderer. */
+  const handleNodeClick = useCallback((nodeId: string) => {
+    // Check if it's a document node
+    const doc = sidebarDocs.find(d => d.document_id === nodeId);
+    if (doc) {
+      handleFocusDocument(nodeId);
     }
-  }, [maxHops, selectedDocument, loadDocumentData]);
+    // Concept clicks are handled by NodeInfoBox inside the renderer
+  }, [sidebarDocs, handleFocusDocument]);
+
+  /** The currently focused document (for the renderer). */
+  const focusedDoc = useMemo(() => {
+    if (!focusedDocId || !explorerData) return null;
+    return explorerData.documents.find(d => d.id === focusedDocId) || null;
+  }, [focusedDocId, explorerData]);
 
   return (
     <div className="flex h-full">
-      {/* Left sidebar - search and results */}
+      {/* Left rail with saved queries */}
+      <IconRailPanel
+        tabs={[
+          {
+            id: 'savedQueries',
+            icon: FolderOpen,
+            label: 'Saved Queries',
+            content: (
+              <SavedQueriesPanel
+                onLoadQuery={handleLoadExplorationQuery}
+                definitionTypeFilter="exploration"
+              />
+            ),
+          },
+          {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
+            content: (
+              <ProfilePanel
+                settings={settings}
+                onChange={setSettings}
+              />
+            ),
+          },
+        ]}
+        activeTab={activeRailTab}
+        onTabChange={setActiveRailTab}
+      />
+
+      {/* Left sidebar — document list + passage search */}
       <div className="w-80 border-r border-border bg-card flex flex-col">
-        {/* Search input */}
-        <div className="p-4 border-b border-border">
+        {/* Passage search input */}
+        <div className="p-3 border-b border-border">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search documents..."
-              className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              value={passageQuery}
+              onChange={(e) => setPassageQuery(e.target.value)}
+              placeholder={sidebarDocs.length > 0 ? 'Search passages...' : 'Load a query first...'}
+              disabled={sidebarDocs.length === 0}
+              className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
           </div>
-          {searchError && (
-            <p className="mt-2 text-xs text-destructive">{searchError}</p>
+          {error && (
+            <p className="mt-2 text-xs text-destructive">{error}</p>
           )}
         </div>
 
-        {/* Hop expansion control */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Expansion Depth</span>
-          </div>
-          <div className="flex gap-1">
-            {[0, 1, 2].map((hop) => (
-              <button
-                key={hop}
-                onClick={() => setMaxHops(hop as 0 | 1 | 2)}
-                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  maxHops === hop
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                }`}
-              >
-                {hop === 0 ? 'Direct' : `+${hop} hop${hop > 1 ? 's' : ''}`}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {maxHops === 0
-              ? 'Show only concepts from document'
-              : `Expand ${maxHops} level${maxHops > 1 ? 's' : ''} of related concepts`}
-          </p>
-        </div>
-
-        {/* Search results */}
+        {/* Document list */}
         <div className="flex-1 overflow-y-auto">
-          {isSearching ? (
-            <div className="flex items-center justify-center py-8">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{loadingMessage}</p>
             </div>
-          ) : searchResults.length > 0 ? (
-            <div className="divide-y divide-border">
-              {searchResults.map((doc) => (
-                <button
-                  key={doc.document_id}
-                  onClick={() => handleSelectDocument(doc)}
-                  className={`w-full p-3 text-left hover:bg-accent transition-colors ${
-                    selectedDocument?.document_id === doc.document_id
-                      ? 'bg-accent'
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <FileText className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+          ) : sidebarDocs.length > 0 ? (
+            <>
+              {/* Document entries */}
+              <div className="divide-y divide-border">
+                {sidebarDocs.map((doc) => (
+                  <div
+                    key={doc.document_id}
+                    className={`flex items-start gap-2 p-3 cursor-pointer hover:bg-accent transition-colors ${
+                      focusedDocId === doc.document_id ? 'bg-accent' : ''
+                    }`}
+                    onClick={() => handleFocusDocument(doc.document_id)}
+                  >
+                    <FileText className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {doc.filename}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.ontology}
-                      </p>
+                      <p className="text-sm font-medium truncate">{doc.filename}</p>
+                      <p className="text-xs text-muted-foreground">{doc.ontology}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {doc.concept_ids.length} concepts •{' '}
-                        {(doc.best_similarity * 100).toFixed(0)}% match
+                        {doc.concept_ids.length} query / {doc.totalConceptCount} total concepts
                       </p>
                     </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
+                      className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                      title="View document"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                </button>
-              ))}
-            </div>
-          ) : debouncedQuery ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No documents found
-            </div>
+                ))}
+              </div>
+
+              {/* Passage search results */}
+              {(isSearchingPassages || passageResults.length > 0) && (
+                <div className="border-t border-border">
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Passages
+                  </div>
+                  {isSearchingPassages ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {passageResults.map((result, i) => (
+                        <button
+                          key={`${result.sourceId}-${i}`}
+                          className="w-full p-3 text-left hover:bg-accent transition-colors"
+                          onClick={() => handleFocusDocument(result.documentId)}
+                        >
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {result.documentFilename} ({(result.similarity * 100).toFixed(0)}%)
+                          </p>
+                          <p className="text-xs line-clamp-3">{result.chunkText}</p>
+                          {result.concepts.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {result.concepts.slice(0, 3).map(c => (
+                                <span key={c.conceptId} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                  {c.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Enter a search query to find documents
+            <div className="text-center py-8 text-muted-foreground text-sm px-4">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Load a saved exploration query to discover documents and their concept graphs.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main area - explorer */}
+      {/* Main area — graph */}
       <div className="flex-1 relative">
-        {isLoadingConcepts ? (
+        {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Loading concepts...
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{loadingMessage}</p>
             </div>
           </div>
         ) : explorerData ? (
@@ -360,18 +509,10 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             data={explorerData}
             settings={settings}
             onSettingsChange={setSettings}
-            onNodeClick={(nodeId) => {
-              // Check if clicked on document node
-              if (selectedDocument && nodeId === selectedDocument.document_id) {
-                setViewingDocument({
-                  document_id: selectedDocument.document_id,
-                  filename: selectedDocument.filename,
-                  content_type: selectedDocument.content_type,
-                });
-              } else {
-                console.log('Clicked concept:', nodeId);
-              }
-            }}
+            onNodeClick={handleNodeClick}
+            focusedDocumentId={focusedDocId}
+            onFocusChange={setFocusedDocId}
+            onViewDocument={handleViewDocumentById}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-background">
@@ -379,7 +520,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
               <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">Document Explorer</p>
               <p className="text-sm mt-1">
-                Search and select a document to explore its concepts
+                Load a saved exploration query to see<br />
+                the multi-document concept graph
               </p>
             </div>
           </div>
