@@ -476,26 +476,24 @@ async def find_documents_by_concepts(
         client = AGEClient()
         try:
             # 1. Find documents linked to these concepts via Source nodes
+            # Group by document_id string (not node identity) to avoid
+            # AGE returning duplicate rows for the same document.
             query = """
             MATCH (c:Concept)-[:APPEARS]->(s:Source)<-[:HAS_SOURCE]-(d:DocumentMeta)
             WHERE c.concept_id IN $concept_ids
-            WITH d, collect(DISTINCT s.source_id) as source_ids,
-                 count(DISTINCT c.concept_id) as matching_concepts
             RETURN d.document_id as document_id,
                    d.filename as filename,
                    d.ontology as ontology,
                    d.content_type as content_type,
                    d.garage_key as garage_key,
                    d.storage_key as storage_key,
-                   size(source_ids) as source_count,
-                   matching_concepts
-            ORDER BY matching_concepts DESC
-            LIMIT $limit
+                   s.source_id as source_id,
+                   c.concept_id as concept_id
             """
 
             results = client._execute_cypher(
                 query,
-                params={"concept_ids": request.concept_ids, "limit": request.limit}
+                params={"concept_ids": request.concept_ids}
             )
 
             if not results:
@@ -505,42 +503,66 @@ async def find_documents_by_concepts(
                     total_matches=0
                 )
 
-            # 2. Fetch concept_ids for each document
-            doc_ids = [r['document_id'] for r in results]
-            concepts_by_doc = _get_concepts_for_documents(client, doc_ids)
-
-            # 3. Build results
-            documents = []
+            # 2. Aggregate in Python — deduplicate by document_id
+            doc_aggregates: Dict[str, Dict] = {}
             for row in results:
-                doc_id = row['document_id']
+                doc_id = row.get('document_id')
+                if not doc_id:
+                    continue
 
+                if doc_id not in doc_aggregates:
+                    doc_aggregates[doc_id] = {
+                        'filename': row.get('filename') or 'unknown',
+                        'ontology': row.get('ontology') or 'unknown',
+                        'content_type': row.get('content_type') or 'document',
+                        'garage_key': row.get('garage_key'),
+                        'storage_key': row.get('storage_key'),
+                        'source_ids': set(),
+                        'concept_ids': set(),
+                    }
+
+                doc_aggregates[doc_id]['source_ids'].add(row.get('source_id'))
+                doc_aggregates[doc_id]['concept_ids'].add(row.get('concept_id'))
+
+            # 3. Sort by matching concept count, limit
+            sorted_docs = sorted(
+                doc_aggregates.items(),
+                key=lambda item: len(item[1]['concept_ids']),
+                reverse=True
+            )[:request.limit]
+
+            total_concept_count = len(request.concept_ids)
+
+            # 4. Build results
+            documents = []
+            for doc_id, agg in sorted_docs:
                 resources = []
-                if row.get('garage_key'):
+                if agg.get('garage_key'):
                     resources.append(DocumentResource(
                         type="document",
-                        garage_key=row['garage_key']
+                        garage_key=agg['garage_key']
                     ))
-                if row.get('storage_key'):
+                if agg.get('storage_key'):
                     resources.append(DocumentResource(
                         type="image",
-                        garage_key=row['storage_key']
+                        garage_key=agg['storage_key']
                     ))
 
                 documents.append(DocumentSearchResult(
                     document_id=doc_id,
-                    filename=row.get('filename') or 'unknown',
-                    ontology=row.get('ontology') or 'unknown',
-                    content_type=row.get('content_type') or 'document',
-                    best_similarity=row.get('matching_concepts', 0) / max(len(request.concept_ids), 1),
-                    source_count=row.get('source_count') or 0,
+                    filename=agg['filename'],
+                    ontology=agg['ontology'],
+                    content_type=agg['content_type'],
+                    best_similarity=len(agg['concept_ids']) / max(total_concept_count, 1),
+                    source_count=len(agg['source_ids']),
                     resources=resources,
-                    concept_ids=concepts_by_doc.get(doc_id, [])
+                    concept_ids=list(agg['concept_ids']),
                 ))
 
             return DocumentSearchResponse(
                 documents=documents,
                 returned=len(documents),
-                total_matches=len(documents)
+                total_matches=len(doc_aggregates)
             )
 
         finally:

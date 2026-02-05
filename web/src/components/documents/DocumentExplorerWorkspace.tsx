@@ -1,16 +1,17 @@
 /**
  * Document Explorer Workspace (ADR-085)
  *
- * Radial visualization of document→concept relationships with
- * spreading activation decay.
+ * Force-directed concept cloud for a single document.
+ * Shows inter-concept relationships with two-tone coloring
+ * based on exploration query overlap.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Search, FileText, Loader2, Layers, FolderOpen } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Search, FileText, Loader2, FolderOpen } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
-import type { DocumentExplorerData, DocumentExplorerSettings, ConceptTreeNode } from '../../explorers/DocumentExplorer/types';
+import type { DocumentExplorerData, DocumentExplorerSettings } from '../../explorers/DocumentExplorer/types';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { DocumentViewer } from '../shared/DocumentViewer';
 import { IconRailPanel } from '../shared/IconRailPanel';
@@ -43,9 +44,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<DocumentSearchResult | null>(null);
   const [explorerData, setExplorerData] = useState<DocumentExplorerData | null>(null);
   const [isLoadingConcepts, setIsLoadingConcepts] = useState(false);
-
-  // Hop expansion control
-  const [maxHops, setMaxHops] = useState<0 | 1 | 2>(0);
 
   // Document viewer state
   const [viewingDocument, setViewingDocument] = useState<{
@@ -103,10 +101,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     setExplorerData(null);
 
     try {
-      // 1. Replay the exploration → populates rawGraphData (W)
       await replayQuery(query);
 
-      // 2. Extract concept_ids from the working graph
       const rawData = useGraphStore.getState().rawGraphData;
       if (!rawData || rawData.nodes.length === 0) {
         setSearchResults([]);
@@ -114,8 +110,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       }
 
       const conceptIds = rawData.nodes.map(n => n.concept_id);
-
-      // 3. Reverse-lookup: find documents containing these concepts
       const response = await apiClient.findDocumentsByConcepts({
         concept_ids: conceptIds,
         limit: 50,
@@ -131,149 +125,73 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     }
   }, [replayQuery]);
 
-  // Load document concepts with hop expansion
-  const loadDocumentData = useCallback(async (doc: DocumentSearchResult, hops: number) => {
+  /**
+   * Load concept cloud for a document: concepts + inter-concept edges.
+   * The doc's concept_ids (from the exploration query match) provide
+   * the two-tone coloring signal.
+   */
+  const loadDocumentData = useCallback(async (doc: DocumentSearchResult) => {
     setIsLoadingConcepts(true);
 
     try {
+      // 1. Fetch document's concepts
       const response = await apiClient.getDocumentConcepts(doc.document_id);
 
-      // Base concepts (hop 0) - deduplicate by name (same concept from multiple chunks)
+      // Deduplicate by name (same concept from multiple chunks)
       const conceptsByName = new Map<string, typeof response.concepts[0]>();
       for (const c of response.concepts) {
         const name = c.name || c.concept_id;
         const existing = conceptsByName.get(name);
         if (!existing || c.instance_count > existing.instance_count) {
-          // Keep the one with more instances (more significant)
           conceptsByName.set(name, c);
         }
       }
 
-      const hop0Concepts = Array.from(conceptsByName.values()).map((c) => ({
+      const concepts = Array.from(conceptsByName.values()).map(c => ({
         id: c.concept_id,
-        type: 'concept' as const,
         label: c.name || c.concept_id,
-        ontology: doc.ontology,
-        hop: 0,
-        grounding_strength: 0.5,
-        grounding_display: undefined,
-        instanceCount: c.instance_count,
-        parentId: doc.document_id, // Parent is the document
       }));
 
-      const allConcepts = [...hop0Concepts];
-      const allLinks = response.concepts.map(c => ({
-        source: doc.document_id,
-        target: c.concept_id,
-        type: 'EXTRACTED_FROM',
-      }));
-
-      // Map to track children for each concept (for tree building)
-      const childrenMap = new Map<string, typeof allConcepts>();
-      hop0Concepts.forEach(c => childrenMap.set(c.id, []));
-
-      // Fetch related concepts for hop 1-2 if requested
-      if (hops > 0 && hop0Concepts.length > 0) {
-        const seenIds = new Set(hop0Concepts.map(c => c.id));
-        seenIds.add(doc.document_id);
-
-        // Fetch related for all hop-0 concepts in parallel for performance
-        const relatedResults = await Promise.all(
-          hop0Concepts.map(async (concept) => {
-            try {
-              const related = await apiClient.getRelatedConcepts({
-                concept_id: concept.id,
-                max_depth: hops,
-              });
-              return { concept, related };
-            } catch (e) {
-              console.warn(`Failed to get related for ${concept.id}:`, e);
-              return { concept, related: { nodes: [], links: [] } };
-            }
-          })
-        );
-
-        // Process results
-        for (const { concept, related } of relatedResults) {
-          // Add hop-1 concepts
-          if (related.nodes) {
-            for (const node of related.nodes) {
-              if (!seenIds.has(node.concept_id)) {
-                seenIds.add(node.concept_id);
-                const newConcept = {
-                  id: node.concept_id,
-                  type: 'concept' as const,
-                  label: node.name || node.concept_id,  // Use 'name' not 'label' (label is relationship type)
-                  ontology: node.ontology || doc.ontology,
-                  hop: 1,
-                  grounding_strength: node.grounding_strength ?? 0.5,
-                  grounding_display: node.grounding_display,
-                  instanceCount: 1,
-                  parentId: concept.id, // Parent is the hop-0 concept
-                };
-                allConcepts.push(newConcept);
-
-                // Track as child of parent concept
-                const siblings = childrenMap.get(concept.id) || [];
-                siblings.push(newConcept);
-                childrenMap.set(concept.id, siblings);
-              }
-            }
-          }
-
-          // Add links
-          if (related.links) {
-            for (const link of related.links) {
-              allLinks.push({
-                source: link.from_id || link.source,
-                target: link.to_id || link.target,
-                type: link.relationship_type || link.type || 'RELATED',
-              });
-            }
-          }
-        }
+      if (concepts.length === 0) {
+        setExplorerData(null);
+        return;
       }
 
-      // Build tree structure for radial tidy tree layout
-      const buildTreeNode = (concept: typeof allConcepts[0]): ConceptTreeNode => {
-        const children = childrenMap.get(concept.id) || [];
-        return {
-          id: concept.id,
-          type: 'concept',
-          label: concept.label,
-          ontology: concept.ontology,
-          hop: concept.hop,
-          grounding_strength: concept.grounding_strength,
-          grounding_display: concept.grounding_display,
-          instanceCount: concept.instanceCount,
-          children: children.map(buildTreeNode),
-        };
-      };
+      // 2. Fetch inter-concept edges via Cypher
+      const conceptIds = concepts.map(c => c.id);
+      let links: { source: string; target: string; type: string }[] = [];
 
-      const treeRoot: ConceptTreeNode = {
-        id: doc.document_id,
-        type: 'document',
-        label: doc.filename,
-        ontology: doc.ontology,
-        hop: -1, // Document is "before" hop 0
-        grounding_strength: 1.0,
-        children: hop0Concepts.map(buildTreeNode),
-      };
+      try {
+        const edgeResult = await apiClient.executeCypherQuery({
+          query: `MATCH (c1:Concept)-[r]->(c2:Concept)
+                  WHERE c1.concept_id IN $concept_ids AND c2.concept_id IN $concept_ids
+                  RETURN c1.concept_id as source, c2.concept_id as target, type(r) as type`,
+          limit: 500,
+        });
 
-      const data: DocumentExplorerData = {
+        if (Array.isArray(edgeResult)) {
+          links = edgeResult.map((row: Record<string, string>) => ({
+            source: row.source,
+            target: row.target,
+            type: row.type || 'RELATED',
+          }));
+        }
+      } catch (e) {
+        console.warn('Failed to fetch inter-concept edges:', e);
+        // Continue without edges — the cloud still shows concepts
+      }
+
+      // 3. Build explorer data with query overlap info
+      setExplorerData({
         document: {
           id: doc.document_id,
-          type: 'document',
           label: doc.filename,
           ontology: doc.ontology,
-          conceptCount: allConcepts.length,
         },
-        concepts: allConcepts,
-        links: allLinks,
-        treeRoot,
-      };
-
-      setExplorerData(data);
+        concepts,
+        links,
+        queryConceptIds: doc.concept_ids || [],
+      });
     } catch (error) {
       console.error('Failed to load document concepts:', error);
       setSearchError('Failed to load document concepts');
@@ -285,15 +203,8 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   // Handle document selection
   const handleSelectDocument = useCallback(async (doc: DocumentSearchResult) => {
     setSelectedDocument(doc);
-    await loadDocumentData(doc, maxHops);
-  }, [loadDocumentData, maxHops]);
-
-  // Reload when maxHops changes
-  useEffect(() => {
-    if (selectedDocument) {
-      loadDocumentData(selectedDocument, maxHops);
-    }
-  }, [maxHops, selectedDocument, loadDocumentData]);
+    await loadDocumentData(doc);
+  }, [loadDocumentData]);
 
   return (
     <div className="flex h-full">
@@ -333,34 +244,6 @@ export const DocumentExplorerWorkspace: React.FC = () => {
           {searchError && (
             <p className="mt-2 text-xs text-destructive">{searchError}</p>
           )}
-        </div>
-
-        {/* Hop expansion control */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Expansion Depth</span>
-          </div>
-          <div className="flex gap-1">
-            {[0, 1, 2].map((hop) => (
-              <button
-                key={hop}
-                onClick={() => setMaxHops(hop as 0 | 1 | 2)}
-                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  maxHops === hop
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                }`}
-              >
-                {hop === 0 ? 'Direct' : `+${hop} hop${hop > 1 ? 's' : ''}`}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {maxHops === 0
-              ? 'Show only concepts from document'
-              : `Expand ${maxHops} level${maxHops > 1 ? 's' : ''} of related concepts`}
-          </p>
         </div>
 
         {/* Search results */}
@@ -428,15 +311,12 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             settings={settings}
             onSettingsChange={setSettings}
             onNodeClick={(nodeId) => {
-              // Check if clicked on document node
               if (selectedDocument && nodeId === selectedDocument.document_id) {
                 setViewingDocument({
                   document_id: selectedDocument.document_id,
                   filename: selectedDocument.filename,
                   content_type: selectedDocument.content_type,
                 });
-              } else {
-                console.log('Clicked concept:', nodeId);
               }
             }}
           />

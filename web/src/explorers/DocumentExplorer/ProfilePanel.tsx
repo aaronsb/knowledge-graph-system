@@ -15,12 +15,11 @@ export const ProfilePanel: React.FC<SettingsPanelProps<DocumentExplorerSettings>
       <section>
         <h3 className="text-lg font-semibold mb-3">Document Explorer</h3>
         <p className="text-sm text-muted-foreground">
-          Radial visualization of document→concept relationships.
+          Tree visualization of document→concept relationships.
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          Select a document to explore its extracted concepts and their
-          relationships. Distance from center indicates hop count, opacity
-          indicates spreading activation decay.
+          Select a document to explore its extracted concepts.
+          The tree shows the document at top with concepts branching below.
         </p>
       </section>
     </div>
