@@ -7,9 +7,10 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, FileText, Loader2, FolderOpen, BookOpen } from 'lucide-react';
+import { Search, FileText, Loader2, FolderOpen, BookOpen, Settings } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { DocumentExplorer } from '../../explorers/DocumentExplorer/DocumentExplorer';
+import { ProfilePanel } from '../../explorers/DocumentExplorer/ProfilePanel';
 import { DEFAULT_SETTINGS } from '../../explorers/DocumentExplorer/types';
 import type {
   DocumentExplorerData,
@@ -25,6 +26,7 @@ import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
 import { useGraphStore } from '../../store/graphStore';
+import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
 
 /** Sidebar document entry (from findDocumentsByConcepts). */
 interface SidebarDocument {
@@ -216,19 +218,24 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       // Step 5: Fetch all concept↔concept edges
       const allConceptIds = Array.from(allConceptsMap.keys());
       try {
+        // Inline concept IDs — the /query/cypher endpoint doesn't support parameter binding.
+        const idList = allConceptIds.map(id => `'${id.replace(/'/g, "\\'")}'`).join(', ');
         const edgeResult = await apiClient.executeCypherQuery({
           query: `MATCH (c1:Concept)-[r]->(c2:Concept)
-                  WHERE c1.concept_id IN $concept_ids AND c2.concept_id IN $concept_ids
-                  RETURN c1.concept_id as source, c2.concept_id as target, type(r) as type`,
-          limit: 2000,
+                  WHERE c1.concept_id IN [${idList}] AND c2.concept_id IN [${idList}]
+                  RETURN c1, r, c2`,
+          limit: 1000,
         });
 
-        if (Array.isArray(edgeResult)) {
-          for (const row of edgeResult) {
+        // Translate AGE internal IDs → concept_ids via the standard mapper.
+        const mapped = mapCypherResultToRawGraph(edgeResult);
+        const nodeIdSet = new Set(nodes.map(n => n.id));
+        for (const link of mapped.links) {
+          if (nodeIdSet.has(link.from_id) && nodeIdSet.has(link.to_id)) {
             links.push({
-              source: (row as Record<string, string>).source,
-              target: (row as Record<string, string>).target,
-              type: (row as Record<string, string>).type || 'RELATED',
+              source: link.from_id,
+              target: link.to_id,
+              type: link.relationship_type || 'RELATED',
               visible: true,
             });
           }
@@ -326,6 +333,12 @@ export const DocumentExplorerWorkspace: React.FC = () => {
     });
   }, []);
 
+  /** Open the document viewer from a document ID (used by graph renderer). */
+  const handleViewDocumentById = useCallback((docId: string) => {
+    const doc = sidebarDocs.find(d => d.document_id === docId);
+    if (doc) handleViewDocument(doc);
+  }, [sidebarDocs, handleViewDocument]);
+
   /** Handle node click from the graph renderer. */
   const handleNodeClick = useCallback((nodeId: string) => {
     // Check if it's a document node
@@ -355,6 +368,17 @@ export const DocumentExplorerWorkspace: React.FC = () => {
               <SavedQueriesPanel
                 onLoadQuery={handleLoadExplorationQuery}
                 definitionTypeFilter="exploration"
+              />
+            ),
+          },
+          {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
+            content: (
+              <ProfilePanel
+                settings={settings}
+                onChange={setSettings}
               />
             ),
           },
@@ -485,10 +509,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             onNodeClick={handleNodeClick}
             focusedDocumentId={focusedDocId}
             onFocusChange={setFocusedDocId}
-            onViewDocument={(docId) => {
-              const doc = sidebarDocs.find(d => d.document_id === docId);
-              if (doc) handleViewDocument(doc);
-            }}
+            onViewDocument={handleViewDocumentById}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-background">

@@ -12,6 +12,7 @@
 export interface DocumentExplorerSettings {
   visual: {
     showLabels: boolean;
+    showEdges: boolean;
     nodeSize: number;           // Base size multiplier
   };
   layout: {
@@ -27,6 +28,7 @@ export interface DocumentExplorerSettings {
 export const DEFAULT_SETTINGS: DocumentExplorerSettings = {
   visual: {
     showLabels: true,
+    showEdges: true,
     nodeSize: 1.0,
   },
   layout: {
