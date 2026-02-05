@@ -38,11 +38,13 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 
+/** Identifies the node a context menu was opened on.  @verified 7b5be48d */
 export interface NodeContextMenuParams {
   nodeId: string;
   nodeLabel: string;
 }
 
+/** Callbacks wired into the context menu — generic actions plus explorer-specific ones.  @verified 7b5be48d */
 export interface GraphContextMenuHandlers {
   // Generic handlers (provided by hook)
   handleFollowConcept: (nodeId: string) => Promise<void>;
@@ -68,6 +70,7 @@ export interface GraphContextMenuHandlers {
   applyDestinationMarker?: (nodeId: string) => void;
 }
 
+/** Lifecycle callbacks from the context menu overlay back to the explorer.  @verified 7b5be48d */
 export interface GraphContextMenuCallbacks {
   onClose: () => void;
   onSettingsChange?: (settings: any) => void;

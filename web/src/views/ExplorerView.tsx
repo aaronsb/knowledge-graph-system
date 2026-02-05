@@ -34,6 +34,7 @@ interface ExplorerViewProps {
   explorerType: VisualizationType;
 }
 
+/** Main explorer view — search bar, graph renderer, saved queries panel, and Cypher editor.  @verified 7b5be48d */
 export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const navigate = useNavigate();
   const [urlParams, setUrlParams] = useSearchParams();

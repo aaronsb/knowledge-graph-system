@@ -67,14 +67,15 @@ Folder icon in the nav rail across all explorer views. Same saved queries list, 
 - [x] Extract color computation from graphTransform.ts into colorScale.ts
 - [x] Rename D3Node/D3Link to RenderNode/RenderLink (renderer-agnostic)
 
-### Phase 5: Documentation & Docstrings
+### Phase 5: Documentation & Docstrings ✓
 - [x] Add JSDoc docstrings to new exploration tracking code
 - [x] Add JSDoc docstrings to graphStore (actions, types)
 - [x] Add JSDoc docstrings to cypherGenerator
 - [x] Add JSDoc docstrings to SearchBar handlers
 - [x] Add JSDoc docstrings to useGraphContextMenu handlers
-- [ ] Document the unified query exploration workflow in user manual
-- [ ] Document the +/- operator algebra concept
+- [x] Document the unified query exploration workflow in user manual (`docs/guides/SAVED_QUERIES.md`)
+- [x] Document the +/- operator algebra concept
+- [x] Fill remaining docstring gaps (graphStore 4/9→9/9, queryDefinitionStore, useQueryReplay, ExplorerView, useGraphContextMenu)
 
 ### Phase 6: Type-Aware Saved Queries ✓
 - [x] Backend: `POST /query/documents/by-concepts` endpoint (concept→document reverse lookup)

@@ -68,6 +68,7 @@ interface QueryDefinitionStoreActions {
 
 type QueryDefinitionStore = QueryDefinitionStoreState & QueryDefinitionStoreActions;
 
+/** Zustand store for saved query definitions — CRUD + pagination against the API.  @verified 7b5be48d */
 export const useQueryDefinitionStore = create<QueryDefinitionStore>()(
   persist(
     (set, get) => ({

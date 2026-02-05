@@ -248,5 +248,6 @@ If you have separate knowledge bases, search both to see how different document 
 
 ## Next Steps
 
+- [Saved Queries](SAVED_QUERIES.md) - Save, load, and share explorations across views
 - [Understanding Grounding](understanding-grounding.md) - Interpret confidence scores
 - [Querying](querying.md) - Programmatic access via CLI, API, and MCP

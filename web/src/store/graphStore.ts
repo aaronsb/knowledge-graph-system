@@ -38,8 +38,10 @@ interface UISettings {
 
 // Search parameters — parameter-presence model where mode is derived, not declared.
 // SearchBar sets these, ExplorerView reacts to them.
+/** Active query authoring mode in the search bar.  @verified 7b5be48d */
 export type QueryMode = 'smart-search' | 'block-builder' | 'cypher-editor';
 
+/** Parameter-presence model for graph queries; mode is derived, not declared.  @verified 7b5be48d */
 export interface SearchParams {
   // Primary concept (always present for any search)
   primaryConceptId?: string;
@@ -59,9 +61,10 @@ export interface SearchParams {
   loadMode: 'clean' | 'add';
 }
 
-// Derived from which parameters are populated — never stored explicitly
+/** Derived query mode: idle (no primary), explore (neighborhood), or path (A→B).  @verified 7b5be48d */
 export type DerivedMode = 'idle' | 'explore' | 'path';
 
+/** Derive the query mode from which SearchParams fields are populated.  @verified 7b5be48d */
 export function deriveMode(params: SearchParams): DerivedMode {
   if (!params.primaryConceptId) return 'idle';
   if (params.destinationConceptId) return 'path';
@@ -278,6 +281,7 @@ const defaultSearchParams: SearchParams = {
   loadMode: 'clean',
 };
 
+/** Central Zustand store for graph state, exploration session, and UI settings.  @verified 7b5be48d */
 export const useGraphStore = create<GraphStore>()(
   persist(
     (set) => ({

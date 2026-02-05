@@ -13,6 +13,7 @@ import { useGraphStore, type SearchParams } from '../store/graphStore';
 import { apiClient } from '../api/client';
 import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
 
+/** Minimal shape a saved query must have to be replayed (exploration, polarity, or legacy).  @verified 7b5be48d */
 export interface ReplayableDefinition {
   id?: number;
   name?: string;
