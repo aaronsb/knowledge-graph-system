@@ -2,7 +2,7 @@
 # ============================================================================
 # operator.sh - Knowledge Graph Platform Manager (Thin Shim)
 # ============================================================================
-OPERATOR_VERSION="0.9.1"
+OPERATOR_VERSION="0.9.2"
 # ============================================================================
 #
 # Minimal host-side script that delegates to operator container.
@@ -47,7 +47,6 @@ fi
 CONFIG_FILE="$SCRIPT_DIR/.operator.conf"
 ENV_FILE="$SCRIPT_DIR/.env"
 OPERATOR_CONTAINER="kg-operator"
-POSTGRES_CONTAINER="knowledge-graph-postgres"
 
 # ============================================================================
 # Configuration
@@ -59,7 +58,6 @@ load_config() {
     fi
     DEV_MODE="${DEV_MODE:-false}"
     GPU_MODE="${GPU_MODE:-cpu}"
-    CONTAINER_PREFIX="${CONTAINER_PREFIX:-kg}"
     # Dev mode uses local builds by default, standalone uses GHCR
     if [ "$DEV_MODE" = "true" ]; then
         IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
@@ -197,15 +195,32 @@ cmd_stop() {
     load_config
     cd "$DOCKER_DIR"
 
-    # Simple stop can run on host
-    local stop_all=true
-    [[ "$1" == "--keep-infra" ]] && stop_all=false
+    local services=()
+    local keep_infra=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --keep-infra) keep_infra=true; shift ;;
+            *)
+                if is_known_service "$1" || [ "$1" = "all" ]; then
+                    services+=("$1")
+                else
+                    echo -e "${RED}Unknown service: $1${NC}"
+                    echo "Known services: $KNOWN_SERVICES"
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
 
     echo -e "${BLUE}→ Stopping containers...${NC}"
-    if [ "$stop_all" = true ]; then
-        run_compose stop
-    else
+    if [ "$keep_infra" = true ]; then
         run_compose stop api web
+    elif [ ${#services[@]} -gt 0 ] && [ "${services[0]}" != "all" ]; then
+        run_compose stop "${services[@]}"
+    else
+        run_compose stop
     fi
     echo -e "${GREEN}✓ Stopped${NC}"
 }
@@ -290,7 +305,9 @@ cmd_upgrade() {
     echo -e "${BLUE}→ Updating infrastructure...${NC}"
     run_compose up -d postgres garage
     echo -e "${BLUE}→ Waiting for postgres...${NC}"
-    if wait_for_container "$POSTGRES_CONTAINER" 30; then
+    local pg_container
+    pg_container=$(resolve_container postgres)
+    if wait_for_container "$pg_container" 30; then
         echo -e "${GREEN}  ✓ Postgres ready${NC}"
     else
         echo -e "${RED}  ✗ Postgres failed to start${NC}"
@@ -371,25 +388,43 @@ cmd_status() {
         echo "  No containers running"
 }
 
-# Get container name based on service and mode
-get_container_name() {
-    local service=$1
-    load_config
+# Known compose services
+KNOWN_SERVICES="postgres garage api web operator"
 
+is_known_service() {
+    local service=$1
     case "$service" in
-        postgres) echo "${CONTAINER_PREFIX:-knowledge-graph}-postgres" ;;
-        garage)   echo "${CONTAINER_PREFIX:-knowledge-graph}-garage" ;;
-        operator) echo "kg-operator" ;;
-        api|web)
-            # Dev mode uses kg-*-dev, standalone uses kg-*
-            if [ "$DEV_MODE" = "true" ]; then
-                echo "kg-${service}-dev"
-            else
-                echo "kg-${service}"
-            fi
-            ;;
-        *) echo "kg-$service" ;;
+        postgres|garage|api|web|operator) return 0 ;;
+        *) return 1 ;;
     esac
+}
+
+# Resolve actual container name for a compose service.
+# Uses docker compose as the source of truth — reads the merged overlay chain.
+# Results are cached after first call to avoid repeated subprocess spawns.
+_RESOLVE_CACHE=""
+_resolve_all_containers() {
+    [ -n "$_RESOLVE_CACHE" ] && return
+    load_config
+    # Try running/stopped containers first (most common path)
+    _RESOLVE_CACHE=$(cd "$DOCKER_DIR" && eval "$(get_compose_cmd) ps -a --format '{{.Service}}={{.Name}}'" 2>/dev/null)
+    if [ -z "$_RESOLVE_CACHE" ]; then
+        # Nothing running — parse compose config
+        _RESOLVE_CACHE=$(cd "$DOCKER_DIR" && eval "$(get_compose_cmd) config" 2>/dev/null | \
+            awk '/^  [a-z].*:$/{svc=substr($1,1,length($1)-1)} svc && /container_name:/{print svc "=" $2; svc=""}')
+    fi
+}
+
+resolve_container() {
+    local service=$1
+    _resolve_all_containers
+    local name
+    name=$(echo "$_RESOLVE_CACHE" | grep "^${service}=" | head -1 | cut -d= -f2)
+    if [ -n "$name" ]; then
+        echo "$name"
+    else
+        echo "kg-${service}"
+    fi
 }
 
 # Read an OCI label from a running container
@@ -417,10 +452,11 @@ show_versions_table() {
 
     local any_stale=false
     for service in postgres api web operator; do
-        local container=$(get_container_name "$service")
+        local container
+        container=$(resolve_container "$service")
 
         # Check if running
-        if ! docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
+        if [ -z "$container" ] || ! docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
             printf "  %-14s ${YELLOW}%-10s${NC}\n" "$service" "(stopped)"
             continue
         fi
@@ -484,17 +520,32 @@ cmd_logs() {
     local service="${1:-api}"
     shift 2>/dev/null || true
 
-    local container=$(get_container_name "$service")
-    docker logs "$@" "$container"
+    load_config
+    cd "$DOCKER_DIR"
+    run_compose logs "$@" "$service"
 }
 
 cmd_restart() {
     local service="${1:-}"
-    [ -z "$service" ] && echo "Usage: $0 restart <service>" && exit 1
+    [ -z "$service" ] && echo "Usage: $0 restart <service|all>" && exit 1
 
-    local container=$(get_container_name "$service")
-    docker restart "$container"
-    echo -e "${GREEN}✓ $service restarted${NC}"
+    check_env
+    load_config
+    cd "$DOCKER_DIR"
+
+    if [ "$service" = "all" ]; then
+        echo -e "${BLUE}→ Restarting all services...${NC}"
+        run_compose restart
+        echo -e "${GREEN}✓ All services restarted${NC}"
+    elif is_known_service "$service"; then
+        echo -e "${BLUE}→ Restarting $service...${NC}"
+        run_compose restart "$service"
+        echo -e "${GREEN}✓ $service restarted${NC}"
+    else
+        echo -e "${RED}Unknown service: $service${NC}"
+        echo "Known services: $KNOWN_SERVICES"
+        exit 1
+    fi
 }
 
 cmd_update() {
@@ -587,8 +638,8 @@ Usage: $0 <command> [options]
 
 ${BOLD}Lifecycle:${NC}
   start              Start platform (infra + app)
-  stop [--keep-infra] Stop platform
-  restart <service>  Restart a service
+  stop [service|--keep-infra] Stop platform or specific service
+  restart <service|all>  Restart a service (or all)
   upgrade            Pull, migrate, restart
   update             Pull images only
   teardown [--full]  Remove containers (--full: +volumes)
