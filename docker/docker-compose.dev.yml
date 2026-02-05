@@ -6,6 +6,23 @@
 # ============================================================================
 
 services:
+  postgres:
+    # Dev mode: use stock apache/age, volume-mount extension artifacts from host build.
+    # Build with: ./graph-accel/build-in-container.sh
+    # If dist/ files don't exist, postgres starts fine — extension is optional.
+    image: apache/age
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
+      - ../schema/11_graph_accel.sql:/docker-entrypoint-initdb.d/11-graph-accel.sql
+      - postgres_import:/import
+      # graph_accel: mount build artifacts for install via deploy-option0.sh.
+      # Build with: ./graph-accel/build-in-container.sh
+      # Install with: ./graph-accel/tests/deploy-option0.sh --skip-build
+      # (deploy-option0.sh docker-cp's from dist/ into the running container)
+    networks:
+      - kg-network
+
   operator:
     # Operator already has full workspace mounted (..:/workspace)
     # Ensure scripts and configs are live-mounted for development

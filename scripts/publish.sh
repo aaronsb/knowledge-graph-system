@@ -123,7 +123,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        api|web|operator)
+        api|web|operator|postgres)
             TARGETS+=("$1")
             shift
             ;;
@@ -591,7 +591,7 @@ cmd_images() {
     get_versions
 
     if [ ${#TARGETS[@]} -eq 0 ]; then
-        TARGETS=(api web operator)
+        TARGETS=(api web operator postgres)
     fi
 
     # Auto-enable multi-arch on release branch
@@ -638,6 +638,7 @@ cmd_images() {
 
     for target in "${TARGETS[@]}"; do
         local context dockerfile image_name
+        local target_multi_arch="$use_multi_arch"
 
         case "$target" in
             api)
@@ -654,6 +655,24 @@ cmd_images() {
                 context="."
                 dockerfile="./operator/Dockerfile"
                 image_name="kg-operator"
+                ;;
+            postgres)
+                # Requires per-arch pre-built artifacts in graph-accel/dist/pg17/
+                if [ ! -d "./graph-accel/dist/pg17/amd64" ]; then
+                    echo -e "${YELLOW}⚠ graph-accel/dist/pg17/amd64/ missing${NC}"
+                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
+                    echo -e "  Skipping postgres target."
+                    continue
+                fi
+                if [ "$target_multi_arch" = "true" ] && [ ! -d "./graph-accel/dist/pg17/arm64" ]; then
+                    echo -e "${YELLOW}⚠ Multi-arch requested but graph-accel/dist/pg17/arm64/ missing${NC}"
+                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
+                    echo -e "  Building amd64 only."
+                    target_multi_arch=false
+                fi
+                context="."
+                dockerfile="./docker/Dockerfile.postgres"
+                image_name="kg-postgres"
                 ;;
             *)
                 echo -e "${RED}Unknown target: $target${NC}"
@@ -674,7 +693,7 @@ cmd_images() {
             )
             [ -n "$DESCRIPTION" ] && label_args+=(--label "org.opencontainers.image.description=$DESCRIPTION")
 
-            if [ "$use_multi_arch" = "true" ]; then
+            if [ "$target_multi_arch" = "true" ]; then
                 # Multi-arch build with buildx (builds and pushes in one step)
                 local push_flag=""
                 [ "$DRY_RUN" = "false" ] && push_flag="--push"
@@ -710,7 +729,7 @@ cmd_images() {
         fi
 
         # Push for single-arch (multi-arch pushes during build)
-        if [ "$DRY_RUN" = "false" ] && [ "$use_multi_arch" = "false" ]; then
+        if [ "$DRY_RUN" = "false" ] && [ "$target_multi_arch" = "false" ]; then
             echo -e "${BLUE}→ Pushing $target...${NC}"
             docker push "$full_image:latest"
             docker push "$full_image:$VERSION"

@@ -1,0 +1,5 @@
+comment = 'In-memory graph traversal acceleration for Apache AGE'
+default_version = '0.5.0'
+module_pathname = '$libdir/graph_accel'
+relocatable = false
+superuser = true

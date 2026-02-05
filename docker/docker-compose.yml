@@ -25,8 +25,14 @@
 
 services:
   postgres:
-    # Apache AGE official image (includes PostgreSQL + AGE extension)
-    image: apache/age
+    # Apache AGE + graph_accel acceleration extension (ADR-201)
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.postgres
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: kg-postgres:latest
     container_name: knowledge-graph-postgres
     ports:
       - "5432:5432"  # PostgreSQL connection port
@@ -47,6 +53,8 @@ services:
       # Note: AGE image provides 00-create-extension-age.sql (runs first)
       # Consolidated baseline schema (v2.0.0) - runs after AGE extension
       - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
+      # graph_accel extension init (conditional - skips if .so not present)
+      - ../schema/11_graph_accel.sql:/docker-entrypoint-initdb.d/11-graph-accel.sql
 
       # Optional: Import directory for bulk data loads
       - postgres_import:/import

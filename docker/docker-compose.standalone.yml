@@ -10,6 +10,12 @@
 # ============================================================================
 
 services:
+  postgres:
+    # Standalone: init scripts baked into kg-postgres GHCR image
+    volumes: !reset
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_import:/import
+
   api:
     # Production container name (no -dev suffix)
     container_name: kg-api

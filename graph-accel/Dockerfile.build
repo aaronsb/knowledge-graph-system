@@ -1,0 +1,62 @@
+# ============================================================================
+# graph_accel — Build extension inside official apache/age container
+# ============================================================================
+# Produces ABI-compatible .so, .control, and .sql files for the exact
+# PostgreSQL + libc shipped by the apache/age image.
+#
+# Usage:
+#   docker build -f graph-accel/Dockerfile.build -t graph-accel-builder .
+#   docker run --rm graph-accel-builder | tar -xf - -C graph-accel/dist/
+#
+# Or use the wrapper script: ./graph-accel/build-in-container.sh
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Build environment (apache/age base ensures ABI compatibility)
+# ---------------------------------------------------------------------------
+# Pin to digest — the runtime image (Dockerfile.postgres) must match.
+# Update both files together when upgrading the base image.
+FROM apache/age@sha256:4ba7dd683fc83fcac0e603f76448f6afba0507cf4d7d21673cede0d6ff0265b2 AS builder
+
+# Build dependencies — Rust toolchain + PostgreSQL dev headers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl ca-certificates \
+    build-essential pkg-config \
+    libssl-dev libclang-dev clang \
+    postgresql-server-dev-17 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust (stable)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install cargo-pgrx (pinned to match graph-accel/ext/Cargo.toml)
+RUN cargo install cargo-pgrx --version =0.16.1 --locked
+
+# Initialize pgrx with the system pg_config (same PG as runtime)
+RUN cargo pgrx init --pg17=$(which pg_config)
+
+# Copy source
+WORKDIR /build
+COPY graph-accel/Cargo.toml graph-accel/Cargo.lock ./
+COPY graph-accel/core/ ./core/
+COPY graph-accel/ext/ ./ext/
+COPY graph-accel/bench/ ./bench/
+
+# Build the extension package
+RUN cargo pgrx package --package graph-accel-ext --pg-config $(which pg_config)
+
+# Resolve the output paths (pgrx nests under pg_config install prefix)
+# Use find to locate artifacts reliably regardless of nesting structure
+RUN mkdir -p /artifacts && \
+    find target/release/graph_accel-pg17 -name "graph_accel.so" -exec cp {} /artifacts/ \; && \
+    find target/release/graph_accel-pg17 -name "graph_accel.control" -exec cp {} /artifacts/ \; && \
+    find target/release/graph_accel-pg17 -name "graph_accel--*.sql" -exec cp {} /artifacts/ \;
+
+# ---------------------------------------------------------------------------
+# Stage 2: Minimal output (per-architecture subdirectory)
+# ---------------------------------------------------------------------------
+FROM scratch AS artifacts
+ARG TARGETARCH
+COPY --from=builder /artifacts/ /pg17/${TARGETARCH}/
