@@ -217,16 +217,19 @@ cmd_upgrade() {
 
     local dry_run=false
     local no_backup=false
+    local auto_yes=false
 
     while [[ $# -gt 0 ]]; do
         case $1 in
             --dry-run|--whatif) dry_run=true; shift ;;
             --no-backup) no_backup=true; shift ;;
+            -y|--yes) auto_yes=true; shift ;;
             --help|-h)
                 echo "Usage: ./operator.sh upgrade [OPTIONS]"
                 echo ""
                 echo "Options:"
                 echo "  --dry-run     Show what would be done (also: --whatif)"
+                echo "  -y, --yes     Skip confirmation prompt"
                 echo "  --no-backup   Skip pre-upgrade backup"
                 exit 0
                 ;;
@@ -254,11 +257,18 @@ cmd_upgrade() {
 
     if [ "$dry_run" = true ]; then
         if [ "$IMAGE_SOURCE" = "local" ]; then
-            echo -e "${YELLOW}[DRY RUN] Would build images, run migrations, restart services${NC}"
+            echo -e "${YELLOW}[DRY RUN] Would build images, update infra, run migrations, restart application${NC}"
         else
-            echo -e "${YELLOW}[DRY RUN] Would pull images, run migrations, restart services${NC}"
+            echo -e "${YELLOW}[DRY RUN] Would pull images, update infra, run migrations, restart application${NC}"
         fi
         return
+    fi
+
+    # Confirmation
+    if [ "$auto_yes" = false ]; then
+        read -p "Proceed with upgrade? [y/N] " -r
+        echo ""
+        [[ ! "$REPLY" =~ ^[Yy]$ ]] && echo "Cancelled." && return
     fi
 
     # Build or pull images
