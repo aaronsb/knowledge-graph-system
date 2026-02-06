@@ -12,7 +12,7 @@
  *
  *   <svg ref={svgRef}>
  *     <g ref={zoomRef}>
- *       {/* content */}
+ *       ...content...
  *     </g>
  *   </svg>
  */
