@@ -215,7 +215,7 @@ export function EdgeExplorerWorkspace() {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Visualization area - fills available space */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           <div className="absolute inset-0">
             {viewMode === 'chord' && (
               <ChordDiagram
@@ -248,7 +248,7 @@ export function EdgeExplorerWorkspace() {
         </div>
 
         {/* Side panel */}
-        <div className="w-80 border-l border-border bg-card overflow-y-auto flex-shrink-0">
+        <div className="w-80 border-l border-border bg-card overflow-y-auto flex-shrink-0 relative z-10">
           {/* Stats summary */}
           <div className="p-4 border-b border-border">
             <h2 className="text-sm font-semibold mb-3">Overview</h2>

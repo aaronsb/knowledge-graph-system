@@ -784,7 +784,7 @@ export function EmbeddingLandscapeWorkspace() {
 
         {/* Color legend */}
         {points.length > 0 && (
-          <div className="absolute top-4 right-4 p-3 bg-card/90 border border-border rounded-lg shadow-lg text-xs">
+          <div className="absolute top-4 right-4 p-3 bg-card border border-border rounded-lg shadow-lg text-xs z-10">
             <div className="font-medium text-foreground mb-2">
               {COLOR_SCHEME_INFO[colorScheme].label}
             </div>
