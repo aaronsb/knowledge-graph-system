@@ -9433,6 +9433,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#46-sequence-diagrams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Sequence Diagrams
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.6 Sequence Diagrams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagram-1-program-notarization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagram 1: Program Notarization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagram-2-program-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagram 2: Program Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagram-3-statement-dispatch-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagram 3: Statement Dispatch Detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10578,6 +10628,100 @@ execution, no jumps, and no back-references.</p>
 <p><strong>ApiOp mapping</strong> depends on the endpoint. Each allowed endpoint returns data
 that the executor maps to <code>WorkingGraph</code>. The mapping is endpoint-specific but
 the output shape is always <code>{ nodes: RawNode[], links: RawLink[] }</code>.</p>
+<h3 id="46-sequence-diagrams">4.6 Sequence Diagrams</h3>
+<p>The following diagrams illustrate the three key GraphProgram flows: how programs
+are validated and stored (notarization), how stored or inline programs execute
+end-to-end, and what happens inside a single statement dispatch. Cross-references
+to the relevant spec sections are noted in each diagram. For operator semantics
+see <a href="#3-operator-semantics">Section 3</a>; for validation rules see
+<a href="#5-validation-rules">Section 5</a>.</p>
+<h4 id="diagram-1-program-notarization">Diagram 1: Program Notarization</h4>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as Client&lt;br/&gt;(Web / CLI / MCP / Agent)
+    participant A as API Server
+    participant V as Validator
+    participant D as Database
+
+    C-&gt;&gt;A: POST /programs&lt;br/&gt;{ GraphProgram JSON }
+    A-&gt;&gt;V: Validate AST
+    Note over V: Layer 1: Pydantic type check&lt;br/&gt;(Section 2 types)
+    Note over V: Layer 2: Structural + safety checks&lt;br/&gt;(Section 5.1–5.4)
+
+    alt Validation fails
+        V--&gt;&gt;A: ValidationResult { valid: false, errors[] }
+        A--&gt;&gt;C: 400 Bad Request&lt;br/&gt;ValidationResult
+    else Validation passes
+        V--&gt;&gt;A: ValidationResult { valid: true }
+        A-&gt;&gt;D: INSERT INTO query_definitions&lt;br/&gt;owner_id, definition_type='program',&lt;br/&gt;definition={ AST }
+        D--&gt;&gt;A: program_id
+        A--&gt;&gt;C: 201 Created&lt;br/&gt;{ id, metadata }
+    end</code></pre>
+<h4 id="diagram-2-program-execution">Diagram 2: Program Execution</h4>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as Client
+    participant A as API Server
+    participant X as Executor
+    participant V as Validator
+    participant H as H (Source Graph)
+    participant W as W (Working Graph)
+
+    C-&gt;&gt;A: POST /programs/execute&lt;br/&gt;{ program (inline AST or id) }
+
+    opt Program submitted by ID
+        A-&gt;&gt;A: Load AST from query_definitions
+    end
+
+    A-&gt;&gt;V: Re-validate AST (defense in depth)
+    alt Validation fails
+        V--&gt;&gt;A: ValidationResult { valid: false }
+        A--&gt;&gt;C: 400 Bad Request
+    else Validation passes
+        V--&gt;&gt;A: ValidationResult { valid: true }
+    end
+
+    A-&gt;&gt;X: Execute program
+    X-&gt;&gt;W: Initialize W = { nodes: [], links: [] }
+
+    loop For each statement[i] (Section 4.2)
+        X-&gt;&gt;H: Execute operation (cypher or api)
+        H--&gt;&gt;X: Raw result
+        X-&gt;&gt;X: Map result to { nodes[], links[] }&lt;br/&gt;(Section 4.5)
+        X-&gt;&gt;W: Apply operator (+, -, &amp;, ?, !) to W&lt;br/&gt;(Section 3)
+        X-&gt;&gt;X: Record StepLogEntry (Section 4.4)
+
+        alt Assert (!) fails — empty result
+            X--&gt;&gt;A: ProgramResult { result: W (pre-failure),&lt;br/&gt;log, aborted: { statement: i } }
+            A--&gt;&gt;C: 200 OK (aborted)
+        end
+    end
+
+    X--&gt;&gt;A: ProgramResult { result: W, log }
+    A--&gt;&gt;C: 200 OK&lt;br/&gt;ProgramResult</code></pre>
+<h4 id="diagram-3-statement-dispatch-detail">Diagram 3: Statement Dispatch Detail</h4>
+<pre class="mermaid"><code>sequenceDiagram
+    participant X as Executor
+    participant Q as Query Facade
+    participant H as H (AGE / PostgreSQL)
+    participant S as Internal Service
+    participant W as W (Working Graph)
+
+    alt operation.type == "cypher"
+        X-&gt;&gt;Q: Send query (with limit if set)
+        Q-&gt;&gt;H: Execute openCypher against AGE
+        H--&gt;&gt;Q: AGE result rows
+        Q--&gt;&gt;X: Raw query result
+        X-&gt;&gt;X: Map AGE result to { nodes[], links[] }&lt;br/&gt;(Section 4.5 — CypherOp mapping)
+    else operation.type == "api"
+        X-&gt;&gt;S: Call service function directly&lt;br/&gt;(endpoint, params — no HTTP)
+        S--&gt;&gt;X: Service response
+        X-&gt;&gt;X: Map response to { nodes[], links[] }&lt;br/&gt;(Section 4.5 — ApiOp mapping)
+    end
+
+    Note over X: R = mapped result set
+
+    X-&gt;&gt;W: Apply operator to W using R&lt;br/&gt;(+, -, &amp;, ?, ! — Section 3)
+    X-&gt;&gt;W: Enforce dangling link invariant&lt;br/&gt;(Section 3.1)
+    X-&gt;&gt;X: Record StepLogEntry&lt;br/&gt;(Section 4.4)</code></pre>
 <hr />
 <h2 id="5-validation-rules">5. Validation Rules</h2>
 <p>Programs MUST be validated before execution. The API provides a
