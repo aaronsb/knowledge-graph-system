@@ -62,6 +62,29 @@ class TestWriteKeywordRejection:
         )
         assert not any(i.rule_id == 'V012' for i in issues)
 
+    def test_keyword_in_block_comment_allowed(self):
+        issues = check_cypher_safety(
+            "MATCH (c:Concept) /* DELETE everything */ RETURN c"
+        )
+        assert not any(i.rule_id == 'V012' for i in issues)
+
+    def test_keyword_in_double_quoted_string_allowed(self):
+        issues = check_cypher_safety(
+            'MATCH (c:Concept) WHERE c.label = "DELETE me" RETURN c'
+        )
+        assert not any(i.rule_id == 'V012' for i in issues)
+
+    def test_keyword_substring_not_rejected(self):
+        """'Created' as a label should not trigger CREATE detection."""
+        issues = check_cypher_safety(
+            "MATCH (n:Created) RETURN n"
+        )
+        assert issues == []
+
+    def test_empty_query(self):
+        issues = check_cypher_safety("")
+        assert issues == []
+
 
 class TestVariableLengthPathRejection:
     """Guard rejects unbounded variable-length paths (V030)."""

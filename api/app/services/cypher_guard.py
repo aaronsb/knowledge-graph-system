@@ -24,7 +24,6 @@ from typing import List
 
 from api.app.services.program_validator import (
     ValidationIssue,
-    _sanitize_cypher,
     _check_cypher_safety as _validator_check_cypher,
 )
 
