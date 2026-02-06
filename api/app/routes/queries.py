@@ -50,6 +50,7 @@ from ..models.queries import (
 )
 from ..services.diversity_analyzer import DiversityAnalyzer
 from ..services.confidence_analyzer import ConfidenceAnalyzer
+from ..services.cypher_guard import check_cypher_safety
 
 
 def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstance]:
@@ -1637,20 +1638,13 @@ async def execute_cypher_query(
     request: CypherQueryRequest
 ):
     """
-    Execute a raw openCypher query against the Apache AGE graph (ADR-060).
+    Execute a read-only openCypher query against the Apache AGE graph (ADR-060).
 
-    **Authentication:** Requires valid OAuth token
-    **Authorization:** Requires `graph:execute` permission
+    **Authentication:** Requires valid OAuth token.
 
-    Allows direct execution of openCypher queries for advanced users who want full control.
-    Returns nodes and relationships in a format suitable for graph visualization.
-
-    **Security Note:** This endpoint executes user-provided queries directly.
-    In production, consider:
-    - Read-only query enforcement
-    - Query timeout limits
-    - Rate limiting
-    - User authentication/authorization
+    Queries are validated against the Cypher safety guard (ADR-500) before
+    execution. Write operations (CREATE, SET, DELETE, MERGE, REMOVE, DROP,
+    DETACH) and unbounded variable-length paths are rejected.
 
     **Example Query:**
     ```cypher
@@ -1662,6 +1656,23 @@ async def execute_cypher_query(
 
     Returns graph data (nodes + relationships) for visualization.
     """
+    # ADR-500 Phase 2a: Cypher safety gate — reject writes and unbounded paths
+    safety_issues = check_cypher_safety(request.query)
+    if safety_issues:
+        details = [
+            {"rule": issue.rule_id, "message": issue.message}
+            for issue in safety_issues
+            if issue.severity == 'error'
+        ]
+        if details:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Query rejected by safety guard",
+                    "issues": details,
+                },
+            )
+
     client = get_age_client()
     import time
 
