@@ -2545,17 +2545,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             if (!toolArgs.program) {
               throw new Error('program is required for create action');
             }
-            const result = await client.createProgram(
-              toolArgs.program as Record<string, any>,
-              toolArgs.name as string | undefined,
-            );
-            const lines: string[] = [];
-            lines.push(`Notarized program "${result.name}" (ID ${result.id})`);
-            lines.push(`  Statements: ${result.program.statements.length}`);
-            lines.push(`  Created: ${result.created_at}`);
-            return {
-              content: [{ type: 'text', text: lines.join('\n') }],
-            };
+            try {
+              const result = await client.createProgram(
+                toolArgs.program as Record<string, any>,
+                toolArgs.name as string | undefined,
+              );
+              const lines: string[] = [];
+              lines.push(`Notarized program "${result.name}" (ID ${result.id})`);
+              lines.push(`  Statements: ${result.program.statements.length}`);
+              lines.push(`  Created: ${result.created_at}`);
+              return {
+                content: [{ type: 'text', text: lines.join('\n') }],
+              };
+            } catch (err: any) {
+              if (err.response?.status === 400 && err.response?.data?.detail?.validation) {
+                const validation = err.response.data.detail.validation;
+                const lines: string[] = ['✗ Program validation failed'];
+                if (validation.errors) {
+                  for (const e of validation.errors) {
+                    const loc = e.statement !== null && e.statement !== undefined
+                      ? `stmt ${e.statement}`
+                      : 'program';
+                    lines.push(`  [${e.rule_id}] ${loc}: ${e.message}`);
+                  }
+                }
+                return {
+                  content: [{ type: 'text', text: lines.join('\n') }],
+                  isError: true,
+                };
+              }
+              throw err;
+            }
           }
 
           case 'get': {
@@ -2586,6 +2606,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 lines.push(`  [${i}] ${stmt.op} conditional${label}`);
               }
             }
+            lines.push('\nProgram AST:');
+            lines.push(JSON.stringify(result.program, null, 2));
             return {
               content: [{ type: 'text', text: lines.join('\n') }],
             };
