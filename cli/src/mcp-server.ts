@@ -71,14 +71,12 @@ import pkg from '../package.json';
 /**
  * Default parameters for graph queries (ADR-048 Query Safety)
  *
- * These defaults balance performance and result quality:
- * - Higher thresholds (0.75+) prevent expensive full-graph scans
- * - Lower max_hops (3) prevent exponential traversal explosion
- * - Adjust based on graph size and performance characteristics
+ * Aligned with CLI defaults so MCP agents get the same results as CLI users.
+ * The API server enforces its own safety limits on the backend.
  */
 const DEFAULT_SEARCH_SIMILARITY = 0.7;  // Search tool minimum similarity
-const DEFAULT_SEMANTIC_THRESHOLD = 0.75; // Connect queries semantic matching
-const DEFAULT_MAX_HOPS = 3;              // Maximum path traversal depth
+const DEFAULT_SEMANTIC_THRESHOLD = 0.5;  // Connect queries semantic matching (matches CLI)
+const DEFAULT_MAX_HOPS = 5;              // Maximum path traversal depth (matches CLI)
 const DEFAULT_MAX_DEPTH = 2;             // Related concepts neighborhood depth
 
 // Create server instance
@@ -338,7 +336,7 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         name: 'concept',
         description: `Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
 
-PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
+For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.
 
 For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.`,
         inputSchema: {
@@ -421,13 +419,13 @@ For multi-step workflows (search → connect → expand → filter), compose the
             },
             max_hops: {
               type: 'number',
-              description: 'Max path length (default: 3). WARNING: Values >5 combined with threshold <0.75 can cause severe performance issues.',
-              default: 3,
+              description: 'Max path length (default: 5). Higher values find longer paths but take more time.',
+              default: 5,
             },
             threshold: {
               type: 'number',
-              description: 'Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, <0.60 = DANGEROUS (can hang database for minutes)',
-              default: 0.75,
+              description: 'Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.',
+              default: 0.5,
             },
           },
           required: ['action'],
@@ -2972,7 +2970,7 @@ Read the **program/syntax** resource for the full language reference with exampl
 
 2. **concept** (action: "connect") — Discover HOW concepts relate
    - Traces paths: problem→solution, cause→effect
-   - **PERFORMANCE**: Start with threshold=0.8, max_hops=3
+   - Defaults (threshold=0.5, max_hops=5) match CLI for broad discovery
    - Often MORE VALUABLE than isolated concept details
 
 3. **concept** (action: "details") — Complete picture for one concept
@@ -3001,7 +2999,7 @@ Read the **program/syntax** resource for the full language reference with exampl
 - **Contradictions are valuable**: Negative grounding reveals pain points and what didn't work
 - **Connection paths tell stories**: Follow the evidence chain between concepts
 - **Use resources for status**: database/stats, system/status — no tool budget cost
-- **Performance**: Keep threshold >= 0.75 for connect queries`,
+- **Defaults match CLI**: threshold=0.5, max_hops=5 — broad discovery out of the box`,
           },
         },
       ],
