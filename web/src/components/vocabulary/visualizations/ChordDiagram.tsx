@@ -9,6 +9,7 @@
 import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import * as d3 from 'd3';
 import { getCategoryColor } from '../../../config/categoryColors';
+import { useSvgPanZoom } from '../../../hooks/useSvgPanZoom';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface GraphLink {
@@ -54,6 +55,8 @@ export function ChordDiagram({
   selectedCategory,
 }: ChordDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<SVGGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredChord, setHoveredChord] = useState<{ source: string; target: string; count: number } | null>(null);
@@ -80,6 +83,8 @@ export function ChordDiagram({
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  useSvgPanZoom(svgRef, zoomRef);
 
   const { width, height } = dimensions;
 
@@ -266,7 +271,8 @@ export function ChordDiagram({
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative">
-      <svg width={width} height={height} className="overflow-visible">
+      <svg ref={svgRef} width={width} height={height} className="overflow-visible">
+        <g ref={zoomRef}>
         <g transform={`translate(${width / 2}, ${height / 2})`}>
           {/* Category arcs */}
           {chordData.groups.map((group, i) => {
@@ -350,6 +356,7 @@ export function ChordDiagram({
               />
             );
           })}
+        </g>
         </g>
       </svg>
 
