@@ -3,7 +3,7 @@
 # Run `make` or `make help` to see available targets.
 
 .DEFAULT_GOAL := help
-.PHONY: help test test-unit test-api test-verbose lint lint-queries \
+.PHONY: help test test-unit test-api test-program test-verbose test-list lint lint-queries \
         coverage coverage-verbose coverage-staleness \
         todos todos-verbose todos-age slopscan \
         docs docs-cli docs-mcp docs-site \
@@ -15,19 +15,38 @@
 
 SCRIPTS := scripts/development
 
+# Verify kg-api-dev container is running before test targets
+_require-api:
+	@docker inspect -f '{{.State.Running}}' kg-api-dev >/dev/null 2>&1 \
+		|| { echo "Error: kg-api-dev container is not running. Start it with: make start"; exit 1; }
+
 ##@ Testing (runs inside kg-api-dev container)
 
-test: ## Run full test suite in container
+test: _require-api ## Run full test suite in container
 	@docker exec kg-api-dev pytest tests/ -x -q
 
-test-unit: ## Run unit tests only
+test-unit: _require-api ## Run unit tests only
 	@docker exec kg-api-dev pytest tests/unit/ -x -q
 
-test-api: ## Run API route tests only
+test-api: _require-api ## Run API route tests only
 	@docker exec kg-api-dev pytest tests/api/ -x -q
 
-test-verbose: ## Run full suite with verbose output
+test-program: _require-api ## Run GraphProgram validation spec
+	@docker exec kg-api-dev pytest tests/unit/test_program_validation.py -v
+
+test-verbose: _require-api ## Run full suite with verbose output
 	@docker exec kg-api-dev pytest tests/ -x -v --tb=short
+
+test-list: ## Show available test suites
+	@echo "Available test suites:"
+	@echo ""
+	@echo "  make test           Full suite (unit + API)"
+	@echo "  make test-unit      Unit tests only"
+	@echo "  make test-api       API route tests only"
+	@echo "  make test-program   GraphProgram validation spec (109 tests)"
+	@echo "  make test-verbose   Full suite with verbose output"
+	@echo ""
+	@echo "Run inside kg-api-dev container. Start platform first: make start"
 
 ##@ Static Analysis
 
