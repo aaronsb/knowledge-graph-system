@@ -1558,6 +1558,49 @@ class APIClient {
   }
 
   // ============================================================
+  // PROGRAM METHODS (ADR-500)
+  // ============================================================
+
+  /**
+   * Notarize and store a GraphProgram.
+   *
+   * Validates the program through all safety layers, stores it in
+   * query_definitions with definition_type='program', and returns
+   * the notarized program with its storage ID.
+   */
+  async createProgram(
+    program: Record<string, unknown>,
+    name?: string,
+  ): Promise<import('../types/program').ProgramCreateResponse> {
+    const response = await this.client.post('/programs', { program, name });
+    return response.data;
+  }
+
+  /**
+   * Validate a GraphProgram without storing it (dry run).
+   *
+   * Returns structured validation errors and warnings.
+   */
+  async validateProgram(
+    program: Record<string, unknown>,
+  ): Promise<import('../types/program').ValidationResult> {
+    const response = await this.client.post('/programs/validate', { program });
+    return response.data;
+  }
+
+  /**
+   * Retrieve a notarized program by ID.
+   *
+   * Only accessible to the program owner or admins.
+   */
+  async getProgram(
+    id: number,
+  ): Promise<import('../types/program').ProgramReadResponse> {
+    const response = await this.client.get(`/programs/${id}`);
+    return response.data;
+  }
+
+  // ============================================================
   // DOCUMENT METHODS (ADR-084)
   // ============================================================
 
