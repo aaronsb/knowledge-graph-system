@@ -1064,6 +1064,46 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
           required: ['action'],
         },
       },
+      // ADR-500: GraphProgram notarization
+      {
+        name: 'program',
+        description: `Manage GraphProgram notarization: validate, store, and retrieve programs.
+
+Programs are the canonical AST for graph query composition (ADR-500). They represent
+bounded sequences of set-algebraic operations over Cypher queries and API calls.
+Programs must be notarized (validated + signed) by the server before execution.
+
+Three actions available:
+- "validate": Dry-run validation (no storage). Returns structured errors and warnings.
+- "create": Validate + store → returns ID + notarized program.
+- "get": Retrieve a notarized program by ID.
+
+Use validate to check programs before committing. Use create to notarize and persist.
+Use get to retrieve previously stored programs for execution.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['validate', 'create', 'get'],
+              description: 'Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID)',
+            },
+            program: {
+              type: 'object',
+              description: 'GraphProgram AST (required for validate and create). Must have version:1 and statements array.',
+            },
+            name: {
+              type: 'string',
+              description: 'Program name (optional for create, ignored for others)',
+            },
+            program_id: {
+              type: 'number',
+              description: 'Program ID (required for get)',
+            },
+          },
+          required: ['action'],
+        },
+      },
     ],
   };
 });
@@ -2462,6 +2502,97 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           default:
             throw new Error(`Unknown graph action: ${action}. Use: create, edit, delete, list, or queue`);
+        }
+      }
+
+      // ADR-500: GraphProgram notarization
+      case 'program': {
+        const action = toolArgs.action as string;
+        const client = createClientFromEnv();
+
+        switch (action) {
+          case 'validate': {
+            if (!toolArgs.program) {
+              throw new Error('program is required for validate action');
+            }
+            const result = await client.validateProgram(toolArgs.program as Record<string, any>);
+            const lines: string[] = [];
+            lines.push(result.valid ? '✓ Program is valid' : '✗ Program is invalid');
+            if (result.errors.length > 0) {
+              lines.push('\nErrors:');
+              for (const err of result.errors) {
+                const loc = err.statement !== null && err.statement !== undefined
+                  ? `stmt ${err.statement}`
+                  : 'program';
+                lines.push(`  [${err.rule_id}] ${loc}: ${err.message}`);
+              }
+            }
+            if (result.warnings.length > 0) {
+              lines.push('\nWarnings:');
+              for (const warn of result.warnings) {
+                const loc = warn.statement !== null && warn.statement !== undefined
+                  ? `stmt ${warn.statement}`
+                  : 'program';
+                lines.push(`  [${warn.rule_id}] ${loc}: ${warn.message}`);
+              }
+            }
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          case 'create': {
+            if (!toolArgs.program) {
+              throw new Error('program is required for create action');
+            }
+            const result = await client.createProgram(
+              toolArgs.program as Record<string, any>,
+              toolArgs.name as string | undefined,
+            );
+            const lines: string[] = [];
+            lines.push(`Notarized program "${result.name}" (ID ${result.id})`);
+            lines.push(`  Statements: ${result.program.statements.length}`);
+            lines.push(`  Created: ${result.created_at}`);
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          case 'get': {
+            if (!toolArgs.program_id) {
+              throw new Error('program_id is required for get action');
+            }
+            const result = await client.getProgram(toolArgs.program_id as number);
+            const lines: string[] = [];
+            lines.push(`Program ${result.id}: ${result.name}`);
+            lines.push(`  Owner: ${result.owner_id ?? '(system)'}`);
+            lines.push(`  Version: ${result.program.version}`);
+            lines.push(`  Statements: ${result.program.statements.length}`);
+            lines.push(`  Created: ${result.created_at}`);
+            lines.push(`  Updated: ${result.updated_at}`);
+            if (result.program.metadata?.description) {
+              lines.push(`  Description: ${result.program.metadata.description}`);
+            }
+            lines.push('\nStatements:');
+            for (let i = 0; i < result.program.statements.length; i++) {
+              const stmt = result.program.statements[i];
+              const op = stmt.operation;
+              const label = stmt.label ? ` (${stmt.label})` : '';
+              if (op.type === 'cypher') {
+                lines.push(`  [${i}] ${stmt.op} cypher: ${op.query}${label}`);
+              } else if (op.type === 'api') {
+                lines.push(`  [${i}] ${stmt.op} api: ${op.endpoint}${label}`);
+              } else if (op.type === 'conditional') {
+                lines.push(`  [${i}] ${stmt.op} conditional${label}`);
+              }
+            }
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          default:
+            throw new Error(`Unknown program action: ${action}. Use: validate, create, or get`);
         }
       }
 

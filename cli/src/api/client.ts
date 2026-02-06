@@ -2194,6 +2194,32 @@ export class KnowledgeGraphClient {
     await this.client.delete(`/query-definitions/${definitionId}`);
   }
 
+  // ========== Program Methods (ADR-500) ==========
+
+  /**
+   * Notarize and store a GraphProgram.
+   */
+  async createProgram(program: Record<string, any>, name?: string): Promise<import('../types/index.js').ProgramCreateResponse> {
+    const response = await this.client.post('/programs', { program, name });
+    return response.data;
+  }
+
+  /**
+   * Validate a GraphProgram without storing it (dry run).
+   */
+  async validateProgram(program: Record<string, any>): Promise<import('../types/index.js').ValidationResult> {
+    const response = await this.client.post('/programs/validate', { program });
+    return response.data;
+  }
+
+  /**
+   * Retrieve a notarized program by ID.
+   */
+  async getProgram(programId: number): Promise<import('../types/index.js').ProgramReadResponse> {
+    const response = await this.client.get(`/programs/${programId}`);
+    return response.data;
+  }
+
   // ========== Storage Admin ==========
 
   /**

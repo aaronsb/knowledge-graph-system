@@ -40,34 +40,17 @@ Raw unnotarized Cypher no longer reaches the database.
 
 ---
 
-## Phase 2a: Cypher Safety Gate (secure the front door)
+## Phase 2a: Cypher Safety Gate ✓ (PR #297)
 
-Wire the existing validator checks as a guard on `/query/cypher` so raw
-Cypher can no longer write to the graph or trigger unbounded traversals.
-No new endpoints — just defense.
+- [x] `cypher_guard.py` — reuses validator's `_check_cypher_safety`
+- [x] Wired on `POST /query/cypher` — write keywords and unbounded paths rejected
+- [x] 27 unit tests
 
-- [ ] Extract Cypher safety checks from `program_validator.py` into a
-      reusable `cypher_guard.py` module (write-keyword scan, path-length
-      cap, sanitization)
-- [ ] Wire `cypher_guard` as a dependency/middleware on `POST /query/cypher`
-- [ ] Reject queries containing write keywords (CREATE, SET, DELETE, MERGE,
-      REMOVE, DROP) with clear error messages
-- [ ] Reject queries with unbounded variable-length paths (`[*]`, `[*3..]`)
-- [ ] Add escape hatch: admin-only flag to bypass guard (for migrations/maintenance)
-- [ ] Tests: write-keyword rejection, path-length rejection, clean queries pass
-- [ ] Verify all existing web UI query patterns still work through the gate
+## Phase 2b: Notarization Endpoints ✓ (PR #298)
 
-## Phase 2b: Notarization Endpoints (ADR-500 Phase 2)
-
-Server-side validation, storage, and retrieval of notarized programs.
-
-- [ ] `POST /programs` — validate + store → return ID + notarized program
-- [ ] `POST /programs/validate` — dry-run validation (no store)
-- [ ] `GET /programs/{id}` — retrieve a notarized program
-- [ ] Migration 052: add 'program' to `valid_definition_type` CHECK constraint
-- [ ] Update `query_definition.py`: add 'program' to `DEFINITION_TYPES`
-- [ ] Register programs router in `main.py`
-- [ ] Tests: create, validate, retrieve, auth, ownership
+- [x] `POST /programs`, `POST /programs/validate`, `GET /programs/{id}`
+- [x] Migration 052, query_definition types updated, router registered
+- [x] 20 API tests (including edge cases from review)
 
 ## Phase 2c: Client Integration
 

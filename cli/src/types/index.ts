@@ -1204,3 +1204,93 @@ export interface BatchCreateResponse {
   concept_results: BatchItemResult[];
   edge_results: BatchItemResult[];
 }
+
+// ========== GraphProgram Types (ADR-500) ==========
+
+/** Set-algebra operator for a statement. */
+export type Operator = '+' | '-' | '&' | '?' | '!';
+
+/** Execute a read-only openCypher query. */
+export interface CypherOp {
+  type: 'cypher';
+  query: string;
+  limit?: number;
+}
+
+/** Call a REST API endpoint (smart block). */
+export interface ApiOp {
+  type: 'api';
+  endpoint: string;
+  params?: Record<string, unknown>;
+}
+
+/** Conditional branching based on working graph state. */
+export interface ConditionalOp {
+  type: 'conditional';
+  condition: Record<string, unknown>;
+  then: ProgramStatement[];
+  else?: ProgramStatement[];
+}
+
+export type Operation = CypherOp | ApiOp | ConditionalOp;
+
+/** A single step in a GraphProgram. */
+export interface ProgramStatement {
+  op: Operator;
+  operation: Operation;
+  label?: string;
+  block?: { blockType: string; params?: Record<string, unknown> };
+}
+
+/** The canonical AST for a graph query program. */
+export interface GraphProgram {
+  version: 1;
+  metadata?: {
+    name?: string;
+    description?: string;
+    author?: 'human' | 'agent' | 'system';
+    created?: string;
+  };
+  params?: Array<{
+    name: string;
+    type: 'string' | 'number';
+    default?: string | number;
+  }>;
+  statements: ProgramStatement[];
+}
+
+/** A single validation error or warning. */
+export interface ValidationIssue {
+  rule_id: string;
+  severity: 'error' | 'warning';
+  statement?: number | null;
+  field?: string | null;
+  message: string;
+}
+
+/** Result of validating a GraphProgram. */
+export interface ValidationResult {
+  valid: boolean;
+  errors: ValidationIssue[];
+  warnings: ValidationIssue[];
+}
+
+/** Response from POST /programs (notarize + store). */
+export interface ProgramCreateResponse {
+  id: number;
+  name: string;
+  program: GraphProgram;
+  valid: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Response from GET /programs/{id}. */
+export interface ProgramReadResponse {
+  id: number;
+  name: string;
+  program: GraphProgram;
+  owner_id: number | null;
+  created_at: string;
+  updated_at: string;
+}

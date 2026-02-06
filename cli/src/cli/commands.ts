@@ -28,6 +28,7 @@ import { conceptCommand } from './concept';
 import { edgeCommand } from './edge';
 import { batchCommand } from './batch';
 import { storageCommand } from './storage';
+import { programCommand } from './program';
 import { registerLoginCommand } from './login';
 import { registerLogoutCommand } from './logout';
 import { registerOAuthCommand } from './oauth';
@@ -120,6 +121,7 @@ export async function registerCommands(program: Command) {
     artifactCommand,
     groupCommand,
     queryDefCommand,
+    programCommand,   // ADR-500: GraphProgram notarization
     storageCommand,
   ];
 
