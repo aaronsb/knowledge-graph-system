@@ -175,6 +175,120 @@ export const programCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  .addCommand(
+    new Command('execute')
+      .description('Execute a program server-side')
+      .argument('<source>', 'Program ID (number) or JSON file path (use - for stdin)')
+      .option('--json', 'Output raw JSON')
+      .option('--log-only', 'Show only the execution log, not the graph')
+      .action(async (source, options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // Determine if source is an ID or file path
+          const isId = /^\d+$/.test(source);
+          let result;
+
+          if (isId) {
+            result = await client.executeProgram({ programId: parseInt(source) });
+          } else {
+            const program = await readProgramJson(source);
+            result = await client.executeProgram({ program });
+          }
+
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+            return;
+          }
+
+          // Header
+          const totalMs = result.log.reduce((sum, e) => sum + e.duration_ms, 0);
+
+          if (result.aborted) {
+            console.log(colors.status.error(
+              `\n  ✗ Aborted at statement ${result.aborted.statement}: ${result.aborted.reason}`
+            ));
+          } else {
+            console.log(colors.status.success(
+              `\n  ✓ Execution completed (${totalMs.toFixed(0)}ms)`
+            ));
+          }
+
+          console.log(`\n  ${colors.stats.label('Nodes:')} ${result.result.nodes.length}`);
+          console.log(`  ${colors.stats.label('Links:')} ${result.result.links.length}`);
+
+          // Execution log
+          if (result.log.length > 0) {
+            console.log('\n' + colors.stats.section('Execution Log'));
+            console.log(separator(80, '─'));
+            for (const entry of result.log) {
+              const opLabel = { '+': 'union', '-': 'diff', '&': 'intersect', '?': 'optional', '!': 'assert' }[entry.op] || entry.op;
+              const branch = entry.branch_taken ? ` → ${entry.branch_taken}` : '';
+              const affected = entry.operation_type === 'conditional'
+                ? ''
+                : ` (${entry.nodes_affected}n, ${entry.links_affected}l)`;
+              console.log(
+                `  ${colors.concept.label(`[${entry.statement}]`)} ${opLabel} ${colors.ui.key(entry.operation_type)}${branch}${affected} ${colors.status.dim(`${entry.duration_ms.toFixed(0)}ms`)}`
+              );
+            }
+            console.log(separator(80, '─'));
+          }
+
+          // Graph contents (unless --log-only)
+          if (!options.logOnly && result.result.nodes.length > 0) {
+            console.log('\n' + colors.stats.section('Nodes'));
+            for (const node of result.result.nodes.slice(0, 50)) {
+              const ont = node.ontology ? colors.status.dim(` [${node.ontology}]`) : '';
+              console.log(`  ${colors.concept.label('●')} ${node.label} ${colors.status.dim(`(${node.concept_id})`)}${ont}`);
+            }
+            if (result.result.nodes.length > 50) {
+              console.log(colors.status.dim(`  ... and ${result.result.nodes.length - 50} more`));
+            }
+          }
+
+          if (!options.logOnly && result.result.links.length > 0) {
+            console.log('\n' + colors.stats.section('Links'));
+            for (const link of result.result.links.slice(0, 30)) {
+              console.log(
+                `  ${colors.status.dim(link.from_id)} → ${colors.ui.key(link.relationship_type)} → ${colors.status.dim(link.to_id)}`
+              );
+            }
+            if (result.result.links.length > 30) {
+              console.log(colors.status.dim(`  ... and ${result.result.links.length - 30} more`));
+            }
+          }
+
+          console.log();
+          if (result.aborted) process.exit(1);
+
+        } catch (error: any) {
+          if (error.response?.status === 400) {
+            const detail = error.response.data.detail;
+            if (detail?.validation?.errors) {
+              console.error(colors.status.error('\n  ✗ Program validation failed'));
+              for (const err of detail.validation.errors) {
+                const loc = err.statement !== null && err.statement !== undefined
+                  ? `stmt ${err.statement}`
+                  : 'program';
+                console.error(
+                  `  ${colors.status.error(`[${err.rule_id}]`)} ${colors.status.dim(loc)}: ${err.message}`
+                );
+              }
+            } else {
+              console.error(colors.status.error(detail?.error || detail || 'Bad request'));
+            }
+          } else if (error.response?.status === 404) {
+            console.error(colors.status.error(`Program not found: ${source}`));
+          } else if (error.response?.status === 403) {
+            console.error(colors.status.error('Access denied to this program'));
+          } else {
+            console.error(colors.status.error('Failed to execute program'));
+            console.error(colors.status.error(error.response?.data?.detail || error.message));
+          }
+          process.exit(1);
+        }
+      })
   );
 
 

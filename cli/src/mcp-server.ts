@@ -1073,20 +1073,21 @@ Programs are the canonical AST for graph query composition (ADR-500). They repre
 bounded sequences of set-algebraic operations over Cypher queries and API calls.
 Programs must be notarized (validated + signed) by the server before execution.
 
-Three actions available:
+Four actions available:
 - "validate": Dry-run validation (no storage). Returns structured errors and warnings.
 - "create": Validate + store → returns ID + notarized program.
 - "get": Retrieve a notarized program by ID.
+- "execute": Execute a program server-side. Provide program (inline AST) or program_id (stored).
 
 Use validate to check programs before committing. Use create to notarize and persist.
-Use get to retrieve previously stored programs for execution.`,
+Use get to retrieve previously stored programs. Use execute to run programs server-side.`,
         inputSchema: {
           type: 'object',
           properties: {
             action: {
               type: 'string',
-              enum: ['validate', 'create', 'get'],
-              description: 'Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID)',
+              enum: ['validate', 'create', 'get', 'execute'],
+              description: 'Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID), "execute" (run server-side)',
             },
             program: {
               type: 'object',
@@ -1098,7 +1099,11 @@ Use get to retrieve previously stored programs for execution.`,
             },
             program_id: {
               type: 'number',
-              description: 'Program ID (required for get)',
+              description: 'Program ID (required for get, optional for execute)',
+            },
+            params: {
+              type: 'object',
+              description: 'Runtime parameter values for execute (optional)',
             },
           },
           required: ['action'],
@@ -2613,8 +2618,89 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
           }
 
+          case 'execute': {
+            if (!toolArgs.program && !toolArgs.program_id) {
+              throw new Error('program or program_id is required for execute action');
+            }
+            try {
+              const result = await client.executeProgram({
+                program: toolArgs.program as Record<string, any> | undefined,
+                programId: toolArgs.program_id as number | undefined,
+                params: toolArgs.params as Record<string, string | number> | undefined,
+              });
+              const lines: string[] = [];
+              const totalMs = result.log.reduce((sum: number, e: any) => sum + e.duration_ms, 0);
+
+              if (result.aborted) {
+                lines.push(`✗ Aborted at statement ${result.aborted.statement}: ${result.aborted.reason}`);
+              } else {
+                lines.push(`✓ Execution completed (${totalMs.toFixed(0)}ms)`);
+              }
+
+              lines.push(`  Nodes: ${result.result.nodes.length}`);
+              lines.push(`  Links: ${result.result.links.length}`);
+
+              if (result.log.length > 0) {
+                lines.push('\nExecution Log:');
+                const opNames: Record<string, string> = { '+': 'union', '-': 'diff', '&': 'intersect', '?': 'optional', '!': 'assert' };
+                for (const entry of result.log) {
+                  const opLabel = opNames[entry.op] || entry.op;
+                  const branch = entry.branch_taken ? ` → ${entry.branch_taken}` : '';
+                  const affected = entry.operation_type === 'conditional'
+                    ? ''
+                    : ` (${entry.nodes_affected}n, ${entry.links_affected}l)`;
+                  lines.push(`  [${entry.statement}] ${opLabel} ${entry.operation_type}${branch}${affected} ${entry.duration_ms.toFixed(0)}ms`);
+                }
+              }
+
+              if (result.result.nodes.length > 0) {
+                lines.push('\nNodes:');
+                for (const node of result.result.nodes.slice(0, 50)) {
+                  const ont = node.ontology ? ` [${node.ontology}]` : '';
+                  lines.push(`  • ${node.label} (${node.concept_id})${ont}`);
+                }
+                if (result.result.nodes.length > 50) {
+                  lines.push(`  ... and ${result.result.nodes.length - 50} more`);
+                }
+              }
+
+              if (result.result.links.length > 0) {
+                lines.push('\nLinks:');
+                for (const link of result.result.links.slice(0, 30)) {
+                  lines.push(`  ${link.from_id} → ${link.relationship_type} → ${link.to_id}`);
+                }
+                if (result.result.links.length > 30) {
+                  lines.push(`  ... and ${result.result.links.length - 30} more`);
+                }
+              }
+
+              return {
+                content: [{ type: 'text', text: lines.join('\n') }],
+                isError: !!result.aborted,
+              };
+            } catch (err: any) {
+              if (err.response?.status === 400 && err.response?.data?.detail?.validation) {
+                const validation = err.response.data.detail.validation;
+                const lines: string[] = ['✗ Program validation failed'];
+                if (validation.errors) {
+                  for (const e of validation.errors) {
+                    const loc = e.statement !== null && e.statement !== undefined
+                      ? `stmt ${e.statement}`
+                      : 'program';
+                    lines.push(`  [${e.rule_id}] ${loc}: ${e.message}`);
+                  }
+                }
+                return {
+                  content: [{ type: 'text', text: lines.join('\n') }],
+                  isError: true,
+                };
+              }
+              throw err;
+            }
+          }
+
           default:
-            throw new Error(`Unknown program action: ${action}. Use: validate, create, or get`);
+            throw new Error(`Unknown program action: ${action}. Use: validate, create, get, or execute`);
         }
       }
 
