@@ -9246,10 +9246,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t2-bypassing-the-blessing" class="md-nav__link">
+  <a href="#t2-bypassing-the-notarization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T2: Bypassing the Blessing
+        T2: Bypassing the Notarization
       
     </span>
   </a>
@@ -9290,10 +9290,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t6-post-blessing-mutation" class="md-nav__link">
+  <a href="#t6-post-notarization-mutation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T6: Post-Blessing Mutation
+        T6: Post-Notarization Mutation
       
     </span>
   </a>
@@ -9403,7 +9403,7 @@ system's trust boundaries.</p>
 <td>The working subgraph. Ephemeral, built during program execution.</td>
 </tr>
 <tr>
-<td><strong>Blessing</strong></td>
+<td><strong>Notarization</strong></td>
 <td>Server-side validation and storage of a <code>GraphProgram</code> AST.</td>
 </tr>
 <tr>
@@ -9419,16 +9419,16 @@ system's trust boundaries.</p>
 <ol>
 <li>Any client (web, CLI, MCP, agent) authors a <code>GraphProgram</code> JSON AST.</li>
 <li>The client submits the AST to the API (<code>POST /programs</code>).</li>
-<li>The API <strong>validates</strong> and <strong>blesses</strong> the program -- structural checks, safety
+<li>The API <strong>validates</strong> and <strong>notarizes</strong> the program -- structural checks, safety
    checks, and boundedness analysis all pass.</li>
-<li>The blessed program is stored in <code>kg_api.query_definitions</code> with an <code>owner_id</code>,
+<li>The notarized program is stored in <code>kg_api.query_definitions</code> with an <code>owner_id</code>,
    timestamp, and definition type <code>program</code>.</li>
-<li>Clients retrieve blessed programs and execute them via <code>POST /programs/execute</code>.</li>
+<li>Clients retrieve notarized programs and execute them via <code>POST /programs/execute</code>.</li>
 </ol>
-<p><strong>The blessing is a trust stamp, not a privilege gate.</strong> A client that bypasses
-blessing and submits an unblessed AST directly to the executor still faces the
+<p><strong>The notarization is a trust stamp, not a privilege gate.</strong> A client that bypasses
+notarization and submits an un-notarized AST directly to the executor still faces the
 same per-statement guards (authentication, rate limiting, read-only enforcement,
-namespace safety) that apply to all query execution. Blessing adds structural
+namespace safety) that apply to all query execution. Notarization adds structural
 guarantees on top of the existing execution guards -- it does not replace them.</p>
 <h2 id="defense-in-depth-layers">Defense-in-Depth Layers</h2>
 <p>The system provides five defense layers. Each layer is independent -- a failure
@@ -9492,9 +9492,9 @@ The security-relevant checks are:</p>
 </tbody>
 </table>
 <p><strong>What this layer guarantees:</strong>
-- A blessed program will not attempt write operations via Cypher.
-- A blessed program will not call arbitrary API endpoints.
-- A blessed program has a statically-determinable maximum operation count.
+- A notarized program will not attempt write operations via Cypher.
+- A notarized program will not call arbitrary API endpoints.
+- A notarized program has a statically-determinable maximum operation count.
 - All parameter references are resolvable.</p>
 <p><strong>What this layer does NOT guarantee:</strong>
 - Cypher queries will return results (they may match nothing).
@@ -9502,7 +9502,7 @@ The security-relevant checks are:</p>
 - <code>ApiOp</code> parameters are semantically valid (e.g., <code>min_similarity: 999</code>).
 - The program produces useful output.</p>
 <h3 id="layer-3-storage-and-ownership">Layer 3: Storage and Ownership</h3>
-<p>Blessed programs are stored in <code>kg_api.query_definitions</code>:</p>
+<p>Notarized programs are stored in <code>kg_api.query_definitions</code>:</p>
 <ul>
 <li><code>owner_id</code>: The authenticated user who created the program.</li>
 <li><code>created_at</code> / <code>updated_at</code>: Timestamps for audit trail.</li>
@@ -9540,10 +9540,10 @@ authenticated users.</p>
 <p><strong>What this layer guarantees:</strong>
 - Programs have author attribution.
 - Non-admin users cannot read, modify, or delete other users' programs.
-- The stored AST is the exact AST that was validated (no post-blessing mutation
+- The stored AST is the exact AST that was validated (no post-notarization mutation
   by unauthorized parties).</p>
 <p><strong>What this layer does NOT guarantee:</strong>
-- Programs are immutable after blessing. The owner (or admin) can update the
+- Programs are immutable after notarization. The owner (or admin) can update the
   stored definition. A re-validation step on update is recommended but not
   currently enforced.
 - Cross-user program sharing. There is no grants or sharing model yet.</p>
@@ -9656,19 +9656,19 @@ corrupt H (the persistent knowledge graph), or cause denial of service.</p>
 This is a resource management concern, not a privilege escalation. Mitigation
 options include per-user query budgets, statement-level timeouts, and EXPLAIN
 cost estimation.</p>
-<h3 id="t2-bypassing-the-blessing">T2: Bypassing the Blessing</h3>
-<p><strong>Threat:</strong> A client submits an unblessed AST directly to the executor, skipping
+<h3 id="t2-bypassing-the-notarization">T2: Bypassing the Notarization</h3>
+<p><strong>Threat:</strong> A client submits an un-notarized AST directly to the executor, skipping
 validation.</p>
 <p><strong>Mitigations:</strong>
 - The executor should re-validate incoming ASTs before execution (defense in
   depth). Even without re-validation, per-statement guards (Layer 4) still
   apply: authentication, audit logging, namespace safety.
-- <strong>No privilege escalation.</strong> Bypassing the blessing does not grant access to
-  write operations, admin endpoints, or other users' data. The blessing
+- <strong>No privilege escalation.</strong> Bypassing the notarization does not grant access to
+  write operations, admin endpoints, or other users' data. The notarization
   provides structural guarantees (well-formedness, boundedness); the execution
   guards provide access control.</p>
 <p><strong>Recommendation:</strong> The executor should always re-validate before execution.
-This makes the blessing a caching optimization (skip validation for known-good
+This makes the notarization a caching optimization (skip validation for known-good
 programs) rather than a security gate.</p>
 <h3 id="t3-injection-via-cypher">T3: Injection via Cypher</h3>
 <p><strong>Threat:</strong> A program contains Cypher that exploits string interpolation to
@@ -9718,8 +9718,8 @@ be reviewed whenever new endpoints are added.</p>
 <p><strong>Residual risk:</strong> There is no cross-user sharing model. Programs are either
 private (owned by a user) or system-provided (<code>owner_id = NULL</code>). A future
 grants system would need careful scoping to avoid confused-deputy scenarios.</p>
-<h3 id="t6-post-blessing-mutation">T6: Post-Blessing Mutation</h3>
-<p><strong>Threat:</strong> A program is modified after blessing, bypassing validation.</p>
+<h3 id="t6-post-notarization-mutation">T6: Post-Notarization Mutation</h3>
+<p><strong>Threat:</strong> A program is modified after notarization, bypassing validation.</p>
 <p><strong>Mitigations:</strong>
 - The <code>update_query_definition</code> endpoint allows the owner (or admin) to update
   the stored definition.</p>
@@ -9727,7 +9727,7 @@ grants system would need careful scoping to avoid confused-deputy scenarios.</p>
 re-validation. The update endpoint MUST reject the update if validation fails.
 This is not optional — without mandatory re-validation, any owner can silently
 introduce write keywords, disallowed endpoints, or unbounded programs by
-editing a previously-blessed definition. As defense-in-depth, the executor
+editing a previously-notarized definition. As defense-in-depth, the executor
 SHOULD also verify a stored hash of the validated AST at execution time.</p>
 <h2 id="capability-based-security">Capability-Based Security</h2>
 <p>The AST type system functions as a capability-based security model:</p>
@@ -9749,9 +9749,9 @@ expressible program cause harm?" The answer should be "no" for the current
 type set, and any new type addition should be evaluated against this question.</p>
 <h2 id="what-is-guaranteed">What IS Guaranteed</h2>
 <ol>
-<li><strong>Structural well-formedness.</strong> Blessed programs have valid operators, valid
+<li><strong>Structural well-formedness.</strong> Notarized programs have valid operators, valid
    operation types, and all required fields.</li>
-<li><strong>No write operations.</strong> Cypher statements in blessed programs do not contain
+<li><strong>No write operations.</strong> Cypher statements in notarized programs do not contain
    write keywords. Combined with read-only database connections, writes are
    prevented at two independent layers.</li>
 <li><strong>Bounded execution.</strong> The maximum operation count is statically computable
@@ -9759,7 +9759,7 @@ type set, and any new type addition should be evaluated against this question.</
    statement.</li>
 <li><strong>ApiOp endpoint restriction.</strong> Only allowlisted internal endpoints can be
    called via <code>ApiOp</code>.</li>
-<li><strong>Author attribution.</strong> Every blessed program records who created it and when.</li>
+<li><strong>Author attribution.</strong> Every notarized program records who created it and when.</li>
 <li><strong>Per-execution authentication.</strong> Every program execution requires a valid
    OAuth token. Programs execute with the caller's permissions.</li>
 <li><strong>Audit trail.</strong> Every Cypher statement is logged via <code>QueryAuditLog</code> with
@@ -9767,12 +9767,12 @@ type set, and any new type addition should be evaluated against this question.</
 </ol>
 <h2 id="what-is-not-guaranteed">What IS NOT Guaranteed</h2>
 <ol>
-<li><strong>Runtime correctness.</strong> A blessed program may return empty results, match
+<li><strong>Runtime correctness.</strong> A notarized program may return empty results, match
    non-existent concepts, or produce semantically meaningless output.</li>
 <li><strong>Performance.</strong> Individual queries may be slow. An unbounded <code>MATCH</code> with
    a high <code>LIMIT</code> can consume significant database resources. The program-level
    operation bound does not constrain individual query cost.</li>
-<li><strong>Data freshness.</strong> H may change between blessing and execution. Concepts
+<li><strong>Data freshness.</strong> H may change between notarization and execution. Concepts
    may be deleted, relationships may be added. Programs do not lock H.</li>
 <li><strong>Parameter semantic validity.</strong> The validator checks that <code>$param</code>
    references resolve, but does not validate that parameter values are
@@ -9780,7 +9780,7 @@ type set, and any new type addition should be evaluated against this question.</
    semantically invalid).</li>
 <li><strong>Cross-user sharing.</strong> There is no mechanism for User A to grant User B
    access to their programs. This is a future capability.</li>
-<li><strong>Immutability after blessing.</strong> Programs can be updated by the owner
+<li><strong>Immutability after notarization.</strong> Programs can be updated by the owner
    without re-validation. This is a known gap.</li>
 </ol>
 <h2 id="security-boundaries-summary">Security Boundaries Summary</h2>
@@ -9797,7 +9797,7 @@ type set, and any new type addition should be evaluated against this question.</
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                         |     ├── Boundedness check
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                         |     └── Parameter resolution
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                         |
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  Submit for blessing ─────&gt; Store blessed program (Layer 3)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  Submit for notarization ──&gt; Store notarized program (Layer 3)
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                         |     │
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                         |     └── owner_id, timestamps
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                         |
