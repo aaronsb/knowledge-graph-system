@@ -523,6 +523,114 @@ Both `CypherOp` and `ApiOp` produce a result set that must be mapped to
 that the executor maps to `WorkingGraph`. The mapping is endpoint-specific but
 the output shape is always `{ nodes: RawNode[], links: RawLink[] }`.
 
+### 4.6 Sequence Diagrams
+
+The following diagrams illustrate the three key GraphProgram flows: how programs
+are validated and stored (notarization), how stored or inline programs execute
+end-to-end, and what happens inside a single statement dispatch. Cross-references
+to the relevant spec sections are noted in each diagram. For operator semantics
+see [Section 3](#3-operator-semantics); for validation rules see
+[Section 5](#5-validation-rules).
+
+#### Diagram 1: Program Notarization
+
+```mermaid
+sequenceDiagram
+    participant C as Client<br/>(Web / CLI / MCP / Agent)
+    participant A as API Server
+    participant V as Validator
+    participant D as Database
+
+    C->>A: POST /programs<br/>{ GraphProgram JSON }
+    A->>V: Validate AST
+    Note over V: Layer 1: Pydantic type check<br/>(Section 2 types)
+    Note over V: Layer 2: Structural + safety checks<br/>(Section 5.1–5.4)
+
+    alt Validation fails
+        V-->>A: ValidationResult { valid: false, errors[] }
+        A-->>C: 400 Bad Request<br/>ValidationResult
+    else Validation passes
+        V-->>A: ValidationResult { valid: true }
+        A->>D: INSERT INTO query_definitions<br/>owner_id, definition_type='program',<br/>definition={ AST }
+        D-->>A: program_id
+        A-->>C: 201 Created<br/>{ id, metadata }
+    end
+```
+
+#### Diagram 2: Program Execution
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as API Server
+    participant X as Executor
+    participant V as Validator
+    participant H as H (Source Graph)
+    participant W as W (Working Graph)
+
+    C->>A: POST /programs/execute<br/>{ program (inline AST or id) }
+
+    opt Program submitted by ID
+        A->>A: Load AST from query_definitions
+    end
+
+    A->>V: Re-validate AST (defense in depth)
+    alt Validation fails
+        V-->>A: ValidationResult { valid: false }
+        A-->>C: 400 Bad Request
+    else Validation passes
+        V-->>A: ValidationResult { valid: true }
+    end
+
+    A->>X: Execute program
+    X->>W: Initialize W = { nodes: [], links: [] }
+
+    loop For each statement[i] (Section 4.2)
+        X->>H: Execute operation (cypher or api)
+        H-->>X: Raw result
+        X->>X: Map result to { nodes[], links[] }<br/>(Section 4.5)
+        X->>W: Apply operator (+, -, &, ?, !) to W<br/>(Section 3)
+        X->>X: Record StepLogEntry (Section 4.4)
+
+        alt Assert (!) fails — empty result
+            X-->>A: ProgramResult { result: W (pre-failure),<br/>log, aborted: { statement: i } }
+            A-->>C: 200 OK (aborted)
+        end
+    end
+
+    X-->>A: ProgramResult { result: W, log }
+    A-->>C: 200 OK<br/>ProgramResult
+```
+
+#### Diagram 3: Statement Dispatch Detail
+
+```mermaid
+sequenceDiagram
+    participant X as Executor
+    participant Q as Query Facade
+    participant H as H (AGE / PostgreSQL)
+    participant S as Internal Service
+    participant W as W (Working Graph)
+
+    alt operation.type == "cypher"
+        X->>Q: Send query (with limit if set)
+        Q->>H: Execute openCypher against AGE
+        H-->>Q: AGE result rows
+        Q-->>X: Raw query result
+        X->>X: Map AGE result to { nodes[], links[] }<br/>(Section 4.5 — CypherOp mapping)
+    else operation.type == "api"
+        X->>S: Call service function directly<br/>(endpoint, params — no HTTP)
+        S-->>X: Service response
+        X->>X: Map response to { nodes[], links[] }<br/>(Section 4.5 — ApiOp mapping)
+    end
+
+    Note over X: R = mapped result set
+
+    X->>W: Apply operator to W using R<br/>(+, -, &, ?, ! — Section 3)
+    X->>W: Enforce dangling link invariant<br/>(Section 3.1)
+    X->>X: Record StepLogEntry<br/>(Section 4.4)
+```
+
 ---
 
 ## 5. Validation Rules
