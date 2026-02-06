@@ -7,6 +7,7 @@
 
 import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { getCategoryColor } from '../../../config/categoryColors';
+import { useSvgPanZoom } from '../../../hooks/useSvgPanZoom';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface CategoryMatrixProps {
@@ -29,6 +30,8 @@ export function CategoryMatrix({
   selectedCategory,
 }: CategoryMatrixProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<SVGGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredType, setHoveredType] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -53,6 +56,8 @@ export function CategoryMatrix({
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  useSvgPanZoom(svgRef, zoomRef);
 
   const { width, height } = dimensions;
 
@@ -118,12 +123,14 @@ export function CategoryMatrix({
   const activeType = hoveredType || selectedType;
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-auto">
+    <div ref={containerRef} className="w-full h-full">
       <svg
-        width={margin.left + maxTypesInCategory * cellSize + margin.right}
-        height={margin.top + sortedCategories.length * cellSize + margin.bottom}
+        ref={svgRef}
+        width={width}
+        height={height}
         className="overflow-visible"
       >
+        <g ref={zoomRef}>
         {/* Title */}
         <text
           x={margin.left}
@@ -262,6 +269,7 @@ export function CategoryMatrix({
             </g>
           );
         })}
+        </g>
       </svg>
     </div>
   );

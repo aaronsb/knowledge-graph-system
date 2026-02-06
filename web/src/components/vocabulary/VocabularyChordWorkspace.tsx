@@ -304,7 +304,7 @@ export function VocabularyChordWorkspace() {
         {/* Visualization + side panel */}
         <div className="flex-1 flex overflow-hidden">
         {/* Visualization area - fills available space */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           {subgraphStats && viewMode === 'chord' && (
             <div className="absolute inset-0">
               <ChordDiagram
@@ -330,7 +330,7 @@ export function VocabularyChordWorkspace() {
         </div>
 
         {/* Side panel */}
-        <div className="w-80 border-l border-border bg-card overflow-y-auto flex-shrink-0">
+        <div className="w-80 border-l border-border bg-card overflow-y-auto flex-shrink-0 relative z-10">
           {/* Subgraph stats */}
           {subgraphStats && (
             <div className="p-4 border-b border-border">

@@ -7,6 +7,7 @@
 
 import { useMemo, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { getCategoryColor } from '../../../config/categoryColors';
+import { useSvgPanZoom } from '../../../hooks/useSvgPanZoom';
 import type { CategoryStats, EdgeTypeData } from '../types';
 
 interface RadialEdgeTypesProps {
@@ -29,6 +30,8 @@ export function RadialEdgeTypes({
   selectedCategory,
 }: RadialEdgeTypesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<SVGGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const [hoveredType, setHoveredType] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -54,6 +57,8 @@ export function RadialEdgeTypes({
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  useSvgPanZoom(svgRef, zoomRef);
 
   const { width, height } = dimensions;
 
@@ -120,7 +125,8 @@ export function RadialEdgeTypes({
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
-      <svg width={width} height={height} className="overflow-visible">
+      <svg ref={svgRef} width={width} height={height} className="overflow-visible">
+      <g ref={zoomRef}>
       <g transform={`translate(${centerX}, ${centerY})`}>
         {/* Center circle */}
         <circle
@@ -261,6 +267,7 @@ export function RadialEdgeTypes({
             </g>
           );
         })}
+      </g>
       </g>
     </svg>
     </div>
