@@ -324,3 +324,100 @@ class TestGetProgram:
             )
 
         assert response.status_code == 200
+
+    def test_null_owner_accessible(self, api_client: TestClient, auth_headers_user):
+        """Programs with NULL owner_id (system-created) are accessible to any authed user."""
+        now = datetime(2024, 1, 1)
+        mock_conn, mock_cur = mock_db_cursor(
+            returning_row=(
+                42,
+                "System Program",
+                valid_program(),
+                None,                   # NULL owner
+                now,
+                now,
+            )
+        )
+
+        with patch(
+            "api.app.routes.programs.get_db_connection",
+            return_value=mock_conn,
+        ):
+            response = api_client.get(
+                "/programs/42",
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 200
+        assert response.json()["owner_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# POST /programs — edge cases
+# ---------------------------------------------------------------------------
+
+class TestCreateProgramEdgeCases:
+    """Edge case tests for POST /programs."""
+
+    def test_db_error_returns_500(self, api_client: TestClient, auth_headers_user):
+        """Database failure returns generic 500 without leaking details."""
+        mock_conn = MagicMock()
+        mock_cur = MagicMock()
+        mock_cur.__enter__ = lambda self: self
+        mock_cur.__exit__ = MagicMock(return_value=False)
+        mock_cur.execute.side_effect = Exception("connection refused to kg_api.query_definitions")
+        mock_conn.cursor.return_value = mock_cur
+
+        with patch(
+            "api.app.routes.programs.get_db_connection",
+            return_value=mock_conn,
+        ):
+            response = api_client.post(
+                "/programs",
+                json={"name": "Test", "program": valid_program()},
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 500
+        # Should NOT leak schema details
+        assert "kg_api" not in response.json()["detail"]
+        assert "connection refused" not in response.json()["detail"]
+
+    def test_submission_name_takes_precedence(self, api_client: TestClient, auth_headers_user):
+        """Submission name beats metadata name."""
+        now = datetime(2024, 1, 1)
+        mock_conn, mock_cur = mock_db_cursor(returning_row=(1, now, now))
+
+        program = valid_program()
+        program["metadata"] = {"name": "Metadata Name"}
+
+        with patch(
+            "api.app.routes.programs.get_db_connection",
+            return_value=mock_conn,
+        ):
+            response = api_client.post(
+                "/programs",
+                json={"name": "Submission Name", "program": program},
+                headers=auth_headers_user,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["name"] == "Submission Name"
+
+    def test_empty_name_ignored(self, api_client: TestClient, auth_headers_user):
+        """Empty string name should be rejected (min_length=1)."""
+        response = api_client.post(
+            "/programs",
+            json={"name": "", "program": valid_program()},
+            headers=auth_headers_user,
+        )
+        assert response.status_code == 422  # Pydantic validation
+
+    def test_non_dict_program_rejected(self, api_client: TestClient, auth_headers_user):
+        """Non-object program body should be rejected."""
+        response = api_client.post(
+            "/programs",
+            json={"program": "not a dict"},
+            headers=auth_headers_user,
+        )
+        assert response.status_code == 422  # Pydantic rejects non-dict

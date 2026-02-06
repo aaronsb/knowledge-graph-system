@@ -111,7 +111,7 @@ async def create_program(
         logger.error(f"Failed to store program: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to store program: {str(e)}",
+            detail="Failed to store program",
         )
     finally:
         conn.close()
@@ -165,7 +165,7 @@ async def get_program(
                     detail=f"Program not found: {program_id}",
                 )
 
-            # Check ownership
+            # Check ownership (NULL owner_id = system-created, accessible to all authed users)
             owner_id = row[3]
             if owner_id is not None and owner_id != current_user.id:
                 if current_user.role not in ("admin", "platform_admin"):

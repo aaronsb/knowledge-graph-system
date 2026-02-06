@@ -342,13 +342,14 @@ class ProgramSubmission(BaseModel):
     Request body for POST /programs and POST /programs/validate.
 
     Wraps the raw program JSON with an optional name. The ``program`` field
-    is Any (not GraphProgram) because deserialization is handled by the
-    validator, which produces structured errors on malformed input.
+    is Dict (not GraphProgram) because deserialization is handled by the
+    validator, which produces structured errors on malformed input rather
+    than Pydantic's generic 422 response.
 
     @verified 0000000
     """
     name: Optional[str] = Field(None, min_length=1, max_length=200)
-    program: Any
+    program: Dict[str, Any]
 
 
 class ProgramCreateResponse(BaseModel):
