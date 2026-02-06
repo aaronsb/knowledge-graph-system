@@ -9,17 +9,18 @@ from typing import Optional, List, Any, Dict, Literal
 from pydantic import BaseModel, Field
 
 
-# Valid definition types (from migration 035)
+# Valid definition types (from migration 035, extended by 050 and 052)
 DEFINITION_TYPES = [
     'block_diagram',
     'cypher',
     'search',
     'polarity',
     'connection',
-    'exploration'
+    'exploration',
+    'program',
 ]
 
-DefinitionType = Literal['block_diagram', 'cypher', 'search', 'polarity', 'connection', 'exploration']
+DefinitionType = Literal['block_diagram', 'cypher', 'search', 'polarity', 'connection', 'exploration', 'program']
 
 
 class QueryDefinitionCreate(BaseModel):

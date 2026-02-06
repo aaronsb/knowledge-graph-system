@@ -40,7 +40,7 @@ from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
 from .workers.annealing_worker import run_annealing_worker
 from .workers.proposal_execution_worker import run_proposal_execution_worker
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -366,6 +366,7 @@ app.include_router(projection.router)  # ADR-078: Embedding landscape projection
 app.include_router(artifacts.router)  # ADR-083: Artifact persistence
 app.include_router(grants.router)  # ADR-082: Groups and resource grants
 app.include_router(query_definitions.router)  # ADR-083: Query definitions
+app.include_router(programs.router)  # ADR-500: Program notarization
 app.include_router(documents.router)  # ADR-084: Document content retrieval
 app.include_router(documents.query_router)  # ADR-084: Document search
 app.include_router(concepts.router)  # ADR-089: Deterministic concept CRUD

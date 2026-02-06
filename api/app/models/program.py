@@ -331,3 +331,54 @@ class GraphProgram(BaseModel):
 # Rebuild models to resolve forward references
 ConditionalOp.model_rebuild()
 Statement.model_rebuild()
+
+
+# ---------------------------------------------------------------------------
+# API request/response models (ADR-500 Phase 2b)
+# ---------------------------------------------------------------------------
+
+class ProgramSubmission(BaseModel):
+    """
+    Request body for POST /programs and POST /programs/validate.
+
+    Wraps the raw program JSON with an optional name. The ``program`` field
+    is Dict (not GraphProgram) because deserialization is handled by the
+    validator, which produces structured errors on malformed input rather
+    than Pydantic's generic 422 response.
+
+    @verified 0000000
+    """
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    program: Dict[str, Any]
+
+
+class ProgramCreateResponse(BaseModel):
+    """
+    Response from POST /programs (notarize + store).
+
+    Returns the notarized program alongside its storage ID and validation
+    result. ``valid`` is always True on 201 responses (invalid programs
+    return 400 instead).
+
+    @verified 0000000
+    """
+    id: int
+    name: str
+    program: GraphProgram
+    valid: bool = True
+    created_at: str
+    updated_at: str
+
+
+class ProgramReadResponse(BaseModel):
+    """
+    Response from GET /programs/{id}.
+
+    @verified 0000000
+    """
+    id: int
+    name: str
+    program: GraphProgram
+    owner_id: Optional[int] = None
+    created_at: str
+    updated_at: str
