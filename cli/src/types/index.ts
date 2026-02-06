@@ -1294,3 +1294,47 @@ export interface ProgramReadResponse {
   created_at: string;
   updated_at: string;
 }
+
+/** A node in the WorkingGraph, identity-keyed by concept_id. */
+export interface RawNode {
+  concept_id: string;
+  label: string;
+  ontology?: string | null;
+  description?: string | null;
+  properties: Record<string, unknown>;
+}
+
+/** A link in the WorkingGraph, identity-keyed by (from_id, relationship_type, to_id). */
+export interface RawLink {
+  from_id: string;
+  to_id: string;
+  relationship_type: string;
+  category?: string | null;
+  confidence?: number | null;
+  properties: Record<string, unknown>;
+}
+
+/** The mutable in-memory graph built during program execution. */
+export interface WorkingGraph {
+  nodes: RawNode[];
+  links: RawLink[];
+}
+
+/** Per-statement execution log record. */
+export interface StepLogEntry {
+  statement: number;
+  op: string;
+  operation_type: 'cypher' | 'api' | 'conditional';
+  branch_taken?: 'then' | 'else' | null;
+  nodes_affected: number;
+  links_affected: number;
+  w_size: { nodes: number; links: number };
+  duration_ms: number;
+}
+
+/** Complete execution result from POST /programs/execute. */
+export interface ProgramResult {
+  result: WorkingGraph;
+  log: StepLogEntry[];
+  aborted?: { statement: number; reason: string } | null;
+}

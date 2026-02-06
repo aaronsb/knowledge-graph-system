@@ -2220,6 +2220,22 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Execute a program server-side and return the WorkingGraph result.
+   */
+  async executeProgram(options: {
+    programId?: number;
+    program?: Record<string, any>;
+    params?: Record<string, string | number>;
+  }): Promise<import('../types/index.js').ProgramResult> {
+    const body: Record<string, any> = {};
+    if (options.programId !== undefined) body.program_id = options.programId;
+    if (options.program !== undefined) body.program = options.program;
+    if (options.params !== undefined) body.params = options.params;
+    const response = await this.client.post('/programs/execute', body);
+    return response.data;
+  }
+
   // ========== Storage Admin ==========
 
   /**

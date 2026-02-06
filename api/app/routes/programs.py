@@ -1,14 +1,15 @@
 """
-Program notarization endpoints (ADR-500 Phase 2b).
+Program notarization and execution endpoints (ADR-500 Phase 2b + Phase 3).
 
-Server-side validation, storage, and retrieval of GraphProgram ASTs.
+Server-side validation, storage, retrieval, and execution of GraphProgram ASTs.
 Programs are notarized (validated + signed) before storage. Only notarized
-programs can be retrieved and executed by clients.
+programs can be retrieved and executed.
 
-Three endpoints:
+Four endpoints:
   POST /programs          — validate + store → ID + notarized program
   POST /programs/validate — dry-run validation (no storage)
   GET  /programs/{id}     — retrieve a notarized program
+  POST /programs/execute  — execute a program server-side (Phase 3)
 
 @verified 0000000
 """
@@ -21,12 +22,15 @@ from ..models.program import (
     ProgramSubmission,
     ProgramCreateResponse,
     ProgramReadResponse,
+    ProgramExecuteRequest,
+    ProgramResult,
     GraphProgram,
 )
 from ..services.program_validator import (
     validate_program,
     ValidationResult,
 )
+from ..services.program_executor import execute_program
 from ..models.auth import UserInDB
 from ..dependencies.auth import get_current_user, get_db_connection
 
@@ -133,6 +137,94 @@ async def validate_program_endpoint(
     Useful for real-time editor feedback before committing to storage.
     """
     return validate_program(submission.program)
+
+
+@router.post(
+    "/execute",
+    response_model=ProgramResult,
+    summary="Execute a program server-side",
+)
+async def execute_program_endpoint(
+    request: ProgramExecuteRequest,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    """
+    Execute a GraphProgram server-side (ADR-500 Phase 3).
+
+    Accepts either a stored program ID or an inline program AST.
+    The program is re-validated before execution (defense in depth).
+    Returns the final WorkingGraph, execution log, and abort info if any.
+    """
+    # Validate request: exactly one of program_id or program
+    if request.program_id is not None and request.program is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide program_id or program, not both",
+        )
+    if request.program_id is None and request.program is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide program_id or program",
+        )
+
+    # Resolve program data
+    if request.program_id is not None:
+        program_data = _load_program_definition(request.program_id, current_user)
+    else:
+        program_data = request.program
+
+    # Re-validate (defense in depth)
+    validation = validate_program(program_data)
+    if not validation.valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "Program validation failed",
+                "validation": validation.model_dump(),
+            },
+        )
+
+    program = GraphProgram.model_validate(program_data)
+
+    # Execute
+    from ..lib.age_client import AGEClient
+    client = AGEClient()
+    try:
+        result = await execute_program(program, client, params=request.params)
+        return result
+    finally:
+        client.close()
+
+
+def _load_program_definition(program_id: int, current_user: UserInDB) -> dict:
+    """Load a program's raw definition from the database."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT definition, owner_id
+                FROM kg_api.query_definitions
+                WHERE id = %s AND definition_type = 'program'
+            """, (program_id,))
+
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Program not found: {program_id}",
+                )
+
+            owner_id = row[1]
+            if owner_id is not None and owner_id != current_user.id:
+                if current_user.role not in ("admin", "platform_admin"):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Access denied to this program",
+                    )
+
+            return row[0]
+    finally:
+        conn.close()
 
 
 @router.get(

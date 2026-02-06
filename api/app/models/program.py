@@ -382,3 +382,64 @@ class ProgramReadResponse(BaseModel):
     owner_id: Optional[int] = None
     created_at: str
     updated_at: str
+
+
+# ---------------------------------------------------------------------------
+# Execution models (ADR-500 Phase 3)
+# ---------------------------------------------------------------------------
+
+class RawNode(BaseModel):
+    """A node in the WorkingGraph, identity-keyed by concept_id."""
+    concept_id: str
+    label: str = ""
+    ontology: Optional[str] = None
+    description: Optional[str] = None
+    properties: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RawLink(BaseModel):
+    """A link in the WorkingGraph, identity-keyed by (from_id, relationship_type, to_id)."""
+    from_id: str
+    to_id: str
+    relationship_type: str
+    category: Optional[str] = None
+    confidence: Optional[float] = None
+    properties: Dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkingGraph(BaseModel):
+    """The mutable in-memory graph built during program execution."""
+    nodes: List[RawNode] = Field(default_factory=list)
+    links: List[RawLink] = Field(default_factory=list)
+
+
+class StepLogEntry(BaseModel):
+    """Per-statement execution log record."""
+    statement: int
+    op: Operator
+    operation_type: Literal['cypher', 'api', 'conditional']
+    branch_taken: Optional[Literal['then', 'else']] = None
+    nodes_affected: int
+    links_affected: int
+    w_size: Dict[str, int]
+    duration_ms: float
+
+
+class ProgramResult(BaseModel):
+    """Complete execution result from POST /programs/execute."""
+    result: WorkingGraph
+    log: List[StepLogEntry] = Field(default_factory=list)
+    aborted: Optional[Dict[str, Any]] = None
+
+
+class ProgramExecuteRequest(BaseModel):
+    """
+    Request body for POST /programs/execute.
+
+    Exactly one of program_id or program must be provided.
+    program_id loads a notarized program from storage.
+    program provides an inline AST for immediate execution.
+    """
+    program_id: Optional[int] = None
+    program: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Union[str, int, float]]] = None
