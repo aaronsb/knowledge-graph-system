@@ -11,7 +11,7 @@ system's trust boundaries.
 |------|-----------|
 | **H** | The persistent knowledge graph. Immutable during query execution. |
 | **W** | The working subgraph. Ephemeral, built during program execution. |
-| **Blessing** | Server-side validation and storage of a `GraphProgram` AST. |
+| **Notarization** | Server-side validation and storage of a `GraphProgram` AST. |
 | **`Operator`** | One of `+` (union), `-` (difference), `&` (intersect), `?` (optional), `!` (assert). |
 
 For the complete validation rule catalog (V001, V002, etc.), see
@@ -23,16 +23,16 @@ GraphProgram uses a **code-signing pattern** for program trust:
 
 1. Any client (web, CLI, MCP, agent) authors a `GraphProgram` JSON AST.
 2. The client submits the AST to the API (`POST /programs`).
-3. The API **validates** and **blesses** the program -- structural checks, safety
+3. The API **validates** and **notarizes** the program -- structural checks, safety
    checks, and boundedness analysis all pass.
-4. The blessed program is stored in `kg_api.query_definitions` with an `owner_id`,
+4. The notarized program is stored in `kg_api.query_definitions` with an `owner_id`,
    timestamp, and definition type `program`.
-5. Clients retrieve blessed programs and execute them via `POST /programs/execute`.
+5. Clients retrieve notarized programs and execute them via `POST /programs/execute`.
 
-**The blessing is a trust stamp, not a privilege gate.** A client that bypasses
-blessing and submits an unblessed AST directly to the executor still faces the
+**The notarization is a trust stamp, not a privilege gate.** A client that bypasses
+notarization and submits an un-notarized AST directly to the executor still faces the
 same per-statement guards (authentication, rate limiting, read-only enforcement,
-namespace safety) that apply to all query execution. Blessing adds structural
+namespace safety) that apply to all query execution. Notarization adds structural
 guarantees on top of the existing execution guards -- it does not replace them.
 
 ## Defense-in-Depth Layers
@@ -80,9 +80,9 @@ The security-relevant checks are:
 | **Required fields** | All required fields are present and correctly typed. |
 
 **What this layer guarantees:**
-- A blessed program will not attempt write operations via Cypher.
-- A blessed program will not call arbitrary API endpoints.
-- A blessed program has a statically-determinable maximum operation count.
+- A notarized program will not attempt write operations via Cypher.
+- A notarized program will not call arbitrary API endpoints.
+- A notarized program has a statically-determinable maximum operation count.
 - All parameter references are resolvable.
 
 **What this layer does NOT guarantee:**
@@ -93,7 +93,7 @@ The security-relevant checks are:
 
 ### Layer 3: Storage and Ownership
 
-Blessed programs are stored in `kg_api.query_definitions`:
+Notarized programs are stored in `kg_api.query_definitions`:
 
 - `owner_id`: The authenticated user who created the program.
 - `created_at` / `updated_at`: Timestamps for audit trail.
@@ -114,11 +114,11 @@ authenticated users.
 **What this layer guarantees:**
 - Programs have author attribution.
 - Non-admin users cannot read, modify, or delete other users' programs.
-- The stored AST is the exact AST that was validated (no post-blessing mutation
+- The stored AST is the exact AST that was validated (no post-notarization mutation
   by unauthorized parties).
 
 **What this layer does NOT guarantee:**
-- Programs are immutable after blessing. The owner (or admin) can update the
+- Programs are immutable after notarization. The owner (or admin) can update the
   stored definition. A re-validation step on update is recommended but not
   currently enforced.
 - Cross-user program sharing. There is no grants or sharing model yet.
@@ -195,22 +195,22 @@ This is a resource management concern, not a privilege escalation. Mitigation
 options include per-user query budgets, statement-level timeouts, and EXPLAIN
 cost estimation.
 
-### T2: Bypassing the Blessing
+### T2: Bypassing the Notarization
 
-**Threat:** A client submits an unblessed AST directly to the executor, skipping
+**Threat:** A client submits an un-notarized AST directly to the executor, skipping
 validation.
 
 **Mitigations:**
 - The executor should re-validate incoming ASTs before execution (defense in
   depth). Even without re-validation, per-statement guards (Layer 4) still
   apply: authentication, audit logging, namespace safety.
-- **No privilege escalation.** Bypassing the blessing does not grant access to
-  write operations, admin endpoints, or other users' data. The blessing
+- **No privilege escalation.** Bypassing the notarization does not grant access to
+  write operations, admin endpoints, or other users' data. The notarization
   provides structural guarantees (well-formedness, boundedness); the execution
   guards provide access control.
 
 **Recommendation:** The executor should always re-validate before execution.
-This makes the blessing a caching optimization (skip validation for known-good
+This makes the notarization a caching optimization (skip validation for known-good
 programs) rather than a security gate.
 
 ### T3: Injection via Cypher
@@ -274,9 +274,9 @@ be reviewed whenever new endpoints are added.
 private (owned by a user) or system-provided (`owner_id = NULL`). A future
 grants system would need careful scoping to avoid confused-deputy scenarios.
 
-### T6: Post-Blessing Mutation
+### T6: Post-Notarization Mutation
 
-**Threat:** A program is modified after blessing, bypassing validation.
+**Threat:** A program is modified after notarization, bypassing validation.
 
 **Mitigations:**
 - The `update_query_definition` endpoint allows the owner (or admin) to update
@@ -286,7 +286,7 @@ grants system would need careful scoping to avoid confused-deputy scenarios.
 re-validation. The update endpoint MUST reject the update if validation fails.
 This is not optional — without mandatory re-validation, any owner can silently
 introduce write keywords, disallowed endpoints, or unbounded programs by
-editing a previously-blessed definition. As defense-in-depth, the executor
+editing a previously-notarized definition. As defense-in-depth, the executor
 SHOULD also verify a stored hash of the validated AST at execution time.
 
 ## Capability-Based Security
@@ -311,9 +311,9 @@ type set, and any new type addition should be evaluated against this question.
 
 ## What IS Guaranteed
 
-1. **Structural well-formedness.** Blessed programs have valid operators, valid
+1. **Structural well-formedness.** Notarized programs have valid operators, valid
    operation types, and all required fields.
-2. **No write operations.** Cypher statements in blessed programs do not contain
+2. **No write operations.** Cypher statements in notarized programs do not contain
    write keywords. Combined with read-only database connections, writes are
    prevented at two independent layers.
 3. **Bounded execution.** The maximum operation count is statically computable
@@ -321,7 +321,7 @@ type set, and any new type addition should be evaluated against this question.
    statement.
 4. **ApiOp endpoint restriction.** Only allowlisted internal endpoints can be
    called via `ApiOp`.
-5. **Author attribution.** Every blessed program records who created it and when.
+5. **Author attribution.** Every notarized program records who created it and when.
 6. **Per-execution authentication.** Every program execution requires a valid
    OAuth token. Programs execute with the caller's permissions.
 7. **Audit trail.** Every Cypher statement is logged via `QueryAuditLog` with
@@ -329,12 +329,12 @@ type set, and any new type addition should be evaluated against this question.
 
 ## What IS NOT Guaranteed
 
-1. **Runtime correctness.** A blessed program may return empty results, match
+1. **Runtime correctness.** A notarized program may return empty results, match
    non-existent concepts, or produce semantically meaningless output.
 2. **Performance.** Individual queries may be slow. An unbounded `MATCH` with
    a high `LIMIT` can consume significant database resources. The program-level
    operation bound does not constrain individual query cost.
-3. **Data freshness.** H may change between blessing and execution. Concepts
+3. **Data freshness.** H may change between notarization and execution. Concepts
    may be deleted, relationships may be added. Programs do not lock H.
 4. **Parameter semantic validity.** The validator checks that `$param`
    references resolve, but does not validate that parameter values are
@@ -342,7 +342,7 @@ type set, and any new type addition should be evaluated against this question.
    semantically invalid).
 5. **Cross-user sharing.** There is no mechanism for User A to grant User B
    access to their programs. This is a future capability.
-6. **Immutability after blessing.** Programs can be updated by the owner
+6. **Immutability after notarization.** Programs can be updated by the owner
    without re-validation. This is a known gap.
 
 ## Security Boundaries Summary
@@ -361,7 +361,7 @@ type set, and any new type addition should be evaluated against this question.
                          |     ├── Boundedness check
                          |     └── Parameter resolution
                          |
-  Submit for blessing ─────> Store blessed program (Layer 3)
+  Submit for notarization ──> Store notarized program (Layer 3)
                          |     │
                          |     └── owner_id, timestamps
                          |

@@ -22,6 +22,7 @@ from ..models.database import (
 )
 from api.app.lib.age_client import AGEClient
 from api.app.services.vocabulary_metrics_service import VocabularyMetricsService
+from api.app.services.cypher_guard import check_cypher_safety
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/database", tags=["database"])
@@ -480,6 +481,23 @@ async def execute_cypher_query(
         }
         ```
     """
+    # ADR-500 Phase 2d: Cypher safety gate — reject writes and unbounded paths
+    safety_issues = check_cypher_safety(request.query)
+    if safety_issues:
+        details = [
+            {"rule": issue.rule_id, "message": issue.message}
+            for issue in safety_issues
+            if issue.severity == 'error'
+        ]
+        if details:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Query rejected by safety guard",
+                    "issues": details,
+                },
+            )
+
     client = get_age_client()
     try:
         warning = None

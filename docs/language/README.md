@@ -71,14 +71,14 @@ This program:
 
 ## Code-Signing Model
 
-Programs follow a **code-signing pattern**: author anywhere, bless server-side,
-execute blessed programs. The API validates and stores programs; clients retrieve
+Programs follow a **code-signing pattern**: author anywhere, notarize server-side,
+execute notarized programs. The API validates and stores programs; clients retrieve
 and execute them. See [security.md](security.md) for the full trust model.
 
 ```
 Client ──> POST /programs/validate ──> Validation result (dry-run)
-Client ──> POST /programs          ──> Validate + store (bless)
-Client ──> GET  /programs/{id}     ──> Retrieve blessed program
+Client ──> POST /programs          ──> Validate + store (notarize)
+Client ──> GET  /programs/{id}     ──> Retrieve notarized program
 Client ──> Execute locally         ──> Per-statement API calls
 ```
 

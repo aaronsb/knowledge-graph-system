@@ -52,46 +52,49 @@ Raw unnotarized Cypher no longer reaches the database.
 - [x] Migration 052, query_definition types updated, router registered
 - [x] 20 API tests (including edge cases from review)
 
-## Phase 2c: Client Integration
+## Phase 2c: Client Integration ✓ (PR #299)
 
-Update all clients to use notarized programs or validated Cypher.
+- [x] TypeScript AST types (web + CLI)
+- [x] Web/CLI API client methods: createProgram(), validateProgram(), getProgram()
+- [x] CLI `kg program validate|create|show` commands
+- [x] MCP program tool (validate/create/get)
+- [ ] Web Cypher editor: validation error display (deferred to UI pass)
+- [ ] Web multi-statement: construct GraphProgram from editor (deferred to UI pass)
+- [ ] Fix #280 include_grounding inconsistencies (deferred — separate PR)
 
-- [ ] TypeScript types (`web/src/types/program.ts`) — mirror Python AST models
-- [ ] Web API client methods: `createProgram()`, `getProgram()`, `validateProgram()`
-- [ ] Web Cypher editor: submit through validation gate, show errors inline
-- [ ] Web multi-statement queries: construct GraphProgram, notarize, execute
-- [ ] CLI: `kg program create`, `kg program validate`, `kg program run`
-- [ ] MCP: program tools for agent use
-- [ ] Fix #280 inconsistencies (include_grounding on related/connect) as part of this pass
-
-## Phase 2d: Internal Cypher Audit
+## Phase 2d: Internal Cypher Audit ✓
 
 Ensure server-side Cypher (routes, workers, facades) also follows safe patterns.
 These are trusted internal queries, but defense-in-depth says audit them.
 
-- [ ] Audit all `_execute_cypher()` call sites (~30 in routes/queries.py alone)
-- [ ] Categorize: read-only queries vs write queries (ingestion, graph mutations)
-- [ ] Write queries: verify they only exist in ingestion/mutation code paths
-- [ ] Consider: separate read-only and read-write database connections
-- [ ] Document the internal query safety model
+- [x] Audit all `_execute_cypher()` call sites (~30 in routes/queries.py alone)
+- [x] Categorize: read-only queries vs write queries (ingestion, graph mutations)
+- [x] Write queries: verified only in ingestion/mutation code paths (workers, serializers)
+- [x] **CRITICAL FIX**: `POST /database/query` was missing cypher_guard — added safety gate
+- [ ] Consider: separate read-only and read-write database connections (future)
+- [ ] Document the internal query safety model (future)
 
-## Phase 2e: Rename & Cleanup
+## Phase 2e: Rename & Cleanup (partial)
 
 Align naming across spec, code, and docs. Resolve the route/allowlist mismatch.
 
-- [ ] Update spec: "blessed" → "notarized" throughout
-- [ ] Update `program_validator.py` docstrings
-- [ ] Resolve allowlist endpoint names vs actual route paths:
-      | Allowlist name | Actual route | Decision |
-      |----------------|-------------|----------|
-      | `/search/concepts` | `POST /query/search` | ? |
-      | `/search/sources` | `POST /query/sources/search` | ? |
-      | `/concepts/details` | `GET /query/concept/{id}` | ? |
-      | `/concepts/related` | `POST /query/related` | ? |
-- [ ] Decide: aliased routes, or update allowlist to match reality?
-- [ ] Consolidate `_get_graph_generation()` (#277) if touched
-- [ ] Extract grounding/caching mixin (#278) if touched
-- [ ] Migrate remaining query_facade.py callers (#279) if natural
+- [x] Update spec: "blessed" → "notarized" throughout (README.md, lifecycle.md, security.md)
+- [x] Update `program_validator.py` docstrings (already uses "notarized")
+- [x] Resolve allowlist endpoint names vs actual route paths:
+      Decision: **keep as-is**. Allowlist names are internal dispatch identifiers
+      for the Phase 3 executor, not HTTP routes. The executor will map these
+      logical names to internal function calls directly.
+      | Allowlist name | Internal dispatch target | Notes |
+      |----------------|------------------------|-------|
+      | `/search/concepts` | concept search service | semantic search |
+      | `/search/sources` | source search service | passage search |
+      | `/concepts/details` | concept details service | single concept |
+      | `/concepts/related` | related concepts service | neighborhood |
+      | `/concepts/batch` | batch concept retrieval | multi-concept |
+      | `/vocabulary/status` | epistemic status service | vocab types |
+- [ ] Consolidate `_get_graph_generation()` (#277) — not touched, defer
+- [ ] Extract grounding/caching mixin (#278) — not touched, defer
+- [ ] Migrate remaining query_facade.py callers (#279) — not touched, defer
 
 ---
 

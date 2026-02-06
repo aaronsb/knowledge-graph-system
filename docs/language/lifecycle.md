@@ -13,7 +13,7 @@ operations against the knowledge graph. Every program follows the same
 lifecycle regardless of which client creates or runs it:
 
 ```
-Author  ──>  Validate (bless)  ──>  Store  ──>  Retrieve  ──>  Execute
+Author  ──>  Validate (notarize)  ──>  Store  ──>  Retrieve  ──>  Execute
 ```
 
 The API is the single authority for validation and execution. Clients are
@@ -121,9 +121,9 @@ See the [language specification](./specification.md) for the full type
 definitions and operator semantics.
 
 
-## 2. Validation (Blessing)
+## 2. Validation (Notarization)
 
-The API is the sole validation authority. A program is **blessed** when the
+The API is the sole validation authority. A program is **notarized** when the
 API confirms it is structurally sound, safe to execute, and bounded.
 
 ### 2.1 Validation Endpoint
