@@ -98,15 +98,19 @@ Align naming across spec, code, and docs. Resolve the route/allowlist mismatch.
 
 ---
 
-## Phase 3 (future): Server-Side Execution
+## Phase 3: Server-Side Execution ✓
 
-- [ ] `POST /programs/{id}/execute` — run notarized program server-side
-- [ ] Eliminates N+1 client round-trips
-- [ ] Enables headless agent execution
+- [x] Response models: RawNode, RawLink, WorkingGraph, StepLogEntry, ProgramResult, ProgramExecuteRequest
+- [x] `program_operators.py` — pure set-algebra operators (+, -, &, ?, !) with dangling link invariant
+- [x] `program_dispatch.py` — CypherOp (AGE result parsing) + ApiOp (6 endpoint handlers)
+- [x] `program_executor.py` — async orchestrator with timeout, abort, conditional branching
+- [x] `POST /programs/execute` — endpoint (inline or stored program, re-validates, returns ProgramResult)
+- [x] 22 operator unit tests, 8 executor unit tests (all pass without Docker)
+- [ ] API endpoint tests (extend tests/api/test_programs.py)
+- [ ] Client integration: CLI `kg program execute`, MCP execute tool, web execute button
 
 ## Phase 4 (future): Advanced Language Features
 
-- [ ] `ConditionalOp` — branching logic in programs
 - [ ] `$param` substitution — reusable parameterized programs
 - [ ] Text DSL parser — human-readable authoring format
 - [ ] AST ↔ Blocks round-trip — block editor interop
