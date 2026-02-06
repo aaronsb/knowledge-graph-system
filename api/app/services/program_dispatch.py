@@ -44,6 +44,17 @@ class DispatchContext:
 
 def dispatch_cypher(ctx: DispatchContext, op: CypherOp) -> WorkingGraph:
     """Execute CypherOp and map AGE results to WorkingGraph."""
+    from api.app.services.cypher_guard import check_cypher_safety
+
+    # Defense-in-depth: re-check safety at execution time even though
+    # the validator already checked during notarization (programs could
+    # be stored and executed much later, or a future caller could skip
+    # the validation gate).
+    issues = check_cypher_safety(op.query)
+    if issues:
+        msgs = "; ".join(i.message for i in issues)
+        raise ValueError(f"Cypher safety check failed: {msgs}")
+
     query = op.query
 
     # Apply limit if set and query doesn't already have one
@@ -137,8 +148,10 @@ def _resolve_link_endpoints(
     """
     resolved = []
     for link in links:
-        from_cid = age_id_to_concept_id.get(link.from_id, link.from_id)
-        to_cid = age_id_to_concept_id.get(link.to_id, link.to_id)
+        from_cid = age_id_to_concept_id.get(link.from_id)
+        to_cid = age_id_to_concept_id.get(link.to_id)
+        if from_cid is None or to_cid is None:
+            continue  # discard dangling
         resolved.append(RawLink(
             from_id=from_cid,
             to_id=to_cid,

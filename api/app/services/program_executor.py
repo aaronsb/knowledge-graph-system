@@ -215,5 +215,5 @@ def _evaluate_condition(op: ConditionalOp, w: WorkingGraph) -> str:
     elif test == 'has_relationship':
         has = any(l.relationship_type == cond.type for l in w.links)
         return 'then' if has else 'else'
-
-    return 'else'
+    else:
+        raise ValueError(f"Unknown condition test: {test}")
