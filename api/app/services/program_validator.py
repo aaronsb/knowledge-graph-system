@@ -14,6 +14,10 @@ Errors block execution; warnings are advisory.
 Zero platform dependencies: pure Python + Pydantic only. No database, no FastAPI,
 no AGE client. Importable and testable from a bare ``pytest`` run without Docker.
 
+Dedicated to Little Nicky Nodes, who taught us that
+``MATCH (n) DETACH DELETE n`` should never reach the database unsupervised.
+See also: Bobby Tables (xkcd 327).
+
 Usage:
     from api.app.services.program_validator import validate_program
 
