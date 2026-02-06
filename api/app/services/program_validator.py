@@ -308,6 +308,30 @@ def _validate_statement_safety(stmt: Statement, index: int) -> List[ValidationIs
     return issues
 
 
+def _sanitize_cypher(query: str) -> str:
+    """
+    Strip string literals and comments from a Cypher query for safety scanning.
+
+    Removes single-quoted strings, double-quoted strings, line comments (``--``),
+    and block comments (``/* */``) to prevent false positives when scanning for
+    keywords or patterns in query text.
+
+    Args:
+        query: Raw Cypher query string.
+
+    Returns:
+        Uppercased query with literals and comments removed.
+
+    @verified 0000000
+    """
+    upper = query.upper()
+    sanitized = re.sub(r"'[^']*'", '', upper)
+    sanitized = re.sub(r'"[^"]*"', '', sanitized)
+    sanitized = re.sub(r'--.*$', '', sanitized, flags=re.MULTILINE)
+    sanitized = re.sub(r'/\*.*?\*/', '', sanitized, flags=re.DOTALL)
+    return sanitized
+
+
 def _check_cypher_safety(query: str, index: int) -> List[ValidationIssue]:
     """
     Check a Cypher query string for write keywords (V010-V016).
@@ -328,15 +352,7 @@ def _check_cypher_safety(query: str, index: int) -> List[ValidationIssue]:
     @verified 0000000
     """
     issues: List[ValidationIssue] = []
-    upper = query.upper()
-
-    # Remove content inside string literals to avoid false positives
-    sanitized = re.sub(r"'[^']*'", '', upper)
-    sanitized = re.sub(r'"[^"]*"', '', sanitized)
-    # Strip line comments
-    sanitized = re.sub(r'--.*$', '', sanitized, flags=re.MULTILINE)
-    # Strip block comments
-    sanitized = re.sub(r'/\*.*?\*/', '', sanitized, flags=re.DOTALL)
+    sanitized = _sanitize_cypher(query)
 
     for keyword in CYPHER_WRITE_KEYWORDS:
         pattern = rf'\b{keyword}\b'
@@ -442,7 +458,12 @@ def _check_api_safety(op: ApiOp, index: int) -> List[ValidationIssue]:
     for param_name, param_value in op.params.items():
         if param_name in type_spec:
             expected = type_spec[param_name]
-            if not isinstance(param_value, expected):
+            # Python quirk: isinstance(True, int) is True. Reject bool when int expected.
+            if isinstance(param_value, bool) and expected in (int, (int, float)):
+                type_mismatch = True
+            else:
+                type_mismatch = not isinstance(param_value, expected)
+            if type_mismatch:
                 # Format expected type name(s) for the error message
                 if isinstance(expected, tuple):
                     type_names = '/'.join(t.__name__ for t in expected)
@@ -467,6 +488,9 @@ def _check_variable_length_paths(query: str, index: int) -> List[ValidationIssue
     traversals. Paths without an upper bound (``[*]``, ``[*3..]``) are always rejected.
     Paths with an upper bound exceeding MAX_VARIABLE_PATH_LENGTH are rejected.
 
+    String literals and comments are stripped before scanning (via ``_sanitize_cypher``)
+    to avoid false positives on patterns inside quoted strings.
+
     Args:
         query: The Cypher query string from a CypherOp.
         index: Statement index for error reporting.
@@ -477,6 +501,7 @@ def _check_variable_length_paths(query: str, index: int) -> List[ValidationIssue
     @verified 0000000
     """
     issues: List[ValidationIssue] = []
+    sanitized = _sanitize_cypher(query)
 
     # Match [* ...] patterns: [*], [*3], [*1..5], [*..5], [*3..], etc.
     # The regex captures the full range spec after the *
@@ -488,7 +513,7 @@ def _check_variable_length_paths(query: str, index: int) -> List[ValidationIssue
         r'\s*\]'                # ]
     )
 
-    for match in var_path_pattern.finditer(query):
+    for match in var_path_pattern.finditer(sanitized):
         lower = match.group(1)
         upper = match.group(2)
         range_text = match.group(0)

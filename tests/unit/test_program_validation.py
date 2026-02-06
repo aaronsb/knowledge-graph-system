@@ -747,6 +747,24 @@ class TestApiParameterTypes:
         assert _has_warning(result, 'V022')
         assert not _has_error(result, 'V023')
 
+    def test_v023_bool_rejected_for_int_param(self):
+        """V023: bool value for int parameter is rejected (Python bool is subclass of int).  @verified 0000000"""
+        prog = _minimal_program(statements=[
+            _api_stmt('/search/concepts', {'query': 'test', 'limit': True}),
+        ])
+        result = validate_program(prog)
+        assert result.valid is False
+        assert _has_error(result, 'V023')
+
+    def test_v023_bool_rejected_for_numeric_param(self):
+        """V023: bool value for int/float parameter is rejected.  @verified 0000000"""
+        prog = _minimal_program(statements=[
+            _api_stmt('/search/concepts', {'query': 'test', 'min_similarity': False}),
+        ])
+        result = validate_program(prog)
+        assert result.valid is False
+        assert _has_error(result, 'V023')
+
 
 # ===========================================================================
 # Layer 3: Safety -- Variable-Length Path Bounds V030
@@ -849,6 +867,24 @@ class TestVariableLengthPaths:
         error = _find_issue(result, 'V030')
         assert error is not None
         assert '*1..10' in error.message
+
+    def test_v030_string_literal_excluded(self):
+        """V030: [*] inside a string literal is not flagged.  @verified 0000000"""
+        prog = _minimal_program(statements=[
+            _cypher_stmt("MATCH (c:Concept) WHERE c.label = '[*]' RETURN c"),
+        ])
+        result = validate_program(prog)
+        assert result.valid is True
+        assert not _has_error(result, 'V030')
+
+    def test_v030_comment_excluded(self):
+        """V030: [*] inside a comment is not flagged.  @verified 0000000"""
+        prog = _minimal_program(statements=[
+            _cypher_stmt("MATCH (c:Concept) RETURN c -- [*] just a comment"),
+        ])
+        result = validate_program(prog)
+        assert result.valid is True
+        assert not _has_error(result, 'V030')
 
 
 # ===========================================================================

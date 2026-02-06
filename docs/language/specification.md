@@ -540,7 +540,7 @@ semantics of validation; refer to the catalog for the exhaustive rule list.
 Structural rules verify that the AST is well-formed before any semantic checks:
 
 - `version` must equal `1`.
-- `metadata` must be present (may be empty object).
+- `metadata`, if present, must be a valid `ProgramMetadata` object. Defaults to empty if omitted.
 - `statements` must be a non-empty array.
 - Each Statement must have a valid `op` (one of `+`, `-`, `&`, `?`, `!`).
 - Each Statement must have an `operation` with a known `type` discriminator.
@@ -566,23 +566,24 @@ The total is the sum across all top-level statements.
 
 Cypher queries are validated through the query safety facade (ADR-048):
 
-- No write clauses (`CREATE`, `SET`, `DELETE`, `MERGE`, `REMOVE`, `DETACH DELETE`).
-- No `CALL` to mutating procedures.
-- Unbounded `MATCH` patterns must include `LIMIT`.
-- No `DROP`, `ALTER`, or DDL statements.
+- No write clauses (`CREATE`, `SET`, `DELETE`, `MERGE`, `REMOVE`, `DETACH DELETE`, `DROP`).
+- Variable-length path traversals (`[*N..M]`) must have an upper bound within `MAX_VARIABLE_PATH_LENGTH` (default: 6).
 
 ### 5.4 API Endpoint Allowlist
 
 `ApiOp.endpoint` values must be in the permitted set. The initial allowlist:
 
-| Endpoint | Description | Expected Params |
-|----------|-------------|-----------------|
-| `/search/concepts` | Vector similarity search | `query: string`, `min_similarity?: number`, `limit?: number` |
-| `/search/sources` | Source passage search | `query: string`, `min_similarity?: number`, `limit?: number`, `ontology?: string` |
-| `/vocabulary/status` | Epistemic status lookup | `relationship_type?: string`, `status_filter?: string` |
-| `/concepts/batch` | Batch concept enrichment | `concept_ids: string[]` |
+| Endpoint | Description | Required Params | Optional Params |
+|----------|-------------|-----------------|-----------------|
+| `/search/concepts` | Vector similarity search | `query` (str) | `min_similarity` (number), `limit` (int), `ontology` (str), `offset` (int) |
+| `/search/sources` | Source passage search | `query` (str) | `min_similarity` (number), `limit` (int), `ontology` (str), `offset` (int) |
+| `/vocabulary/status` | Epistemic status lookup | *(none)* | `relationship_type` (str), `status_filter` (str) |
+| `/concepts/batch` | Batch concept enrichment | `concept_ids` (list) | `include_details` (bool) |
+| `/concepts/details` | Concept detail retrieval | `concept_id` (str) | `include_diversity` (bool), `include_grounding` (bool) |
+| `/concepts/related` | Neighborhood exploration | `concept_id` (str) | `max_depth` (int), `relationship_types` (list) |
 
-Any `endpoint` value not in this set produces a validation error.
+Any `endpoint` value not in this set produces a validation error. Parameter
+types are enforced at validation time.
 
 ### 5.5 Parameter Validation (Phase 2)
 
@@ -595,11 +596,13 @@ Any `endpoint` value not in this set produces a validation error.
 ```typescript
 interface ValidationResult {
   valid: boolean;
-  errors: ValidationError[];
+  errors: ValidationIssue[];
+  warnings: ValidationIssue[];
 }
 
-interface ValidationError {
-  rule?: string;              // catalog rule ID, e.g. "V001"
+interface ValidationIssue {
+  rule_id: string;            // catalog rule ID, e.g. "V010"
+  severity: 'error' | 'warning';
   statement?: number;         // zero-based index, absent for program-level errors
   field?: string;             // dotted path, e.g. "operation.query"
   message: string;
@@ -917,7 +920,7 @@ The following JSON Schema can be used for programmatic validation of
   "$id": "https://knowledge-graph-system/schemas/graph-program/v1",
   "title": "GraphProgram",
   "type": "object",
-  "required": ["version", "metadata", "statements"],
+  "required": ["version", "statements"],
   "properties": {
     "version": {
       "const": 1
