@@ -436,10 +436,34 @@ class ProgramExecuteRequest(BaseModel):
     """
     Request body for POST /programs/execute.
 
-    Exactly one of program_id or program must be provided.
-    program_id loads a notarized program from storage.
-    program provides an inline AST for immediate execution.
+    Single mode: exactly one of program_id or program must be provided.
+    Chain mode: provide a deck array of DeckEntry items.
+    The two modes are mutually exclusive.
     """
     program_id: Optional[int] = None
     program: Optional[Dict[str, Any]] = None
     params: Optional[Dict[str, Union[str, int, float]]] = None
+    deck: Optional[List['DeckEntry']] = None
+
+
+class DeckEntry(BaseModel):
+    """A single entry in a program chain (deck). Either program_id or program required."""
+    program_id: Optional[int] = None
+    program: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Union[str, int, float]]] = None
+
+
+class BatchProgramResult(BaseModel):
+    """Result from chained program execution (deck mode)."""
+    result: WorkingGraph
+    programs: List[ProgramResult] = Field(default_factory=list)
+    aborted: Optional[Dict[str, Any]] = None
+
+
+class ProgramListItem(BaseModel):
+    """Lightweight program summary for list endpoints."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    statement_count: int
+    created_at: str

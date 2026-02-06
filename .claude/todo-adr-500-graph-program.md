@@ -106,8 +106,39 @@ Align naming across spec, code, and docs. Resolve the route/allowlist mismatch.
 - [x] `program_executor.py` — async orchestrator with timeout, abort, conditional branching
 - [x] `POST /programs/execute` — endpoint (inline or stored program, re-validates, returns ProgramResult)
 - [x] 22 operator unit tests, 8 executor unit tests (all pass without Docker)
+- [x] Client integration: CLI `kg program execute`, MCP execute/chain/list tools
+- [x] MCP syntax guide: tool description + `program/syntax` resource
+- [x] Batch execution: `DeckEntry`, `BatchProgramResult`, `initial_w` seeding, `_execute_deck()`
+- [x] Program discovery: `GET /programs` list endpoint with search
 - [ ] API endpoint tests (extend tests/api/test_programs.py)
-- [ ] Client integration: CLI `kg program execute`, MCP execute tool, web execute button
+
+## Phase 3b: Agent Guidance Revision (in progress)
+
+**Problem:** Current MCP tool descriptions steer agents toward single-tool-call patterns.
+Programs and chains are invisible in all primary guidance surfaces.
+
+**Survey findings (all text in `mcp-server.ts`):**
+
+| Surface | Lines | Issue |
+|---------|-------|-------|
+| Server guide comment (L99-121) | Lists 6 tools, numbered 1-6 | Zero mention of programs. Agents see tools as the workflow. |
+| `search` tool description | "Your ENTRY POINT to the graph" | Steers directly to search → concept → details loop. No mention that programs can compose these. |
+| `explore-graph` prompt (L2921-3008) | 4-step workflow | Step 1: search, Step 2: concept connect, Step 3: concept details, Step 4: concept related. Zero mention of programs. |
+| All 12 tool descriptions | Each is action-oriented | Every tool says "use this for X". None say "or compose this into a program". |
+| `program/syntax` resource | Full reference with examples | Hidden behind a resource read. Agents must proactively discover it. |
+
+**Consequence:** Agents that connect to this MCP server will:
+1. Use search → concept → details one-call-at-a-time
+2. Never discover that programs exist unless they read the program tool
+3. Never discover chaining unless they read the syntax resource
+4. Waste tool budget on N individual calls when 1 program could do the same
+
+**Strategy:**
+- [x] Rewrite server guide to present three tiers: quick lookups → programs → chains
+- [x] Add program guidance to search tool's RECOMMENDED WORKFLOW
+- [x] Rewrite explore-graph prompt to teach program-first exploration
+- [x] Add cross-references from high-traffic tools (search, concept) to program tool
+- [x] Keep program/syntax resource as deep reference (don't inflate tool descriptions)
 
 ## Phase 4 (future): Advanced Language Features
 

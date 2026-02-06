@@ -2236,6 +2236,32 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
+  /**
+   * Execute a chain of programs (deck mode). W threads through each program.
+   */
+  async chainPrograms(deck: import('../types/index.js').DeckEntry[]): Promise<import('../types/index.js').BatchProgramResult> {
+    const body = { deck: deck.map(e => {
+      const entry: Record<string, any> = {};
+      if (e.program_id !== undefined) entry.program_id = e.program_id;
+      if (e.program !== undefined) entry.program = e.program;
+      if (e.params !== undefined) entry.params = e.params;
+      return entry;
+    })};
+    const response = await this.client.post('/programs/execute', body);
+    return response.data;
+  }
+
+  /**
+   * List stored programs with optional search.
+   */
+  async listPrograms(options?: { search?: string; limit?: number }): Promise<import('../types/index.js').ProgramListItem[]> {
+    const params: Record<string, any> = {};
+    if (options?.search) params.search = options.search;
+    if (options?.limit) params.limit = options.limit;
+    const response = await this.client.get('/programs', { params });
+    return response.data;
+  }
+
   // ========== Storage Admin ==========
 
   /**

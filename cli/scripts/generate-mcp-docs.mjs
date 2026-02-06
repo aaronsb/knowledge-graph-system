@@ -200,10 +200,11 @@ async function main() {
   index.push('These tools enable semantic search, concept exploration, and graph traversal directly from Claude.\n');
   index.push('---\n');
 
-  // TOC
+  // TOC (first line of description only)
   index.push('## Available Tools\n');
   tools.forEach(tool => {
-    index.push(`- [\`${tool.name}\`](#${tool.name.replace(/_/g, '-')}) - ${tool.description}`);
+    const firstLine = tool.description.split('\n')[0].trim();
+    index.push(`- [\`${tool.name}\`](#${tool.name.replace(/_/g, '-')}) - ${firstLine}`);
   });
   index.push('\n---\n');
 

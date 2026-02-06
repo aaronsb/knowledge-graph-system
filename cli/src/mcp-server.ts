@@ -104,17 +104,26 @@ const server = new Server(
  * - Diversity score (0-100%): Conceptual richness and connection breadth
  * - Authenticated diversity (✅✓⚠❌): Directional quality combining grounding + diversity
  *
- * Explore by:
- * 1. search - Find entry points (returns all scores + evidence samples)
- * 2. concept - Work with concepts (details, related, connections)
- * 3. ontology - Manage ontologies (list, info, files, delete)
- * 4. job - Manage jobs (status, list, approve, cancel)
- * 5. ingest - Ingest content (text, inspect-file, file, directory)
- * 6. source - Retrieve source images for visual verification
+ * Three tiers of exploration (prefer higher tiers for efficiency):
+ *
+ * TIER 3 — Programs & Chains (most efficient):
+ *   program (action: "execute") - Compose multi-step queries into a single server-side program
+ *   program (action: "chain")   - Thread results through multiple stored programs
+ *   program (action: "list")    - Discover reusable stored programs
+ *   Read the program/syntax resource for the full language reference.
+ *
+ * TIER 2 — Individual tools (quick lookups):
+ *   search  - Find concepts, sources, or documents by semantic similarity
+ *   concept - Get details, find related concepts, discover connection paths
+ *   source  - Retrieve original source text or images
+ *
+ * TIER 1 — Management:
+ *   ontology, job, ingest, graph, document, epistemic_status, analyze_polarity_axis
  *
  * Resources provide fresh data on-demand without consuming tool budget:
  * - database/stats, database/info, database/health
  * - system/status, api/health
+ * - program/syntax — full GraphProgram language reference
  *
  * Use high grounding + high diversity to find reliable, central concepts.
  * Negative grounding often shows the most interesting problems/contradictions.
@@ -286,6 +295,8 @@ DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR
 
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
+For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         inputSchema: {
           type: 'object',
@@ -327,7 +338,9 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         name: 'concept',
         description: `Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
 
-PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.`,
+PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
+
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -1064,46 +1077,100 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
           required: ['action'],
         },
       },
-      // ADR-500: GraphProgram notarization
+      // ADR-500: GraphProgram notarization and execution
       {
         name: 'program',
-        description: `Manage GraphProgram notarization: validate, store, and retrieve programs.
+        description: `Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
-Programs are the canonical AST for graph query composition (ADR-500). They represent
-bounded sequences of set-algebraic operations over Cypher queries and API calls.
-Programs must be notarized (validated + signed) by the server before execution.
+Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
+Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
 
-Four actions available:
-- "validate": Dry-run validation (no storage). Returns structured errors and warnings.
-- "create": Validate + store → returns ID + notarized program.
-- "get": Retrieve a notarized program by ID.
-- "execute": Execute a program server-side. Provide program (inline AST) or program_id (stored).
+**Actions:**
+- "validate": Dry-run validation. Returns errors/warnings without storing.
+- "create": Notarize + store. Returns program ID for later execution.
+- "get": Retrieve a stored program by ID.
+- "list": Search stored programs by name/description. Returns lightweight metadata.
+- "execute": Run a program server-side. Pass inline AST (program) or stored ID (program_id).
+- "chain": Run multiple programs sequentially. W threads through each — program N's output becomes program N+1's input. Pass a deck array of {program_id} or {program} entries (max 10).
 
-Use validate to check programs before committing. Use create to notarize and persist.
-Use get to retrieve previously stored programs. Use execute to run programs server-side.`,
+**Program Structure:**
+{ version: 1, metadata?: { name, description, author }, statements: [{ op, operation, label? }] }
+
+**Operators** (applied to Working Graph W using result R):
+  +  Union: merge R into W (dedup by concept_id / link compound key)
+  -  Difference: remove R's nodes from W, cascade dangling links
+  &  Intersect: keep only W nodes that appear in R
+  ?  Optional: union if R non-empty, silent no-op if empty
+  !  Assert: union if R non-empty, abort program if empty
+
+**CypherOp** — run read-only openCypher against the source graph:
+  { type: "cypher", query: "MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t", limit?: 20 }
+  Queries must be read-only (no CREATE/SET/DELETE/MERGE). RETURN nodes and relationships.
+
+**ApiOp** — call internal service functions (no HTTP):
+  { type: "api", endpoint: "/search/concepts", params: { query: "...", limit: 10 } }
+
+  Allowed endpoints:
+  /search/concepts   — params: query (required), min_similarity?, limit?
+  /search/sources    — params: query (required), min_similarity?, limit?
+  /concepts/details  — params: concept_id (required)
+  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?
+  /concepts/batch    — params: concept_ids (required, list)
+  /vocabulary/status — params: relationship_type?, status_filter?
+
+**Example** — find concepts about "machine learning", add their relationships:
+  { version: 1, statements: [
+    { op: "+", operation: { type: "api", endpoint: "/search/concepts",
+        params: { query: "machine learning", limit: 5 } }, label: "seed" },
+    { op: "+", operation: { type: "cypher",
+        query: "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
+      label: "expand relationships" }
+  ]}
+
+Read the program/syntax resource for the complete language reference with more examples.`,
         inputSchema: {
           type: 'object',
           properties: {
             action: {
               type: 'string',
-              enum: ['validate', 'create', 'get', 'execute'],
-              description: 'Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID), "execute" (run server-side)',
+              enum: ['validate', 'create', 'get', 'list', 'execute', 'chain'],
+              description: 'Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID), "list" (search stored programs), "execute" (run server-side), "chain" (run multiple programs sequentially)',
             },
             program: {
               type: 'object',
-              description: 'GraphProgram AST (required for validate and create). Must have version:1 and statements array.',
+              description: 'GraphProgram AST (required for validate, create, execute). Must have version:1 and statements array.',
             },
             name: {
               type: 'string',
-              description: 'Program name (optional for create, ignored for others)',
+              description: 'Program name (optional for create)',
             },
             program_id: {
               type: 'number',
-              description: 'Program ID (required for get, optional for execute)',
+              description: 'Program ID (required for get, optional for execute as alternative to inline program)',
             },
             params: {
               type: 'object',
               description: 'Runtime parameter values for execute (optional)',
+            },
+            search: {
+              type: 'string',
+              description: 'Search text for list action (matches name and description)',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max results for list action (default: 20)',
+            },
+            deck: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  program_id: { type: 'number', description: 'Stored program ID' },
+                  program: { type: 'object', description: 'Inline program AST' },
+                  params: { type: 'object', description: 'Runtime params for this program' },
+                },
+              },
+              description: 'Array of program entries for chain action (max 10). Each entry needs program_id or program.',
             },
           },
           required: ['action'],
@@ -1152,6 +1219,12 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
         name: 'MCP File Access Allowlist',
         description: 'Path allowlist configuration for secure file/directory ingestion (ADR-062)',
         mimeType: 'application/json'
+      },
+      {
+        uri: 'program/syntax',
+        name: 'GraphProgram Language Reference',
+        description: 'Complete syntax reference for composing GraphProgram ASTs (ADR-500). Includes operators, operation types, allowed endpoints, conditions, and examples.',
+        mimeType: 'text/plain'
       }
     ]
   };
@@ -1250,6 +1323,16 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
               max_files_per_directory: config.max_files_per_directory,
               config_path: manager.getAllowlistPath()
             })
+          }]
+        };
+      }
+
+      case 'program/syntax': {
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: getGraphProgramSyntaxReference()
           }]
         };
       }
@@ -2699,8 +2782,98 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           }
 
+          case 'list': {
+            const programs = await client.listPrograms({
+              search: toolArgs.search as string | undefined,
+              limit: toolArgs.limit as number | undefined,
+            });
+            if (programs.length === 0) {
+              return {
+                content: [{ type: 'text', text: 'No stored programs found.' }],
+              };
+            }
+            const lines: string[] = [`Found ${programs.length} program(s):\n`];
+            for (const p of programs) {
+              const desc = p.description ? `  ${p.description}` : '';
+              lines.push(`  [${p.id}] ${p.name} (${p.statement_count} statements)${desc}`);
+            }
+            return {
+              content: [{ type: 'text', text: lines.join('\n') }],
+            };
+          }
+
+          case 'chain': {
+            if (!toolArgs.deck || !Array.isArray(toolArgs.deck)) {
+              throw new Error('deck array is required for chain action');
+            }
+            if (toolArgs.deck.length === 0) {
+              throw new Error('deck must contain at least one entry');
+            }
+            if (toolArgs.deck.length > 10) {
+              throw new Error(`Deck too large: ${toolArgs.deck.length} entries (max 10)`);
+            }
+            try {
+              const result = await client.chainPrograms(toolArgs.deck as any[]);
+              const lines: string[] = [];
+
+              if (result.aborted) {
+                lines.push(`✗ Chain aborted at statement ${result.aborted.statement}: ${result.aborted.reason}`);
+              } else {
+                const totalMs = result.programs.reduce((sum, p) =>
+                  sum + p.log.reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
+                lines.push(`✓ Chain completed: ${result.programs.length} programs (${totalMs.toFixed(0)}ms)`);
+              }
+
+              lines.push(`  Nodes: ${result.result.nodes.length}`);
+              lines.push(`  Links: ${result.result.links.length}`);
+
+              // Per-program summary
+              lines.push('\nProgram Results:');
+              for (let i = 0; i < result.programs.length; i++) {
+                const pr = result.programs[i];
+                const ms = pr.log.reduce((s: number, e: any) => s + e.duration_ms, 0);
+                const status = pr.aborted ? '✗' : '✓';
+                lines.push(`  ${status} [${i}] ${pr.log.length} steps, ${pr.result.nodes.length}n/${pr.result.links.length}l (${ms.toFixed(0)}ms)`);
+              }
+
+              if (result.result.nodes.length > 0) {
+                lines.push('\nNodes:');
+                for (const node of result.result.nodes.slice(0, 50)) {
+                  const ont = node.ontology ? ` [${node.ontology}]` : '';
+                  lines.push(`  • ${node.label} (${node.concept_id})${ont}`);
+                }
+                if (result.result.nodes.length > 50) {
+                  lines.push(`  ... and ${result.result.nodes.length - 50} more`);
+                }
+              }
+
+              if (result.result.links.length > 0) {
+                lines.push('\nLinks:');
+                for (const link of result.result.links.slice(0, 30)) {
+                  lines.push(`  ${link.from_id} → ${link.relationship_type} → ${link.to_id}`);
+                }
+                if (result.result.links.length > 30) {
+                  lines.push(`  ... and ${result.result.links.length - 30} more`);
+                }
+              }
+
+              return {
+                content: [{ type: 'text', text: lines.join('\n') }],
+                isError: !!result.aborted,
+              };
+            } catch (err: any) {
+              if (err.response?.status === 400) {
+                return {
+                  content: [{ type: 'text', text: `✗ Chain error: ${err.response?.data?.detail || err.message}` }],
+                  isError: true,
+                };
+              }
+              throw err;
+            }
+          }
+
           default:
-            throw new Error(`Unknown program action: ${action}. Use: validate, create, get, or execute`);
+            throw new Error(`Unknown program action: ${action}. Use: validate, create, get, list, execute, or chain`);
         }
       }
 
@@ -2762,90 +2935,73 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 
 This system transforms documents into semantic concept graphs with grounding strength (reliability scores) and evidence (quoted text).
 
-## Exploration Workflow:
+## Choose Your Approach
 
-1. **search** - Your entry point. Find concepts by semantic similarity.
-   - Returns RICH DATA:
-     * Grounding strength: Reliability score (-1.0 to 1.0)
-     * Diversity score: % showing conceptual richness
-     * Authenticated diversity: Support/contradiction indicator (✅✓⚠❌)
-     * Evidence samples: Quoted text from sources
-     * Image indicators: Visual evidence available
+### Quick lookup (1-2 results needed)
+Use individual tools directly:
+- **search** — find concepts by semantic similarity (2-3 word phrases)
+- **concept** (action: "connect") — trace paths between two concepts
+- **concept** (action: "details") — get all evidence for one concept
+
+### Multi-step exploration (recommended for most tasks)
+Compose a **GraphProgram** using the **program** tool. One program replaces
+multiple individual tool calls and runs entirely server-side:
+\`\`\`json
+{ "version": 1, "statements": [
+  { "op": "+", "operation": { "type": "api", "endpoint": "/search/concepts",
+      "params": { "query": "your topic", "limit": 10 } }, "label": "seed" },
+  { "op": "+", "operation": { "type": "cypher",
+      "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
+    "label": "expand relationships" }
+]}
+\`\`\`
+Use **program** (action: "execute") to run inline, or (action: "create") to store for reuse.
+
+### Chained exploration (complex investigations)
+Stack multiple programs with **program** (action: "chain"). Each program's
+output becomes the next program's input. Use (action: "list") to find stored
+programs you can compose.
+
+Read the **program/syntax** resource for the full language reference with examples.
+
+## Individual Tool Reference
+
+1. **search** — Find concepts, source passages, or documents
+   - Returns: grounding strength, diversity score, authenticated diversity (✅✓⚠❌), evidence samples
    - Use 2-3 word phrases (e.g., "configuration management", "licensing issues")
 
-2. **concept (action: connect)** - **PRIORITIZE THIS** - Discover HOW concepts connect.
-   - This is often MORE VALUABLE than isolated concept details
-   - Trace problem→solution chains, cause/effect relationships
-   - See grounding + evidence at each step in the path
-   - Reveals narrative flow through ideas
-   - **PERFORMANCE CRITICAL**: Start with threshold=0.8, max_hops=3
-   - Lower thresholds exponentially increase query time (0.6 = slow, <0.6 = very slow)
+2. **concept** (action: "connect") — Discover HOW concepts relate
+   - Traces paths: problem→solution, cause→effect
+   - **PERFORMANCE**: Start with threshold=0.8, max_hops=3
+   - Often MORE VALUABLE than isolated concept details
 
-3. **concept (action: details)** - See the complete picture for any concept.
-   - Returns: ALL quoted evidence + relationships
-   - IMPORTANT: Contradicted concepts (negative grounding) are VALUABLE - they show problems/outdated approaches
-   - Use this after finding interesting concepts via search or connect
+3. **concept** (action: "details") — Complete picture for one concept
+   - ALL quoted evidence + relationships
+   - Contradicted concepts (negative grounding) show problems/outdated approaches
 
-4. **concept (action: related)** - Explore neighborhoods.
-   - Find what's nearby in the concept graph
-   - Discover clusters and themes
-   - Use depth=1-2 for neighbors, 3-4 for broader exploration
+4. **concept** (action: "related") — Explore neighborhoods
+   - depth=1-2 for neighbors, 3-4 for broader exploration
 
-## Resources (Fresh Data):
+## Understanding the Scores
 
-Use MCP resources for quick status checks without consuming tool budget:
-- **database/stats** - Concept counts, relationships, ontologies
-- **database/info** - PostgreSQL version, AGE extension
-- **database/health** - Connection status
-- **system/status** - Job scheduler, resource usage
-- **api/health** - API server status
+**Grounding Strength (-1.0 to 1.0)** — Reliability/Contradiction
+- Positive (>0.7): Well-supported, reliable
+- Moderate (0.3-0.7): Mixed evidence
+- Negative (<0): Contradicted — often the most interesting!
 
-## Understanding the Scores:
+**Diversity Score (0-100%)** — Conceptual Richness
+- High: Connects to many different related concepts (central)
+- Low: Specialized or newly added
 
-**Grounding Strength (-1.0 to 1.0)** - Reliability/Contradiction
-- **Positive (>0.7)**: Well-supported, reliable concept
-- **Moderate (0.3-0.7)**: Mixed evidence, use with caution
-- **Negative (<0)**: Contradicted or presented as a problem
-- **Contradicted (-1.0)**: Often the most interesting - shows pain points!
+**Authenticated Diversity (✅✓⚠❌)** — Combines grounding + diversity
+- ✅ Use confidently · ✓ Moderate support · ⚠ Investigate · ❌ Contradicted
 
-**Diversity Score (0-100%)** - Conceptual Richness
-- High diversity: Concept connects to many different related concepts
-- Shows breadth of connections in the knowledge graph
-- Higher scores indicate more interconnected, central concepts
-
-**Authenticated Diversity (✅✓⚠❌)** - Directional Quality
-- ✅ Diverse support: Strong positive evidence across many connections
-- ✓ Some support: Moderate positive evidence
-- ⚠ Weak contradiction: Some conflicting evidence
-- ❌ Diverse contradiction: Strong negative evidence across connections
-- Combines grounding with diversity to show reliability + breadth
-
-## How to Use the Scores:
-
-**High Grounding + High Diversity** → Central, well-established concepts
-- These are reliable anchor points for exploration
-- Good starting points for connection queries
-
-**High Grounding + Low Diversity** → Specialized, focused concepts
-- Domain-specific, niche ideas with strong support
-- May be isolated or newly added
-
-**Low/Negative Grounding + High Diversity** → Controversial or evolving concepts
-- Contested ideas with multiple perspectives
-- Often the most interesting for understanding debates
-
-**Authenticated Diversity** → Quick quality check
-- Use ✅ results confidently
-- Investigate ⚠ and ❌ results for contradictions and problems
-
-## Pro Tips:
-- **Connection queries first**: After search, immediately explore HOW concepts connect - this reveals causality and narrative
-- Use diversity scores to find central vs. peripheral concepts
-- Start broad with search, then drill down with concept details
-- Contradicted concepts reveal what DIDN'T work - goldmines for learning
-- Connection paths tell stories - follow the evidence chain
-- Use resources for quick status checks instead of tools
-- **Performance**: Keep threshold >= 0.75 for connect queries to avoid slow/hung queries`,
+## Tips
+- **Programs over individual calls**: A 3-statement program is faster and cheaper than 3 tool calls
+- **Contradictions are valuable**: Negative grounding reveals pain points and what didn't work
+- **Connection paths tell stories**: Follow the evidence chain between concepts
+- **Use resources for status**: database/stats, system/status — no tool budget cost
+- **Performance**: Keep threshold >= 0.75 for connect queries`,
           },
         },
       ],
@@ -2854,6 +3010,309 @@ Use MCP resources for quick status checks without consuming tool budget:
 
   throw new Error(`Unknown prompt: ${name}`);
 });
+
+/**
+ * GraphProgram language reference for agent consumption (ADR-500).
+ * Returned by the program/syntax MCP resource.
+ */
+function getGraphProgramSyntaxReference(): string {
+  return `# GraphProgram Language Reference (ADR-500)
+
+GraphProgram is a JSON-based query composition language for the knowledge graph.
+Programs compose openCypher queries and REST API calls using set-algebra operators
+to build a mutable Working Graph (W) from the persistent Source Graph (H).
+
+## Program Structure
+
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "...", "description": "...", "author": "agent" },
+  "statements": [
+    { "op": "+", "operation": { ... }, "label": "description of this step" }
+  ]
+}
+\`\`\`
+
+- version: Must be 1 (integer)
+- metadata: Optional. author can be "human", "agent", or "system"
+- statements: Non-empty array. Executed sequentially. Min 1, max 100.
+
+## Operators
+
+Each statement has an "op" that controls how the operation's result (R) modifies W:
+
+  +  UNION     — Merge R into W. Dedup by concept_id (nodes) and (from_id, relationship_type, to_id) (links). W wins on collision.
+  -  DIFFERENCE — Remove R's nodes from W by concept_id. Links referencing removed nodes are cascade-removed.
+  &  INTERSECT  — Keep only W nodes whose concept_id appears in R. Remove all others + dangling links.
+  ?  OPTIONAL   — If R is non-empty: apply union. If R is empty: silent no-op. Use for exploratory steps.
+  !  ASSERT     — If R is non-empty: apply union. If R is empty: ABORT the entire program. Use for guard steps.
+
+Invariant: After every operator, links whose from_id or to_id has no matching node are removed (dangling link invariant).
+
+## Operation Types
+
+### CypherOp — Query the source graph with openCypher
+
+\`\`\`json
+{
+  "type": "cypher",
+  "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'physics' RETURN c, r, t",
+  "limit": 20
+}
+\`\`\`
+
+- query: Read-only openCypher. Must RETURN nodes (c) and/or relationships (r). No CREATE/SET/DELETE/MERGE.
+- limit: Optional positive integer. Appended as LIMIT if query doesn't already have one.
+
+Common Cypher patterns:
+  MATCH (c:Concept) RETURN c LIMIT 10                              — fetch concepts
+  MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t LIMIT 20      — concepts + relationships
+  MATCH (c:Concept) WHERE c.ontology = 'name' RETURN c             — filter by ontology
+  MATCH (c:Concept) WHERE c.concept_id IN ['id1','id2'] RETURN c   — batch by ID
+  MATCH p=(a:Concept)-[*1..3]->(b:Concept) RETURN p                — paths (max depth 6)
+
+### ApiOp — Call internal service functions
+
+\`\`\`json
+{
+  "type": "api",
+  "endpoint": "/search/concepts",
+  "params": { "query": "neural networks", "limit": 10, "min_similarity": 0.7 }
+}
+\`\`\`
+
+Allowed endpoints and their parameters:
+
+  /search/concepts
+    Required: query (string) — semantic search text
+    Optional: min_similarity (number, default 0.7), limit (integer, default 10)
+    Returns: concept nodes matching the search
+
+  /search/sources
+    Required: query (string) — semantic search text
+    Optional: min_similarity (number, default 0.7), limit (integer, default 10)
+    Returns: concept nodes extracted from matching source passages
+
+  /concepts/details
+    Required: concept_id (string)
+    Returns: the concept node + its outgoing relationships and target nodes
+
+  /concepts/related
+    Required: concept_id (string)
+    Optional: max_depth (integer, default 2), relationship_types (string array)
+    Returns: neighborhood concept nodes
+
+  /concepts/batch
+    Required: concept_ids (string array)
+    Returns: concept nodes for all matching IDs
+
+  /vocabulary/status
+    Optional: relationship_type (string), status_filter (string)
+    Returns: vocabulary type nodes with epistemic status metadata
+
+### ConditionalOp — Branch based on Working Graph state
+
+\`\`\`json
+{
+  "type": "conditional",
+  "condition": { "test": "has_results" },
+  "then": [ { "op": "+", "operation": { ... } } ],
+  "else": [ { "op": "+", "operation": { ... } } ]
+}
+\`\`\`
+
+Condition tests (evaluated against current W):
+  has_results      — W has at least one node
+  empty            — W has zero nodes
+  count_gte        — W node count >= value (needs "value": number)
+  count_lte        — W node count <= value (needs "value": number)
+  has_ontology     — any W node has matching ontology (needs "ontology": string)
+  has_relationship — any W link has matching type (needs "type": string)
+
+Max nesting depth: 3.
+
+## Working Graph Shape
+
+Nodes are keyed by concept_id (string). Links are keyed by (from_id, relationship_type, to_id).
+
+  Node: { concept_id, label, ontology?, description?, properties? }
+  Link: { from_id, to_id, relationship_type, category?, confidence? }
+
+## Examples
+
+### 1. Simple concept search + relationship expansion
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "explore topic", "author": "agent" },
+  "statements": [
+    {
+      "op": "+",
+      "operation": { "type": "api", "endpoint": "/search/concepts",
+        "params": { "query": "machine learning", "limit": 5 } },
+      "label": "seed with search results"
+    },
+    {
+      "op": "+",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t LIMIT 30" },
+      "label": "add relationships between any concepts"
+    }
+  ]
+}
+\`\`\`
+
+### 2. Ontology-filtered exploration
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "ontology deep dive", "author": "agent" },
+  "statements": [
+    {
+      "op": "+",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept) WHERE c.ontology = 'distributed-systems' RETURN c LIMIT 20" },
+      "label": "get ontology concepts"
+    },
+    {
+      "op": "+",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'distributed-systems' AND t.ontology = 'distributed-systems' RETURN c, r, t" },
+      "label": "intra-ontology relationships"
+    }
+  ]
+}
+\`\`\`
+
+### 3. Assert + conditional pattern
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "guarded expansion", "author": "agent" },
+  "statements": [
+    {
+      "op": "!",
+      "operation": { "type": "api", "endpoint": "/search/concepts",
+        "params": { "query": "quantum computing", "limit": 3, "min_similarity": 0.8 } },
+      "label": "must find quantum concepts (abort if not)"
+    },
+    {
+      "op": "?",
+      "operation": { "type": "api", "endpoint": "/search/concepts",
+        "params": { "query": "quantum entanglement", "limit": 5 } },
+      "label": "optionally add entanglement concepts"
+    },
+    {
+      "op": "+",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept)-[r:SUPPORTS|IMPLIES]->(t:Concept) RETURN c, r, t LIMIT 50" },
+      "label": "add supporting/implied relationships"
+    }
+  ]
+}
+\`\`\`
+
+### 4. Cross-ontology comparison (intersect)
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "cross-ontology overlap", "author": "agent" },
+  "statements": [
+    {
+      "op": "+",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept) WHERE c.ontology = 'machine-learning' RETURN c" },
+      "label": "load ML concepts"
+    },
+    {
+      "op": "&",
+      "operation": { "type": "cypher",
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE t.ontology = 'statistics' RETURN c" },
+      "label": "keep only ML concepts that relate to statistics"
+    }
+  ]
+}
+\`\`\`
+
+### 5. Enrichment pipeline (concept details)
+\`\`\`json
+{
+  "version": 1,
+  "metadata": { "name": "enrich concepts", "author": "agent" },
+  "statements": [
+    {
+      "op": "+",
+      "operation": { "type": "api", "endpoint": "/search/concepts",
+        "params": { "query": "neural architecture", "limit": 3 } },
+      "label": "find seed concepts"
+    },
+    {
+      "op": "+",
+      "operation": { "type": "api", "endpoint": "/concepts/details",
+        "params": { "concept_id": "CONCEPT_ID_FROM_SEARCH" } },
+      "label": "enrich first concept with relationships"
+    }
+  ]
+}
+\`\`\`
+Note: For enrichment, you typically execute a search first, inspect the results,
+then compose a second program using specific concept_ids from the first result.
+
+## Execution
+
+Use the program tool with action "execute":
+- Inline: { action: "execute", program: { version: 1, statements: [...] } }
+- Stored: { action: "execute", program_id: 42 }
+
+The response includes:
+- result: { nodes: [...], links: [...] } — the final Working Graph
+- log: step-by-step execution record with timing
+- aborted: present only if an assert (!) failed
+
+## Tips for Agent Program Composition
+
+1. Start with + (union) to seed W with initial data.
+2. Use ? (optional) for speculative searches that might return nothing.
+3. Use ! (assert) for critical steps — if the data doesn't exist, abort early.
+4. Use - (difference) to remove unwanted nodes and their links.
+5. Use & (intersect) to filter W down to a specific subset.
+6. Cypher queries that RETURN c, r, t give both nodes and relationships.
+7. API searches return only nodes. Use Cypher to add relationships between them.
+8. Validate before execute: use action "validate" to catch errors without side effects.
+9. Programs are bounded: max 100 operations, max conditional nesting depth 3.
+10. All queries are read-only. Programs cannot modify the source graph.
+11. Use "list" to discover stored programs, then "chain" to compose them.
+12. Chain programs that build on each other: seed → expand → filter → enrich.
+
+## Program Chaining (Deck Mode)
+
+Chain multiple programs into a single execution. W threads through each program
+sequentially — program N's final W becomes program N+1's initial W.
+
+Use the program tool with action "chain" and a "deck" array:
+  { action: "chain", deck: [
+    { program_id: 1 },
+    { program_id: 5 },
+    { program: { version: 1, statements: [...] } }
+  ]}
+
+Each deck entry can be a stored program (program_id) or an inline AST (program).
+Max 10 programs per chain. If any program aborts (! assert fails), the chain stops.
+
+The response includes:
+- result: final W after all programs
+- programs: per-program results (each with own log)
+- aborted: present only if any program aborted
+
+## Discovering Programs
+
+Use action "list" to find stored programs:
+  { action: "list" }                        — list all
+  { action: "list", search: "ontology" }    — search by name/description
+
+Returns: id, name, description, statement_count. Use the IDs in chain decks.`;
+}
 
 /**
  * Start the MCP server

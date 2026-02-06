@@ -1338,3 +1338,26 @@ export interface ProgramResult {
   log: StepLogEntry[];
   aborted?: { statement: number; reason: string } | null;
 }
+
+/** A single entry in a program chain (deck). */
+export interface DeckEntry {
+  program_id?: number;
+  program?: Record<string, any>;
+  params?: Record<string, string | number>;
+}
+
+/** Result from chained program execution (deck mode). */
+export interface BatchProgramResult {
+  result: WorkingGraph;
+  programs: ProgramResult[];
+  aborted?: { statement: number; reason: string } | null;
+}
+
+/** Lightweight program summary for list endpoints. */
+export interface ProgramListItem {
+  id: number;
+  name: string;
+  description?: string | null;
+  statement_count: number;
+  created_at: string;
+}

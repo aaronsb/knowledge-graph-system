@@ -28,6 +28,8 @@ DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR
 
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
+For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**

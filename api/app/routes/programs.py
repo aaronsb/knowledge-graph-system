@@ -1,20 +1,21 @@
 """
-Program notarization and execution endpoints (ADR-500 Phase 2b + Phase 3).
+Program notarization, execution, and chain endpoints (ADR-500).
 
-Server-side validation, storage, retrieval, and execution of GraphProgram ASTs.
-Programs are notarized (validated + signed) before storage. Only notarized
-programs can be retrieved and executed.
+Server-side validation, storage, retrieval, execution, and chained execution
+of GraphProgram ASTs. Programs are notarized (validated + signed) before storage.
 
-Four endpoints:
+Endpoints:
   POST /programs          — validate + store → ID + notarized program
   POST /programs/validate — dry-run validation (no storage)
+  GET  /programs          — list stored programs (with optional search)
   GET  /programs/{id}     — retrieve a notarized program
-  POST /programs/execute  — execute a program server-side (Phase 3)
+  POST /programs/execute  — execute or chain programs server-side
 
 @verified 0000000
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 import logging
 import psycopg2.extras
 
@@ -24,7 +25,10 @@ from ..models.program import (
     ProgramReadResponse,
     ProgramExecuteRequest,
     ProgramResult,
+    BatchProgramResult,
+    ProgramListItem,
     GraphProgram,
+    WorkingGraph,
 )
 from ..services.program_validator import (
     validate_program,
@@ -141,21 +145,41 @@ async def validate_program_endpoint(
 
 @router.post(
     "/execute",
-    response_model=ProgramResult,
-    summary="Execute a program server-side",
+    summary="Execute or chain programs server-side",
 )
 async def execute_program_endpoint(
     request: ProgramExecuteRequest,
     current_user: UserInDB = Depends(get_current_user),
 ):
     """
-    Execute a GraphProgram server-side (ADR-500 Phase 3).
+    Execute a GraphProgram or chain of programs server-side.
 
-    Accepts either a stored program ID or an inline program AST.
-    The program is re-validated before execution (defense in depth).
-    Returns the final WorkingGraph, execution log, and abort info if any.
+    Single mode: provide program_id or inline program AST.
+    Chain mode: provide a deck array of program references. W threads through
+    each program sequentially — program N's output becomes program N+1's input.
+
+    All programs are re-validated before execution (defense in depth).
     """
-    # Validate request: exactly one of program_id or program
+    # Chain mode (deck)
+    if request.deck is not None:
+        if request.program_id is not None or request.program is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Provide deck OR (program_id/program), not both",
+            )
+        if len(request.deck) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Deck must contain at least one entry",
+            )
+        if len(request.deck) > 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deck too large: {len(request.deck)} entries (max 10)",
+            )
+        return await _execute_deck(request.deck, current_user)
+
+    # Single mode (existing behavior)
     if request.program_id is not None and request.program is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -196,6 +220,74 @@ async def execute_program_endpoint(
         client.close()
 
 
+async def _execute_deck(deck, current_user) -> BatchProgramResult:
+    """Execute a chain of programs, threading W through each."""
+    from ..lib.age_client import AGEClient
+
+    # Resolve and validate all programs upfront before executing any
+    validated_programs = []
+    for i, entry in enumerate(deck):
+        if entry.program_id is not None and entry.program is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deck entry {i}: provide program_id or program, not both",
+            )
+        if entry.program_id is None and entry.program is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Deck entry {i}: provide program_id or program",
+            )
+
+        if entry.program_id is not None:
+            program_data = _load_program_definition(entry.program_id, current_user)
+        else:
+            program_data = entry.program
+
+        validation = validate_program(program_data)
+        if not validation.valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": f"Deck entry {i}: program validation failed",
+                    "validation": validation.model_dump(),
+                },
+            )
+
+        validated_programs.append((
+            GraphProgram.model_validate(program_data),
+            entry.params,
+        ))
+
+    # Execute chain: thread W through each program
+    client = AGEClient()
+    try:
+        w = WorkingGraph()
+        program_results = []
+
+        for program, params in validated_programs:
+            result = await execute_program(
+                program, client, params=params, initial_w=w,
+            )
+            program_results.append(result)
+
+            if result.aborted:
+                return BatchProgramResult(
+                    result=result.result,
+                    programs=program_results,
+                    aborted=result.aborted,
+                )
+
+            # Thread W forward
+            w = result.result
+
+        return BatchProgramResult(
+            result=w,
+            programs=program_results,
+        )
+    finally:
+        client.close()
+
+
 def _load_program_definition(program_id: int, current_user: UserInDB) -> dict:
     """Load a program's raw definition from the database."""
     conn = get_db_connection()
@@ -223,6 +315,73 @@ def _load_program_definition(program_id: int, current_user: UserInDB) -> dict:
                     )
 
             return row[0]
+    finally:
+        conn.close()
+
+
+@router.get(
+    "",
+    response_model=List[ProgramListItem],
+    summary="List stored programs",
+)
+async def list_programs(
+    search: Optional[str] = Query(None, description="Search name/description"),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: UserInDB = Depends(get_current_user),
+):
+    """
+    List stored programs with optional text search.
+
+    Returns lightweight metadata (id, name, description, statement_count).
+    Search matches against program name and metadata description.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            if search:
+                cur.execute("""
+                    SELECT id, name,
+                           definition->'metadata'->>'description' as description,
+                           jsonb_array_length(definition->'statements') as stmt_count,
+                           created_at
+                    FROM kg_api.query_definitions
+                    WHERE definition_type = 'program'
+                      AND (owner_id IS NULL OR owner_id = %s
+                           OR %s IN ('admin', 'platform_admin'))
+                      AND (name ILIKE %s
+                           OR definition->'metadata'->>'description' ILIKE %s)
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                """, (
+                    current_user.id, current_user.role,
+                    f'%{search}%', f'%{search}%',
+                    limit,
+                ))
+            else:
+                cur.execute("""
+                    SELECT id, name,
+                           definition->'metadata'->>'description' as description,
+                           jsonb_array_length(definition->'statements') as stmt_count,
+                           created_at
+                    FROM kg_api.query_definitions
+                    WHERE definition_type = 'program'
+                      AND (owner_id IS NULL OR owner_id = %s
+                           OR %s IN ('admin', 'platform_admin'))
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                """, (current_user.id, current_user.role, limit))
+
+            rows = cur.fetchall()
+            return [
+                ProgramListItem(
+                    id=row[0],
+                    name=row[1],
+                    description=row[2],
+                    statement_count=row[3] or 0,
+                    created_at=str(row[4]),
+                )
+                for row in rows
+            ]
     finally:
         conn.close()
 

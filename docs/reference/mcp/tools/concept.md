@@ -8,6 +8,8 @@ Work with concepts: get details (ALL evidence + relationships), find related con
 
 PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
+
 **Parameters:**
 
 - `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)
