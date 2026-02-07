@@ -10,6 +10,8 @@ Interactive visualizations for discovering patterns and relationships.
 
 ### 2D Force Graph
 
+![2D Force Graph](../media/screenshots/web-2d-force-graph.png)
+
 Force-directed layout showing concepts as nodes and relationships as edges.
 
 **What you can do:**
@@ -26,6 +28,8 @@ Force-directed layout showing concepts as nodes and relationships as edges.
 
 ### 3D Force Graph
 
+![3D Force Graph](../media/screenshots/web-3d-force-graph.png)
+
 Immersive three-dimensional version with spatial depth.
 
 **What you can do:**
@@ -38,6 +42,8 @@ Immersive three-dimensional version with spatial depth.
 ---
 
 ### Document Explorer
+
+![Document Explorer](../media/screenshots/web-document-explorer.png)
 
 Radial tree centered on a source document.
 
@@ -52,6 +58,8 @@ Radial tree centered on a source document.
 ---
 
 ### Polarity Explorer
+
+![Polarity Explorer](../media/screenshots/web-polarity-explorer.png)
 
 Project concepts onto a semantic spectrum between two poles.
 
@@ -80,6 +88,8 @@ Project concepts onto a semantic spectrum between two poles.
 ---
 
 ### Edge Explorer
+
+![Edge Explorer](../media/screenshots/web-edge-explorer.png)
 
 System-wide analysis of relationship types.
 
@@ -112,6 +122,8 @@ Functional workspaces for specific tasks.
 
 ### Flow Editor
 
+![Flow Editor](../media/screenshots/web-block-builder.png)
+
 Visual query builder for complex graph traversals.
 
 **What you can do:**
@@ -125,6 +137,8 @@ Visual query builder for complex graph traversals.
 ---
 
 ### Upload Content
+
+![Upload Content](../media/screenshots/web-ingest-upload.png)
 
 Drag-and-drop document ingestion.
 
@@ -141,6 +155,8 @@ Drag-and-drop document ingestion.
 ---
 
 ### Job Queue
+
+![Job Queue](../media/screenshots/web-admin-jobs.png)
 
 Monitor and manage extraction jobs.
 
@@ -170,6 +186,8 @@ Tabular views and export functionality.
 
 ### Graph Editor
 
+![Graph Editor](../media/screenshots/web-graph-editor.png)
+
 Manual creation and editing of concepts and edges.
 
 **What you can do:**
@@ -183,6 +201,8 @@ Manual creation and editing of concepts and edges.
 ---
 
 ### Administration
+
+![Administration](../media/screenshots/web-admin-system.png)
 
 User and system management.
 

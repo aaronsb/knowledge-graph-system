@@ -120,6 +120,14 @@ cd knowledge-graph-system
 
 See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
+## See It In Action
+
+![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph.png)
+*Interactive graph exploration with smart search, concept clustering, and relationship visualization*
+
+![CLI with Inline Image Evidence](docs/media/screenshots/cli-search-with-images.png)
+*Command-line search returns concepts with source images rendered inline via chafa*
+
 ## What You Can Do
 
 **Ingest documents** — PDFs, markdown, images, text. The system extracts concepts, relationships, and evidence automatically.
