@@ -11,7 +11,8 @@
 import { useState, useCallback } from 'react';
 import { useGraphStore, type SearchParams } from '../store/graphStore';
 import { apiClient } from '../api/client';
-import { mapCypherResultToRawGraph } from '../utils/cypherResultMapper';
+import { mapWorkingGraphToRawGraph } from '../utils/cypherResultMapper';
+import { statementsToProgram } from '../utils/programBuilder';
 
 /** Minimal shape a saved query must have to be replayed (exploration, polarity, or legacy).  @verified 7b5be48d */
 export interface ReplayableDefinition {
@@ -40,7 +41,7 @@ export function useQueryReplay() {
   const replayQuery = useCallback(async (query: ReplayableDefinition) => {
     const definition = query.definition;
 
-    // Exploration-type: replay +/- Cypher statements
+    // Exploration-type: replay +/- Cypher statements via GraphProgram execution
     if (query.definition_type === 'exploration' && definition?.statements) {
       setIsReplaying(true);
       try {
@@ -48,27 +49,24 @@ export function useQueryReplay() {
         setRawGraphData(null);
         resetExplorationSession();
 
-        for (const stmt of definition.statements as Array<{ op: '+' | '-'; cypher: string }>) {
-          try {
-            const result = await apiClient.executeCypherQuery({ query: stmt.cypher, limit: 500 });
-            const mapped = mapCypherResultToRawGraph(result);
+        const stmts = definition.statements as Array<{ op: '+' | '-'; cypher: string }>;
+        const program = statementsToProgram(stmts);
+        const programResult = await apiClient.executeProgram({
+          program: program as unknown as Record<string, unknown>,
+        });
+        const mapped = mapWorkingGraphToRawGraph(programResult.result);
+        mergeRawGraphData(mapped);
 
-            if (stmt.op === '+') {
-              mergeRawGraphData(mapped);
-            } else {
-              subtractRawGraphData(mapped);
-            }
-
-            // Reconstruct exploration session so Save/Export work after load
-            useGraphStore.getState().addExplorationStep({
-              action: 'cypher',
-              op: stmt.op,
-              cypher: stmt.cypher,
-            });
-          } catch (error) {
-            console.error('Failed to replay statement:', stmt.cypher, error);
-          }
+        // Reconstruct exploration session so Save/Export work after load
+        for (const stmt of stmts) {
+          useGraphStore.getState().addExplorationStep({
+            action: 'cypher',
+            op: stmt.op,
+            cypher: stmt.cypher,
+          });
         }
+      } catch (error) {
+        console.error('Failed to replay exploration:', error);
       } finally {
         setIsReplaying(false);
       }

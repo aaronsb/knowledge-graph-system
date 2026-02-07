@@ -40,6 +40,8 @@ import { BlockHelpPopup } from './BlockHelpPopup';
 import { compileBlocksToOpenCypher } from '../../lib/blockCompiler';
 import { apiClient } from '../../api/client';
 import { useGraphStore } from '../../store/graphStore';
+import { mapWorkingGraphToRawGraph } from '../../utils/cypherResultMapper';
+import { cypherToStatement } from '../../utils/programBuilder';
 import { useThemeStore } from '../../store/themeStore';
 import { useBlockDiagramStore, type DiagramMetadata } from '../../store/blockDiagramStore';
 
@@ -629,11 +631,31 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
           relationships: [], // Source search returns concepts from passages, no relationships
         };
       } else {
-        // Standard Cypher execution path
-        result = await apiClient.executeCypherQuery({
-          query: compiledCypher,
-          limit: 100,
+        // Standard Cypher execution via GraphProgram (ADR-500)
+        const stmt = cypherToStatement(compiledCypher, '+');
+        const program = { version: 1 as const, statements: [stmt] };
+        const programResult = await apiClient.executeProgram({
+          program: program as unknown as Record<string, unknown>,
         });
+        const mapped = mapWorkingGraphToRawGraph(programResult.result);
+        result = {
+          nodes: mapped.nodes.map((n) => ({
+            id: n.concept_id,
+            label: n.label,
+            properties: {
+              concept_id: n.concept_id,
+              ontology: n.ontology,
+              grounding_strength: n.grounding_strength,
+              search_terms: n.search_terms,
+            },
+          })),
+          relationships: mapped.links.map((l) => ({
+            from_id: l.from_id,
+            to_id: l.to_id,
+            type: l.relationship_type,
+            properties: { category: l.category },
+          })),
+        };
       }
 
       console.log('[BlockBuilder] Execution result:', result);
@@ -644,8 +666,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
         return;
       }
 
-      // Build a map of internal vertex IDs to concept_ids
-      // The API returns internal AGE vertex IDs, but we need concept_ids
+      // No AGE internal ID mapping needed — program results already use concept_ids
       const internalToConceptId = new Map<string, string>();
       result.nodes.forEach((n: any) => {
         const conceptId = n.properties?.concept_id || n.id;

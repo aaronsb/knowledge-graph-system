@@ -112,9 +112,25 @@ Align naming across spec, code, and docs. Resolve the route/allowlist mismatch.
 - [x] Program discovery: `GET /programs` list endpoint with search
 - [ ] API endpoint tests (extend tests/api/test_programs.py)
 
-## Phase 3b: Agent Guidance Revision (in progress)
+## Phase 3c: Web Client Program Execution ✓
 
-**Problem:** Current MCP tool descriptions steer agents toward single-tool-call patterns.
+Route all web client Cypher execution through `POST /programs/execute` instead
+of raw `POST /query/cypher`. The web client's rawGraphData (W) continues to
+serve as the human's working memory for interactive exploration.
+
+- [x] Execution types in `web/src/types/program.ts` (WorkingGraph, ProgramResult, etc.)
+- [x] `executeProgram()`, `chainPrograms()`, `listPrograms()` in web API client
+- [x] `mapWorkingGraphToRawGraph()` in cypherResultMapper.ts
+- [x] `programBuilder.ts` — `cypherToStatement()`, `statementsToProgram()`
+- [x] Reroute SearchBar.tsx (multi-statement Cypher editor)
+- [x] Reroute BlockBuilder.tsx (block-compiled Cypher)
+- [x] Reroute useQueryReplay.ts (saved query replay)
+- [x] Reroute DocumentExplorerWorkspace.tsx (inter-concept edges)
+- [x] Remove `executeCypherQuery()` from web API client (zero callers)
+
+## Phase 3b: Agent Guidance Revision ✓ (PR #303)
+
+**Problem:** MCP tool descriptions steered agents toward single-tool-call patterns.
 Programs and chains are invisible in all primary guidance surfaces.
 
 **Survey findings (all text in `mcp-server.ts`):**

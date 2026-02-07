@@ -314,20 +314,6 @@ class APIClient {
   }
 
   /**
-   * Execute a raw openCypher query
-   * For advanced users who want full control over graph queries
-   */
-  async executeCypherQuery(params: {
-    query: string;
-    limit?: number;
-  }): Promise<any> {
-    const response = await this.client.post('/query/cypher', params, {
-      timeout: 60000, // 1 minute timeout for custom queries
-    });
-    return response.data;
-  }
-
-  /**
    * Get related concepts (neighborhood)
    */
   async getRelatedConcepts(params: {
@@ -1597,6 +1583,59 @@ class APIClient {
     id: number,
   ): Promise<import('../types/program').ProgramReadResponse> {
     const response = await this.client.get(`/programs/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Execute a program server-side and return the WorkingGraph result.
+   */
+  async executeProgram(options: {
+    programId?: number;
+    program?: Record<string, unknown>;
+    params?: Record<string, string | number>;
+  }): Promise<import('../types/program').ProgramResult> {
+    const body: Record<string, unknown> = {};
+    if (options.programId !== undefined) body.program_id = options.programId;
+    if (options.program !== undefined) body.program = options.program;
+    if (options.params !== undefined) body.params = options.params;
+    const response = await this.client.post('/programs/execute', body, {
+      timeout: 60000,
+    });
+    return response.data;
+  }
+
+  /**
+   * Execute a chain of programs (deck mode). W threads through each program.
+   */
+  async chainPrograms(
+    deck: import('../types/program').DeckEntry[],
+  ): Promise<import('../types/program').BatchProgramResult> {
+    const body = {
+      deck: deck.map((e) => {
+        const entry: Record<string, unknown> = {};
+        if (e.program_id !== undefined) entry.program_id = e.program_id;
+        if (e.program !== undefined) entry.program = e.program;
+        if (e.params !== undefined) entry.params = e.params;
+        return entry;
+      }),
+    };
+    const response = await this.client.post('/programs/execute', body, {
+      timeout: 120000,
+    });
+    return response.data;
+  }
+
+  /**
+   * List stored programs with optional search.
+   */
+  async listPrograms(options?: {
+    search?: string;
+    limit?: number;
+  }): Promise<import('../types/program').ProgramListItem[]> {
+    const params: Record<string, unknown> = {};
+    if (options?.search) params.search = options.search;
+    if (options?.limit) params.limit = options.limit;
+    const response = await this.client.get('/programs', { params });
     return response.data;
   }
 

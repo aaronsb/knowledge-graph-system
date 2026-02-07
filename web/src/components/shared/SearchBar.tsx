@@ -23,8 +23,9 @@ import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
 import { stepToCypher, parseCypherStatements } from '../../utils/cypherGenerator';
-import { mapCypherResultToRawGraph, extractGraphFromPath } from '../../utils/cypherResultMapper';
+import { mapCypherResultToRawGraph, mapWorkingGraphToRawGraph, extractGraphFromPath } from '../../utils/cypherResultMapper';
 import type { PathResult } from '../../utils/cypherResultMapper';
+import { statementsToProgram } from '../../utils/programBuilder';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -299,28 +300,22 @@ LIMIT 50`);
       setRawGraphData(null);
       store.resetExplorationSession();
 
+      // Execute all statements as a single GraphProgram (ADR-500)
+      const program = statementsToProgram(statements);
+      const programResult = await apiClient.executeProgram({ program: program as unknown as Record<string, unknown> });
+      const mapped = mapWorkingGraphToRawGraph(programResult.result);
+
+      // Record exploration steps for save/export round-trip
       for (const stmt of statements) {
-        const result = await apiClient.executeCypherQuery({
-          query: stmt.cypher,
-          limit: 500,
-        });
-
-        const mapped = mapCypherResultToRawGraph(result);
-
-        // Record exploration step
         store.addExplorationStep({
           action: 'cypher',
           op: stmt.op,
           cypher: stmt.cypher,
         });
-
-        // Apply through rawGraphData pipeline
-        if (stmt.op === '+') {
-          mergeRawGraphData(mapped);
-        } else {
-          store.subtractRawGraphData(mapped);
-        }
       }
+
+      // Load the complete result
+      mergeRawGraphData(mapped);
     } catch (error: unknown) {
       console.error('Failed to execute Cypher query:', error);
       const err = error as { response?: { data?: { detail?: string } }; message?: string };

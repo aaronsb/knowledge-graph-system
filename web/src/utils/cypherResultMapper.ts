@@ -1,13 +1,15 @@
 /**
- * Cypher Result Mapper
+ * Result Mappers
  *
- * Maps Apache AGE Cypher query results to the canonical raw graph format
- * used by the store (rawGraphData). Handles the AGE internal ID → concept_id
- * mapping that's required because AGE returns its own vertex IDs, not
- * the concept_ids stored in node properties.
+ * Maps query results to the canonical raw graph format used by the store
+ * (rawGraphData). Two mappers:
  *
- * Used by both the Cypher editor (SearchBar) and saved query replay (ExplorerView).
+ * - mapCypherResultToRawGraph: Legacy AGE internal ID → concept_id translation
+ * - mapWorkingGraphToRawGraph: GraphProgram WorkingGraph → RawGraphData (no ID
+ *   translation needed since WorkingGraph already uses concept_id keys)
  */
+
+import type { WorkingGraph } from '../types/program';
 
 export interface CypherResultNode {
   id: string;
@@ -173,4 +175,35 @@ export function extractGraphFromPath(path: PathResult): {
   }
 
   return { nodes, links, conceptNodeIds: conceptNodes.map(n => n.id) };
+}
+
+/**
+ * Map a GraphProgram WorkingGraph to the canonical raw graph format.
+ *
+ * WorkingGraph nodes already use concept_id as identity — no AGE internal
+ * ID translation needed. Properties like grounding_strength and search_terms
+ * are extracted from the properties bag into flat fields.
+ */
+export function mapWorkingGraphToRawGraph(wg: WorkingGraph): RawGraphData {
+  const nodes: RawGraphNode[] = wg.nodes.map((n) => ({
+    concept_id: n.concept_id,
+    label: n.label,
+    ontology: n.ontology ?? 'default',
+    description: n.description ?? undefined,
+    search_terms: (n.properties.search_terms as string[] | undefined) ?? [],
+    grounding_strength: n.properties.grounding_strength as number | undefined,
+    diversity_score: n.properties.diversity_score as number | undefined,
+    evidence_count: n.properties.evidence_count as number | undefined,
+  }));
+
+  const links: RawGraphLink[] = wg.links.map((l) => ({
+    from_id: l.from_id,
+    to_id: l.to_id,
+    relationship_type: l.relationship_type,
+    category: l.category ?? undefined,
+    confidence: l.confidence ?? undefined,
+    grounding_strength: l.properties.grounding_strength as number | undefined,
+  }));
+
+  return { nodes, links };
 }
