@@ -157,6 +157,9 @@ See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
 **Agent memory** — Give AI assistants persistent, grounded memory. They can check confidence before making claims.
 
+![Claude Desktop exploring the knowledge graph](docs/media/claude-desktop/claude-desktop-mcp.png)
+*Claude Desktop using MCP to search, explore relationships, and validate claims against the knowledge graph*
+
 **Spatial understanding** — Ingest place photos. The graph learns physical relationships without coordinates.
 
 **Compliance/audit** — Full provenance chain. Every concept traces to source evidence.

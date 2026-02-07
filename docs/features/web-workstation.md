@@ -28,8 +28,6 @@ Force-directed layout showing concepts as nodes and relationships as edges.
 
 ### 3D Force Graph
 
-![3D Force Graph](../media/screenshots/web-3d-force-graph.png)
-
 Immersive three-dimensional version with spatial depth.
 
 **What you can do:**
@@ -74,6 +72,8 @@ Project concepts onto a semantic spectrum between two poles.
 ---
 
 ### Embedding Landscape
+
+![Embedding Landscape](../media/screenshots/web-embedding-landscape.png)
 
 3D visualization of all concept embeddings using t-SNE or UMAP.
 
