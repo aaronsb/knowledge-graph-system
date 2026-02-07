@@ -49,6 +49,7 @@ async def execute_program(
     program: GraphProgram,
     client,
     params: Optional[Dict[str, Union[str, int, float]]] = None,
+    initial_w: Optional[WorkingGraph] = None,
 ) -> ProgramResult:
     """Execute a validated GraphProgram server-side.
 
@@ -56,12 +57,13 @@ async def execute_program(
         program: Validated GraphProgram AST.
         client: AGEClient instance (caller manages lifecycle).
         params: Runtime parameter values for $param substitution.
+        initial_w: Optional seed WorkingGraph (for chained execution).
 
     Returns:
         ProgramResult with final WorkingGraph, step log, and optional abort info.
     """
     ctx = DispatchContext(client)
-    w = WorkingGraph()
+    w = initial_w if initial_w is not None else WorkingGraph()
     log: List[StepLogEntry] = []
     # Mutable counter so nested conditionals share the global statement index
     stmt_counter = [0]

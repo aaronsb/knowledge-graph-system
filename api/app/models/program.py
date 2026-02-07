@@ -20,7 +20,7 @@ Usage:
 """
 
 from typing import Optional, List, Union, Literal, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -432,14 +432,61 @@ class ProgramResult(BaseModel):
     aborted: Optional[Dict[str, Any]] = None
 
 
+class DeckEntry(BaseModel):
+    """A single entry in a program chain (deck). Exactly one of program_id or program required."""
+    program_id: Optional[int] = None
+    program: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Union[str, int, float]]] = None
+
+    @model_validator(mode='after')
+    def check_exactly_one_source(self) -> 'DeckEntry':
+        has_id = self.program_id is not None
+        has_program = self.program is not None
+        if not has_id and not has_program:
+            raise ValueError('Each deck entry must provide either program_id or program')
+        if has_id and has_program:
+            raise ValueError('Deck entry cannot have both program_id and program')
+        return self
+
+
 class ProgramExecuteRequest(BaseModel):
     """
     Request body for POST /programs/execute.
 
-    Exactly one of program_id or program must be provided.
-    program_id loads a notarized program from storage.
-    program provides an inline AST for immediate execution.
+    Single mode: exactly one of program_id or program must be provided.
+    Chain mode: provide a deck array of DeckEntry items.
+    The two modes are mutually exclusive.
     """
     program_id: Optional[int] = None
     program: Optional[Dict[str, Any]] = None
     params: Optional[Dict[str, Union[str, int, float]]] = None
+    deck: Optional[List['DeckEntry']] = None
+
+    @model_validator(mode='after')
+    def check_mode_exclusivity(self) -> 'ProgramExecuteRequest':
+        has_id = self.program_id is not None
+        has_program = self.program is not None
+        has_deck = self.deck is not None
+        if has_deck and (has_id or has_program):
+            raise ValueError('Cannot combine deck with program_id or program')
+        if not has_deck and not has_id and not has_program:
+            raise ValueError('Must provide program_id, program, or deck')
+        if has_id and has_program:
+            raise ValueError('Cannot provide both program_id and program')
+        return self
+
+
+class BatchProgramResult(BaseModel):
+    """Result from chained program execution (deck mode)."""
+    result: WorkingGraph
+    programs: List[ProgramResult] = Field(default_factory=list)
+    aborted: Optional[Dict[str, Any]] = None
+
+
+class ProgramListItem(BaseModel):
+    """Lightweight program summary for list endpoints."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    statement_count: int
+    created_at: str

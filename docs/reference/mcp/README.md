@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-01-31
+> Last updated: 2026-02-06
 
 ---
 
@@ -17,141 +17,17 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 ## Available Tools
 
 - [`search`](#search) - Search for concepts, source passages, or documents using semantic similarity. Your ENTRY POINT to the graph.
-
-CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarity:
-- Grounding strength (-1.0 to 1.0): Reliability/contradiction score
-- Diversity score: Conceptual richness (% of diverse connections)
-- Authenticated diversity: Support vs contradiction indicator (✅✓⚠❌)
-- Evidence samples: Quoted text from source documents
-- Image indicators: Visual evidence when available
-- Document sources: Where concepts originated
-
-SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
-- Searches source document embeddings, not concept embeddings
-- Returns matched text chunks with character offsets for highlighting
-- Shows concepts extracted from those passages
-- Useful for RAG workflows and finding original context
-
-DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
-- Searches at document level (aggregates source chunks)
-- Returns documents ranked by best matching chunk similarity
-- Shows concepts extracted from each document
-- Use with document tool for content retrieval
-
-RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
-
-Use 2-3 word phrases (e.g., "linear thinking patterns").
 - [`concept`](#concept) - Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
-
-PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 - [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.
 - [`ingest`](#ingest) - Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
 - [`source`](#source) - Retrieve original source content (text or image) for a source node (ADR-057).
-
-For IMAGE sources: Returns the image for visual verification
-For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
-
-Use when you need to:
-- Verify extracted concepts against original source
-- Get the full context of a text passage
-- Retrieve images for visual analysis
-- Check character offsets for highlighting
 - [`epistemic_status`](#epistemic-status) - Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
-
-Three actions available:
-- "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
-- "show": Get detailed status for a specific relationship type
-- "measure": Run measurement to calculate epistemic status for all types (admin operation)
-
-EPISTEMIC STATUS CLASSIFICATIONS:
-- AFFIRMATIVE: High avg grounding >0.8 (well-established knowledge)
-- CONTESTED: Mixed grounding 0.2-0.8 (debated/mixed validation)
-- CONTRADICTORY: Low grounding <-0.5 (contradicted knowledge)
-- HISTORICAL: Temporal vocabulary (detected by name)
-- INSUFFICIENT_DATA: <3 successful measurements
-- UNCLASSIFIED: Doesn't fit known patterns
-
-Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
 - [`analyze_polarity_axis`](#analyze-polarity-axis) - Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
-
-Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
-- Axis quality and magnitude (semantic distinctness)
-- Concept positions along the axis (-1 to +1)
-- Direction distribution (positive/neutral/negative)
-- Grounding correlation patterns
-- Statistical analysis of projections
-
-PERFORMANCE: Direct query pattern, ~2-3 seconds execution time.
-
-Use Cases:
-- Explore conceptual spectrums and gradients
-- Identify position-grounding correlation patterns
-- Discover concepts balanced between opposing ideas
-- Map semantic dimensions in the knowledge graph
 - [`artifact`](#artifact) - Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
-
-Three actions available:
-- "list": List artifacts with optional filtering by type, representation, or ontology
-- "show": Get artifact metadata by ID (without payload)
-- "payload": Get artifact with full payload (for reusing stored analysis)
-
-Use artifacts to:
-- Recall previously computed analyses without re-running expensive queries
-- Share analysis results across sessions
-- Track analysis history with parameters and timestamps
-- Check freshness (is_fresh indicates if graph has changed since artifact creation)
 - [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-084).
-
-Three actions available:
-- "list": List all documents with optional ontology filter
-- "show": Retrieve document content from Garage storage
-- "concepts": Get all concepts extracted from a document
-
-Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
-Use search tool with type="documents" to find documents semantically.
 - [`graph`](#graph) - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
-
-This tool provides deterministic graph editing without going through the LLM ingest pipeline.
-Use for manual curation, agent-driven knowledge building, and precise graph manipulation.
-
-**Actions:**
-- "create": Create a new concept or edge
-- "edit": Update an existing concept or edge
-- "delete": Delete a concept or edge
-- "list": List concepts or edges with filters
-
-**Entity Types:**
-- "concept": Knowledge graph concepts (nodes)
-- "edge": Relationships between concepts
-
-**Matching Modes (for create):**
-- "auto": Link to existing if match found, create if not (default)
-- "force_create": Always create new, even if similar exists
-- "match_only": Only link to existing, error if no match
-
-**Semantic Resolution:**
-- Use `from_label`/`to_label` to reference concepts by name instead of ID
-- Resolution uses vector similarity (85% threshold) to find matching concepts
-
-**Examples:**
-- Create concept: `{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}`
-- Create edge: `{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}`
-- List concepts: `{action: "list", entity: "concept", ontology: "distributed-systems"}`
-- Delete concept: `{action: "delete", entity: "concept", concept_id: "c_abc123"}`
-
-**Queue Mode** (batch multiple operations in one call):
-```json
-{
-  "action": "queue",
-  "operations": [
-    {"op": "create", "entity": "concept", "label": "A", "ontology": "test"},
-    {"op": "create", "entity": "concept", "label": "B", "ontology": "test"},
-    {"op": "create", "entity": "edge", "from_label": "A", "to_label": "B", "relationship_type": "IMPLIES"}
-  ]
-}
-```
-Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.
+- [`program`](#program) - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
 ---
 
@@ -181,6 +57,8 @@ DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR
 
 RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.
 
+For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
@@ -203,7 +81,9 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
 
-PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.
+For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.
+
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
 
 **Parameters:**
 
@@ -230,10 +110,10 @@ PERFORMANCE CRITICAL: For "connect" action, use threshold >= 0.75 to avoid datab
 - `to_id` (`string`) - Target concept ID (for exact mode)
 - `from_query` (`string`) - Starting phrase (for semantic mode, 2-3 words)
 - `to_query` (`string`) - Target phrase (for semantic mode, 2-3 words)
-- `max_hops` (`number`) - Max path length (default: 3). WARNING: Values >5 combined with threshold <0.75 can cause severe performance issues.
-  - Default: `3`
-- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, <0.60 = DANGEROUS (can hang database for minutes)
-  - Default: `0.75`
+- `max_hops` (`number`) - Max path length (default: 5). Higher values find longer paths but take more time.
+  - Default: `5`
+- `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.
+  - Default: `0.5`
 
 ---
 
@@ -550,5 +430,70 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
   - Default: `0`
 - `cascade` (`boolean`) - For concept delete: also delete orphaned synthetic sources (default: false)
   - Default: `false`
+
+---
+
+### program
+
+Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
+
+Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
+Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
+
+**Actions:**
+- "validate": Dry-run validation. Returns errors/warnings without storing.
+- "create": Notarize + store. Returns program ID for later execution.
+- "get": Retrieve a stored program by ID.
+- "list": Search stored programs by name/description. Returns lightweight metadata.
+- "execute": Run a program server-side. Pass inline AST (program) or stored ID (program_id).
+- "chain": Run multiple programs sequentially. W threads through each — program N's output becomes program N+1's input. Pass a deck array of {program_id} or {program} entries (max 10).
+
+**Program Structure:**
+{ version: 1, metadata?: { name, description, author }, statements: [{ op, operation, label? }] }
+
+**Operators** (applied to Working Graph W using result R):
+  +  Union: merge R into W (dedup by concept_id / link compound key)
+  -  Difference: remove R's nodes from W, cascade dangling links
+  &  Intersect: keep only W nodes that appear in R
+  ?  Optional: union if R non-empty, silent no-op if empty
+  !  Assert: union if R non-empty, abort program if empty
+
+**CypherOp** — run read-only openCypher against the source graph:
+  { type: "cypher", query: "MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t", limit?: 20 }
+  Queries must be read-only (no CREATE/SET/DELETE/MERGE). RETURN nodes and relationships.
+
+**ApiOp** — call internal service functions (no HTTP):
+  { type: "api", endpoint: "/search/concepts", params: { query: "...", limit: 10 } }
+
+  Allowed endpoints:
+  /search/concepts   — params: query (required), min_similarity?, limit?
+  /search/sources    — params: query (required), min_similarity?, limit?
+  /concepts/details  — params: concept_id (required)
+  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?
+  /concepts/batch    — params: concept_ids (required, list)
+  /vocabulary/status — params: relationship_type?, status_filter?
+
+**Example** — find concepts about "machine learning", add their relationships:
+  { version: 1, statements: [
+    { op: "+", operation: { type: "api", endpoint: "/search/concepts",
+        params: { query: "machine learning", limit: 5 } }, label: "seed" },
+    { op: "+", operation: { type: "cypher",
+        query: "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
+      label: "expand relationships" }
+  ]}
+
+Read the program/syntax resource for the complete language reference with more examples.
+
+**Parameters:**
+
+- `action` (`string`) **(required)** - Operation: "validate" (dry run), "create" (notarize + store), "get" (retrieve by ID), "list" (search stored programs), "execute" (run server-side), "chain" (run multiple programs sequentially)
+  - Allowed values: `validate`, `create`, `get`, `list`, `execute`, `chain`
+- `program` (`object`) - GraphProgram AST (required for validate, create, execute). Must have version:1 and statements array.
+- `name` (`string`) - Program name (optional for create)
+- `program_id` (`number`) - Program ID (required for get, optional for execute as alternative to inline program)
+- `params` (`object`) - Runtime parameter values for execute (optional)
+- `search` (`string`) - Search text for list action (matches name and description)
+- `limit` (`number`) - Max results for list action (default: 20)
+- `deck` (`array`) - Array of program entries for chain action (max 10). Each entry needs program_id or program.
 
 ---
