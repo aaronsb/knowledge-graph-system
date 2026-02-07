@@ -20,7 +20,7 @@ Usage:
 """
 
 from typing import Optional, List, Union, Literal, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -432,6 +432,23 @@ class ProgramResult(BaseModel):
     aborted: Optional[Dict[str, Any]] = None
 
 
+class DeckEntry(BaseModel):
+    """A single entry in a program chain (deck). Exactly one of program_id or program required."""
+    program_id: Optional[int] = None
+    program: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Union[str, int, float]]] = None
+
+    @model_validator(mode='after')
+    def check_exactly_one_source(self) -> 'DeckEntry':
+        has_id = self.program_id is not None
+        has_program = self.program is not None
+        if not has_id and not has_program:
+            raise ValueError('Each deck entry must provide either program_id or program')
+        if has_id and has_program:
+            raise ValueError('Deck entry cannot have both program_id and program')
+        return self
+
+
 class ProgramExecuteRequest(BaseModel):
     """
     Request body for POST /programs/execute.
@@ -445,12 +462,18 @@ class ProgramExecuteRequest(BaseModel):
     params: Optional[Dict[str, Union[str, int, float]]] = None
     deck: Optional[List['DeckEntry']] = None
 
-
-class DeckEntry(BaseModel):
-    """A single entry in a program chain (deck). Either program_id or program required."""
-    program_id: Optional[int] = None
-    program: Optional[Dict[str, Any]] = None
-    params: Optional[Dict[str, Union[str, int, float]]] = None
+    @model_validator(mode='after')
+    def check_mode_exclusivity(self) -> 'ProgramExecuteRequest':
+        has_id = self.program_id is not None
+        has_program = self.program is not None
+        has_deck = self.deck is not None
+        if has_deck and (has_id or has_program):
+            raise ValueError('Cannot combine deck with program_id or program')
+        if not has_deck and not has_id and not has_program:
+            raise ValueError('Must provide program_id, program, or deck')
+        if has_id and has_program:
+            raise ValueError('Cannot provide both program_id and program')
+        return self
 
 
 class BatchProgramResult(BaseModel):
