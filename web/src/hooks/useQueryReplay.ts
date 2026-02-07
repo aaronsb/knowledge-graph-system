@@ -31,7 +31,6 @@ export function useQueryReplay() {
     setGraphData,
     setRawGraphData,
     mergeRawGraphData,
-    subtractRawGraphData,
     resetExplorationSession,
     setSearchParams,
     setSimilarityThreshold,
@@ -99,7 +98,7 @@ export function useQueryReplay() {
         setSimilarityThreshold(definition.similarityThreshold);
       }
     }
-  }, [setGraphData, setRawGraphData, mergeRawGraphData, subtractRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold, setPolarityState]);
+  }, [setGraphData, setRawGraphData, mergeRawGraphData, resetExplorationSession, setSearchParams, setSimilarityThreshold, setPolarityState]);
 
   return { replayQuery, isReplaying };
 }
