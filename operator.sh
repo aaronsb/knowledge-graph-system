@@ -2,7 +2,7 @@
 # ============================================================================
 # operator.sh - Knowledge Graph Platform Manager (Thin Shim)
 # ============================================================================
-OPERATOR_VERSION="0.9.2"
+OPERATOR_VERSION="0.9.3"
 # ============================================================================
 #
 # Minimal host-side script that delegates to operator container.
@@ -433,6 +433,13 @@ inspect_label() {
     docker inspect --format "{{index .Config.Labels \"$label\"}}" "$container" 2>/dev/null
 }
 
+# Get the latest semver version tag from GHCR for a service
+get_remote_version() {
+    local service=$1
+    gh api "/users/aaronsb/packages/container/knowledge-graph-system%2Fkg-${service}/versions" \
+        --jq '[.[] | select(.metadata.container.tags | length > 0) | .metadata.container.tags[] | select(test("^[0-9]"))] | first' 2>/dev/null
+}
+
 # Get the target image name for a service (respects IMAGE_SOURCE)
 get_image_ref() {
     local service=$1
@@ -447,8 +454,17 @@ get_image_ref() {
 show_versions_table() {
     local show_stale=${1:-false}
 
-    printf "  %-14s %-10s %-10s %-12s %s\n" "Service" "Version" "Commit" "Built" "Image"
-    printf "  %-14s %-10s %-10s %-12s %s\n" "-------" "-------" "------" "-----" "-----"
+    # Check if gh CLI is available for remote version queries
+    local has_gh=false
+    command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1 && has_gh=true
+
+    if [ "$has_gh" = "true" ]; then
+        printf "  %-14s %-26s %-10s %-10s %-12s %s\n" "Service" "Local" "Remote" "Commit" "Built" "Image"
+        printf "  %-14s %-26s %-10s %-10s %-12s %s\n" "-------" "-----" "------" "------" "-----" "-----"
+    else
+        printf "  %-14s %-26s %-10s %-12s %s\n" "Service" "Version" "Commit" "Built" "Image"
+        printf "  %-14s %-26s %-10s %-12s %s\n" "-------" "-------" "------" "-----" "-----"
+    fi
 
     local any_stale=false
     for service in postgres api web operator; do
@@ -469,6 +485,18 @@ show_versions_table() {
         [ "$ver" = "unknown" ] && ver=""
         [ "$rev" = "unknown" ] && rev=""
         [ "$blt" = "unknown" ] && blt=""
+
+        # Postgres fallback: query extension versions from the running database
+        if [ "$service" = "postgres" ] && [ -z "$ver" ]; then
+            local age_ver=$(docker exec "$container" psql -U admin -d knowledge_graph -tAc \
+                "SELECT extversion FROM pg_extension WHERE extname='age'" 2>/dev/null | tr -d '[:space:]')
+            local accel_ver=$(docker exec "$container" psql -U admin -d knowledge_graph -tAc \
+                "SELECT extversion FROM pg_extension WHERE extname='graph_accel'" 2>/dev/null | tr -d '[:space:]')
+            local parts=""
+            [ -n "$age_ver" ] && parts="AGE ${age_ver}"
+            [ -n "$accel_ver" ] && parts="${parts:+${parts}, }accel ${accel_ver}"
+            [ -n "$parts" ] && ver="$parts"
+        fi
 
         # Truncate built date to date-only
         [ -n "$blt" ] && blt="${blt%%T*}"
@@ -495,12 +523,30 @@ show_versions_table() {
             fi
         fi
 
-        printf "  %-14s %-10s %-10s %-12s %s%b\n" \
-            "$service" "${ver:--}" "${rev:--}" "${blt:--}" "${short_sha:--}" "$stale_flag"
+        # Remote version lookup
+        if [ "$has_gh" = "true" ]; then
+            local remote_ver=$(get_remote_version "$service")
+            local remote_display="${remote_ver:--}"
+            # Color: green if matching, yellow if different
+            if [ -n "$remote_ver" ] && [ -n "$ver" ] && [ "$remote_ver" = "$ver" ]; then
+                remote_display="${GREEN}${remote_ver}${NC}"
+            elif [ -n "$remote_ver" ] && [ -n "$ver" ] && [ "$remote_ver" != "$ver" ]; then
+                remote_display="${YELLOW}${remote_ver}${NC}"
+            fi
+            printf "  %-14s %-26s %-10b %-10s %-12s %s%b\n" \
+                "$service" "${ver:--}" "$remote_display" "${rev:--}" "${blt:--}" "${short_sha:--}" "$stale_flag"
+        else
+            printf "  %-14s %-26s %-10s %-12s %s%b\n" \
+                "$service" "${ver:--}" "${rev:--}" "${blt:--}" "${short_sha:--}" "$stale_flag"
+        fi
     done
 
     # operator.sh script version
-    printf "  %-14s %-10s %s\n" "operator.sh" "$OPERATOR_VERSION" "(host script)"
+    if [ "$has_gh" = "true" ]; then
+        printf "  %-14s %-26s %-10s %s\n" "operator.sh" "$OPERATOR_VERSION" "" "(host script)"
+    else
+        printf "  %-14s %-26s %s\n" "operator.sh" "$OPERATOR_VERSION" "(host script)"
+    fi
 
     if [ "$show_stale" = "true" ] && [ "$any_stale" = "true" ]; then
         echo ""
