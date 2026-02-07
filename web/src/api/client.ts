@@ -72,17 +72,19 @@ class APIClient {
     include_epistemic_status?: string[];
     exclude_epistemic_status?: string[];
   }): Promise<SubgraphResponse> {
-    // Step 1: Fetch related concepts
-    const response = await this.client.post<any>('/query/related', {
-      concept_id: params.center_concept_id,
-      max_depth: params.depth ?? 1,
-      relationship_types: params.relationship_types,
-      // ADR-065: Epistemic status filtering
-      include_epistemic_status: params.include_epistemic_status,
-      exclude_epistemic_status: params.exclude_epistemic_status,
-    });
-
-    const relatedConcepts = response.data.results || [];
+    // Step 1: Fetch related concepts (skip for depth 0 — just load the center node)
+    let relatedConcepts: any[] = [];
+    if ((params.depth ?? 1) > 0) {
+      const response = await this.client.post<any>('/query/related', {
+        concept_id: params.center_concept_id,
+        max_depth: params.depth ?? 1,
+        relationship_types: params.relationship_types,
+        // ADR-065: Epistemic status filtering
+        include_epistemic_status: params.include_epistemic_status,
+        exclude_epistemic_status: params.exclude_epistemic_status,
+      });
+      relatedConcepts = response.data.results || [];
+    }
 
     // Step 2: Collect all concept IDs (center + related)
     const allConceptIds = [
