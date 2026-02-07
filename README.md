@@ -2,6 +2,8 @@
 
 A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
 
+![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph.png)
+
 ## Why External AI Memory Matters
 
 Today's LLMs are static. They learn during training, then freeze. You can fine-tune or retrain, but the model itself doesn't accumulate knowledge from conversations. Every session starts fresh.
