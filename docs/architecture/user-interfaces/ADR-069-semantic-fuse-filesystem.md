@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 date: 2025-11-28
 deciders:
   - aaronsb
@@ -7,6 +7,7 @@ deciders:
 related:
   - ADR-055
   - ADR-048
+  - ADR-054
 ---
 
 # ADR-069: Semantic FUSE Filesystem
@@ -16,17 +17,37 @@ related:
 
 ## Overview
 
-Traditional filesystems force you to organize knowledge in rigid hierarchies—one directory, one path, one canonical location. But knowledge doesn't work that way. A document about embedding models is simultaneously about AI architecture, operational procedures, and bug fixes. Why should it live in only one folder?
+Traditional filesystems force you to organize knowledge in rigid hierarchies — one directory, one path, one canonical location. But knowledge doesn't work that way. A document about embedding models is simultaneously about AI architecture, operational procedures, and bug fixes. Why should it live in only one folder?
 
-The knowledge graph already solves this by letting concepts exist in multiple semantic contexts. But accessing it requires custom tools: CLI commands, web interfaces, MCP integration. Unix users already have powerful tools—grep, find, diff, tar—that they know intimately, but these tools can't touch the graph.
+The knowledge graph already solves this by letting concepts exist in multiple semantic contexts. But accessing it requires custom tools: CLI commands, web interfaces, MCP integration. Unix users already have powerful tools — grep, find, diff, tar — that they know intimately, but these tools can't touch the graph.
 
-This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, turning standard Unix tools into knowledge graph explorers. Type `cd /mnt/knowledge/embedding-models/` and you're executing a semantic query. Run `ls` and you see concepts with similarity scores. Use `grep -r` across multiple mounted shards and you're running distributed queries. Same concepts appear in multiple "directories" because they belong to multiple contexts. The filesystem adapts to your exploration patterns, making knowledge navigation feel like browsing files—except the files organize themselves based on what they mean.
+This ADR describes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, turning standard Unix tools into knowledge graph explorers. Type `cd /mnt/knowledge/embedding-models/` and you're executing a semantic query. Run `ls` and you see concepts with similarity scores. The filesystem adapts to your exploration patterns, making knowledge navigation feel like browsing files — except the files organize themselves based on what they mean.
+
+## Implementation Status
+
+**Published:** `pipx install kg-fuse` ([PyPI](https://pypi.org/project/kg-fuse/))
+
+| Feature | Status |
+|---------|--------|
+| FUSE mount/unmount (pyfuse3) | Shipped |
+| OAuth authentication | Shipped |
+| Ontology listing at `/ontology/` | Shipped |
+| `mkdir` creates semantic query | Shipped |
+| Query results as `.concept.md` files | Shipped |
+| Document content reading | Shipped |
+| Concept rendering with evidence | Shipped |
+| `kg oauth create --for fuse` setup | Shipped |
+| Desktop integration (Dolphin, GNOME) | Shipped |
+| Obsidian graph view compatibility | Shipped |
+| `.meta/` control plane | Planned |
+| Nested query resolution (AND) | Planned |
+| Multi-ontology symlinks | Planned |
+| Write-to-ingest | Planned |
+| Userspace LRU caching | Planned |
+
+See ADR-069.1 for detailed implementation specifics (phases, caching, query store).
 
 ---
-
-## Abstract
-
-This ADR proposes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, enabling semantic navigation and querying through standard Unix tools (`ls`, `cd`, `cat`, `grep`, `find`). Like `/sys/` or `/proc/`, this is a **partial filesystem** that implements only operations that make semantic sense, providing a familiar interface to knowledge graph exploration.
 
 ## Context
 
@@ -56,19 +77,19 @@ Why force it into one directory when it semantically belongs in multiple concept
 The knowledge graph already provides:
 - Semantic search (vector similarity)
 - Relationship traversal (graph navigation)
-- Multi-ontology federation (shard/facet architecture from ADR-055)
+- Multi-ontology organization
 - Cross-domain linking (automatic concept merging)
 
-FUSE could expose these capabilities through filesystem metaphors that users already understand.
+FUSE exposes these capabilities through filesystem metaphors that users already understand.
 
 ### Architectural Validation
 
 This proposal underwent external peer review to validate feasibility against the existing codebase. Key findings:
 
 - **Architectural Fit:** The FUSE operations map directly to existing services without requiring new core logic
-  - `ls` (semantic query) → `QueryService.build_search_query`
-  - `cd relationships/` (graph traversal) → `QueryService.build_concept_details_query`
-  - Write operations → existing async ingestion pipeline
+  - `ls` (semantic query) -> `QueryService.build_search_query`
+  - `cd relationships/` (graph traversal) -> `QueryService.build_concept_details_query`
+  - Write operations -> existing async ingestion pipeline
 
 - **Implementation Feasibility:** High - essentially re-skinning existing services into FUSE protocol
 
@@ -78,148 +99,43 @@ This proposal underwent external peer review to validate feasibility against the
 
 The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.
 
-#### Performance and Consistency Engineering
+### Performance and Consistency Engineering
 
 External research on high-dimensional semantic file systems identified critical engineering considerations that our architecture already addresses:
 
 **1. The Write Latency Trap (Mitigated)**
 - **Risk:** Synchronous embedding generation (15-50ms+) and graph linking (seconds) would block write() syscalls, hanging applications
 - **Our Solution:** Asynchronous worker pattern (ADR-014) with job queue
-  - Writes accepted immediately to staging area
-  - Background workers handle chunking, embedding, concept matching
-  - POSIX-compliant write performance maintained
 
 **2. The Read (ls) Bottleneck (Mitigated)**
-- **Risk:** Fresh vector searches or clustering on every readdir would cause sluggish directory listings
-- **Our Solution:** Query-time retrieval with caching
-  - 100-200ms retrieval target (realistic for vector search + graph traversal)
-  - PostgreSQL connection pooling for concurrent queries
-  - Directory structure is deterministic (ontology-based), not emergent clustering
-  - FUSE implementation will cache directory listings with configurable TTL
+- **Risk:** Fresh vector searches on every readdir would cause sluggish directory listings
+- **Our Solution:** Query-time retrieval with caching, 100-200ms retrieval target, PostgreSQL connection pooling
 
 **3. POSIX Stability via Deterministic Structure (Addressed)**
-- **Risk:** Purely emergent clustering causes "cluster jitter" - files randomly moving between folders as content shifts
-- **Our Solution:** Stable four-level hierarchy (Shard → Facet → Ontology → Concepts)
-  - Paths are deterministic based on ontology assignment
-  - Concepts appear in multiple semantic query directories (intentional non-determinism)
-  - But underlying storage location is stable (ontology-scoped)
+- **Risk:** Purely emergent clustering causes "cluster jitter" - files randomly moving between folders
+- **Our Solution:** Stable hierarchy based on ontology assignment. Concepts appear in multiple semantic query directories (intentional), but underlying storage location is stable.
 
 **4. Eventual Consistency Gap (Acknowledged)**
 - **Risk:** Async processing creates delay between write and appearance in semantic directories
-- **Mitigation:** Virtual README.md in empty query results (see Future Extensions)
-  - Explains why results are empty
-  - Suggests alternative queries or lower thresholds
-  - Future: "Processing" indicator for in-flight ingestion
-
-**5. Connection Pool Saturation (Addressed)**
-- **Risk:** "Thundering herd" when user pastes 1,000 files - every readdir hammers database
-- **Our Solution:**
-  - PostgreSQL connection pooling (existing infrastructure)
-  - FUSE TTL-based caching (mount option: `cache_ttl=60`)
-  - Query rate limiting at API layer
-  - Batch ingestion queuing (ADR-014 job scheduler)
+- **Mitigation:** Virtual README.md in empty query results explaining why (future)
 
 **Verdict:** The architecture decouples high-latency "thinking" (AI processing) from low-latency "acting" (filesystem I/O), which research validates as the primary requirement for functional semantic filesystems.
 
-### Related Work: Other Semantic File Systems
+---
 
-This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.
-
-#### 1. Logic & Query-Based Systems (Direct Ancestors)
-
-**Semantic File System (SFS)** - MIT, 1991
-- **Concept:** Original implementation of "transducers" extracting attributes from files
-- **Innovation:** Virtual directories interpreted as queries (`/sfs/author/jdoe` dynamically generated)
-- **Limitation:** Attribute-based (key-value pairs), not semantic
-- **Our Extension:** Replace discrete attributes with continuous similarity scores
-
-**Tagsistant** - Linux/FUSE
-- **Concept:** Directory nesting for boolean logic operations
-- **Innovation:** Path as query language (`/tags/music/+/rock/` for AND operations)
-- **Similarity:** The `/+/` operator is conceptually similar to our relationship traversal
-- **Our Extension:** Replace boolean logic with semantic similarity thresholds
-
-**JOINFS**
-- **Concept:** Dynamic directories populated by metadata query matching
-- **Innovation:** `mkdir "format=mp3"` creates persistent searches
-- **Similarity:** Query definition via directory creation (like our approach)
-- **Our Extension:** Semantic queries vs. exact metadata matching
-
-#### 2. Tag-Based Systems (Modern Implementations)
-
-**TMSU** (Tag My Sh*t Up)
-- **Concept:** SQLite-backed FUSE mount with explicit tagging
-- **Architecture:** Standard "FUSE + Database" pattern we follow
-- **Similarity:** Files exist in multiple paths (`/mnt/tmsu/tags/music/mp3/`)
-- **Difference:** Deterministic (file is tagged or not), no similarity threshold
-- **Our Extension:** Probabilistic membership based on semantic similarity
-
-**TagFS / SemFS**
-- **Concept:** RDF triples for tag storage (graph-like structure)
-- **Similarity:** Graph backend architecture (closer to our Knowledge Graph than SQL)
-- **Difference:** Explicit RDF relationships vs. emergent semantic relationships
-- **Our Extension:** Vector embeddings replace RDF triples
-
-#### 3. Partial POSIX Precedents
-
-**Google Cloud FUSE / rclone**
-- **Precedent:** Explicitly documents "Limitations and differences from POSIX"
-- **Validation:** Large-scale ML workloads accept non-compliance for utility
-- **Similar Violations:** Directories disappear, non-deterministic caching, eventual consistency
-- **Our Justification:** If users accept this for cloud storage, they'll accept it for semantic navigation
-
-#### Comparison Table
-
-| Feature | Tagsistant | TMSU | MIT SFS (1991) | **ADR-069 (This Proposal)** |
-|---------|------------|------|----------------|----------------------------|
-| **Organization** | Boolean Logic | Explicit Tags | Key-Value Attributes | **Vector Embeddings** |
-| **Navigation** | `/tag1/+/tag2/` | `/tag1/tag2/` | `/author/name/` | **`/query/threshold/`** |
-| **Determinism** | Deterministic | Deterministic | Deterministic | **Probabilistic** |
-| **Backend** | SQL/Dedup | SQLite | Transducers | **Vector DB + LLM** |
-| **Write Behavior** | Tags file | Tags file | Indexing | **Ingest & Grounding** |
-| **Membership Model** | Binary (tagged/not) | Binary | Binary | **Continuous (similarity score)** |
-
-#### The Key Innovation
-
-**Existing systems:** Map **discrete values** (tags, attributes) → directories
-- File either has tag "music" or it doesn't
-- Boolean membership: true/false
-- Deterministic listings
-
-**Our proposal:** Map **continuous values** (similarity scores) → directories
-- Concept has 73.5% similarity to query "embedding models"
-- Probabilistic membership: threshold-dependent
-- Non-deterministic listings (similarity changes as graph evolves)
-
-This is the specific innovation that justifies the "POSIX violations" in our design - we're not just organizing files by metadata, we're navigating high-dimensional semantic space through a filesystem interface.
-
-## Motivation
-
-Traditional filesystems organize knowledge through rigid hierarchies:
-```
-/docs/
-  /architecture/
-    /decisions/
-      adr-068.md
-  /guides/
-    embedding-guide.md
-```
-
-But knowledge doesn't fit in trees. ADR-068 is simultaneously:
-- An architecture decision
-- A guide for operators
-- An embedding system reference
-- A bug fix chronicle
-- A compatibility management strategy
-
-Why force it into one directory when it semantically belongs in multiple conceptual spaces?
-
-## The Proposal
+## The Design
 
 ### Mount Point
 
 ```bash
-mount -t fuse.knowledge-graph /dev/knowledge /mnt/knowledge
+# Create OAuth credentials
+kg oauth create --for fuse
+
+# Mount the filesystem
+kg-fuse /mnt/knowledge
+
+# Explore
+ls /mnt/knowledge/ontology/
 ```
 
 ### Directory Structure
@@ -228,224 +144,170 @@ Directories are **semantic queries**, not static folders:
 
 ```bash
 /mnt/knowledge/
-├── embedding-regeneration/     # Concepts matching "embedding regeneration"
-│   ├── unified-regeneration.concept (79.8% similarity)
-│   ├── compatibility-checking.concept (75.2% similarity)
-│   └── model-migration.concept (78.5% similarity)
-├── ai-models/                  # Concepts matching "ai models"
-│   ├── embedding-models.concept (89.6% similarity)
-│   ├── unified-regeneration.concept (64.5% similarity)  # Same file!
-│   └── ai-capabilities.concept (70.6% similarity)
-└── search/
-    ├── 0.7/                    # 70% similarity threshold
-    │   └── embedding+models/
-    ├── 0.8/                    # 80% similarity threshold
-    │   └── embedding+models/   # Fewer results
-    └── 0.6/                    # 60% similarity threshold
-        └── embedding+models/   # More results
+├── ontology/                           # All knowledge domains
+│   ├── economics/                      # An ontology
+│   │   ├── documents/                  # Source files (read-only)
+│   │   │   └── research-paper.pdf
+│   │   ├── inflation/                  # Your query (mkdir)
+│   │   │   ├── Monetary-Policy.concept.md
+│   │   │   └── Supply-Chain.concept.md
+│   │   └── market-dynamics/            # Another query
+│   └── architecture/                   # Another ontology
 ```
 
 ### File Format
 
-Concept files are dynamically generated:
+Concept files are dynamically generated markdown:
 
 ```bash
-$ cat /mnt/knowledge/embedding-regeneration/unified-regeneration.concept
+$ cat /mnt/knowledge/ontology/economics/inflation/Monetary-Policy.concept.md
 ```
 
 ```markdown
-# Unified Embedding Regeneration
+# Monetary Policy
 
-**ID:** sha256:95454_chunk1_76de0274
-**Ontologies:** ADR-068-Phase4-Implementation, AI-Applications
-**Similarity:** 79.8% (to directory query: "embedding regeneration")
-**Grounding:** Weak (0.168, 17%)
-**Diversity:** 39.2% (10 related concepts)
-
-## Description
-
-A system for regenerating vector embeddings across all graph text entities,
-ensuring compatibility and proper namespace organization.
+Central bank actions to control money supply and interest rates.
 
 ## Evidence
 
-### Source 1: ADR-068-Phase4-Implementation (para 1)
-The knowledge graph system needed a unified approach to regenerating vector
-embeddings across all graph text entities (concepts, sources, and vocabulary)...
+> "The Federal Reserve uses open market operations..."
+> -- research-paper.pdf (chunk 3)
 
-### Source 2: AI-Applications (para 1)
-A unified embedding regeneration system addresses this challenge by treating
-all embedded entities consistently...
+> "Interest rate adjustments affect borrowing costs..."
+> -- economics-textbook.pdf (chunk 12)
 
 ## Relationships
 
-→ INCLUDES compatibility-checking.concept
-→ REQUIRES embedding-management-endpoints.concept
-→ VALIDATES testing-verification.concept
-← SUPPORTS bug-fix-source-regeneration.concept
+- INFLUENCES -> Inflation (0.92)
+- CONTROLLED_BY -> Central Bank (0.88)
+- AFFECTS -> Employment (0.75)
 
-## Navigate
+## Grounding
 
-ls ../ai-models/           # See related concepts in different semantic space
-cd relationships/includes/ # Traverse by relationship type
+Strength: 0.85 (well-supported)
+Sources: 3 documents
 ```
 
-### Relationship Navigation
+### Query System
 
-Traverse the graph via relationships:
+Creating a directory defines a semantic query. Listing it executes the query:
 
 ```bash
-$ cd /mnt/knowledge/embedding-regeneration/unified-regeneration/
-$ ls relationships/
-includes/  requires/  validates/  supported-by/
+# Create a query
+mkdir /mnt/knowledge/ontology/economics/inflation
+# List results (executes semantic search)
+ls /mnt/knowledge/ontology/economics/inflation/
+# Monetary-Policy.concept.md
+# Supply-Chain.concept.md
+# Consumer-Price-Index.concept.md
 
-$ cd relationships/includes/
-$ ls
-compatibility-checking.concept
-
-$ cat compatibility-checking.concept  # Full concept description
+# Remove the query (not the concepts)
+rmdir /mnt/knowledge/ontology/economics/inflation/
 ```
 
-### Search Interface
-
-```bash
-$ cd /mnt/knowledge/search/0.75/
-$ mkdir "embedding+migration+compatibility"  # Creates query directory!
-$ cd "embedding+migration+compatibility"/
-$ ls  # Results ranked by similarity
-```
+---
 
 ## POSIX Violations (Features!)
 
 ### 1. Non-Deterministic Directory Listings
 
 ```bash
-$ ls /mnt/knowledge/embedding-models/
-unified-regeneration.concept
-compatibility-checking.concept
-model-migration.concept
+$ ls /mnt/knowledge/ontology/ai-research/embedding-models/
+unified-regeneration.concept.md
+compatibility-checking.concept.md
 
-# New concept added to graph elsewhere...
+# New concept ingested elsewhere...
 
-$ ls /mnt/knowledge/embedding-models/
-unified-regeneration.concept
-compatibility-checking.concept
-model-migration.concept
-embedding-architecture.concept  # New! Without touching this directory!
+$ ls /mnt/knowledge/ontology/ai-research/embedding-models/
+unified-regeneration.concept.md
+compatibility-checking.concept.md
+embedding-architecture.concept.md  # New! Without touching this directory!
 ```
 
 **Why it's beautiful:** Your filesystem stays current with your knowledge, automatically.
 
 ### 2. Multiple Canonical Paths
 
-```bash
-$ pwd
-/mnt/knowledge/embedding-regeneration/unified-regeneration.concept
-
-$ cat unified-regeneration.concept
-# ... reads file ...
-
-$ pwd  # From the file's perspective
-/mnt/knowledge/ai-models/unified-regeneration.concept
-
-# Both are correct! The file exists in multiple semantic spaces!
-```
+The same concept can appear in multiple query directories. It "exists" everywhere it's semantically relevant.
 
 **Why it's beautiful:** Concepts belong to multiple contexts simultaneously.
 
-### 3. Read-Influenced Writes
+### 3. Temporal Inconsistency
 
 ```bash
-$ cat concept-a.concept
-$ cat concept-b.concept
-
-# Graph notices correlation...
-
-$ ls  # Now concept-c appears because semantic relatedness!
-concept-a.concept
-concept-b.concept
-concept-c.concept  # ← Appeared based on your read pattern
-```
-
-**Why it's beautiful:** The filesystem adapts to your workflow.
-
-### 4. Relationship-Based Symlinks That Aren't Symlinks
-
-```bash
-$ ls -l /mnt/knowledge/embedding-regeneration/
-lrwxrwxrwx compatibility → [INCLUDES] ../compatibility-checking/
-lrwxrwxrwx testing → [VALIDATES] ../testing-verification/
-
-# These aren't real symlinks, they're semantic relationships!
-# Different relationship types could render differently!
-```
-
-**Why it's beautiful:** Explicit relationship semantics instead of opaque links.
-
-### 5. Threshold-Dependent Paths
-
-```bash
-$ cd /mnt/knowledge/search/0.8/ai+models/
-$ ls | wc -l
-12
-
-$ cd ../0.7/ai+models/  # Same query, lower threshold
-$ ls | wc -l
-27
-
-$ cd ../0.9/ai+models/  # Higher threshold
-$ ls | wc -l
-5
-```
-
-**Why it's beautiful:** Precision vs. recall as a filesystem operation!
-
-### 6. Temporal Inconsistency
-
-```bash
-$ stat unified-regeneration.concept
+$ stat unified-regeneration.concept.md
 Modified: 2025-11-29 03:59:57  # When concept was created
 
-$ cat unified-regeneration.concept  # Read it
+$ cat unified-regeneration.concept.md  # Read it
 
-$ stat unified-regeneration.concept
+$ stat unified-regeneration.concept.md
 Modified: 2025-11-29 04:15:32  # NOW! Because grounding updated!
 ```
 
 **Why it's beautiful:** Living knowledge, not static files.
 
-## Use Cases Where This Is Actually Useful
+### Important: This Is NOT a Full Filesystem
 
-### 1. Exploratory Research
+Like `/sys/` or `/proc/`, this is a **partial filesystem** that exposes a specific interface through filesystem semantics. It only implements operations that make semantic sense.
+
+**What works:**
+- `ls` (semantic query)
+- `cd` (navigate semantic space)
+- `cat` (read concept)
+- `find` / `grep` (search)
+- `tar` (snapshot)
+- `stat` (metadata)
+- `mkdir` / `rmdir` (create/remove queries)
+
+**What doesn't work (and won't):**
+- `mv` (concepts don't "move" in semantic space)
+- `chmod` / `chown` (use OAuth scoping instead)
+- `touch` (timestamps are semantic, not file-based)
+- `dd` (nonsensical for semantic content)
+
+**This is a feature, not a limitation.** Don't pretend to be a full filesystem. Be an excellent semantic interface.
+
+---
+
+## Use Cases
+
+### Unix Tool Integration
 
 ```bash
-# Start with a concept
-cd /mnt/knowledge/embedding-models/
+# Find all concepts mentioning "distributed"
+grep -r "distributed" /mnt/knowledge/ontology/architecture/
 
-# Navigate by relationships
-cd unified-regeneration/relationships/requires/
+# Open concept in your editor
+vim /mnt/knowledge/ontology/economics/inflation/Monetary-Policy.concept.md
 
-# Follow to related concepts
-cd compatibility-checking/relationships/includes/
+# Snapshot your research
+tar czf research-$(date +%s).tar.gz /mnt/knowledge/ontology/my-research/
+# Same path, different contents over time -- temporal knowledge snapshots
 
-# Emerge somewhere totally different but semantically connected!
-pwd
-# /mnt/knowledge/ai-models/compatibility-checking/relationships/includes/
+# Copy a snapshot of query results
+cp -r /mnt/knowledge/ontology/economics/inflation/ ./local-backup/
 ```
 
-### 2. Context-Aware Documentation
+### Obsidian as a Graph Viewer
+
+The FUSE filesystem presents concepts as markdown files with relationship references. Point Obsidian at the mount point and its built-in graph view renders your knowledge graph natively -- no plugin required. Obsidian is essentially fooled into being a graph introspection interface and document viewer.
+
+### Remote Access
+
+Since it's a real filesystem, remote access is free:
 
 ```bash
-# You're working on AI models
-cd /workspace/ai-stuff/
+# SSH into your server and browse the graph
+ssh server "ls /mnt/knowledge/ontology/"
 
-# Mount context-aware knowledge
-ln -s /mnt/knowledge/ai-models/ ./docs
+# Mount remotely via SSHFS
+sshfs server:/mnt/knowledge /mnt/remote-knowledge
 
-# Everything in ./docs is semantically relevant to AI!
+# Copy a snapshot of query results
+scp -r server:/mnt/knowledge/ontology/economics/inflation/ ./local-copy/
 ```
 
-### 3. Semantic Grep
+### Semantic Grep
 
 ```bash
 # Traditional grep
@@ -453,648 +315,176 @@ grep -r "embedding" /docs/
 # Returns every file mentioning "embedding" (thousands of false positives)
 
 # Semantic filesystem
-ls /mnt/knowledge/search/0.8/embedding/
-# Returns only concepts semantically related to embedding at 80% threshold
+ls /mnt/knowledge/ontology/ai-research/embedding/
+# Returns only concepts semantically related to embedding
 ```
 
-### 4. AI-Assisted Workflows
+---
+
+## Decision
+
+**Implement knowledge graph access as a FUSE filesystem** with the following design choices:
+
+1. **Partial Filesystem Model** - Like `/sys/` or `/proc/`, implement only semantically meaningful operations
+2. **Ontology-Based Hierarchy** - Ontologies are directories, queries are subdirectories created by the user
+3. **Directory Creation = Semantic Query** - `mkdir "embedding models"` defines a query, `ls` executes it
+4. **Python FUSE (pyfuse3)** - Direct integration with the API backend, shared auth model
+5. **OAuth Client Authentication** - Same auth as CLI and MCP (ADR-054)
+
+## Consequences
+
+### Benefits
+
+1. **Familiar Interface** - Users already understand `cd`, `ls`, `cat`, `grep`. No new query language needed.
+2. **Standard Tool Integration** - Every Unix utility becomes a knowledge graph tool for free.
+3. **Desktop Integration** - File managers (Dolphin, GNOME Files) browse the graph natively.
+4. **Editor Compatibility** - Obsidian, VS Code, vim all read concept files without plugins.
+5. **Remote Access** - SSH and SSHFS provide remote graph browsing with zero extra infrastructure.
+
+### Drawbacks
+
+1. **Non-Determinism Can Be Confusing** - `ls` results change as graph evolves. Mitigation: document as feature, provide caching.
+2. **POSIX Violations Require Education** - Many standard file operations won't work. Mitigation: follow rclone precedent, document limitations.
+3. **Performance Considerations** - Semantic queries slower than filesystem metadata operations. Mitigation: caching layer, configurable similarity thresholds.
+
+---
+
+## Future Vision
+
+The following ideas informed the design but are not yet implemented. They represent the natural evolution of a semantic filesystem.
+
+### `.meta` Control Plane
+
+Every query directory would contain a hidden `.meta/` folder with virtual files for tuning:
 
 ```bash
-# What concepts relate to what I'm working on?
-git log --oneline -1
-# fix: compatibility checking for embeddings
+echo 0.85 > .meta/threshold     # High precision
+echo 20 > .meta/limit           # Fewer results
+echo "deprecated" >> .meta/exclude  # Filter out
+cat .meta/query.toml            # Debug view
+```
 
-ls /mnt/knowledge/compatibility+checking/relationships/
-requires/  includes/  supports/  related-to/
+### Nested Query Resolution
 
-# Oh, it requires these other concepts!
-cd requires/
+Each directory level narrows results (implicit AND):
+
+```bash
+ls /ontology/economics/leadership/                  # "leadership" in economics
+ls /ontology/economics/leadership/communication/     # "leadership" AND "communication"
+```
+
+### Multi-Ontology Queries via Symlinks
+
+```bash
+mkdir my-research
+ln -s ../ontology/economics my-research/
+ln -s ../ontology/sociology my-research/
+ls my-research/inequality/   # Searches across both ontologies
+```
+
+### Write-to-Ingest
+
+```bash
+cp report.pdf /mnt/knowledge/ontology/economics/
+# File "disappears" into the ingestion pipeline
+# After extraction, concepts appear in query results
+```
+
+### Multi-Tenant Hierarchy (Shards and Facets)
+
+The ADR originally proposed a four-level hierarchy:
+
+```
+Shard (infrastructure: database + API)
+  -> Facet (logical grouping: RBAC + resource isolation)
+    -> Ontology (knowledge domain)
+      -> Concepts (semantic content)
+```
+
+This would enable per-team access control, resource isolation, and organizational clarity. The current implementation uses the flat ontology model. Shards and facets remain a future consideration for multi-tenant deployments.
+
+### Relationship Navigation as Filesystem
+
+```bash
+cd /mnt/knowledge/ontology/ai/embedding-models/unified-regeneration/
+ls relationships/
+# includes/  requires/  validates/  supported-by/
+cd relationships/includes/
 ls
-embedding-models.concept
-model-migration.concept
+# compatibility-checking.concept.md
 ```
 
-## Practical Applications That Sound Insane But Actually Work
+### rclone Backend (Alternative Implementation)
 
-### TAR as Temporal Snapshots
+Instead of a custom FUSE driver, the knowledge graph could be exposed as an rclone backend. This would provide instant interoperability with cloud storage:
 
 ```bash
-# Capture your research state RIGHT NOW
-tar czf research-$(date +%s).tar.gz /mnt/knowledge/embedding-models/
-
-# Three months later: graph has evolved, new concepts exist
-tar czf research-$(date +%s).tar.gz /mnt/knowledge/embedding-models/
-
-# DIFFERENT tar contents!
-# Same "directory", different semantic space!
-# Each tarball is a temporal snapshot of the knowledge graph
+rclone sync kg:research s3:backup/
+rclone copy gdrive:Papers/ kg:research/papers/
 ```
 
-**Why this works:** The filesystem is a *view* of the knowledge graph at a point in time. TAR captures that view. Different views = different archives. Version your knowledge semantically!
+The Python FUSE approach was chosen for tighter integration, but rclone remains viable for remote access and cross-backend sync scenarios.
 
-**Practical use:**
-- Archive research findings before pivoting
-- Create snapshots before major refactoring
-- Share "knowledge packs" with collaborators
-- Restore previous understanding states
-
-### Living Documentation in Development Workspaces
+### Distributed Queries Across Mount Boundaries
 
 ```bash
-# Your project workspace
-cd /workspace/my-ai-project/
+# Mount local and remote shards
+mount -t fuse.knowledge-graph -o shard=research /dev/knowledge /mnt/local
+sshfs partner@remote:/mnt/knowledge/shared /mnt/remote
 
-# Symlink semantic knowledge as documentation
-ln -s /mnt/knowledge/my-project/ ./docs
-
-# Claude Code (or any IDE) can now:
-cat docs/architecture/api-design.concept          # Read current architecture
-ls docs/relationships/SUPPORTS/                    # See what supports this design
-grep -r "performance" docs/                        # Semantic search in docs!
-
-# As you work and ingest commit messages:
-git commit -m "feat: add caching layer"
-kg ingest commit HEAD -o my-project
-
-# Moments later:
-ls ./docs/
-# NEW concepts appear automatically!
-# caching-layer.concept
-# performance-optimization.concept
-```
-
-**Why this works:** The symlink points to a semantic query. The query results update as the graph evolves. Your documentation becomes a living, self-organizing entity.
-
-**Claude Code integration:**
-```bash
-# Claude can literally read your knowledge graph
-<Read file="docs/api-design.concept">
-# Gets: full concept, relationships, evidence, grounding metrics
-# Not just static markdown
-
-# Claude can explore relationships
-cd docs/api-design/relationships/REQUIRES/
-# Discovers dependencies automatically
-```
-
-### Bidirectional Ingestion
-
-```bash
-# Write support makes this a full knowledge management system
-echo "# New Architecture Decision
-
-We're adopting GraphQL for the API layer because..." > /mnt/knowledge/my-project/adr-070.md
-
-# File write triggers:
-# 1. Document chunking
-# 2. LLM concept extraction
-# 3. Semantic matching against existing concepts
-# 4. Relationship discovery
-# 5. Graph integration
-
-# Seconds later:
-ls /mnt/knowledge/api-design/
-# adr-070-graphql-adoption.concept appears!
-
-# Batch ingestion:
-cp docs/*.md /mnt/knowledge/my-project/
-# Processes all files, discovers cross-document relationships automatically
-```
-
-**Why this works:** Every write is an ingestion trigger. The filesystem becomes a natural interface for knowledge capture.
-
-**Anti-pattern prevention:**
-```bash
-# Only accept markdown/text
-cp binary-file.exe /mnt/knowledge/
-# Error: unsupported file type
-
-# Prevent knowledge pollution
-cp spam.txt /mnt/knowledge/my-project/
-# Ingests but low grounding, won't pollute semantic queries
-```
-
-### Build System Integration
-
-```bash
-# Makefile that depends on semantic queries
-API_DOCS := $(shell ls /mnt/knowledge/api-endpoints/*.concept)
-
-docs/api.html: $(API_DOCS)
-	kg export --format html /mnt/knowledge/api-endpoints/ > $@
-
-# When new API concepts appear (from code ingestion):
-# - Build automatically detects new .concept files
-# - Regenerates documentation
-# - No manual tracking needed
-```
-
-**Why this works:** The filesystem exposes semantic queries as file paths. Build tools already know how to depend on file paths.
-
-**CI/CD integration:**
-```yaml
-# GitHub Actions
-- name: Check documentation coverage
-  run: |
-    concept_count=$(ls /mnt/knowledge/my-project/*.concept | wc -l)
-    if [ $concept_count -lt 50 ]; then
-      echo "Warning: Only $concept_count concepts documented"
-    fi
+# grep across ALL of them
+grep -r "API compatibility" /mnt/{local,remote}/
+# Standard Unix tools become distributed knowledge graph query engines
 ```
 
 ### Event-Driven Workflows
 
 ```bash
 # Watch for knowledge graph changes
-fswatch /mnt/knowledge/my-project/ | while read event; do
-    echo "Knowledge updated: $event"
-    kg admin embedding regenerate --type concept --only-missing
-done
-
-# Trigger notifications when concepts appear
-inotifywait -m /mnt/knowledge/security-vulnerabilities/ -e create |
+inotifywait -m /mnt/knowledge/ontology/security/ -e create |
 while read dir action file; do
-    notify-send "Security Alert" "New vulnerability concept: $file"
+    notify-send "New vulnerability concept: $file"
 done
 ```
 
-**Why this works:** Filesystem events map to knowledge graph updates. Standard Linux tools (inotify, fswatch) become knowledge graph event listeners.
+### Build System Integration
 
-**Knowledge-driven automation:**
 ```bash
-# When AI research concepts appear, trigger model retraining
-ls /mnt/knowledge/ai-research/*.concept | entr make train-model
+# Makefile that depends on semantic queries
+API_DOCS := $(shell ls /mnt/knowledge/ontology/api-endpoints/*.concept.md)
 
-# When architecture concepts change, validate against constraints
-ls /mnt/knowledge/architecture/*.concept | entr ./validate-architecture.sh
+docs/api.html: $(API_DOCS)
+    kg export --format html /mnt/knowledge/ontology/api-endpoints/ > $@
 ```
 
-### Diff-Based Knowledge Evolution Tracking
+### Diff-Based Knowledge Evolution
 
 ```bash
-# Semantic diff across time
-tar czf snapshot-before.tar.gz /mnt/knowledge/my-research/
-
-# ... three months of work ...
-
-tar czf snapshot-after.tar.gz /mnt/knowledge/my-research/
-tar xzf snapshot-before.tar.gz -C /tmp/before/
-tar xzf snapshot-after.tar.gz -C /tmp/after/
+# Capture semantic state at two points
+tar czf snapshot-before.tar.gz /mnt/knowledge/ontology/my-research/
+# ... months of work ...
+tar czf snapshot-after.tar.gz /mnt/knowledge/ontology/my-research/
 
 diff -r /tmp/before/ /tmp/after/
-# Shows concept evolution:
-# - New concepts (+ files)
-# - Strengthened concepts (modified files with higher grounding)
-# - Abandoned concepts (- files, fell below similarity threshold)
+# New concepts (+), strengthened concepts (modified), abandoned concepts (-)
 ```
 
-**Why this works:** Concepts are files. Files can be diffed. Knowledge evolution becomes visible through standard Unix tools.
+---
 
-## Architecture and Hierarchy
+## Appendix: Related Work
 
-### Important: This Is NOT a Full Filesystem
+This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.
 
-Like `/sys/` or `/proc/`, this is a **partial filesystem** that exposes a specific interface (knowledge graphs) through filesystem semantics. It only implements operations that make semantic sense.
+| Feature | Tagsistant | TMSU | MIT SFS (1991) | **This System** |
+|---------|------------|------|----------------|-----------------|
+| **Organization** | Boolean Logic | Explicit Tags | Key-Value Attributes | **Vector Embeddings** |
+| **Determinism** | Deterministic | Deterministic | Deterministic | **Probabilistic** |
+| **Backend** | SQL/Dedup | SQLite | Transducers | **Vector DB + LLM** |
+| **Membership Model** | Binary (tagged/not) | Binary | Binary | **Continuous (similarity score)** |
 
-**What works:**
-- `ls` (semantic query)
-- `cd` (navigate semantic space)
-- `cat` (read concept)
-- `find` / `grep` (search)
-- `echo >` / `cp` (ingest)
-- `tar` (snapshot)
-- `stat` (metadata)
+**The key innovation:** Existing systems map **discrete values** (tags, attributes) to directories. This system maps **continuous values** (similarity scores) to directories. That's the specific innovation that justifies the POSIX violations -- we're navigating high-dimensional semantic space through a filesystem interface.
 
-**What doesn't work (and won't):**
-- `mv` (concepts don't "move" in semantic space)
-- `chmod` / `chown` (use facet-level RBAC instead)
-- `ln -s` (maybe future: create relationships)
-- `touch` (timestamps are semantic, not file-based)
-- `dd` (nonsensical for semantic content)
-- Most other file operations that assume static files
-
-**This is a feature, not a limitation.** Don't pretend to be a full filesystem. Be an excellent semantic interface.
-
-### The Four-Level Model
-
-The semantic filesystem has a clear hierarchy that maps infrastructure to semantic content:
-
-```
-Shard (infrastructure: database + API + resources)
-  └── Facet (logical grouping of related ontologies)
-      └── Ontology (specific knowledge domain)
-          └── Concepts (semantic content)
-```
-
-**Why this hierarchy matters:**
-
-| Level | Purpose | Example | Isolation |
-|-------|---------|---------|-----------|
-| **Shard** | Physical deployment instance | `shard-research`, `shard-production` | Infrastructure (separate databases) |
-| **Facet** | Logical grouping for organization/RBAC | `academic`, `industrial`, `engineering` | Access control & resource limits |
-| **Ontology** | Knowledge domain namespace | `ai-research`, `api-docs`, `patents` | Semantic namespace |
-| **Concepts** | Individual semantic units | `embedding-models.concept` | Content |
-
-### Directory Structure
-
-```bash
-/mnt/knowledge/
-├── shard-research/              # Shard: research infrastructure
-│   ├── academic/                # Facet: academic research group
-│   │   ├── ai-research/         # Ontology: AI papers
-│   │   │   └── embedding-models.concept
-│   │   ├── neuroscience/        # Ontology: neuroscience papers
-│   │   └── ml-papers/           # Ontology: ML literature
-│   │
-│   └── industrial/              # Facet: industrial R&D group
-│       ├── patents/             # Ontology: patent filings
-│       └── prototypes/          # Ontology: prototype docs
-│
-├── shard-production/            # Shard: production infrastructure
-│   ├── engineering/             # Facet: engineering team
-│   │   ├── api-docs/            # Ontology: API documentation
-│   │   ├── architecture/        # Ontology: architecture decisions
-│   │   └── runbooks/            # Ontology: operational runbooks
-│   │
-│   └── compliance/              # Facet: compliance team
-│       ├── gdpr/                # Ontology: GDPR documentation
-│       └── soc2/                # Ontology: SOC2 compliance
-│
-└── shard-partners/              # Shard: partner infrastructure (remote)
-    └── shared/                  # Facet: shared knowledge
-        └── api-integration/     # Ontology: integration docs
-```
-
-### Why Facets?
-
-**Facets** provide logical organization within a shard without requiring separate infrastructure:
-
-1. **Access Control Boundaries:**
-   ```bash
-   # Academic team: read/write to academic/ facet
-   # Industrial team: read/write to industrial/ facet
-   # Same database, different permissions
-   ```
-
-2. **Resource Isolation:**
-   ```bash
-   # Academic facet: high ingestion rate, low query rate
-   # Industrial facet: low ingestion rate, high query rate
-   # Same infrastructure, different resource profiles
-   ```
-
-3. **Namespace Management:**
-   ```bash
-   # Both facets can have "documentation" ontology:
-   /mnt/knowledge/shard-research/academic/documentation/
-   /mnt/knowledge/shard-research/industrial/documentation/
-   # No collision!
-   ```
-
-4. **Organizational Clarity:**
-   ```bash
-   ls /mnt/knowledge/shard-research/
-   academic/      # University research
-   industrial/    # Corporate R&D
-   # Clear logical separation
-   ```
-
-### Mount Options at Different Levels
-
-```bash
-# Mount entire shard (all facets, all ontologies)
-mount -t fuse.knowledge-graph \
-  -o api_url=http://localhost:8000 \
-  -o client_id=fuse-client \
-  -o client_secret=$FUSE_SECRET \
-  -o shard=research \
-  /dev/knowledge /mnt/knowledge/research
-
-ls /mnt/knowledge/research/
-academic/  industrial/
-
-# Mount specific facet (all ontologies in facet)
-mount -t fuse.knowledge-graph \
-  -o client_id=fuse-client,client_secret=$FUSE_SECRET \
-  -o shard=research,facet=academic \
-  /dev/knowledge /mnt/knowledge/academic
-
-ls /mnt/knowledge/academic/
-ai-research/  neuroscience/  ml-papers/
-
-# Mount specific ontology (direct semantic access)
-mount -t fuse.knowledge-graph \
-  -o client_id=fuse-client,client_secret=$FUSE_SECRET \
-  -o shard=research,facet=academic,ontology=ai-research \
-  /dev/knowledge /mnt/knowledge/ai-research
-
-ls /mnt/knowledge/ai-research/
-# Shows semantic query space directly
-embedding-models/  neural-networks/  transformers/
-```
-
-**Note:** All mount operations use OAuth client authentication (ADR-054). The same client credentials work across FUSE, MCP server, and CLI - they're all clients of the same API backend.
-
-### Cross-Shard, Cross-Facet Queries
-
-Standard Unix tools traverse the hierarchy automatically:
-
-```bash
-# Search across all mounted shards, facets, and ontologies
-find /mnt/knowledge/ -name "*.concept" | grep "embedding"
-
-# Traverses:
-# 1. Shards (local + remote)
-#    ├── shard-research (local FUSE → local PostgreSQL)
-#    └── shard-partners (SSHFS → remote FUSE → remote PostgreSQL)
-#
-# 2. Facets within each shard
-#    ├── academic
-#    ├── industrial
-#    └── shared
-#
-# 3. Ontologies within each facet
-#    ├── ai-research
-#    ├── patents
-#    └── api-integration
-#
-# 4. Semantic queries within each ontology
-#    └── embedding-models.concept (found!)
-
-# All through standard Unix tooling!
-```
-
-**The magic:** `find` and `grep` don't know about:
-- Knowledge graphs
-- Semantic queries
-- Shard boundaries
-- Local vs. remote mounts
-
-They just traverse directories and read files. **The abstraction is perfect.**
-
-### Distributed Queries Across Mount Boundaries
-
-```bash
-# Mount local shards
-mount -t fuse.knowledge-graph -o shard=research /dev/knowledge /mnt/local/research
-mount -t fuse.knowledge-graph -o shard=production /dev/knowledge /mnt/local/production
-
-# Mount remote shards via SSH
-sshfs partner-a@remote:/mnt/knowledge/shared /mnt/remote/partner-a
-sshfs partner-b@remote:/mnt/knowledge/public /mnt/remote/partner-b
-
-# Now grep across ALL of them:
-grep -r "API compatibility" /mnt/{local,remote}/*/
-
-# What actually happens:
-# 1. grep traverses /mnt/local/research/
-#    → FUSE reads local database
-#    → Returns concept files as text
-#
-# 2. grep traverses /mnt/local/production/
-#    → FUSE reads local database
-#    → Returns concept files as text
-#
-# 3. grep traverses /mnt/remote/partner-a/
-#    → SSHFS sends reads over SSH
-#    → Remote FUSE reads remote database
-#    → SSH returns concept files as text
-#
-# 4. grep traverses /mnt/remote/partner-b/
-#    → Same: SSHFS → SSH → remote FUSE → remote database
-
-# Result: distributed semantic search across multiple knowledge graphs
-# Using only: grep, mount, and sshfs
-# No special distributed query protocol needed
-```
-
-**This is profound:** Standard Unix tools become distributed knowledge graph query engines simply by mounting semantic filesystems at different paths.
-
-### Write Operations Respect Hierarchy
-
-```bash
-cd /mnt/knowledge/research/academic/ai-research/embedding-models/
-
-# Write here → ingests into:
-# - Shard: research
-# - Facet: academic
-# - Ontology: ai-research
-# - Context: embedding-models (semantic query)
-echo "# Quantization Techniques..." > quantization.md
-
-# Concept appears in:
-# ✓ /mnt/knowledge/research/academic/ai-research/
-# ✗ NOT in /mnt/knowledge/research/industrial/patents/
-# Same shard, different facet = isolated
-```
-
-### Federation and Discovery
-
-```bash
-# Local shard (FUSE → local knowledge graph)
-mount -t fuse.knowledge-graph -o shard=research /dev/knowledge /mnt/local
-
-# Remote shard (SSHFS → remote FUSE → remote knowledge graph)
-sshfs partner@partner.com:/mnt/knowledge/shared \
-      /mnt/remote
-
-# Now find operates across BOTH:
-find /mnt/{local,remote}/ -name "*.concept" | grep "api"
-
-# Returns concepts from:
-# - Local research shard (all facets)
-# - Remote partner shard (shared facet)
-# Distributed knowledge graph queries via standard Unix tools!
-```
-
-### Path Semantics
-
-Every path encodes the full context:
-
-```
-/mnt/knowledge/shard-research/academic/ai-research/embedding-models/quantization.concept
-│              │              │        │            │                │
-│              │              │        │            │                └─ Concept (semantic entity)
-│              │              │        │            └─────────────────── Semantic query context
-│              │              │        └──────────────────────────────── Ontology (knowledge domain)
-│              │              └───────────────────────────────────────── Facet (logical group)
-│              └──────────────────────────────────────────────────────── Shard (infrastructure)
-└─────────────────────────────────────────────────────────────────────── Mount point
-```
-
-**Deterministic structure, semantic content.**
-
-## Implementation Sketch
-
-### Technology Stack
-
-- **FUSE:** Filesystem in Userspace (client interface)
-- **Backend:** FastAPI REST API server
-- **Query Engine:** Semantic search API (part of backend)
-- **Cache:** TTL-based concept cache (fights non-determinism slightly)
-
-**Note:** The FUSE filesystem is a client interface, just like the MCP server, CLI, and web interface. All clients communicate with the same FastAPI backend.
-
-### Basic Operations
-
-```python
-class SemanticFS(Operations):
-    def readdir(self, path, fh):
-        """List directory = semantic query"""
-        query = path_to_query(path)
-        concepts = kg.search(query, threshold=0.7)
-        return [f"{c.id}.concept" for c in concepts]
-
-    def read(self, path, size, offset, fh):
-        """Read file = get concept details"""
-        concept_id = path_to_concept_id(path)
-        concept = kg.get_concept(concept_id)
-        return format_concept_markdown(concept)
-
-    def getattr(self, path, fh=None):
-        """Stat file = concept metadata"""
-        concept = kg.get_concept(path_to_concept_id(path))
-        return {
-            'st_mode': S_IFREG | 0o444,  # Read-only
-            'st_size': len(concept.description),
-            'st_mtime': concept.last_updated,  # Changes with grounding!
-        }
-```
-
-### Mount Options
-
-```bash
-mount -t fuse.knowledge-graph \
-  -o api_url=http://localhost:8000 \    # API server endpoint
-  -o client_id=fuse-client \            # OAuth client ID (ADR-054)
-  -o client_secret=$FUSE_SECRET \       # OAuth client secret
-  -o threshold=0.75 \                   # Default similarity threshold
-  -o cache_ttl=60 \                     # Cache concepts for 60s
-  -o relationship_links=true \          # Show relationship symlinks
-  -o dynamic_discovery=true \           # Concepts appear based on access patterns
-  /dev/knowledge /mnt/knowledge
-```
-
-**Authentication:** FUSE authenticates as an OAuth client (ADR-054), just like the MCP server and CLI. The same client credentials can be shared across all client interfaces, or each can have its own client ID for granular access control.
-
-### Alternative: rclone Backend Implementation
-
-Instead of writing a custom FUSE driver, implement as an **rclone backend**.
-
-**Why rclone?**
-- rclone already handles FUSE mounting, caching, config management
-- Implement knowledge graph as "just another backend" (like S3, Google Drive)
-- Get interop between knowledge graphs and cloud storage for free
-- Users already understand rclone's model
-
-**Implementation:**
-
-```go
-// rclone backend for knowledge graphs
-package kg
-
-import (
-    "context"
-    "github.com/rclone/rclone/fs"
-)
-
-func init() {
-    fs.Register(&fs.RegInfo{
-        Name:        "kg",
-        Description: "Knowledge Graph Backend",
-        NewFs:       NewFs,
-        Options: []fs.Option{{
-            Name: "api_url",
-            Default: "http://localhost:8000",
-        }, {
-            Name: "shard",
-        }, {
-            Name: "client_id",
-            Help: "OAuth client ID (ADR-054)",
-        }, {
-            Name: "client_secret",
-            Help: "OAuth client secret",
-        }},
-    })
-}
-
-// List directory = semantic query
-func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-    facet, ontology, query := parsePath(dir)
-    concepts, err := f.client.Search(ctx, query, ontology)
-    for _, concept := range concepts {
-        entries = append(entries, conceptToEntry(concept))
-    }
-    return entries, nil
-}
-
-// Open file = read concept as markdown
-func (o *Object) Open(ctx context.Context) (io.ReadCloser, error) {
-    concept, err := o.fs.client.GetConcept(ctx, o.conceptID)
-    markdown := formatConceptMarkdown(concept)
-    return io.NopCloser(strings.NewReader(markdown)), nil
-}
-
-// Put file = ingest into knowledge graph
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
-    data, _ := io.ReadAll(in)
-    facet, ontology, _ := parsePath(src.Remote())
-    result, err := f.client.Ingest(ctx, data, ontology, facet)
-    return &Object{...}, nil
-}
-```
-
-**Usage:**
-
-```bash
-# Configure knowledge graph backend (OAuth client authentication)
-rclone config create kg-research kg \
-  api_url=http://localhost:8000 \
-  shard=research \
-  client_id=rclone-client \
-  client_secret=$RCLONE_SECRET
-
-# Mount it
-rclone mount kg-research:academic/ai-research /mnt/knowledge
-
-# Works like any rclone mount
-ls /mnt/knowledge/
-cat /mnt/knowledge/embedding-models.concept
-echo "new idea" > /mnt/knowledge/new-concept.md
-```
-
-**Note:** Uses same OAuth client authentication (ADR-054) as MCP server and CLI. The same client credentials can be reused, or rclone can have its own client ID for separate access control policies.
-
-**Bonus: Cross-Backend Operations**
-
-```bash
-# Backup knowledge graph to S3
-rclone sync kg-research: s3:backup/kg-snapshot/
-
-# Ingest Google Drive docs into knowledge graph
-rclone copy gdrive:Papers/ kg-research:academic/papers/
-
-# Sync between knowledge graph shards
-rclone sync kg-shard-a: kg-shard-b:
-
-# Export concepts to git repository
-rclone sync kg-research: /tmp/kg-export/
-cd /tmp/kg-export && git init && git add . && git commit
-
-# Use rclone browser GUI to explore knowledge graph
-rclone rcd --rc-web-gui
-```
-
-**Benefits:**
-- Don't write FUSE layer (rclone handles it)
-- Get caching, retry logic, rate limiting for free
-- Instant interop with cloud storage backends
-- Existing rclone user base understands the model
-- rclone browser GUI works automatically
-
-**Implementation effort:** Minimal backend (List/Read/Write) could be prototyped in a weekend.
-
-## Why This Will Make Unix Admins Angry
+## Appendix: Why This Will Make Unix Admins Angry
 
 ### The Angry Tweets We Expect
 
@@ -1116,415 +506,53 @@ Correct! The number of concepts matching your context changes as you explore.
 
 > "This breaks `rsync`!"
 
-Have you considered that maybe `rsync` should understand semantic similarity? 🤔
+Have you considered that maybe `rsync` should understand semantic similarity?
 
 ### The rclone Defense
 
-> "This is just like rclone for Google Drive!"
-
-**Yes. Exactly.** And millions of people use rclone daily despite its POSIX violations.
-
-**rclone for Google Drive exhibits:**
-- **Non-deterministic listings:** Files appear/disappear as others edit shared drives
-- **Multiple canonical paths:** Same file accessible via `/MyDrive/` and `/SharedDrives/` (Google's "Add to My Drive")
-- **Eventually consistent:** Write a file, read might return old content (API sync lag)
-- **Weird metadata:** Fake Unix permissions from Google's ACLs, timestamps from cloud provider
-- **Partial POSIX:** No symlinks, no memory mapping, fake chmod/chown
+Google Cloud Storage FUSE and rclone for Google Drive exhibit the same violations:
+- Non-deterministic listings (files appear/disappear as others edit)
+- Multiple canonical paths (same file via `/MyDrive/` and `/SharedDrives/`)
+- Eventually consistent (write then read might return old content)
+- Partial POSIX (no symlinks, fake permissions)
 
 **People accept this because the abstraction is useful.**
 
-**Semantic FUSE is actually BETTER than rclone:**
-
-| Aspect | rclone (Google Drive) | Semantic FUSE |
-|--------|----------------------|---------------|
-| Non-determinism | Network sync (unpredictable) | Semantic relevance (intentional) |
-| Multiple paths | Google's sharing model (confusing) | Semantic contexts (by design) |
-| Performance | Network latency, API rate limits | Local database (consistent) |
-| Metadata | Fake Unix perms from ACLs (awkward) | Native semantic data (grounding, similarity) |
-| Consistency | Eventually consistent (network) | Immediately consistent (local) |
-
-**rclone documentation literally says:**
+rclone documentation literally says:
 > "Note that many operations are not fully POSIX compliant. This is an inherent limitation of cloud storage systems."
-
-**Our documentation:**
-> "Note that many operations are not fully POSIX compliant. This is an inherent limitation of exposing semantic graphs as filesystems."
-
-**Same energy. Same usefulness. Same tradeoffs.**
 
 If you accept rclone's weirdness for the convenience of `grep`-ing Google Drive, you'll accept semantic FUSE's weirdness for the convenience of `grep`-ing knowledge graphs.
 
-### The Defenses We Don't Care About
-
-**"But the POSIX specification says..."**
-
-The POSIX specification doesn't account for semantic knowledge graphs. Times change.
-
-**"This would break every tool!"**
-
-Good! Those tools assume files are in trees. Knowledge isn't a tree.
-
-**"What about `make`? What about `git`?"**
-
-Don't use this for source code. Use it for *knowledge about* source code.
-
-**"This is cursed."**
-
-Yes. Beautifully cursed. Like all the best ideas.
-
-## Practical Limitations
-
-### What This Is NOT Good For
-
-- Source code version control (use git)
-- Binary file storage (use object storage)
-- High-performance computing (use tmpfs)
-- Traditional backups (use the graph's native backup)
-- Anything requiring determinism (use a real filesystem)
-
-### What This IS Good For
-
-- Research and exploration
-- Documentation navigation
-- Semantic code search
-- Learning domain knowledge
-- Following conceptual trails
-- AI-assisted development workflows
-
-## Future Extensions
-
-### Write Support
-
-```bash
-$ mkdir /mnt/knowledge/my-new-concept/
-$ echo "Description: A revolutionary new idea..." > description.md
-$ echo "Ontology: MyProject" > .ontology
-
-# Automatically ingested and linked!
-```
-
-### Relationship Creation
-
-```bash
-$ ln -s ../target-concept.concept relationship/supports/
-# Creates SUPPORTS relationship in the graph!
-```
-
-### Query Operators
-
-```bash
-$ cd /mnt/knowledge/search/AND/embedding+models/
-$ cd /mnt/knowledge/search/OR/ai+ml/
-$ cd /mnt/knowledge/search/NOT/embedding-models/
-```
-
-### Grounding Filters
-
-```bash
-$ cd /mnt/knowledge/grounding/strong/embedding-models/
-# Only concepts with strong grounding (>0.5)
-```
-
-## Decision
-
-**Implement knowledge graph access as a FUSE filesystem** with the following design choices:
-
-1. **Partial Filesystem Model** - Like `/sys/` or `/proc/`, implement only semantically meaningful operations
-   - Support: `ls` (query), `cd` (navigate), `cat` (read), `grep`/`find` (search), `echo`/`cp` (ingest), `tar` (snapshot)
-   - Do not support: `mv`, `chmod`, `chown`, `touch`, `dd` (operations that don't map to semantic concepts)
-
-2. **Four-Level Hierarchy** - Map infrastructure to semantics:
-   - **Shard** (infrastructure: database + API + resources)
-   - **Facet** (logical grouping: RBAC + resource isolation)
-   - **Ontology** (knowledge domain namespace)
-   - **Concepts** (semantic content)
-
-3. **Directory Creation = Semantic Query** - User creates directories with query names
-   - `mkdir "embedding models"` defines a semantic query
-   - `cd embedding-models/` executes the query
-   - `ls` shows concepts matching the query at configured similarity threshold
-
-4. **Relationship Navigation** - Concepts expose `relationships/` subdirectory
-   - `cd concept.concept/relationships/SUPPORTS/` traverses graph edges
-   - Path represents traversal history (deterministic structure, semantic content)
-
-5. **Write = Ingest** - File writes trigger automatic ingestion
-   - `echo "content" > file.md` ingests into current ontology/facet context
-   - File may not reappear with same name (concept extraction determines label)
-   - Embraces non-determinism as feature (concepts appear based on semantic relevance)
-
-6. **Implementation Options** - Two paths forward:
-   - **Option A:** Custom FUSE driver in Python (full control, more code)
-   - **Option B:** rclone backend in Go (leverage existing infrastructure, instant interop)
-
-## Consequences
-
-### Benefits
-
-**1. Familiar Interface for Semantic Exploration**
-- Users already understand `cd`, `ls`, `cat`, `grep`
-- No need to learn custom query language or web UI
-- Standard Unix tools become knowledge graph query engines
-
-**2. Distributed Queries via Standard Tools**
-```bash
-# Transparently searches local + remote shards
-find /mnt/knowledge/ -name "*.concept" | grep "pattern"
-# - Local shards: FUSE → local PostgreSQL
-# - Remote shards: SSHFS → SSH → remote FUSE → remote PostgreSQL
-```
-
-**3. Cross-Backend Interoperability** (if rclone implementation)
-```bash
-# Backup knowledge graph to S3
-rclone sync kg:research s3:backup/
-
-# Ingest from Google Drive
-rclone copy gdrive:Papers/ kg:research/papers/
-
-# Export to git repository
-rclone sync kg:research /tmp/export/
-```
-
-**4. TAR as Temporal Snapshots**
-```bash
-tar czf snapshot-$(date +%s).tar.gz /mnt/knowledge/my-research/
-# Same path, different contents over time
-# Version your semantic space
-```
-
-**5. Living Documentation in Workspaces**
-```bash
-ln -s /mnt/knowledge/my-project/ ./docs
-# Documentation auto-updates as concepts evolve
-# Claude Code can read semantic graph directly
-```
-
-### Drawbacks
-
-**1. Non-Determinism Can Be Confusing**
-- `ls` results change as graph evolves
-- Same query returns different results over time
-- Mitigation: Clear documentation, caching options, embrace as feature
-
-**2. POSIX Violations Require Education**
-- Many standard file operations won't work
-- Users expect traditional filesystem behavior
-- Mitigation: Follow rclone precedent, document limitations clearly
-
-**3. Performance Considerations**
-- Semantic queries slower than filesystem metadata operations
-- Graph traversal can be expensive for deep relationships
-- Mitigation: Caching layer, configurable similarity thresholds, limit traversal depth
-
-**4. Implementation Complexity**
-- Custom FUSE: ~2000-3000 lines of Python
-- rclone backend: ~500-1000 lines of Go + API wrapper
-- Either requires ongoing maintenance
-
-### Risks
-
-**1. User Confusion** - Non-deterministic behavior violates expectations
-- Mitigation: Clear "partial filesystem" designation, precedent from rclone
-
-**2. Performance at Scale** - Large knowledge graphs may be slow
-- Mitigation: Shard/facet architecture limits query scope
-
-**3. Adoption Barrier** - Requires FUSE support, mount permissions
-- Mitigation: Provide alternative interfaces (web UI, CLI, MCP)
-
-## Alternatives Considered
-
-### 1. WebDAV/HTTP Filesystem
-
-**Pros:** Cross-platform, no FUSE required, browser-compatible
-**Cons:** Poorer performance, limited caching, no local integration
-**Decision:** FUSE provides better Unix integration, can add WebDAV later
-
-### 2. Git-Like Interface
-
-**Pros:** Familiar to developers, built-in versioning, distributed
-**Cons:** Concepts aren't commits, relationships aren't branches, poor semantic fit
-**Decision:** Git is for version control, not semantic navigation
-
-### 3. Custom CLI Only
-
-**Pros:** Full control, no filesystem abstraction mismatch
-**Cons:** Users must learn new commands, can't use standard Unix tools
-**Decision:** CLI exists (kg command), FUSE adds complementary interface
-
-### 4. SQL/GraphQL Query Interface
-
-**Pros:** Powerful queries, precise results, standard protocols
-**Cons:** Requires learning query language, no filesystem metaphor benefits
-**Decision:** APIs exist, FUSE provides filesystem convenience layer
-
-### 5. Database-as-Filesystem (Direct PostgreSQL Mount)
-
-**Pros:** Tools exist (pgfuse), direct database access
-**Cons:** Exposes tables/rows, not semantic concepts, wrong abstraction level
-**Decision:** Need semantic layer, not raw database access
-
-## Implementation Recommendation
-
-**Update (Post Peer Review):** After architectural review, we are **strongly leaning toward Python FUSE (Option A)** for the MVP, though not yet committed.
-
-### Reconsidering Python FUSE (Option A)
-
-**Advantages for our specific architecture:**
-
-1. **Shared Logic Layer** - All core services (`QueryService`, `EmbeddingModel`, `GraphQueryFacade`) are Python
-   - Can import services directly without HTTP overhead
-   - Zero-latency local operations during development
-   - No schema drift between FUSE layer and graph layer
-
-2. **Complex Traversal Support** - Deep graph schema knowledge (ADR-048)
-   - Relationship navigation requires VocabType awareness
-   - Dynamic relationship discovery easier in Python
-   - Access to full graph context without API round-trips
-
-3. **Tight Integration** - Same runtime as API server
-   - Can mount on same machine as database for testing
-   - Direct access to PostgreSQL connection pool
-   - Shared caching layer with existing services
-
-**Implementation with `pyfuse3`:**
-```python
-import pyfuse3
-from api.services.query_service import QueryService
-
-class SemanticFS(pyfuse3.Operations):
-    def __init__(self):
-        self.query_service = QueryService()  # Direct import!
-
-    async def readdir(self, inode, off, token):
-        # Direct service call, no HTTP
-        concepts = await self.query_service.execute_search(query, threshold=0.7)
-        for concept in concepts:
-            pyfuse3.readdir_reply(token, f"{concept.label}.concept", ...)
-```
-
-**When to use rclone instead (Option B):**
-- Remote mounting (laptop → cloud server)
-- OAuth management for remote instances
-- Cross-backend sync requirements (knowledge graph ↔ S3/Google Drive)
-- Deployment to users unfamiliar with Python infrastructure
-
-**Current stance:** Prototype with Python FUSE for local/development use. Both implementations may coexist - Python for tight integration, rclone for remote access and OAuth workflows.
-
-**Authentication (applies to both approaches):**
-Both Python FUSE and rclone implementations use the same OAuth client authentication system (ADR-054) as the MCP server and CLI. This means:
-- Same client credentials can be shared across all client interfaces
-- Consistent authentication flow regardless of client type
-- Granular access control via separate client IDs if needed
-- FUSE authenticates to the API server just like any other client
-
-## Future Extensions
-
-### Core Features
-
-- Relationship-based symbolic links (`ln -s concept relationships/SUPPORTS/`)
-- Query operators (`/search/AND/`, `/search/OR/`, `/search/NOT/`)
-- Grounding filters (`/grounding/strong/`, `/grounding/weak/`)
-- Write support for relationship creation
-- Multi-shard federated views
-
-### Usability Enhancements (From Peer Review)
-
-**1. Empty Directory Problem Solution**
-
-When semantic queries return no results, generate a virtual `README.md` explaining why:
-
-```bash
-mkdir /mnt/knowledge/research/unicorn-physics/
-ls /mnt/knowledge/research/unicorn-physics/
-# Empty directory - no matching concepts
-
-cat /mnt/knowledge/research/unicorn-physics/README.md
-# Query 'unicorn physics' (Threshold: 0.7) matched 0 concepts in ontology 'research'.
-#
-# Suggestions:
-# - Lower threshold: /mnt/knowledge/search/0.5/unicorn+physics/
-# - Try broader query: /mnt/knowledge/research/physics/
-# - Check available ontologies: ls /mnt/knowledge/
-```
-
-**Benefits:** Users understand empty results instead of wondering if the system is broken.
-
-**2. Tarball Snapshots with Temporal Metadata**
-
-Include a `.manifest` file in every tarball to enable "time travel":
-
-```bash
-tar czf snapshot-$(date +%s).tar.gz /mnt/knowledge/research/
-
-tar tzf snapshot-*.tar.gz | head -5
-.manifest
-embedding-models.concept
-neural-networks.concept
-...
-
-cat .manifest
-{
-  "snapshot_timestamp": "2025-11-28T23:45:00Z",
-  "graph_revision": "a3b2c1d4",
-  "shard": "research",
-  "facet": "academic",
-  "ontology": "ai-research",
-  "query_threshold": 0.7,
-  "concept_count": 127,
-  "embedding_model": "nomic-ai/nomic-embed-text-v1.5"
-}
-```
-
-**Benefits:**
-- Restore semantic state from snapshots
-- Track knowledge evolution over time
-- Debug "why did this concept disappear?"
-
-**3. RBAC Integration via Filesystem Permissions**
-
-Map filesystem permission bits to OAuth scopes from ADR-054/055:
-
-```bash
-ls -l /mnt/knowledge/shard-production/
-drwxr-xr-x  engineering/     # User has write:engineering scope
-drwxr-xr--  compliance/      # User has read:compliance scope (no write)
-d---------  finance/         # User has no access
-
-# Attempting to write without scope:
-echo "test" > /mnt/knowledge/shard-production/compliance/test.md
-# Permission denied (requires write:compliance scope)
-```
-
-**Implementation:** Check OAuth scopes during FUSE `access()` and `open()` operations.
-
-**Benefits:**
-- Familiar Unix permission model
-- Natural RBAC enforcement
-- Tools like `ls -l` show access levels automatically
+## Appendix: Alternatives Considered
+
+### WebDAV/HTTP Filesystem
+**Pros:** Cross-platform, no FUSE required. **Cons:** Poorer Unix integration.
+**Decision:** FUSE provides better Unix integration, can add WebDAV later.
+
+### Git-Like Interface
+**Pros:** Familiar to developers. **Cons:** Concepts aren't commits, poor semantic fit.
+**Decision:** Git is for version control, not semantic navigation.
+
+### Custom CLI Only
+**Pros:** Full control. **Cons:** Can't use standard Unix tools.
+**Decision:** CLI exists (`kg` command), FUSE adds complementary interface.
+
+### Database-as-Filesystem (Direct PostgreSQL Mount)
+**Pros:** Tools exist (pgfuse). **Cons:** Exposes tables/rows, wrong abstraction level.
+**Decision:** Need semantic layer, not raw database access.
 
 ## References
 
-### Implementation Tools
-
 - [FUSE Documentation](https://github.com/libfuse/libfuse)
 - [pyfuse3 Documentation](https://pyfuse3.readthedocs.io/)
-- [rclone Architecture](https://rclone.org/docs/)
-- [rclone Backend Implementation Guide](https://rclone.org/docs/#writing-your-own-backend)
-
-### Related Semantic File Systems
-
-- [Semantic File System (SFS)](https://dl.acm.org/doi/10.1145/121132.121138) - Gifford et al., MIT, 1991 - Original virtual directories as queries
-- [Tagsistant](http://www.tagsistant.net/) - Linux FUSE semantic filesystem with boolean logic
+- [Semantic File System (SFS)](https://dl.acm.org/doi/10.1145/121132.121138) - Gifford et al., MIT, 1991
+- [Tagsistant](http://www.tagsistant.net/) - Linux FUSE semantic filesystem
 - [TMSU](https://tmsu.org/) - Tag My Sh*t Up - Modern SQLite-backed tagging filesystem
-- [Google Cloud Storage FUSE](https://cloud.google.com/storage/docs/gcs-fuse) - Example of widely-used partial POSIX compliance
-
-### Internal Architecture
-
+- [Google Cloud Storage FUSE](https://cloud.google.com/storage/docs/gcs-fuse) - Partial POSIX compliance precedent
+- ADR-069.1: FUSE Implementation Specifics
+- ADR-054: OAuth 2.0 Authentication
 - ADR-055: Sharding and facet architecture
-- ADR-048: Query safety and namespace isolation
-- ADR-054: OAuth client management
 
 ---
 
-*Knowledge doesn't fit in trees. It forms graphs. Your filesystem should too.* 🌳→🕸️
+*Knowledge doesn't fit in trees. It forms graphs. Your filesystem should too.*

@@ -234,6 +234,23 @@ Generate credentials with `kg oauth create --for fuse`.
 
 ---
 
+### Remote Access
+
+Since it's a real filesystem, you get remote access for free:
+
+```bash
+# SSH into your server and browse the graph
+ssh server "ls /mnt/knowledge/ontology/"
+
+# Copy a snapshot of query results
+scp -r server:/mnt/knowledge/ontology/economics/inflation/ ./local-copy/
+
+# Mount remotely via SSHFS
+sshfs server:/mnt/knowledge /mnt/remote-knowledge
+```
+
+---
+
 ## Notes
 
 - **Non-POSIX by design** — Like Google Drive, the filesystem intentionally violates some POSIX expectations. Concepts can appear in multiple places, results change as the graph evolves.
