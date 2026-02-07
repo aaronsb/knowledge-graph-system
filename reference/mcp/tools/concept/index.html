@@ -4296,6 +4296,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    program
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../search/" class="md-nav__link">
         
   
@@ -9229,7 +9257,8 @@
 </blockquote>
 <h3 id="concept_1">concept</h3>
 <p>Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).</p>
-<p>PERFORMANCE CRITICAL: For "connect" action, use threshold &gt;= 0.75 to avoid database overload. Lower thresholds create exponentially larger searches that can hang for minutes. Start with threshold=0.8, max_hops=3, then adjust if needed.</p>
+<p>For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.</p>
+<p>For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)</li>
@@ -9255,10 +9284,10 @@
 <li><code>to_id</code> (<code>string</code>) - Target concept ID (for exact mode)</li>
 <li><code>from_query</code> (<code>string</code>) - Starting phrase (for semantic mode, 2-3 words)</li>
 <li><code>to_query</code> (<code>string</code>) - Target phrase (for semantic mode, 2-3 words)</li>
-<li><code>max_hops</code> (<code>number</code>) - Max path length (default: 3). WARNING: Values &gt;5 combined with threshold &lt;0.75 can cause severe performance issues.</li>
-<li>Default: <code>3</code></li>
-<li><code>threshold</code> (<code>number</code>) - Similarity threshold for semantic mode (default: 0.75). PERFORMANCE GUIDE: 0.85+ = precise/fast, 0.75-0.84 = balanced, 0.60-0.74 = exploratory/SLOW, &lt;0.60 = DANGEROUS (can hang database for minutes)</li>
-<li>Default: <code>0.75</code></li>
+<li><code>max_hops</code> (<code>number</code>) - Max path length (default: 5). Higher values find longer paths but take more time.</li>
+<li>Default: <code>5</code></li>
+<li><code>threshold</code> (<code>number</code>) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.</li>
+<li>Default: <code>0.5</code></li>
 </ul>
 <hr />
 
