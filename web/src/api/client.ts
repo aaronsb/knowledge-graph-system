@@ -75,7 +75,7 @@ class APIClient {
     // Step 1: Fetch related concepts
     const response = await this.client.post<any>('/query/related', {
       concept_id: params.center_concept_id,
-      max_depth: params.depth || 1, // Use depth 1 for better performance
+      max_depth: params.depth ?? 1,
       relationship_types: params.relationship_types,
       // ADR-065: Epistemic status filtering
       include_epistemic_status: params.include_epistemic_status,

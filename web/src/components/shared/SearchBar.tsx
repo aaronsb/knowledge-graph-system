@@ -484,10 +484,10 @@ LIMIT 50`);
                   <SliderControl
                     label={showDestination ? "Context:" : "Depth:"}
                     value={depth}
-                    min={showDestination ? 0 : 1}
+                    min={0}
                     max={showDestination ? 2 : 5}
                     onChange={setDepth}
-                    unit={showDestination && depth === 0 ? 'none' : `hop${depth !== 1 ? 's' : ''}`}
+                    unit={depth === 0 ? 'just node' : `hop${depth !== 1 ? 's' : ''}`}
                   />
 
                   {/* Load buttons (explore mode — no destination) */}
