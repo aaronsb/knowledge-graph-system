@@ -793,6 +793,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#obsidian-as-a-graph-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obsidian as a Graph Viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#quick-lookups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -816,6 +827,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -7876,7 +7904,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -9610,6 +9638,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#obsidian-as-a-graph-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obsidian as a Graph Viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#quick-lookups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9633,6 +9672,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -9669,6 +9725,8 @@
 
 <h1 id="fuse-driver">FUSE Driver</h1>
 <p>A semantic filesystem that lets you browse your knowledge graph using standard Unix commands. Create directories to define queries, list them to see results, read files to get concept details.</p>
+<p><img alt="FUSE filesystem in Dolphin file manager" src="../../media/fuse/fuse-file-manager.png" />
+<em>Knowledge graph mounted as a filesystem — ontologies are folders, queries are directories you create, and concepts appear as files. Integrates with Dolphin and GNOME Files (directory refresh signals, thumbnails). Use <code>grep</code>, <code>tree</code>, <code>cp -r</code>, or any Unix tool on your semantic data.</em></p>
 <h2 id="installation">Installation</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipx<span class="w"> </span>install<span class="w"> </span>kg-fuse
 </code></pre></div>
@@ -9833,6 +9891,12 @@
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>basename<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">done</span>
 </code></pre></div>
+<h3 id="obsidian-as-a-graph-viewer">Obsidian as a Graph Viewer</h3>
+<p>The FUSE filesystem presents concepts as markdown files with wikilink-style relationships. Point Obsidian at the mount point and its graph view renders your knowledge graph natively — no plugin required.</p>
+<p><img alt="Obsidian graph view of knowledge graph" src="../../media/obsidian-use-case/obsidian-graph-view.png" />
+<em>Obsidian's built-in graph view rendering concept relationships from the FUSE mount</em></p>
+<p><img alt="Obsidian concept detail" src="../../media/obsidian-use-case/obsidian-concept-detail.png" />
+<em>A concept file showing properties, evidence, and knowledge metadata in Obsidian</em></p>
 <h3 id="quick-lookups">Quick Lookups</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># What does the knowledge graph say about X?</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mkdir<span class="w"> </span>/mnt/knowledge/ontology/economics/stagflation
@@ -9849,6 +9913,18 @@
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span>
 </code></pre></div>
 <p>Generate credentials with <code>kg oauth create --for fuse</code>.</p>
+<hr />
+<h3 id="remote-access">Remote Access</h3>
+<p>Since it's a real filesystem, you get remote access for free:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># SSH into your server and browse the graph</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>ssh<span class="w"> </span>server<span class="w"> </span><span class="s2">&quot;ls /mnt/knowledge/ontology/&quot;</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Copy a snapshot of query results</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>scp<span class="w"> </span>-r<span class="w"> </span>server:/mnt/knowledge/ontology/economics/inflation/<span class="w"> </span>./local-copy/
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Mount remotely via SSHFS</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>sshfs<span class="w"> </span>server:/mnt/knowledge<span class="w"> </span>/mnt/remote-knowledge
+</code></pre></div>
 <hr />
 <h2 id="notes">Notes</h2>
 <ul>
