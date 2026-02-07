@@ -197,10 +197,22 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   // this preserves rawGraphData in Zustand when toggling between 2D/3D/analysis views.
   const lastProcessedData = React.useRef<{ nodes?: unknown[]; links?: unknown[] } | undefined>(mode === 'path' ? pathData : exploreData);
 
+  // Track searchParams identity to detect user-initiated loads.
+  // When the user clicks Load, setSearchParams creates a new object reference.
+  // On remount (view switch), the reference is the same Zustand object.
+  const lastSearchParamsRef = React.useRef(searchParams);
+
   // Update rawGraphData when query results come back
   useEffect(() => {
     const newData = mode === 'path' ? pathData : exploreData;
-    if (!newData || newData === lastProcessedData.current) return;
+    if (!newData) return;
+
+    // Skip if same data AND not a new user-initiated search.
+    // User-initiated searches produce a new searchParams reference.
+    const isNewSearch = searchParams !== lastSearchParamsRef.current;
+    lastSearchParamsRef.current = searchParams;
+
+    if (newData === lastProcessedData.current && !isNewSearch) return;
     lastProcessedData.current = newData;
 
     const graphPayload = { nodes: newData.nodes || [], links: newData.links || [] };
@@ -211,7 +223,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       setGraphData(null);
       setRawGraphData(graphPayload);
     }
-  }, [exploreData, pathData, mode]);
+  }, [exploreData, pathData, mode, searchParams]);
 
   // Merge path enrichment data when it arrives
   useEffect(() => {
