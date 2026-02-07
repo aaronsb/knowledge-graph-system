@@ -2,7 +2,7 @@
 
 A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
 
-![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph.png)
+![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph-hero.png)
 
 ## Why External AI Memory Matters
 
