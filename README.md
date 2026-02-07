@@ -4,89 +4,6 @@ A semantic knowledge graph that extracts concepts from documents, tracks how wel
 
 ![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph-hero.png)
 
-## Why External AI Memory Matters
-
-Today's LLMs are static. They learn during training, then freeze. You can fine-tune or retrain, but the model itself doesn't accumulate knowledge from conversations. Every session starts fresh.
-
-This is changing. Google's Titans architecture introduces neural long-term memory that updates during inference—"surprise-driven memorization" that prioritizes unexpected information, scaling to 2+ million tokens. Mixture-of-experts models route queries to specialized subnetworks. The boundary between model and memory is blurring.
-
-But these are internal mechanisms. You don't control what they remember. You can't audit their confidence. You can't see where their sources disagree.
-
-**External memory systems**—knowledge you manage outside the model—remain essential:
-- You control what's stored
-- You can trace provenance
-- You can measure confidence
-- You can preserve contradictions
-
-Many external memory systems exist. Paid services like Mem0, Zep, and Pinecone offer managed infrastructure. Open source options like LlamaIndex, LangChain, and GraphRAG provide frameworks. They vary widely in features, production-readiness, cost, and what they optimize for.
-
-This system optimizes for **epistemic rigor**—knowing how well-supported your knowledge is, not just retrieving it.
-
-## The Evolution of External AI Memory
-
-**Stage 1: Context Window** — Paste documents into the prompt. Works until you hit token limits. No persistence. Re-paste everything next conversation.
-
-**Stage 2: Vector Database** — Embed documents as vectors. Search by similarity. "Find chunks related to this query." But: no relationships between chunks. No way to know if sources agree or disagree. Every chunk is equally trusted.
-
-**Stage 3: RAG (Retrieval-Augmented Generation)** — Vector search feeds context to an LLM. Better answers grounded in your documents. But still: chunks are isolated. No accumulated understanding. The LLM sees fragments, not structure.
-
-**Stage 4: Knowledge Graph** — Extract entities and relationships. Build structure. "Person X works at Company Y." Now you have connections. But: most graphs assume everything is true. No confidence. No contradiction handling. Microsoft's GraphRAG lives here—impressive comprehensiveness, but conflicts require LLM judgment at query time.
-
-**Stage 5: Epistemic Knowledge Graph** — This system. Concepts have grounding scores computed from evidence. Contradictions are preserved, not hidden. Semantic diversity detects fabrication. You know *what* and *how sure*.
-
-The progression: retrieval → structure → **confidence**.
-
-## The Problem with Most AI Memory
-
-Most AI memory systems store facts and retrieve them by similarity. They can't tell you:
-- **How confident** should I be in this?
-- **Do sources disagree** about this?
-- **Where did this come from** originally?
-
-Vector databases find similar content. They don't know if it's contested, well-supported, or fabricated.
-
-## What This System Does Differently
-
-### Grounding: Measuring Confidence Mathematically
-
-Every concept has a **grounding score** (-1.0 to +1.0) computed from supporting vs. contradicting evidence. Not a label someone assigned—a calculation from the actual evidence graph.
-
-A concept with 47 supporting edges and 12 contradicting edges gets grounding ≈ 0.77. You know exactly how contested it is.
-
-*No other system we researched computes grounding this way.* GraphRAG stores conflicting nodes but relies on LLMs to resolve them at query time. We measure it.
-
-### Diversity: Detecting Fabrication
-
-Authentic information connects to many independent domains. Fabricated claims create echo chambers—circular reasoning with low conceptual diversity.
-
-We tested this: Apollo 11 mission data showed **37.7% semantic diversity** across 33 related concepts. Moon landing conspiracy theories showed **23.2% diversity** across 3 concepts.
-
-*This metric is unique to this system.*
-
-### Contradiction Preservation
-
-When sources disagree, the system doesn't pick a winner. It preserves both perspectives with evidence attribution, letting you (or an AI agent) reason about the disagreement.
-
-### Emergent Spatial Mapping
-
-Feed the system street view images or photos of a physical place. The relationships extracted ("next to", "across from", "visible from") naturally encode physical topology.
-
-The graph becomes a spatial map—without GPS coordinates. "The pharmacy is between the bank and the cafe" emerges from visual evidence alone.
-
-## How It Compares
-
-| Capability | This System | GraphRAG | Zep/Graphiti | Vector DBs |
-|------------|-------------|----------|--------------|------------|
-| Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No |
-| Grounding scores | Continuous 0-1 | Source citations only | No | Similarity only |
-| Semantic diversity | Yes (authenticity signal) | No | No | No |
-| Epistemic status | Per-relationship | No | No | No |
-| FUSE filesystem | Yes | No | No | No |
-| Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Some local |
-| Dynamic vocabulary | Emergent + consolidation | Fixed schema | Fixed schema | N/A |
-
-**Closest competitor:** Zep/Graphiti has sophisticated temporal tracking (bi-temporal model). We have better epistemic metrics; they have better time-travel queries.
-
 ## Quick Start
 
 ### Install Client Tools
@@ -200,6 +117,30 @@ Documents ──→ [FastAPI] ──→ LLM Extraction ──→ [PostgreSQL + A
 | Architecture decisions | [docs/architecture/](docs/architecture/) |
 
 88 Architecture Decision Records document the design evolution.
+
+## Background
+
+Most systems that store knowledge for retrieval — vector databases, RAG pipelines, knowledge graphs — optimize for finding relevant content. They can tell you *what* matches your query. They can't tell you how well-supported it is, whether sources disagree about it, or where the evidence actually came from.
+
+This system adds an epistemic layer on top of the graph. Every concept carries a **grounding score** computed from supporting vs. contradicting evidence — not a label, but a measurement. A concept backed by 47 sources with 12 contradictions scores differently than one with a single unchallenged mention. When sources disagree, the system preserves both sides rather than picking a winner.
+
+**Semantic diversity** provides a second signal. Well-established knowledge tends to connect across independent domains. Narrow claims that only reference each other score lower. In testing, Apollo 11 mission data showed 37.7% diversity across 33 concepts; moon landing conspiracy content showed 23.2% across 3.
+
+The system also handles images. Feed it street view photos and the extracted relationships ("next to", "across from", "visible from") naturally encode spatial topology — no coordinates needed.
+
+### How It Compares
+
+| Capability | This System | GraphRAG | Zep/Graphiti | Vector DBs |
+|------------|-------------|----------|--------------|------------|
+| Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No |
+| Grounding scores | Continuous -1 to +1 | Source citations only | No | Similarity only |
+| Semantic diversity | Yes (authenticity signal) | No | No | No |
+| Epistemic status | Per-relationship | No | No | No |
+| FUSE filesystem | Yes | No | No | No |
+| Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Some local |
+| Dynamic vocabulary | Emergent + consolidation | Fixed schema | Fixed schema | N/A |
+
+Zep/Graphiti has better temporal tracking (bi-temporal model). GraphRAG has broader community adoption. This system fills the gap for epistemic metrics — measuring confidence rather than just retrieving content.
 
 ## Why Try It
 
