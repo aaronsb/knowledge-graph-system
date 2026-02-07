@@ -2,6 +2,8 @@
 
 Command-line interface for scripting, automation, and power users. The `kg` command provides access to all knowledge graph operations.
 
+![kg CLI](../media/screenshots/cli-kg-help.png)
+
 ## Installation
 
 ```bash
@@ -17,6 +19,8 @@ Verify with `kg health`.
 ## Knowledge Operations
 
 ### Search
+
+![CLI Search with Inline Images](../media/screenshots/cli-search-with-images.png)
 
 Find concepts by meaning, not keywords.
 

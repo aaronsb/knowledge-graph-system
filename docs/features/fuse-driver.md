@@ -2,6 +2,9 @@
 
 A semantic filesystem that lets you browse your knowledge graph using standard Unix commands. Create directories to define queries, list them to see results, read files to get concept details.
 
+![FUSE filesystem in Dolphin file manager](../media/fuse/fuse-file-manager.png)
+*Knowledge graph mounted as a filesystem — ontologies are folders, queries are directories you create, and concepts appear as files. Integrates with Dolphin and GNOME Files (directory refresh signals, thumbnails). Use `grep`, `tree`, `cp -r`, or any Unix tool on your semantic data.*
+
 ## Installation
 
 ```bash
@@ -194,6 +197,16 @@ for f in /mnt/knowledge/ontology/economics/*/; do
 done
 ```
 
+### Obsidian as a Graph Viewer
+
+The FUSE filesystem presents concepts as markdown files with wikilink-style relationships. Point Obsidian at the mount point and its graph view renders your knowledge graph natively — no plugin required.
+
+![Obsidian graph view of knowledge graph](../media/obsidian-use-case/obsidian-graph-view.png)
+*Obsidian's built-in graph view rendering concept relationships from the FUSE mount*
+
+![Obsidian concept detail](../media/obsidian-use-case/obsidian-concept-detail.png)
+*A concept file showing properties, evidence, and knowledge metadata in Obsidian*
+
 ### Quick Lookups
 
 ```bash
@@ -218,6 +231,23 @@ url = "http://localhost:8000"
 ```
 
 Generate credentials with `kg oauth create --for fuse`.
+
+---
+
+### Remote Access
+
+Since it's a real filesystem, you get remote access for free:
+
+```bash
+# SSH into your server and browse the graph
+ssh server "ls /mnt/knowledge/ontology/"
+
+# Copy a snapshot of query results
+scp -r server:/mnt/knowledge/ontology/economics/inflation/ ./local-copy/
+
+# Mount remotely via SSHFS
+sshfs server:/mnt/knowledge /mnt/remote-knowledge
+```
 
 ---
 

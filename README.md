@@ -120,6 +120,14 @@ cd knowledge-graph-system
 
 See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
+## See It In Action
+
+![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph.png)
+*Interactive graph exploration with smart search, concept clustering, and relationship visualization*
+
+![CLI with Inline Image Evidence](docs/media/screenshots/cli-search-with-images.png)
+*Command-line search returns concepts with source images rendered inline via chafa*
+
 ## What You Can Do
 
 **Ingest documents** — PDFs, markdown, images, text. The system extracts concepts, relationships, and evidence automatically.
@@ -137,6 +145,9 @@ See [Quick Start Guide](docs/operating/quick-start.md) for details.
 **Navigate via filesystem** — Mount the graph as a FUSE filesystem. Use `ls`, `grep`, `find` on semantic space.
 
 ## Use Cases
+
+![Obsidian viewing the knowledge graph via FUSE](docs/media/obsidian-use-case/obsidian-graph-view.png)
+*Obsidian's graph view rendering knowledge graph relationships via the FUSE filesystem — no plugin needed*
 
 **Research synthesis** — Ingest papers, find connections across them, see where authors disagree. Grounding scores tell you which claims have broad support.
 
