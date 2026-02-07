@@ -72,17 +72,19 @@ class APIClient {
     include_epistemic_status?: string[];
     exclude_epistemic_status?: string[];
   }): Promise<SubgraphResponse> {
-    // Step 1: Fetch related concepts
-    const response = await this.client.post<any>('/query/related', {
-      concept_id: params.center_concept_id,
-      max_depth: params.depth || 1, // Use depth 1 for better performance
-      relationship_types: params.relationship_types,
-      // ADR-065: Epistemic status filtering
-      include_epistemic_status: params.include_epistemic_status,
-      exclude_epistemic_status: params.exclude_epistemic_status,
-    });
-
-    const relatedConcepts = response.data.results || [];
+    // Step 1: Fetch related concepts (skip for depth 0 — just load the center node)
+    let relatedConcepts: any[] = [];
+    if ((params.depth ?? 1) > 0) {
+      const response = await this.client.post<any>('/query/related', {
+        concept_id: params.center_concept_id,
+        max_depth: params.depth ?? 1,
+        relationship_types: params.relationship_types,
+        // ADR-065: Epistemic status filtering
+        include_epistemic_status: params.include_epistemic_status,
+        exclude_epistemic_status: params.exclude_epistemic_status,
+      });
+      relatedConcepts = response.data.results || [];
+    }
 
     // Step 2: Collect all concept IDs (center + related)
     const allConceptIds = [
@@ -104,26 +106,29 @@ class APIClient {
     // The /query/related traversal can miss neighbors (stale accelerator, etc.),
     // but concept details include the actual relationships. Hydrate any targets
     // we don't already have so the subgraph is complete.
-    const fetchedIds = new Set(allConceptIds);
-    const missingIds: string[] = [];
-    allConceptDetails.forEach((concept: any) => {
-      (concept.relationships || []).forEach((rel: any) => {
-        if (rel.to_id && !fetchedIds.has(rel.to_id)) {
-          fetchedIds.add(rel.to_id);
-          missingIds.push(rel.to_id);
-        }
+    // Skip at depth 0 — user asked for just the center node, no neighbors.
+    if ((params.depth ?? 1) > 0) {
+      const fetchedIds = new Set(allConceptIds);
+      const missingIds: string[] = [];
+      allConceptDetails.forEach((concept: any) => {
+        (concept.relationships || []).forEach((rel: any) => {
+          if (rel.to_id && !fetchedIds.has(rel.to_id)) {
+            fetchedIds.add(rel.to_id);
+            missingIds.push(rel.to_id);
+          }
+        });
       });
-    });
 
-    if (missingIds.length > 0) {
-      const extraDetails = (await Promise.all(
-        missingIds.map(id =>
-          this.client.get(`/query/concept/${id}`, {
-            params: { include_grounding: false }
-          }).then(r => r.data).catch(() => null)
-        )
-      )).filter(Boolean);
-      allConceptDetails = [...allConceptDetails, ...extraDetails];
+      if (missingIds.length > 0) {
+        const extraDetails = (await Promise.all(
+          missingIds.map(id =>
+            this.client.get(`/query/concept/${id}`, {
+              params: { include_grounding: false }
+            }).then(r => r.data).catch(() => null)
+          )
+        )).filter(Boolean);
+        allConceptDetails = [...allConceptDetails, ...extraDetails];
+      }
     }
 
     // Step 4: Build nodes array (with grounding strength)
@@ -309,20 +314,6 @@ class APIClient {
   }): Promise<any> {
     const response = await this.client.post('/query/connect-by-search', params, {
       timeout: 120000, // 2 minutes for complex path searches
-    });
-    return response.data;
-  }
-
-  /**
-   * Execute a raw openCypher query
-   * For advanced users who want full control over graph queries
-   */
-  async executeCypherQuery(params: {
-    query: string;
-    limit?: number;
-  }): Promise<any> {
-    const response = await this.client.post('/query/cypher', params, {
-      timeout: 60000, // 1 minute timeout for custom queries
     });
     return response.data;
   }
@@ -1597,6 +1588,59 @@ class APIClient {
     id: number,
   ): Promise<import('../types/program').ProgramReadResponse> {
     const response = await this.client.get(`/programs/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Execute a program server-side and return the WorkingGraph result.
+   */
+  async executeProgram(options: {
+    programId?: number;
+    program?: Record<string, unknown>;
+    params?: Record<string, string | number>;
+  }): Promise<import('../types/program').ProgramResult> {
+    const body: Record<string, unknown> = {};
+    if (options.programId !== undefined) body.program_id = options.programId;
+    if (options.program !== undefined) body.program = options.program;
+    if (options.params !== undefined) body.params = options.params;
+    const response = await this.client.post('/programs/execute', body, {
+      timeout: 60000,
+    });
+    return response.data;
+  }
+
+  /**
+   * Execute a chain of programs (deck mode). W threads through each program.
+   */
+  async chainPrograms(
+    deck: import('../types/program').DeckEntry[],
+  ): Promise<import('../types/program').BatchProgramResult> {
+    const body = {
+      deck: deck.map((e) => {
+        const entry: Record<string, unknown> = {};
+        if (e.program_id !== undefined) entry.program_id = e.program_id;
+        if (e.program !== undefined) entry.program = e.program;
+        if (e.params !== undefined) entry.params = e.params;
+        return entry;
+      }),
+    };
+    const response = await this.client.post('/programs/execute', body, {
+      timeout: 120000,
+    });
+    return response.data;
+  }
+
+  /**
+   * List stored programs with optional search.
+   */
+  async listPrograms(options?: {
+    search?: string;
+    limit?: number;
+  }): Promise<import('../types/program').ProgramListItem[]> {
+    const params: Record<string, unknown> = {};
+    if (options?.search) params.search = options.search;
+    if (options?.limit) params.limit = options.limit;
+    const response = await this.client.get('/programs', { params });
     return response.data;
   }
 

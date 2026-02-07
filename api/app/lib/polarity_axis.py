@@ -312,11 +312,12 @@ def discover_candidate_concepts_parallel(
     validate_concept_id(positive_pole_id)
     validate_concept_id(negative_pole_id)
 
-    # Fall back to sequential for max_hops > 2 (safety)
+    # Parallel discovery only supports 1-2 hops structurally; higher hops use
+    # the sequential variable-length path query (fast with graph_accel).
     if max_hops > 2:
-        logger.warning(
-            f"max_hops={max_hops} exceeds parallel query limit (2), "
-            "falling back to sequential implementation"
+        logger.info(
+            f"max_hops={max_hops} exceeds parallel implementation limit (2), "
+            "using sequential variable-length path query"
         )
         return discover_candidate_concepts(
             positive_pole_id=positive_pole_id,

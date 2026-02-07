@@ -584,7 +584,6 @@ export const useGraphStore = create<GraphStore>()(
       partialize: (state) => ({
         rawGraphData: state.rawGraphData,
         explorationSession: state.explorationSession,
-        searchParams: state.searchParams,
         similarityThreshold: state.similarityThreshold,
       }),
     }

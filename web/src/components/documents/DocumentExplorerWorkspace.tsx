@@ -26,7 +26,8 @@ import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
 import { usePassageSearch } from '../../hooks/usePassageSearch';
 import { useGraphStore } from '../../store/graphStore';
-import { mapCypherResultToRawGraph } from '../../utils/cypherResultMapper';
+import { mapWorkingGraphToRawGraph } from '../../utils/cypherResultMapper';
+import { cypherToStatement } from '../../utils/programBuilder';
 
 /** Sidebar document entry (from findDocumentsByConcepts). */
 interface SidebarDocument {
@@ -215,14 +216,16 @@ export const DocumentExplorerWorkspace: React.FC = () => {
       const allConceptIds = Array.from(allConceptsMap.keys());
       try {
         const idList = allConceptIds.map(id => `'${id.replace(/'/g, "''")}'`).join(', ');
-        const edgeResult = await apiClient.executeCypherQuery({
-          query: `MATCH (c1:Concept)-[r]->(c2:Concept)
+        const edgeCypher = `MATCH (c1:Concept)-[r]->(c2:Concept)
                   WHERE c1.concept_id IN [${idList}] AND c2.concept_id IN [${idList}]
-                  RETURN c1, r, c2`,
-          limit: 1000,
+                  RETURN c1, r, c2 LIMIT 1000`;
+        const stmt = cypherToStatement(edgeCypher, '+');
+        const program = { version: 1 as const, statements: [stmt] };
+        const programResult = await apiClient.executeProgram({
+          program: program as unknown as Record<string, unknown>,
         });
 
-        const mapped = mapCypherResultToRawGraph(edgeResult);
+        const mapped = mapWorkingGraphToRawGraph(programResult.result);
         const nodeIdSet = new Set(nodes.map(n => n.id));
         for (const link of mapped.links) {
           if (nodeIdSet.has(link.from_id) && nodeIdSet.has(link.to_id)) {

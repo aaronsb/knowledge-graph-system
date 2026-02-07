@@ -201,3 +201,74 @@ export interface ProgramReadResponse {
   created_at: string;
   updated_at: string;
 }
+
+// ---------------------------------------------------------------------------
+// Execution types (ADR-500 Phase 3)
+// ---------------------------------------------------------------------------
+
+/** A node in the WorkingGraph, identity-keyed by concept_id. */
+export interface ProgramRawNode {
+  concept_id: string;
+  label: string;
+  ontology?: string | null;
+  description?: string | null;
+  properties: Record<string, unknown>;
+}
+
+/** A link in the WorkingGraph, identity-keyed by (from_id, relationship_type, to_id). */
+export interface ProgramRawLink {
+  from_id: string;
+  to_id: string;
+  relationship_type: string;
+  category?: string | null;
+  confidence?: number | null;
+  properties: Record<string, unknown>;
+}
+
+/** The mutable in-memory graph built during program execution. */
+export interface WorkingGraph {
+  nodes: ProgramRawNode[];
+  links: ProgramRawLink[];
+}
+
+/** Per-statement execution log record. */
+export interface StepLogEntry {
+  statement: number;
+  op: string;
+  operation_type: 'cypher' | 'api' | 'conditional';
+  branch_taken?: 'then' | 'else' | null;
+  nodes_affected: number;
+  links_affected: number;
+  w_size: { nodes: number; links: number };
+  duration_ms: number;
+}
+
+/** Complete execution result from POST /programs/execute. */
+export interface ProgramResult {
+  result: WorkingGraph;
+  log: StepLogEntry[];
+  aborted?: { statement: number; reason: string } | null;
+}
+
+/** A single entry in a program chain (deck). */
+export interface DeckEntry {
+  program_id?: number;
+  program?: Record<string, unknown>;
+  params?: Record<string, string | number>;
+}
+
+/** Result from chained program execution (deck mode). */
+export interface BatchProgramResult {
+  result: WorkingGraph;
+  programs: ProgramResult[];
+  aborted?: { statement: number; reason: string } | null;
+}
+
+/** Lightweight program summary for list endpoints. */
+export interface ProgramListItem {
+  id: number;
+  name: string;
+  description?: string | null;
+  statement_count: number;
+  created_at: string;
+}
