@@ -2,6 +2,8 @@
 
 Model Context Protocol integration that gives AI assistants direct access to your knowledge graph. Claude Desktop, Claude Code, and other MCP-compatible clients can search, explore, and manipulate your knowledge.
 
+![MCP Server](../media/mcp/mcp-server-help.png)
+
 ## Setup
 
 ```bash

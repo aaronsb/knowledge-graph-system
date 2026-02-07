@@ -146,6 +146,9 @@ See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
 ## Use Cases
 
+![Obsidian viewing the knowledge graph via FUSE](docs/media/obsidian-use-case/obsidian-graph-view.png)
+*Obsidian's graph view rendering knowledge graph relationships via the FUSE filesystem — no plugin needed*
+
 **Research synthesis** — Ingest papers, find connections across them, see where authors disagree. Grounding scores tell you which claims have broad support.
 
 **Technical documentation** — Extract architecture concepts from diagrams, meeting notes, design docs. Query how components relate.
