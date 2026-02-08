@@ -8,6 +8,7 @@ import { createClientFromEnv } from '../../api/client';
 import * as colors from '../colors';
 import { coloredCount, separator } from '../colors';
 
+/** Create the `vocab consolidate` command — LLM-grounded vocabulary merge and prune workflow. */
 export function createConsolidateCommand(): Command {
   return new Command('consolidate')
     .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.')
@@ -130,6 +131,7 @@ export function createConsolidateCommand(): Command {
     });
 }
 
+/** Create the `vocab merge` command — manually merge one edge type into another. */
 export function createMergeCommand(): Command {
   return new Command('merge')
     .description('Manually merge one edge type into another. Redirects all edges from deprecated type to target type.')

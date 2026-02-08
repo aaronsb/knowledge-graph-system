@@ -100,7 +100,7 @@ jobsCommand
     }
   });
 
-// Helper function to display jobs list using Table utility
+/** Fetch and display jobs in a formatted table. Used by list command and its subcommands. */
 async function displayJobsList(status?: string, clientId?: string, limit: number = 20, fullId: boolean = false, offset: number = 0) {
   const client = createClientFromEnv();
   const jobs = await client.listJobs(status, clientId, limit, offset);
@@ -673,9 +673,7 @@ jobsCommand
     }
   });
 
-/**
- * Print detailed job status
- */
+/** Print detailed single-job status including analysis, progress, cost, and results. */
 function printJobStatus(job: JobStatus) {
   console.log(chalk.blue('\nJob Status:'));
   console.log(chalk.gray(`  ID: ${job.job_id}`));
