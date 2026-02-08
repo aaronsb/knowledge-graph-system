@@ -297,35 +297,24 @@ class OpenAIProvider(AIProvider):
             )
 
     def generate_embedding(self, text: str) -> Dict[str, Any]:
-        """Generate embedding using OpenAI embedding models or configured provider
+        """Generate embedding using the system embedding provider.
+
+        All embedding generation goes through the configured embedding provider
+        (e.g., local nomic-embed-text). The reasoning provider never generates
+        its own embeddings — this prevents dimension mismatches between the
+        embedding model (768-dim nomic) and OpenAI's text-embedding-3-small
+        (1536-dim).
 
         Returns dict with 'embedding' (vector) and 'tokens' (usage info)
         """
-        # Delegate to separate embedding provider if configured (e.g., local)
         if self.embedding_provider:
             return self.embedding_provider.generate_embedding(text)
 
-        # Otherwise use OpenAI embeddings
-        try:
-            response = self.client.embeddings.create(
-                model=self.embedding_model,
-                input=text
-            )
-
-            embedding = response.data[0].embedding
-
-            # Extract token usage
-            tokens = 0
-            if hasattr(response, 'usage') and response.usage:
-                tokens = response.usage.total_tokens
-
-            return {
-                "embedding": embedding,
-                "tokens": tokens
-            }
-
-        except Exception as e:
-            raise Exception(f"OpenAI embedding generation failed: {e}")
+        raise RuntimeError(
+            "No embedding provider configured. OpenAI reasoning provider cannot "
+            "generate embeddings without a system embedding config. Configure via "
+            "POST /admin/embedding/config or ensure local embedding model is loaded."
+        )
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
         """

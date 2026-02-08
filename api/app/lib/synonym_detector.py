@@ -120,6 +120,7 @@ class SynonymDetector:
         """
         self.ai_provider = ai_provider
         self._embedding_cache: Dict[str, np.ndarray] = {}
+        self._expected_dims: Optional[int] = None  # Resolved lazily from first embedding
 
     async def find_synonyms(
         self,
@@ -464,25 +465,37 @@ class SynonymDetector:
             embedding_data = db.get_vocabulary_embedding(edge_type)
 
             if embedding_data and embedding_data.get('embedding'):
-                # Use database embedding
                 embedding = np.array(embedding_data['embedding'])
 
-                # Cache for reuse
-                self._embedding_cache[edge_type] = embedding
+                # Validate dimension matches current model (detect stale embeddings)
+                if self._expected_dims is not None and embedding.shape[0] != self._expected_dims:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Stale embedding for {edge_type}: {embedding.shape[0]}-dim "
+                        f"(expected {self._expected_dims}). Regenerating."
+                    )
+                    # Fall through to regeneration below
+                else:
+                    # Set expected dims from first valid cached embedding
+                    if self._expected_dims is None:
+                        self._expected_dims = embedding.shape[0]
 
-                return embedding
+                    self._embedding_cache[edge_type] = embedding
+                    return embedding
         finally:
             db.close()
 
-        # Fallback: Generate new embedding via API
-        # Convert edge type to descriptive text
+        # Generate new embedding via provider
         descriptive_text = self._edge_type_to_text(edge_type)
 
-        # Generate embedding
         result = self.ai_provider.generate_embedding(descriptive_text)
         embedding = np.array(result["embedding"])
 
-        # Cache for reuse
+        # Set expected dims from first generated embedding
+        if self._expected_dims is None:
+            self._expected_dims = embedding.shape[0]
+
         self._embedding_cache[edge_type] = embedding
 
         # Store in database for future use
@@ -534,7 +547,18 @@ class SynonymDetector:
 
         Returns:
             Similarity score (0.0 to 1.0)
+
+        Raises:
+            ValueError: If vectors have different dimensions (e.g., stale 1536-dim
+                        vs current 768-dim embeddings from different models)
         """
+        if vec1.shape != vec2.shape:
+            raise ValueError(
+                f"Embedding dimension mismatch: {vec1.shape[0]} vs {vec2.shape[0]}. "
+                f"Regenerate embeddings with the current model: "
+                f"POST /vocabulary/generate-embeddings {{\"force_regenerate\": true}}"
+            )
+
         dot_product = np.dot(vec1, vec2)
         norm1 = np.linalg.norm(vec1)
         norm2 = np.linalg.norm(vec2)
