@@ -43,6 +43,7 @@ References:
 from typing import Dict, List, Optional, Literal
 from dataclasses import dataclass
 from enum import Enum
+import asyncio
 import json
 import logging
 
@@ -757,16 +758,20 @@ Should these be merged? Consider:
 Respond with MERGE or SKIP and a one-sentence reasoning."""
 
         try:
-            response = self._call_llm(prompt)
+            response = await asyncio.to_thread(self._call_llm, prompt)
             first_line = response.strip().upper().split(".")[0]
 
-            # Validate the LLM gave a parsable decision
-            has_merge = "MERGE" in first_line
-            has_skip = "SKIP" in first_line
-            if not has_merge and not has_skip:
+            # Validate the LLM gave a parsable decision.
+            # Use first keyword position to resolve ambiguity (e.g. "SKIP. MERGE would lose...")
+            merge_pos = first_line.find("MERGE")
+            skip_pos = first_line.find("SKIP")
+            if merge_pos == -1 and skip_pos == -1:
                 raise ValueError(f"Unparsable LLM response (no MERGE/SKIP keyword): {response[:100]}")
 
-            if has_merge:
+            # First keyword wins when both appear
+            is_merge = merge_pos != -1 and (skip_pos == -1 or merge_pos < skip_pos)
+
+            if is_merge:
                 reasoning = response.strip()
                 logger.info(f"LLM synonym review: MERGE {deprecate_type} → {preserve_type} ({reasoning})")
                 return ActionRecommendation(
@@ -870,16 +875,20 @@ Should it be deprecated? Consider:
 Respond with DEPRECATE or SKIP and a one-sentence reasoning."""
 
         try:
-            response = self._call_llm(prompt)
+            response = await asyncio.to_thread(self._call_llm, prompt)
             first_line = response.strip().upper().split(".")[0]
 
-            # Validate the LLM gave a parsable decision
-            has_deprecate = "DEPRECATE" in first_line
-            has_skip = "SKIP" in first_line
-            if not has_deprecate and not has_skip:
+            # Validate the LLM gave a parsable decision.
+            # Use first keyword position to resolve ambiguity.
+            deprecate_pos = first_line.find("DEPRECATE")
+            skip_pos = first_line.find("SKIP")
+            if deprecate_pos == -1 and skip_pos == -1:
                 raise ValueError(f"Unparsable LLM response (no DEPRECATE/SKIP keyword): {response[:100]}")
 
-            if has_deprecate:
+            # First keyword wins when both appear
+            is_deprecate = deprecate_pos != -1 and (skip_pos == -1 or deprecate_pos < skip_pos)
+
+            if is_deprecate:
                 reasoning = response.strip()
                 logger.info(f"LLM low-value review: DEPRECATE {score.relationship_type} ({reasoning})")
                 return ActionRecommendation(
