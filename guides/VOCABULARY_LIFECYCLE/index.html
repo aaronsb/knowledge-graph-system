@@ -27,7 +27,7 @@
     
     
       
-        <title>Vocabulary Category Guide - Knowledge Graph System</title>
+        <title>Understanding: Vocabulary Lifecycle & Grounded LLM Decisions - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#vocabulary-category-guide" class="md-skip">
+        <a href="#understanding-vocabulary-lifecycle-grounded-llm-decisions" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Vocabulary Category Guide
+              Understanding: Vocabulary Lifecycle &amp; Grounded LLM Decisions
             
           </span>
         </div>
@@ -1012,7 +1012,7 @@
   <span class="md-ellipsis">
     
   
-    Vocabulary Category Guide
+    Understanding: Vocabulary Lifecycle &amp; Grounded LLM Decisions
   
 
     
@@ -1030,7 +1030,7 @@
   <span class="md-ellipsis">
     
   
-    Vocabulary Category Guide
+    Understanding: Vocabulary Lifecycle &amp; Grounded LLM Decisions
   
 
     
@@ -1056,10 +1056,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        The Problem
       
     </span>
   </a>
@@ -1067,10 +1067,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-8-semantic-categories" class="md-nav__link">
+  <a href="#the-key-insight" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The 8 Semantic Categories
+        The Key Insight
       
     </span>
   </a>
@@ -1078,88 +1078,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-categories-are-assigned" class="md-nav__link">
+  <a href="#how-consolidation-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Categories Are Assigned
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How Categories Are Assigned">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-max-instead-of-mean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Max Instead of Mean?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#understanding-the-display" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the Display
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Understanding the Display">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#in-kg-vocab-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In kg vocab list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#confidence-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Confidence Levels
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-ambiguity-flag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Ambiguity Flag ⚠
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#viewing-detailed-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Viewing Detailed Scores
+        How Consolidation Works
       
     </span>
   </a>
@@ -1167,10 +1089,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#refreshing-categories" class="md-nav__link">
+  <a href="#decision-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refreshing Categories
+        Decision Model
       
     </span>
   </a>
@@ -1178,10 +1100,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#interpreting-low-confidence" class="md-nav__link">
+  <a href="#embedding-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Interpreting Low Confidence
+        Embedding Architecture
       
     </span>
   </a>
@@ -1189,10 +1111,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#category-distribution" class="md-nav__link">
+  <a href="#cli-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Category Distribution
+        CLI Commands
       
     </span>
   </a>
@@ -1200,174 +1122,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#known-limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        Known Limitations
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-curators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Curators
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-users" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Users
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-developers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Developers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-is-this-type-in-the-wrong-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Why is this type in the wrong category?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-is-everything-100-confident" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Why is everything 100% confident?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#should-i-worry-about-ambiguous-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Should I worry about ambiguous types?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#high-confidence-not-ambiguous" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        High Confidence, Not Ambiguous
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#high-confidence-ambiguous" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        High Confidence, Ambiguous
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-confidence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium Confidence
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#low-confidence-needs-review" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Low Confidence (needs review)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -9522,10 +9283,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        The Problem
       
     </span>
   </a>
@@ -9533,10 +9294,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-8-semantic-categories" class="md-nav__link">
+  <a href="#the-key-insight" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The 8 Semantic Categories
+        The Key Insight
       
     </span>
   </a>
@@ -9544,88 +9305,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-categories-are-assigned" class="md-nav__link">
+  <a href="#how-consolidation-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Categories Are Assigned
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How Categories Are Assigned">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-max-instead-of-mean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Max Instead of Mean?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#understanding-the-display" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the Display
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Understanding the Display">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#in-kg-vocab-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In kg vocab list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#confidence-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Confidence Levels
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-ambiguity-flag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The Ambiguity Flag ⚠
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#viewing-detailed-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Viewing Detailed Scores
+        How Consolidation Works
       
     </span>
   </a>
@@ -9633,10 +9316,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#refreshing-categories" class="md-nav__link">
+  <a href="#decision-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refreshing Categories
+        Decision Model
       
     </span>
   </a>
@@ -9644,10 +9327,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#interpreting-low-confidence" class="md-nav__link">
+  <a href="#embedding-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Interpreting Low Confidence
+        Embedding Architecture
       
     </span>
   </a>
@@ -9655,10 +9338,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#category-distribution" class="md-nav__link">
+  <a href="#cli-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Category Distribution
+        CLI Commands
       
     </span>
   </a>
@@ -9666,174 +9349,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#known-limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        Known Limitations
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-curators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Curators
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-users" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Users
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-developers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Developers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-is-this-type-in-the-wrong-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Why is this type in the wrong category?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-is-everything-100-confident" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Why is everything 100% confident?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#should-i-worry-about-ambiguous-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        "Should I worry about ambiguous types?"
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#high-confidence-not-ambiguous" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        High Confidence, Not Ambiguous
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#high-confidence-ambiguous" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        High Confidence, Ambiguous
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#medium-confidence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Medium Confidence
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#low-confidence-needs-review" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Low Confidence (needs review)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -9857,307 +9379,171 @@
   
 
 
-<h1 id="vocabulary-category-guide">Vocabulary Category Guide</h1>
-<h2 id="overview">Overview</h2>
-<p>The knowledge graph uses <strong>probabilistic category assignment</strong> (ADR-047) to automatically classify relationship types into 8 semantic categories. This guide explains how to interpret category scores, confidence levels, and ambiguity flags.</p>
-<h2 id="the-8-semantic-categories">The 8 Semantic Categories</h2>
-<p>All relationship types are classified into one of these fundamental categories:</p>
-<table>
-<thead>
-<tr>
-<th>Category</th>
-<th>Description</th>
-<th>Example Types</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>causation</strong></td>
-<td>Cause-and-effect relationships</td>
-<td>CAUSES, ENABLES, PREVENTS, INFLUENCES, RESULTS_FROM</td>
-</tr>
-<tr>
-<td><strong>composition</strong></td>
-<td>Part-whole and containment</td>
-<td>PART_OF, CONTAINS, COMPOSED_OF, SUBSET_OF, INSTANCE_OF</td>
-</tr>
-<tr>
-<td><strong>logical</strong></td>
-<td>Logical inference and contradiction</td>
-<td>IMPLIES, CONTRADICTS, PRESUPPOSES, EQUIVALENT_TO</td>
-</tr>
-<tr>
-<td><strong>evidential</strong></td>
-<td>Evidence and support relationships</td>
-<td>SUPPORTS, REFUTES, EXEMPLIFIES, MEASURED_BY</td>
-</tr>
-<tr>
-<td><strong>semantic</strong></td>
-<td>Meaning and similarity</td>
-<td>SIMILAR_TO, ANALOGOUS_TO, CONTRASTS_WITH, DEFINES</td>
-</tr>
-<tr>
-<td><strong>temporal</strong></td>
-<td>Time-based relationships</td>
-<td>PRECEDES, CONCURRENT_WITH, EVOLVES_INTO</td>
-</tr>
-<tr>
-<td><strong>dependency</strong></td>
-<td>Requirements and dependencies</td>
-<td>DEPENDS_ON, REQUIRES, CONSUMES, PRODUCES</td>
-</tr>
-<tr>
-<td><strong>derivation</strong></td>
-<td>Origin and generation</td>
-<td>DERIVED_FROM, GENERATED_BY, BASED_ON</td>
-</tr>
-</tbody>
-</table>
-<h2 id="how-categories-are-assigned">How Categories Are Assigned</h2>
-<p>Categories emerge from <strong>embedding similarity to seed types</strong>:</p>
-<ol>
-<li>Each category has 3-6 <strong>builtin seed types</strong> (30 total across all categories)</li>
-<li>For any relationship type, we compute cosine similarity to all 30 seeds</li>
-<li><strong>Category score = max similarity</strong> to any seed in that category (satisficing approach)</li>
-<li>The category with the highest score wins</li>
-<li>If runner-up score &gt; 70%, the type is flagged as <strong>ambiguous</strong></li>
-</ol>
-<h3 id="why-max-instead-of-mean">Why Max Instead of Mean?</h3>
-<p>Categories contain opposing polarities. For example, causation includes both:
-- ENABLES (positive causation)
-- PREVENTS (negative causation)</p>
-<p>Using max similarity means: <em>"Is this type semantically similar to ANY seed in this category?"</em>
-This correctly identifies both ENABLES and PREVENTS as causal, even though they're opposites.</p>
-<h2 id="understanding-the-display">Understanding the Display</h2>
-<h3 id="in-kg-vocab-list">In <code>kg vocab list</code></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>TYPE                      CATEGORY          CONF    EDGES     STATUS
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>───────────────────────────────────────────────────────────────────────
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ANALOGOUS_TO             semantic          100%        3          ✓ [B]
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>CAUSES                   causation         100%       10          ✓ [B]
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>COMPLEMENTS              composition       100%⚠       0          ✓ [B]
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>DEFINES                  semantic           58%        0          ✓ [B]
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>MYSTERIOUS_TYPE          causation          45%        1          ✓
+<h1 id="understanding-vocabulary-lifecycle-grounded-llm-decisions">Understanding: Vocabulary Lifecycle &amp; Grounded LLM Decisions</h1>
+<p>How and why the vocabulary management system works.</p>
+<h2 id="the-problem">The Problem</h2>
+<p>As documents are ingested, the LLM invents relationship types organically —
+IMPLIES, SUPPORTS, HISTORICALLY_PRECEDED, etc. Over time the vocabulary sprawls:
+near-duplicates appear, some types accumulate zero edges, others become
+structurally irrelevant. Something needs to govern this lifecycle.</p>
+<h2 id="the-key-insight">The Key Insight</h2>
+<p>The system computes objective mathematical scores for every relationship type:
+grounding strength, similarity to other types, edge counts, traversal frequency,
+bridge importance, polarity positioning, epistemic status. These numbers
+describe reality.</p>
+<p>A human reviewing vocabulary decisions would look at these same numbers and
+compute a function: "low value, no bridges, similar to another type → merge."
+If the human ignored the numbers and went with gut feeling, they'd be
+inconsistent, biased, and worse than the math.</p>
+<p>An LLM, given the same numbers as context, computes the same function — but
+also brings reasoning that a pure threshold cannot: "these types look
+numerically similar but capture different semantic intent." This is the same
+external reasoning a human would bring, and a capable LLM does it at
+comparable quality.</p>
+<p><strong>Therefore: math grounds the LLM, the LLM reasons over the math, and the
+combination is more consistent than a human in the loop.</strong></p>
+<p>The human's role is bringing external information <em>into</em> the graph (new
+documents, new knowledge domains), not reviewing vocabulary hygiene decisions
+that the system can make objectively.</p>
+<h2 id="how-consolidation-works">How Consolidation Works</h2>
+<p>The consolidation pipeline follows a loop: score candidates, ask the LLM,
+execute the decision, re-score (since the vocabulary changed), repeat.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant CLI as CLI / API Client
+    participant VM as VocabularyManager
+    participant SD as SynonymDetector
+    participant PS as PruningStrategy
+    participant LLM as GPT-4o (Reasoning)
+    participant DB as PostgreSQL + AGE
+
+    CLI-&gt;&gt;VM: consolidate(target, threshold, dry_run)
+    VM-&gt;&gt;DB: Query active vocabulary types
+    DB--&gt;&gt;VM: Types with edge counts
+
+    alt vocab_size &gt; target
+        loop Until target reached or no candidates
+            VM-&gt;&gt;SD: find_synonyms(types)
+            SD-&gt;&gt;DB: Fetch embeddings (768-dim nomic)
+            SD--&gt;&gt;VM: Ranked synonym candidates
+
+            VM-&gt;&gt;PS: evaluate_synonym(candidate, scores)
+            PS-&gt;&gt;LLM: Structured prompt (similarity, edges, usage)
+            LLM--&gt;&gt;PS: MergeDecision(should_merge, reasoning)
+            PS--&gt;&gt;VM: ActionRecommendation
+
+            alt should_merge and not dry_run
+                VM-&gt;&gt;DB: UPDATE edges SET type = target
+                VM-&gt;&gt;DB: SET deprecated type inactive
+            end
+
+            VM-&gt;&gt;DB: Re-query vocabulary (state changed)
+        end
+    end
+
+    VM-&gt;&gt;VM: Prune zero-usage custom types
+    VM--&gt;&gt;CLI: ConsolidationResult</code></pre>
+<p>Key behaviors:
+- <strong>Target-gated</strong>: Live mode only works when vocab size exceeds the target.
+  <code>--target 90</code> with 63 types is a no-op. Use a target below current size to
+  trigger merges, or <code>--dry-run</code> to preview candidates regardless of target.
+- <strong>Re-query loop</strong>: After each merge, the vocabulary state changes — types
+  disappear, edge counts shift. Live mode re-fetches similarity before the
+  next candidate. Dry-run evaluates all candidates against the initial state.
+- <strong>Prune after merge</strong>: Zero-usage custom types are removed after the merge
+  loop completes. Builtin types are never pruned.</p>
+<h2 id="decision-model">Decision Model</h2>
+<p>Candidates route through three tiers based on similarity and the LLM's
+judgment:</p>
+<pre class="mermaid"><code>flowchart TD
+    A[Synonym Candidate] --&gt; B{Similarity &gt;= 0.90?}
+
+    B --&gt;|Yes| C{Zero edges on&lt;br/&gt;deprecated type?}
+    C --&gt;|Yes| D[Auto-prune]
+    C --&gt;|No| E[LLM Evaluate]
+
+    B --&gt;|No| F{Similarity &gt;= 0.70?}
+    F --&gt;|Yes| E
+    F --&gt;|No| G[Skip - not synonyms]
+
+    E --&gt; H{LLM Decision}
+    H --&gt;|Merge| I[Execute merge&lt;br/&gt;Update edges + deactivate]
+    H --&gt;|Skip| J[Reject with reasoning]
+
+    D --&gt; K[Remove from vocabulary]
+    I --&gt; L[Re-query vocabulary]
+    L --&gt; A
+
+    style D fill:#2d5a27,color:#fff
+    style I fill:#2d5a27,color:#fff
+    style G fill:#4a4a4a,color:#fff
+    style J fill:#4a4a4a,color:#fff
+    style E fill:#1a3a5c,color:#fff</code></pre>
+<p>The LLM receives a structured prompt with embedding similarity, edge counts,
+and usage context. It returns a merge/skip decision with reasoning. The
+reasoning is displayed in the CLI and stored in the audit trail. The LLM
+correctly handles cases that pure thresholds miss:
+- Directional inverses (HAS_PART/PART_OF look similar but are opposites)
+- Semantic distinctions (CONTRASTS_WITH/EQUIVALENT_TO share embedding space)
+- Genuinely redundant types (DEFINED_AS/DEFINED, INCREASES/ENHANCES)</p>
+<h2 id="embedding-architecture">Embedding Architecture</h2>
+<p>All embedding generation flows through a single consistent path. The reasoning
+provider (used for extraction and consolidation decisions) and the embedding
+provider (used for vector similarity) are separate but connected:</p>
+<pre class="mermaid"><code>flowchart LR
+    subgraph Callers
+        SW[SynonymDetector]
+        CC[CategoryClassifier]
+        EW[EmbeddingWorker]
+        ING[Ingestion Pipeline]
+    end
+
+    subgraph Provider Layer
+        GP["get_provider()"] --&gt; RP[ReasoningProvider&lt;br/&gt;e.g. OpenAI GPT-4o]
+        RP --&gt;|".embedding_provider"| LP
+        GEP["get_embedding_provider()"] --&gt; LP[LocalEmbeddingProvider&lt;br/&gt;nomic-embed-text-v1.5]
+    end
+
+    subgraph Output
+        LP --&gt;|sync call| EMB["768-dim embedding"]
+    end
+
+    SW --&gt; GP
+    CC --&gt; GP
+    EW --&gt; GP
+    ING --&gt; GEP
+
+    style LP fill:#1a3a5c,color:#fff
+    style EMB fill:#2d5a27,color:#fff
+    style RP fill:#4a3a1c,color:#fff</code></pre>
+<p>Design constraints:
+- <code>generate_embedding()</code> is <strong>sync</strong> across all providers — never awaited.
+- <code>OpenAIProvider.generate_embedding()</code> delegates to <code>self.embedding_provider</code>.
+  If none is configured, it raises <code>RuntimeError</code> (no silent fallback to
+  OpenAI's text-embedding-3-small — that would create a dimension mismatch).
+- Dimension guards in <code>SynonymDetector._cosine_similarity()</code> catch mismatches
+  at comparison time with a clear error message.
+- Stale embedding detection in <code>_get_edge_type_embedding()</code> auto-regenerates
+  when a cached embedding's dimensions don't match expectations.</p>
+<h2 id="cli-commands">CLI Commands</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg vocab list                          # Show all types with categories, edges, status
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg vocab consolidate                   # Execute merges + prune (live)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kg vocab consolidate --dry-run         # Preview candidates without executing
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>kg vocab consolidate --target N        # Set target vocab size (default 90)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kg vocab consolidate --threshold 0.85  # LLM auto-execute threshold
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kg vocab merge TYPE_A TYPE_B           # Manual merge
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kg job list -s pending                 # Status aliases: pending, running, done, failed
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>kg job cleanup -s done --confirm       # Delete completed jobs
 </code></pre></div>
-<p><strong>Columns:</strong>
-- <strong>TYPE</strong>: Relationship type name
-- <strong>CATEGORY</strong>: Assigned semantic category
-- <strong>CONF</strong>: Confidence percentage (see below)
-- <strong>EDGES</strong>: Number of edges using this type in the graph
-- <strong>STATUS</strong>: ✓ active, ✗ deprecated, [B] builtin</p>
-<h3 id="confidence-levels">Confidence Levels</h3>
-<p>Confidence shows how similar the type is to its assigned category's seed types:</p>
-<table>
-<thead>
-<tr>
-<th>Range</th>
-<th>Color</th>
-<th>Meaning</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>≥70%</strong></td>
-<td>🟢 Green</td>
-<td><strong>High confidence</strong> - Clear category match</td>
-<td>Auto-accept</td>
-</tr>
-<tr>
-<td><strong>50-69%</strong></td>
-<td>🟡 Yellow</td>
-<td><strong>Medium confidence</strong> - Reasonable match</td>
-<td>Auto-accept with monitoring</td>
-</tr>
-<tr>
-<td><strong>&lt;50%</strong></td>
-<td>🔴 Red</td>
-<td><strong>Low confidence</strong> - Weak match</td>
-<td>Review needed, possible new category</td>
-</tr>
-<tr>
-<td><strong>--</strong></td>
-<td>Gray</td>
-<td><strong>Builtin type</strong> - Hand-assigned, no confidence needed</td>
-<td>N/A</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Examples:</strong>
-- <code>CAUSES 100%</code> - Perfect match to causation seeds
-- <code>DEFINES 58%</code> - Moderate match to semantic seeds
-- <code>MYSTERIOUS_TYPE 45%</code> - Weak match, may need human review</p>
-<h3 id="the-ambiguity-flag">The Ambiguity Flag ⚠</h3>
-<p><strong>What it means:</strong> The type strongly matches TWO categories (runner-up &gt; 70%)</p>
-<p><strong>Why it appears:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>COMPLEMENTS: composition 100%⚠
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Primary:   composition 100%  (PART_OF, CONTAINS, etc.)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  Runner-up: semantic     73%  (SIMILAR_TO, ANALOGOUS_TO, etc.)
-</code></pre></div></p>
-<p>This type genuinely <strong>spans multiple semantic categories</strong>:
-- Things that complement each other are compositionally related (parts working together)
-- But they also have semantic similarity (complementary concepts share meaning)</p>
-<p><strong>This is valuable information!</strong> These types are:
-- <strong>Bridge nodes</strong> connecting different semantic spaces
-- <strong>Multi-dimensional</strong> relationships with rich meaning
-- <strong>Candidates for future multi-category support</strong></p>
-<p><strong>Common ambiguous patterns:</strong>
-- <strong>IMPLIES</strong>: logical + causation (logical implications often have causal nature)
-- <strong>COMPLEMENTS</strong>: composition + semantic (parts that work well together)
-- <strong>DERIVED_FROM</strong>: derivation + causation (derivation often implies causation)</p>
-<h2 id="viewing-detailed-scores">Viewing Detailed Scores</h2>
-<p>Use <code>kg vocab category-scores &lt;type&gt;</code> to see the full breakdown:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>IMPLIES
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>📊<span class="w"> </span>Category<span class="w"> </span>Scores:<span class="w"> </span>IMPLIES
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Assignment
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>Category:<span class="w">   </span>logical
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>Confidence:<span class="w"> </span><span class="m">100</span>%
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>Ambiguous:<span class="w">  </span>Yes
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>Runner-up:<span class="w">  </span>causation<span class="w"> </span><span class="o">(</span><span class="m">71</span>%<span class="o">)</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>Similarity<span class="w"> </span>to<span class="w"> </span>Category<span class="w"> </span>Seeds
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span>logical<span class="w">         </span><span class="m">100</span>%<span class="w">  </span>████████████████████
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">  </span>causation<span class="w">        </span><span class="m">71</span>%<span class="w">  </span>██████████████
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">  </span>dependency<span class="w">       </span><span class="m">63</span>%<span class="w">  </span>█████████████
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">  </span>composition<span class="w">      </span><span class="m">62</span>%<span class="w">  </span>████████████
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">  </span>evidential<span class="w">       </span><span class="m">62</span>%<span class="w">  </span>████████████
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">  </span>derivation<span class="w">       </span><span class="m">58</span>%<span class="w">  </span>████████████
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">  </span>temporal<span class="w">         </span><span class="m">58</span>%<span class="w">  </span>████████████
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">  </span>semantic<span class="w">         </span><span class="m">54</span>%<span class="w">  </span>███████████
-</code></pre></div>
-<p>This shows:
-- <strong>Primary category</strong>: logical (100% - perfect match to IMPLIES, CONTRADICTS, etc.)
-- <strong>Why ambiguous</strong>: causation is 71% (&gt;70% threshold)
-- <strong>Full landscape</strong>: How similar the type is to all 8 categories</p>
-<h2 id="refreshing-categories">Refreshing Categories</h2>
-<p>Categories can be recomputed after:
-- <strong>Vocabulary merges</strong> (topology changed)
-- <strong>Embedding model changes</strong> (semantic space shifted)
-- <strong>Seed type adjustments</strong> (category definitions updated)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Refresh only LLM-generated types (default)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Refresh ALL types including builtins (testing)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--all
-</code></pre></div>
-<p><strong>What happens:</strong>
-1. Recomputes similarity scores for each type
-2. Updates category assignments in database
-3. Recalculates ambiguity flags
-4. Shows sample results</p>
-<p><strong>When to refresh:</strong>
-- After merging synonyms: <code>kg vocab merge STRENGTHENS ENABLES</code>
-- After model change: <code>kg admin embedding set --model nomic-embed-text</code>
-- To verify system: <code>kg vocab refresh-categories --all</code></p>
-<h2 id="interpreting-low-confidence">Interpreting Low Confidence</h2>
-<p><strong>Low confidence (&lt;50%) can mean:</strong></p>
-<ol>
-<li>
-<p><strong>Missing seed type</strong> - Need to add a new builtin type to this category
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>CONFIGURES: dependency 45%
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>→ Maybe add CONFIGURES as a dependency seed type
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>New category needed</strong> - Type doesn't fit existing categories well
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>REGULATES: causation 42%, composition 38%, logical 35%
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>→ Regulatory relationships might need their own category
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Truly ambiguous</strong> - No dominant category
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>CONTEXTUALIZES: semantic 48%, evidential 45%, composition 40%
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>→ Genuinely spans multiple semantic spaces
-</code></pre></div></p>
-</li>
-</ol>
-<p><strong>Action items for low confidence types:</strong>
-1. Use <code>kg vocab category-scores &lt;type&gt;</code> to see full breakdown
-2. Check if type is actually being used: look at EDGES column
-3. If unused (0-1 edges), consider deprecation
-4. If heavily used, either:
-   - Add as seed type to strengthen category
-   - Propose new category in ADR
-   - Accept as legitimately ambiguous</p>
-<h2 id="category-distribution">Category Distribution</h2>
-<p>Check overall distribution with <code>kg vocab list</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;causation&quot;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>$<span class="w"> </span>kg<span class="w"> </span>vocab<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;composition&quot;</span>
-</code></pre></div>
-<p><strong>Healthy distribution</strong> (30-90 types total):
-- Roughly balanced across 8 categories (8-15 types each)
-- Most types have ≥70% confidence (green)
-- A few ambiguous types (⚠) spanning categories
-- Very few low confidence types (&lt;50%)</p>
-<p><strong>Warning signs:</strong>
-- One category dominates (e.g., 40 causation, 3 temporal)
-- Many low confidence types (lots of yellow/red)
-- No ambiguous types (may indicate overfitting)</p>
-<h2 id="best-practices">Best Practices</h2>
-<h3 id="for-curators">For Curators</h3>
-<ol>
-<li><strong>Monitor confidence</strong> - Regularly review yellow/red types</li>
-<li><strong>Investigate ambiguity</strong> - Use <code>category-scores</code> to understand why types are ambiguous</li>
-<li><strong>Merge synonyms</strong> - Reduces vocabulary, then refresh categories</li>
-<li><strong>Add seed types</strong> - Strengthen weak categories by promoting good examples</li>
-</ol>
-<h3 id="for-users">For Users</h3>
-<ol>
-<li><strong>Trust high confidence</strong> (≥70%) - These are reliable classifications</li>
-<li><strong>Understand ambiguity</strong> (⚠) - Not a problem, just informative</li>
-<li><strong>Question low confidence</strong> (&lt;50%) - These may need review</li>
-<li><strong>Use detailed view</strong> - <code>kg vocab category-scores</code> when investigating</li>
-</ol>
-<h3 id="for-developers">For Developers</h3>
-<ol>
-<li><strong>Don't override</strong> - Categories are computed, not hand-assigned</li>
-<li><strong>Refresh after changes</strong> - Vocabulary merges, model changes require refresh</li>
-<li><strong>Test with samples</strong> - <code>kg vocab category-scores</code> on known types</li>
-<li><strong>Monitor distribution</strong> - Ensure balanced category usage</li>
-</ol>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="why-is-this-type-in-the-wrong-category">"Why is this type in the wrong category?"</h3>
-<p>Check detailed scores:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>MYSTERIOUS_TYPE
-</code></pre></div></p>
-<p>If the assigned category isn't actually the highest score, file a bug. If it is the highest but seems wrong, the seed types for that category may need adjustment.</p>
-<h3 id="why-is-everything-100-confident">"Why is everything 100% confident?"</h3>
-<p>After running <code>kg vocab refresh-categories --all</code>, builtin types will show 100% because they're comparing against themselves (they ARE the seeds). This is expected.</p>
-<p>LLM-generated types should show varied confidence based on their similarity to seeds.</p>
-<h3 id="should-i-worry-about-ambiguous-types">"Should I worry about ambiguous types?"</h3>
-<p><strong>No!</strong> Ambiguity (⚠) indicates rich, multi-dimensional relationships. It's valuable information, not a problem.</p>
-<p>Only worry if:
-- Type has low confidence AND is heavily used
-- Distribution is extremely unbalanced
-- Many types cluster around 50% (indicates poor seed selection)</p>
-<h2 id="related-documentation">Related Documentation</h2>
+<p>Status aliases (<code>pending</code> → <code>awaiting_approval</code>, <code>running</code> → <code>processing</code>,
+<code>done</code> → <code>completed</code>) are resolved by a shared <code>resolveStatusFilter()</code> utility
+used across all job subcommands.</p>
+<h2 id="known-limitations">Known Limitations</h2>
 <ul>
-<li><strong>ADR-047</strong>: Probabilistic Vocabulary Categorization (design rationale)</li>
-<li><strong>ADR-044</strong>: Probabilistic Truth Convergence (similar pattern for grounding)</li>
-<li><strong>ADR-032</strong>: Automatic Edge Vocabulary Expansion (vocabulary management)</li>
-<li><strong>ADR-022</strong>: 30-Type Relationship Taxonomy (original seed types)</li>
+<li><strong>Pending reviews lack persistence</strong>: <code>get_pending_reviews()</code> and
+  <code>approve_action()</code> exist but are in-memory only. Low priority since the
+  primary path is fully automated.</li>
 </ul>
-<h2 id="examples">Examples</h2>
-<h3 id="high-confidence-not-ambiguous">High Confidence, Not Ambiguous</h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>CAUSES: causation 100%
-</code></pre></div>
-Clear causal relationship, no ambiguity.</p>
-<h3 id="high-confidence-ambiguous">High Confidence, Ambiguous</h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>IMPLIES: logical 100%⚠ (runner-up: causation 71%)
-</code></pre></div>
-Primarily logical, but strong causal undertones.</p>
-<h3 id="medium-confidence">Medium Confidence</h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>DEFINES: semantic 58%
-</code></pre></div>
-Reasonable semantic match, but not strong.</p>
-<h3 id="low-confidence-needs-review">Low Confidence (needs review)</h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>CONFIGURES: dependency 45%
-</code></pre></div>
-Weak match, may need new seed type or category.</p>
-<hr />
-<p><strong>Last Updated:</strong> 2025-10-27
-<strong>Related ADR:</strong> ADR-047 (Probabilistic Vocabulary Categorization)</p>
 
 
 
