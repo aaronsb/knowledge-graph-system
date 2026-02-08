@@ -107,12 +107,21 @@ echo ""
 
 # Check if database is accessible
 if [ "$INSIDE_CONTAINER" = true ]; then
-    # Inside container: check if postgres is reachable
-    if ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
-        echo -e "${RED}✗ Cannot connect to database${NC}"
-        echo -e "${YELLOW}Ensure postgres container is running and accessible${NC}"
-        exit 1
-    fi
+    # Inside container: wait for postgres to be ready (handles startup race)
+    MAX_RETRIES=15
+    RETRY_INTERVAL=2
+    for i in $(seq 1 $MAX_RETRIES); do
+        if PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
+            break
+        fi
+        if [ "$i" -eq "$MAX_RETRIES" ]; then
+            echo -e "${RED}✗ Cannot connect to database after ${MAX_RETRIES} attempts${NC}"
+            echo -e "${YELLOW}Ensure postgres container is running and accessible${NC}"
+            exit 1
+        fi
+        echo -e "${GRAY}Waiting for database... (${i}/${MAX_RETRIES})${NC}"
+        sleep $RETRY_INTERVAL
+    done
 else
     # On host: check if container is running
     if ! docker ps --format '{{.Names}}' | grep -q "$CONTAINER"; then

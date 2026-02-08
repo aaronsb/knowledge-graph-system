@@ -37,7 +37,9 @@ from .datetime_utils import utcnow
 
 # OAuth Token Signing Configuration
 # OAuth access tokens are JWTs signed with HS256
-SECRET_KEY = os.getenv("OAUTH_SIGNING_KEY", "CHANGE_THIS_IN_PRODUCTION_GENERATE_WITH_openssl_rand_hex_32")
+# Loaded via SecretManager (supports Docker secrets, env vars)
+from app.lib.secrets import OAUTH_SIGNING_KEY as _oauth_key
+SECRET_KEY = _oauth_key or ""
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
@@ -314,9 +316,9 @@ def validate_oauth_configuration() -> tuple[bool, list[str]]:
     """
     warnings = []
 
-    # Check SECRET_KEY is not default
-    if "CHANGE_THIS" in SECRET_KEY:
-        warnings.append("OAUTH_SIGNING_KEY is using default value - INSECURE!")
+    # Check SECRET_KEY is configured
+    if not SECRET_KEY:
+        warnings.append("OAUTH_SIGNING_KEY is not configured - authentication will not work!")
 
     # Check SECRET_KEY length
     if len(SECRET_KEY) < 32:

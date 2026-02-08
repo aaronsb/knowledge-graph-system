@@ -74,7 +74,7 @@ class Config:
 
     @staticmethod
     def postgres_password() -> str:
-        return Config.get("POSTGRES_PASSWORD", "password")
+        return Config.require("POSTGRES_PASSWORD")
 
     # OpenAI Configuration
     @staticmethod

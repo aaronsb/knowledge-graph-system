@@ -170,9 +170,14 @@ except ValueError:
 try:
     POSTGRES_PASSWORD = get_postgres_password()
 except ValueError:
-    # Try without secrets for development
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-    logger.warning(f"Using fallback PostgreSQL password from POSTGRES_PASSWORD env var")
+    # Try direct env var without secrets manager (development without Docker secrets)
+    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
+    if POSTGRES_PASSWORD is None:
+        raise ValueError(
+            "POSTGRES_PASSWORD is not set. Configure via Docker/Podman secrets "
+            "or set the POSTGRES_PASSWORD environment variable."
+        )
+    logger.warning("Using fallback PostgreSQL password from POSTGRES_PASSWORD env var")
 
 try:
     INTERNAL_KEY_SERVICE_SECRET = get_internal_key_service_secret()
