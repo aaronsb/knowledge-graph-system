@@ -8,13 +8,13 @@ import { createClientFromEnv } from '../../api/client';
 import * as colors from '../colors';
 import { coloredCount, separator } from '../colors';
 
+/** Create the `vocab consolidate` command — LLM-grounded vocabulary merge and prune workflow. */
 export function createConsolidateCommand(): Command {
   return new Command('consolidate')
     .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.')
     .option('-t, --target <size>', 'Target vocabulary size', '90')
     .option('--threshold <value>', 'Auto-execute threshold (0.0-1.0)', '0.90')
-    .option('--dry-run', 'Evaluate candidates without executing merges')
-    .option('--auto', 'Auto-execute high confidence merges (AITL mode)')
+    .option('--dry-run', 'Preview candidates without executing (no merges, no pruning)')
     .option('--no-prune-unused', 'Skip pruning vocabulary types with 0 uses')
     .action(async (options) => {
       try {
@@ -22,7 +22,6 @@ export function createConsolidateCommand(): Command {
         const targetSize = parseInt(options.target);
         const threshold = parseFloat(options.threshold);
         const dryRun = options.dryRun || false;
-        const autoMode = options.auto || false;
         const pruneUnused = options.pruneUnused !== false;
 
         // Validate inputs
@@ -42,11 +41,9 @@ export function createConsolidateCommand(): Command {
         console.log(separator());
 
         if (dryRun) {
-          console.log(`\n${colors.ui.key('Mode:')} ${colors.status.dim('DRY RUN')} (validation only)`);
-        } else if (autoMode) {
-          console.log(`\n${colors.ui.key('Mode:')} ${colors.status.warning('AUTO')} (AITL - auto-execute)`);
+          console.log(`\n${colors.ui.key('Mode:')} ${colors.status.dim('DRY RUN')} (preview only)`);
         } else {
-          console.log(`\n${colors.ui.key('Mode:')} ${colors.ui.value('DEFAULT')} (dry-run validation)`);
+          console.log(`\n${colors.ui.key('Mode:')} ${colors.status.success('EXECUTE')} (merge + prune)`);
         }
 
         console.log(`${colors.ui.key('Target Size:')} ${coloredCount(targetSize)}`);
@@ -61,7 +58,7 @@ export function createConsolidateCommand(): Command {
           target_size: targetSize,
           batch_size: 1,
           auto_execute_threshold: threshold,
-          dry_run: dryRun || !autoMode,
+          dry_run: dryRun,
           prune_unused: pruneUnused
         });
 
@@ -85,22 +82,32 @@ export function createConsolidateCommand(): Command {
         }
 
         // Auto-executed merges
-        if (result.auto_executed.length > 0) {
-          console.log('\n' + colors.stats.section('Auto-Executed Merges'));
+        // Filter out no-op merges (same type → same type)
+        const actualMerges = result.auto_executed.filter(
+          (m: any) => m.deprecated !== m.target
+        );
+        const skippedSelfMerges = result.auto_executed.length - actualMerges.length;
+
+        if (actualMerges.length > 0) {
+          console.log('\n' + colors.stats.section(dryRun ? 'Proposed Merges' : 'Executed Merges'));
           console.log(separator(80, '─'));
-          result.auto_executed.forEach((merge: any) => {
+          actualMerges.forEach((merge: any) => {
             const status = merge.error ? '✗' : '✓';
             const statusColor = merge.error ? colors.status.error : colors.status.success;
             console.log(`\n${statusColor(status)} ${merge.deprecated} → ${merge.target}`);
             console.log(`   ${colors.ui.key('Similarity:')} ${colors.ui.value((merge.similarity * 100).toFixed(1) + '%')}`);
             console.log(`   ${colors.ui.key('Reasoning:')} ${colors.status.dim(merge.reasoning)}`);
-            if (merge.edges_updated !== undefined) {
-              console.log(`   ${colors.ui.key('Edges Updated:')} ${coloredCount(merge.edges_updated)}`);
+            const edgesUpdated = merge.edges_updated ?? 0;
+            if (!dryRun && edgesUpdated > 0) {
+              console.log(`   ${colors.ui.key('Edges Updated:')} ${coloredCount(edgesUpdated)}`);
             }
             if (merge.error) {
               console.log(`   ${colors.status.error('ERROR:')} ${merge.error}`);
             }
           });
+        }
+        if (skippedSelfMerges > 0) {
+          console.log(`\n${colors.status.dim(`  (${skippedSelfMerges} self-referencing merge(s) skipped)`)}`);
         }
 
         // Rejected
@@ -124,6 +131,7 @@ export function createConsolidateCommand(): Command {
     });
 }
 
+/** Create the `vocab merge` command — manually merge one edge type into another. */
 export function createMergeCommand(): Command {
   return new Command('merge')
     .description('Manually merge one edge type into another. Redirects all edges from deprecated type to target type.')

@@ -15,6 +15,8 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
+from api.app.lib.llm_utils import call_llm_sync
+
 logger = logging.getLogger(__name__)
 
 
@@ -209,51 +211,13 @@ Respond with ONLY the JSON, no other text."""
 
 def _call_llm_sync(prompt: str, ai_provider) -> str:
     """Synchronous LLM call. Runs in a thread pool via _call_llm."""
-    provider_name = ai_provider.get_provider_name().lower()
-
-    if provider_name == "openai":
-        response = ai_provider.client.chat.completions.create(
-            model=ai_provider.extraction_model,
-            messages=[
-                {"role": "system", "content": "You are a knowledge graph architect. Respond with valid JSON only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=400,
-            response_format={"type": "json_object"}
-        )
-        return response.choices[0].message.content.strip()
-
-    elif provider_name == "anthropic":
-        message = ai_provider.client.messages.create(
-            model=ai_provider.extraction_model,
-            max_tokens=400,
-            temperature=0.3,
-            system="You are a knowledge graph architect. Respond with valid JSON only.",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return message.content[0].text.strip()
-
-    elif "ollama" in provider_name:
-        response = ai_provider.session.post(
-            f"{ai_provider.base_url}/api/chat",
-            json={
-                "model": ai_provider.extraction_model,
-                "messages": [
-                    {"role": "system", "content": "You are a knowledge graph architect. Respond with valid JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                "format": "json",
-                "stream": False,
-                "options": {"temperature": 0.3, "num_predict": 400}
-            },
-            timeout=60
-        )
-        response.raise_for_status()
-        return response.json()["message"]["content"].strip()
-
-    else:
-        raise ValueError(f"Unsupported AI provider: {provider_name}")
+    return call_llm_sync(
+        ai_provider,
+        prompt=prompt,
+        system_msg="You are a knowledge graph architect. Respond with valid JSON only.",
+        max_tokens=400,
+        json_mode=True,
+    )
 
 
 async def _call_llm(prompt: str, ai_provider, parse_fn, fallback):

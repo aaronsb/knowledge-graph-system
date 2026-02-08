@@ -50,10 +50,15 @@ test-list: ## Show available test suites
 
 ##@ Static Analysis
 
-lint: lint-queries coverage ## Run all static analysis
+lint: lint-queries lint-dead-code coverage ## Run all static analysis
 
 lint-queries: ## Lint Cypher queries for safety issues
 	@python3 $(SCRIPTS)/lint/lint_queries.py
+
+lint-dead-code: _require-api ## Detect unused code with vulture (high confidence only)
+	@docker exec kg-api-dev vulture api/app/ --min-confidence 90 \
+		--exclude api/app/models/,api/app/routes/ \
+		|| true
 
 coverage: ## Report docstring coverage (Python, TypeScript, Rust)
 	@python3 $(SCRIPTS)/lint/docstring_coverage.py

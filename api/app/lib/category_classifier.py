@@ -181,7 +181,7 @@ class CategoryClassifier:
         # Convert edge type to descriptive text for better embeddings
         descriptive_text = self._edge_type_to_text(edge_type)
 
-        result = await self.ai_provider.generate_embedding(descriptive_text)
+        result = self.ai_provider.generate_embedding(descriptive_text)
         embedding = result["embedding"]
 
         return np.array(embedding)
@@ -205,7 +205,7 @@ class CategoryClassifier:
         # Generate descriptive text for category
         descriptive_text = self._category_to_text(category)
 
-        result = await self.ai_provider.generate_embedding(descriptive_text)
+        result = self.ai_provider.generate_embedding(descriptive_text)
         embedding = np.array(result["embedding"])
 
         # Cache for reuse

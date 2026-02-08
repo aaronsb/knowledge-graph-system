@@ -66,9 +66,8 @@ References:
 
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
-import psycopg2
 from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger(__name__)

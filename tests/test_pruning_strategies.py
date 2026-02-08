@@ -28,8 +28,23 @@ from api.app.lib.vocabulary_scoring import EdgeTypeScore
 
 @pytest.fixture
 def mock_ai_provider():
-    """Mock AI provider for AITL mode."""
-    return MagicMock()
+    """Mock AI provider for AITL mode.
+
+    Simulates an OpenAI provider that returns structured responses.
+    The mock supports _call_llm dispatch via get_provider_name() and
+    client.chat.completions.create().
+    """
+    provider = MagicMock()
+    provider.get_provider_name.return_value = "openai"
+    provider.extraction_model = "gpt-4o"
+
+    # Default response: returns MERGE decision (tests can override per-case)
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "MERGE. These types are semantically equivalent."
+    provider.client.chat.completions.create.return_value = mock_response
+
+    return provider
 
 
 @pytest.fixture
@@ -347,7 +362,7 @@ async def test_aitl_strong_synonym_auto_merge(mock_ai_provider, strong_synonym_c
 
 @pytest.mark.asyncio
 async def test_aitl_moderate_synonym_ai_review(mock_ai_provider, moderate_synonym_candidate, high_value_score, low_value_score):
-    """Test AITL mode uses AI review for moderate synonyms."""
+    """Test AITL mode uses LLM review for moderate synonyms."""
     strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
 
     action = await strategy.evaluate_synonym(
@@ -356,10 +371,10 @@ async def test_aitl_moderate_synonym_ai_review(mock_ai_provider, moderate_synony
         low_value_score
     )
 
-    # AI review should make a decision
+    # LLM review should make a decision (mock returns MERGE by default)
     assert action.review_level == ReviewLevel.AI
-    # Based on heuristic in code: similarity < 0.80 -> SKIP
-    assert action.action_type == ActionType.SKIP or action.action_type == ActionType.MERGE
+    assert action.action_type == ActionType.MERGE
+    assert action.metadata["decision_source"] == "llm"
 
 
 @pytest.mark.asyncio
@@ -383,7 +398,7 @@ async def test_aitl_high_moderate_synonym_ai_approves(mock_ai_provider, high_val
     assert action.action_type == ActionType.MERGE
     assert action.review_level == ReviewLevel.AI
     assert action.should_execute is True
-    assert "ai approved" in action.reasoning.lower()
+    assert "llm approved" in action.reasoning.lower()
 
 
 @pytest.mark.asyncio
@@ -400,21 +415,33 @@ async def test_aitl_zero_edge_auto_prune(mock_ai_provider, zero_edge_score):
 
 @pytest.mark.asyncio
 async def test_aitl_low_value_ai_review(mock_ai_provider, low_value_score):
-    """Test AITL mode uses AI review for low-value types with edges."""
+    """Test AITL mode uses LLM review for low-value types with edges."""
+    # Configure mock to return DEPRECATE for low-value review
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "DEPRECATE. Low value with no structural importance."
+    mock_ai_provider.client.chat.completions.create.return_value = mock_response
+
     strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
 
     action = await strategy.evaluate_low_value_type(low_value_score)
 
-    # AI review should make a decision
+    # LLM review should make a decision
     assert action.review_level == ReviewLevel.AI
-    # Based on heuristic: value < 0.5 and no bridges -> DEPRECATE
     assert action.action_type == ActionType.DEPRECATE
     assert action.should_execute is True
+    assert action.metadata["decision_source"] == "llm"
 
 
 @pytest.mark.asyncio
 async def test_aitl_low_value_with_bridges_protected(mock_ai_provider):
-    """Test AITL AI protects low-value types with bridges."""
+    """Test AITL LLM protects low-value types with bridges."""
+    # Configure mock to return SKIP (bridges are structurally important)
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "SKIP. Type has bridges and is structurally important."
+    mock_ai_provider.client.chat.completions.create.return_value = mock_response
+
     strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
 
     # Low value but has bridges
@@ -432,7 +459,68 @@ async def test_aitl_low_value_with_bridges_protected(mock_ai_provider):
     action = await strategy.evaluate_low_value_type(score)
 
     assert action.action_type == ActionType.SKIP
-    assert "structurally important" in action.reasoning.lower()
+    assert action.review_level == ReviewLevel.AI
+    assert action.metadata["decision_source"] == "llm"
+
+
+# ============================================================================
+# Heuristic Fallback Tests
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_aitl_heuristic_fallback_on_llm_failure(mock_ai_provider, moderate_synonym_candidate, high_value_score, low_value_score):
+    """Test that LLM failure falls back to heuristic with honest labeling."""
+    # Make the LLM call raise an exception
+    mock_ai_provider.client.chat.completions.create.side_effect = Exception("LLM service unavailable")
+
+    strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
+
+    action = await strategy.evaluate_synonym(
+        moderate_synonym_candidate,
+        high_value_score,
+        low_value_score
+    )
+
+    # Should fall back to heuristic with honest labeling
+    assert action.review_level == ReviewLevel.HEURISTIC
+    assert action.metadata["decision_source"] == "heuristic_fallback"
+    assert "LLM unavailable" in action.reasoning
+
+
+@pytest.mark.asyncio
+async def test_aitl_heuristic_fallback_on_unparsable_llm_response(mock_ai_provider, moderate_synonym_candidate, high_value_score, low_value_score):
+    """Test that unparsable LLM response falls back to heuristic."""
+    # LLM returns gibberish with no MERGE/SKIP keyword
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "I think these types are interesting but I'm not sure what to do."
+    mock_ai_provider.client.chat.completions.create.return_value = mock_response
+
+    strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
+
+    action = await strategy.evaluate_synonym(
+        moderate_synonym_candidate,
+        high_value_score,
+        low_value_score
+    )
+
+    assert action.review_level == ReviewLevel.HEURISTIC
+    assert action.metadata["decision_source"] == "heuristic_fallback"
+
+
+@pytest.mark.asyncio
+async def test_aitl_low_value_heuristic_fallback_on_llm_failure(mock_ai_provider, low_value_score):
+    """Test that LLM failure on low-value review falls back to heuristic."""
+    mock_ai_provider.client.chat.completions.create.side_effect = Exception("LLM service unavailable")
+
+    strategy = PruningStrategy(mode="aitl", ai_provider=mock_ai_provider)
+
+    action = await strategy.evaluate_low_value_type(low_value_score)
+
+    assert action.review_level == ReviewLevel.HEURISTIC
+    assert action.metadata["decision_source"] == "heuristic_fallback"
+    assert "LLM unavailable" in action.reasoning
 
 
 # ============================================================================

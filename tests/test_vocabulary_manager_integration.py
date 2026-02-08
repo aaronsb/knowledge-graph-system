@@ -23,7 +23,7 @@ from api.app.services.vocabulary_manager import VocabularyManager
 from api.app.lib.aggressiveness_curve import calculate_aggressiveness
 from api.app.lib.vocabulary_scoring import EdgeTypeScore
 from api.app.lib.synonym_detector import SynonymCandidate, SynonymStrength
-from api.app.lib.pruning_strategies import ActionType, ReviewLevel
+from api.app.lib.pruning_strategies import ActionType, ReviewLevel, ActionRecommendation
 
 
 # =============================================================================
@@ -661,6 +661,195 @@ async def test_empty_synonym_candidates(vocabulary_manager_naive):
         synonyms = await vocabulary_manager_naive.check_for_synonyms("UNIQUE_TYPE")
         assert synonyms == []
         assert isinstance(synonyms, list)
+
+
+# =============================================================================
+# Execute Prune/Deprecate Tests
+# =============================================================================
+
+def _make_mock_pool():
+    """Create a mock connection pool with cursor context manager."""
+    pool = MagicMock()
+    conn = MagicMock()
+    cursor = MagicMock()
+    conn.cursor.return_value.__enter__ = MagicMock(return_value=cursor)
+    conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+    pool.getconn.return_value = conn
+    return pool, conn, cursor
+
+
+@pytest.fixture
+def prune_action():
+    """ActionRecommendation for a PRUNE action."""
+    return ActionRecommendation(
+        action_type=ActionType.PRUNE,
+        edge_type="STALE_TYPE",
+        review_level=ReviewLevel.NONE,
+        should_execute=True,
+        needs_review=False,
+        reasoning="Zero edges - auto-prune",
+        metadata={"value_score": 0.0, "edge_count": 0}
+    )
+
+
+@pytest.fixture
+def deprecate_action():
+    """ActionRecommendation for a DEPRECATE action."""
+    return ActionRecommendation(
+        action_type=ActionType.DEPRECATE,
+        edge_type="LOW_VALUE_TYPE",
+        review_level=ReviewLevel.AI,
+        should_execute=True,
+        needs_review=False,
+        reasoning="LLM approved deprecation",
+        metadata={"value_score": 0.3, "edge_count": 5}
+    )
+
+
+@pytest.mark.asyncio
+async def test_execute_prune_success(vocabulary_manager_naive, prune_action):
+    """Test successful prune: type exists with zero edges."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    # First query: SELECT edge_count → row with edge_count=0
+    # Second query: DELETE RETURNING → returns the deleted type
+    # Third query: INSERT history → no return needed
+    cursor.fetchone.side_effect = [
+        (0,),            # edge_count = 0 (safe to prune)
+        ("STALE_TYPE",), # DELETE RETURNING
+    ]
+
+    result = await vocabulary_manager_naive._execute_prune(prune_action)
+
+    assert result.success is True
+    assert "Pruned" in result.message
+    conn.commit.assert_called_once()
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_prune_refuses_with_edges(vocabulary_manager_naive, prune_action):
+    """Test prune refused when type still has edges."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    cursor.fetchone.side_effect = [
+        (12,),  # edge_count = 12 (NOT safe to prune)
+    ]
+
+    result = await vocabulary_manager_naive._execute_prune(prune_action)
+
+    assert result.success is False
+    assert "still has 12 edges" in result.message
+    assert result.error == "edges_exist"
+    conn.commit.assert_not_called()
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_prune_type_not_found(vocabulary_manager_naive, prune_action):
+    """Test prune when type doesn't exist in vocabulary."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    cursor.fetchone.side_effect = [
+        None,  # SELECT returns nothing
+    ]
+
+    result = await vocabulary_manager_naive._execute_prune(prune_action)
+
+    assert result.success is False
+    assert "not found" in result.message
+    assert result.error == "not_found"
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_prune_delete_fails(vocabulary_manager_naive, prune_action):
+    """Test prune when DELETE RETURNING returns nothing."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    cursor.fetchone.side_effect = [
+        (0,),   # edge_count = 0
+        None,   # DELETE RETURNING → nothing deleted
+    ]
+
+    result = await vocabulary_manager_naive._execute_prune(prune_action)
+
+    assert result.success is False
+    assert result.error == "delete_failed"
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_prune_db_error_rolls_back(vocabulary_manager_naive, prune_action):
+    """Test prune rolls back on database error."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    cursor.execute.side_effect = Exception("connection lost")
+
+    result = await vocabulary_manager_naive._execute_prune(prune_action)
+
+    assert result.success is False
+    assert "connection lost" in result.error
+    conn.rollback.assert_called_once()
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_deprecate_success(vocabulary_manager_naive, deprecate_action):
+    """Test successful deprecate: type exists and is active."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    # UPDATE RETURNING → returns type and edge count
+    cursor.fetchone.side_effect = [
+        ("LOW_VALUE_TYPE", 5),  # relationship_type, edge_count
+    ]
+
+    result = await vocabulary_manager_naive._execute_deprecate(deprecate_action)
+
+    assert result.success is True
+    assert "Deprecated" in result.message
+    assert "5 edges preserved" in result.message
+    conn.commit.assert_called_once()
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_deprecate_already_inactive(vocabulary_manager_naive, deprecate_action):
+    """Test deprecate when type is already inactive or doesn't exist."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    # UPDATE RETURNING → nothing (WHERE is_active = TRUE didn't match)
+    cursor.fetchone.side_effect = [None]
+
+    result = await vocabulary_manager_naive._execute_deprecate(deprecate_action)
+
+    assert result.success is False
+    assert "not found or already inactive" in result.message
+    assert result.error == "not_found_or_inactive"
+    pool.putconn.assert_called_once_with(conn)
+
+
+@pytest.mark.asyncio
+async def test_execute_deprecate_db_error_rolls_back(vocabulary_manager_naive, deprecate_action):
+    """Test deprecate rolls back on database error."""
+    pool, conn, cursor = _make_mock_pool()
+    vocabulary_manager_naive.db.pool = pool
+
+    cursor.execute.side_effect = Exception("permission denied")
+
+    result = await vocabulary_manager_naive._execute_deprecate(deprecate_action)
+
+    assert result.success is False
+    assert "permission denied" in result.error
+    conn.rollback.assert_called_once()
+    pool.putconn.assert_called_once_with(conn)
 
 
 # =============================================================================

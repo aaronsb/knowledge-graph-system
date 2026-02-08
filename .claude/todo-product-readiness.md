@@ -5,12 +5,14 @@ Backlog: `.claude/backlog-product-review.md`
 
 ## Credibility Fixes
 
-- [ ] `[agent]` Fix CORS — replace `allow_origins=["*"]` with env-gated `ALLOWED_ORIGINS`, default to `localhost:3000` in dev
-- [ ] `[agent]` Remove default password fallbacks — 7 locations hardcode `"password"`; fail-closed if `POSTGRES_PASSWORD` unset
-- [ ] `[agent]` Fix broken links and stale counts — 8 broken links in docs/README.md, 1 in root README, wrong ADR counts, wrong MCP tool names/counts in CLI README, stale CLI command table
-- [ ] `[agent]` Pipeline cleanup — delete always-failing `publish-docs.yml`, remove `docs/.venv/` from repo
-- [ ] `[pair]` Stub honesty — vocab manager 4 silent no-ops, pruning 2 fake AI stubs. Decide: implement or `NotImplementedError`.
-- [ ] `[human]` Triage known bugs — graph annealing job failures, any other broken subsystems
+- [x] `[agent]` Fix CORS — env-gated `ALLOWED_ORIGINS`, defaults to `localhost:3000`
+- [x] `[agent]` Remove default password fallbacks — 8 app code locations + 3 docker-compose + OAUTH_SIGNING_KEY through SecretManager
+- [x] `[agent]` Fix broken links and stale counts — 8+ links, ADR counts, CLI README tools (5→12) and commands (9→30)
+- [x] `[agent]` Pipeline cleanup — deleted `publish-docs.yml`, `.venv/` already gitignored
+- [x] `[agent]` Pin dev AGE image to PG17 (upstream :latest advanced to PG18)
+- [x] `[agent]` Add migration runner retry loop for postgres startup race
+- [x] `[pair]` Stub honesty — vocab manager 4 silent no-ops, pruning 2 fake AI stubs. Wired to real LLM + database in PR #309.
+- [ ] `[human]` Triage known bugs — graph annealing job failures, FUSE truncation (#307)
 
 ## Onboarding
 

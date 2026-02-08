@@ -97,9 +97,10 @@ class TestCategoryClassifier:
 
     @pytest.fixture
     def mock_ai_provider(self):
-        """Provide mock AI provider with embedding generation"""
+        """Provide mock AI provider with embedding generation (sync)"""
         provider = MagicMock()
-        provider.generate_embedding = AsyncMock()
+        # generate_embedding() is sync across all providers
+        provider.generate_embedding = MagicMock()
         return provider
 
     @pytest.fixture
@@ -423,7 +424,7 @@ class TestCategoryClassifierIntegration:
     async def test_full_classification_workflow_assign(self):
         """Test complete workflow for assigning to existing category"""
         mock_provider = MagicMock()
-        mock_provider.generate_embedding = AsyncMock()
+        mock_provider.generate_embedding = MagicMock()
 
         # Create classifier
         classifier = CategoryClassifier(mock_provider)
@@ -449,7 +450,7 @@ class TestCategoryClassifierIntegration:
     async def test_full_classification_workflow_new_category(self):
         """Test complete workflow for proposing new category"""
         mock_provider = MagicMock()
-        mock_provider.generate_embedding = AsyncMock()
+        mock_provider.generate_embedding = MagicMock()
 
         classifier = CategoryClassifier(mock_provider)
 
@@ -493,7 +494,7 @@ class TestCategoryClassifierIntegration:
     async def test_threshold_boundary_conditions(self):
         """Test classification at exact threshold boundaries"""
         mock_provider = MagicMock()
-        mock_provider.generate_embedding = AsyncMock()
+        mock_provider.generate_embedding = MagicMock()
         classifier = CategoryClassifier(mock_provider)
 
         # Test at exact threshold (0.3)

@@ -35,6 +35,7 @@ References:
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
 import logging
 
 # Phase 1 worker modules
@@ -1090,7 +1091,10 @@ class VocabularyManager:
 
     async def _execute_prune(self, action: ActionRecommendation) -> ExecutionResult:
         """
-        Execute prune action: remove type entirely (safe for zero-edge types).
+        Execute prune action: remove type entirely from vocabulary.
+
+        Safety: verifies zero edges exist before deleting. Refuses to prune
+        if any edges still reference this type.
 
         Args:
             action: PRUNE action with edge_type
@@ -1102,28 +1106,86 @@ class VocabularyManager:
 
         logger.info(f"Executing prune: {edge_type}")
 
-        # TODO: Implement actual prune in database
-        # 1. Verify no edges exist (safety check)
-        #    SELECT COUNT(*) FROM graph WHERE relationship_type = edge_type
-        #    (should be 0)
-        #
-        # 2. Delete from vocabulary
-        #    DELETE FROM kg_api.relationship_vocabulary
-        #    WHERE relationship_type = edge_type AND edge_count = 0
-        #
-        # 3. Record in vocabulary_history
-        #    INSERT INTO kg_api.vocabulary_history (action='prune', ...)
+        conn = self.db.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # Safety check: verify no edges exist for this type
+                cur.execute("""
+                    SELECT edge_count FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                """, (edge_type,))
+                row = cur.fetchone()
+                if row is None:
+                    return ExecutionResult(
+                        action=action,
+                        success=False,
+                        message=f"Type {edge_type} not found in vocabulary",
+                        error="not_found"
+                    )
 
-        return ExecutionResult(
-            action=action,
-            success=True,
-            message=f"Pruned {edge_type} (zero edges)",
-            affected_edges=0
-        )
+                edge_count = row[0] or 0
+                if edge_count > 0:
+                    return ExecutionResult(
+                        action=action,
+                        success=False,
+                        message=f"Cannot prune {edge_type}: still has {edge_count} edges",
+                        error="edges_exist"
+                    )
+
+                # Delete from vocabulary
+                cur.execute("""
+                    DELETE FROM kg_api.relationship_vocabulary
+                    WHERE relationship_type = %s
+                    RETURNING relationship_type
+                """, (edge_type,))
+                deleted = cur.fetchone()
+
+                if not deleted:
+                    return ExecutionResult(
+                        action=action,
+                        success=False,
+                        message=f"Failed to delete {edge_type} from vocabulary",
+                        error="delete_failed"
+                    )
+
+                # Record in history
+                cur.execute("""
+                    INSERT INTO kg_api.vocabulary_history
+                        (relationship_type, action, performed_by, reason, metadata)
+                    VALUES (%s, 'pruned', 'vocabulary_manager', %s, %s)
+                """, (
+                    edge_type,
+                    action.reasoning,
+                    json.dumps(action.metadata) if action.metadata else None
+                ))
+
+            conn.commit()
+            logger.info(f"Pruned vocabulary type: {edge_type}")
+
+            return ExecutionResult(
+                action=action,
+                success=True,
+                message=f"Pruned {edge_type} (zero edges)",
+                affected_edges=0
+            )
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Failed to prune {edge_type}: {e}")
+            return ExecutionResult(
+                action=action,
+                success=False,
+                message=f"Prune failed",
+                error=str(e)
+            )
+        finally:
+            self.db.pool.putconn(conn)
 
     async def _execute_deprecate(self, action: ActionRecommendation) -> ExecutionResult:
         """
         Execute deprecate action: mark type inactive but keep existing edges.
+
+        Existing edges are preserved — the type is just discouraged for new
+        edge creation. Can be reactivated later if needed.
 
         Args:
             action: DEPRECATE action with edge_type
@@ -1135,19 +1197,60 @@ class VocabularyManager:
 
         logger.info(f"Executing deprecate: {edge_type}")
 
-        # TODO: Implement actual deprecate in database
-        # UPDATE kg_api.relationship_vocabulary
-        # SET is_active = FALSE,
-        #     deprecated_at = NOW(),
-        #     deprecation_reason = 'Low value - discouraged for new edges'
-        # WHERE relationship_type = edge_type
+        conn = self.db.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                # Mark type as inactive
+                cur.execute("""
+                    UPDATE kg_api.relationship_vocabulary
+                    SET is_active = FALSE,
+                        deprecation_reason = %s
+                    WHERE relationship_type = %s AND is_active = TRUE
+                    RETURNING relationship_type, edge_count
+                """, (action.reasoning, edge_type))
+                row = cur.fetchone()
 
-        return ExecutionResult(
-            action=action,
-            success=True,
-            message=f"Deprecated {edge_type} (existing edges preserved)",
-            affected_edges=0
-        )
+                if not row:
+                    return ExecutionResult(
+                        action=action,
+                        success=False,
+                        message=f"Type {edge_type} not found or already inactive",
+                        error="not_found_or_inactive"
+                    )
+
+                preserved_edges = row[1] or 0
+
+                # Record in history
+                cur.execute("""
+                    INSERT INTO kg_api.vocabulary_history
+                        (relationship_type, action, performed_by, reason, metadata)
+                    VALUES (%s, 'deprecated', 'vocabulary_manager', %s, %s)
+                """, (
+                    edge_type,
+                    action.reasoning,
+                    json.dumps(action.metadata) if action.metadata else None
+                ))
+
+            conn.commit()
+            logger.info(f"Deprecated vocabulary type: {edge_type} ({preserved_edges} edges preserved)")
+
+            return ExecutionResult(
+                action=action,
+                success=True,
+                message=f"Deprecated {edge_type} ({preserved_edges} edges preserved)",
+                affected_edges=0
+            )
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Failed to deprecate {edge_type}: {e}")
+            return ExecutionResult(
+                action=action,
+                success=False,
+                message=f"Deprecate failed",
+                error=str(e)
+            )
+        finally:
+            self.db.pool.putconn(conn)
 
 
 # ============================================================================

@@ -10,6 +10,35 @@ import * as colors from './colors';
 import { Table } from '../lib/table';
 import { setCommandHelp } from './help-formatter';
 
+/**
+ * Resolve user-friendly status aliases to DB status values.
+ * Centralizes the mapping so all subcommands behave consistently.
+ */
+function resolveStatusFilter(input: string): string | undefined {
+  const aliases: Record<string, string | undefined> = {
+    'all': undefined,
+    'pending': 'awaiting_approval',
+    'awaiting': 'awaiting_approval',
+    'awaiting_approval': 'awaiting_approval',
+    'approved': 'approved',
+    'queued': 'queued',
+    'running': 'processing',
+    'processing': 'processing',
+    'completed': 'completed',
+    'done': 'completed',
+    'failed': 'failed',
+    'cancelled': 'cancelled',
+    'canceled': 'cancelled',
+  };
+
+  const key = input.toLowerCase();
+  if (key in aliases) {
+    return aliases[key] ?? undefined;
+  }
+  // Pass through unknown values — let the API reject them
+  return input;
+}
+
 export const jobsCommand = setCommandHelp(
   new Command('job'),
   'Manage and monitor ingestion jobs',
@@ -71,7 +100,7 @@ jobsCommand
     }
   });
 
-// Helper function to display jobs list using Table utility
+/** Fetch and display jobs in a formatted table. Used by list command and its subcommands. */
 async function displayJobsList(status?: string, clientId?: string, limit: number = 20, fullId: boolean = false, offset: number = 0) {
   const client = createClientFromEnv();
   const jobs = await client.listJobs(status, clientId, limit, offset);
@@ -181,7 +210,7 @@ async function displayJobsList(status?: string, clientId?: string, limit: number
 // List command with subcommands
 const listCommand = new Command('list')
   .description('List recent jobs with optional filtering by status or user - includes subcommands for common filters')
-  .option('-s, --status <status>', 'Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled)')
+  .option('-s, --status <status>', 'Filter by status (pending|approved|queued|running|completed|failed|cancelled)')
   .option('-c, --client <user-id>', 'Filter by user ID (view specific user\'s jobs)')
   .option('-l, --limit <n>', 'Maximum jobs to return (max: 500, default: 100)', '100')
   .option('-o, --offset <n>', 'Number of jobs to skip for pagination (default: 0)', '0')
@@ -191,7 +220,8 @@ const listCommand = new Command('list')
     try {
       const limit = parseInt(options.limit);
       const offset = parseInt(options.offset);
-      await displayJobsList(options.status, options.client, limit, options.fullId, offset);
+      const status = options.status ? resolveStatusFilter(options.status) : undefined;
+      await displayJobsList(status, options.client, limit, options.fullId, offset);
     } catch (error: any) {
       console.error(chalk.red('✗ Failed to list jobs'));
       console.error(chalk.red(error.response?.data?.detail || error.message));
@@ -365,11 +395,7 @@ approveCommand
       try {
         const client = createClientFromEnv();
 
-        const statusMap: Record<string, string> = {
-          'pending': 'awaiting_approval',
-          'awaiting': 'awaiting_approval',
-        };
-        const status = statusMap[statusFilter] || statusFilter;
+        const status = resolveStatusFilter(statusFilter) || statusFilter;
 
         console.log(chalk.blue(`Finding jobs with status: ${status}...\n`));
         const jobs = await client.listJobs(status, options.client, 100);
@@ -430,20 +456,10 @@ jobsCommand
         }
       } else {
         // Batch cancellation by status filter
-        const statusMap: Record<string, string | undefined> = {
-          'all': undefined,  // No filter = all jobs
-          'pending': 'awaiting_approval',
-          'awaiting': 'awaiting_approval',
-          'approved': 'approved',
-          'queued': 'queued',
-          'running': 'processing',
-          'processing': 'processing',
-        };
-
         const filter = jobIdOrFilter.toLowerCase();
+        const cancellableFilters = ['all', 'pending', 'awaiting', 'approved', 'queued', 'running', 'processing'];
 
-        // Check if it's a known filter
-        if (!(filter in statusMap)) {
+        if (!cancellableFilters.includes(filter)) {
           console.error(chalk.red(`✗ Unknown filter: "${jobIdOrFilter}"`));
           console.error(chalk.gray('\nSupported filters:'));
           console.error(chalk.gray('  all        - All cancellable jobs'));
@@ -454,7 +470,7 @@ jobsCommand
           process.exit(1);
         }
 
-        const status = statusMap[filter];
+        const status = resolveStatusFilter(filter);
 
         const filterDisplay = status || 'all cancellable jobs';
         console.log(chalk.blue(`Finding ${filterDisplay}...`));
@@ -534,7 +550,7 @@ jobsCommand
 jobsCommand
   .command('cleanup')
   .description('Delete jobs matching filters (with preview) - safer alternative to clear')
-  .option('-s, --status <status>', 'Filter by status (pending|cancelled|completed|failed)')
+  .option('-s, --status <status>', 'Filter by status (pending|cancelled|completed|failed|running)')
   .option('--system', 'Only delete system/scheduled jobs', false)
   .option('--older-than <duration>', 'Delete jobs older than duration (1h|24h|7d|30d)')
   .option('-t, --type <job-type>', 'Filter by job type (ingestion|epistemic_remeasurement|projection|etc)')
@@ -545,8 +561,11 @@ jobsCommand
     try {
       const client = createClientFromEnv();
 
+      // Resolve status alias to DB value
+      const resolvedStatus = options.status ? resolveStatusFilter(options.status) : undefined;
+
       // Check for --all without filters
-      const hasFilters = options.status || options.system || options.olderThan || options.type;
+      const hasFilters = resolvedStatus || options.system || options.olderThan || options.type;
 
       if (options.all && !options.confirm) {
         console.error(chalk.red('✗ Confirmation required for --all'));
@@ -571,7 +590,7 @@ jobsCommand
 
         const result = await client.deleteJobs({
           dryRun: true,
-          status: options.status,
+          status: resolvedStatus,
           system: options.system,
           olderThan: options.olderThan,
           jobType: options.type
@@ -606,7 +625,7 @@ jobsCommand
 
         const result = await client.deleteJobs({
           confirm: true,
-          status: options.status,
+          status: resolvedStatus,
           system: options.system,
           olderThan: options.olderThan,
           jobType: options.type
@@ -654,9 +673,7 @@ jobsCommand
     }
   });
 
-/**
- * Print detailed job status
- */
+/** Print detailed single-job status including analysis, progress, cost, and results. */
 function printJobStatus(job: JobStatus) {
   console.log(chalk.blue('\nJob Status:'));
   console.log(chalk.gray(`  ID: ${job.job_id}`));

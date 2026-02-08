@@ -115,11 +115,83 @@ class SynonymDetector:
         """
         Initialize detector with AI provider for embeddings.
 
+        Eagerly resolves expected embedding dimensions from the provider
+        chain and DB config to prevent stale cached embeddings from
+        poisoning the dimension guard.
+
         Args:
             ai_provider: AI provider instance with generate_embedding() method
         """
         self.ai_provider = ai_provider
         self._embedding_cache: Dict[str, np.ndarray] = {}
+        self._expected_dims: Optional[int] = self._resolve_expected_dims()
+
+    def _resolve_expected_dims(self) -> Optional[int]:
+        """
+        Resolve expected embedding dimensions from the provider chain and DB.
+
+        Checks two sources and raises if they disagree:
+        1. Provider chain: model_manager.get_dimensions()
+        2. DB config: embedding_config.embedding_dimensions
+
+        Returns:
+            Expected dimensions, or None if neither source is available
+            (e.g. mock providers in tests).
+
+        Raises:
+            RuntimeError: If provider and DB report different dimensions.
+        """
+        provider_dims = self._dims_from_provider()
+        db_dims = self._dims_from_db()
+
+        if provider_dims is not None and db_dims is not None:
+            if provider_dims != db_dims:
+                raise RuntimeError(
+                    f"Embedding dimension mismatch: provider reports {provider_dims}, "
+                    f"DB config says {db_dims}. Check embedding_config table."
+                )
+            return provider_dims
+
+        # Return whichever is available, or None for test mocks
+        return provider_dims or db_dims
+
+    def _dims_from_provider(self) -> Optional[int]:
+        """Get dimensions from the provider's model manager, if available."""
+        provider = self.ai_provider
+
+        # Case 1: provider IS the local embedding provider
+        if hasattr(provider, 'model_manager') and provider.model_manager is not None:
+            try:
+                dims = provider.model_manager.get_dimensions()
+                # isinstance guard: MagicMock auto-creates attributes and returns
+                # non-int sentinels; treat those as "not available".
+                if isinstance(dims, int):
+                    return dims
+            except (RuntimeError, AttributeError):
+                pass
+
+        # Case 2: provider delegates to a sub-provider (OpenAI/Anthropic → Local)
+        sub = getattr(provider, 'embedding_provider', None)
+        if sub is not None and hasattr(sub, 'model_manager') and sub.model_manager is not None:
+            try:
+                dims = sub.model_manager.get_dimensions()
+                if isinstance(dims, int):
+                    return dims
+            except (RuntimeError, AttributeError):
+                pass
+
+        return None
+
+    def _dims_from_db(self) -> Optional[int]:
+        """Get configured dimensions from the active embedding config in DB."""
+        try:
+            from api.app.lib.embedding_config import load_active_embedding_config
+            config = load_active_embedding_config()
+            if config and config.get('embedding_dimensions'):
+                return int(config['embedding_dimensions'])
+        except Exception:
+            pass
+        return None
 
     async def find_synonyms(
         self,
@@ -464,25 +536,37 @@ class SynonymDetector:
             embedding_data = db.get_vocabulary_embedding(edge_type)
 
             if embedding_data and embedding_data.get('embedding'):
-                # Use database embedding
                 embedding = np.array(embedding_data['embedding'])
 
-                # Cache for reuse
-                self._embedding_cache[edge_type] = embedding
+                # Validate dimension matches current model (detect stale embeddings)
+                if self._expected_dims is not None and embedding.shape[0] != self._expected_dims:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Stale embedding for {edge_type}: {embedding.shape[0]}-dim "
+                        f"(expected {self._expected_dims}). Regenerating."
+                    )
+                    # Fall through to regeneration below
+                else:
+                    # Set expected dims from first valid cached embedding
+                    if self._expected_dims is None:
+                        self._expected_dims = embedding.shape[0]
 
-                return embedding
+                    self._embedding_cache[edge_type] = embedding
+                    return embedding
         finally:
             db.close()
 
-        # Fallback: Generate new embedding via API
-        # Convert edge type to descriptive text
+        # Generate new embedding via provider
         descriptive_text = self._edge_type_to_text(edge_type)
 
-        # Generate embedding
-        result = await self.ai_provider.generate_embedding(descriptive_text)
+        result = self.ai_provider.generate_embedding(descriptive_text)
         embedding = np.array(result["embedding"])
 
-        # Cache for reuse
+        # Set expected dims from first generated embedding
+        if self._expected_dims is None:
+            self._expected_dims = embedding.shape[0]
+
         self._embedding_cache[edge_type] = embedding
 
         # Store in database for future use
@@ -534,7 +618,18 @@ class SynonymDetector:
 
         Returns:
             Similarity score (0.0 to 1.0)
+
+        Raises:
+            ValueError: If vectors have different dimensions (e.g., stale 1536-dim
+                        vs current 768-dim embeddings from different models)
         """
+        if vec1.shape != vec2.shape:
+            raise ValueError(
+                f"Embedding dimension mismatch: {vec1.shape[0]} vs {vec2.shape[0]}. "
+                f"Regenerate embeddings with the current model: "
+                f"POST /vocabulary/generate-embeddings {{\"force_regenerate\": true}}"
+            )
+
         dot_product = np.dot(vec1, vec2)
         norm1 = np.linalg.norm(vec1)
         norm2 = np.linalg.norm(vec2)
