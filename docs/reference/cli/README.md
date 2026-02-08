@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-01-31
+> Last updated: 2026-02-08
 
 ---
 
@@ -531,7 +531,7 @@ kg list [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-s, --status <status>` | Filter by status (pending|awaiting_approval|approved|queued|processing|completed|failed|cancelled) | - |
+| `-s, --status <status>` | Filter by status (pending|approved|queued|running|completed|failed|cancelled) | - |
 | `-c, --client <user-id>` | Filter by user ID (view specific user's jobs) | - |
 | `-l, --limit <n>` | Maximum jobs to return (max: 500, default: 100) | `"100"` |
 | `-o, --offset <n>` | Number of jobs to skip for pagination (default: 0) | `"0"` |
@@ -749,7 +749,7 @@ kg cleanup [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-s, --status <status>` | Filter by status (pending|cancelled|completed|failed) | - |
+| `-s, --status <status>` | Filter by status (pending|cancelled|completed|failed|running) | - |
 | `--system` | Only delete system/scheduled jobs | `false` |
 | `--older-than <duration>` | Delete jobs older than duration (1h|24h|7d|30d) | - |
 | `-t, --type <job-type>` | Filter by job type (ingestion|epistemic_remeasurement|projection|etc) | - |
