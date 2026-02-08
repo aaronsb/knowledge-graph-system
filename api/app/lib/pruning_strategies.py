@@ -301,7 +301,8 @@ class ActionType(Enum):
 class ReviewLevel(Enum):
     """Required review level for action."""
     NONE = "none"           # Auto-execute
-    AI = "ai"               # AI review
+    AI = "ai"               # AI review (LLM grounded in math)
+    HEURISTIC = "heuristic" # Threshold fallback (no LLM available)
     HUMAN = "human"         # Human approval required
 
 
@@ -639,6 +640,74 @@ class PruningStrategy:
             "needs_review": needs_review
         }
 
+    def _call_llm(self, prompt: str, system_msg: str = "You are a knowledge graph vocabulary expert.") -> str:
+        """
+        Call the configured reasoning LLM and return the response text.
+
+        Uses the same provider configured for concept extraction reasoning.
+        Handles OpenAI, Anthropic, and Ollama dispatch.
+
+        Args:
+            prompt: User prompt to send
+            system_msg: System message for context
+
+        Returns:
+            Raw response text from the LLM
+
+        Raises:
+            ValueError: If provider type is unsupported
+            Exception: If the LLM call fails
+        """
+        provider_name = self.ai_provider.get_provider_name().lower()
+
+        if provider_name == "openai":
+            response = self.ai_provider.client.chat.completions.create(
+                model=self.ai_provider.extraction_model,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=300
+            )
+            return response.choices[0].message.content.strip()
+
+        elif provider_name == "anthropic":
+            message = self.ai_provider.client.messages.create(
+                model=self.ai_provider.extraction_model,
+                max_tokens=300,
+                temperature=0.3,
+                system=system_msg,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return message.content[0].text.strip()
+
+        elif "ollama" in provider_name:
+            response = self.ai_provider.session.post(
+                f"{self.ai_provider.base_url}/api/chat",
+                json={
+                    "model": self.ai_provider.extraction_model,
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                        "top_p": self.ai_provider.top_p,
+                        "num_predict": 300
+                    }
+                },
+                timeout=60
+            )
+            response.raise_for_status()
+            return response.json()["message"]["content"].strip()
+
+        else:
+            raise ValueError(f"Unsupported AI provider: {provider_name}")
+
     async def _ai_review_synonym(
         self,
         candidate: SynonymCandidate,
@@ -648,19 +717,25 @@ class PruningStrategy:
         """
         AI review for moderate synonym matches in AITL mode.
 
-        Uses LLM to make tactical decision about merge.
+        Presents mathematical scores to the reasoning LLM and asks it to decide
+        whether the types should be merged. The grounding data (edge counts,
+        value scores, bridge counts, similarity) prevents LLM drift — the
+        decision is anchored in objective graph measurements.
+
+        Falls back to heuristic threshold if the LLM call fails.
 
         Args:
-            candidate: Synonym candidate
-            type1_score: Score for type1
-            type2_score: Score for type2
+            candidate: Synonym candidate with similarity score
+            type1_score: Value score for type1
+            type2_score: Value score for type2
 
         Returns:
-            ActionRecommendation with AI decision
+            ActionRecommendation with LLM-grounded or heuristic decision
         """
-        # Prepare context for AI
-        context = f"""
-Evaluate whether to merge these potentially synonym edge types:
+        preserve_type = candidate.type1 if type1_score.value_score >= type2_score.value_score else candidate.type2
+        deprecate_type = candidate.type2 if preserve_type == candidate.type1 else candidate.type1
+
+        prompt = f"""Evaluate whether to merge these potentially synonym edge types:
 
 Type 1: {candidate.type1}
   - Edges: {type1_score.edge_count}
@@ -679,42 +754,83 @@ Should these be merged? Consider:
 - Would merging lose important semantic distinctions?
 - Is the similarity score reliable?
 
-Respond with MERGE or SKIP and brief reasoning.
-"""
+Respond with MERGE or SKIP and a one-sentence reasoning."""
 
-        # TODO: Implement actual AI call when LLM integration is ready
-        # For now, use heuristic: if similarity >= 0.80, recommend merge
-        if candidate.similarity >= 0.80:
-            preserve_type = candidate.type1 if type1_score.value_score >= type2_score.value_score else candidate.type2
-            deprecate_type = candidate.type2 if preserve_type == candidate.type1 else candidate.type1
+        try:
+            response = self._call_llm(prompt)
+            first_line = response.strip().upper().split(".")[0]
 
-            return ActionRecommendation(
-                action_type=ActionType.MERGE,
-                edge_type=deprecate_type,
-                target_type=preserve_type,
-                review_level=ReviewLevel.AI,
-                should_execute=True,
-                needs_review=False,
-                reasoning=f"AI approved merge (similarity: {candidate.similarity:.3f})",
-                metadata={
-                    "similarity": candidate.similarity,
-                    "ai_decision": "MERGE",
-                    "preserve_value": type1_score.value_score if preserve_type == candidate.type1 else type2_score.value_score
-                }
-            )
-        else:
-            return ActionRecommendation(
-                action_type=ActionType.SKIP,
-                edge_type=candidate.type1,
-                review_level=ReviewLevel.AI,
-                should_execute=False,
-                needs_review=False,
-                reasoning=f"AI rejected merge (similarity: {candidate.similarity:.3f} - semantic distinction likely important)",
-                metadata={
-                    "similarity": candidate.similarity,
-                    "ai_decision": "SKIP"
-                }
-            )
+            # Validate the LLM gave a parsable decision
+            has_merge = "MERGE" in first_line
+            has_skip = "SKIP" in first_line
+            if not has_merge and not has_skip:
+                raise ValueError(f"Unparsable LLM response (no MERGE/SKIP keyword): {response[:100]}")
+
+            if has_merge:
+                reasoning = response.strip()
+                logger.info(f"LLM synonym review: MERGE {deprecate_type} → {preserve_type} ({reasoning})")
+                return ActionRecommendation(
+                    action_type=ActionType.MERGE,
+                    edge_type=deprecate_type,
+                    target_type=preserve_type,
+                    review_level=ReviewLevel.AI,
+                    should_execute=True,
+                    needs_review=False,
+                    reasoning=f"LLM approved merge: {reasoning}",
+                    metadata={
+                        "similarity": candidate.similarity,
+                        "decision_source": "llm",
+                        "preserve_value": type1_score.value_score if preserve_type == candidate.type1 else type2_score.value_score
+                    }
+                )
+            else:
+                reasoning = response.strip()
+                logger.info(f"LLM synonym review: SKIP {candidate.type1} vs {candidate.type2} ({reasoning})")
+                return ActionRecommendation(
+                    action_type=ActionType.SKIP,
+                    edge_type=candidate.type1,
+                    review_level=ReviewLevel.AI,
+                    should_execute=False,
+                    needs_review=False,
+                    reasoning=f"LLM rejected merge: {reasoning}",
+                    metadata={
+                        "similarity": candidate.similarity,
+                        "decision_source": "llm"
+                    }
+                )
+
+        except Exception as e:
+            logger.warning(f"LLM synonym review failed, falling back to heuristic: {e}")
+
+            # Heuristic fallback: threshold on similarity score
+            if candidate.similarity >= 0.80:
+                return ActionRecommendation(
+                    action_type=ActionType.MERGE,
+                    edge_type=deprecate_type,
+                    target_type=preserve_type,
+                    review_level=ReviewLevel.HEURISTIC,
+                    should_execute=True,
+                    needs_review=False,
+                    reasoning=f"Heuristic merge (similarity {candidate.similarity:.3f} >= 0.80, LLM unavailable: {e})",
+                    metadata={
+                        "similarity": candidate.similarity,
+                        "decision_source": "heuristic_fallback",
+                        "preserve_value": type1_score.value_score if preserve_type == candidate.type1 else type2_score.value_score
+                    }
+                )
+            else:
+                return ActionRecommendation(
+                    action_type=ActionType.SKIP,
+                    edge_type=candidate.type1,
+                    review_level=ReviewLevel.HEURISTIC,
+                    should_execute=False,
+                    needs_review=False,
+                    reasoning=f"Heuristic skip (similarity {candidate.similarity:.3f} < 0.80, LLM unavailable: {e})",
+                    metadata={
+                        "similarity": candidate.similarity,
+                        "decision_source": "heuristic_fallback"
+                    }
+                )
 
     async def _ai_review_low_value(
         self,
@@ -723,17 +839,20 @@ Respond with MERGE or SKIP and brief reasoning.
         """
         AI review for low-value types with edges in AITL mode.
 
-        Uses LLM to make tactical decision about deprecation.
+        Presents mathematical scores to the reasoning LLM and asks whether
+        the type should be deprecated. The grounding data (value score,
+        edge count, traversal frequency, bridge count) anchors the LLM's
+        reasoning in objective measurements.
+
+        Falls back to heuristic threshold if the LLM call fails.
 
         Args:
             score: EdgeTypeScore for low-value type
 
         Returns:
-            ActionRecommendation with AI decision
+            ActionRecommendation with LLM-grounded or heuristic decision
         """
-        # Prepare context for AI
-        context = f"""
-Evaluate whether to deprecate this low-value edge type:
+        prompt = f"""Evaluate whether to deprecate this low-value edge type:
 
 Type: {score.relationship_type}
   - Edges: {score.edge_count}
@@ -748,41 +867,87 @@ Should it be deprecated? Consider:
 - Is usage just temporarily low?
 - Would deprecation harm the graph?
 
-Respond with DEPRECATE or SKIP and brief reasoning.
-"""
+Respond with DEPRECATE or SKIP and a one-sentence reasoning."""
 
-        # TODO: Implement actual AI call when LLM integration is ready
-        # For now, use heuristic: if value < 0.5 and no bridges, deprecate
-        if score.value_score < 0.5 and score.bridge_count == 0:
-            return ActionRecommendation(
-                action_type=ActionType.DEPRECATE,
-                edge_type=score.relationship_type,
-                review_level=ReviewLevel.AI,
-                should_execute=True,
-                needs_review=False,
-                reasoning=f"AI approved deprecation (value: {score.value_score:.2f}, no bridges)",
-                metadata={
-                    "value_score": score.value_score,
-                    "edge_count": score.edge_count,
-                    "bridge_count": score.bridge_count,
-                    "ai_decision": "DEPRECATE"
-                }
-            )
-        else:
-            return ActionRecommendation(
-                action_type=ActionType.SKIP,
-                edge_type=score.relationship_type,
-                review_level=ReviewLevel.AI,
-                should_execute=False,
-                needs_review=False,
-                reasoning=f"AI rejected deprecation (value: {score.value_score:.2f}, bridges: {score.bridge_count} - structurally important)",
-                metadata={
-                    "value_score": score.value_score,
-                    "edge_count": score.edge_count,
-                    "bridge_count": score.bridge_count,
-                    "ai_decision": "SKIP"
-                }
-            )
+        try:
+            response = self._call_llm(prompt)
+            first_line = response.strip().upper().split(".")[0]
+
+            # Validate the LLM gave a parsable decision
+            has_deprecate = "DEPRECATE" in first_line
+            has_skip = "SKIP" in first_line
+            if not has_deprecate and not has_skip:
+                raise ValueError(f"Unparsable LLM response (no DEPRECATE/SKIP keyword): {response[:100]}")
+
+            if has_deprecate:
+                reasoning = response.strip()
+                logger.info(f"LLM low-value review: DEPRECATE {score.relationship_type} ({reasoning})")
+                return ActionRecommendation(
+                    action_type=ActionType.DEPRECATE,
+                    edge_type=score.relationship_type,
+                    review_level=ReviewLevel.AI,
+                    should_execute=True,
+                    needs_review=False,
+                    reasoning=f"LLM approved deprecation: {reasoning}",
+                    metadata={
+                        "value_score": score.value_score,
+                        "edge_count": score.edge_count,
+                        "bridge_count": score.bridge_count,
+                        "decision_source": "llm"
+                    }
+                )
+            else:
+                reasoning = response.strip()
+                logger.info(f"LLM low-value review: SKIP {score.relationship_type} ({reasoning})")
+                return ActionRecommendation(
+                    action_type=ActionType.SKIP,
+                    edge_type=score.relationship_type,
+                    review_level=ReviewLevel.AI,
+                    should_execute=False,
+                    needs_review=False,
+                    reasoning=f"LLM rejected deprecation: {reasoning}",
+                    metadata={
+                        "value_score": score.value_score,
+                        "edge_count": score.edge_count,
+                        "bridge_count": score.bridge_count,
+                        "decision_source": "llm"
+                    }
+                )
+
+        except Exception as e:
+            logger.warning(f"LLM low-value review failed, falling back to heuristic: {e}")
+
+            # Heuristic fallback: low value + no bridges → deprecate
+            if score.value_score < 0.5 and score.bridge_count == 0:
+                return ActionRecommendation(
+                    action_type=ActionType.DEPRECATE,
+                    edge_type=score.relationship_type,
+                    review_level=ReviewLevel.HEURISTIC,
+                    should_execute=True,
+                    needs_review=False,
+                    reasoning=f"Heuristic deprecation (value {score.value_score:.2f} < 0.5, no bridges, LLM unavailable: {e})",
+                    metadata={
+                        "value_score": score.value_score,
+                        "edge_count": score.edge_count,
+                        "bridge_count": score.bridge_count,
+                        "decision_source": "heuristic_fallback"
+                    }
+                )
+            else:
+                return ActionRecommendation(
+                    action_type=ActionType.SKIP,
+                    edge_type=score.relationship_type,
+                    review_level=ReviewLevel.HEURISTIC,
+                    should_execute=False,
+                    needs_review=False,
+                    reasoning=f"Heuristic skip (value {score.value_score:.2f}, bridges: {score.bridge_count}, LLM unavailable: {e})",
+                    metadata={
+                        "value_score": score.value_score,
+                        "edge_count": score.edge_count,
+                        "bridge_count": score.bridge_count,
+                        "decision_source": "heuristic_fallback"
+                    }
+                )
 
 
 # ============================================================================

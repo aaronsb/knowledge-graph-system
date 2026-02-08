@@ -22,6 +22,7 @@ class ReviewLevelEnum(str, Enum):
     """Required review level for action"""
     none = "none"
     ai = "ai"
+    heuristic = "heuristic"
     human = "human"
 
 

@@ -38,7 +38,7 @@ from .datetime_utils import utcnow
 # OAuth Token Signing Configuration
 # OAuth access tokens are JWTs signed with HS256
 # Loaded via SecretManager (supports Docker secrets, env vars)
-from app.lib.secrets import OAUTH_SIGNING_KEY as _oauth_key
+from api.app.lib.secrets import OAUTH_SIGNING_KEY as _oauth_key
 SECRET_KEY = _oauth_key or ""
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
