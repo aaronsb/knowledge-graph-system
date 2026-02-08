@@ -50,6 +50,7 @@ import logging
 # Type imports for other ADR-032 modules
 from api.app.lib.synonym_detector import SynonymCandidate, SynonymStrength
 from api.app.lib.vocabulary_scoring import EdgeTypeScore
+from api.app.lib.llm_utils import call_llm_sync
 
 logger = logging.getLogger(__name__)
 
@@ -178,8 +179,6 @@ Consider:
 Respond with ONLY the JSON, no other text."""
 
     try:
-        from api.app.lib.llm_utils import call_llm_sync
-
         content = call_llm_sync(
             ai_provider,
             prompt=prompt,
@@ -613,8 +612,6 @@ class PruningStrategy:
             ValueError: If provider type is unsupported
             Exception: If the LLM call fails
         """
-        from api.app.lib.llm_utils import call_llm_sync
-
         return call_llm_sync(
             self.ai_provider,
             prompt=prompt,

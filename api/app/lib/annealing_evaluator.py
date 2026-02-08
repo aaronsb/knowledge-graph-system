@@ -15,6 +15,8 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
+from api.app.lib.llm_utils import call_llm_sync
+
 logger = logging.getLogger(__name__)
 
 
@@ -209,8 +211,6 @@ Respond with ONLY the JSON, no other text."""
 
 def _call_llm_sync(prompt: str, ai_provider) -> str:
     """Synchronous LLM call. Runs in a thread pool via _call_llm."""
-    from api.app.lib.llm_utils import call_llm_sync
-
     return call_llm_sync(
         ai_provider,
         prompt=prompt,

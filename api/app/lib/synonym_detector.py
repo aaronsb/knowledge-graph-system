@@ -163,6 +163,8 @@ class SynonymDetector:
         if hasattr(provider, 'model_manager') and provider.model_manager is not None:
             try:
                 dims = provider.model_manager.get_dimensions()
+                # isinstance guard: MagicMock auto-creates attributes and returns
+                # non-int sentinels; treat those as "not available".
                 if isinstance(dims, int):
                     return dims
             except (RuntimeError, AttributeError):
