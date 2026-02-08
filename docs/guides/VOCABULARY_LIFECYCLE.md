@@ -191,13 +191,6 @@ used across all job subcommands.
 
 ## Known Limitations
 
-- **Duplicated LLM dispatch**: `llm_evaluate_merge()` and `_call_llm()` in
-  `pruning_strategies.py` have independent provider-dispatch logic. A shared
-  helper would reduce maintenance surface.
-- **Stale embedding bootstrap**: `_expected_dims` is inferred from the first
-  embedding encountered. If that first embedding is itself stale, the guard
-  inverts — regenerating correct embeddings instead of stale ones. Works in
-  practice because model transitions are infrequent, but fragile.
 - **Pending reviews lack persistence**: `get_pending_reviews()` and
   `approve_action()` exist but are in-memory only. Low priority since the
   primary path is fully automated.

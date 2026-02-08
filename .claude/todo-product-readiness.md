@@ -11,7 +11,7 @@ Backlog: `.claude/backlog-product-review.md`
 - [x] `[agent]` Pipeline cleanup — deleted `publish-docs.yml`, `.venv/` already gitignored
 - [x] `[agent]` Pin dev AGE image to PG17 (upstream :latest advanced to PG18)
 - [x] `[agent]` Add migration runner retry loop for postgres startup race
-- [ ] `[pair]` Stub honesty — vocab manager 4 silent no-ops, pruning 2 fake AI stubs. Decide: implement or `NotImplementedError`.
+- [x] `[pair]` Stub honesty — vocab manager 4 silent no-ops, pruning 2 fake AI stubs. Wired to real LLM + database in PR #309.
 - [ ] `[human]` Triage known bugs — graph annealing job failures, FUSE truncation (#307)
 
 ## Onboarding

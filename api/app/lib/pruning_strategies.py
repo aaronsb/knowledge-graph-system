@@ -178,60 +178,15 @@ Consider:
 Respond with ONLY the JSON, no other text."""
 
     try:
-        # Call LLM (handle both OpenAI and Anthropic providers)
-        provider_name = ai_provider.get_provider_name().lower()
+        from api.app.lib.llm_utils import call_llm_sync
 
-        if provider_name == "openai":
-            response = ai_provider.client.chat.completions.create(
-                model=ai_provider.extraction_model,
-                messages=[
-                    {"role": "system", "content": "You are a knowledge graph vocabulary expert. Respond with valid JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                max_tokens=300,
-                response_format={"type": "json_object"}
-            )
-            content = response.choices[0].message.content.strip()
-
-        elif provider_name == "anthropic":
-            message = ai_provider.client.messages.create(
-                model=ai_provider.extraction_model,
-                max_tokens=300,
-                temperature=0.3,
-                system="You are a knowledge graph vocabulary expert. Respond with valid JSON only.",
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            content = message.content[0].text.strip()
-
-        elif "ollama" in provider_name:
-            # Ollama provider - use direct HTTP API
-            response = ai_provider.session.post(
-                f"{ai_provider.base_url}/api/chat",
-                json={
-                    "model": ai_provider.extraction_model,
-                    "messages": [
-                        {"role": "system", "content": "You are a knowledge graph vocabulary expert. Respond with valid JSON only."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "format": "json",  # Ollama JSON mode
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "top_p": ai_provider.top_p,
-                        "num_predict": 300
-                    }
-                },
-                timeout=60
-            )
-            response.raise_for_status()
-            response_data = response.json()
-            content = response_data["message"]["content"].strip()
-
-        else:
-            raise ValueError(f"Unsupported AI provider: {provider_name}")
+        content = call_llm_sync(
+            ai_provider,
+            prompt=prompt,
+            system_msg="You are a knowledge graph vocabulary expert. Respond with valid JSON only.",
+            max_tokens=300,
+            json_mode=True,
+        )
 
         # Extract JSON if wrapped in markdown
         if "```json" in content:
@@ -645,8 +600,7 @@ class PruningStrategy:
         """
         Call the configured reasoning LLM and return the response text.
 
-        Uses the same provider configured for concept extraction reasoning.
-        Handles OpenAI, Anthropic, and Ollama dispatch.
+        Delegates to the shared call_llm_sync() utility for provider dispatch.
 
         Args:
             prompt: User prompt to send
@@ -659,55 +613,14 @@ class PruningStrategy:
             ValueError: If provider type is unsupported
             Exception: If the LLM call fails
         """
-        provider_name = self.ai_provider.get_provider_name().lower()
+        from api.app.lib.llm_utils import call_llm_sync
 
-        if provider_name == "openai":
-            response = self.ai_provider.client.chat.completions.create(
-                model=self.ai_provider.extraction_model,
-                messages=[
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                max_tokens=300
-            )
-            return response.choices[0].message.content.strip()
-
-        elif provider_name == "anthropic":
-            message = self.ai_provider.client.messages.create(
-                model=self.ai_provider.extraction_model,
-                max_tokens=300,
-                temperature=0.3,
-                system=system_msg,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return message.content[0].text.strip()
-
-        elif "ollama" in provider_name:
-            response = self.ai_provider.session.post(
-                f"{self.ai_provider.base_url}/api/chat",
-                json={
-                    "model": self.ai_provider.extraction_model,
-                    "messages": [
-                        {"role": "system", "content": system_msg},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "top_p": self.ai_provider.top_p,
-                        "num_predict": 300
-                    }
-                },
-                timeout=60
-            )
-            response.raise_for_status()
-            return response.json()["message"]["content"].strip()
-
-        else:
-            raise ValueError(f"Unsupported AI provider: {provider_name}")
+        return call_llm_sync(
+            self.ai_provider,
+            prompt=prompt,
+            system_msg=system_msg,
+            max_tokens=300,
+        )
 
     async def _ai_review_synonym(
         self,
