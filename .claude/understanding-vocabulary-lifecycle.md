@@ -1,8 +1,6 @@
 # Understanding: Vocabulary Lifecycle & Grounded LLM Decisions
 
-Working reference for why the vocabulary management system works the way it does.
-Written collaboratively (human + Claude) on 2026-02-08 during product readiness work.
-Updated 2026-02-08 after wiring LLM decisions end-to-end and validating with real content.
+How and why the vocabulary management system works.
 
 ## The Problem
 
@@ -13,10 +11,10 @@ structurally irrelevant. Something needs to govern this lifecycle.
 
 ## The Key Insight
 
-The system already computes objective mathematical scores for every relationship
-type: grounding strength, similarity to other types, edge counts, traversal
-frequency, bridge importance, polarity positioning, epistemic status. These
-numbers describe reality.
+The system computes objective mathematical scores for every relationship type:
+grounding strength, similarity to other types, edge counts, traversal frequency,
+bridge importance, polarity positioning, epistemic status. These numbers
+describe reality.
 
 A human reviewing vocabulary decisions would look at these same numbers and
 compute a function: "low value, no bridges, similar to another type → merge."
@@ -36,16 +34,10 @@ The human's role is bringing external information *into* the graph (new
 documents, new knowledge domains), not reviewing vocabulary hygiene decisions
 that the system can make objectively.
 
-## The Design: Math → LLM → Execute
+## How Consolidation Works
 
-1. **Score**: Mathematical evaluation of each relationship type (value score,
-   edge count, bridge count, similarity to other types, traversal patterns)
-2. **Present**: Format the scores as structured context in a prompt that asks
-   the LLM to reason about the decision (merge? deprecate? prune? skip?)
-3. **Decide**: The LLM reads real numbers and applies judgment. The grounding
-   prevents drift — the LLM can't hallucinate that a zero-edge type is
-   important when the math says otherwise
-4. **Execute**: Carry out the decision against the database
+The consolidation pipeline follows a loop: score candidates, ask the LLM,
+execute the decision, re-score (since the vocabulary changed), repeat.
 
 ```mermaid
 sequenceDiagram
@@ -58,7 +50,7 @@ sequenceDiagram
 
     CLI->>VM: consolidate(target, threshold, dry_run)
     VM->>DB: Query active vocabulary types
-    DB-->>VM: 62 types with edge counts
+    DB-->>VM: Types with edge counts
 
     alt vocab_size > target
         loop Until target reached or no candidates
@@ -84,11 +76,20 @@ sequenceDiagram
     VM-->>CLI: ConsolidationResult
 ```
 
-The three-tier review model (automatic / AI / human) still exists but the
-tiers mean:
-- **Automatic**: Pure math, no ambiguity (zero-edge type → prune)
-- **AI (LLM-grounded)**: Math + reasoning for moderate cases
-- **Human**: Optional audit/override, not the primary path
+Key behaviors:
+- **Target-gated**: Live mode only works when vocab size exceeds the target.
+  `--target 90` with 63 types is a no-op. Use a target below current size to
+  trigger merges, or `--dry-run` to preview candidates regardless of target.
+- **Re-query loop**: After each merge, the vocabulary state changes — types
+  disappear, edge counts shift. Live mode re-fetches similarity before the
+  next candidate. Dry-run evaluates all candidates against the initial state.
+- **Prune after merge**: Zero-usage custom types are removed after the merge
+  loop completes. Builtin types are never pruned.
+
+## Decision Model
+
+Candidates route through three tiers based on similarity and the LLM's
+judgment:
 
 ```mermaid
 flowchart TD
@@ -117,26 +118,19 @@ flowchart TD
     style E fill:#1a3a5c,color:#fff
 ```
 
-## Current State (Post-Wiring)
+The LLM receives a structured prompt with embedding similarity, edge counts,
+and usage context. It returns a merge/skip decision with reasoning. The
+reasoning is displayed in the CLI and stored in the audit trail. The LLM
+correctly handles cases that pure thresholds miss:
+- Directional inverses (HAS_PART/PART_OF look similar but are opposites)
+- Semantic distinctions (CONTRASTS_WITH/EQUIVALENT_TO share embedding space)
+- Genuinely redundant types (DEFINED_AS/DEFINED, INCREASES/ENHANCES)
 
-The full pipeline is now operational:
+## Embedding Architecture
 
-- **LLM calls are live.** `llm_evaluate_merge()` in `pruning_strategies.py`
-  calls GPT-4o with structured prompts containing embedding similarity, edge
-  counts, and usage data. The LLM returns merge/skip decisions with reasoning.
-- **Execute path works.** Merges update edges in the graph and deactivate the
-  deprecated type. Pruning removes zero-usage types entirely.
-- **Live consolidation loop** in `vocabulary_manager.py` processes candidates
-  one-at-a-time with re-query (re-fetches similarity after each merge since
-  the vocabulary state changes). Dry-run evaluates all candidates without
-  re-query.
-- **Target-gated**: Live mode skips work when vocab size is already at or
-  below target. This means `--target 90` with 63 types does nothing. Use a
-  target below current size to trigger merges, or `--dry-run` to preview.
-
-### Embedding Architecture
-
-All embedding generation flows through a single consistent path:
+All embedding generation flows through a single consistent path. The reasoning
+provider (used for extraction and consolidation decisions) and the embedding
+provider (used for vector similarity) are separate but connected:
 
 ```mermaid
 flowchart LR
@@ -167,39 +161,43 @@ flowchart LR
     style RP fill:#4a3a1c,color:#fff
 ```
 
-- `get_provider()` returns the reasoning provider with `embedding_provider`
-  injected (the local nomic model).
+Design constraints:
 - `generate_embedding()` is **sync** across all providers — never awaited.
-- `OpenAIProvider.generate_embedding()` delegates to `self.embedding_provider`
-  and raises `RuntimeError` if none is configured (no silent fallback).
-- All embeddings are 768-dim from `nomic-ai/nomic-embed-text-v1.5`.
-- Dimension guards in `SynonymDetector._cosine_similarity()` catch mismatches.
+- `OpenAIProvider.generate_embedding()` delegates to `self.embedding_provider`.
+  If none is configured, it raises `RuntimeError` (no silent fallback to
+  OpenAI's text-embedding-3-small — that would create a dimension mismatch).
+- Dimension guards in `SynonymDetector._cosine_similarity()` catch mismatches
+  at comparison time with a clear error message.
 - Stale embedding detection in `_get_edge_type_embedding()` auto-regenerates
-  when dimensions don't match the expected size.
+  when a cached embedding's dimensions don't match expectations.
 
-### CLI UX
+## CLI Commands
 
-- `kg vocab consolidate` — executes live (merge + prune)
-- `kg vocab consolidate --dry-run` — preview only
-- `kg vocab consolidate --target N` — set target size (default 90)
-- `kg job cleanup -s pending` — resolves to `awaiting_approval` via shared
-  `resolveStatusFilter()` utility. All job subcommands use friendly names.
+```
+kg vocab list                          # Show all types with categories, edges, status
+kg vocab consolidate                   # Execute merges + prune (live)
+kg vocab consolidate --dry-run         # Preview candidates without executing
+kg vocab consolidate --target N        # Set target vocab size (default 90)
+kg vocab consolidate --threshold 0.85  # LLM auto-execute threshold
+kg vocab merge TYPE_A TYPE_B           # Manual merge
 
-## Validated Behavior
+kg job list -s pending                 # Status aliases: pending, running, done, failed
+kg job cleanup -s done --confirm       # Delete completed jobs
+```
 
-Tested with 8 real documents (essays + enterprise-as-code), 243 concepts,
-597 source embeddings, 62 vocabulary types:
+Status aliases (`pending` → `awaiting_approval`, `running` → `processing`,
+`done` → `completed`) are resolved by a shared `resolveStatusFilter()` utility
+used across all job subcommands.
 
-- Consolidation correctly merges semantically equivalent types
-  (DEFINED_AS→DEFINED, EQUIVALENT_TO→EQUIVALENT, INCREASES→ENHANCES)
-- Correctly rejects directional inverses (HAS_PART/PART_OF)
-- Correctly rejects semantic distinctions (CONTRASTS_WITH/EQUIVALENT_TO)
-- Self-referencing merges (same→same) filtered from display
-- Pruning removes zero-usage custom types after consolidation
+## Known Limitations
 
-## Remaining Considerations
-
-- The grounded-LLM-decision pattern generalizes — ontology annealing already
-  uses similar logic. Could warrant an ADR if we formalize the pattern.
-- `get_pending_reviews()` and `approve_action()` exist but lack persistence.
-  Low priority since the primary path is automated.
+- **Duplicated LLM dispatch**: `llm_evaluate_merge()` and `_call_llm()` in
+  `pruning_strategies.py` have independent provider-dispatch logic. A shared
+  helper would reduce maintenance surface.
+- **Stale embedding bootstrap**: `_expected_dims` is inferred from the first
+  embedding encountered. If that first embedding is itself stale, the guard
+  inverts — regenerating correct embeddings instead of stale ones. Works in
+  practice because model transitions are infrequent, but fragile.
+- **Pending reviews lack persistence**: `get_pending_reviews()` and
+  `approve_action()` exist but are in-memory only. Low priority since the
+  primary path is fully automated.
