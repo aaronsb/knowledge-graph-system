@@ -4,7 +4,7 @@ This directory contains documentation for the Knowledge Graph System.
 
 ## Quick Start
 
-**[Quick Start Guide](guides/QUICKSTART.md)** - Operator architecture setup (containerized deployment)
+**[Quick Start Guide](operating/quick-start.md)** - Operator architecture setup (containerized deployment)
 
 Uses Docker containers with the operator pattern (ADR-061). No local Python installation required.
 
@@ -25,30 +25,22 @@ See `manual/README.md` for detailed navigation.
 ### `architecture/`
 Architecture decisions and design documents.
 
-- **ARCHITECTURE_DECISIONS.md** - ADR index (67 decisions)
-- **ARCHITECTURE_OVERVIEW.md** - System architecture overview
-- **ADR-###-*.md** - Individual architecture decision records
+- **INDEX.md** - ADR index (96 decisions)
+- **ADR-###-*.md** - Individual architecture decision records (organized in subdirectories)
 
 Key ADRs for understanding the system:
-- [ADR-044](architecture/ADR-044-probabilistic-truth-convergence.md) - Probabilistic truth convergence
-- [ADR-058](architecture/ADR-058-polarity-axis-triangulation.md) - Truth as geometric projection
-- [ADR-063](architecture/ADR-063-semantic-diversity-authenticity.md) - Semantic diversity as authenticity
-- [ADR-052](architecture/ADR-052-vocabulary-expansion-consolidation.md) - Vocabulary expansion-consolidation
+- [ADR-044](architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence.md) - Probabilistic truth convergence
+- [ADR-058](architecture/ai-embeddings/ADR-058-polarity-axis-triangulation.md) - Truth as geometric projection
+- [ADR-063](architecture/query-search/ADR-063-semantic-diversity-authenticity-signal.md) - Semantic diversity as authenticity
+- [ADR-052](architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle.md) - Vocabulary expansion-consolidation
 
 ### `guides/`
 Standalone guides for specific topics.
 
-- **QUICKSTART.md** - Quick start using operator architecture
 - **DEPLOYMENT.md** - Deployment strategies for all environments
 - **VOCABULARY_CATEGORIES.md** - Vocabulary category scores and confidence
 - **SCHEDULED-JOBS.md** - Background maintenance tasks
 - **EPISTEMIC-STATUS-FILTERING.md** - Filtering by epistemic status
-
-### `development/`
-Development journals and internal notes.
-
-- **DEV_JOURNAL_chunked_ingestion.md** - Chunked ingestion development
-- **LEARNED_KNOWLEDGE_MCP.md** - MCP integration learnings
 
 ### `testing/`
 Test coverage specifications.
@@ -61,7 +53,7 @@ Images and diagrams.
 ## Quick Navigation
 
 ### New Users
-1. Start with [QUICKSTART.md](guides/QUICKSTART.md) - Operator architecture setup
+1. Start with [QUICKSTART.md](operating/quick-start.md) - Operator architecture setup
 2. Learn about [AI Providers](manual/02-configuration/01-AI_PROVIDERS.md)
 3. Read [INGESTION.md](manual/01-getting-started/03-INGESTION.md) for document ingestion workflow
 4. See [VOCABULARY_CONSOLIDATION.md](manual/03-integration/02-VOCABULARY_CONSOLIDATION.md) for managing edge vocabulary growth
@@ -80,8 +72,8 @@ Images and diagrams.
 8. Review [SCHEDULED-JOBS.md](guides/SCHEDULED-JOBS.md) for understanding background maintenance tasks
 
 ### Developers
-1. Read [ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md)
-2. Review [ADR-016](architecture/ADR-016-apache-age-migration.md) for current database architecture
+1. Read [ARCHITECTURE_OVERVIEW.md](reference/ARCHITECTURE_OVERVIEW.md)
+2. Review [ADR-016](architecture/database-schema/ADR-016-apache-age-migration.md) for current database architecture
 3. Learn about [DATABASE_MIGRATIONS.md](manual/05-maintenance/02-DATABASE_MIGRATIONS.md) for schema evolution (ADR-040)
 4. Reference [SCHEMA_REFERENCE.md](manual/06-reference/01-SCHEMA_REFERENCE.md) for complete schema documentation
 5. Check [TEST_COVERAGE.md](testing/TEST_COVERAGE.md) for testing guidelines
@@ -90,5 +82,4 @@ Images and diagrams.
 ### Contributors
 1. Read architecture decisions in `architecture/`
 2. Follow test guidelines in `testing/`
-3. Review development journals in `development/`
-4. Understand system concepts in `reference/`
+3. Understand system concepts in `concepts/`

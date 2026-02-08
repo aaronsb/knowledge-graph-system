@@ -48,15 +48,35 @@ kg search "machine learning"
 
 | Command | Description |
 |---------|-------------|
-| `kg health` | Check API connection |
-| `kg login` | Authenticate with the API |
-| `kg logout` | Clear saved credentials |
-| `kg config` | View/edit configuration |
-| `kg ingest <file>` | Submit document for extraction |
-| `kg search <query>` | Search concepts |
-| `kg jobs` | List extraction jobs |
-| `kg artifact` | Manage artifacts |
-| `kg document` | Manage documents |
+| `kg health` | Check API server health |
+| `kg login` | Authenticate with username and password |
+| `kg logout` | End authentication session |
+| `kg oauth` | Manage OAuth clients |
+| `kg config` | Manage CLI configuration |
+| `kg mcp-config` | Manage MCP file access allowlist |
+| `kg ingest <file>` | Ingest documents into the knowledge graph |
+| `kg search <query>` | Search and explore the knowledge graph |
+| `kg concept` | Create, list, show, and delete concepts |
+| `kg edge` | Manage edges (relationships) between concepts |
+| `kg batch` | Batch graph operations (atomic import) |
+| `kg document` | Search and retrieve documents |
+| `kg source` | Manage source documents |
+| `kg ontology` | Manage ontologies (knowledge domains) |
+| `kg vocabulary` | Vocabulary management and consolidation |
+| `kg database` | Database operations and information |
+| `kg jobs` | Manage ingestion jobs |
+| `kg admin` | System administration (backup, RBAC, AI config) |
+| `kg polarity` | Polarity axis analysis between concept poles |
+| `kg projection` | Manage embedding projections for visualization |
+| `kg artifact` | Manage stored computation results |
+| `kg group` | Manage groups and membership |
+| `kg query-def` | Manage saved query definitions |
+| `kg program` | Manage graph programs (GraphProgram DSL) |
+| `kg storage` | Storage diagnostics and inspection |
+| `kg ls` | List resources (Unix-style shortcut) |
+| `kg cat` | Display resource details (Unix-style shortcut) |
+| `kg stat` | Show status or statistics (Unix-style shortcut) |
+| `kg rm` | Remove or delete resources (Unix-style shortcut) |
 
 Run `kg --help` or `kg <command> --help` for detailed usage.
 
@@ -100,11 +120,20 @@ Or if installed globally/user-local (simpler):
 
 ### Available MCP Tools
 
-- `search_concepts` - Semantic search across the knowledge graph
-- `get_concept` - Get details about a specific concept
-- `list_sources` - List ingested documents
-- `get_relationships` - Find connections between concepts
-- `ingest_document` - Submit new documents (with approval)
+| Tool | Description |
+|------|-------------|
+| `search` | Search concepts, source passages, or documents by semantic similarity |
+| `concept` | Get concept details, find related concepts, or discover connection paths |
+| `ontology` | Manage ontologies: list, info, files, scores, annealing |
+| `job` | Manage ingestion jobs: status, list, approve, cancel, cleanup |
+| `ingest` | Ingest content: submit text, inspect/ingest files, ingest directories |
+| `source` | Retrieve original source content (text or image) for a source node |
+| `epistemic_status` | Vocabulary epistemic status classification for relationship types |
+| `analyze_polarity_axis` | Analyze semantic dimensions between two concept poles |
+| `artifact` | Manage saved artifacts (persisted search results, projections, analyses) |
+| `document` | Work with documents: list, show content, get extracted concepts |
+| `graph` | Create, edit, delete, and list concepts and edges directly |
+| `program` | Compose and execute GraphProgram queries (set-algebraic DSL) |
 
 ## Configuration
 

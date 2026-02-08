@@ -298,7 +298,7 @@ class AdminService:
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "knowledge_graph"),
                 user=os.getenv("POSTGRES_USER", "admin"),
-                password=os.getenv("POSTGRES_PASSWORD", ""),
+                password=os.environ["POSTGRES_PASSWORD"],
                 connect_timeout=5
             )
             conn.close()
@@ -375,7 +375,7 @@ class AdminService:
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "knowledge_graph"),
                 user=os.getenv("POSTGRES_USER", "admin"),
-                password=os.getenv("POSTGRES_PASSWORD", "")
+                password=os.environ["POSTGRES_PASSWORD"]
             )
             key_store = EncryptedKeyStore(conn)
 

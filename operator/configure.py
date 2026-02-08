@@ -25,7 +25,7 @@ class OperatorConfig:
         self.postgres_port = int(os.getenv("POSTGRES_PORT", "5432"))
         self.postgres_db = os.getenv("POSTGRES_DB", "knowledge_graph")
         self.postgres_user = os.getenv("POSTGRES_USER", "admin")
-        self.postgres_password = os.getenv("POSTGRES_PASSWORD", "password")
+        self.postgres_password = os.environ["POSTGRES_PASSWORD"]
 
     def get_connection(self):
         """Get database connection"""

@@ -53,7 +53,7 @@ class BaseMixin:
         self.port = port or int(os.getenv("POSTGRES_PORT", "5432"))
         self.database = database or os.getenv("POSTGRES_DB", "knowledge_graph")
         self.user = user or os.getenv("POSTGRES_USER", "admin")
-        self.password = password or os.getenv("POSTGRES_PASSWORD", "password")
+        self.password = password or os.environ["POSTGRES_PASSWORD"]
         self.graph_name = "knowledge_graph"
 
         if not all([self.host, self.port, self.database, self.user, self.password]):

@@ -113,10 +113,10 @@ Documents ──→ [FastAPI] ──→ LLM Extraction ──→ [PostgreSQL + A
 |----------|------------|
 | Understanding the concepts | [docs/concepts/](docs/concepts/) |
 | Deploying and operating | [docs/operating/](docs/operating/) |
-| Using the system | [docs/using/](docs/using/) |
+| Using the system | [docs/features/](docs/features/) |
 | Architecture decisions | [docs/architecture/](docs/architecture/) |
 
-88 Architecture Decision Records document the design evolution.
+96 Architecture Decision Records document the design evolution.
 
 ## Background
 

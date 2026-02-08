@@ -933,7 +933,7 @@ def init_job_queue(queue_type: str = "postgresql", **kwargs) -> JobQueue:
             port=kwargs.get("port", int(os.getenv("POSTGRES_PORT", "5432"))),
             database=kwargs.get("database", os.getenv("POSTGRES_DB", "knowledge_graph")),
             user=kwargs.get("user", os.getenv("POSTGRES_USER", "admin")),
-            password=kwargs.get("password", os.getenv("POSTGRES_PASSWORD", "password")),
+            password=kwargs.get("password", os.environ["POSTGRES_PASSWORD"]),
             min_connections=kwargs.get("min_connections", 1),
             max_connections=kwargs.get("max_connections", 10)
         )
