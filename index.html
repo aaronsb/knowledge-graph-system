@@ -338,17 +338,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        development/
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9413,17 +9402,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        development/
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9534,7 +9512,7 @@
 <h1 id="documentation-index">Documentation Index</h1>
 <p>This directory contains documentation for the Knowledge Graph System.</p>
 <h2 id="quick-start">Quick Start</h2>
-<p><strong><a href="guides/QUICKSTART.md">Quick Start Guide</a></strong> - Operator architecture setup (containerized deployment)</p>
+<p><strong><a href="operating/quick-start/">Quick Start Guide</a></strong> - Operator architecture setup (containerized deployment)</p>
 <p>Uses Docker containers with the operator pattern (ADR-061). No local Python installation required.</p>
 <h2 id="directory-structure">Directory Structure</h2>
 <h3 id="manual"><code>manual/</code></h3>
@@ -9551,29 +9529,21 @@
 <h3 id="architecture"><code>architecture/</code></h3>
 <p>Architecture decisions and design documents.</p>
 <ul>
-<li><strong>ARCHITECTURE_DECISIONS.md</strong> - ADR index (67 decisions)</li>
-<li><strong>ARCHITECTURE_OVERVIEW.md</strong> - System architecture overview</li>
-<li><strong>ADR-###-*.md</strong> - Individual architecture decision records</li>
+<li><strong>INDEX.md</strong> - ADR index (96 decisions)</li>
+<li><strong>ADR-###-*.md</strong> - Individual architecture decision records (organized in subdirectories)</li>
 </ul>
 <p>Key ADRs for understanding the system:
-- <a href="architecture/ADR-044-probabilistic-truth-convergence.md">ADR-044</a> - Probabilistic truth convergence
-- <a href="architecture/ADR-058-polarity-axis-triangulation.md">ADR-058</a> - Truth as geometric projection
-- <a href="architecture/ADR-063-semantic-diversity-authenticity.md">ADR-063</a> - Semantic diversity as authenticity
-- <a href="architecture/ADR-052-vocabulary-expansion-consolidation.md">ADR-052</a> - Vocabulary expansion-consolidation</p>
+- <a href="architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/">ADR-044</a> - Probabilistic truth convergence
+- <a href="architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/">ADR-058</a> - Truth as geometric projection
+- <a href="architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/">ADR-063</a> - Semantic diversity as authenticity
+- <a href="architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/">ADR-052</a> - Vocabulary expansion-consolidation</p>
 <h3 id="guides"><code>guides/</code></h3>
 <p>Standalone guides for specific topics.</p>
 <ul>
-<li><strong>QUICKSTART.md</strong> - Quick start using operator architecture</li>
 <li><strong>DEPLOYMENT.md</strong> - Deployment strategies for all environments</li>
 <li><strong>VOCABULARY_CATEGORIES.md</strong> - Vocabulary category scores and confidence</li>
 <li><strong>SCHEDULED-JOBS.md</strong> - Background maintenance tasks</li>
 <li><strong>EPISTEMIC-STATUS-FILTERING.md</strong> - Filtering by epistemic status</li>
-</ul>
-<h3 id="development"><code>development/</code></h3>
-<p>Development journals and internal notes.</p>
-<ul>
-<li><strong>DEV_JOURNAL_chunked_ingestion.md</strong> - Chunked ingestion development</li>
-<li><strong>LEARNED_KNOWLEDGE_MCP.md</strong> - MCP integration learnings</li>
 </ul>
 <h3 id="testing"><code>testing/</code></h3>
 <p>Test coverage specifications.</p>
@@ -9585,7 +9555,7 @@
 <h2 id="quick-navigation">Quick Navigation</h2>
 <h3 id="new-users">New Users</h3>
 <ol>
-<li>Start with <a href="guides/QUICKSTART.md">QUICKSTART.md</a> - Operator architecture setup</li>
+<li>Start with <a href="operating/quick-start/">QUICKSTART.md</a> - Operator architecture setup</li>
 <li>Learn about <a href="manual/02-configuration/01-AI_PROVIDERS/">AI Providers</a></li>
 <li>Read <a href="manual/01-getting-started/03-INGESTION/">INGESTION.md</a> for document ingestion workflow</li>
 <li>See <a href="manual/03-integration/02-VOCABULARY_CONSOLIDATION/">VOCABULARY_CONSOLIDATION.md</a> for managing edge vocabulary growth</li>
@@ -9606,8 +9576,8 @@
 </ol>
 <h3 id="developers">Developers</h3>
 <ol>
-<li>Read <a href="architecture/ARCHITECTURE_OVERVIEW.md">ARCHITECTURE_OVERVIEW.md</a></li>
-<li>Review <a href="architecture/ADR-016-apache-age-migration.md">ADR-016</a> for current database architecture</li>
+<li>Read <a href="reference/ARCHITECTURE_OVERVIEW/">ARCHITECTURE_OVERVIEW.md</a></li>
+<li>Review <a href="architecture/database-schema/ADR-016-apache-age-migration/">ADR-016</a> for current database architecture</li>
 <li>Learn about <a href="manual/05-maintenance/02-DATABASE_MIGRATIONS/">DATABASE_MIGRATIONS.md</a> for schema evolution (ADR-040)</li>
 <li>Reference <a href="manual/06-reference/01-SCHEMA_REFERENCE/">SCHEMA_REFERENCE.md</a> for complete schema documentation</li>
 <li>Check <a href="testing/TEST_COVERAGE/">TEST_COVERAGE.md</a> for testing guidelines</li>
@@ -9617,8 +9587,7 @@
 <ol>
 <li>Read architecture decisions in <code>architecture/</code></li>
 <li>Follow test guidelines in <code>testing/</code></li>
-<li>Review development journals in <code>development/</code></li>
-<li>Understand system concepts in <code>reference/</code></li>
+<li>Understand system concepts in <code>concepts/</code></li>
 </ol>
 
 
