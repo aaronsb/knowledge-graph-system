@@ -1050,9 +1050,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         fi = pyfuse3.FileInfo(fh=inode)
 
-        # Image entries have unknown size until first read — use direct_io
-        # to bypass kernel page cache so reads aren't limited by st_size
-        if entry.entry_type in ("image_document", "image_evidence"):
+        # Virtual files have unknown size until first read — use direct_io
+        # to bypass kernel page cache so reads aren't limited by st_size.
+        # Without this, the kernel truncates reads at the placeholder st_size (4096).
+        if entry.entry_type in ("document", "concept", "image_document", "image_prose", "image_evidence"):
             fi.direct_io = True
 
         return fi
@@ -1089,6 +1090,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         if cacheable:
             cached = self._cache.get_content(fh)
             if cached is not None:
+                entry.size = len(cached)
                 if not self._cache.is_content_fresh(fh):
                     # Stale — serve immediately, refresh in background
                     self._cache.spawn_refresh(fh, lambda e=entry: self._fetch_content(e))
@@ -1097,6 +1099,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # No cache — block on fetch
         try:
             content_bytes = await self._fetch_content(entry)
+            entry.size = len(content_bytes)
 
             if cacheable:
                 self._cache.put_content(fh, content_bytes)
