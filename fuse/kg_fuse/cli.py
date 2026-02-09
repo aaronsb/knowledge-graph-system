@@ -35,6 +35,58 @@ from .safety import (
 log = logging.getLogger(__name__)
 
 
+# --- ANSI formatting helpers ---
+
+def _supports_color() -> bool:
+    """Check if terminal supports ANSI colors."""
+    if os.environ.get("NO_COLOR"):
+        return False
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+        return False
+    return True
+
+_COLOR = _supports_color()
+
+def _bold(text: str) -> str:
+    return f"\033[1m{text}\033[0m" if _COLOR else text
+
+def _green(text: str) -> str:
+    return f"\033[32m{text}\033[0m" if _COLOR else text
+
+def _yellow(text: str) -> str:
+    return f"\033[33m{text}\033[0m" if _COLOR else text
+
+def _red(text: str) -> str:
+    return f"\033[31m{text}\033[0m" if _COLOR else text
+
+def _dim(text: str) -> str:
+    return f"\033[2m{text}\033[0m" if _COLOR else text
+
+
+def _systemd_unit_active() -> bool:
+    """Check if kg-fuse systemd user service is active."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "is-active", "kg-fuse"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip() == "active"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def _systemd_unit_enabled() -> bool:
+    """Check if kg-fuse systemd user service is enabled."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "is-enabled", "kg-fuse"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip() == "enabled"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
 def _get_version() -> str:
     """Get package version."""
     from importlib.metadata import version, PackageNotFoundError
@@ -105,24 +157,28 @@ def cmd_status(args: Namespace) -> None:
     ver = _get_version()
     config = load_config()
 
-    print(f"\nkg-fuse {ver}\n")
+    print(f"\n{_bold(f'kg-fuse {ver}')}\n")
 
     # Check if fuse.json exists
     fuse_path = get_fuse_config_path()
     if not fuse_path.exists():
         kg_path = get_kg_config_path()
         print("No configuration found. Run:")
-        print(f"  kg-fuse init /mnt/knowledge\n")
+        print(f"  {_bold('kg-fuse init /mnt/knowledge')}\n")
         if not kg_path.exists():
             print("Prerequisites:")
-            print("  npm install -g @aaronsb/kg-cli")
-            print("  kg login")
-            print("  kg oauth create")
+            print(f"  {_dim('npm install -g @aaronsb/kg-cli')}")
+            print(f"  {_dim('kg login')}")
+            print(f"  {_dim('kg oauth create')}")
         return
+
+    # Detect daemonization method
+    unit_path = get_systemd_unit_path()
+    systemd_enabled = _systemd_unit_enabled()
+    systemd_active = _systemd_unit_active()
 
     # Scan for all running kg-fuse daemon processes
     all_procs = find_kg_fuse_processes()
-    # Filter out this status process itself
     my_pid = os.getpid()
     daemon_procs = [p for p in all_procs if p["pid"] != my_pid]
 
@@ -131,77 +187,96 @@ def cmd_status(args: Namespace) -> None:
 
     # Show mounts
     if config.mounts:
-        print("Mounts:")
+        print(f"{_bold('Mounts:')}")
         for mount_path, mount_cfg in config.mounts.items():
             status = mount_status(mount_path)
             if status["pid"]:
                 accounted_pids.add(status["pid"])
             if status["orphaned"]:
-                state = "ORPHANED (run: kg-fuse repair)"
+                state = _red("ORPHANED") + _dim(" (run: kg-fuse repair)")
             elif status["running"]:
-                state = f"mounted    pid {status['pid']}"
+                state = _green("mounted") + f"    pid {status['pid']}"
             else:
-                state = "stopped"
+                state = _dim("stopped")
             print(f"  {mount_path:<30s} {state}")
     else:
-        print("Mounts: (none configured)")
-        print("  Add one with: kg-fuse init /mnt/knowledge")
+        print(f"{_bold('Mounts:')} {_dim('(none configured)')}")
+        print(f"  Add one with: {_bold('kg-fuse init /mnt/knowledge')}")
 
     # Check for unaccounted daemon processes (not tied to any configured mount)
     rogue_procs = [p for p in daemon_procs if p["pid"] not in accounted_pids]
     if rogue_procs:
-        print(f"\n  WARNING: {len(rogue_procs)} kg-fuse process(es) not in config:")
+        print(f"\n  {_yellow('WARNING:')} {len(rogue_procs)} kg-fuse process(es) not in config:")
         for p in rogue_procs:
-            print(f"    pid {p['pid']}: {p['cmdline'][:80]}")
-        print("  These may be leftover daemons. Use 'kg-fuse repair' to investigate.")
+            print(f"    pid {p['pid']}: {_dim(p['cmdline'][:80])}")
+        print(f"  Run {_bold('kg-fuse repair')} to investigate.")
 
-    # Daemon summary
+    # Daemon management summary
     print()
     running_count = sum(
         1 for mp in config.mounts
         if mount_status(mp)["running"]
     )
     total_daemon_count = len(daemon_procs)
-    if total_daemon_count == 0:
-        print("Daemons: none running")
+
+    if systemd_enabled:
+        if systemd_active:
+            mgmt = _green("systemd user service") + " (enabled, active)"
+        else:
+            mgmt = _yellow("systemd user service") + " (enabled, inactive)"
+    elif unit_path.exists():
+        mgmt = _dim("systemd user service") + " (installed, not enabled)"
     else:
-        print(f"Daemons: {total_daemon_count} process(es) running"
+        if total_daemon_count > 0:
+            mgmt = _dim("session daemon") + " (manual / shell RC)"
+        else:
+            mgmt = _dim("none")
+
+    print(f"{_bold('Managed by:')} {mgmt}")
+
+    if total_daemon_count == 0:
+        print(f"{_bold('Daemons:')}  {_dim('none running')}")
+    else:
+        print(f"{_bold('Daemons:')}  {total_daemon_count} process(es)"
               f" ({running_count} configured mount(s) active)")
 
     # Auth info
+    print()
     if config.client_id:
-        print(f"Auth:   {config.client_id} (via {get_kg_config_path()})")
+        print(f"{_bold('Auth:')}    {config.client_id} {_dim(f'(via {get_kg_config_path()})')}")
     else:
-        print("Auth:   not configured")
+        print(f"{_bold('Auth:')}    {_red('not configured')}")
 
     # API
     reachable, api_info = _test_api(config.api_url)
     if reachable:
-        print(f"API:    {config.api_url} (v{api_info})")
+        print(f"{_bold('API:')}     {config.api_url} {_green(f'(v{api_info})')}")
     else:
-        print(f"API:    {config.api_url} ({api_info})")
+        print(f"{_bold('API:')}     {config.api_url} {_red(f'({api_info})')}")
 
     # FUSE library
     fuse3_available = shutil.which("fusermount3") or shutil.which("fusermount")
-    print(f"FUSE:   {'present' if fuse3_available else 'NOT FOUND'}")
+    fuse_state = _green("present") if fuse3_available else _red("NOT FOUND")
+    print(f"{_bold('FUSE:')}    {fuse_state}")
 
     # Show other FUSE mounts on the system (collision awareness)
     all_fuse = find_all_fuse_mounts()
     other_fuse = [m for m in all_fuse if not m["is_ours"] and not m["is_system"]]
     if other_fuse:
-        print(f"\nOther FUSE mounts on system:")
+        print(f"\n{_bold('Other FUSE mounts:')}")
         for m in other_fuse:
-            print(f"  {m['mountpoint']:<30s} {m['source']} ({m['fstype']})")
+            detail = f"{m['source']} ({m['fstype']})"
+            print(f"  {m['mountpoint']:<30s} {_dim(detail)}")
 
     # Commands hint
-    print("\nCommands:")
-    print("  kg-fuse mount              Mount all configured filesystems")
-    print("  kg-fuse unmount            Unmount all")
-    print("  kg-fuse init [path]        Add a new mount")
-    print("  kg-fuse repair             Fix orphaned mounts / stale state")
-    print("  kg-fuse config             Show configuration")
-    print("  kg-fuse update             Update kg-fuse via pipx")
-    print("  kg-fuse --help             Full help")
+    print(f"\n{_dim('Commands:')}")
+    print(f"  {_dim('kg-fuse mount              Mount all configured filesystems')}")
+    print(f"  {_dim('kg-fuse unmount            Unmount all')}")
+    print(f"  {_dim('kg-fuse init [path]        Add a new mount')}")
+    print(f"  {_dim('kg-fuse repair             Fix orphaned mounts / stale state')}")
+    print(f"  {_dim('kg-fuse config             Show configuration')}")
+    print(f"  {_dim('kg-fuse update             Update kg-fuse via pipx')}")
+    print(f"  {_dim('kg-fuse --help             Full help')}")
     print()
 
 
@@ -210,20 +285,20 @@ def cmd_init(args: Namespace) -> None:
     mountpoint = os.path.realpath(args.mountpoint)
     api_url = args.api_url
 
-    print(f"\nKnowledge Graph FUSE Driver Setup")
+    print(f"\n{_bold('Knowledge Graph FUSE Driver Setup')}")
     print(f"{'=' * 34}\n")
 
     # Step 1: Check kg config exists
     kg_config = read_kg_config()
     if kg_config is None:
         kg_path = get_kg_config_path()
-        print(f"No kg configuration found at {kg_path}\n")
+        print(f"{_red('No kg configuration found')} at {kg_path}\n")
         print("The kg CLI manages authentication for all kg tools.")
         print("Install and configure it first:\n")
-        print("  npm install -g @aaronsb/kg-cli")
-        print("  kg login")
-        print("  kg oauth create")
-        print(f"\nThen run kg-fuse init again.")
+        print(f"  {_dim('npm install -g @aaronsb/kg-cli')}")
+        print(f"  {_dim('kg login')}")
+        print(f"  {_dim('kg oauth create')}")
+        print(f"\nThen run {_bold('kg-fuse init')} again.")
         sys.exit(1)
 
     # Step 2: Resolve API URL
@@ -231,22 +306,22 @@ def cmd_init(args: Namespace) -> None:
         api_url = kg_config.get("api_url", "http://localhost:8000")
 
     # Step 3: Check API
-    print(f"Checking API... ", end="", flush=True)
+    print("Checking API... ", end="", flush=True)
     reachable, api_info = _test_api(api_url)
     if reachable:
-        print(f"OK  {api_url} (v{api_info})")
+        print(f"{_green('OK')}  {api_url} (v{api_info})")
     else:
-        print(f"FAILED  {api_url} ({api_info})")
+        print(f"{_red('FAILED')}  {api_url} ({api_info})")
         print("\nMake sure the knowledge graph platform is running.")
-        print("  operator.sh start")
+        print(f"  {_dim('operator.sh start')}")
         sys.exit(1)
 
     # Step 4: Check auth
-    print(f"Checking credentials... ", end="", flush=True)
+    print("Checking credentials... ", end="", flush=True)
     client_id, client_secret, _ = read_kg_credentials()
 
     if not client_id or not client_secret:
-        print("MISSING\n")
+        print(f"{_yellow('MISSING')}\n")
         print(f"  No OAuth credentials in {get_kg_config_path()}\n")
         if _prompt_yn("  Run 'kg oauth create' now?"):
             try:
@@ -271,20 +346,20 @@ def cmd_init(args: Namespace) -> None:
     # Test credentials
     auth_ok, auth_info = _test_auth(api_url, client_id, client_secret)
     if auth_ok:
-        print(f"OK  {client_id}")
+        print(f"{_green('OK')}  {client_id}")
     else:
-        print(f"FAILED  {auth_info}")
+        print(f"{_red('FAILED')}  {auth_info}")
         print("\n  Credentials may be expired. Try:")
-        print("    kg oauth create")
+        print(f"    {_dim('kg oauth create')}")
         sys.exit(1)
 
     # Step 5: Check credential permissions
     perm_warning = check_config_permissions(get_kg_config_path())
     if perm_warning:
-        print(f"\n  {perm_warning}")
+        print(f"\n  {_yellow(perm_warning)}")
 
     # Step 6: Validate mountpoint
-    print(f"\nMount point: {mountpoint}")
+    print(f"\n{_bold('Mount point:')} {mountpoint}")
 
     # Check if already configured
     fuse_data = read_fuse_config() or {}
@@ -316,19 +391,26 @@ def cmd_init(args: Namespace) -> None:
     print(f"Data directory: {mount_data}")
 
     # Step 9: Offer autostart
+    systemd_installed = False
+    rc_installed = False
     print()
     if has_systemd():
-        if _prompt_yn("Install systemd user service for auto-mount?"):
+        # Check if systemd unit already exists and is enabled
+        if _systemd_unit_enabled():
+            print(f"Autostart: {_green('systemd user service already enabled')}")
+            systemd_installed = True
+        elif _prompt_yn("Install systemd user service for auto-mount?"):
             kg_fuse_path = shutil.which("kg-fuse") or "kg-fuse"
             ok, msg = install_systemd_unit(kg_fuse_path)
             if ok:
-                print(f"\n  {msg}")
+                systemd_installed = True
+                print(f"\n  {_green(msg)}")
                 print(f"\n  Manage with:")
-                print(f"    systemctl --user status kg-fuse")
-                print(f"    systemctl --user restart kg-fuse")
-                print(f"    journalctl --user -u kg-fuse -f")
+                print(f"    {_dim('systemctl --user status kg-fuse')}")
+                print(f"    {_dim('systemctl --user restart kg-fuse')}")
+                print(f"    {_dim('journalctl --user -u kg-fuse -f')}")
             else:
-                print(f"\n  {msg}")
+                print(f"\n  {_red(msg)}")
     else:
         shell_info = detect_shell()
         if shell_info:
@@ -337,11 +419,29 @@ def cmd_init(args: Namespace) -> None:
                 mount_line = "command -v kg-fuse >/dev/null && kg-fuse mount"
                 ok, msg = add_to_rc(rc_path, mount_line)
                 print(f"  {msg}")
+                if ok:
+                    rc_installed = True
 
-    # Summary
-    print(f"\nReady! Mount with:")
-    print(f"  kg-fuse mount {mountpoint}")
-    print(f"  kg-fuse mount                # mounts all configured")
+    # Summary — context-aware about autostart
+    print()
+    if systemd_installed:
+        # Systemd handles it — mount is either already active or will start now
+        if _systemd_unit_active():
+            print(f"{_green('Ready!')} Filesystem is mounted at {_bold(mountpoint)}")
+            print(f"Auto-mounts on login via systemd user service.")
+        else:
+            print(f"{_green('Ready!')} Systemd service will mount {_bold(mountpoint)} shortly.")
+            print(f"Auto-mounts on login via systemd user service.")
+        print(f"\n  {_dim('kg-fuse status                # check mount status')}")
+        print(f"  {_dim('systemctl --user restart kg-fuse  # restart service')}")
+    elif rc_installed:
+        print(f"{_green('Ready!')} Mount with:")
+        print(f"  {_bold(f'kg-fuse mount {mountpoint}')}")
+        print(f"\nWill auto-mount on shell login.")
+    else:
+        print(f"{_green('Ready!')} Mount with:")
+        print(f"  {_bold(f'kg-fuse mount {mountpoint}')}")
+        print(f"  {_dim(f'kg-fuse mount                # mounts all configured')}")
     print()
 
 
@@ -557,8 +657,10 @@ def cmd_config(args: Namespace) -> None:
     kg_path = get_kg_config_path()
     fuse_path = get_fuse_config_path()
 
-    print(f"\nkg config:   {kg_path} {'(exists)' if kg_path.exists() else '(NOT FOUND)'}")
-    print(f"fuse config: {fuse_path} {'(exists)' if fuse_path.exists() else '(NOT FOUND)'}")
+    kg_exists = _green("(exists)") if kg_path.exists() else _red("(NOT FOUND)")
+    fuse_exists = _green("(exists)") if fuse_path.exists() else _red("(NOT FOUND)")
+    print(f"\n{_bold('kg config:')}   {kg_path} {kg_exists}")
+    print(f"{_bold('fuse config:')} {fuse_path} {fuse_exists}")
 
     # Show kg config auth (masked)
     kg_data = read_kg_config()
@@ -598,7 +700,7 @@ def cmd_repair(args: Namespace) -> None:
     config = load_config()
     issues = 0
 
-    print(f"\nkg-fuse repair\n")
+    print(f"\n{_bold('kg-fuse repair')}\n")
 
     # Check for orphaned mounts in /proc/mounts
     mounted = find_mounted_fuse()
@@ -606,7 +708,7 @@ def cmd_repair(args: Namespace) -> None:
         mp = entry["mountpoint"]
         if is_mount_orphaned(mp):
             issues += 1
-            print(f"  ORPHANED: {mp} (transport endpoint not connected)")
+            print(f"  {_red('ORPHANED:')} {mp} (transport endpoint not connected)")
             if _prompt_yn(f"  Clean up with fusermount -u?"):
                 ok, msg = fusermount_unmount(mp)
                 print(f"    {msg}")
@@ -617,7 +719,7 @@ def cmd_repair(args: Namespace) -> None:
         status = mount_status(mount_path)
         if status["pid"] and not status["running"]:
             issues += 1
-            print(f"  STALE PID: {mount_path} (pid {status['pid']} not running)")
+            print(f"  {_yellow('STALE PID:')} {mount_path} (pid {status['pid']} not running)")
             clear_pid(mount_path)
             print(f"    Cleaned up PID file")
 
@@ -625,7 +727,7 @@ def cmd_repair(args: Namespace) -> None:
     for mount_path in config.mounts:
         if not os.path.isdir(mount_path):
             issues += 1
-            print(f"  MISSING DIR: {mount_path} does not exist")
+            print(f"  {_yellow('MISSING DIR:')} {mount_path} does not exist")
             if _prompt_yn(f"  Remove from config?"):
                 from .config import remove_mount_from_config
                 remove_mount_from_config(mount_path)
@@ -647,8 +749,8 @@ def cmd_repair(args: Namespace) -> None:
     if rogue_procs:
         for p in rogue_procs:
             issues += 1
-            print(f"  ROGUE PROCESS: pid {p['pid']}")
-            print(f"    {p['cmdline'][:100]}")
+            print(f"  {_red('ROGUE PROCESS:')} pid {p['pid']}")
+            print(f"    {_dim(p['cmdline'][:100])}")
             if _prompt_yn(f"  Kill this process?"):
                 try:
                     import signal
@@ -665,15 +767,15 @@ def cmd_repair(args: Namespace) -> None:
             content = unit_path.read_text()
             if kg_fuse_path not in content:
                 issues += 1
-                print(f"  STALE UNIT: systemd unit references wrong path")
+                print(f"  {_yellow('STALE UNIT:')} systemd unit references wrong path")
                 if _prompt_yn(f"  Update to {kg_fuse_path}?"):
                     ok, msg = install_systemd_unit(kg_fuse_path)
                     print(f"    {msg}")
 
     if issues == 0:
-        print("  No issues found.")
+        print(f"  {_green('No issues found.')}")
     else:
-        print(f"\n  Fixed {issues} issue{'s' if issues != 1 else ''}.")
+        print(f"\n  Addressed {issues} issue{'s' if issues != 1 else ''}.")
     print()
 
 
