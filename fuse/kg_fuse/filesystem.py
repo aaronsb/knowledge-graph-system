@@ -71,7 +71,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
     def __init__(self, api_url: str, client_id: str, client_secret: str,
                  tags_config: TagsConfig = None, jobs_config: JobsConfig = None,
-                 cache_config: CacheConfig = None):
+                 cache_config: CacheConfig = None,
+                 query_store: QueryStore = None):
         super().__init__()
         self.tags_config = tags_config or TagsConfig()
         self.jobs_config = jobs_config or JobsConfig()
@@ -80,8 +81,8 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # API client for graph operations
         self._api = KnowledgeGraphClient(api_url, client_id, client_secret)
 
-        # Query store for user-created directories
-        self.query_store = QueryStore()
+        # Query store for user-created directories (caller can inject per-mount store)
+        self.query_store = query_store or QueryStore()
 
         # Inode management - root and ontology_root are fixed
         self._inodes: dict[int, InodeEntry] = {
