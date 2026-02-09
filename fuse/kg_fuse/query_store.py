@@ -50,12 +50,20 @@ class QueryStore:
     GLOBAL_PREFIX = "_global_"
 
     def __init__(self, data_path: Optional[Path] = None):
-        self.path = data_path or (self._get_data_path() / "queries.toml")
+        """Initialize query store.
+
+        Args:
+            data_path: Path to queries.toml file. If None, uses the legacy
+                       global path (~/.local/share/kg-fuse/queries.toml).
+                       Per-mount paths are preferred — pass
+                       get_mount_data_dir(mountpoint) / "queries.toml".
+        """
+        self.path = data_path or (self._get_default_data_path() / "queries.toml")
         self.queries: dict[str, Query] = {}
         self._load()
 
-    def _get_data_path(self) -> Path:
-        """Get XDG data directory for kg-fuse."""
+    def _get_default_data_path(self) -> Path:
+        """Get default XDG data directory for kg-fuse (legacy global path)."""
         xdg_data = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
         data_dir = Path(xdg_data) / "kg-fuse"
         data_dir.mkdir(parents=True, exist_ok=True)

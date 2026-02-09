@@ -2,23 +2,24 @@
 """
 Knowledge Graph FUSE Driver
 
-Mounts the knowledge graph as a filesystem.
+Multi-command CLI for mounting and managing FUSE filesystems
+backed by the knowledge graph API.
 
 Usage:
-    kg-fuse /mnt/knowledge                          # Uses config file
-    kg-fuse /mnt/knowledge --client-id X --client-secret Y  # Override config
+    kg-fuse                          # Status + help
+    kg-fuse init /mnt/knowledge      # Interactive setup
+    kg-fuse mount                    # Mount all configured
+    kg-fuse mount /mnt/knowledge     # Mount one
+    kg-fuse unmount                  # Unmount all
+    kg-fuse status                   # Same as bare kg-fuse
+    kg-fuse config                   # Show configuration
+    kg-fuse repair                   # Fix orphaned mounts
+    kg-fuse update                   # Self-update via pipx
 """
 
 import argparse
-import logging
 import sys
 from importlib.metadata import version, PackageNotFoundError
-
-import pyfuse3
-import trio
-
-from .config import load_config, get_config_path, TagsConfig, JobsConfig, CacheConfig
-from .filesystem import KnowledgeGraphFS
 
 
 def get_version() -> str:
@@ -28,134 +29,108 @@ def get_version() -> str:
     except PackageNotFoundError:
         return "dev"
 
-log = logging.getLogger(__name__)
 
-
-def parse_args() -> argparse.Namespace:
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Mount knowledge graph as FUSE filesystem",
-        epilog=f"Config file: {get_config_path()}\nCreate with: kg oauth create --for fuse",
+        prog="kg-fuse",
+        description="Knowledge Graph FUSE Driver",
+        epilog="Run 'kg-fuse' with no arguments for status overview.",
     )
     parser.add_argument(
         "--version", "-V",
         action="version",
         version=f"kg-fuse {get_version()}",
     )
-    parser.add_argument(
-        "mountpoint",
-        nargs="?",  # Optional when --version is used
-        help="Directory to mount the filesystem",
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    # --- mount ---
+    mount_parser = subparsers.add_parser(
+        "mount", help="Mount filesystem(s)",
+        description="Mount one or all configured FUSE filesystems.",
     )
-    parser.add_argument(
-        "--api-url",
-        help="Knowledge graph API URL (default: from config or http://localhost:8000)",
+    mount_parser.add_argument(
+        "mountpoint", nargs="?",
+        help="Mount point (omit to mount all configured)",
     )
-    parser.add_argument(
-        "--client-id",
-        help="OAuth client ID (default: from config file)",
-    )
-    parser.add_argument(
-        "--client-secret",
-        help="OAuth client secret (default: from config file)",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug logging",
-    )
-    parser.add_argument(
-        "--foreground", "-f",
-        action="store_true",
+    mount_parser.add_argument("--api-url", help="API URL override")
+    mount_parser.add_argument("--client-id", help="OAuth client ID override")
+    mount_parser.add_argument("--client-secret", help="OAuth client secret override")
+    mount_parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    mount_parser.add_argument(
+        "--foreground", "-f", action="store_true",
         help="Run in foreground (don't daemonize)",
     )
-    return parser.parse_args()
 
+    # --- init ---
+    init_parser = subparsers.add_parser(
+        "init", help="Set up a new FUSE mount",
+        description="Interactive setup: detect auth, configure mount, offer autostart.",
+    )
+    init_parser.add_argument(
+        "mountpoint", nargs="?", default="/mnt/knowledge",
+        help="Mount point directory (default: /mnt/knowledge)",
+    )
+    init_parser.add_argument("--api-url", help="API URL override")
 
-def main() -> None:
-    args = parse_args()
-
-    # Mountpoint is required unless --version was used (which exits before here)
-    if not args.mountpoint:
-        print("Error: mountpoint is required", file=sys.stderr)
-        print("Usage: kg-fuse MOUNTPOINT [options]", file=sys.stderr)
-        sys.exit(1)
-
-    # Setup logging
-    logging.basicConfig(
-        level=logging.DEBUG if args.debug else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    # --- unmount ---
+    unmount_parser = subparsers.add_parser(
+        "unmount", help="Unmount filesystem(s)",
+        description="Unmount one or all FUSE filesystems.",
+    )
+    unmount_parser.add_argument(
+        "mountpoint", nargs="?",
+        help="Mount point (omit to unmount all)",
     )
 
-    # Load config from file, allow CLI overrides
-    config = load_config()
-
-    client_id = args.client_id
-    client_secret = args.client_secret
-    api_url = args.api_url
-
-    # Use config file values if not provided on CLI
-    if config:
-        if not client_id:
-            client_id = config.client_id
-        if not client_secret:
-            client_secret = config.client_secret
-        if not api_url:
-            api_url = config.api_url
-
-    # Default API URL
-    if not api_url:
-        api_url = "http://localhost:8000"
-
-    # Validate we have credentials
-    if not client_id or not client_secret:
-        config_path = get_config_path()
-        log.error(f"No OAuth credentials found.")
-        log.error(f"")
-        log.error(f"Either:")
-        log.error(f"  1. Create config: kg oauth create --for fuse")
-        log.error(f"  2. Pass on CLI: --client-id ID --client-secret SECRET")
-        log.error(f"")
-        log.error(f"Config file location: {config_path}")
-        sys.exit(1)
-
-    # Get configs (or use defaults)
-    tags_config = config.tags if config else TagsConfig()
-    jobs_config = config.jobs if config else JobsConfig()
-    cache_config = config.cache if config else CacheConfig()
-
-    # Create filesystem
-    fs = KnowledgeGraphFS(
-        api_url=api_url,
-        client_id=client_id,
-        client_secret=client_secret,
-        tags_config=tags_config,
-        jobs_config=jobs_config,
-        cache_config=cache_config,
+    # --- status ---
+    subparsers.add_parser(
+        "status", help="Show driver status",
+        description="Show status of all configured mounts and system info.",
     )
 
-    # FUSE options
-    fuse_options = set(pyfuse3.default_options)
-    fuse_options.add("fsname=kg-fuse")
-    if args.debug:
-        fuse_options.add("debug")
+    # --- config ---
+    subparsers.add_parser(
+        "config", help="Show configuration",
+        description="Show current configuration with masked secrets.",
+    )
 
-    log.info(f"Mounting knowledge graph at {args.mountpoint}")
-    log.info(f"API: {api_url}")
+    # --- repair ---
+    subparsers.add_parser(
+        "repair", help="Fix orphaned mounts / stale state",
+        description="Detect and fix orphaned mounts, stale PIDs, and bad config.",
+    )
 
-    pyfuse3.init(fs, args.mountpoint, fuse_options)
+    # --- update ---
+    subparsers.add_parser(
+        "update", help="Update kg-fuse via pipx",
+    )
 
-    async def _run():
-        async with trio.open_nursery() as nursery:
-            fs.set_nursery(nursery)
-            await pyfuse3.main()
+    args = parser.parse_args()
 
-    try:
-        trio.run(_run)
-    except KeyboardInterrupt:
-        log.info("Interrupted, unmounting...")
-    finally:
-        pyfuse3.close(unmount=True)
-        log.info("Unmounted")
+    # Bare kg-fuse (no subcommand) = status
+    if not args.command:
+        from .cli import cmd_status
+        cmd_status(args)
+        return
+
+    # Dispatch to subcommand
+    from .cli import (
+        cmd_init, cmd_mount, cmd_unmount,
+        cmd_status, cmd_config, cmd_repair, cmd_update,
+    )
+
+    commands = {
+        "init": cmd_init,
+        "mount": cmd_mount,
+        "unmount": cmd_unmount,
+        "status": cmd_status,
+        "config": cmd_config,
+        "repair": cmd_repair,
+        "update": cmd_update,
+    }
+
+    commands[args.command](args)
 
 
 if __name__ == "__main__":
