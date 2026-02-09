@@ -157,7 +157,8 @@ def write_fuse_config(data: dict) -> None:
     """Atomic write to fuse.json with file locking.
 
     Writes to a temp file, validates the roundtrip, then renames atomically.
-    Enforces 600 permissions.
+    The flock is held through the rename to prevent concurrent writers from
+    seeing a partially-written state. Enforces 600 permissions.
     """
     path = get_fuse_config_path()
     tmp_path = path.with_suffix(".tmp")
@@ -170,18 +171,18 @@ def write_fuse_config(data: dict) -> None:
     if roundtrip != data:
         raise ValueError("JSON roundtrip validation failed — refusing to write")
 
-    # Write to temp file with exclusive lock, then atomic rename
+    # Write to temp file with exclusive lock held through rename
     with open(tmp_path, "w") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         try:
             f.write(content)
             f.flush()
             os.fsync(f.fileno())
+            # Rename while still holding the lock — atomic on same filesystem
+            os.rename(tmp_path, path)
+            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 600
         finally:
             fcntl.flock(f, fcntl.LOCK_UN)
-
-    os.rename(tmp_path, path)
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 600
 
 
 # --- High-level config loading ---

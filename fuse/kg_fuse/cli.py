@@ -29,7 +29,7 @@ from .safety import (
     kill_mount_daemon, clear_pid,
     has_systemd, install_systemd_unit, get_systemd_unit_path,
     detect_shell, add_to_rc, remove_from_rc,
-    check_config_permissions,
+    check_config_permissions, fix_config_permissions,
 )
 
 log = logging.getLogger(__name__)
@@ -38,29 +38,34 @@ log = logging.getLogger(__name__)
 # --- ANSI formatting helpers ---
 
 def _supports_color() -> bool:
-    """Check if terminal supports ANSI colors."""
+    """Check if terminal supports ANSI colors.
+
+    Respects NO_COLOR env (https://no-color.org/) and checks tty.
+    """
     if os.environ.get("NO_COLOR"):
         return False
     if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
         return False
     return True
 
-_COLOR = _supports_color()
+def _use_color() -> bool:
+    """Whether to emit ANSI codes. Evaluated per-call for testability."""
+    return _supports_color()
 
 def _bold(text: str) -> str:
-    return f"\033[1m{text}\033[0m" if _COLOR else text
+    return f"\033[1m{text}\033[0m" if _use_color() else text
 
 def _green(text: str) -> str:
-    return f"\033[32m{text}\033[0m" if _COLOR else text
+    return f"\033[32m{text}\033[0m" if _use_color() else text
 
 def _yellow(text: str) -> str:
-    return f"\033[33m{text}\033[0m" if _COLOR else text
+    return f"\033[33m{text}\033[0m" if _use_color() else text
 
 def _red(text: str) -> str:
-    return f"\033[31m{text}\033[0m" if _COLOR else text
+    return f"\033[31m{text}\033[0m" if _use_color() else text
 
 def _dim(text: str) -> str:
-    return f"\033[2m{text}\033[0m" if _COLOR else text
+    return f"\033[2m{text}\033[0m" if _use_color() else text
 
 
 def _systemd_unit_active() -> bool:
@@ -182,14 +187,17 @@ def cmd_status(args: Namespace) -> None:
     my_pid = os.getpid()
     daemon_procs = [p for p in all_procs if p["pid"] != my_pid]
 
+    # Cache mount_status() results — each call scans /proc
+    mount_statuses = {mp: mount_status(mp) for mp in config.mounts}
+
     # Collect PIDs that are accounted for by configured mounts
     accounted_pids = set()
 
     # Show mounts
     if config.mounts:
         print(f"{_bold('Mounts:')}")
-        for mount_path, mount_cfg in config.mounts.items():
-            status = mount_status(mount_path)
+        for mount_path in config.mounts:
+            status = mount_statuses[mount_path]
             if status["pid"]:
                 accounted_pids.add(status["pid"])
             if status["orphaned"]:
@@ -213,10 +221,7 @@ def cmd_status(args: Namespace) -> None:
 
     # Daemon management summary
     print()
-    running_count = sum(
-        1 for mp in config.mounts
-        if mount_status(mp)["running"]
-    )
+    running_count = sum(1 for s in mount_statuses.values() if s["running"])
     total_daemon_count = len(daemon_procs)
 
     if systemd_enabled:
@@ -354,9 +359,13 @@ def cmd_init(args: Namespace) -> None:
         sys.exit(1)
 
     # Step 5: Check credential permissions
-    perm_warning = check_config_permissions(get_kg_config_path())
+    kg_cfg_path = get_kg_config_path()
+    perm_warning = check_config_permissions(kg_cfg_path)
     if perm_warning:
         print(f"\n  {_yellow(perm_warning)}")
+        if _prompt_yn("  Fix permissions now? (chmod 600)"):
+            ok, msg = fix_config_permissions(kg_cfg_path)
+            print(f"  {_green(msg) if ok else _red(msg)}")
 
     # Step 6: Validate mountpoint
     print(f"\n{_bold('Mount point:')} {mountpoint}")
@@ -675,7 +684,10 @@ def cmd_config(args: Namespace) -> None:
         # Permission check
         warning = check_config_permissions(kg_path)
         if warning:
-            print(f"\n  {warning}")
+            print(f"\n  {_yellow(warning)}")
+            if _prompt_yn("  Fix permissions now? (chmod 600)"):
+                ok, msg = fix_config_permissions(kg_path)
+                print(f"  {_green(msg) if ok else _red(msg)}")
 
     # Show fuse config
     fuse_data = read_fuse_config()

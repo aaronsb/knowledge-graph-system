@@ -492,3 +492,17 @@ def check_config_permissions(path: Path) -> Optional[str]:
             f"  chmod 600 {path}"
         )
     return None
+
+
+def fix_config_permissions(path: Path) -> tuple[bool, str]:
+    """Set config file to owner-only permissions (600).
+
+    Returns (success, message).
+    """
+    if not path.exists():
+        return False, f"{path} does not exist"
+    try:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+        return True, f"Set {path} to mode 600"
+    except OSError as e:
+        return False, f"Could not chmod {path}: {e}"

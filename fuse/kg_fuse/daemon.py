@@ -17,39 +17,6 @@ from .safety import write_pid, clear_pid, read_pid, is_process_alive, is_kg_fuse
 log = logging.getLogger(__name__)
 
 
-def daemonize() -> int:
-    """Double-fork to detach from terminal. Returns child PID to parent, 0 to child.
-
-    Parent receives the grandchild PID and returns it.
-    Grandchild (daemon) gets PID 0 and continues running.
-    """
-    # First fork — detach from parent
-    pid = os.fork()
-    if pid > 0:
-        # Parent: wait for intermediate child to get grandchild PID
-        _, status = os.waitpid(pid, 0)
-        # Read grandchild PID from pipe
-        return pid  # We return the intermediate child PID; actual daemon PID comes via pipe
-
-    # Intermediate child: create new session
-    os.setsid()
-
-    # Second fork — prevent acquiring a controlling terminal
-    pid = os.fork()
-    if pid > 0:
-        # Intermediate child exits, orphaning the daemon
-        os._exit(0)
-
-    # Daemon process: redirect stdio
-    devnull = os.open(os.devnull, os.O_RDWR)
-    os.dup2(devnull, 0)
-    os.dup2(devnull, 1)
-    os.dup2(devnull, 2)
-    os.close(devnull)
-
-    return 0
-
-
 def fork_mount(mountpoint: str, config: FuseConfig, run_fn: Callable) -> int:
     """Fork a daemon process that runs a FUSE mount.
 
@@ -117,11 +84,12 @@ def fork_mount(mountpoint: str, config: FuseConfig, run_fn: Callable) -> int:
     daemon_pid = os.getpid()
     write_pid(mountpoint, daemon_pid)
 
-    # Setup signal handler for clean shutdown
+    # Setup signal handler — raise KeyboardInterrupt so the FUSE event loop
+    # can perform async cleanup (unmount, close connections) rather than
+    # sys.exit() which would bypass finally blocks in async contexts.
     def _handle_term(signum, frame):
-        log.info(f"Received signal {signum}, unmounting {mountpoint}")
-        clear_pid(mountpoint)
-        sys.exit(0)
+        log.info(f"Received signal {signum}, requesting shutdown for {mountpoint}")
+        raise KeyboardInterrupt
 
     signal.signal(signal.SIGTERM, _handle_term)
     signal.signal(signal.SIGINT, _handle_term)
