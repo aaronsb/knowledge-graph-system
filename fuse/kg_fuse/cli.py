@@ -692,17 +692,30 @@ def cmd_config(args: Namespace) -> None:
     # Show fuse config
     fuse_data = read_fuse_config()
     if fuse_data:
-        print(f"\nFUSE config ({fuse_path}):")
-        print(f"  auth_client_id: {fuse_data.get('auth_client_id', '(not set)')}")
+        print(f"\n{_bold('FUSE mounts')} ({fuse_path}):")
+        print(f"  auth_client_id: {fuse_data.get('auth_client_id', _dim('(not set)'))}")
         mounts = fuse_data.get("mounts", {})
         if mounts:
-            print(f"  mounts:")
             for mp, settings in mounts.items():
-                print(f"    {mp}")
-                for key, val in settings.items():
-                    print(f"      {key}: {val}")
+                print(f"\n  {_bold(mp)}")
+                # Tags
+                tags = settings.get("tags", {})
+                enabled = tags.get("enabled", True)
+                threshold = tags.get("threshold", 0.5)
+                tag_status = _green("enabled") if enabled else _dim("disabled")
+                print(f"    tags:      {tag_status}, threshold {threshold}")
+                # Cache
+                cache = settings.get("cache", {})
+                epoch = cache.get("epoch_check_interval", 5.0)
+                max_bytes = cache.get("content_cache_max", 50 * 1024 * 1024)
+                max_mb = max_bytes / (1024 * 1024)
+                print(f"    cache:     epoch check {epoch}s, content max {max_mb:.0f} MB")
+                # Jobs
+                jobs = settings.get("jobs", {})
+                hidden = jobs.get("hide_jobs", False)
+                print(f"    jobs:      {'hidden' if hidden else 'visible'}")
         else:
-            print(f"  mounts: (none)")
+            print(f"  {_dim('No mounts configured.')}")
 
     print()
 
