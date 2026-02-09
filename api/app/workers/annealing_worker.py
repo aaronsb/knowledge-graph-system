@@ -1,15 +1,18 @@
 """
-Annealing cycle worker (ADR-200 Phase 3b).
+Annealing cycle worker (ADR-200).
 
 Runs ontology annealing cycle as a background job:
 score all → recompute centroids → identify candidates → LLM judgment → store proposals.
 
-Phase 3b is proposal-only (HITL). Phase 4 adds execution.
+In autonomous mode (default), proposals are auto-approved and dispatched
+for execution within the same job. In hitl mode, proposals wait for
+human review via the API.
 """
 
 import asyncio
 import logging
-from typing import Dict, Any
+from datetime import datetime, timezone
+from typing import Dict, Any, List
 
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ontology_scorer import OntologyScorer
@@ -85,6 +88,28 @@ def run_annealing_worker(
             specializes_threshold=specializes_threshold,
         ))
 
+        # Auto-approve and dispatch proposals in autonomous mode
+        automation_level = job_data.get("automation_level", "autonomous")
+        proposal_ids = result.get("proposal_ids", [])
+
+        if automation_level == "autonomous" and not dry_run and proposal_ids:
+            job_queue.update_job(job_id, {
+                "progress": {"stage": "executing_proposals", "percent": 90}
+            })
+            dispatched = _auto_approve_and_dispatch(
+                proposal_ids, age_client, job_queue
+            )
+            result["auto_dispatched"] = dispatched
+            logger.info(
+                f"Autonomous mode: dispatched {dispatched} of "
+                f"{len(proposal_ids)} proposals for execution"
+            )
+        elif proposal_ids:
+            logger.info(
+                f"HITL mode: {len(proposal_ids)} proposals awaiting "
+                f"human review (automation_level={automation_level})"
+            )
+
         job_queue.update_job(job_id, {
             "progress": {"stage": "complete", "percent": 100}
         })
@@ -104,3 +129,69 @@ def run_annealing_worker(
     finally:
         if age_client:
             age_client.close()
+
+
+def _auto_approve_and_dispatch(
+    proposal_ids: List[int],
+    age_client: AGEClient,
+    job_queue,
+) -> int:
+    """Auto-approve pending proposals and dispatch execution jobs.
+
+    Follows the same execution path as the human review endpoint:
+    mark approved → enqueue proposal_execution job → dispatch async.
+
+    Returns the number of proposals dispatched.
+    """
+    dispatched = 0
+    conn = age_client.pool.getconn()
+    try:
+        for proposal_id in proposal_ids:
+            try:
+                # Atomic approve — only if still pending (prevents double-dispatch)
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE kg_api.annealing_proposals
+                        SET status = 'approved',
+                            reviewed_by = 'annealing_worker',
+                            reviewed_at = %s
+                        WHERE id = %s AND status = 'pending'
+                        RETURNING id
+                    """, (datetime.now(timezone.utc), proposal_id))
+                    row = cur.fetchone()
+                conn.commit()
+
+                if not row:
+                    logger.warning(
+                        f"Proposal {proposal_id} not pending — skipping auto-approve"
+                    )
+                    continue
+
+                # Dispatch execution job
+                exec_job_id = job_queue.enqueue(
+                    job_type="proposal_execution",
+                    job_data={
+                        "proposal_id": proposal_id,
+                        "triggered_by": "annealing_worker",
+                    },
+                )
+                job_queue.update_job(exec_job_id, {
+                    "status": "approved",
+                    "approved_by": "annealing_worker",
+                })
+                job_queue.execute_job_async(exec_job_id)
+                dispatched += 1
+
+                logger.info(
+                    f"Auto-approved proposal {proposal_id}, "
+                    f"dispatched execution job {exec_job_id}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to auto-approve/dispatch proposal {proposal_id}: {e}",
+                    exc_info=True,
+                )
+    finally:
+        age_client.pool.putconn(conn)
+
+    return dispatched

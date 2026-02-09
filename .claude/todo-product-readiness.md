@@ -12,7 +12,8 @@ Backlog: `.claude/backlog-product-review.md`
 - [x] `[agent]` Pin dev AGE image to PG17 (upstream :latest advanced to PG18)
 - [x] `[agent]` Add migration runner retry loop for postgres startup race
 - [x] `[pair]` Stub honesty — vocab manager 4 silent no-ops, pruning 2 fake AI stubs. Wired to real LLM + database in PR #309.
-- [ ] `[human]` Triage known bugs — graph annealing job failures, FUSE truncation (#307)
+- [x] `[pair]` FUSE truncation (#307) — direct_io fix, PR #310
+- [x] `[pair]` Triage known bugs — annealing proposals stalled at pending; root cause: no auto-execution. Fixed: autonomous mode (default), hitl mode for diagnostics.
 
 ## Onboarding
 

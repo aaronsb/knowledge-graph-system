@@ -1,10 +1,11 @@
 """
-Annealing Manager — orchestrates ontology annealing cycles (ADR-200 Phase 3b).
+Annealing Manager — orchestrates ontology annealing cycles (ADR-200).
 
 Follows the vocabulary consolidation pattern:
 score all → identify candidates → LLM judgment → store proposals.
 
-Phase 3b is proposal-only (HITL). Phase 4 adds execution.
+In autonomous mode (default), proposals are auto-approved and executed
+by the annealing worker. In hitl mode, proposals wait for human review.
 """
 
 import logging
@@ -26,7 +27,8 @@ class AnnealingManager:
     """
     Runs annealing cycles: score, identify candidates, evaluate, propose.
 
-    Does NOT execute proposals — that's Phase 4.
+    Execution is handled by the annealing worker (autonomous mode) or
+    human review endpoint (hitl mode).
     """
 
     def __init__(self, age_client, scorer: OntologyScorer, ai_provider=None):
@@ -133,35 +135,36 @@ class AnnealingManager:
             }
 
         # 6. Evaluate and store proposals
-        proposals_generated = 0
+        proposal_ids = []
         remaining = max_proposals
 
         # Demotions first (more impactful)
         for candidate in demotion_candidates[:remaining]:
-            proposal = await self._evaluate_and_store_demotion(candidate, global_epoch)
-            if proposal:
-                proposals_generated += 1
+            proposal_id = await self._evaluate_and_store_demotion(candidate, global_epoch)
+            if proposal_id:
+                proposal_ids.append(proposal_id)
                 remaining -= 1
                 if remaining <= 0:
                     break
 
         # Then promotions
         for candidate in promotion_candidates[:remaining]:
-            proposal = await self._evaluate_and_store_promotion(candidate, global_epoch)
-            if proposal:
-                proposals_generated += 1
+            proposal_id = await self._evaluate_and_store_promotion(candidate, global_epoch)
+            if proposal_id:
+                proposal_ids.append(proposal_id)
                 remaining -= 1
                 if remaining <= 0:
                     break
 
         logger.info(
-            f"Annealing cycle complete: {proposals_generated} proposals, "
+            f"Annealing cycle complete: {len(proposal_ids)} proposals, "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
             f"{edge_result.get('edges_created', 0)} edges"
         )
 
         return {
-            "proposals_generated": proposals_generated,
+            "proposals_generated": len(proposal_ids),
+            "proposal_ids": proposal_ids,
             "demotion_candidates": len(demotion_candidates),
             "promotion_candidates": len(promotion_candidates),
             "scores_updated": len(all_scores),

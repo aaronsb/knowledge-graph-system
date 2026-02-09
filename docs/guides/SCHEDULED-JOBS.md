@@ -95,6 +95,94 @@ Instead of using timestamps, this job uses a change counter that increments when
 
 ---
 
+### 4. Ontology Annealing (Every 6 Hours / Post-Ingestion)
+
+**Schedule:** `0 */6 * * *` (Every 6 hours at minute 0) + post-ingestion trigger
+**Worker:** `annealing_worker`
+**Launcher:** `AnnealingLauncher`
+
+**What it does:**
+Self-organizes the ontology structure by promoting high-degree concepts to ontologies and demoting low-value ontologies back into their neighbors.
+
+**When it runs:**
+Only when the epoch delta since the last annealing cycle exceeds the interval threshold (default: 5 epochs). Also triggered after each ingestion job completes.
+
+**Why you need it:**
+As documents are ingested, the graph's natural structure diverges from human-imposed ontology boundaries. Some ontologies become weak (few concepts, low coherence), while individual concepts accumulate enough connections to merit their own ontology. Annealing automatically reorganizes this structure.
+
+**Automation modes:**
+- **autonomous** (default): Proposals are auto-approved and executed within the same job cycle. Like vocabulary consolidation, math grounds the LLM and the system operates without human intervention.
+- **hitl** (diagnostic): Proposals stay at `pending` status for human review via API/CLI. Use this mode to observe what the system would do before trusting it.
+
+Configure via: `UPDATE kg_api.annealing_options SET value = 'hitl' WHERE key = 'automation_level';`
+
+**Annealing cycle flow:**
+
+```mermaid
+sequenceDiagram
+    participant Trigger as Cron / Ingestion / API
+    participant Launcher as AnnealingLauncher
+    participant Worker as annealing_worker
+    participant Manager as AnnealingManager
+    participant LLM as LLM (Reasoning)
+    participant DB as PostgreSQL + AGE
+    participant Queue as JobQueue
+
+    Trigger->>Launcher: check_conditions()
+    Launcher->>DB: Atomic epoch delta check + claim
+    DB-->>Launcher: Epoch claimed (or skip)
+
+    Launcher->>Queue: enqueue(ontology_annealing)
+    Queue->>Worker: run_annealing_worker(job_data)
+
+    Worker->>Manager: run_annealing_cycle()
+    Manager->>DB: Score all ontologies
+    Manager->>DB: Recompute centroids
+    Manager->>DB: Derive ontology-to-ontology edges
+
+    Manager->>DB: Find demotion candidates (protection < threshold)
+    Manager->>DB: Find promotion candidates (degree >= min)
+
+    loop For each candidate (up to max_proposals)
+        Manager->>LLM: Evaluate with scores + context
+        LLM-->>Manager: Decision (promote/demote/reject + reasoning)
+        alt Decision confirmed
+            Manager->>DB: INSERT proposal (status='pending')
+        end
+    end
+
+    Manager-->>Worker: {proposal_ids, scores, ...}
+
+    alt automation_level = autonomous
+        loop For each proposal
+            Worker->>DB: UPDATE status='approved', reviewed_by='annealing_worker'
+            Worker->>Queue: enqueue(proposal_execution)
+            Queue->>Queue: execute_job_async → ProposalExecutor
+        end
+    else automation_level = hitl
+        Note over Worker,DB: Proposals await human review
+    end
+
+    Worker-->>Queue: Cycle result
+```
+
+**Decision criteria:**
+
+| Candidate Type | Threshold | LLM Evaluates |
+|---------------|-----------|---------------|
+| Demotion | `protection_score < 0.15` | Mass, coherence, protection, concept count, affinity targets |
+| Promotion | `concept degree >= 10` | Degree, top neighbors, ontology size, affinity targets |
+
+The LLM can reject candidates that pass numeric thresholds (e.g., directional concepts that shouldn't become ontologies, or small ontologies that serve a distinct purpose despite low scores).
+
+**Typical behavior:**
+- Checks every 6 hours AND after each ingestion
+- Epoch delta prevents duplicate runs regardless of trigger source
+- Usually generates 0-5 proposals per cycle
+- In autonomous mode, execution happens within seconds of proposal creation
+
+---
+
 ## How Scheduled Jobs Work
 
 ### Pattern: Polling with Rare Execution
@@ -307,9 +395,10 @@ Edit `VocabConsolidationLauncher.check_conditions()` in `api/api/launchers/vocab
 
 - **[ADR-050: Scheduled Jobs System](../architecture/ADR-050-scheduled-jobs-system.md)** - Technical architecture and design decisions
 - **[ADR-065: Vocabulary-Based Provenance](../architecture/ADR-065-vocabulary-based-provenance-relationships.md)** - Epistemic status measurement design
-- **[Vocabulary Management Guide](./VOCABULARY-MANAGEMENT.md)** - Understanding vocabulary categories and consolidation
+- **[ADR-200: Annealing Ontologies](../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md)** - Self-organizing graph structure design
+- **[Vocabulary Lifecycle Guide](./VOCABULARY_LIFECYCLE.md)** - Vocabulary consolidation flow and grounded LLM decisions
 - **[Epistemic Status Filtering Guide](./EPISTEMIC-STATUS-FILTERING.md)** - Using epistemic status in queries
 
 ---
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2026-02-08

@@ -1,5 +1,5 @@
 """
-Annealing Cycle Launcher (ADR-200 Phase 3b).
+Annealing Cycle Launcher (ADR-200).
 
 Triggers ontology annealing cycles based on epoch interval.
 Dual-trigger: runs on cron schedule AND after ingestion.
@@ -23,6 +23,7 @@ DEFAULTS = {
     "promotion_min_degree": 10,
     "max_proposals": 5,
     "enabled": True,
+    "automation_level": "autonomous",
 }
 
 
@@ -142,6 +143,7 @@ class AnnealingLauncher(JobLauncher):
             "derive_edges": options.get("derive_edges", True),
             "overlap_threshold": options.get("overlap_threshold", 0.1),
             "specializes_threshold": options.get("specializes_threshold", 0.3),
+            "automation_level": options.get("automation_level", "autonomous"),
             "dry_run": False,
             "triggered_at_epoch": current_epoch,
             "description": f"Annealing cycle at epoch {current_epoch}",

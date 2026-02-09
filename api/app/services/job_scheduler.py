@@ -5,6 +5,7 @@ Runs periodic maintenance tasks:
 - Cancel expired unapproved jobs (24h timeout)
 - Delete old completed/cancelled jobs (48h retention)
 - Delete old failed jobs (7 days retention for debugging)
+- Expire stale annealing proposals past their TTL (7 days)
 
 Based on ADR-014: Job Approval Workflow
 """
@@ -195,6 +196,27 @@ class JobScheduler:
 
         if deleted_failed > 0:
             logger.info(f"Deleted {deleted_failed} old failed jobs")
+
+        # Task 4: Expire stale annealing proposals past their TTL
+        try:
+            conn = queue._get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE kg_api.annealing_proposals
+                        SET status = 'expired'
+                        WHERE status = 'pending'
+                          AND expires_at IS NOT NULL
+                          AND expires_at < NOW()
+                    """)
+                    expired_proposals = cur.rowcount
+                conn.commit()
+                if expired_proposals > 0:
+                    logger.info(f"Expired {expired_proposals} stale annealing proposals")
+            finally:
+                queue._return_connection(conn)
+        except Exception as e:
+            logger.debug(f"Proposal expiry check skipped: {e}")
 
     async def manual_cleanup(self) -> Dict[str, int]:
         """
