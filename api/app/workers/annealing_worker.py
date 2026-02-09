@@ -154,7 +154,8 @@ def _auto_approve_and_dispatch(
                         UPDATE kg_api.annealing_proposals
                         SET status = 'approved',
                             reviewed_by = 'annealing_worker',
-                            reviewed_at = %s
+                            reviewed_at = %s,
+                            reviewer_notes = 'auto-approved (autonomous mode)'
                         WHERE id = %s AND status = 'pending'
                         RETURNING id
                     """, (datetime.now(timezone.utc), proposal_id))

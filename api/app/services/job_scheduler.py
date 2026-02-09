@@ -197,11 +197,12 @@ class JobScheduler:
         if deleted_failed > 0:
             logger.info(f"Deleted {deleted_failed} old failed jobs")
 
-        # Task 4: Expire stale annealing proposals past their TTL
+        # Task 4: Annealing proposal lifecycle cleanup
         try:
             conn = queue._get_connection()
             try:
                 with conn.cursor() as cur:
+                    # 4a. Expire stale pending proposals past their TTL
                     cur.execute("""
                         UPDATE kg_api.annealing_proposals
                         SET status = 'expired'
@@ -210,13 +211,50 @@ class JobScheduler:
                           AND expires_at < NOW()
                     """)
                     expired_proposals = cur.rowcount
+
+                    # 4b. Re-dispatch stranded approved proposals (approved
+                    # but no execution job dispatched, e.g. enqueue failed)
+                    cur.execute("""
+                        SELECT id FROM kg_api.annealing_proposals
+                        WHERE status = 'approved'
+                          AND executed_at IS NULL
+                          AND reviewed_at < NOW() - INTERVAL '5 minutes'
+                    """)
+                    stranded = cur.fetchall()
+
                 conn.commit()
+
                 if expired_proposals > 0:
                     logger.info(f"Expired {expired_proposals} stale annealing proposals")
+
+                # Re-dispatch stranded proposals outside the cursor
+                if stranded:
+                    for (proposal_id,) in stranded:
+                        try:
+                            exec_job_id = queue.enqueue(
+                                job_type="proposal_execution",
+                                job_data={
+                                    "proposal_id": proposal_id,
+                                    "triggered_by": "scheduler_recovery",
+                                },
+                            )
+                            queue.update_job(exec_job_id, {
+                                "status": "approved",
+                                "approved_by": "scheduler_recovery",
+                            })
+                            queue.execute_job_async(exec_job_id)
+                            logger.info(
+                                f"Re-dispatched stranded proposal {proposal_id} "
+                                f"as job {exec_job_id}"
+                            )
+                        except Exception as e:
+                            logger.error(
+                                f"Failed to re-dispatch proposal {proposal_id}: {e}"
+                            )
             finally:
                 queue._return_connection(conn)
         except Exception as e:
-            logger.debug(f"Proposal expiry check skipped: {e}")
+            logger.warning(f"Proposal lifecycle cleanup skipped: {e}")
 
     async def manual_cleanup(self) -> Dict[str, int]:
         """
