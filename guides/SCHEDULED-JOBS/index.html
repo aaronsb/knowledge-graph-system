@@ -1055,6 +1055,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#4-ontology-annealing-every-6-hours-post-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Ontology Annealing (Every 6 Hours / Post-Ingestion)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -9533,6 +9544,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#4-ontology-annealing-every-6-hours-post-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Ontology Annealing (Every 6 Hours / Post-Ingestion)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -9837,6 +9859,95 @@ Epistemic status measurements (WELL_GROUNDED, MIXED_GROUNDING, etc.) are based o
 <p><strong>Counter-based staleness:</strong>
 Instead of using timestamps, this job uses a change counter that increments whenever vocabulary is modified. This ensures measurements stay fresh relative to actual graph changes, not just elapsed time.</p>
 <hr />
+<h3 id="4-ontology-annealing-every-6-hours-post-ingestion">4. Ontology Annealing (Every 6 Hours / Post-Ingestion)</h3>
+<p><strong>Schedule:</strong> <code>0 */6 * * *</code> (Every 6 hours at minute 0) + post-ingestion trigger
+<strong>Worker:</strong> <code>annealing_worker</code>
+<strong>Launcher:</strong> <code>AnnealingLauncher</code></p>
+<p><strong>What it does:</strong>
+Self-organizes the ontology structure by promoting high-degree concepts to ontologies and demoting low-value ontologies back into their neighbors.</p>
+<p><strong>When it runs:</strong>
+Only when the epoch delta since the last annealing cycle exceeds the interval threshold (default: 5 epochs). Also triggered after each ingestion job completes.</p>
+<p><strong>Why you need it:</strong>
+As documents are ingested, the graph's natural structure diverges from human-imposed ontology boundaries. Some ontologies become weak (few concepts, low coherence), while individual concepts accumulate enough connections to merit their own ontology. Annealing automatically reorganizes this structure.</p>
+<p><strong>Automation modes:</strong>
+- <strong>autonomous</strong> (default): Proposals are auto-approved and executed within the same job cycle. Like vocabulary consolidation, math grounds the LLM and the system operates without human intervention.
+- <strong>hitl</strong> (diagnostic): Proposals stay at <code>pending</code> status for human review via API/CLI. Use this mode to observe what the system would do before trusting it.</p>
+<p>Configure via: <code>UPDATE kg_api.annealing_options SET value = 'hitl' WHERE key = 'automation_level';</code></p>
+<p><strong>Annealing cycle flow:</strong></p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Trigger as Cron / Ingestion / API
+    participant Launcher as AnnealingLauncher
+    participant Worker as annealing_worker
+    participant Manager as AnnealingManager
+    participant LLM as LLM (Reasoning)
+    participant DB as PostgreSQL + AGE
+    participant Queue as JobQueue
+
+    Trigger-&gt;&gt;Launcher: check_conditions()
+    Launcher-&gt;&gt;DB: Atomic epoch delta check + claim
+    DB--&gt;&gt;Launcher: Epoch claimed (or skip)
+
+    Launcher-&gt;&gt;Queue: enqueue(ontology_annealing)
+    Queue-&gt;&gt;Worker: run_annealing_worker(job_data)
+
+    Worker-&gt;&gt;Manager: run_annealing_cycle()
+    Manager-&gt;&gt;DB: Score all ontologies
+    Manager-&gt;&gt;DB: Recompute centroids
+    Manager-&gt;&gt;DB: Derive ontology-to-ontology edges
+
+    Manager-&gt;&gt;DB: Find demotion candidates (protection &lt; threshold)
+    Manager-&gt;&gt;DB: Find promotion candidates (degree &gt;= min)
+
+    loop For each candidate (up to max_proposals)
+        Manager-&gt;&gt;LLM: Evaluate with scores + context
+        LLM--&gt;&gt;Manager: Decision (promote/demote/reject + reasoning)
+        alt Decision confirmed
+            Manager-&gt;&gt;DB: INSERT proposal (status='pending')
+        end
+    end
+
+    Manager--&gt;&gt;Worker: {proposal_ids, scores, ...}
+
+    alt automation_level = autonomous
+        loop For each proposal
+            Worker-&gt;&gt;DB: UPDATE status='approved', reviewed_by='annealing_worker'
+            Worker-&gt;&gt;Queue: enqueue(proposal_execution)
+            Queue-&gt;&gt;Queue: execute_job_async → ProposalExecutor
+        end
+    else automation_level = hitl
+        Note over Worker,DB: Proposals await human review
+    end
+
+    Worker--&gt;&gt;Queue: Cycle result</code></pre>
+<p><strong>Decision criteria:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Candidate Type</th>
+<th>Threshold</th>
+<th>LLM Evaluates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Demotion</td>
+<td><code>protection_score &lt; 0.15</code></td>
+<td>Mass, coherence, protection, concept count, affinity targets</td>
+</tr>
+<tr>
+<td>Promotion</td>
+<td><code>concept degree &gt;= 10</code></td>
+<td>Degree, top neighbors, ontology size, affinity targets</td>
+</tr>
+</tbody>
+</table>
+<p>The LLM can reject candidates that pass numeric thresholds (e.g., directional concepts that shouldn't become ontologies, or small ontologies that serve a distinct purpose despite low scores).</p>
+<p><strong>Typical behavior:</strong>
+- Checks every 6 hours AND after each ingestion
+- Epoch delta prevents duplicate runs regardless of trigger source
+- Usually generates 0-5 proposals per cycle
+- In autonomous mode, execution happens within seconds of proposal creation</p>
+<hr />
 <h2 id="how-scheduled-jobs-work">How Scheduled Jobs Work</h2>
 <h3 id="pattern-polling-with-rare-execution">Pattern: Polling with Rare Execution</h3>
 <p>All scheduled jobs follow this pattern:</p>
@@ -9990,11 +10101,12 @@ Edit <code>VocabConsolidationLauncher.check_conditions()</code> in <code>api/api
 <ul>
 <li><strong><a href="../architecture/ADR-050-scheduled-jobs-system.md">ADR-050: Scheduled Jobs System</a></strong> - Technical architecture and design decisions</li>
 <li><strong><a href="../architecture/ADR-065-vocabulary-based-provenance-relationships.md">ADR-065: Vocabulary-Based Provenance</a></strong> - Epistemic status measurement design</li>
-<li><strong><a href="./VOCABULARY-MANAGEMENT.md">Vocabulary Management Guide</a></strong> - Understanding vocabulary categories and consolidation</li>
+<li><strong><a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/">ADR-200: Annealing Ontologies</a></strong> - Self-organizing graph structure design</li>
+<li><strong><a href="../VOCABULARY_LIFECYCLE/">Vocabulary Lifecycle Guide</a></strong> - Vocabulary consolidation flow and grounded LLM decisions</li>
 <li><strong><a href="../EPISTEMIC-STATUS-FILTERING/">Epistemic Status Filtering Guide</a></strong> - Using epistemic status in queries</li>
 </ul>
 <hr />
-<p><strong>Last Updated:</strong> 2025-11-17</p>
+<p><strong>Last Updated:</strong> 2026-02-08</p>
 
 
 
