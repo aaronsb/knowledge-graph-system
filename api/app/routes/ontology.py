@@ -484,10 +484,11 @@ async def trigger_annealing_cycle(
     _: None = Depends(require_permission("ontologies", "write")),
 ):
     """
-    Trigger a manual annealing cycle (ADR-200 Phase 3b).
+    Trigger a manual annealing cycle (ADR-200).
 
     Scores all ontologies, recomputes centroids, identifies candidates,
-    and generates proposals for human review.
+    and generates proposals. In autonomous mode (default), proposals are
+    auto-approved and executed. In hitl mode, proposals wait for review.
 
     Use `dry_run=true` to preview candidates without generating proposals.
 
@@ -496,12 +497,33 @@ async def trigger_annealing_cycle(
     from api.app.services.job_queue import get_job_queue
 
     queue = get_job_queue()
+
+    # Read automation_level from DB so manual triggers respect the setting
+    automation_level = "autonomous"
+    try:
+        client = get_age_client()
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT value FROM kg_api.annealing_options "
+                    "WHERE key = 'automation_level'"
+                )
+                row = cur.fetchone()
+                if row:
+                    automation_level = row[0]
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        pass  # Fall back to default
+
     job_id = queue.enqueue(
         job_type="ontology_annealing",
         job_data={
             "demotion_threshold": demotion_threshold,
             "promotion_min_degree": promotion_min_degree,
             "max_proposals": max_proposals,
+            "automation_level": automation_level,
             "dry_run": dry_run,
             "triggered_by": current_user.username if current_user else "api",
         }
