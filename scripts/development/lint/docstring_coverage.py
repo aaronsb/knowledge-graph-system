@@ -999,7 +999,7 @@ def main():
 
     if run_all or args.python_only:
         results.append(scan_python(
-            ['api/app'], project_root, force_ast=force_staleness,
+            ['api/app', 'fuse/kg_fuse'], project_root, force_ast=force_staleness,
         ))
 
     if run_all or args.ts_only:

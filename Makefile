@@ -6,7 +6,8 @@
 .PHONY: help test test-unit test-api test-program test-verbose test-list lint lint-queries \
         coverage coverage-verbose coverage-staleness \
         todos todos-verbose todos-age slopscan \
-        docs docs-cli docs-mcp docs-site \
+        build-cli build-fuse install-cli install-fuse test-cli test-fuse \
+        docs docs-cli docs-mcp docs-fuse docs-site \
         publish publish-status \
         diagnose status logs rebuild-api rebuild-web rebuild-all \
         build-operator push-operator \
@@ -81,15 +82,43 @@ todos-age: ## Include git blame age per marker
 slopscan: ## SLOPSCAN 9000: detect agent antipatterns
 	@python3 $(SCRIPTS)/lint/todo_inventory.py --slop -v
 
+##@ User Tools — Build
+
+build-cli: ## Build CLI + MCP (TypeScript)
+	@cd cli && npm install && npm run build
+
+build-fuse: ## Build FUSE driver (Python wheel)
+	@cd fuse && python3 -m build
+
+##@ User Tools — Install
+
+install-cli: build-cli ## Install kg CLI + MCP server to ~/.local
+	@cd cli && npm install -g --prefix "$(HOME)/.local"
+
+install-fuse: ## Install kg-fuse via pipx
+	@command -v pipx >/dev/null || { echo "Error: pipx not found. Install with: python3 -m pip install --user pipx"; exit 1; }
+	@cd fuse && pipx install --force .
+
+##@ User Tools — Test
+
+test-cli: ## Run CLI test suite
+	@cd cli && npm test
+
+test-fuse: ## Run FUSE driver test suite
+	@cd fuse && { [ -x .venv/bin/python ] && .venv/bin/python -m pytest tests/ -x -q || python3 -m pytest tests/ -x -q; }
+
 ##@ Documentation
 
-docs: docs-cli docs-mcp ## Generate all reference docs (CLI + MCP)
+docs: docs-cli docs-mcp docs-fuse ## Generate all reference docs
 
 docs-cli: ## Generate CLI command reference
 	@cd cli && npm run docs:cli
 
 docs-mcp: ## Generate MCP server tool reference
 	@cd cli && npm run docs:mcp
+
+docs-fuse: ## Generate FUSE driver API reference (markdown)
+	@python3 fuse/scripts/generate-fuse-docs.py
 
 docs-site: ## Build documentation site (MkDocs)
 	@./site/scripts/docs build
