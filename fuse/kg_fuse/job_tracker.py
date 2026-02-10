@@ -25,7 +25,6 @@ class TrackedJob:
     ontology: str
     filename: str
     created_at: float = field(default_factory=time.time)
-    seen_complete: bool = False
     marked_for_removal: bool = False
 
     def is_stale(self) -> bool:
@@ -79,23 +78,15 @@ class JobTracker:
     def mark_job_status(self, job_id: str, status: str) -> None:
         """Update job status after reading from API.
 
-        If status is terminal:
-        - First call: marks seen_complete=True (show final status)
-        - Second call: marks for removal (cleanup on next listing)
+        Terminal jobs are marked for immediate removal on next listing.
         """
         job = self._jobs.get(job_id)
         if not job:
             return
 
         if status in TERMINAL_JOB_STATUSES:
-            if not job.seen_complete:
-                # First time seeing completion - show it but mark as seen
-                log.info(f"Job {job_id} completed with status: {status}")
-                job.seen_complete = True
-            else:
-                # Already shown completion once - mark for removal
-                log.info(f"Job {job_id} shown complete, marking for removal")
-                job.marked_for_removal = True
+            log.info(f"Job {job_id} reached terminal status: {status}")
+            job.marked_for_removal = True
 
     def mark_job_not_found(self, job_id: str) -> None:
         """Mark a job for removal when API returns not found."""

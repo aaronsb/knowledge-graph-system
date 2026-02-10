@@ -1460,7 +1460,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         status = data.get("status", "unknown")
 
-        # Update job tracker with status (handles seen_complete logic)
+        # Update job tracker with status (marks terminal jobs for removal)
         self._job_tracker.mark_job_status(entry.job_id, status)
 
         # If job is now marked for removal, invalidate caches

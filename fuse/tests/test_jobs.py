@@ -159,7 +159,6 @@ class TestTrackedJob:
         assert job.job_id == "job_123"
         assert job.ontology == "Test Ontology"
         assert job.filename == "document.md"
-        assert job.seen_complete is False
         assert job.marked_for_removal is False
 
     def test_tracked_job_staleness(self):
@@ -204,27 +203,24 @@ class TestJobTracker:
         assert len(jobs_a) == 2
         assert all(j.ontology == "Ontology A" for j in jobs_a)
 
-    def test_mark_job_status_first_completion(self):
-        """First completion marks seen_complete=True."""
+    def test_mark_job_status_terminal_marks_for_removal(self):
+        """Terminal status immediately marks job for removal."""
         tracker = JobTracker()
         tracker.track_job("job_123", "Test", "doc.md")
 
         tracker.mark_job_status("job_123", "completed")
 
         job = tracker.get_job("job_123")
-        assert job.seen_complete is True
-        assert job.marked_for_removal is False
+        assert job.marked_for_removal is True
 
-    def test_mark_job_status_second_completion(self):
-        """Second completion marks for removal."""
+    def test_mark_job_status_failed_marks_for_removal(self):
+        """Failed status also marks for immediate removal."""
         tracker = JobTracker()
         tracker.track_job("job_123", "Test", "doc.md")
 
-        tracker.mark_job_status("job_123", "completed")  # First
-        tracker.mark_job_status("job_123", "completed")  # Second
+        tracker.mark_job_status("job_123", "failed")
 
         job = tracker.get_job("job_123")
-        assert job.seen_complete is True
         assert job.marked_for_removal is True
 
     def test_mark_job_not_found(self):
@@ -292,7 +288,6 @@ class TestJobTracker:
         tracker.mark_job_status("job_123", "running")
 
         job = tracker.get_job("job_123")
-        assert job.seen_complete is False
         assert job.marked_for_removal is False
 
 
