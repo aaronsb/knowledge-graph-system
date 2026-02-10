@@ -17,9 +17,9 @@ from kg_fuse.models import InodeEntry
 
 def _make_fs(write_protect=None, mountpoint=None):
     """Create a KnowledgeGraphFS with mocked API client and cache."""
-    with patch("kg_fuse.filesystem.KnowledgeGraphClient") as MockClient, \
-         patch("kg_fuse.filesystem.EpochCache"), \
-         patch("kg_fuse.filesystem.ImageHandler"):
+    with patch("kg_fuse.filesystem.base.KnowledgeGraphClient") as MockClient, \
+         patch("kg_fuse.filesystem.base.EpochCache"), \
+         patch("kg_fuse.filesystem.base.ImageHandler"):
         from kg_fuse.filesystem import KnowledgeGraphFS
         fs = KnowledgeGraphFS(
             api_url="http://test:8000",
@@ -341,7 +341,7 @@ class TestConfigReload:
                 "write_protect": {"allow_ontology_delete": True, "allow_document_delete": True},
             }},
         }))
-        with patch("kg_fuse.filesystem.read_fuse_config",
+        with patch("kg_fuse.filesystem.base.read_fuse_config",
                     return_value=json.loads(fuse_path.read_text())):
             fs._reload_config()
 
@@ -352,7 +352,7 @@ class TestConfigReload:
         fs = _make_fs(mountpoint="/mnt/test")
         assert fs.tags_config.threshold == 0.5
 
-        with patch("kg_fuse.filesystem.read_fuse_config", return_value={
+        with patch("kg_fuse.filesystem.base.read_fuse_config", return_value={
             "mounts": {"/mnt/test": {
                 "tags": {"enabled": False, "threshold": 0.8},
             }},
@@ -366,7 +366,7 @@ class TestConfigReload:
         fs = _make_fs(mountpoint="/mnt/test")
         assert fs.jobs_config.hide_jobs is False
 
-        with patch("kg_fuse.filesystem.read_fuse_config", return_value={
+        with patch("kg_fuse.filesystem.base.read_fuse_config", return_value={
             "mounts": {"/mnt/test": {"jobs": {"hide_jobs": True}}},
         }):
             fs._reload_config()
@@ -375,14 +375,14 @@ class TestConfigReload:
 
     def test_reload_noop_when_no_config(self):
         fs = _make_fs(mountpoint="/mnt/test")
-        with patch("kg_fuse.filesystem.read_fuse_config", return_value=None):
+        with patch("kg_fuse.filesystem.base.read_fuse_config", return_value=None):
             fs._reload_config()
         # Defaults unchanged
         assert fs.write_protect.allow_ontology_delete is False
 
     def test_reload_noop_when_mount_missing(self):
         fs = _make_fs(mountpoint="/mnt/test")
-        with patch("kg_fuse.filesystem.read_fuse_config", return_value={
+        with patch("kg_fuse.filesystem.base.read_fuse_config", return_value={
             "mounts": {"/mnt/other": {}},
         }):
             fs._reload_config()
@@ -394,7 +394,7 @@ class TestConfigReload:
             write_protect=WriteProtectConfig(allow_ontology_delete=True),
             mountpoint="/mnt/test",
         )
-        with patch("kg_fuse.filesystem.read_fuse_config", return_value={
+        with patch("kg_fuse.filesystem.base.read_fuse_config", return_value={
             "mounts": {"/mnt/test": {
                 "write_protect": {"allow_ontology_delete": True, "allow_document_delete": False},
             }},

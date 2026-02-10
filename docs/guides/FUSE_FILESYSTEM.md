@@ -2,7 +2,7 @@
 
 **Browse your knowledge graph like a filesystem.**
 
-The FUSE driver (`kg-fuse`) mounts your knowledge graph as a virtual filesystem. Navigate ontologies, create semantic queries with `mkdir`, and configure searches through simple file operations.
+The FUSE driver (`kg-fuse`) mounts your knowledge graph as a virtual filesystem. Navigate ontologies, create semantic queries with `mkdir`, ingest documents by copying files, and configure searches through simple file operations — all from your terminal or file manager.
 
 ## Prerequisites
 
@@ -42,6 +42,8 @@ pipx install kg-fuse
 
 ```bash
 pipx upgrade kg-fuse
+# or
+kg-fuse update
 ```
 
 ## Setup
@@ -52,181 +54,221 @@ pipx upgrade kg-fuse
 kg oauth create --for fuse
 ```
 
-This writes credentials to `~/.config/kg-fuse/config.toml`.
-
-### 2. Create Mount Point
+### 2. Initialize a Mount
 
 ```bash
-sudo mkdir -p /mnt/knowledge
-sudo chown $USER:$USER /mnt/knowledge
+kg-fuse init ~/Knowledge
 ```
 
-### 3. Mount the Filesystem
+This validates the path, detects credentials, and optionally sets up autostart.
+
+### 3. Mount and Unmount
 
 ```bash
-# Mount (runs in background by default)
-kg-fuse /mnt/knowledge
-
-# Or run in foreground for debugging
-kg-fuse /mnt/knowledge -f
-```
-
-### 4. Unmount When Done
-
-```bash
-# Normal unmount
-fusermount -u /mnt/knowledge
-
-# Force unmount if stuck
-fusermount -uz /mnt/knowledge
+kg-fuse mount           # Start all configured mounts
+kg-fuse unmount         # Stop all mounts
+kg-fuse status          # Check what's running
 ```
 
 ## Filesystem Structure
 
 ```
-/mnt/knowledge/
-├── ontology/                          # System-managed (read-only structure)
-│   ├── Strategy-As-Code/              # Ontology from your graph
-│   │   ├── documents/                 # Source documents (read-only)
-│   │   │   └── whitepaper.md          # Original ingested document
-│   │   └── leadership/                # Your query (created with mkdir)
-│   │       ├── .meta/                 # Query control plane
-│   │       │   ├── limit              # Max results (default: 50)
-│   │       │   ├── threshold          # Min similarity (default: 0.7)
-│   │       │   ├── exclude            # Terms to exclude
-│   │       │   ├── union              # Terms to add
-│   │       │   └── query.toml         # Full query state (read-only)
-│   │       └── Leadership.concept.md  # Search results
-│   └── test-concepts/
-│       └── documents/
+~/Knowledge/
+├── ontology/                              # System-managed ontology listing
+│   ├── Machine Intelligence/              # An ontology from your graph
+│   │   ├── .ontology                      # Ontology stats (concepts, docs, relationships)
+│   │   ├── documents/                     # Source documents (read-only)
+│   │   │   ├── .documents                 # Document listing with count
+│   │   │   ├── research-paper.md          # Text document content
+│   │   │   └── diagram.png               # Image document (raw bytes)
+│   │   ├── ingest/                        # Drop box for new documents
+│   │   │   ├── .ingest                    # Usage instructions
+│   │   │   └── paper.md.ingesting         # Job status (appears during processing)
+│   │   └── neural networks/               # Your query (created with mkdir)
+│   │       ├── .meta/                     # Query control plane
+│   │       │   ├── limit                  # Max results (default: 50)
+│   │       │   ├── threshold              # Min similarity (default: 0.7)
+│   │       │   ├── exclude                # Terms to exclude (NOT)
+│   │       │   ├── union                  # Terms to add (OR)
+│   │       │   └── query.toml             # Full query state (read-only)
+│   │       ├── images/                    # Image evidence from matching concepts
+│   │       └── Neural-Networks.concept.md # Search result
+│   └── Economics/
+│       └── ...
 │
-└── my-research/                       # Global query (all ontologies)
+└── my-research/                           # Global query (searches all ontologies)
     ├── .meta/
     └── Results.concept.md
 ```
 
-## Basic Usage
+## Browsing and Exploring
 
-### Browse Ontologies
+### Discover What You Have
+
+Every ontology has contextual dotfiles that tell you what's inside without needing API calls or CLI commands:
 
 ```bash
-# List all ontologies
-ls /mnt/knowledge/ontology/
+ls ~/Knowledge/ontology/
+# Machine Intelligence  Economics  Architecture
 
-# List documents in an ontology
-ls /mnt/knowledge/ontology/Strategy-As-Code/documents/
+# Quick stats: how many concepts, documents, relationships?
+cat ~/Knowledge/ontology/Machine\ Intelligence/.ontology
+# # Machine Intelligence
+# - Source Count: 16
+# - Concept Count: 101
+# - Relationship Count: 101
 
-# Read a source document
-cat /mnt/knowledge/ontology/Strategy-As-Code/documents/whitepaper.md
+# What documents are in this ontology?
+cat ~/Knowledge/ontology/Machine\ Intelligence/documents/.documents
+# # Machine Intelligence — Documents (7)
+# - the_hallway.md
+# - neural_architecture.pdf
+# ...
 ```
 
-### Create Queries
+This is useful when you have many ontologies and want to quickly understand what each one contains — no need to open a browser or run queries.
+
+### Read Source Documents
+
+```bash
+# List documents
+ls ~/Knowledge/ontology/Machine\ Intelligence/documents/
+
+# Read a document (rendered as markdown with YAML frontmatter)
+cat ~/Knowledge/ontology/Machine\ Intelligence/documents/the_hallway.md
+```
+
+Documents include their original content plus metadata about extracted concepts (if tag generation is enabled).
+
+## Searching with Queries
 
 Directories you create become semantic searches. The directory name is the search term.
 
-```bash
-# Scoped query (searches only this ontology)
-mkdir /mnt/knowledge/ontology/Strategy-As-Code/leadership
-ls /mnt/knowledge/ontology/Strategy-As-Code/leadership/
-# Shows: .meta/  Leadership.concept.md  Strategy.concept.md  ...
+### Scoped Queries
 
-# Global query (searches all ontologies)
-mkdir /mnt/knowledge/machine-learning
-ls /mnt/knowledge/machine-learning/
-# Shows results from every ontology
-```
-
-### Read Concept Files
-
-Concept files (`.concept.md`) contain full details with YAML frontmatter:
+Search within a single ontology:
 
 ```bash
-cat /mnt/knowledge/ontology/Strategy-As-Code/leadership/Leadership.concept.md
+mkdir ~/Knowledge/ontology/Machine\ Intelligence/neural\ networks
+ls ~/Knowledge/ontology/Machine\ Intelligence/neural\ networks/
+# Neural-Networks.concept.md  Plasticity-Problem.concept.md  images/  .meta/
 ```
 
-Output:
-```yaml
----
-id: sha256:abc123...
-label: Leadership
-grounding: 0.82
-documents:
-  - Strategy-As-Code
-sources:
-  - whitepaper.md
-relationships:
-  - type: IMPLIES
-    target: Strategy
----
+This is useful when you know which ontology has the knowledge you're looking for and want to avoid noise from other domains.
 
-# Leadership
+### Global Queries
 
-## Evidence
+Search across all ontologies at once:
 
-### Instance 1 from whitepaper.md (para 3)
-> Leadership in technology organizations requires...
+```bash
+mkdir ~/Knowledge/distributed\ systems
+ls ~/Knowledge/distributed\ systems/
+# Shows concepts from every ontology that matches
 ```
+
+This is useful for cross-cutting research — finding how different knowledge domains relate to the same topic.
 
 ### Nested Queries (AND Logic)
 
-Each directory level adds an AND constraint:
+Each directory level adds an AND constraint, progressively narrowing results:
 
 ```bash
-mkdir /mnt/knowledge/ontology/Strategy-As-Code/leadership
-mkdir /mnt/knowledge/ontology/Strategy-As-Code/leadership/communication
+mkdir ~/Knowledge/ontology/Economics/inflation
+mkdir ~/Knowledge/ontology/Economics/inflation/monetary\ policy
 
-# Results match "leadership" AND "communication"
-ls /mnt/knowledge/ontology/Strategy-As-Code/leadership/communication/
+# First level: concepts matching "inflation"
+ls ~/Knowledge/ontology/Economics/inflation/
+
+# Second level: concepts matching "inflation" AND "monetary policy"
+ls ~/Knowledge/ontology/Economics/inflation/monetary\ policy/
+```
+
+This is useful for drilling into a topic — start broad, then focus by adding subdirectories.
+
+### Read Concept Files
+
+Each concept result is a markdown file with full context:
+
+```bash
+cat ~/Knowledge/ontology/Economics/inflation/Monetary-Policy.concept.md
+```
+
+```yaml
+---
+id: sha256:abc123...
+label: Monetary Policy
+aliases:
+  - central bank policy
+  - money supply management
+documents:
+  - Economics
+sources:
+  - research-paper.pdf
+relationships:
+  - type: INFLUENCES
+    target: "[[Inflation.concept]]"
+tags:
+  - concept/Inflation
+  - ontology/Economics
+---
+
+# Monetary Policy
+
+## Evidence
+
+### Instance 1 from research-paper.pdf (para 3)
+> The Federal Reserve uses open market operations to influence...
 ```
 
 ### Remove Queries
 
 ```bash
-rmdir /mnt/knowledge/ontology/Strategy-As-Code/leadership
-# Also removes nested queries (leadership/communication, etc.)
+rmdir ~/Knowledge/ontology/Economics/inflation
+# Also removes nested queries (inflation/monetary policy, etc.)
 ```
+
+Query directories are client-side — removing them doesn't affect the graph.
 
 ## Query Configuration (.meta)
 
-Every query directory has a `.meta/` subdirectory with virtual configuration files.
+Every query directory has a `.meta/` subdirectory with virtual configuration files. Changes take effect immediately — the next `ls` shows updated results.
 
 ### View Current Settings
 
 ```bash
-cat .meta/limit      # Shows: "# Maximum number of concepts...\n50"
-cat .meta/threshold  # Shows: "# Minimum similarity...\n0.7"
-cat .meta/query.toml # Shows full query state (read-only)
+cat .meta/limit      # "50"
+cat .meta/threshold  # "0.7"
+cat .meta/query.toml # Full state (read-only debug view)
 ```
 
-### Modify Settings
+### Tune Results
 
 ```bash
-# Set result limit
-echo 20 > .meta/limit
-
-# Set minimum similarity (0.0-1.0)
+# Fewer, more precise results
 echo 0.85 > .meta/threshold
+echo 10 > .meta/limit
 
-# Exclude terms (semantic NOT)
+# Broader, exploratory results
+echo 0.3 > .meta/threshold
+echo 100 > .meta/limit
+```
+
+### Filter and Expand
+
+```bash
+# Exclude irrelevant concepts (semantic NOT)
 echo "deprecated" >> .meta/exclude
 echo "legacy" >> .meta/exclude
 
-# Add terms (semantic OR)
-echo "management" >> .meta/union
+# Broaden the search (semantic OR)
+echo "governance" >> .meta/union
+echo "compliance" >> .meta/union
 
-# View combined state
-cat .meta/query.toml
-```
-
-### Clear Lists
-
-```bash
-# Clear exclude list (truncate to empty)
+# Clear a filter list
 : > .meta/exclude
-
-# Clear union list
-: > .meta/union
 ```
+
+This is useful for iterative exploration — you can tune a query interactively, watching how results change with each adjustment, without leaving the filesystem.
 
 ### Configuration Reference
 
@@ -236,159 +278,319 @@ cat .meta/query.toml
 | `threshold` | Float (0.0-1.0) | Current value | Set new value | Min similarity score |
 | `exclude` | Text (lines) | Current terms | Append term | Semantic NOT filter |
 | `union` | Text (lines) | Current terms | Append term | Semantic OR expansion |
-| `query.toml` | TOML | Full state | — | Debug view (read-only) |
+| `query.toml` | TOML | Full state | Read-only | Debug view |
 
-## Example Workflows
-
-### Research Workflow
-
-```bash
-# Mount
-kg-fuse /mnt/kg
-
-# Create focused research query
-mkdir /mnt/kg/ontology/Strategy-As-Code/governance
-cd /mnt/kg/ontology/Strategy-As-Code/governance
-
-# Tune for precision
-echo 0.8 > .meta/threshold
-echo 10 > .meta/limit
-
-# Exclude irrelevant terms
-echo "compliance" >> .meta/exclude
-
-# Review results
-ls *.concept.md
-cat "Risk Management.concept.md"
-
-# Drill down
-mkdir risk
-ls risk/
-```
-
-### Cross-Ontology Analysis
-
-```bash
-# Global query searches everything
-mkdir /mnt/kg/distributed-systems
-cd /mnt/kg/distributed-systems
-
-# Check what ontologies contributed
-cat .meta/query.toml
-
-# Read concepts from multiple sources
-cat "Consensus.concept.md"  # Might be from different ontologies
-```
-
-### Quick Exploration
-
-```bash
-# Fast browse with low threshold
-mkdir /mnt/kg/ontology/my-ont/broad-search
-echo 0.3 > /mnt/kg/ontology/my-ont/broad-search/.meta/threshold
-echo 100 > /mnt/kg/ontology/my-ont/broad-search/.meta/limit
-ls /mnt/kg/ontology/my-ont/broad-search/
-```
-
-## Write Support (Ingestion)
-
-The FUSE driver supports document ingestion through standard file operations.
+## Ontology Management
 
 ### Create an Ontology
 
 ```bash
-# Create a new ontology (directory under /ontology/)
-mkdir /mnt/kg/ontology/my-new-ontology
+mkdir ~/Knowledge/ontology/My-Research
+ls ~/Knowledge/ontology/My-Research/
+# .ontology  documents/  ingest/
 ```
 
-### Ingest Documents
+This creates the ontology on the platform via the API. The `.ontology`, `documents/`, and `ingest/` subdirectories appear automatically.
 
-Copy files directly into an ontology directory to trigger ingestion:
+### Delete an Ontology
+
+Ontology deletion is gated by write protection (off by default):
 
 ```bash
-# Copy a document to ingest it
-cp research-paper.md /mnt/kg/ontology/my-new-ontology/
+# Enable in fuse.json first:
+# "write_protect": { "allow_ontology_delete": true }
 
-# The file "disappears" after ingestion (black hole semantics)
-# It will appear in documents/ once processing completes
-ls /mnt/kg/ontology/my-new-ontology/documents/
+rmdir ~/Knowledge/ontology/My-Research
 ```
 
-**How it works:**
-1. `cp` creates a temporary file and writes content
-2. On file close, content is POSTed to `/ingest` API
-3. Ingestion is auto-approved (no manual approval needed)
-4. File disappears from ontology root
-5. After processing, document appears in `documents/`
+This deletes the ontology and all its documents from the graph — it's irreversible.
+
+## Document Ingestion
+
+Each ontology has an `ingest/` directory — a drop box for new documents.
+
+### Ingest a Document
+
+```bash
+# Copy a file into the ingest directory
+cp research-paper.md ~/Knowledge/ontology/Economics/ingest/
+
+# A job status file appears while processing
+ls ~/Knowledge/ontology/Economics/ingest/
+# .ingest  research-paper.md.ingesting
+
+# Check progress
+cat ~/Knowledge/ontology/Economics/ingest/research-paper.md.ingesting
+# # Ingestion Job: job_abc123
+# # Status: running
+# [progress]
+# stage = "extracting_concepts"
+# percent = 45
+
+# After processing completes, the .ingesting file disappears
+# and the document appears in documents/
+ls ~/Knowledge/ontology/Economics/documents/
+# .documents  research-paper.md
+```
+
+### How Ingestion Works
+
+1. `cp` creates a file in `ingest/` and writes content
+2. On file close, content is POSTed to the ingestion API
+3. A `.ingesting` status file appears showing job progress
+4. Ingestion is auto-approved (no manual step needed)
+5. After processing, the job file disappears and the document appears in `documents/`
 
 ### Batch Ingestion
 
 ```bash
-# Ingest multiple documents
-for f in papers/*.md; do
-    cp "$f" /mnt/kg/ontology/research/
+# Ingest a directory of papers
+for f in ~/papers/*.md; do
+    cp "$f" ~/Knowledge/ontology/Research/ingest/
+done
+```
+
+### Supported Formats
+
+The `ingest/` directory accepts text, markdown, PDF, and image files (.png, .jpg, .gif, .webp, .bmp). The `.ingest` dotfile in each ingest directory reminds you of this:
+
+```bash
+cat ~/Knowledge/ontology/Economics/ingest/.ingest
+# # Economics — Ingest
+#
+# Drop or copy files here to ingest them into the knowledge graph.
+#
+# Supported formats: text, markdown, PDF, and images.
+# Files are processed automatically after upload.
+```
+
+### File Manager Integration
+
+The `ingest/` directory works with graphical file managers like Dolphin and GNOME Files. Drag files from your desktop or paste from the clipboard — they'll be ingested automatically.
+
+## Document Deletion
+
+Documents can be deleted with `rm`, gated by write protection:
+
+```bash
+# Enable in fuse.json first:
+# "write_protect": { "allow_document_delete": true }
+
+rm ~/Knowledge/ontology/Economics/documents/old-paper.md
+```
+
+This deletes the document from the graph via the API. The concepts extracted from it remain (they may have evidence from other documents too).
+
+## Cross-Ontology Queries with Symlinks
+
+Global queries (created at the mount root) search all ontologies by default. You can restrict them to specific ontologies using symlinks:
+
+```bash
+# Create a global query
+mkdir ~/Knowledge/my-research
+
+# Link specific ontologies into it (OR logic)
+ln -s ../ontology/Economics ~/Knowledge/my-research/Economics
+ln -s ../ontology/Architecture ~/Knowledge/my-research/Architecture
+
+# Now "my-research" only searches Economics and Architecture
+ls ~/Knowledge/my-research/
+```
+
+This is useful when you want to compare concepts across a specific subset of ontologies without including everything.
+
+## Write Protection
+
+Destructive operations (ontology deletion, document deletion) are disabled by default. Enable them per-mount in `~/.config/kg/fuse.json`:
+
+```json
+{
+  "mounts": {
+    "/home/user/Knowledge": {
+      "write_protect": {
+        "allow_ontology_delete": false,
+        "allow_document_delete": false
+      }
+    }
+  }
+}
+```
+
+Changes are hot-reloaded — no remount needed. This is useful for shared or production mounts where accidental deletion would be costly.
+
+## Example Workflows
+
+### Research Session
+
+```bash
+# Start from an ontology you know has relevant data
+cd ~/Knowledge/ontology/Machine\ Intelligence
+
+# Quick stats
+cat .ontology
+
+# Create a focused query
+mkdir "agent architecture"
+cd "agent architecture"
+
+# Too many results? Raise the threshold
+echo 0.8 > .meta/threshold
+
+# Filter out noise
+echo "deprecated" >> .meta/exclude
+
+# Read the results
+ls *.concept.md
+cat "Agent-Model.concept.md"
+
+# Drill deeper
+mkdir reasoning
+ls reasoning/
+```
+
+### Building a New Knowledge Domain
+
+```bash
+# Create the ontology
+mkdir ~/Knowledge/ontology/Project-Notes
+
+# Ingest your documents
+cp ~/docs/design-doc.md ~/Knowledge/ontology/Project-Notes/ingest/
+cp ~/docs/meeting-notes.md ~/Knowledge/ontology/Project-Notes/ingest/
+
+# Wait for processing, then explore what was extracted
+cat ~/Knowledge/ontology/Project-Notes/.ontology
+ls ~/Knowledge/ontology/Project-Notes/documents/
+
+# Query the newly ingested knowledge
+mkdir ~/Knowledge/ontology/Project-Notes/architecture\ decisions
+ls ~/Knowledge/ontology/Project-Notes/architecture\ decisions/
+```
+
+### Quick Lookup
+
+```bash
+# "What does the graph know about X?"
+mkdir ~/Knowledge/ontology/Economics/stagflation
+cat ~/Knowledge/ontology/Economics/stagflation/*.concept.md
+rmdir ~/Knowledge/ontology/Economics/stagflation
+```
+
+### Cross-Domain Exploration
+
+```bash
+# Search everything, then narrow
+mkdir ~/Knowledge/distributed\ systems
+echo 0.5 > ~/Knowledge/distributed\ systems/.meta/threshold
+ls ~/Knowledge/distributed\ systems/
+# Concepts from multiple ontologies appear together
+```
+
+### Unix Tool Integration
+
+Since it's a real filesystem, every tool that works with files works with your knowledge graph:
+
+```bash
+# Grep across all concepts in an ontology
+grep -r "consensus" ~/Knowledge/ontology/Architecture/
+
+# Copy query results for offline reference
+cp -r ~/Knowledge/ontology/Economics/inflation/ ~/notes/
+
+# Tree view of an ontology
+tree ~/Knowledge/ontology/Machine\ Intelligence/ -L 2
+
+# Open in your editor
+vim ~/Knowledge/ontology/Economics/inflation/Monetary-Policy.concept.md
+
+# Count concepts matching a query
+ls ~/Knowledge/ontology/Economics/inflation/*.concept.md | wc -l
+
+# Diff two concept files
+diff ~/Knowledge/ontology/Economics/inflation/CPI.concept.md \
+     ~/Knowledge/ontology/Economics/inflation/PPI.concept.md
+```
+
+### External Program Integration
+
+Any program that reads or writes files can interact with the knowledge graph without knowing about it:
+
+```bash
+# Obsidian: point a vault at the mount — wikilinks in concept files
+# render as a navigable graph natively (no plugin needed)
+
+# Speech-to-text: have a transcription tool write directly to ingest/
+whisper-cli record --output ~/Knowledge/ontology/Meeting-Notes/ingest/standup.md
+
+# Automated ingestion: a cron job or watcher that drops files
+inotifywait -m ~/incoming/ -e close_write | while read dir event file; do
+    cp ~/incoming/"$file" ~/Knowledge/ontology/Auto-Ingest/ingest/
 done
 
-# Check job status
-kg job list
+# Backup: snapshot an ontology's documents
+rsync -av ~/Knowledge/ontology/Economics/documents/ ~/backup/economics/
+
+# Remote access: browse from another machine
+ssh server "cat ~/Knowledge/ontology/Economics/.ontology"
+sshfs server:~/Knowledge ~/remote-knowledge
 ```
+
+### Obsidian as a Graph Viewer
+
+The FUSE filesystem presents concepts as markdown files with wikilink-style relationships (`[[Concept.concept]]`). Point Obsidian at the mount point and its graph view renders your knowledge graph natively — no plugin required. Concept frontmatter includes tags, relationships, and source attribution that Obsidian can index and display.
 
 ## Troubleshooting
 
-### Mount Fails
+### Mount Issues
 
 ```bash
-# Check if already mounted
-mount | grep kg-fuse
+# Check status
+kg-fuse status
 
-# Force unmount stale mount
-fusermount -uz /mnt/knowledge
+# Repair orphaned mounts or stale PIDs
+kg-fuse repair
 
-# Check API is running
-curl https://kg.example.com/api/health
-```
-
-### Permission Errors
-
-```bash
-# Ensure you have FUSE access
-groups  # Should include 'fuse' group
-
-# Check mount point is empty directory you own
-ls -la /mnt/knowledge
-```
-
-### Transport Endpoint Not Connected
-
-This happens when the FUSE process dies but the mount remains:
-
-```bash
-fusermount -uz /mnt/knowledge
-kg-fuse /mnt/knowledge
+# Manual force unmount (if repair doesn't help)
+fusermount -uz ~/Knowledge
+kg-fuse mount
 ```
 
 ### Query Returns No Results
 
 ```bash
-# Check query settings
+# Check the query state
 cat .meta/query.toml
 
-# Lower threshold
+# Lower the threshold
 echo 0.3 > .meta/threshold
 
-# Verify ontology has documents
+# Verify the ontology actually has documents
+cat ../.ontology
 ls ../documents/
+```
+
+### Ingestion Seems Stuck
+
+```bash
+# Check the job status file
+cat ~/Knowledge/ontology/My-Ont/ingest/*.ingesting
+
+# If the .ingesting file persists after the job is done,
+# re-list the directory to trigger cleanup
+ls ~/Knowledge/ontology/My-Ont/ingest/
 ```
 
 ## Architecture Notes
 
-- **Hologram model**: Documents and concepts are read-only projections from the graph
-- **Write as ingestion**: Writing to ontology directories triggers document ingestion
-- **Client-side queries**: Query definitions stored in `~/.local/share/kg-fuse/queries.toml`
-- **Caching**: Results cached for 30 seconds to reduce API calls
-- **OAuth**: Uses standard OAuth 2.0 client credentials flow
+- **Hologram model**: Documents and concepts are read-only projections from the graph — the filesystem is a view, not a copy
+- **Epoch-gated caching**: Tracks the graph change counter; serves stale data instantly while refreshing in the background
+- **Client-side queries**: Query definitions stored in `~/.local/share/kg-fuse/mounts/<id>/queries.toml`
+- **Write-back ingestion**: Files are buffered locally then submitted to the API on close
+- **OAuth**: Uses standard OAuth 2.0 client credentials flow, shared with `kg` CLI
 
 ## Related Documentation
 
-- [ADR-069: Semantic FUSE Filesystem](../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem.md) - Design rationale
-- [ADR-069a: Implementation Specifics](../architecture/user-interfaces/ADR-069a-fuse-implementation-specifics.md) - Technical details
+- [ADR-069: Semantic FUSE Filesystem](../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem.md) — Design rationale
+- [ADR-069.1: Implementation Specifics](../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics.md) — Technical details
+- [FUSE Driver Feature Page](../features/fuse-driver.md) — Quick overview
+- [FUSE Package README](../../fuse/README.md) — CLI reference and configuration
