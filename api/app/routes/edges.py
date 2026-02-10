@@ -87,6 +87,9 @@ async def create_edge(
             outcome="success"
         )
 
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        age_client.refresh_epoch()
+
         return result
     except ValueError as e:
         raise HTTPException(
@@ -234,6 +237,10 @@ async def delete_edge(
             to_concept_id=to_concept_id,
             relationship_type=relationship_type
         )
+
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        age_client.refresh_epoch()
+
         return None  # 204 No Content
     except ValueError as e:
         if "not found" in str(e).lower():

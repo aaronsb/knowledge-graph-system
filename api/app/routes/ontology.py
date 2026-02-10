@@ -139,6 +139,9 @@ async def create_ontology(
         except Exception as e:
             logger.warning(f"Failed to generate embedding for new ontology '{request.name}': {e}")
 
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        client.refresh_epoch()
+
         return OntologyNodeResponse(
             ontology_id=node.get('ontology_id', ontology_id),
             name=request.name,
@@ -927,16 +930,15 @@ async def delete_ontology(
     client = get_age_client()
     queue = get_job_queue()
     try:
-        # Check if ontology exists
+        # Check if ontology exists (Ontology node or Source nodes)
         if not force:
             check = client._execute_cypher("""
-                MATCH (s:Source {document: $name})
-                WITH count(s) as source_count
-                OPTIONAL MATCH (c:Concept)-[:APPEARS]->(s:Source {document: $name})
-                RETURN source_count, count(DISTINCT c) as concept_count
+                OPTIONAL MATCH (o:Ontology {name: $name})
+                OPTIONAL MATCH (s:Source {document: $name})
+                RETURN count(o) as ontology_node_count, count(s) as source_count
             """, params={"name": ontology_name}, fetch_one=True)
 
-            if not check or check['source_count'] == 0:
+            if not check or (check['ontology_node_count'] == 0 and check['source_count'] == 0):
                 raise HTTPException(
                     status_code=404,
                     detail=f"Ontology '{ontology_name}' not found"
@@ -1070,6 +1072,9 @@ async def delete_ontology(
         jobs_deleted = queue.delete_jobs_by_ontology(ontology_name)
         if jobs_deleted > 0:
             logger.info(f"Deleted {jobs_deleted} job records for ontology '{ontology_name}'")
+
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        client.refresh_epoch()
 
         return OntologyDeleteResponse(
             ontology=ontology_name,
@@ -1476,6 +1481,9 @@ async def create_ontology_edge(
             source="manual",
         )
 
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        client.refresh_epoch()
+
         return OntologyEdge(
             from_ontology=ontology_name,
             to_ontology=request.to_ontology,
@@ -1531,6 +1539,9 @@ async def delete_ontology_edge(
                 status_code=404,
                 detail=f"No {edge_type} edge found from '{ontology_name}' to '{to_ontology}'",
             )
+
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        client.refresh_epoch()
 
         return {"deleted": deleted, "from_ontology": ontology_name,
                 "to_ontology": to_ontology, "edge_type": edge_type}

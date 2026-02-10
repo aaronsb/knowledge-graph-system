@@ -299,6 +299,31 @@ class BaseMixin:
             # If not JSON, return as-is (might be a simple value)
             return agtype_value
 
+    def refresh_epoch(self):
+        """Recompute graph_change_counter after a mutation.
+
+        Must be called after any operation that changes graph object counts
+        (create/delete concepts, sources, edges, ontologies, documents).
+        The counter is a snapshot sum of all object counts — FUSE and other
+        clients poll it to detect staleness and invalidate caches.
+
+        This is a graph integrity requirement: every mutation path must call
+        this, regardless of whether the caller is FUSE, CLI, curl, or the
+        web UI. Without it, caches serve stale data until the next periodic
+        refresh.
+        """
+        conn = None
+        try:
+            conn = self.pool.getconn()
+            with conn.cursor() as cur:
+                cur.execute("SELECT refresh_graph_metrics()")
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to refresh graph epoch: {e}")
+        finally:
+            if conn:
+                self.pool.putconn(conn)
+
     def close(self):
         """Close all database connections."""
         if hasattr(self, 'pool'):

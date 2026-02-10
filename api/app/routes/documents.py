@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from ..lib.age_client import AGEClient
 from ..lib.garage import get_source_storage, get_image_storage
 from ..lib.similarity_calculator import cosine_similarity
-from ..dependencies.auth import get_current_active_user
+from ..dependencies.auth import get_current_active_user, CurrentUser, require_permission
 from ..models.auth import UserInDB
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -105,6 +105,14 @@ class DocumentListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class DocumentDeleteResponse(BaseModel):
+    """Response from document deletion."""
+    document_id: str
+    deleted: bool
+    sources_deleted: int
+    orphaned_concepts_deleted: int
 
 
 class DocumentConceptItem(BaseModel):
@@ -997,5 +1005,175 @@ async def get_document_concepts_bulk(
     except Exception as e:
         logger.error(f"Failed to get bulk document concepts: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get bulk concepts: {str(e)}")
+    finally:
+        client.close()
+
+
+# ============================================================================
+# Document Deletion
+# ============================================================================
+
+@router.delete("/{document_id}", response_model=DocumentDeleteResponse)
+async def delete_document(
+    document_id: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("sources", "delete")),
+):
+    """Delete a document and cascade-remove orphaned concepts.
+
+    Deletes all data associated with a single document:
+    - Source nodes (chunks) linked via DocumentMeta
+    - Instance nodes linked to those sources
+    - source_embeddings records
+    - Garage storage objects (source documents and images)
+    - The DocumentMeta node itself
+    - Orphaned Concept nodes (concepts with no remaining sources)
+
+    Follows the same cascade pattern as DELETE /ontology/{name}
+    but scoped to a single document.
+
+    Authorization: Requires sources:delete permission.
+    """
+    from ..services.job_queue import get_job_queue
+
+    client = AGEClient()
+    queue = get_job_queue()
+    try:
+        # Find the DocumentMeta node and its sources
+        doc_meta = client._execute_cypher("""
+            MATCH (d:DocumentMeta {document_id: $document_id})
+            RETURN d.document_id as document_id,
+                   d.filename as filename,
+                   d.ontology as ontology
+        """, params={"document_id": document_id}, fetch_one=True)
+
+        if not doc_meta:
+            raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found")
+
+        ontology_name = doc_meta.get("ontology")
+        filename = doc_meta.get("filename", document_id)
+        logger.info(f"Deleting document '{filename}' (id={document_id}) from ontology '{ontology_name}'")
+
+        # Capture source_ids before deletion
+        source_ids_result = client._execute_cypher("""
+            MATCH (d:DocumentMeta {document_id: $document_id})-[:HAS_SOURCE]->(s:Source)
+            RETURN s.source_id as source_id, s.storage_key as storage_key
+        """, params={"document_id": document_id})
+
+        source_ids = [r["source_id"] for r in (source_ids_result or []) if r.get("source_id")]
+        storage_keys = [r["storage_key"] for r in (source_ids_result or []) if r.get("storage_key")]
+
+        # Clean up Garage storage objects
+        try:
+            # Delete images (via storage_key on Source nodes)
+            if storage_keys:
+                image_storage = get_image_storage()
+                for key in storage_keys:
+                    try:
+                        image_storage.delete(key)
+                    except Exception as e:
+                        logger.warning(f"Failed to delete Garage image {key}: {e}")
+
+            # Delete source documents
+            try:
+                source_storage = get_source_storage()
+                for sid in source_ids:
+                    try:
+                        source_storage.delete(sid)
+                    except Exception as e:
+                        logger.warning(f"Failed to delete source doc {sid} from Garage: {e}")
+            except Exception as e:
+                logger.warning(f"Failed to initialize source storage: {e}")
+
+        except Exception as e:
+            logger.warning(f"Failed to initialize Garage for cleanup: {e}")
+
+        # Delete Instance nodes linked to this document's sources
+        client._execute_cypher("""
+            MATCH (d:DocumentMeta {document_id: $document_id})-[:HAS_SOURCE]->(s:Source)
+            MATCH (i:Instance)-[:FROM_SOURCE]->(s)
+            DETACH DELETE i
+        """, params={"document_id": document_id})
+
+        # Delete Source nodes
+        result = client._execute_cypher("""
+            MATCH (d:DocumentMeta {document_id: $document_id})-[:HAS_SOURCE]->(s:Source)
+            DETACH DELETE s
+            RETURN count(s) as deleted_count
+        """, params={"document_id": document_id}, fetch_one=True)
+
+        sources_deleted = result["deleted_count"] if result else 0
+
+        # Delete source_embeddings
+        if source_ids:
+            conn = None
+            try:
+                conn = client.pool.getconn()
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        DELETE FROM kg_api.source_embeddings
+                        WHERE source_id = ANY(%s)
+                    """, (source_ids,))
+                    conn.commit()
+            except Exception as e:
+                logger.warning(f"Failed to delete source embeddings: {e}")
+            finally:
+                if conn:
+                    client.pool.putconn(conn)
+
+        # Delete the DocumentMeta node
+        client._execute_cypher("""
+            MATCH (d:DocumentMeta {document_id: $document_id})
+            DETACH DELETE d
+        """, params={"document_id": document_id})
+
+        # Clean up orphaned concepts (concepts with no remaining sources)
+        orphaned_result = client._execute_cypher("""
+            MATCH (c:Concept)
+            OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
+            WITH c, s
+            WHERE s IS NULL
+            DETACH DELETE c
+            RETURN count(c) as orphaned_count
+        """, fetch_one=True)
+
+        orphaned_count = orphaned_result["orphaned_count"] if orphaned_result else 0
+
+        # Delete job records for this document
+        try:
+            conn = None
+            conn = client.pool.getconn()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM kg_api.jobs
+                    WHERE source_filename = %s AND ontology = %s
+                """, (filename, ontology_name))
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to delete job records: {e}")
+        finally:
+            if conn:
+                client.pool.putconn(conn)
+
+        logger.info(
+            f"Deleted document '{filename}': "
+            f"{sources_deleted} sources, {orphaned_count} orphaned concepts"
+        )
+
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        client.refresh_epoch()
+
+        return DocumentDeleteResponse(
+            document_id=document_id,
+            deleted=True,
+            sources_deleted=sources_deleted,
+            orphaned_concepts_deleted=orphaned_count,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete document: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
     finally:
         client.close()

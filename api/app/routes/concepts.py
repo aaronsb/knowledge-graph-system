@@ -81,6 +81,9 @@ async def create_concept(
             outcome="success"
         )
 
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        age_client.refresh_epoch()
+
         return result
     except ValueError as e:
         raise HTTPException(
@@ -253,6 +256,10 @@ async def delete_concept(
 
     try:
         await service.delete_concept(concept_id=concept_id, cascade=cascade)
+
+        # Refresh graph epoch so caches (FUSE, etc.) detect the change
+        age_client.refresh_epoch()
+
         return None  # 204 No Content
     except ValueError as e:
         if "not found" in str(e).lower():
