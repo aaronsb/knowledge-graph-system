@@ -54,6 +54,7 @@ class InodeMixin:
 
         # Meta files need special handling for size and permissions
         if entry.entry_type == "meta_file":
+            # _render_meta_file lives in ReadMixin, resolved via composed class
             content = self._render_meta_file(entry)
             size = len(content.encode("utf-8"))
             # query.toml is read-only, others are read-write
