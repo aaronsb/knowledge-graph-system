@@ -49,6 +49,6 @@ def is_dir_type(entry_type: str) -> bool:
     """Check if entry type is a directory.
 
     Non-directory types include: document, image_document, image_prose,
-    image_evidence, concept, meta_file, ingestion_file, symlink, job_file
+    image_evidence, concept, meta_file, ingestion_file, symlink, job_file, info_file
     """
     return entry_type in DIR_TYPES

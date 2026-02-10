@@ -55,9 +55,9 @@ log = logging.getLogger(__name__)
 MAX_INGESTION_SIZE = 50 * 1024 * 1024
 
 # Write-back delay (seconds) before flushing to ingestion API.
-# Editors (vim, emacs, nano, etc.) create temp files, rename, and unlink
-# during their save dance — the delay lets that settle before we ingest.
-WRITE_BACK_DELAY = 3
+# Zero = flush on next background tick (~1s). Non-zero gives editors time
+# to finish their create→write→release→rename dance before we commit.
+WRITE_BACK_DELAY = 0
 
 # Supported image extensions (matches API's _is_image_file and CLI's isImageFile)
 IMAGE_EXTENSIONS = frozenset({'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'})
@@ -379,6 +379,14 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         return inode  # Use inode as file handle
 
+    async def releasedir(self, fh: int) -> None:
+        """Release (close) a directory handle. No-op — we use inodes as handles."""
+        pass
+
+    async def flush(self, fh: int) -> None:
+        """Flush file data. No-op — write-back is handled in release()."""
+        pass
+
     async def mkdir(self, parent_inode: int, name: bytes, mode: int, ctx: pyfuse3.RequestContext) -> pyfuse3.EntryAttributes:
         """Create a query directory."""
         name_str = name.decode("utf-8")
@@ -695,6 +703,21 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             log.error(f"Failed to list ontologies: {e}")
             return []
 
+    def _get_or_create_info_inode(self, name: str, parent_inode: int, ontology: str) -> int:
+        """Get or create a virtual info dotfile inode (.ontology, .documents, .ingest)."""
+        for inode, entry in self._inodes.items():
+            if entry.parent == parent_inode and entry.name == name:
+                return inode
+        inode = self._allocate_inode()
+        self._inodes[inode] = InodeEntry(
+            name=name,
+            entry_type="info_file",
+            parent=parent_inode,
+            ontology=ontology,
+            size=0,
+        )
+        return inode
+
     async def _list_ontology_contents(self, parent_inode: int, ontology: str) -> list[tuple[int, str]]:
         """List contents of an ontology directory: documents/ + ingest/ + user queries."""
         cached = self._cache.get_dir(parent_inode)
@@ -702,6 +725,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             return cached
 
         entries = []
+
+        # Virtual .ontology — ontology statistics
+        info_inode = self._get_or_create_info_inode(".ontology", parent_inode, ontology)
+        entries.append((info_inode, ".ontology"))
 
         # Fixed: the "documents" directory (read-only view of ingested content)
         docs_inode = self._get_or_create_documents_dir_inode(ontology, parent_inode)
@@ -731,6 +758,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             return cached
 
         entries = []
+
+        # Virtual .documents — document listing with count
+        info_inode = self._get_or_create_info_inode(".documents", parent_inode, ontology)
+        entries.append((info_inode, ".documents"))
 
         # Get documents from API
         try:
@@ -772,8 +803,16 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         No API call — job tracker is local. Files appear as .ingesting
         while the job is running and disappear when complete.
+
+        Always includes a .ingest so the directory is never empty on first
+        read — Dolphin/KIO grays out paste on empty FUSE directories.
         """
         entries = []
+
+        # Virtual .ingest — drop-box instructions + Dolphin workaround.
+        # Dolphin/KIO grays out paste on empty FUSE directories.
+        info_inode = self._get_or_create_info_inode(".ingest", parent_inode, ontology)
+        entries.append((info_inode, ".ingest"))
 
         for job in self._job_tracker.get_jobs_for_ontology(ontology):
             virtual_name = self.jobs_config.format_job_filename(job.filename)
@@ -1248,12 +1287,10 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             self.jobs_config = new_jobs
 
     async def _flush_pending_ingestions(self):
-        """Background task: flush write-back queue after WRITE_BACK_DELAY.
+        """Background task: flush pending ingestions.
 
-        Runs every second, checks timestamps, and ingests anything that has
-        been sitting in the queue long enough. This gives editors time to
-        finish their create→write→release→rename dance before we commit
-        content to the API.
+        Runs every second and ingests anything in the queue. With
+        WRITE_BACK_DELAY=0 this is effectively immediate (~1s max).
         """
         import trio
         while True:
@@ -1320,7 +1357,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         entry = self._inodes[inode]
         if entry.entry_type not in ("document", "concept", "meta_file", "ingestion_file", "job_file",
-                                     "image_document", "image_prose", "image_evidence"):
+                                     "image_document", "image_prose", "image_evidence", "info_file"):
             raise pyfuse3.FUSEError(errno.EISDIR)
 
         # Check write permissions for meta files
@@ -1338,7 +1375,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         # Virtual files have unknown size until first read — use direct_io
         # to bypass kernel page cache so reads aren't limited by st_size.
         # Without this, the kernel truncates reads at the placeholder st_size (4096).
-        if entry.entry_type in ("document", "concept", "image_document", "image_prose", "image_evidence"):
+        if entry.entry_type in ("document", "concept", "image_document", "image_prose", "image_evidence", "info_file"):
             fi.direct_io = True
 
         return fi
@@ -1370,7 +1407,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
 
         # For cacheable types: check content cache first
         # (meta_file and job_file are dynamic/local — don't cache)
-        cacheable = entry.entry_type in ("document", "concept", "image_prose")
+        cacheable = entry.entry_type in ("document", "concept", "image_prose", "info_file")
 
         if cacheable:
             cached = self._cache.get_content(fh)
@@ -1407,9 +1444,64 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             content = self._render_meta_file(entry)
         elif entry.entry_type == "job_file":
             content = await self._read_job(entry)
+        elif entry.entry_type == "info_file":
+            content = await self._render_info_file(entry)
         else:
             content = "# Unknown file type\n"
         return content.encode("utf-8")
+
+    async def _render_info_file(self, entry: InodeEntry) -> str:
+        """Render content for virtual info dotfiles (.ontology, .documents, .ingest)."""
+        ontology = entry.ontology
+        name = entry.name
+
+        if name == ".ingest":
+            return (
+                f"# {ontology} — Ingest\n\n"
+                "Drop or copy files here to ingest them into the knowledge graph.\n\n"
+                "Supported formats: text, markdown, PDF, and images.\n"
+                "Files are processed automatically after upload.\n"
+            )
+
+        # .ontology and .documents both need API data
+        try:
+            data = await self._api.get(f"/ontology/{ontology}")
+        except Exception as e:
+            log.debug(f"Could not fetch ontology info for {name}: {e}")
+            return f"# {ontology}\n\nUnable to fetch ontology info.\n"
+
+        if name == ".ontology":
+            return self._format_ontology_info(ontology, data)
+        elif name == ".documents":
+            return self._format_documents_info(ontology, data)
+
+        return f"# {ontology}\n"
+
+    def _format_ontology_info(self, ontology: str, data: dict) -> str:
+        """Format .ontology file: statistics overview."""
+        lines = [f"# {ontology}\n"]
+        stats = data.get("statistics", {})
+        if stats:
+            for key, value in stats.items():
+                label = key.replace("_", " ").title()
+                lines.append(f"- {label}: {value}")
+            lines.append("")
+        node = data.get("node")
+        if node and node.get("description"):
+            lines.append(f"## Description\n\n{node['description']}\n")
+        return "\n".join(lines) + "\n"
+
+    def _format_documents_info(self, ontology: str, data: dict) -> str:
+        """Format .documents file: document listing with count."""
+        files = data.get("files", [])
+        lines = [f"# {ontology} — Documents ({len(files)})\n"]
+        if files:
+            for f in files:
+                lines.append(f"- {f}")
+            lines.append("")
+        else:
+            lines.append("No documents ingested yet.\n")
+        return "\n".join(lines) + "\n"
 
     async def _read_document(self, entry: InodeEntry) -> str:
         """Read and format a document file."""
@@ -1891,11 +1983,11 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         return (fi, attr)
 
     async def release(self, fh: int) -> None:
-        """Release (close) a file — queues non-empty ingestion files for write-back.
+        """Release (close) a file — queues non-empty ingestion files for immediate ingestion.
 
-        Content is stashed in _pending_ingestions with a timestamp. A background
-        task flushes entries after WRITE_BACK_DELAY seconds, giving editors time
-        to complete their save dance (create→write→release→rename).
+        Content is stashed in _pending_ingestions and flushed on the next
+        background tick (~1s). Rename events update the queue key so editor
+        save dances still work correctly.
         """
         entry = self._inodes.get(fh)
         if not entry:
@@ -1917,7 +2009,7 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     "timestamp": time.monotonic(),
                     "inode": fh,
                 }
-                log.info(f"Queued for write-back: {filename} ({len(content)} bytes) → {ontology} (flush in {WRITE_BACK_DELAY}s)")
+                log.info(f"Queued for ingestion: {filename} ({len(content)} bytes) → {ontology}")
 
             if content:
                 # Keep the inode alive so rename() and lookup() still work.

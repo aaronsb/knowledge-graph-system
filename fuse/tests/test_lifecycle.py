@@ -552,34 +552,24 @@ class TestWriteBack:
         assert exc_info.value.errno == errno.EPERM
 
     @pytest.mark.anyio
-    async def test_flush_skips_entries_below_delay(self):
-        """Flush task should not ingest entries younger than WRITE_BACK_DELAY."""
+    async def test_flush_entries_immediately_ready(self):
+        """With WRITE_BACK_DELAY=0, entries are ready on the next flush tick."""
         fs = _make_fs()
         ctx = _mock_ctx()
         ingest_inode = self._setup_ingest_dir(fs)
 
-        fi, _ = await fs.create(ingest_inode, b"young.md", 0o644, 0, ctx)
+        fi, _ = await fs.create(ingest_inode, b"doc.md", 0o644, 0, ctx)
         fh = fi.fh
         await fs.write(fh, 0, b"content")
         await fs.release(fh)
         assert len(fs._pending_ingestions) == 1
 
-        # Simulate flush with entry still young (timestamp = now)
+        # Entry should be immediately ready (delay is 0)
         ready = [
             (k, e) for k, e in fs._pending_ingestions.items()
             if time.monotonic() - e["timestamp"] >= WRITE_BACK_DELAY
         ]
-        assert len(ready) == 0, "Entry should not be ready yet"
-
-        # Age the entry past the delay
-        for entry in fs._pending_ingestions.values():
-            entry["timestamp"] = time.monotonic() - WRITE_BACK_DELAY - 1
-
-        ready = [
-            (k, e) for k, e in fs._pending_ingestions.items()
-            if time.monotonic() - e["timestamp"] >= WRITE_BACK_DELAY
-        ]
-        assert len(ready) == 1, "Entry should be ready after aging"
+        assert len(ready) == 1, "Entry should be immediately ready with zero delay"
 
     @pytest.mark.anyio
     async def test_destroy_flushes_pending(self):
