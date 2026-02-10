@@ -23,6 +23,7 @@ class InodeEntry:
     - meta_dir: The .meta/ control plane directory inside a query
     - meta_file: Virtual file inside .meta/ (limit, threshold, exclude, union, query.toml)
     - images_dir: The images/ directory inside a query (lazy-loaded image evidence)
+    - ingest_dir: The ingest/ drop box inside an ontology (write-only)
     - ingestion_file: Temporary file being written for ingestion
     """
     name: str
@@ -41,7 +42,7 @@ class InodeEntry:
 
 
 # Directory entry types
-DIR_TYPES = frozenset({"root", "ontology_root", "ontology", "documents_dir", "query", "meta_dir", "images_dir"})
+DIR_TYPES = frozenset({"root", "ontology_root", "ontology", "documents_dir", "ingest_dir", "query", "meta_dir", "images_dir"})
 
 
 def is_dir_type(entry_type: str) -> bool:

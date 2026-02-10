@@ -105,7 +105,7 @@ test-cli: ## Run CLI test suite
 	@cd cli && npm test
 
 test-fuse: ## Run FUSE driver test suite
-	@cd fuse && { [ -x .venv/bin/python ] && .venv/bin/python -m pytest tests/ -x -q || python3 -m pytest tests/ -x -q; }
+	@cd fuse && { [ -x .venv/bin/python ] && .venv/bin/python -m pytest tests/ -x -q -o "addopts=" || ~/.local/share/pipx/venvs/kg-fuse/bin/python -m pytest tests/ -x -q -o "addopts=" || python3 -m pytest tests/ -x -q -o "addopts="; }
 
 ##@ Documentation
 

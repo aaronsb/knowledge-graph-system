@@ -571,10 +571,13 @@ def _start_mount(
             tags_config=mc.tags,
             jobs_config=mc.jobs,
             cache_config=mc.cache,
+            write_protect_config=mc.write_protect,
             query_store=query_store,
+            mountpoint=mp,
         )
 
         fuse_options = set(pyfuse3.default_options)
+        fuse_options.discard("default_permissions")  # We enforce permissions in handlers
         fuse_options.add("fsname=kg-fuse")
         if debug:
             fuse_options.add("debug")
@@ -707,13 +710,21 @@ def cmd_config(args: Namespace) -> None:
                 # Cache
                 cache = settings.get("cache", {})
                 epoch = cache.get("epoch_check_interval", 5.0)
+                dir_ttl = cache.get("dir_cache_ttl", 30.0)
                 max_bytes = cache.get("content_cache_max", 50 * 1024 * 1024)
                 max_mb = max_bytes / (1024 * 1024)
-                print(f"    cache:     epoch check {epoch}s, content max {max_mb:.0f} MB")
+                print(f"    cache:     epoch check {epoch}s, dir TTL {dir_ttl}s, content max {max_mb:.0f} MB")
                 # Jobs
                 jobs = settings.get("jobs", {})
                 hidden = jobs.get("hide_jobs", False)
                 print(f"    jobs:      {'hidden' if hidden else 'visible'}")
+                # Write protection
+                wp = settings.get("write_protect", {})
+                onto_del = wp.get("allow_ontology_delete", False)
+                doc_del = wp.get("allow_document_delete", False)
+                onto_status = _red("allowed") if onto_del else _green("blocked")
+                doc_status = _red("allowed") if doc_del else _green("blocked")
+                print(f"    delete:    ontology {onto_status}, document {doc_status}")
         else:
             print(f"  {_dim('No mounts configured.')}")
 
@@ -799,6 +810,16 @@ def cmd_repair(args: Namespace) -> None:
 
     if issues == 0:
         print(f"  {_green('No issues found.')}")
+        # Offer restart if mounts are running
+        running = [mp for mp in config.mounts if mount_status(mp)["running"]]
+        if running and _prompt_yn("  Restart all mounts?"):
+            for mp in running:
+                _stop_mount(mp)
+            # Reload config in case fuse.json changed
+            config = load_config()
+            for mp in running:
+                mc = config.mounts.get(mp, MountConfig(path=mp))
+                _start_mount(mp, config, mc, foreground=False, debug=False)
     else:
         print(f"\n  Addressed {issues} issue{'s' if issues != 1 else ''}.")
     print()

@@ -9,10 +9,12 @@ from unittest.mock import patch
 
 from kg_fuse.config import (
     FuseConfig, MountConfig, TagsConfig, CacheConfig, JobsConfig,
+    WriteProtectConfig,
     get_mount_id, get_mount_data_dir,
     read_kg_config, read_kg_credentials,
     read_fuse_config, write_fuse_config,
     load_config, add_mount_to_config, remove_mount_from_config,
+    normalize_fuse_config, _mount_config_to_dict,
 )
 
 
@@ -39,6 +41,21 @@ class TestDataClasses:
         mc2 = MountConfig(path="/b")
         mc1.tags.threshold = 0.9
         assert mc2.tags.threshold == 0.5
+
+    def test_write_protect_defaults_blocked(self):
+        wp = WriteProtectConfig()
+        assert wp.allow_ontology_delete is False
+        assert wp.allow_document_delete is False
+
+    def test_write_protect_explicit_enable(self):
+        wp = WriteProtectConfig(allow_ontology_delete=True, allow_document_delete=True)
+        assert wp.allow_ontology_delete is True
+        assert wp.allow_document_delete is True
+
+    def test_mount_config_includes_write_protect(self):
+        mc = MountConfig(path="/mnt/test")
+        assert mc.write_protect.allow_ontology_delete is False
+        assert mc.write_protect.allow_document_delete is False
 
 
 class TestPathHelpers:
@@ -236,6 +253,41 @@ class TestLoadConfig:
             assert cfg.client_secret == ""
             assert cfg.api_url == "http://localhost:8000"
 
+    def test_loads_write_protect_from_fuse_json(self, tmp_path):
+        kg_path = tmp_path / "config.json"
+        fuse_path = tmp_path / "fuse.json"
+        kg_path.write_text(json.dumps({"auth": {}}))
+        fuse_path.write_text(json.dumps({
+            "mounts": {
+                "/mnt/test": {
+                    "write_protect": {
+                        "allow_ontology_delete": True,
+                        "allow_document_delete": False,
+                    }
+                }
+            },
+        }))
+        with patch("kg_fuse.config.get_kg_config_path", return_value=kg_path), \
+             patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            cfg = load_config()
+            mc = cfg.mounts["/mnt/test"]
+            assert mc.write_protect.allow_ontology_delete is True
+            assert mc.write_protect.allow_document_delete is False
+
+    def test_write_protect_defaults_when_absent(self, tmp_path):
+        kg_path = tmp_path / "config.json"
+        fuse_path = tmp_path / "fuse.json"
+        kg_path.write_text(json.dumps({"auth": {}}))
+        fuse_path.write_text(json.dumps({
+            "mounts": {"/mnt/test": {"tags": {"enabled": True}}},
+        }))
+        with patch("kg_fuse.config.get_kg_config_path", return_value=kg_path), \
+             patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            cfg = load_config()
+            mc = cfg.mounts["/mnt/test"]
+            assert mc.write_protect.allow_ontology_delete is False
+            assert mc.write_protect.allow_document_delete is False
+
     def test_default_api_url_when_not_set(self, tmp_path):
         kg_path = tmp_path / "config.json"
         fuse_path = tmp_path / "fuse.json"
@@ -285,8 +337,101 @@ class TestMountManagement:
             data = json.loads(fuse_path.read_text())
             assert "/mnt/test" not in data["mounts"]
 
+    def test_add_mount_includes_write_protect(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        kg_path = tmp_path / "config.json"
+        kg_path.write_text(json.dumps({"auth": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path), \
+             patch("kg_fuse.config.get_kg_config_path", return_value=kg_path):
+            add_mount_to_config("/mnt/new")
+            data = json.loads(fuse_path.read_text())
+            wp = data["mounts"]["/mnt/new"]["write_protect"]
+            assert wp["allow_ontology_delete"] is False
+            assert wp["allow_document_delete"] is False
+
     def test_remove_nonexistent_mount(self, tmp_path):
         fuse_path = tmp_path / "fuse.json"
         fuse_path.write_text(json.dumps({"mounts": {}}))
         with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
             assert remove_mount_from_config("/mnt/missing") is False
+
+
+class TestNormalizeFuseConfig:
+    """Tests for config normalization (backfilling missing sections)."""
+
+    def test_backfills_missing_write_protect(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({
+            "mounts": {
+                "/mnt/test": {
+                    "tags": {"enabled": True, "threshold": 0.5},
+                    "cache": {"epoch_check_interval": 5.0},
+                    "jobs": {"hide_jobs": False},
+                }
+            },
+        }))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            changed = normalize_fuse_config()
+            assert changed is True
+            data = json.loads(fuse_path.read_text())
+            wp = data["mounts"]["/mnt/test"]["write_protect"]
+            assert wp["allow_ontology_delete"] is False
+            assert wp["allow_document_delete"] is False
+
+    def test_backfills_missing_key_within_section(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({
+            "mounts": {
+                "/mnt/test": {
+                    "tags": {"enabled": True},
+                    "cache": {"epoch_check_interval": 5.0},
+                    "jobs": {"hide_jobs": False},
+                    "write_protect": {"allow_ontology_delete": True},
+                }
+            },
+        }))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            changed = normalize_fuse_config()
+            assert changed is True
+            data = json.loads(fuse_path.read_text())
+            # Missing key backfilled
+            assert data["mounts"]["/mnt/test"]["write_protect"]["allow_document_delete"] is False
+            # Existing key preserved
+            assert data["mounts"]["/mnt/test"]["write_protect"]["allow_ontology_delete"] is True
+
+    def test_no_change_when_complete(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        mc = MountConfig(path="/mnt/test")
+        fuse_path.write_text(json.dumps({
+            "mounts": {"/mnt/test": _mount_config_to_dict(mc)},
+        }))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            changed = normalize_fuse_config()
+            assert changed is False
+
+    def test_noop_when_no_config(self, tmp_path):
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=tmp_path / "missing.json"):
+            assert normalize_fuse_config() is False
+
+    def test_preserves_user_values(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({
+            "mounts": {
+                "/mnt/test": {
+                    "tags": {"enabled": False, "threshold": 0.9},
+                    "cache": {"epoch_check_interval": 20.0},
+                    "jobs": {"hide_jobs": True},
+                }
+            },
+        }))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            normalize_fuse_config()
+            data = json.loads(fuse_path.read_text())
+            mount = data["mounts"]["/mnt/test"]
+            # User values preserved
+            assert mount["tags"]["enabled"] is False
+            assert mount["tags"]["threshold"] == 0.9
+            assert mount["cache"]["epoch_check_interval"] == 20.0
+            assert mount["jobs"]["hide_jobs"] is True
+            # Missing section added with defaults
+            assert mount["write_protect"]["allow_ontology_delete"] is False

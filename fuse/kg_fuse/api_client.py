@@ -74,6 +74,18 @@ class KnowledgeGraphClient:
         response.raise_for_status()
         return response.json()
 
+    async def delete(self, path: str, params: Optional[dict] = None) -> dict:
+        """Make authenticated DELETE request to API."""
+        token = await self._get_token()
+        client = await self._get_client()
+        response = await client.delete(
+            path,
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        response.raise_for_status()
+        return response.json()
+
     async def get_bytes(self, path: str, params: Optional[dict] = None, timeout: float = 60.0) -> bytes:
         """Make authenticated GET request returning raw bytes.
 

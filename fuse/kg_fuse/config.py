@@ -52,12 +52,23 @@ class CacheConfig:
     content_cache_max: int = 50 * 1024 * 1024
 
 @dataclass
+class WriteProtectConfig:
+    """Write protection to prevent accidental deletion via FUSE.
+
+    Both default to False (blocked). Users must explicitly enable
+    deletion in fuse.json to allow rm/rmdir on ontologies and documents.
+    """
+    allow_ontology_delete: bool = False
+    allow_document_delete: bool = False
+
+@dataclass
 class MountConfig:
     """Configuration for a single FUSE mount point."""
     path: str
     tags: TagsConfig = field(default_factory=TagsConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
     jobs: JobsConfig = field(default_factory=JobsConfig)
+    write_protect: WriteProtectConfig = field(default_factory=WriteProtectConfig)
 
 @dataclass
 class FuseConfig:
@@ -207,7 +218,8 @@ def load_config(
     kg_auth = kg_data.get("auth", {}) if kg_data else {}
     kg_api_url = kg_data.get("api_url") if kg_data else None
 
-    # Read fuse config (mounts + preferences)
+    # Read fuse config (mounts + preferences), backfilling missing sections
+    normalize_fuse_config()
     fuse_data = read_fuse_config()
 
     # Parse mounts from fuse.json
@@ -217,6 +229,7 @@ def load_config(
             tags_data = mount_data.get("tags", {})
             cache_data = mount_data.get("cache", {})
             jobs_data = mount_data.get("jobs", {})
+            wp_data = mount_data.get("write_protect", {})
             config.mounts[mount_path] = MountConfig(
                 path=mount_path,
                 tags=TagsConfig(
@@ -230,6 +243,10 @@ def load_config(
                 ),
                 jobs=JobsConfig(
                     hide_jobs=jobs_data.get("hide_jobs", False),
+                ),
+                write_protect=WriteProtectConfig(
+                    allow_ontology_delete=wp_data.get("allow_ontology_delete", False),
+                    allow_document_delete=wp_data.get("allow_document_delete", False),
                 ),
             )
 
@@ -250,6 +267,50 @@ def load_config(
     return config
 
 
+def _mount_config_to_dict(mc: MountConfig) -> dict:
+    """Serialize a MountConfig to a JSON-safe dict. Single source of truth."""
+    return {
+        "tags": {"enabled": mc.tags.enabled, "threshold": mc.tags.threshold},
+        "cache": {
+            "epoch_check_interval": mc.cache.epoch_check_interval,
+            "dir_cache_ttl": mc.cache.dir_cache_ttl,
+            "content_cache_max": mc.cache.content_cache_max,
+        },
+        "jobs": {"hide_jobs": mc.jobs.hide_jobs},
+        "write_protect": {
+            "allow_ontology_delete": mc.write_protect.allow_ontology_delete,
+            "allow_document_delete": mc.write_protect.allow_document_delete,
+        },
+    }
+
+
+def normalize_fuse_config() -> bool:
+    """Backfill missing config sections with defaults. Returns True if file was updated."""
+    fuse_data = read_fuse_config()
+    if not fuse_data or "mounts" not in fuse_data:
+        return False
+
+    changed = False
+    default_dict = _mount_config_to_dict(MountConfig(path=""))
+
+    for mount_path, mount_data in fuse_data["mounts"].items():
+        for section_key, section_defaults in default_dict.items():
+            if section_key not in mount_data:
+                mount_data[section_key] = section_defaults
+                changed = True
+            elif isinstance(section_defaults, dict):
+                # Backfill missing keys within existing sections
+                for k, v in section_defaults.items():
+                    if k not in mount_data[section_key]:
+                        mount_data[section_key][k] = v
+                        changed = True
+
+    if changed:
+        write_fuse_config(fuse_data)
+        log.info("Backfilled missing config sections with defaults")
+    return changed
+
+
 def add_mount_to_config(mountpoint: str, mount_config: Optional[MountConfig] = None) -> None:
     """Add a mount to fuse.json. Creates the file if it doesn't exist."""
     fuse_data = read_fuse_config() or {}
@@ -258,14 +319,7 @@ def add_mount_to_config(mountpoint: str, mount_config: Optional[MountConfig] = N
         fuse_data["mounts"] = {}
 
     mc = mount_config or MountConfig(path=mountpoint)
-    fuse_data["mounts"][mountpoint] = {
-        "tags": {"enabled": mc.tags.enabled, "threshold": mc.tags.threshold},
-        "cache": {
-            "epoch_check_interval": mc.cache.epoch_check_interval,
-            "content_cache_max": mc.cache.content_cache_max,
-        },
-        "jobs": {"hide_jobs": mc.jobs.hide_jobs},
-    }
+    fuse_data["mounts"][mountpoint] = _mount_config_to_dict(mc)
 
     # Set auth_client_id if not already set
     if "auth_client_id" not in fuse_data or not fuse_data["auth_client_id"]:
