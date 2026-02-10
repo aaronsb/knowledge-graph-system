@@ -158,6 +158,24 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         """Check if entry type is a directory."""
         return is_dir_type(entry_type)
 
+    async def statfs(self, ctx: pyfuse3.RequestContext) -> pyfuse3.StatvfsData:
+        """Return filesystem stats. Required for file managers like Dolphin.
+
+        Reports generous free space so file managers don't gray out paste/write
+        operations. Actual write gating is done by our create/write handlers.
+        """
+        stat = pyfuse3.StatvfsData()
+        stat.f_bsize = 4096
+        stat.f_frsize = 4096
+        stat.f_blocks = 1024 * 1024  # 4 GB virtual
+        stat.f_bfree = 1024 * 1024
+        stat.f_bavail = 1024 * 1024
+        stat.f_files = len(self._inodes)
+        stat.f_ffree = 1024 * 1024
+        stat.f_favail = 1024 * 1024
+        stat.f_namemax = 255
+        return stat
+
     async def access(self, inode: int, mode: int, ctx: pyfuse3.RequestContext) -> bool:
         """Permission check — always allow, we enforce in each handler.
 
@@ -1255,6 +1273,15 @@ class KnowledgeGraphFS(pyfuse3.Operations):
         filename = entry["filename"]
         content = entry["content"]
 
+        # Clean up the temporary inode now that we're committing
+        stale_inode = entry.get("inode")
+        if stale_inode and stale_inode in self._inodes:
+            parent_inode = self._inodes[stale_inode].parent
+            del self._inodes[stale_inode]
+            self._free_inode(stale_inode)
+            if parent_inode:
+                self._invalidate_cache(parent_inode)
+
         log.info(f"Write-back flush: ingesting {filename} ({len(content)} bytes) into {ontology}")
         try:
             if _is_image_file(filename):
@@ -1767,6 +1794,17 @@ class KnowledgeGraphFS(pyfuse3.Operations):
             if source_inode in self._write_info:
                 self._write_info[source_inode]["filename"] = new_name
 
+            # Also update the pending ingestion queue if content was already released
+            ontology = source_entry.ontology
+            if ontology:
+                old_key = f"{ontology}/{old_name}"
+                if old_key in self._pending_ingestions:
+                    pending = self._pending_ingestions.pop(old_key)
+                    pending["filename"] = new_name
+                    pending["timestamp"] = time.monotonic()
+                    new_key = f"{ontology}/{new_name}"
+                    self._pending_ingestions[new_key] = pending
+
             self._invalidate_cache(parent_inode_old)
             if parent_inode_new != parent_inode_old:
                 self._invalidate_cache(parent_inode_new)
@@ -1877,16 +1915,22 @@ class KnowledgeGraphFS(pyfuse3.Operations):
                     "filename": filename,
                     "content": content,
                     "timestamp": time.monotonic(),
+                    "inode": fh,
                 }
                 log.info(f"Queued for write-back: {filename} ({len(content)} bytes) → {ontology} (flush in {WRITE_BACK_DELAY}s)")
 
-            # Clean up the temporary inode (file handle is gone, content is in the queue)
-            if fh in self._inodes:
-                parent_inode = self._inodes[fh].parent
-                del self._inodes[fh]
-                self._free_inode(fh)
-                if parent_inode:
-                    self._invalidate_cache(parent_inode)
+            if content:
+                # Keep the inode alive so rename() and lookup() still work.
+                # The inode is cleaned up after write-back flush in _ingest_and_notify().
+                pass
+            else:
+                # Empty file — not queued, clean up the inode immediately
+                if fh in self._inodes:
+                    parent_inode = self._inodes[fh].parent
+                    del self._inodes[fh]
+                    self._free_inode(fh)
+                    if parent_inode:
+                        self._invalidate_cache(parent_inode)
 
     async def _ingest_document(self, ontology: str, filename: str, content: bytes) -> dict:
         """Submit document to ingestion API and track the job."""
