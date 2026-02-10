@@ -654,6 +654,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#contextual-info-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contextual Info Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#query-control" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -737,6 +748,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#document-and-ontology-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document and Ontology Deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#concept-files" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -782,10 +804,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#shell-scripting" class="md-nav__link">
+  <a href="#automated-ingestion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell Scripting
+        Automated Ingestion
       
     </span>
   </a>
@@ -804,10 +826,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#quick-lookups" class="md-nav__link">
+  <a href="#remote-access" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Lookups
+        Remote Access
       
     </span>
   </a>
@@ -827,23 +849,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#remote-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remote Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -9582,6 +9587,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#contextual-info-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contextual Info Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#query-control" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9665,6 +9681,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#document-and-ontology-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document and Ontology Deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#concept-files" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9710,10 +9737,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#shell-scripting" class="md-nav__link">
+  <a href="#automated-ingestion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell Scripting
+        Automated Ingestion
       
     </span>
   </a>
@@ -9732,10 +9759,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#quick-lookups" class="md-nav__link">
+  <a href="#remote-access" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Lookups
+        Remote Access
       
     </span>
   </a>
@@ -9755,23 +9782,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#remote-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Remote Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -9807,9 +9817,9 @@
 
 
 <h1 id="fuse-driver">FUSE Driver</h1>
-<p>A semantic filesystem that lets you browse your knowledge graph using standard Unix commands. Create directories to define queries, list them to see results, read files to get concept details.</p>
+<p>A semantic filesystem that lets you browse your knowledge graph using standard Unix commands. Create directories to define queries, list them to see results, read files to get concept details, and copy files to ingest new documents.</p>
 <p><img alt="FUSE filesystem in Dolphin file manager" src="../../media/fuse/fuse-file-manager.png" />
-<em>Knowledge graph mounted as a filesystem — ontologies are folders, queries are directories you create, and concepts appear as files. Integrates with Dolphin and GNOME Files (directory refresh signals, thumbnails). Use <code>grep</code>, <code>tree</code>, <code>cp -r</code>, or any Unix tool on your semantic data.</em></p>
+<em>Knowledge graph mounted as a filesystem — ontologies are folders, queries are directories you create, and concepts appear as files. Integrates with Dolphin and GNOME Files. Use <code>grep</code>, <code>tree</code>, <code>cp -r</code>, or any Unix tool on your semantic data.</em></p>
 <h2 id="installation">Installation</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipx<span class="w"> </span>install<span class="w"> </span>kg-fuse
 </code></pre></div>
@@ -9817,18 +9827,19 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create OAuth credentials</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create<span class="w"> </span>--for<span class="w"> </span>fuse
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Mount the filesystem</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg-fuse<span class="w"> </span>/mnt/knowledge
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Explore</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>ls<span class="w"> </span>/mnt/knowledge/ontology/
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nb">cd</span><span class="w"> </span>/mnt/knowledge/ontology/economics/
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>mkdir<span class="w"> </span><span class="s2">&quot;causes of inflation&quot;</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>ls<span class="w"> </span><span class="s2">&quot;causes of inflation&quot;</span>/
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>cat<span class="w"> </span><span class="s2">&quot;causes of inflation&quot;</span>/Monetary-Policy.concept.md
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># Unmount</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>fusermount<span class="w"> </span>-u<span class="w"> </span>/mnt/knowledge
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Set up and mount</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg-fuse<span class="w"> </span>init<span class="w"> </span>~/Knowledge
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kg-fuse<span class="w"> </span>mount
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># Explore</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>ls<span class="w"> </span>~/Knowledge/ontology/
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>cat<span class="w"> </span>~/Knowledge/ontology/Economics/.ontology
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Economics/inflation
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>cat<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/Monetary-Policy.concept.md
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Unmount</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kg-fuse<span class="w"> </span>unmount
 </code></pre></div>
 <hr />
 <h2 id="how-it-works">How It Works</h2>
@@ -9846,11 +9857,23 @@
 <td>List all ontologies</td>
 </tr>
 <tr>
-<td><code>mkdir economics/leadership</code></td>
-<td>Create semantic query for "leadership" in economics ontology</td>
+<td><code>cat ontology/Economics/.ontology</code></td>
+<td>View ontology stats (concepts, docs, relationships)</td>
 </tr>
 <tr>
-<td><code>ls economics/leadership/</code></td>
+<td><code>ls ontology/Economics/documents/</code></td>
+<td>List source documents</td>
+</tr>
+<tr>
+<td><code>cat ontology/Economics/documents/.documents</code></td>
+<td>View document listing with count</td>
+</tr>
+<tr>
+<td><code>mkdir ontology/Economics/inflation</code></td>
+<td>Create semantic query for "inflation" in Economics</td>
+</tr>
+<tr>
+<td><code>ls ontology/Economics/inflation/</code></td>
 <td>Execute query, show matching concepts</td>
 </tr>
 <tr>
@@ -9858,36 +9881,102 @@
 <td>Read concept with evidence and relationships</td>
 </tr>
 <tr>
-<td><code>cp paper.pdf ontology/economics/</code></td>
-<td>Ingest document into economics ontology</td>
+<td><code>echo 0.8 &gt; .meta/threshold</code></td>
+<td>Tune query precision</td>
 </tr>
 <tr>
-<td><code>rm economics/leadership/</code></td>
-<td>Delete query (not the concepts)</td>
+<td><code>echo "noise" &gt;&gt; .meta/exclude</code></td>
+<td>Filter out irrelevant results</td>
+</tr>
+<tr>
+<td><code>cp paper.pdf ontology/Economics/ingest/</code></td>
+<td>Ingest document into Economics</td>
+</tr>
+<tr>
+<td><code>cat paper.pdf.ingesting</code></td>
+<td>Check ingestion job progress</td>
+</tr>
+<tr>
+<td><code>rm ontology/Economics/documents/old.md</code></td>
+<td>Delete a document from the graph</td>
+</tr>
+<tr>
+<td><code>mkdir ontology/New-Domain</code></td>
+<td>Create a new ontology</td>
+</tr>
+<tr>
+<td><code>rmdir ontology/New-Domain</code></td>
+<td>Delete an ontology (if write-protect allows)</td>
+</tr>
+<tr>
+<td><code>rmdir ontology/Economics/inflation</code></td>
+<td>Remove query (not the concepts)</td>
+</tr>
+<tr>
+<td><code>ln -s ../ontology/Econ query/Econ</code></td>
+<td>Link ontology into a global query (OR)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="filesystem-structure">Filesystem Structure</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/mnt/knowledge/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>~/Knowledge/
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── ontology/                           # All knowledge domains
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│   ├── economics/                      # An ontology
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│   │   ├── documents/                  # Source files (read-only)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│   │   │   └── research-paper.pdf
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│   │   ├── inflation/                  # Your query
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│   │   │   ├── .meta/                  # Query controls
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│   │   │   │   ├── limit               # Max results (default: 50)
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   │   │   │   ├── threshold           # Min similarity (default: 0.7)
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   │   │   │   ├── exclude             # Terms to filter out
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│   │   │   │   └── query.toml          # Debug view
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>│   │   │   ├── Monetary-Policy.concept.md
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>│   │   │   └── Supply-Chain.concept.md
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>│   │   └── market-dynamics/            # Another query
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>│   └── architecture/                   # Another ontology
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>│
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>└── global-search/                      # Query across ALL ontologies
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    └── ...
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│   ├── Economics/                      # An ontology
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│   │   ├── .ontology                   # Stats: concept count, doc count, etc.
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│   │   ├── documents/                  # Source documents (read-only)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│   │   │   ├── .documents              # Document listing with count
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│   │   │   ├── research-paper.md       # Text document
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│   │   │   └── diagram.png            # Image document
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   │   ├── ingest/                     # Drop box for new documents
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   │   │   ├── .ingest                 # Usage instructions
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│   │   │   └── paper.md.ingesting      # Job tracker (during processing)
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>│   │   └── inflation/                  # Your query
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>│   │       ├── .meta/                  # Query controls
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>│   │       │   ├── limit               # Max results (default: 50)
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>│   │       │   ├── threshold           # Min similarity (default: 0.7)
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>│   │       │   ├── exclude             # Terms to filter out (NOT)
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>│   │       │   ├── union               # Terms to add (OR)
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>│   │       │   └── query.toml          # Debug view (read-only)
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>│   │       ├── images/                 # Image evidence from concepts
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>│   │       ├── Monetary-Policy.concept.md
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>│   │       └── Supply-Chain.concept.md
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>│   └── Architecture/                   # Another ontology
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>│
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>└── global-search/                      # Query across ALL ontologies
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    ├── .meta/
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    └── Results.concept.md
 </code></pre></div>
+<hr />
+<h2 id="contextual-info-files">Contextual Info Files</h2>
+<p>Each directory has a dotfile that describes its contents:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Location</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.ontology</code></td>
+<td><code>ontology/{name}/</code></td>
+<td>Concept count, document count, relationship count, description</td>
+</tr>
+<tr>
+<td><code>.documents</code></td>
+<td><code>ontology/{name}/documents/</code></td>
+<td>Document listing with count</td>
+</tr>
+<tr>
+<td><code>.ingest</code></td>
+<td><code>ontology/{name}/ingest/</code></td>
+<td>Usage instructions for the drop box</td>
+</tr>
+</tbody>
+</table>
+<p>These are useful for quickly understanding what's in each ontology without running queries or opening a browser.</p>
 <hr />
 <h2 id="query-control">Query Control</h2>
 <p>Every query directory has a <code>.meta/</code> folder for tuning results.</p>
@@ -9896,124 +9985,113 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.85<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># More results, broader matching</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.5<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.3<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
 </code></pre></div>
 <h3 id="limit-results">Limit Results</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">echo</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>&gt;<span class="w"> </span>.meta/limit
 </code></pre></div>
 <h3 id="exclude-terms">Exclude Terms</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Filter out concepts containing &quot;deprecated&quot;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deprecated&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;legacy&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deprecated&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;legacy&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
 </code></pre></div>
 <h3 id="broaden-search">Broaden Search</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Add OR terms</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;monetary&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;fiscal&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;monetary&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;fiscal&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
 </code></pre></div>
 <h3 id="view-query-state">View Query State</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cat<span class="w"> </span>.meta/query.toml
 </code></pre></div>
 <hr />
 <h2 id="document-ingestion">Document Ingestion</h2>
-<p>Copy files to ingest them:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Ingest a PDF</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>cp<span class="w"> </span>research-paper.pdf<span class="w"> </span>/mnt/knowledge/ontology/economics/
+<p>Each ontology has a dedicated <code>ingest/</code> drop box:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Copy files to ingest them</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>cp<span class="w"> </span>research-paper.pdf<span class="w"> </span>~/Knowledge/ontology/Economics/ingest/
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># The file &quot;disappears&quot; into the processing pipeline</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># After extraction, it appears in documents/</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>ls<span class="w"> </span>/mnt/knowledge/ontology/economics/documents/
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># A .ingesting file tracks progress</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>cat<span class="w"> </span>~/Knowledge/ontology/Economics/ingest/research-paper.pdf.ingesting
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Status: running, stage: extracting_concepts, percent: 45</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># After processing, the document appears in documents/</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/documents/
 </code></pre></div>
+<p>Supports text, markdown, PDF, and images (.png, .jpg, .gif, .webp, .bmp). Works with file managers too — drag and drop files into <code>ingest/</code> from Dolphin or GNOME Files.</p>
+<hr />
+<h2 id="document-and-ontology-deletion">Document and Ontology Deletion</h2>
+<p>Destructive operations are gated by write protection (off by default):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Delete a document (requires allow_document_delete: true)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>rm<span class="w"> </span>~/Knowledge/ontology/Economics/documents/old-paper.md
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Delete an ontology (requires allow_ontology_delete: true)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>rmdir<span class="w"> </span>~/Knowledge/ontology/Deprecated-Domain
+</code></pre></div>
+<p>Configure in <code>~/.config/kg/fuse.json</code> under the mount's <code>write_protect</code> section. Changes are hot-reloaded.</p>
 <hr />
 <h2 id="concept-files">Concept Files</h2>
-<p>Each concept appears as a markdown file with:</p>
+<p>Each concept appears as a markdown file with YAML frontmatter:</p>
 <ul>
-<li><strong>Label and description</strong></li>
+<li><strong>Label, aliases, and description</strong></li>
 <li><strong>Evidence quotes</strong> with source attribution</li>
-<li><strong>Relationships</strong> to other concepts</li>
+<li><strong>Relationships</strong> to other concepts (wikilink format)</li>
 <li><strong>Grounding strength</strong> score</li>
+<li><strong>Tags</strong> for Obsidian/Logseq integration</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cat<span class="w"> </span>Monetary-Policy.concept.md
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gh"># Monetary Policy</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>Central bank actions to control money supply and interest rates.
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="gu">## Evidence</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="k">&gt; </span><span class="ge">&quot;The Federal Reserve uses open market operations...&quot;</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="k">&gt; </span><span class="ge">— research-paper.pdf (chunk 3)</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="k">&gt; </span><span class="ge">&quot;Interest rate adjustments affect borrowing costs...&quot;</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="k">&gt; </span><span class="ge">— economics-textbook.pdf (chunk 12)</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="gu">## Relationships</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="k">-</span><span class="w"> </span>INFLUENCES → Inflation (0.92)
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="k">-</span><span class="w"> </span>CONTROLLED_BY → Central Bank (0.88)
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="k">-</span><span class="w"> </span>AFFECTS → Employment (0.75)
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="gu">## Grounding</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>Strength: 0.85 (well-supported)
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>Sources: 3 documents
-</code></pre></div>
 <hr />
 <h2 id="use-cases">Use Cases</h2>
 <h3 id="grep-through-knowledge">Grep Through Knowledge</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Find all concepts mentioning &quot;distributed&quot;</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;distributed&quot;</span><span class="w"> </span>/mnt/knowledge/ontology/architecture/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;distributed&quot;</span><span class="w"> </span>~/Knowledge/ontology/Architecture/
 </code></pre></div>
 <h3 id="editor-integration">Editor Integration</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Open concept in your editor</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>vim<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/Monetary-Policy.concept.md
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>vim<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/Monetary-Policy.concept.md
 </code></pre></div>
-<h3 id="shell-scripting">Shell Scripting</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># List all concepts in an ontology</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>/mnt/knowledge/ontology/economics/*/<span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>basename<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">done</span>
+<h3 id="automated-ingestion">Automated Ingestion</h3>
+<p>Any program that writes files can feed the knowledge graph:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Speech-to-text transcription → knowledge graph</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>whisper-cli<span class="w"> </span>record<span class="w"> </span>--output<span class="w"> </span>~/Knowledge/ontology/Meetings/ingest/standup.md
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># File watcher for continuous ingestion</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>inotifywait<span class="w"> </span>-m<span class="w"> </span>~/incoming/<span class="w"> </span>-e<span class="w"> </span>close_write<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>dir<span class="w"> </span>event<span class="w"> </span>file<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span>cp<span class="w"> </span>~/incoming/<span class="s2">&quot;</span><span class="nv">$file</span><span class="s2">&quot;</span><span class="w"> </span>~/Knowledge/ontology/Auto-Ingest/ingest/
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="k">done</span>
 </code></pre></div>
 <h3 id="obsidian-as-a-graph-viewer">Obsidian as a Graph Viewer</h3>
-<p>The FUSE filesystem presents concepts as markdown files with wikilink-style relationships. Point Obsidian at the mount point and its graph view renders your knowledge graph natively — no plugin required.</p>
+<p>The FUSE filesystem presents concepts as markdown with wikilink-style relationships. Point Obsidian at the mount point and its graph view renders your knowledge graph natively — no plugin required.</p>
 <p><img alt="Obsidian graph view of knowledge graph" src="../../media/obsidian-use-case/obsidian-graph-view.png" />
 <em>Obsidian's built-in graph view rendering concept relationships from the FUSE mount</em></p>
 <p><img alt="Obsidian concept detail" src="../../media/obsidian-use-case/obsidian-concept-detail.png" />
 <em>A concept file showing properties, evidence, and knowledge metadata in Obsidian</em></p>
-<h3 id="quick-lookups">Quick Lookups</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># What does the knowledge graph say about X?</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mkdir<span class="w"> </span>/mnt/knowledge/ontology/economics/stagflation
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>cat<span class="w"> </span>/mnt/knowledge/ontology/economics/stagflation/*.md
+<h3 id="remote-access">Remote Access</h3>
+<p>Since it's a real filesystem, remote access works natively:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>ssh<span class="w"> </span>server<span class="w"> </span><span class="s2">&quot;cat ~/Knowledge/ontology/Economics/.ontology&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>scp<span class="w"> </span>-r<span class="w"> </span>server:~/Knowledge/ontology/Economics/inflation/<span class="w"> </span>./local-copy/
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>sshfs<span class="w"> </span>server:~/Knowledge<span class="w"> </span>~/remote-knowledge
 </code></pre></div>
 <hr />
 <h2 id="configuration">Configuration</h2>
-<p>Config stored in <code>~/.config/kg-fuse/config.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">[auth]</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">client_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;kg-fuse-...&quot;</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">client_secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;secret...&quot;</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">[api]</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span>
+<p>Config stored in <code>~/.config/kg/fuse.json</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">{</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">&quot;auth_client_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kg-cli-admin-ba93368c&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">&quot;mounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="nt">&quot;/home/user/Knowledge&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">      </span><span class="nt">&quot;cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;epoch_check_interval&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5.0</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">      </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;hide_jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">      </span><span class="nt">&quot;write_protect&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">        </span><span class="nt">&quot;allow_ontology_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">        </span><span class="nt">&quot;allow_document_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="p">}</span>
 </code></pre></div>
+<p>Settings are hot-reloaded — edit the file while mounted and changes take effect within seconds.</p>
 <p>Generate credentials with <code>kg oauth create --for fuse</code>.</p>
-<hr />
-<h3 id="remote-access">Remote Access</h3>
-<p>Since it's a real filesystem, you get remote access for free:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># SSH into your server and browse the graph</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>ssh<span class="w"> </span>server<span class="w"> </span><span class="s2">&quot;ls /mnt/knowledge/ontology/&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Copy a snapshot of query results</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>scp<span class="w"> </span>-r<span class="w"> </span>server:/mnt/knowledge/ontology/economics/inflation/<span class="w"> </span>./local-copy/
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Mount remotely via SSHFS</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>sshfs<span class="w"> </span>server:/mnt/knowledge<span class="w"> </span>/mnt/remote-knowledge
-</code></pre></div>
 <hr />
 <h2 id="notes">Notes</h2>
 <ul>
 <li><strong>Non-POSIX by design</strong> — Like Google Drive, the filesystem intentionally violates some POSIX expectations. Concepts can appear in multiple places, results change as the graph evolves.</li>
 <li><strong>Read-heavy</strong> — Optimized for exploration. Write operations (ingestion) are async.</li>
 <li><strong>OAuth required</strong> — Uses the same authentication as CLI and MCP.</li>
+<li><strong>File manager friendly</strong> — Reports virtual free space so Dolphin/GNOME Files don't disable paste; dotfiles keep directories non-empty so drag targets work.</li>
 </ul>
 
 
