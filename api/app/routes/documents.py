@@ -1130,9 +1130,7 @@ async def delete_document(
         # Clean up orphaned concepts (concepts with no remaining sources)
         orphaned_result = client._execute_cypher("""
             MATCH (c:Concept)
-            OPTIONAL MATCH (c)-[:APPEARS]->(s:Source)
-            WITH c, s
-            WHERE s IS NULL
+            WHERE NOT EXISTS { MATCH (c)-[:APPEARS]->(:Source) }
             DETACH DELETE c
             RETURN count(c) as orphaned_count
         """, fetch_one=True)

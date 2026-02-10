@@ -2,12 +2,14 @@
 
 import json
 import errno
+import time
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pyfuse3
 
 from kg_fuse.config import WriteProtectConfig, TagsConfig, JobsConfig
+from kg_fuse.filesystem import WRITE_BACK_DELAY
 from kg_fuse.models import InodeEntry
 
 
@@ -548,6 +550,36 @@ class TestWriteBack:
         with pytest.raises(pyfuse3.FUSEError) as exc_info:
             await fs.rename(ingest_inode, b"some.concept.md", ingest_inode, b"new.md", 0, ctx)
         assert exc_info.value.errno == errno.EPERM
+
+    @pytest.mark.anyio
+    async def test_flush_skips_entries_below_delay(self):
+        """Flush task should not ingest entries younger than WRITE_BACK_DELAY."""
+        fs = _make_fs()
+        ctx = _mock_ctx()
+        ingest_inode = self._setup_ingest_dir(fs)
+
+        fi, _ = await fs.create(ingest_inode, b"young.md", 0o644, 0, ctx)
+        fh = fi.fh
+        await fs.write(fh, 0, b"content")
+        await fs.release(fh)
+        assert len(fs._pending_ingestions) == 1
+
+        # Simulate flush with entry still young (timestamp = now)
+        ready = [
+            (k, e) for k, e in fs._pending_ingestions.items()
+            if time.monotonic() - e["timestamp"] >= WRITE_BACK_DELAY
+        ]
+        assert len(ready) == 0, "Entry should not be ready yet"
+
+        # Age the entry past the delay
+        for entry in fs._pending_ingestions.values():
+            entry["timestamp"] = time.monotonic() - WRITE_BACK_DELAY - 1
+
+        ready = [
+            (k, e) for k, e in fs._pending_ingestions.items()
+            if time.monotonic() - e["timestamp"] >= WRITE_BACK_DELAY
+        ]
+        assert len(ready) == 1, "Entry should be ready after aging"
 
     @pytest.mark.anyio
     async def test_destroy_flushes_pending(self):
