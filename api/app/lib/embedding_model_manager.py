@@ -1,8 +1,13 @@
 """
 Embedding Model Manager - Singleton pattern for local embedding models.
 
-Manages heavy sentence-transformers models that should be loaded once
-at startup and reused across all requests.
+Manages heavy sentence-transformers and transformers models that should be loaded
+once at startup and reused across all requests.
+
+Supports multiple loaders (ADR-039 + migration 055):
+- sentence-transformers: SentenceTransformer (nomic, bge, etc.)
+- transformers: AutoModel + AutoTokenizer (SigLIP text, custom models)
+- api: No local model needed (OpenAI, etc.)
 
 Usage:
     # In main.py startup event
@@ -29,11 +34,19 @@ class EmbeddingModelManager:
     """
     Singleton manager for local embedding models.
 
-    Loads heavy sentence-transformers models once and reuses them
-    across all requests to avoid repeated model loading overhead.
+    Loads heavy models once and reuses them across all requests.
+    Dispatches loading and inference based on the loader type.
     """
 
-    def __init__(self, model_name: str = "nomic-ai/nomic-embed-text-v1.5", precision: str = "float16", device: str = None):
+    def __init__(
+        self,
+        model_name: str = "nomic-ai/nomic-embed-text-v1.5",
+        precision: str = "float16",
+        device: str = None,
+        loader: str = "sentence-transformers",
+        model_revision: Optional[str] = None,
+        trust_remote_code: bool = False
+    ):
         """
         Initialize embedding model manager.
 
@@ -41,141 +54,274 @@ class EmbeddingModelManager:
             model_name: HuggingFace model identifier
             precision: Embedding precision ('float16' or 'float32')
             device: Device to use ('cpu', 'cuda', 'mps') - if None, auto-detect
+            loader: How to load the model: 'sentence-transformers', 'transformers', or 'api'
+            model_revision: HuggingFace commit hash / version tag
+            trust_remote_code: Whether to trust remote code in HuggingFace models
         """
         self.model_name = model_name
         self.precision = precision
-        self.configured_device = device  # Device from config (may be None for auto)
+        self.configured_device = device
+        self.loader = loader
+        self.model_revision = model_revision
+        self.trust_remote_code = trust_remote_code
         self.model = None
+        self.tokenizer = None  # Used by transformers loader
         self.dimensions = None
 
     def load_model(self):
         """
-        Load the sentence-transformers model into memory.
+        Load the embedding model into memory.
 
-        This is called once at startup. Model loading takes 1-2 seconds
-        and allocates 300MB-1.3GB RAM depending on model size.
-
-        Uses local cache-first strategy to avoid HuggingFace network checks on every startup.
-        Falls back to downloading if model not cached.
-
-        Device selection:
-        - Automatically detects MPS (Apple Silicon), CUDA (NVIDIA), or CPU
-        - MPS: Apple M1/M2/M3 and other ARM platforms with Metal support
-        - CUDA: NVIDIA GPUs on Linux/Windows
-        - CPU: Fallback when no GPU available
+        Dispatches to the appropriate loader:
+        - sentence-transformers: SentenceTransformer
+        - transformers: AutoModel + AutoTokenizer
+        - api: no-op (external API handles inference)
         """
         if self.model is not None:
             logger.warning(f"Model {self.model_name} already loaded, skipping")
             return
 
-        # Determine device to use
+        if self.loader == 'api':
+            logger.info(f"Loader=api for {self.model_name}, no local model to load")
+            return
+
+        # Determine device
         from .device_selector import get_best_device, log_device_selection
 
         if self.configured_device and self.configured_device != "auto":
-            # Use device from config (respects user's choice to force CPU)
             device = self.configured_device
-            logger.info(f"📍 Using configured device: {device}")
         else:
-            # Auto-detect best available device
             device = get_best_device()
         log_device_selection(self.model_name)
 
-        logger.info(f"📥 Loading embedding model: {self.model_name}")
-        logger.info(f"   Precision: {self.precision}")
-        logger.info(f"   Device: {device}")
-        logger.info(f"   This may take 1-2 seconds...")
+        logger.info(f"Loading embedding model: {self.model_name}")
+        logger.info(f"  Loader: {self.loader}")
+        logger.info(f"  Precision: {self.precision}")
+        logger.info(f"  Device: {device}")
+        if self.model_revision:
+            logger.info(f"  Revision: {self.model_revision}")
 
+        self._device = device
+
+        if self.loader == 'sentence-transformers':
+            self._load_sentence_transformers(device)
+        elif self.loader == 'transformers':
+            self._load_transformers(device)
+        else:
+            raise RuntimeError(f"Unknown loader: {self.loader}")
+
+    def _load_sentence_transformers(self, device: str):
+        """Load model via sentence-transformers library."""
         try:
             from sentence_transformers import SentenceTransformer
 
-            # TODO: Pin specific model version/revision for consistency and reproducibility
-            # Example: self.model_name = "nomic-ai/nomic-embed-text-v1.5@abc123"
+            load_kwargs = {
+                "trust_remote_code": self.trust_remote_code,
+                "device": device,
+            }
+            if self.model_revision:
+                load_kwargs["revision"] = self.model_revision
 
-            # Try loading from local cache first (fast, no network)
-            # If not cached, download ONCE to persistent volume
-            # trust_remote_code=True required for models like nomic-embed-text that have custom code
+            # Try local cache first
             try:
-                logger.info(f"   Attempting to load from local cache...")
                 self.model = SentenceTransformer(
                     self.model_name,
-                    trust_remote_code=True,
-                    device=device,  # Use detected device (mps/cuda/cpu)
-                    local_files_only=True  # Try cache first
+                    local_files_only=True,
+                    **load_kwargs
                 )
-                logger.info(f"   ✓ Loaded from local cache")
-
-            except (OSError, ValueError) as cache_error:
-                # Model not in cache - download to persistent volume (one-time operation)
-                logger.warning(f"   Model not in cache, downloading from HuggingFace...")
-                logger.warning(f"   This is a one-time download (~200-500MB)")
-                logger.warning(f"   Model will be cached in persistent volume for future startups")
-
+                logger.info("  Loaded from local cache")
+            except (OSError, ValueError):
+                logger.warning("  Model not in cache, downloading...")
                 self.model = SentenceTransformer(
                     self.model_name,
-                    trust_remote_code=True,
-                    device=device  # Use detected device (mps/cuda/cpu)
-                    # local_files_only=False (default) - will download
+                    **load_kwargs
                 )
-                logger.info(f"   ✓ Downloaded and cached to persistent volume")
+                logger.info("  Downloaded and cached")
 
             self.dimensions = self.model.get_sentence_embedding_dimension()
-
-            logger.info(f"✅ Embedding model loaded: {self.model_name}")
-            logger.info(f"   Dimensions: {self.dimensions}")
-            logger.info(f"   Device: {device}")
-            logger.info(f"   Max sequence length: {self.model.max_seq_length}")
+            logger.info(f"Embedding model loaded: {self.model_name} ({self.dimensions} dims, {device})")
 
         except Exception as e:
-            logger.error(f"❌ Failed to load embedding model: {e}")
-            logger.error(f"   This indicates a network or configuration issue")
+            logger.error(f"Failed to load embedding model: {e}")
+            raise RuntimeError(f"Failed to load embedding model {self.model_name}: {e}")
+
+    def _resolve_text_model_class(self):
+        """Resolve the correct model class for text embedding.
+
+        Multimodal models (SigLIP, CLIP) need their text-tower subclass
+        rather than AutoModel, which loads the full vision+text model and
+        requires pixel_values in forward().
+        """
+        from transformers import AutoConfig, AutoModel
+
+        config = AutoConfig.from_pretrained(
+            self.model_name,
+            trust_remote_code=self.trust_remote_code,
+            revision=self.model_revision,
+        )
+        model_type = getattr(config, 'model_type', '')
+
+        # Map multimodal model types to their text-tower classes
+        text_tower_map = {
+            'siglip': 'SiglipTextModel',
+            'clip': 'CLIPTextModel',
+        }
+
+        if model_type in text_tower_map:
+            import transformers
+            cls_name = text_tower_map[model_type]
+            cls = getattr(transformers, cls_name, None)
+            if cls:
+                logger.info(f"  Multimodal model ({model_type}) — loading text tower: {cls_name}")
+                return cls
+            logger.warning(f"  {cls_name} not found in transformers, falling back to AutoModel")
+
+        return AutoModel
+
+    def _load_transformers(self, device: str):
+        """Load model via transformers AutoModel + AutoTokenizer."""
+        try:
+            from transformers import AutoTokenizer
+            import torch
+
+            load_kwargs = {
+                "trust_remote_code": self.trust_remote_code,
+            }
+            if self.model_revision:
+                load_kwargs["revision"] = self.model_revision
+
+            model_cls = self._resolve_text_model_class()
+
+            # Try local cache first
+            try:
+                self.model = model_cls.from_pretrained(
+                    self.model_name,
+                    local_files_only=True,
+                    **load_kwargs
+                )
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name,
+                    local_files_only=True,
+                    trust_remote_code=self.trust_remote_code,
+                )
+                logger.info("  Loaded from local cache")
+            except (OSError, ValueError):
+                logger.warning("  Model not in cache, downloading...")
+                self.model = model_cls.from_pretrained(
+                    self.model_name,
+                    **load_kwargs
+                )
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name,
+                    trust_remote_code=self.trust_remote_code,
+                )
+                logger.info("  Downloaded and cached")
+
+            # Move to device
+            if device in ('cuda', 'mps'):
+                self.model = self.model.to(device)
+            self.model.eval()
+
+            # Detect dimensions via a dummy forward pass
+            dummy_input = self.tokenizer("hello", return_tensors="pt", padding=True, truncation=True)
+            if device in ('cuda', 'mps'):
+                dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
+            with torch.no_grad():
+                outputs = self.model(**dummy_input)
+                embedding = self._extract_text_embedding(outputs)
+                self.dimensions = embedding.shape[-1]
+
+            logger.info(f"Embedding model loaded: {self.model_name} ({self.dimensions} dims, {device})")
+
+        except Exception as e:
+            logger.error(f"Failed to load embedding model: {e}")
             raise RuntimeError(f"Failed to load embedding model {self.model_name}: {e}")
 
     def generate_embedding(self, text: str) -> List[float]:
         """
         Generate embedding for text using the loaded model.
 
-        Args:
-            text: Text to embed
-
-        Returns:
-            List of floats (embedding vector)
-
-        Raises:
-            RuntimeError: If model not loaded
+        Dispatches based on loader type:
+        - sentence-transformers: model.encode()
+        - transformers: tokenize -> forward -> CLS pool -> normalize
         """
         if self.model is None:
             raise RuntimeError(
-                "Embedding model not loaded. Call load_model() first or "
-                "ensure init_embedding_model_manager() was called at startup."
+                "Embedding model not loaded. Call load_model() first."
             )
 
-        try:
-            # Generate embedding with normalization (for cosine similarity)
-            embedding = self.model.encode(text, normalize_embeddings=True, show_progress_bar=False)
+        if self.loader == 'sentence-transformers':
+            return self._embed_sentence_transformers(text)
+        elif self.loader == 'transformers':
+            return self._embed_transformers(text)
+        else:
+            raise RuntimeError(f"Cannot generate embedding with loader={self.loader}")
 
-            # Apply precision conversion
+    def _extract_text_embedding(self, outputs):
+        """Extract embedding from model outputs, handling different architectures.
+
+        Tries in order: pooler_output, last_hidden_state CLS token, text_embeds.
+        Works for BERT-family, SigLIP, and other transformer variants.
+        """
+        # Log available output keys for debugging new architectures
+        if hasattr(outputs, 'keys'):
+            logger.debug(f"Model output keys: {list(outputs.keys())}")
+        # pooler_output: BERT, SigLIP text tower
+        if hasattr(outputs, 'pooler_output') and outputs.pooler_output is not None:
+            return outputs.pooler_output.squeeze()
+        # last_hidden_state CLS: generic fallback
+        if hasattr(outputs, 'last_hidden_state') and outputs.last_hidden_state is not None:
+            return outputs.last_hidden_state[:, 0, :].squeeze()
+        # text_embeds: CLIP-family
+        if hasattr(outputs, 'text_embeds') and outputs.text_embeds is not None:
+            return outputs.text_embeds.squeeze()
+        # Report what we actually got
+        available = {k for k in (outputs.keys() if hasattr(outputs, 'keys') else [])
+                     if getattr(outputs, k, None) is not None}
+        raise RuntimeError(
+            f"Cannot extract text embedding — non-None output keys: {available}"
+        )
+
+    def _embed_sentence_transformers(self, text: str) -> List[float]:
+        """Generate embedding via sentence-transformers encode()."""
+        try:
+            embedding = self.model.encode(text, normalize_embeddings=True, show_progress_bar=False)
+            if self.precision == "float16":
+                embedding = embedding.astype(np.float16)
+            return embedding.tolist()
+        except Exception as e:
+            raise RuntimeError(f"Embedding generation failed: {e}")
+
+    def _embed_transformers(self, text: str) -> List[float]:
+        """Generate embedding via transformers tokenize -> forward -> CLS pool -> normalize."""
+        import torch
+
+        try:
+            inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+            device = getattr(self, '_device', 'cpu')
+            if device in ('cuda', 'mps'):
+                inputs = {k: v.to(device) for k, v in inputs.items()}
+
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+                embedding = self._extract_text_embedding(outputs).cpu().numpy()
+
+            # L2 normalize
+            norm = np.linalg.norm(embedding)
+            if norm > 0:
+                embedding = embedding / norm
+
             if self.precision == "float16":
                 embedding = embedding.astype(np.float16)
 
             return embedding.tolist()
-
         except Exception as e:
-            logger.error(f"Failed to generate embedding: {e}")
             raise RuntimeError(f"Embedding generation failed: {e}")
 
     def get_dimensions(self) -> int:
-        """
-        Get embedding dimensions for this model.
-
-        Returns:
-            Number of dimensions
-
-        Raises:
-            RuntimeError: If model not loaded
-        """
-        if self.model is None:
+        """Get embedding dimensions for this model."""
+        if self.dimensions is None:
             raise RuntimeError("Model not loaded")
-
         return self.dimensions
 
     def get_model_name(self) -> str:
@@ -191,70 +337,68 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     """
     Initialize the global embedding model manager (called at startup).
 
-    Loads configuration from database (kg_api.embedding_config table).
-    Only loads if provider='local' is configured. For OpenAI, returns None.
-
-    Database-first configuration (ADR-039):
-    - No environment variable fallback
-    - Config must be in database
-    - Use admin API to configure: POST /admin/embedding/config
+    Loads configuration from database (kg_api.embedding_profile table).
+    Only loads if text_provider='local' is configured. For API providers, returns None.
 
     Returns:
         EmbeddingModelManager instance if local provider configured, None otherwise
     """
     global _model_manager
 
-    # Load configuration from database (ADR-039: database-first, no .env fallback)
     from .embedding_config import load_active_embedding_config
 
     config = await asyncio.to_thread(load_active_embedding_config)
 
     if config is None:
-        logger.info("⚠️  No embedding config in database")
-        logger.info("   Use: POST /admin/embedding/config to configure")
-        logger.info("   Defaulting to OpenAI embeddings via AI provider")
+        logger.info("No embedding profile in database")
         return None
 
-    if config['provider'] != 'local':
-        logger.info(f"📍 Embedding provider: {config['provider']} (no local model needed)")
+    provider = config.get('text_provider', config.get('provider'))
+    if provider != 'local':
+        logger.info(f"Embedding provider: {provider} (no local model needed)")
         return None
 
-    # Extract local model configuration
-    model_name = config.get('model_name')
+    model_name = config.get('text_model_name', config.get('model_name'))
     if not model_name:
-        logger.error("❌ Local embedding provider configured but no model_name specified")
-        logger.error("   Use: POST /admin/embedding/config with model_name parameter")
+        logger.error("Local embedding provider configured but no model_name specified")
         return None
 
-    precision = config.get('precision', 'float16')
-    device = config.get('device', 'cpu')  # Default to CPU for safety
+    precision = config.get('text_precision', config.get('precision', 'float16'))
+    device = config.get('device', 'cpu')
+    loader = config.get('text_loader', 'sentence-transformers')
+    revision = config.get('text_revision')
+    trust_remote_code = config.get('text_trust_remote_code', False)
 
-    logger.info(f"📍 Embedding provider: local")
-    logger.info(f"   Model: {model_name}")
-    logger.info(f"   Precision: {precision}")
-    logger.info(f"   Device: {device}")
-    logger.info(f"   Dimensions: {config.get('embedding_dimensions', 'auto-detect')}")
-    logger.info(f"   Resource limits: {config.get('max_memory_mb')}MB RAM, {config.get('num_threads')} threads")
-    logger.info(f"   Initializing model manager...")
+    logger.info(f"Embedding provider: local")
+    logger.info(f"  Model: {model_name}")
+    logger.info(f"  Loader: {loader}")
+    logger.info(f"  Precision: {precision}")
+    logger.info(f"  Device: {device}")
+    if revision:
+        logger.info(f"  Revision: {revision}")
 
     try:
-        # Create and load model manager
-        _model_manager = EmbeddingModelManager(model_name=model_name, precision=precision, device=device)
+        _model_manager = EmbeddingModelManager(
+            model_name=model_name,
+            precision=precision,
+            device=device,
+            loader=loader,
+            model_revision=revision,
+            trust_remote_code=trust_remote_code
+        )
         _model_manager.load_model()
 
-        # Verify dimensions match config (if specified)
+        # Verify dimensions match config
         actual_dims = _model_manager.get_dimensions()
-        expected_dims = config.get('embedding_dimensions')
+        expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
         if expected_dims and actual_dims != expected_dims:
-            logger.warning(f"⚠️  Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
-            logger.warning(f"   Consider updating config to match model dimensions")
+            logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
 
-        logger.info(f"✅ Local embedding model manager initialized")
+        logger.info(f"Local embedding model manager initialized")
         return _model_manager
 
     except Exception as e:
-        logger.error(f"❌ Failed to initialize embedding model manager: {e}")
-        logger.error(f"   Check model_name in database config or switch to provider='openai'")
+        logger.error(f"Failed to initialize embedding model manager: {e}")
         raise
 
 
@@ -262,18 +406,15 @@ def get_embedding_model_manager() -> EmbeddingModelManager:
     """
     Get the global embedding model manager instance.
 
-    Returns:
-        EmbeddingModelManager singleton
-
     Raises:
-        RuntimeError: If manager not initialized (call init_embedding_model_manager first)
+        RuntimeError: If manager not initialized
     """
     global _model_manager
 
     if _model_manager is None:
         raise RuntimeError(
             "Embedding model manager not initialized. "
-            "This should be called at startup via init_embedding_model_manager()"
+            "Call init_embedding_model_manager() at startup."
         )
 
     return _model_manager
@@ -283,84 +424,72 @@ async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     """
     Hot reload embedding model manager with new configuration from database.
 
-    This implements zero-downtime configuration updates:
+    Implements zero-downtime configuration updates:
     1. Load new config from database
-    2. Create and load new model in parallel (old model still serves requests)
+    2. Create and load new model in parallel (old model still serves)
     3. Atomic swap to new model
-    4. Old model garbage collected when no longer referenced
-
-    For provider switches (local ↔ openai):
-    - local → openai: New manager set to None, old model unloaded
-    - openai → local: New model loaded, replaces None
-
-    Returns:
-        New EmbeddingModelManager instance if local provider, None for openai
-
-    Raises:
-        RuntimeError: If configuration invalid or model loading fails
+    4. Old model garbage collected
     """
     global _model_manager
 
-    logger.info("🔄 Hot reloading embedding model manager...")
+    logger.info("Hot reloading embedding model manager...")
 
-    # Load new configuration from database
     from .embedding_config import load_active_embedding_config
 
     config = await asyncio.to_thread(load_active_embedding_config)
 
     if config is None:
-        logger.warning("⚠️  No embedding config in database after reload attempt")
-        logger.info("   Keeping existing configuration")
+        logger.warning("No embedding profile in database after reload attempt")
         return _model_manager
 
-    provider = config['provider']
-    logger.info(f"📍 New provider: {provider}")
+    provider = config.get('text_provider', config.get('provider'))
 
     # If switching to non-local provider, unload model
     if provider != 'local':
-        old_manager = _model_manager
         _model_manager = None
-        logger.info(f"✅ Switched to {provider} embeddings (local model unloaded)")
+        logger.info(f"Switched to {provider} embeddings (local model unloaded)")
         return None
 
-    # Local provider - load or reload model
-    model_name = config.get('model_name')
+    model_name = config.get('text_model_name', config.get('model_name'))
     if not model_name:
-        raise RuntimeError(
-            "Local embedding provider configured but no model_name specified. "
-            "Update config via: POST /admin/embedding/config"
-        )
+        raise RuntimeError("Local embedding provider configured but no model_name specified")
 
-    precision = config.get('precision', 'float16')
-    device = config.get('device', 'cpu')  # Default to CPU for safety
+    precision = config.get('text_precision', config.get('precision', 'float16'))
+    device = config.get('device', 'cpu')
+    loader = config.get('text_loader', 'sentence-transformers')
+    revision = config.get('text_revision')
+    trust_remote_code = config.get('text_trust_remote_code', False)
 
-    logger.info(f"📥 Loading new model: {model_name}")
-    logger.info(f"   Precision: {precision}")
-    logger.info(f"   Device: {device}")
+    logger.info(f"Loading new model: {model_name} (loader={loader})")
 
     try:
-        # Create new manager and load model (in parallel with old model serving requests)
-        new_manager = EmbeddingModelManager(model_name=model_name, precision=precision, device=device)
+        new_manager = EmbeddingModelManager(
+            model_name=model_name,
+            precision=precision,
+            device=device,
+            loader=loader,
+            model_revision=revision,
+            trust_remote_code=trust_remote_code
+        )
         new_manager.load_model()
 
         # Verify dimensions
         actual_dims = new_manager.get_dimensions()
-        expected_dims = config.get('embedding_dimensions')
+        expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
         if expected_dims and actual_dims != expected_dims:
-            logger.warning(f"⚠️  Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
+            logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
 
-        # Atomic swap - old model will be garbage collected
+        # Atomic swap
         old_manager = _model_manager
         _model_manager = new_manager
 
         if old_manager:
-            logger.info(f"✅ Hot reload complete: {old_manager.get_model_name()} → {model_name}")
+            logger.info(f"Hot reload complete: {old_manager.get_model_name()} -> {model_name}")
         else:
-            logger.info(f"✅ Model loaded: {model_name}")
+            logger.info(f"Model loaded: {model_name}")
 
         return _model_manager
 
     except Exception as e:
-        logger.error(f"❌ Hot reload failed: {e}")
-        logger.error(f"   Keeping existing model configuration")
+        logger.error(f"Hot reload failed: {e}")
         raise RuntimeError(f"Failed to reload embedding model: {e}")

@@ -65,12 +65,13 @@ def run_ingestion_worker(
         image_b64 = job_data["image_bytes"]
         image_bytes = base64.b64decode(image_b64)
 
-        # Step 1: Generate visual embedding (Nomic Vision v1.5)
-        logger.info("Generating visual embedding with Nomic Vision v1.5...")
-        from api.app.lib.visual_embeddings import generate_visual_embedding
+        # Step 1: Generate visual embedding from active profile
+        from api.app.lib.visual_embeddings import get_visual_embedding_generator, generate_visual_embedding
+        vis_gen = get_visual_embedding_generator()
+        logger.info(f"Generating visual embedding with {vis_gen.get_model_name()}...")
         try:
             visual_embedding = generate_visual_embedding(image_bytes)
-            logger.info(f"Visual embedding generated: 768-dim")
+            logger.info(f"Visual embedding generated: {len(visual_embedding)}-dim")
         except Exception as e:
             logger.error(f"Failed to generate visual embedding: {e}")
             raise Exception(f"Visual embedding generation failed: {str(e)}")
@@ -132,14 +133,24 @@ def run_ingestion_worker(
             raise Exception(f"Image storage failed: {str(e)}")
 
         # Step 4: Store image metadata in job_data for graph upsert
+        # Read image model info from the visual embedding generator (profile-driven)
+        from api.app.lib.visual_embeddings import get_visual_embedding_generator
+        try:
+            vis_gen = get_visual_embedding_generator()
+            visual_model_name = vis_gen.get_model_name()
+            visual_model_dim = vis_gen.get_embedding_dimension()
+        except Exception:
+            visual_model_name = "unknown"
+            visual_model_dim = len(visual_embedding) if visual_embedding else 768
+
         job_data["storage_key"] = storage_key
         job_data["visual_embedding"] = visual_embedding
         job_data["vision_metadata"] = {
             "provider": vision_provider.get_provider_name(),
             "model": vision_provider.get_model_name(),
             "vision_tokens": vision_tokens,
-            "visual_embedding_model": "nomic-ai/nomic-embed-vision-v1.5",
-            "visual_embedding_dimension": 768,
+            "visual_embedding_model": visual_model_name,
+            "visual_embedding_dimension": visual_model_dim,
             "prose_length": len(prose_description)
         }
 

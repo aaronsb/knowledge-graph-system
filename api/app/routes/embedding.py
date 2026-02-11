@@ -1,26 +1,28 @@
 """
-Embedding Configuration Routes
+Embedding Profile Routes
 
-API endpoints for embedding configuration management (ADR-039).
+API endpoints for embedding profile management (ADR-039 + migration 055).
 
 Public endpoints:
 - GET /embedding/config - Get embedding configuration summary
 
 Admin endpoints:
-- GET /admin/embedding/config - Get full configuration details
-- POST /admin/embedding/config - Update configuration
-- POST /admin/embedding/config/reload - Hot reload model (Phase 2)
+- GET /admin/embedding/config - Get full profile details
+- GET /admin/embedding/configs - List all profiles
+- POST /admin/embedding/config - Create profile
+- POST /admin/embedding/config/reload - Hot reload model
+- GET /admin/embedding/export/{id} - Export profile as JSON
 """
 
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Optional
+from typing import List, Optional
 
 from ..dependencies.auth import CurrentUser, require_permission
 from ..models.embedding import (
     EmbeddingConfigResponse,
-    EmbeddingConfigDetail,
-    UpdateEmbeddingConfigRequest,
+    EmbeddingProfileDetail,
+    EmbeddingProfileCreateRequest,
     UpdateEmbeddingConfigResponse,
     ReloadEmbeddingModelResponse
 )
@@ -31,7 +33,8 @@ from ..lib.embedding_config import (
     list_all_embedding_configs,
     set_embedding_config_protection,
     delete_embedding_config,
-    activate_embedding_config
+    activate_embedding_config,
+    export_embedding_profile
 )
 
 # Public router (no auth)
@@ -66,20 +69,21 @@ async def get_embedding_config():
         )
 
 
-@admin_router.get("/config", response_model=Optional[EmbeddingConfigDetail])
+@admin_router.get("/config", response_model=Optional[EmbeddingProfileDetail])
 async def get_embedding_config_detail(
     current_user: CurrentUser,
     _: None = Depends(require_permission("embedding_config", "read"))
 ):
     """
-    Get full embedding configuration details
+    Get full embedding profile details
 
-    Returns complete configuration including:
+    Returns complete profile including:
+    - Text and image model configuration
     - All resource allocation settings
     - Metadata (created_at, updated_by, etc.)
-    - Database config ID
+    - Profile ID
 
-    Returns null if no configuration is set.
+    Returns null if no profile is active.
 
     **Authorization:** Requires `embedding_config:read` permission
     """
@@ -87,78 +91,100 @@ async def get_embedding_config_detail(
         config = load_active_embedding_config()
         return config
     except Exception as e:
-        logger.error(f"Failed to get embedding config details: {e}")
+        logger.error(f"Failed to get embedding profile details: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get embedding config: {str(e)}"
+            detail=f"Failed to get embedding profile: {str(e)}"
         )
 
 
 @admin_router.post("/config", response_model=UpdateEmbeddingConfigResponse)
 async def create_embedding_config(
-    request: UpdateEmbeddingConfigRequest,
+    request: EmbeddingProfileCreateRequest,
     current_user: CurrentUser,
     _: None = Depends(require_permission("embedding_config", "create"))
 ):
     """
-    Create a new embedding configuration
+    Create a new embedding profile (inactive by default)
 
-    Creates a new INACTIVE configuration entry. Use the activate endpoint to switch to it.
+    Supports both shorthand (provider/model) and full profile fields (text_*/image_*).
 
     **Workflow:**
-    1. Create config: POST /admin/embedding/config (this endpoint)
-    2. Review configs: GET /admin/embedding/configs
+    1. Create profile: POST /admin/embedding/config (this endpoint)
+    2. Review: GET /admin/embedding/configs
     3. Activate: POST /admin/embedding/config/{id}/activate
     4. Hot reload: POST /admin/embedding/config/reload
 
-    **Validation:**
-    - provider='local' requires model_name
-    - embedding_dimensions auto-detected from model (can be specified for validation)
-    - precision must be 'float16' or 'float32'
-    - device must be 'cpu', 'cuda', or 'mps'
-
-    **Example (OpenAI):**
-    ```json
-    {
-        "provider": "openai"
-    }
-    ```
-
-    **Example (Local):**
+    **Example (shorthand):**
     ```json
     {
         "provider": "local",
         "model_name": "nomic-ai/nomic-embed-text-v1.5",
-        "precision": "float16",
-        "max_memory_mb": 512,
-        "num_threads": 4,
-        "device": "cpu",
-        "batch_size": 8
+        "embedding_dimensions": 768
+    }
+    ```
+
+    **Example (full profile):**
+    ```json
+    {
+        "name": "My Custom Profile",
+        "vector_space": "custom-v1",
+        "text_provider": "local",
+        "text_model_name": "nomic-ai/nomic-embed-text-v1.5",
+        "text_dimensions": 768,
+        "image_provider": "local",
+        "image_model_name": "nomic-ai/nomic-embed-vision-v1.5",
+        "image_dimensions": 768
     }
     ```
 
     **Authorization:** Requires `embedding_config:create` permission
     """
     try:
-        # Validate provider
-        if request.provider not in ['openai', 'local']:
+        # Resolve effective provider (explicit text_provider or shorthand)
+        effective_provider = request.text_provider or request.provider
+        effective_model = request.text_model_name or request.model_name
+
+        if not effective_provider:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid provider: {request.provider}. Must be 'openai' or 'local'"
+                detail="Must specify provider (or text_provider)"
             )
 
-        # Validate local provider has model_name
-        if request.provider == 'local' and not request.model_name:
+        if effective_provider not in ['openai', 'local']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="provider='local' requires model_name parameter"
+                detail=f"Invalid provider: {effective_provider}. Must be 'openai' or 'local'"
             )
+
+        if effective_provider == 'local' and not effective_model:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="provider='local' requires model_name (or text_model_name)"
+            )
+
+        # Validate multimodal consistency
+        if request.multimodal and request.image_model_name:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="multimodal=true: image fields must be absent (text model serves both roles)"
+            )
+
+        # Validate dimension match for non-multimodal with image
+        if not request.multimodal and request.image_dimensions:
+            text_dims = request.text_dimensions or request.embedding_dimensions
+            if text_dims and text_dims != request.image_dimensions:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dimension mismatch: text={text_dims}, image={request.image_dimensions}. Must match for non-multimodal profiles."
+                )
 
         # Validate precision
-        if request.precision and request.precision not in ['float16', 'float32']:
+        text_precision = request.text_precision
+        if text_precision and text_precision not in ['float16', 'float32']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid precision: {request.precision}. Must be 'float16' or 'float32'"
+                detail=f"Invalid precision: {text_precision}. Must be 'float16' or 'float32'"
             )
 
         # Validate device
@@ -168,32 +194,32 @@ async def create_embedding_config(
                 detail=f"Invalid device: {request.device}. Must be 'cpu', 'cuda', or 'mps'"
             )
 
-        # Create configuration (inactive by default)
+        # Create profile (inactive by default)
         config_dict = request.model_dump(exclude_none=True)
-        success, error_msg, config_id = save_embedding_config(config_dict, updated_by=request.updated_by)
+        success, error_msg, config_id = save_embedding_config(config_dict, updated_by=request.updated_by or "api")
 
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST if "protected" in error_msg.lower() else status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=error_msg or "Failed to create embedding configuration"
+                detail=error_msg or "Failed to create embedding profile"
             )
 
-        logger.info(f"✅ Embedding config created (ID {config_id}, inactive): {request.provider} / {request.model_name or 'N/A'}")
+        logger.info(f"Embedding profile created (ID {config_id}, inactive): {effective_provider} / {effective_model or 'N/A'}")
 
         return UpdateEmbeddingConfigResponse(
             success=True,
-            message=f"Configuration created (ID {config_id}, inactive). Use 'kg admin embedding activate {config_id}' to switch to this config.",
+            message=f"Profile created (ID {config_id}, inactive). Use 'kg admin embedding activate {config_id}' to switch.",
             config_id=config_id,
-            reload_required=False  # Not active yet, so no reload needed
+            reload_required=False
         )
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update embedding config: {e}")
+        logger.error(f"Failed to create embedding profile: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update embedding config: {str(e)}"
+            detail=f"Failed to create embedding profile: {str(e)}"
         )
 
 
@@ -273,7 +299,7 @@ async def reload_embedding_model(
         )
 
 
-@admin_router.get("/configs", response_model=list)
+@admin_router.get("/configs", response_model=List[EmbeddingProfileDetail])
 async def list_embedding_configs(
     current_user: CurrentUser,
     _: None = Depends(require_permission("embedding_config", "read"))
@@ -294,6 +320,48 @@ async def list_embedding_configs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list configs: {str(e)}"
+        )
+
+
+@admin_router.get("/export/{profile_id}")
+async def export_embedding_profile_endpoint(
+    profile_id: int,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("embedding_config", "read")),
+    profile_only: bool = False
+):
+    """
+    Export an embedding profile as JSON
+
+    Returns a JSON document with profile configuration and metadata.
+    Can be imported via POST /admin/embedding/config with --from-json.
+
+    **Authorization:** Requires `embedding_config:read` permission
+
+    Query Parameters:
+    - profile_only: If true, strips metadata (id, timestamps, etc.)
+    """
+    try:
+        result = export_embedding_profile(profile_id)
+
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Profile {profile_id} not found"
+            )
+
+        if profile_only:
+            return result["profile"]
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export embedding profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export profile: {str(e)}"
         )
 
 
@@ -443,16 +511,16 @@ async def activate_embedding_config_endpoint(
                 detail=error_msg
             )
 
-        # Get the activated config details
+        # Get the activated profile details
         config = load_active_embedding_config()
 
         return {
             "success": True,
             "config_id": config_id,
-            "message": "Configuration activated successfully. Run 'kg admin embedding reload' to apply changes.",
-            "provider": config.get('provider') if config else None,
-            "model": config.get('model_name') if config else None,
-            "dimensions": config.get('embedding_dimensions') if config else None
+            "message": "Profile activated successfully. Run 'kg admin embedding reload' to apply changes.",
+            "provider": config.get('text_provider') if config else None,
+            "model": config.get('text_model_name') if config else None,
+            "dimensions": config.get('text_dimensions') if config else None
         }
 
     except HTTPException:

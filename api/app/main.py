@@ -182,6 +182,18 @@ async def startup_event():
         logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
         logger.info("   Falling back to API-based embeddings")
 
+    # Initialize visual embedding generator (profile-driven, migration 055)
+    try:
+        from .lib.visual_embeddings import init_visual_embedding_generator
+        visual_gen = await init_visual_embedding_generator()
+        if visual_gen:
+            logger.info(f"✅ Visual embedding generator initialized: {visual_gen.get_model_name()} ({visual_gen.get_embedding_dimension()} dims)")
+        else:
+            logger.info("📍 Visual embeddings: disabled (text-only profile or API-based)")
+    except Exception as e:
+        logger.warning(f"⚠️  Failed to initialize visual embedding generator: {e}")
+        logger.info("   Visual embedding features may be limited")
+
     # ADR-041: Validate API keys at startup (non-blocking)
     try:
         from .lib.api_key_validator import validate_api_keys_at_startup

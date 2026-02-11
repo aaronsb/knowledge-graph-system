@@ -1805,6 +1805,16 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Export an embedding profile as JSON (admin endpoint)
+   */
+  async exportEmbeddingProfile(profileId: number, profileOnly?: boolean): Promise<any> {
+    const params: any = {};
+    if (profileOnly) params.profile_only = true;
+    const response = await this.client.get(`/admin/embedding/export/${profileId}`, { params });
+    return response.data;
+  }
+
+  /**
    * Get current extraction configuration (public endpoint)
    */
   async getExtractionConfig(): Promise<any> {
