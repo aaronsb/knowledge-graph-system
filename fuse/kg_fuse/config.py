@@ -347,8 +347,19 @@ def remove_mount_from_config(mountpoint: str) -> bool:
     return True
 
 
+_VALID_DAEMON_MODES = ("systemd", "daemon", "")
+
+
 def set_daemon_mode(mode: str) -> None:
-    """Set daemon_mode in fuse.json. Creates the file if needed."""
+    """Set daemon_mode in fuse.json. Creates the file if needed.
+
+    Raises ValueError for invalid modes.
+    """
+    if mode not in _VALID_DAEMON_MODES:
+        raise ValueError(
+            f"Invalid daemon_mode {mode!r} — must be one of: "
+            + ", ".join(repr(m) for m in _VALID_DAEMON_MODES if m)
+        )
     fuse_data = read_fuse_config() or {}
     fuse_data["daemon_mode"] = mode
     write_fuse_config(fuse_data)

@@ -494,6 +494,8 @@ linux_stop_fuse() {
             fusermount3 -u "$mount_dir" 2>/dev/null || true
         elif command -v fusermount &>/dev/null; then
             fusermount -u "$mount_dir" 2>/dev/null || true
+        else
+            umount "$mount_dir" 2>/dev/null || true
         fi
         return
     fi

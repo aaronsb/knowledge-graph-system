@@ -327,3 +327,147 @@ class TestResolveDaemonMode:
         with patch("kg_fuse.cli.set_daemon_mode") as mock_set:
             _resolve_daemon_mode(cfg)
             mock_set.assert_not_called()
+
+
+class TestCmdMountSystemdRouting:
+    """Tests for cmd_mount systemd mode routing."""
+
+    def test_mount_systemd_delegates_to_systemctl(self, capsys):
+        from kg_fuse.cli import cmd_mount
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="id", client_secret="secret",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.get_systemd_unit_path") as mock_unit, \
+             patch("kg_fuse.cli.systemd_start", return_value=(True, "Started")), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            mock_unit.return_value = MagicMock(exists=MagicMock(return_value=True))
+            cmd_mount(Namespace(foreground=False, debug=False, mountpoint=None,
+                                client_id=None, client_secret=None, api_url=None))
+            output = capsys.readouterr().out
+            assert "Started" in output
+
+    def test_mount_systemd_warns_on_specific_mountpoint(self, capsys):
+        from kg_fuse.cli import cmd_mount
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="id", client_secret="secret",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.get_systemd_unit_path") as mock_unit, \
+             patch("kg_fuse.cli.systemd_start", return_value=(True, "Started")), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            mock_unit.return_value = MagicMock(exists=MagicMock(return_value=True))
+            cmd_mount(Namespace(foreground=False, debug=False, mountpoint="/mnt/specific",
+                                client_id=None, client_secret=None, api_url=None))
+            output = capsys.readouterr().out
+            assert "ignored" in output.lower()
+
+    def test_mount_systemd_errors_when_no_systemd(self, capsys):
+        from kg_fuse.cli import cmd_mount
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="id", client_secret="secret",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=False), \
+             patch("kg_fuse.cli._use_color", return_value=False), \
+             pytest.raises(SystemExit):
+            cmd_mount(Namespace(foreground=False, debug=False, mountpoint=None,
+                                client_id=None, client_secret=None, api_url=None))
+
+
+class TestCmdUnmountSystemdRouting:
+    """Tests for cmd_unmount systemd mode routing."""
+
+    def test_unmount_systemd_delegates_to_systemctl(self, capsys):
+        from kg_fuse.cli import cmd_unmount
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="id",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.systemd_stop", return_value=(True, "Stopped")), \
+             patch("kg_fuse.cli.mount_status", return_value={"running": False, "pid": None, "orphaned": False}), \
+             patch("kg_fuse.cli.clear_pid"), \
+             patch("kg_fuse.cli.set_daemon_mode"), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            cmd_unmount(Namespace(mountpoint=None))
+            output = capsys.readouterr().out
+            assert "Stopped" in output
+
+
+class TestCmdResetDaemonPath:
+    """Tests for cmd_reset in daemon mode."""
+
+    def test_reset_daemon_no_creds_errors(self, capsys):
+        from kg_fuse.cli import cmd_reset
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="daemon",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=False), \
+             patch("kg_fuse.cli._use_color", return_value=False), \
+             pytest.raises(SystemExit):
+            cmd_reset(Namespace())
+
+    def test_reset_daemon_no_mounts(self, capsys):
+        from kg_fuse.cli import cmd_reset
+        from kg_fuse.config import FuseConfig
+
+        cfg = FuseConfig(daemon_mode="daemon")
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=False), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            cmd_reset(Namespace())
+            output = capsys.readouterr().out
+            assert "No mounts configured" in output
+
+    def test_reset_systemd_delegates_to_systemctl(self, capsys):
+        from kg_fuse.cli import cmd_reset
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            daemon_mode="systemd",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.systemd_restart", return_value=(True, "Restarted")), \
+             patch("kg_fuse.cli.set_daemon_mode"), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            cmd_reset(Namespace())
+            output = capsys.readouterr().out
+            assert "Restarted" in output

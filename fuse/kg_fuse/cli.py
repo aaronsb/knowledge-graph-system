@@ -1,7 +1,7 @@
 """
 Subcommand implementations for kg-fuse CLI.
 
-Commands: init, mount, unmount, status, config, repair, update.
+Commands: init, mount, unmount, status, config, reset, repair, update.
 """
 
 import json
@@ -117,6 +117,28 @@ def _resolve_daemon_mode(config: FuseConfig) -> str:
     set_daemon_mode(mode)
     config.daemon_mode = mode
     return mode
+
+
+def _offer_rc_autostart() -> None:
+    """Offer to add kg-fuse mount to shell RC file for login autostart."""
+    rc_installed = False
+    shell_info = detect_shell()
+    if shell_info:
+        shell_name, rc_path = shell_info
+        if _prompt_yn(f"Add auto-mount to {rc_path}?"):
+            mount_line = "command -v kg-fuse >/dev/null && kg-fuse mount"
+            ok, msg = add_to_rc(rc_path, mount_line)
+            print(f"  {msg}")
+            if ok:
+                rc_installed = True
+
+    if rc_installed:
+        print(f"\n{_green('Ready!')} Mount with:")
+        print(f"  {_bold('kg-fuse mount')}")
+        print(f"\nWill auto-mount on shell login.")
+    else:
+        print(f"\n{_green('Ready!')} Mount with:")
+        print(f"  {_bold('kg-fuse mount')}")
 
 
 def _test_api(api_url: str) -> tuple[bool, str]:
@@ -433,7 +455,9 @@ def cmd_init(args: Namespace) -> None:
 
             if _systemd_unit_enabled():
                 print(f"  Systemd unit already enabled — updating unit file.")
-                install_systemd_unit(kg_fuse_path, enable=True)
+                ok, msg = install_systemd_unit(kg_fuse_path, enable=True)
+                if not ok:
+                    print(f"  {_red(msg)}")
             else:
                 ok, msg = install_systemd_unit(kg_fuse_path, enable=True)
                 if ok:
@@ -459,48 +483,10 @@ def cmd_init(args: Namespace) -> None:
             print(f"  You can switch later by setting \"daemon_mode\": \"systemd\" in")
             print(f"  {get_fuse_config_path()} or by running {_bold('kg-fuse init')} again.\n")
 
-            # Offer RC file autostart as fallback
-            rc_installed = False
-            shell_info = detect_shell()
-            if shell_info:
-                shell_name, rc_path = shell_info
-                if _prompt_yn(f"Add auto-mount to {rc_path}?"):
-                    mount_line = "command -v kg-fuse >/dev/null && kg-fuse mount"
-                    ok, msg = add_to_rc(rc_path, mount_line)
-                    print(f"  {msg}")
-                    if ok:
-                        rc_installed = True
-
-            if rc_installed:
-                print(f"\n{_green('Ready!')} Mount with:")
-                print(f"  {_bold('kg-fuse mount')}")
-                print(f"\nWill auto-mount on shell login.")
-            else:
-                print(f"\n{_green('Ready!')} Mount with:")
-                print(f"  {_bold('kg-fuse mount')}")
+            _offer_rc_autostart()
     else:
         set_daemon_mode("daemon")
-
-        # No systemd — offer RC file autostart
-        rc_installed = False
-        shell_info = detect_shell()
-        if shell_info:
-            shell_name, rc_path = shell_info
-            if _prompt_yn(f"Add auto-mount to {rc_path}?"):
-                mount_line = "command -v kg-fuse >/dev/null && kg-fuse mount"
-                ok, msg = add_to_rc(rc_path, mount_line)
-                print(f"  {msg}")
-                if ok:
-                    rc_installed = True
-
-        if rc_installed:
-            print(f"\n{_green('Ready!')} Mount with:")
-            print(f"  {_bold('kg-fuse mount')}")
-            print(f"\nWill auto-mount on shell login.")
-        else:
-            print(f"\n{_green('Ready!')} Mount with:")
-            print(f"  {_bold('kg-fuse mount')}")
-            print(f"  {_dim('kg-fuse mount                # mounts all configured')}")
+        _offer_rc_autostart()
     print()
 
 
@@ -534,6 +520,11 @@ def cmd_mount(args: Namespace) -> None:
                 print(f"Switch to daemon mode:")
                 print(f"  Edit {get_fuse_config_path()} and set \"daemon_mode\": \"daemon\"")
                 sys.exit(1)
+
+            if mountpoint:
+                print(f"{_yellow('Note:')} systemd mode starts all configured mounts via the service unit.")
+                print(f"  Specific mountpoint '{mountpoint}' argument is ignored.")
+                print(f"  To mount a single path, use: kg-fuse mount --foreground {mountpoint}\n")
 
             # Ensure unit is installed and up-to-date
             unit_path = get_systemd_unit_path()
@@ -709,9 +700,11 @@ def cmd_unmount(args: Namespace) -> None:
             print(f"  {_green(msg)}")
         else:
             print(f"  {_yellow(msg)}")
-        # Also do fusermount cleanup for any lingering mounts
+        # Clean up any lingering mounts that survived service stop
         for mount_path in config.mounts:
-            fusermount_unmount(mount_path)
+            status = mount_status(mount_path)
+            if status["running"] or status["orphaned"]:
+                fusermount_unmount(mount_path)
             clear_pid(mount_path)
         return
 
@@ -942,6 +935,11 @@ def cmd_reset(args: Namespace) -> None:
         if not config.mounts:
             print("No mounts configured.")
             return
+
+        if not config.client_id or not config.client_secret:
+            print(f"{_red('Error:')} No OAuth credentials found.")
+            print("  Run: kg login && kg oauth create")
+            sys.exit(1)
 
         for mount_path in config.mounts:
             status = mount_status(mount_path)

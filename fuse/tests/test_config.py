@@ -488,3 +488,25 @@ class TestDaemonMode:
              patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
             cfg = load_config()
             assert cfg.daemon_mode == ""
+
+    def test_set_daemon_mode_rejects_invalid(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({"mounts": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            with pytest.raises(ValueError, match="Invalid daemon_mode"):
+                set_daemon_mode("fork")
+
+    def test_set_daemon_mode_rejects_case_variant(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({"mounts": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            with pytest.raises(ValueError, match="Invalid daemon_mode"):
+                set_daemon_mode("Systemd")
+
+    def test_set_daemon_mode_accepts_empty_string(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({"daemon_mode": "systemd", "mounts": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            set_daemon_mode("")
+            data = json.loads(fuse_path.read_text())
+            assert data["daemon_mode"] == ""
