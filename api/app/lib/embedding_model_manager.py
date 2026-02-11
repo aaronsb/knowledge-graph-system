@@ -21,7 +21,7 @@ Usage:
 import os
 import logging
 import asyncio
-from typing import Optional, List
+from typing import Literal, Optional, List
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -243,7 +243,7 @@ class EmbeddingModelManager:
             logger.error(f"Failed to load embedding model: {e}")
             raise RuntimeError(f"Failed to load embedding model {self.model_name}: {e}")
 
-    def generate_embedding(self, text: str, purpose: str = "document") -> List[float]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """
         Generate embedding for text using the loaded model.
 
@@ -292,7 +292,7 @@ class EmbeddingModelManager:
             f"Cannot extract text embedding — non-None output keys: {available}"
         )
 
-    def _embed_sentence_transformers(self, text: str, purpose: str = "document") -> List[float]:
+    def _embed_sentence_transformers(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding via sentence-transformers encode()."""
         try:
             encode_kwargs = {"normalize_embeddings": True, "show_progress_bar": False}
@@ -309,7 +309,7 @@ class EmbeddingModelManager:
         except Exception as e:
             raise RuntimeError(f"Embedding generation failed: {e}")
 
-    def _embed_transformers(self, text: str, purpose: str = "document") -> List[float]:
+    def _embed_transformers(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding via transformers tokenize -> forward -> CLS pool -> normalize."""
         import torch
 

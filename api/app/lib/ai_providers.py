@@ -11,7 +11,7 @@ API Key Loading (ADR-031):
 
 import os
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Literal, Optional
 from abc import ABC, abstractmethod
 import json
 from .rate_limiter import exponential_backoff_retry
@@ -112,7 +112,7 @@ class AIProvider(ABC):
         pass
 
     @abstractmethod
-    def generate_embedding(self, text: str, purpose: str = "document") -> List[float]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate vector embedding for text. Purpose: 'query' or 'document'."""
         pass
 
@@ -296,7 +296,7 @@ class OpenAIProvider(AIProvider):
                 e.pos
             )
 
-    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> Dict[str, Any]:
         """Generate embedding using the system embedding provider.
 
         All embedding generation goes through the configured embedding provider
@@ -494,7 +494,7 @@ class LocalEmbeddingProvider(AIProvider):
             "Use OpenAI or Anthropic for extraction."
         )
 
-    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> Dict[str, Any]:
         """
         Generate embedding using local model with purpose-aware task prefix.
 
@@ -691,7 +691,7 @@ class AnthropicProvider(AIProvider):
         except json.JSONDecodeError as e:
             raise Exception(f"Failed to parse JSON from Claude response: {e}\nResponse: {text}")
 
-    def generate_embedding(self, text: str, purpose: str = "document") -> List[float]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding using the configured embedding provider"""
         return self.embedding_provider.generate_embedding(text, purpose=purpose)
 
@@ -1093,7 +1093,7 @@ class OllamaProvider(AIProvider):
                 e.pos
             )
 
-    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> Dict[str, Any]:
         """Generate embedding using the configured embedding provider"""
         return self.embedding_provider.generate_embedding(text, purpose=purpose)
 
