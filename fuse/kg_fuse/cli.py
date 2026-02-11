@@ -529,7 +529,13 @@ def cmd_mount(args: Namespace) -> None:
             # Ensure unit is installed and up-to-date
             unit_path = get_systemd_unit_path()
             kg_fuse_path = shutil.which("kg-fuse") or "kg-fuse"
-            if not unit_path.exists():
+            needs_install = not unit_path.exists()
+            if not needs_install:
+                # Check for stale unit (old Type=forking without --foreground)
+                content = unit_path.read_text()
+                if "--foreground" not in content:
+                    needs_install = True
+            if needs_install:
                 install_systemd_unit(kg_fuse_path, enable=True)
 
             ok, msg = systemd_start()

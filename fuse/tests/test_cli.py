@@ -343,12 +343,15 @@ class TestCmdMountSystemdRouting:
             daemon_mode="systemd",
         )
 
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path.read_text.return_value = "ExecStart=kg-fuse mount --foreground\nType=simple"
+
         with patch("kg_fuse.cli.load_config", return_value=cfg), \
              patch("kg_fuse.cli.has_systemd", return_value=True), \
-             patch("kg_fuse.cli.get_systemd_unit_path") as mock_unit, \
+             patch("kg_fuse.cli.get_systemd_unit_path", return_value=mock_path), \
              patch("kg_fuse.cli.systemd_start", return_value=(True, "Started")), \
              patch("kg_fuse.cli._use_color", return_value=False):
-            mock_unit.return_value = MagicMock(exists=MagicMock(return_value=True))
             cmd_mount(Namespace(foreground=False, debug=False, mountpoint=None,
                                 client_id=None, client_secret=None, api_url=None))
             output = capsys.readouterr().out
@@ -365,16 +368,46 @@ class TestCmdMountSystemdRouting:
             daemon_mode="systemd",
         )
 
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path.read_text.return_value = "ExecStart=kg-fuse mount --foreground\nType=simple"
+
         with patch("kg_fuse.cli.load_config", return_value=cfg), \
              patch("kg_fuse.cli.has_systemd", return_value=True), \
-             patch("kg_fuse.cli.get_systemd_unit_path") as mock_unit, \
+             patch("kg_fuse.cli.get_systemd_unit_path", return_value=mock_path), \
              patch("kg_fuse.cli.systemd_start", return_value=(True, "Started")), \
              patch("kg_fuse.cli._use_color", return_value=False):
-            mock_unit.return_value = MagicMock(exists=MagicMock(return_value=True))
             cmd_mount(Namespace(foreground=False, debug=False, mountpoint="/mnt/specific",
                                 client_id=None, client_secret=None, api_url=None))
             output = capsys.readouterr().out
             assert "ignored" in output.lower()
+
+    def test_mount_systemd_upgrades_stale_unit(self, capsys):
+        """Old Type=forking unit without --foreground should be reinstalled."""
+        from kg_fuse.cli import cmd_mount
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="id", client_secret="secret",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path.read_text.return_value = "Type=forking\nExecStart=kg-fuse mount"
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.get_systemd_unit_path", return_value=mock_path), \
+             patch("kg_fuse.cli.install_systemd_unit", return_value=(True, "Installed")) as mock_install, \
+             patch("kg_fuse.cli.shutil.which", return_value="/usr/bin/kg-fuse"), \
+             patch("kg_fuse.cli.systemd_start", return_value=(True, "Started")), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            cmd_mount(Namespace(foreground=False, debug=False, mountpoint=None,
+                                client_id=None, client_secret=None, api_url=None))
+            mock_install.assert_called_once()
 
     def test_mount_systemd_errors_when_no_systemd(self, capsys):
         from kg_fuse.cli import cmd_mount
