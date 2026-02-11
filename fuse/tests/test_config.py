@@ -15,6 +15,7 @@ from kg_fuse.config import (
     read_fuse_config, write_fuse_config,
     load_config, add_mount_to_config, remove_mount_from_config,
     normalize_fuse_config, _mount_config_to_dict,
+    set_daemon_mode,
 )
 
 
@@ -27,6 +28,7 @@ class TestDataClasses:
         assert cfg.client_secret == ""
         assert cfg.api_url == "http://localhost:8000"
         assert cfg.mounts == {}
+        assert cfg.daemon_mode == ""
 
     def test_mount_config_defaults(self):
         mc = MountConfig(path="/mnt/test")
@@ -435,3 +437,54 @@ class TestNormalizeFuseConfig:
             assert mount["jobs"]["hide_jobs"] is True
             # Missing section added with defaults
             assert mount["write_protect"]["allow_ontology_delete"] is False
+
+
+class TestDaemonMode:
+    """Tests for daemon_mode config field."""
+
+    def test_set_daemon_mode_creates_field(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({"mounts": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            set_daemon_mode("systemd")
+            data = json.loads(fuse_path.read_text())
+            assert data["daemon_mode"] == "systemd"
+
+    def test_set_daemon_mode_updates_existing(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        fuse_path.write_text(json.dumps({"daemon_mode": "daemon", "mounts": {}}))
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            set_daemon_mode("systemd")
+            data = json.loads(fuse_path.read_text())
+            assert data["daemon_mode"] == "systemd"
+
+    def test_set_daemon_mode_creates_file_if_needed(self, tmp_path):
+        fuse_path = tmp_path / "fuse.json"
+        with patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            set_daemon_mode("daemon")
+            assert fuse_path.exists()
+            data = json.loads(fuse_path.read_text())
+            assert data["daemon_mode"] == "daemon"
+
+    def test_load_config_reads_daemon_mode(self, tmp_path):
+        kg_path = tmp_path / "config.json"
+        fuse_path = tmp_path / "fuse.json"
+        kg_path.write_text(json.dumps({"auth": {}}))
+        fuse_path.write_text(json.dumps({
+            "daemon_mode": "systemd",
+            "mounts": {},
+        }))
+        with patch("kg_fuse.config.get_kg_config_path", return_value=kg_path), \
+             patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            cfg = load_config()
+            assert cfg.daemon_mode == "systemd"
+
+    def test_load_config_daemon_mode_empty_when_absent(self, tmp_path):
+        kg_path = tmp_path / "config.json"
+        fuse_path = tmp_path / "fuse.json"
+        kg_path.write_text(json.dumps({"auth": {}}))
+        fuse_path.write_text(json.dumps({"mounts": {}}))
+        with patch("kg_fuse.config.get_kg_config_path", return_value=kg_path), \
+             patch("kg_fuse.config.get_fuse_config_path", return_value=fuse_path):
+            cfg = load_config()
+            assert cfg.daemon_mode == ""

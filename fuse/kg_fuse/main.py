@@ -11,6 +11,7 @@ Usage:
     kg-fuse mount                    # Mount all configured
     kg-fuse mount /mnt/knowledge     # Mount one
     kg-fuse unmount                  # Unmount all
+    kg-fuse reset                    # Restart the driver
     kg-fuse status                   # Same as bare kg-fuse
     kg-fuse config                   # Show configuration
     kg-fuse repair                   # Fix orphaned mounts
@@ -95,6 +96,12 @@ def main() -> None:
         description="Show current configuration with masked secrets.",
     )
 
+    # --- reset ---
+    subparsers.add_parser(
+        "reset", help="Restart the FUSE driver",
+        description="Restart via systemd (systemd mode) or kill+refork (daemon mode).",
+    )
+
     # --- repair ---
     subparsers.add_parser(
         "repair", help="Fix orphaned mounts / stale state",
@@ -117,7 +124,7 @@ def main() -> None:
     # Dispatch to subcommand
     from .cli import (
         cmd_init, cmd_mount, cmd_unmount,
-        cmd_status, cmd_config, cmd_repair, cmd_update,
+        cmd_status, cmd_config, cmd_reset, cmd_repair, cmd_update,
     )
 
     commands = {
@@ -126,6 +133,7 @@ def main() -> None:
         "unmount": cmd_unmount,
         "status": cmd_status,
         "config": cmd_config,
+        "reset": cmd_reset,
         "repair": cmd_repair,
         "update": cmd_update,
     }

@@ -81,6 +81,8 @@ class FuseConfig:
     mounts: dict[str, MountConfig] = field(default_factory=dict)
     # Which auth client to use (references config.json auth)
     auth_client_id: str = ""
+    # Daemon mode: "systemd" or "daemon" (empty = auto-detect on first use)
+    daemon_mode: str = ""
 
 
 # --- Path helpers ---
@@ -222,6 +224,10 @@ def load_config(
     normalize_fuse_config()
     fuse_data = read_fuse_config()
 
+    # Daemon mode
+    if fuse_data:
+        config.daemon_mode = fuse_data.get("daemon_mode", "")
+
     # Parse mounts from fuse.json
     if fuse_data:
         config.auth_client_id = fuse_data.get("auth_client_id", "")
@@ -339,3 +345,10 @@ def remove_mount_from_config(mountpoint: str) -> bool:
     del fuse_data["mounts"][mountpoint]
     write_fuse_config(fuse_data)
     return True
+
+
+def set_daemon_mode(mode: str) -> None:
+    """Set daemon_mode in fuse.json. Creates the file if needed."""
+    fuse_data = read_fuse_config() or {}
+    fuse_data["daemon_mode"] = mode
+    write_fuse_config(fuse_data)

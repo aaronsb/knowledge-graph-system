@@ -13,6 +13,7 @@ from kg_fuse.cli import (
     _mask_secret, _get_version,
     _test_api, _test_auth,
     _systemd_unit_active, _systemd_unit_enabled,
+    _resolve_daemon_mode,
 )
 
 
@@ -223,6 +224,7 @@ class TestCmdStatusOutput:
             client_id="test-id",
             api_url="http://localhost:8000",
             mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="daemon",
         )
 
         with patch("kg_fuse.cli.load_config", return_value=cfg), \
@@ -236,6 +238,7 @@ class TestCmdStatusOutput:
              patch("kg_fuse.cli._test_api", return_value=(True, "1.0")), \
              patch("kg_fuse.cli.find_all_fuse_mounts", return_value=[]), \
              patch("kg_fuse.cli.shutil.which", return_value="/usr/bin/fusermount3"), \
+             patch("kg_fuse.cli.has_systemd", return_value=False), \
              patch("kg_fuse.cli._use_color", return_value=False):
             mock_fuse.return_value = MagicMock(exists=MagicMock(return_value=True))
             mock_kg.return_value = MagicMock(exists=MagicMock(return_value=True))
@@ -246,3 +249,81 @@ class TestCmdStatusOutput:
             assert "/mnt/test" in output
             assert "stopped" in output
             assert "test-id" in output
+
+    def test_status_shows_systemd_mode(self, capsys):
+        """When daemon_mode=systemd, status should reflect it."""
+        from kg_fuse.cli import cmd_status
+        from kg_fuse.config import FuseConfig, MountConfig
+
+        cfg = FuseConfig(
+            client_id="test-id",
+            api_url="http://localhost:8000",
+            mounts={"/mnt/test": MountConfig(path="/mnt/test")},
+            daemon_mode="systemd",
+        )
+
+        with patch("kg_fuse.cli.load_config", return_value=cfg), \
+             patch("kg_fuse.cli.get_fuse_config_path") as mock_fuse, \
+             patch("kg_fuse.cli.get_kg_config_path") as mock_kg, \
+             patch("kg_fuse.cli.mount_status", return_value={"running": False, "pid": None, "orphaned": False}), \
+             patch("kg_fuse.cli.find_kg_fuse_processes", return_value=[]), \
+             patch("kg_fuse.cli._systemd_unit_enabled", return_value=True), \
+             patch("kg_fuse.cli._systemd_unit_active", return_value=True), \
+             patch("kg_fuse.cli.get_systemd_unit_path") as mock_unit, \
+             patch("kg_fuse.cli._test_api", return_value=(True, "1.0")), \
+             patch("kg_fuse.cli.find_all_fuse_mounts", return_value=[]), \
+             patch("kg_fuse.cli.shutil.which", return_value="/usr/bin/fusermount3"), \
+             patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.set_daemon_mode"), \
+             patch("kg_fuse.cli._use_color", return_value=False):
+            mock_fuse.return_value = MagicMock(exists=MagicMock(return_value=True))
+            mock_kg.return_value = MagicMock(exists=MagicMock(return_value=True))
+            mock_unit.return_value = MagicMock(exists=MagicMock(return_value=True))
+
+            cmd_status(Namespace())
+            output = capsys.readouterr().out
+            assert "systemd user service" in output
+            assert "active" in output
+
+
+class TestResolveDaemonMode:
+    """Tests for daemon mode resolution logic."""
+
+    def test_returns_systemd_when_configured(self):
+        from kg_fuse.config import FuseConfig
+        cfg = FuseConfig(daemon_mode="systemd")
+        with patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.set_daemon_mode"):
+            assert _resolve_daemon_mode(cfg) == "systemd"
+
+    def test_returns_daemon_when_configured(self):
+        from kg_fuse.config import FuseConfig
+        cfg = FuseConfig(daemon_mode="daemon")
+        with patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.set_daemon_mode"):
+            assert _resolve_daemon_mode(cfg) == "daemon"
+
+    def test_auto_detects_systemd(self):
+        from kg_fuse.config import FuseConfig
+        cfg = FuseConfig(daemon_mode="")
+        with patch("kg_fuse.cli.has_systemd", return_value=True), \
+             patch("kg_fuse.cli.set_daemon_mode") as mock_set:
+            result = _resolve_daemon_mode(cfg)
+            assert result == "systemd"
+            mock_set.assert_called_once_with("systemd")
+
+    def test_auto_detects_daemon_when_no_systemd(self):
+        from kg_fuse.config import FuseConfig
+        cfg = FuseConfig(daemon_mode="")
+        with patch("kg_fuse.cli.has_systemd", return_value=False), \
+             patch("kg_fuse.cli.set_daemon_mode") as mock_set:
+            result = _resolve_daemon_mode(cfg)
+            assert result == "daemon"
+            mock_set.assert_called_once_with("daemon")
+
+    def test_does_not_write_when_already_set(self):
+        from kg_fuse.config import FuseConfig
+        cfg = FuseConfig(daemon_mode="daemon")
+        with patch("kg_fuse.cli.set_daemon_mode") as mock_set:
+            _resolve_daemon_mode(cfg)
+            mock_set.assert_not_called()
