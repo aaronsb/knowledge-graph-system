@@ -16,6 +16,8 @@ from kg_fuse.safety import (
     detect_shell,
     add_to_rc, remove_from_rc, RC_BEGIN, RC_END,
     has_systemd, get_systemd_unit_path,
+    install_systemd_unit,
+    systemd_start, systemd_stop, systemd_restart,
     check_config_permissions, fix_config_permissions,
 )
 
@@ -345,6 +347,95 @@ class TestSystemdHelpers:
         path = get_systemd_unit_path()
         assert "systemd" in str(path)
         assert "kg-fuse.service" in str(path)
+
+
+class TestInstallSystemdUnit:
+    """Tests for systemd unit file generation."""
+
+    def test_unit_uses_type_simple(self, tmp_path):
+        unit_path = tmp_path / "kg-fuse.service"
+        with patch("kg_fuse.safety.get_systemd_unit_path", return_value=unit_path), \
+             patch("kg_fuse.safety.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            ok, msg = install_systemd_unit("/usr/bin/kg-fuse", enable=False)
+            assert ok is True
+            content = unit_path.read_text()
+            assert "Type=simple" in content
+            assert "--foreground" in content
+
+    def test_unit_does_not_use_type_forking(self, tmp_path):
+        unit_path = tmp_path / "kg-fuse.service"
+        with patch("kg_fuse.safety.get_systemd_unit_path", return_value=unit_path), \
+             patch("kg_fuse.safety.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            install_systemd_unit("/usr/bin/kg-fuse", enable=False)
+            content = unit_path.read_text()
+            assert "Type=forking" not in content
+
+    def test_unit_enable_flag(self, tmp_path):
+        unit_path = tmp_path / "kg-fuse.service"
+        with patch("kg_fuse.safety.get_systemd_unit_path", return_value=unit_path), \
+             patch("kg_fuse.safety.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            install_systemd_unit("/usr/bin/kg-fuse", enable=True)
+            # Should call daemon-reload then enable
+            calls = [c.args[0] for c in mock_run.call_args_list]
+            assert any("daemon-reload" in str(c) for c in calls)
+            assert any("enable" in str(c) for c in calls)
+
+    def test_unit_no_enable(self, tmp_path):
+        unit_path = tmp_path / "kg-fuse.service"
+        with patch("kg_fuse.safety.get_systemd_unit_path", return_value=unit_path), \
+             patch("kg_fuse.safety.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            ok, msg = install_systemd_unit("/usr/bin/kg-fuse", enable=False)
+            assert ok is True
+            assert "not enabled" in msg
+            # Should only call daemon-reload, not enable
+            calls = [c.args[0] for c in mock_run.call_args_list]
+            assert not any("enable" in str(c) for c in calls)
+
+
+class TestSystemdLifecycle:
+    """Tests for systemd start/stop/restart helpers."""
+
+    def test_systemd_start_success(self):
+        mock_result = MagicMock(returncode=0)
+        with patch("kg_fuse.safety.subprocess.run", return_value=mock_result):
+            ok, msg = systemd_start()
+            assert ok is True
+            assert "Started" in msg
+
+    def test_systemd_start_failure(self):
+        mock_result = MagicMock(returncode=1, stderr="unit not found")
+        with patch("kg_fuse.safety.subprocess.run", return_value=mock_result):
+            ok, msg = systemd_start()
+            assert ok is False
+
+    def test_systemd_stop_success(self):
+        mock_result = MagicMock(returncode=0)
+        with patch("kg_fuse.safety.subprocess.run", return_value=mock_result):
+            ok, msg = systemd_stop()
+            assert ok is True
+            assert "Stopped" in msg
+
+    def test_systemd_restart_success(self):
+        mock_result = MagicMock(returncode=0)
+        with patch("kg_fuse.safety.subprocess.run", return_value=mock_result):
+            ok, msg = systemd_restart()
+            assert ok is True
+            assert "Restarted" in msg
+
+    def test_systemd_start_no_systemctl(self):
+        with patch("kg_fuse.safety.subprocess.run", side_effect=FileNotFoundError):
+            ok, msg = systemd_start()
+            assert ok is False
+
+    def test_systemd_stop_timeout(self):
+        import subprocess
+        with patch("kg_fuse.safety.subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 15)):
+            ok, msg = systemd_stop()
+            assert ok is False
 
 
 class TestConfigPermissions:

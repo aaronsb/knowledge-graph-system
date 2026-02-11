@@ -479,6 +479,7 @@ linux_get_config_dir() {
 
 linux_stop_fuse() {
     # Unmount FUSE filesystem on Linux
+    # Delegates to kg-fuse CLI which handles systemd/daemon mode correctly
     # Args: $1 = mount directory
     local mount_dir="$1"
 
@@ -487,22 +488,20 @@ linux_stop_fuse() {
         return 1
     fi
 
-    # Check if mounted
-    if mountpoint -q "$mount_dir" 2>/dev/null; then
-        log_info "Unmounting FUSE at $mount_dir..."
-        # Try fusermount3 first (newer), fall back to fusermount
+    if ! command -v kg-fuse &>/dev/null; then
+        log_warning "kg-fuse not found, trying raw fusermount"
         if command -v fusermount3 &>/dev/null; then
             fusermount3 -u "$mount_dir" 2>/dev/null || true
         elif command -v fusermount &>/dev/null; then
             fusermount -u "$mount_dir" 2>/dev/null || true
         else
-            log_warning "No fusermount found, trying umount..."
             umount "$mount_dir" 2>/dev/null || true
         fi
-        log_success "FUSE unmounted"
-    else
-        log_info "FUSE not mounted at $mount_dir"
+        return
     fi
+
+    log_info "Unmounting FUSE at $mount_dir..."
+    kg-fuse unmount "$mount_dir" 2>/dev/null && log_success "FUSE unmounted" || log_info "FUSE not mounted at $mount_dir"
 }
 
 detect_fuse_mounts() {
@@ -519,45 +518,29 @@ fuse_libs_available() {
 }
 
 stop_fuse_all() {
-    # Stop all running kg-fuse processes and unmount all mounts
+    # Stop all FUSE mounts
+    # Delegates to kg-fuse CLI which handles systemd/daemon mode correctly
     # Returns the list of previously-mounted directories (space-separated) on stdout
     local mounts
     mounts=$(detect_fuse_mounts)
 
-    # Phase 1: Unmount all detected FUSE mounts
-    if [[ -n "$mounts" ]]; then
-        log_info "Detected active FUSE mounts:"
-        while IFS= read -r mount_dir; do
-            log_info "  $mount_dir"
-            if command -v fusermount3 &>/dev/null; then
-                fusermount3 -u "$mount_dir" 2>/dev/null || true
-            elif command -v fusermount &>/dev/null; then
-                fusermount -u "$mount_dir" 2>/dev/null || true
-            else
-                umount "$mount_dir" 2>/dev/null || true
-            fi
-        done <<< "$mounts"
-    fi
-
-    # Phase 2: Kill any lingering kg-fuse processes
-    local pids
-    pids=$(pgrep -f 'kg-fuse' 2>/dev/null || true)
-    if [[ -n "$pids" ]]; then
-        log_info "Stopping kg-fuse processes: $pids"
-        kill $pids 2>/dev/null || true
-        # Wait briefly for graceful shutdown
-        sleep 2
-        # Force-kill any survivors
-        local remaining
-        remaining=$(pgrep -f 'kg-fuse' 2>/dev/null || true)
-        if [[ -n "$remaining" ]]; then
-            log_warning "Force-killing kg-fuse processes: $remaining"
-            kill -9 $remaining 2>/dev/null || true
-            sleep 1
+    if command -v kg-fuse &>/dev/null; then
+        # Let kg-fuse handle unmounting (respects daemon_mode config)
+        kg-fuse unmount 2>/dev/null || true
+    else
+        # Fallback: raw fusermount if kg-fuse not installed
+        if [[ -n "$mounts" ]]; then
+            while IFS= read -r mount_dir; do
+                if command -v fusermount3 &>/dev/null; then
+                    fusermount3 -u "$mount_dir" 2>/dev/null || true
+                elif command -v fusermount &>/dev/null; then
+                    fusermount -u "$mount_dir" 2>/dev/null || true
+                fi
+            done <<< "$mounts"
         fi
     fi
 
-    # Phase 3: Verify all mounts are gone
+    # Verify
     local leftover
     leftover=$(detect_fuse_mounts)
     if [[ -n "$leftover" ]]; then
@@ -573,6 +556,7 @@ stop_fuse_all() {
 
 linux_start_fuse() {
     # Start FUSE filesystem on Linux
+    # Delegates to kg-fuse CLI which handles systemd/daemon mode correctly
     # Args: $1 = mount directory
     local mount_dir="$1"
 
@@ -581,7 +565,6 @@ linux_start_fuse() {
         return 1
     fi
 
-    # Check if kg-fuse is installed
     if ! command -v kg-fuse &>/dev/null; then
         log_warning "kg-fuse not found, cannot start FUSE"
         return 1
@@ -590,55 +573,54 @@ linux_start_fuse() {
     # Ensure mount directory exists
     mkdir -p "$mount_dir"
 
-    # Start in background
     log_info "Starting FUSE at $mount_dir..."
-    nohup kg-fuse "$mount_dir" &>/dev/null &
-    sleep 1  # Give it a moment to mount
+    kg-fuse mount "$mount_dir"
 
-    # Verify it mounted
+    # Verify it mounted (give systemd a moment)
+    sleep 1
     if mountpoint -q "$mount_dir" 2>/dev/null; then
         log_success "FUSE mounted at $mount_dir"
     else
-        log_warning "FUSE may not have mounted correctly"
+        log_warning "FUSE may not have mounted correctly — check 'kg-fuse status'"
     fi
 }
 
 linux_configure_autostart() {
-    # Configure FUSE to start on login using XDG autostart
-    # Creates a .desktop file in ~/.config/autostart/
-    # This works on KDE, GNOME, XFCE, and other freedesktop-compliant desktops
+    # Configure FUSE autostart on Linux
+    # Delegates to kg-fuse init which handles systemd vs daemon mode,
+    # creates the systemd unit or shell RC block as appropriate
     # Args: $1 = mount directory
     local mount_dir="$1"
-    local autostart_dir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
-    local desktop_file="$autostart_dir/kg-fuse.desktop"
 
-    mkdir -p "$autostart_dir"
+    if ! command -v kg-fuse &>/dev/null; then
+        log_warning "kg-fuse not found, cannot configure autostart"
+        return 1
+    fi
 
-    cat > "$desktop_file" << EOF
-[Desktop Entry]
-Type=Application
-Name=Knowledge Graph FUSE
-Comment=Mount Knowledge Graph as filesystem
-Exec=kg-fuse "$mount_dir"
-Terminal=false
-StartupNotify=false
-X-GNOME-Autostart-enabled=true
-EOF
-
-    log_success "Autostart configured: $desktop_file"
+    # kg-fuse init handles autostart setup (systemd unit, RC block, etc.)
+    log_info "Configuring FUSE autostart via kg-fuse init..."
+    kg-fuse init "$mount_dir"
+    log_success "Autostart configured via kg-fuse"
 }
 
 linux_remove_autostart() {
     # Remove FUSE autostart configuration
+    # Cleans up legacy XDG .desktop files AND systemd units
     local autostart_dir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
     local desktop_file="$autostart_dir/kg-fuse.desktop"
 
+    # Remove legacy XDG .desktop autostart if present
     if [[ -f "$desktop_file" ]]; then
         rm -f "$desktop_file"
-        log_success "Autostart removed"
-    else
-        log_info "No autostart configuration found"
+        log_info "Removed legacy XDG autostart: $desktop_file"
     fi
+
+    # Disable systemd unit if present
+    if command -v systemctl &>/dev/null; then
+        systemctl --user disable kg-fuse.service 2>/dev/null || true
+    fi
+
+    log_success "Autostart removed"
 }
 
 
@@ -660,6 +642,7 @@ macos_get_config_dir() {
 
 macos_stop_fuse() {
     # Unmount FUSE filesystem on macOS
+    # Delegates to kg-fuse CLI which handles daemon mode correctly
     # Args: $1 = mount directory
     local mount_dir="$1"
 
@@ -668,24 +651,21 @@ macos_stop_fuse() {
         return 1
     fi
 
-    # Check if mounted (macOS doesn't have mountpoint command)
-    if mount | grep -q " on $mount_dir "; then
-        log_info "Unmounting FUSE at $mount_dir..."
-        # Try diskutil first, fall back to umount
-        if diskutil unmount "$mount_dir" 2>/dev/null; then
+    if ! command -v kg-fuse &>/dev/null; then
+        log_warning "kg-fuse not found, trying raw unmount"
+        if diskutil unmount "$mount_dir" 2>/dev/null || umount "$mount_dir" 2>/dev/null; then
             log_success "FUSE unmounted"
-        elif umount "$mount_dir" 2>/dev/null; then
-            log_success "FUSE unmounted"
-        else
-            log_warning "Could not unmount FUSE"
         fi
-    else
-        log_info "FUSE not mounted at $mount_dir"
+        return
     fi
+
+    log_info "Unmounting FUSE at $mount_dir..."
+    kg-fuse unmount "$mount_dir" 2>/dev/null && log_success "FUSE unmounted" || log_info "FUSE not mounted at $mount_dir"
 }
 
 macos_start_fuse() {
     # Start FUSE filesystem on macOS
+    # Delegates to kg-fuse CLI which handles daemon mode correctly
     # Args: $1 = mount directory
     local mount_dir="$1"
 
@@ -694,7 +674,6 @@ macos_start_fuse() {
         return 1
     fi
 
-    # Check if kg-fuse is installed
     if ! command -v kg-fuse &>/dev/null; then
         log_warning "kg-fuse not found, cannot start FUSE"
         return 1
@@ -703,75 +682,46 @@ macos_start_fuse() {
     # Ensure mount directory exists
     mkdir -p "$mount_dir"
 
-    # Start in background
     log_info "Starting FUSE at $mount_dir..."
-    nohup kg-fuse "$mount_dir" &>/dev/null &
-    sleep 1  # Give it a moment to mount
+    kg-fuse mount "$mount_dir"
 
     # Verify it mounted
+    sleep 1
     if mount | grep -q " on $mount_dir "; then
         log_success "FUSE mounted at $mount_dir"
     else
-        log_warning "FUSE may not have mounted correctly"
+        log_warning "FUSE may not have mounted correctly — check 'kg-fuse status'"
     fi
 }
 
 macos_configure_autostart() {
-    # Configure FUSE to start on login using launchd
-    # Creates a plist file in ~/Library/LaunchAgents/
+    # Configure FUSE autostart on macOS
+    # Delegates to kg-fuse init which handles launchd plist creation
     # Args: $1 = mount directory
     local mount_dir="$1"
-    local plist_dir="$HOME/Library/LaunchAgents"
-    local plist_file="$plist_dir/com.kg.fuse.plist"
-    local kg_fuse_path
 
-    # Find kg-fuse path
-    kg_fuse_path=$(command -v kg-fuse 2>/dev/null || echo "/usr/local/bin/kg-fuse")
+    if ! command -v kg-fuse &>/dev/null; then
+        log_warning "kg-fuse not found, cannot configure autostart"
+        return 1
+    fi
 
-    mkdir -p "$plist_dir"
-
-    cat > "$plist_file" << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.kg.fuse</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>$kg_fuse_path</string>
-        <string>$mount_dir</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <false/>
-    <key>StandardOutPath</key>
-    <string>/tmp/kg-fuse.log</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/kg-fuse.err</string>
-</dict>
-</plist>
-EOF
-
-    # Load the agent
-    launchctl load "$plist_file" 2>/dev/null || true
-
-    log_success "Autostart configured: $plist_file"
+    log_info "Configuring FUSE autostart via kg-fuse init..."
+    kg-fuse init "$mount_dir"
+    log_success "Autostart configured via kg-fuse"
 }
 
 macos_remove_autostart() {
-    # Remove FUSE autostart configuration
+    # Remove FUSE autostart configuration on macOS
+    # Cleans up legacy launchd plist
     local plist_file="$HOME/Library/LaunchAgents/com.kg.fuse.plist"
 
     if [[ -f "$plist_file" ]]; then
-        # Unload first
         launchctl unload "$plist_file" 2>/dev/null || true
         rm -f "$plist_file"
-        log_success "Autostart removed"
-    else
-        log_info "No autostart configuration found"
+        log_info "Removed legacy launchd autostart: $plist_file"
     fi
+
+    log_success "Autostart removed"
 }
 
 
@@ -1283,11 +1233,17 @@ configure_cli() {
 }
 
 configure_fuse() {
-    # Configure FUSE mount directory and autostart (OAuth credentials created separately)
+    # Configure FUSE via kg-fuse init (handles mount dir, daemon mode, autostart)
+    # OAuth credentials created separately in configure_fuse_auth()
     log_step "Configuring kg-fuse"
 
     if ! fuse_supported; then
         return 1
+    fi
+
+    if ! command -v kg-fuse &>/dev/null; then
+        log_warning "kg-fuse not installed yet, skipping configuration"
+        return 0
     fi
 
     # Set default mount directory if not specified
@@ -1295,17 +1251,10 @@ configure_fuse() {
         FUSE_MOUNT_DIR="$HOME/Knowledge"
     fi
 
-    # Create mount directory
-    mkdir -p "$FUSE_MOUNT_DIR"
-    log_success "Mount directory: $FUSE_MOUNT_DIR"
-
-    # Configure autostart if requested
-    if [[ "$FUSE_AUTOSTART" == true ]]; then
-        configure_autostart "$FUSE_MOUNT_DIR"
-    fi
-
-    # Note: FUSE OAuth credentials and startup happen after CLI authentication
-    # See configure_fuse_auth() which must run after configure_cli()
+    # Delegate to kg-fuse init (handles mount dir creation, daemon mode,
+    # systemd unit installation, and autostart configuration)
+    kg-fuse init "$FUSE_MOUNT_DIR"
+    log_success "FUSE configured via kg-fuse init"
 }
 
 configure_fuse_auth() {
@@ -1356,24 +1305,22 @@ upgrade_kg_cli() {
 
 upgrade_kg_fuse() {
     # Upgrade kg-fuse to latest version
-    # Robustly discovers running mounts, stops them, upgrades, and restarts
+    # Uses kg-fuse CLI for lifecycle management (respects daemon_mode config)
     log_step "Upgrading kg-fuse"
 
     if ! fuse_supported; then
         return 1
     fi
 
-    # Discover active mounts from /proc/mounts (ground truth)
-    local previous_mounts
-    previous_mounts=$(detect_fuse_mounts)
+    local was_running=false
+    if [[ -n "$(detect_fuse_mounts)" ]]; then
+        was_running=true
+    fi
 
-    # Stop all FUSE processes and unmount
-    if [[ -n "$previous_mounts" ]]; then
-        stop_fuse_all > /dev/null  # stdout is mount list, suppress
-    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
-        # No active mounts detected, but config knows a mount dir
-        # Try stopping in case process is in a bad state
-        stop_fuse "$FUSE_MOUNT_DIR"
+    # Stop via kg-fuse (handles systemd/daemon correctly)
+    if [[ "$was_running" == true ]] && command -v kg-fuse &>/dev/null; then
+        log_info "Stopping FUSE before upgrade..."
+        kg-fuse unmount 2>/dev/null || true
     fi
 
     # Upgrade the package
@@ -1386,20 +1333,10 @@ upgrade_kg_fuse() {
         log_success "kg-fuse upgraded: $DETECTED_FUSE_VERSION"
     fi
 
-    # Verify FUSE libraries before restarting
-    if ! fuse_libs_available; then
-        log_warning "FUSE userspace tools (fusermount3/fusermount) not found"
-        log_info "Install FUSE3 libraries before starting: fuse3 (apt/pacman/dnf)"
-        return 0
-    fi
-
-    # Restart on previously-active mounts
-    if [[ -n "$previous_mounts" ]]; then
-        while IFS= read -r mount_dir; do
-            start_fuse "$mount_dir"
-        done <<< "$previous_mounts"
-    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
-        start_fuse "$FUSE_MOUNT_DIR"
+    # Restart if it was running before
+    if [[ "$was_running" == true ]] && command -v kg-fuse &>/dev/null; then
+        log_info "Restarting FUSE after upgrade..."
+        kg-fuse mount 2>/dev/null || log_warning "FUSE restart failed — try 'kg-fuse mount' manually"
     fi
 }
 
@@ -1422,16 +1359,12 @@ uninstall_kg_fuse() {
     # Uninstall kg-fuse
     log_step "Uninstalling kg-fuse"
 
-    # Stop all FUSE mounts and processes
-    local active_mounts
-    active_mounts=$(detect_fuse_mounts)
-    if [[ -n "$active_mounts" ]]; then
-        stop_fuse_all > /dev/null
-    elif [[ -n "$FUSE_MOUNT_DIR" ]]; then
-        stop_fuse "$FUSE_MOUNT_DIR"
+    # Stop via kg-fuse CLI (handles systemd/daemon correctly)
+    if command -v kg-fuse &>/dev/null; then
+        kg-fuse unmount 2>/dev/null || true
     fi
 
-    # Remove autostart
+    # Remove autostart (legacy + systemd)
     remove_autostart
 
     log_info "Uninstalling $PYPI_PACKAGE..."

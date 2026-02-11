@@ -412,8 +412,12 @@ def get_systemd_unit_path() -> Path:
     return Path(xdg_config) / "systemd" / "user" / "kg-fuse.service"
 
 
-def install_systemd_unit(kg_fuse_path: str) -> tuple[bool, str]:
-    """Install and enable systemd user service for kg-fuse."""
+def install_systemd_unit(kg_fuse_path: str, enable: bool = True) -> tuple[bool, str]:
+    """Install systemd user service for kg-fuse.
+
+    Uses Type=simple with --foreground so systemd manages the lifecycle
+    directly instead of wrapping a double-fork daemon.
+    """
     unit_path = get_systemd_unit_path()
     unit_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -423,8 +427,8 @@ Description=Knowledge Graph FUSE Driver
 After=network-online.target
 
 [Service]
-Type=forking
-ExecStart={kg_fuse_path} mount
+Type=simple
+ExecStart={kg_fuse_path} mount --foreground
 ExecStop={kg_fuse_path} unmount
 Restart=on-failure
 RestartSec=5
@@ -434,14 +438,20 @@ WantedBy=default.target
 """
     unit_path.write_text(unit_content)
 
-    # Enable and start
     try:
         subprocess.run(
             ["systemctl", "--user", "daemon-reload"],
             capture_output=True, timeout=10,
         )
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, f"daemon-reload failed: {e}"
+
+    if not enable:
+        return True, f"Installed {unit_path} (not enabled)"
+
+    try:
         result = subprocess.run(
-            ["systemctl", "--user", "enable", "--now", "kg-fuse"],
+            ["systemctl", "--user", "enable", "kg-fuse"],
             capture_output=True, text=True, timeout=10,
         )
         if result.returncode == 0:
@@ -449,6 +459,48 @@ WantedBy=default.target
         return False, f"systemctl enable failed: {result.stderr.strip()}"
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         return False, f"systemctl failed: {e}"
+
+
+def systemd_start() -> tuple[bool, str]:
+    """Start kg-fuse via systemd user service."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "start", "kg-fuse"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            return True, "Started kg-fuse.service"
+        return False, f"systemctl start failed: {result.stderr.strip()}"
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, f"systemctl start failed: {e}"
+
+
+def systemd_stop() -> tuple[bool, str]:
+    """Stop kg-fuse via systemd user service."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "stop", "kg-fuse"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            return True, "Stopped kg-fuse.service"
+        return False, f"systemctl stop failed: {result.stderr.strip()}"
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, f"systemctl stop failed: {e}"
+
+
+def systemd_restart() -> tuple[bool, str]:
+    """Restart kg-fuse via systemd user service."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "restart", "kg-fuse"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            return True, "Restarted kg-fuse.service"
+        return False, f"systemctl restart failed: {result.stderr.strip()}"
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, f"systemctl restart failed: {e}"
 
 
 def uninstall_systemd_unit() -> tuple[bool, str]:
