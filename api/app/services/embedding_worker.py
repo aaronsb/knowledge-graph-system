@@ -104,12 +104,17 @@ class EmbeddingWorker:
         """
         self.db = db_client
         self.provider = ai_provider
-        self.provider_name = ai_provider.__class__.__name__.replace("Provider", "").lower()
+
+        # Resolve the actual embedding provider for accurate reporting.
+        # Extraction providers (OpenAI, Anthropic) may delegate embeddings
+        # to a LocalEmbeddingProvider — report the real source, not the wrapper.
+        embedding_source = getattr(ai_provider, 'embedding_provider', None) or ai_provider
+        self.provider_name = embedding_source.__class__.__name__.replace("Provider", "").lower()
 
         # Resource management: Queue local embeddings to prevent GPU contention
         # Cloud providers (OpenAI) can handle concurrency natively
         from api.app.lib.ai_providers import LocalEmbeddingProvider
-        if isinstance(ai_provider, LocalEmbeddingProvider):
+        if isinstance(embedding_source, LocalEmbeddingProvider):
             # Single-worker executor = automatic FIFO queue
             # Multiple concurrent calls will be serialized
             self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="local-embed")
