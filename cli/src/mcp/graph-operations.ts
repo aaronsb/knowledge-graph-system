@@ -259,6 +259,9 @@ export class GraphOperationExecutor {
    * @throws Error if no confident match found
    */
   async resolveConceptByLabel(label: string): Promise<string> {
+    // Thresholds: 0.75 accept, 0.6 floor for suggestions.
+    // CLI validation.ts uses 0.70 for its own search — intentionally different
+    // because graph edits need higher confidence than exploratory search.
     const searchResult = await this.client.searchConcepts({
       query: label,
       limit: 3,
@@ -582,7 +585,7 @@ export class GraphOperationExecutor {
    */
   async executeQueue(
     operations: QueueOperation[],
-    continueOnError: boolean = false
+    continueOnError: boolean = true
   ): Promise<QueueExecutionResult> {
     const results: QueueOperationResult[] = [];
     let stopIndex = -1;
