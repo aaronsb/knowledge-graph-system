@@ -55,6 +55,8 @@ class EmbeddingProfileTextSlot(BaseModel):
     dimensions: int
     precision: Optional[str] = None
     trust_remote_code: bool = False
+    query_prefix: Optional[str] = None
+    document_prefix: Optional[str] = None
 
 
 class EmbeddingProfileImageSlot(BaseModel):
@@ -87,6 +89,8 @@ class EmbeddingProfileDetail(BaseModel):
     text_dimensions: int
     text_precision: Optional[str] = None
     text_trust_remote_code: bool = False
+    text_query_prefix: Optional[str] = None
+    text_document_prefix: Optional[str] = None
 
     # Image slot (nullable for text-only profiles)
     image_provider: Optional[str] = None
@@ -146,6 +150,8 @@ class EmbeddingProfileCreateRequest(BaseModel):
     text_dimensions: Optional[int] = Field(None, description="Text embedding dimensions")
     text_precision: Optional[str] = Field('float16', description="Precision: 'float16' or 'float32'")
     text_trust_remote_code: bool = Field(False, description="Trust remote code for text model")
+    text_query_prefix: Optional[str] = Field(None, description="Prefix for search queries (e.g. 'search_query: ')")
+    text_document_prefix: Optional[str] = Field(None, description="Prefix for stored documents (e.g. 'search_document: ')")
 
     # Image slot (optional, ignored when multimodal=True)
     image_provider: Optional[str] = Field(None, description="Image provider")

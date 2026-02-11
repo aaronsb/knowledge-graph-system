@@ -21,7 +21,7 @@ Usage:
 import os
 import logging
 import asyncio
-from typing import Optional, List
+from typing import Literal, Optional, List
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,9 @@ class EmbeddingModelManager:
         device: str = None,
         loader: str = "sentence-transformers",
         model_revision: Optional[str] = None,
-        trust_remote_code: bool = False
+        trust_remote_code: bool = False,
+        query_prefix: Optional[str] = None,
+        document_prefix: Optional[str] = None,
     ):
         """
         Initialize embedding model manager.
@@ -57,6 +59,8 @@ class EmbeddingModelManager:
             loader: How to load the model: 'sentence-transformers', 'transformers', or 'api'
             model_revision: HuggingFace commit hash / version tag
             trust_remote_code: Whether to trust remote code in HuggingFace models
+            query_prefix: Task prefix for search queries (e.g. 'search_query: ')
+            document_prefix: Task prefix for stored documents (e.g. 'search_document: ')
         """
         self.model_name = model_name
         self.precision = precision
@@ -64,6 +68,8 @@ class EmbeddingModelManager:
         self.loader = loader
         self.model_revision = model_revision
         self.trust_remote_code = trust_remote_code
+        self._query_prefix = query_prefix
+        self._document_prefix = document_prefix
         self.model = None
         self.tokenizer = None  # Used by transformers loader
         self.dimensions = None
@@ -237,13 +243,17 @@ class EmbeddingModelManager:
             logger.error(f"Failed to load embedding model: {e}")
             raise RuntimeError(f"Failed to load embedding model {self.model_name}: {e}")
 
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """
         Generate embedding for text using the loaded model.
 
+        Args:
+            text: Input text to embed
+            purpose: 'query' for search queries, 'document' for stored content
+
         Dispatches based on loader type:
-        - sentence-transformers: model.encode()
-        - transformers: tokenize -> forward -> CLS pool -> normalize
+        - sentence-transformers: model.encode() with prompt_name if prefixes configured
+        - transformers: prepend raw prefix, tokenize -> forward -> CLS pool -> normalize
         """
         if self.model is None:
             raise RuntimeError(
@@ -251,9 +261,9 @@ class EmbeddingModelManager:
             )
 
         if self.loader == 'sentence-transformers':
-            return self._embed_sentence_transformers(text)
+            return self._embed_sentence_transformers(text, purpose)
         elif self.loader == 'transformers':
-            return self._embed_transformers(text)
+            return self._embed_transformers(text, purpose)
         else:
             raise RuntimeError(f"Cannot generate embedding with loader={self.loader}")
 
@@ -282,21 +292,34 @@ class EmbeddingModelManager:
             f"Cannot extract text embedding — non-None output keys: {available}"
         )
 
-    def _embed_sentence_transformers(self, text: str) -> List[float]:
+    def _embed_sentence_transformers(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding via sentence-transformers encode()."""
         try:
-            embedding = self.model.encode(text, normalize_embeddings=True, show_progress_bar=False)
+            encode_kwargs = {"normalize_embeddings": True, "show_progress_bar": False}
+
+            # Apply task prefix via prompt_name if model supports it
+            if self._query_prefix:
+                prompt_name_map = {"query": "query", "document": "document"}
+                encode_kwargs["prompt_name"] = prompt_name_map.get(purpose, "document")
+
+            embedding = self.model.encode(text, **encode_kwargs)
             if self.precision == "float16":
                 embedding = embedding.astype(np.float16)
             return embedding.tolist()
         except Exception as e:
             raise RuntimeError(f"Embedding generation failed: {e}")
 
-    def _embed_transformers(self, text: str) -> List[float]:
+    def _embed_transformers(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding via transformers tokenize -> forward -> CLS pool -> normalize."""
         import torch
 
         try:
+            # Apply raw prefix for transformers loader
+            if purpose == "query" and self._query_prefix:
+                text = self._query_prefix + text
+            elif purpose == "document" and self._document_prefix:
+                text = self._document_prefix + text
+
             inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
             device = getattr(self, '_device', 'cpu')
             if device in ('cuda', 'mps'):
@@ -368,6 +391,8 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     loader = config.get('text_loader', 'sentence-transformers')
     revision = config.get('text_revision')
     trust_remote_code = config.get('text_trust_remote_code', False)
+    query_prefix = config.get('text_query_prefix')
+    document_prefix = config.get('text_document_prefix')
 
     logger.info(f"Embedding provider: local")
     logger.info(f"  Model: {model_name}")
@@ -376,6 +401,8 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     logger.info(f"  Device: {device}")
     if revision:
         logger.info(f"  Revision: {revision}")
+    if query_prefix or document_prefix:
+        logger.info(f"  Task prefixes: query={query_prefix!r} document={document_prefix!r}")
 
     try:
         _model_manager = EmbeddingModelManager(
@@ -384,7 +411,9 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
             device=device,
             loader=loader,
             model_revision=revision,
-            trust_remote_code=trust_remote_code
+            trust_remote_code=trust_remote_code,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
         )
         _model_manager.load_model()
 
@@ -459,6 +488,8 @@ async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     loader = config.get('text_loader', 'sentence-transformers')
     revision = config.get('text_revision')
     trust_remote_code = config.get('text_trust_remote_code', False)
+    query_prefix = config.get('text_query_prefix')
+    document_prefix = config.get('text_document_prefix')
 
     logger.info(f"Loading new model: {model_name} (loader={loader})")
 
@@ -469,7 +500,9 @@ async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
             device=device,
             loader=loader,
             model_revision=revision,
-            trust_remote_code=trust_remote_code
+            trust_remote_code=trust_remote_code,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
         )
         new_manager.load_model()
 

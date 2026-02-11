@@ -7,7 +7,7 @@ Useful for unit tests, integration tests, and development without live LLM calls
 
 import hashlib
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Literal, Optional
 from .ai_providers import AIProvider
 
 
@@ -172,7 +172,7 @@ class MockAIProvider(AIProvider):
             "tokens": self._calculate_mock_tokens(text)
         }
 
-    def generate_embedding(self, text: str) -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> Dict[str, Any]:
         """
         Generate deterministic embedding vector from text.
 
