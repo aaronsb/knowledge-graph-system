@@ -442,13 +442,15 @@ class TestCmdUnmountSystemdRouting:
             daemon_mode="systemd",
         )
 
+        env = {k: v for k, v in os.environ.items() if k != "INVOCATION_ID"}
         with patch("kg_fuse.cli.load_config", return_value=cfg), \
              patch("kg_fuse.cli.has_systemd", return_value=True), \
              patch("kg_fuse.cli.systemd_stop", return_value=(True, "Stopped")), \
              patch("kg_fuse.cli.mount_status", return_value={"running": False, "pid": None, "orphaned": False}), \
              patch("kg_fuse.cli.clear_pid"), \
              patch("kg_fuse.cli.set_daemon_mode"), \
-             patch("kg_fuse.cli._use_color", return_value=False):
+             patch("kg_fuse.cli._use_color", return_value=False), \
+             patch.dict(os.environ, env, clear=True):
             cmd_unmount(Namespace(mountpoint=None))
             output = capsys.readouterr().out
             assert "Stopped" in output

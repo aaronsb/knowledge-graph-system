@@ -531,9 +531,10 @@ def cmd_mount(args: Namespace) -> None:
             kg_fuse_path = shutil.which("kg-fuse") or "kg-fuse"
             needs_install = not unit_path.exists()
             if not needs_install:
-                # Check for stale unit (old Type=forking without --foreground)
+                # Check for stale unit (old Type=forking, missing --foreground,
+                # or bare command without absolute path)
                 content = unit_path.read_text()
-                if "--foreground" not in content:
+                if "--foreground" not in content or f"ExecStart={kg_fuse_path}" not in content:
                     needs_install = True
             if needs_install:
                 install_systemd_unit(kg_fuse_path, enable=True)
@@ -700,7 +701,9 @@ def cmd_unmount(args: Namespace) -> None:
     daemon_mode = _resolve_daemon_mode(config)
 
     # In systemd mode, stop the service (which handles all mounts)
-    if daemon_mode == "systemd" and not mountpoint and has_systemd():
+    # But if we're already running as systemd ExecStop, don't recurse
+    running_under_systemd = os.environ.get("INVOCATION_ID") is not None
+    if daemon_mode == "systemd" and not mountpoint and has_systemd() and not running_under_systemd:
         ok, msg = systemd_stop()
         if ok:
             print(f"  {_green(msg)}")

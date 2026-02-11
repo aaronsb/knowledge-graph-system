@@ -417,7 +417,19 @@ def install_systemd_unit(kg_fuse_path: str, enable: bool = True) -> tuple[bool, 
 
     Uses Type=simple with --foreground so systemd manages the lifecycle
     directly instead of wrapping a double-fork daemon.
+
+    The kg_fuse_path MUST be an absolute path — systemd user units do not
+    search $PATH, so bare 'kg-fuse' causes EXEC(203) failures.
     """
+    # Ensure we have an absolute path — systemd doesn't search PATH
+    if not os.path.isabs(kg_fuse_path):
+        import shutil
+        resolved = shutil.which(kg_fuse_path)
+        if resolved:
+            kg_fuse_path = resolved
+        # If which() fails too, we proceed with what we have — install_systemd_unit
+        # is best-effort and the caller can handle the error.
+
     unit_path = get_systemd_unit_path()
     unit_path.parent.mkdir(parents=True, exist_ok=True)
 
