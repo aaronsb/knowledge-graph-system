@@ -414,6 +414,13 @@ class OpenAIProvider(AIProvider):
             return self.embedding_provider.get_embedding_model()
         return self.embedding_model
 
+    @property
+    def model_name(self) -> str:
+        """Embedding model name, delegating to embedding_provider if set."""
+        if self.embedding_provider and hasattr(self.embedding_provider, 'model_name'):
+            return self.embedding_provider.model_name
+        return self.embedding_model
+
     def validate_api_key(self) -> bool:
         """Validate OpenAI API key by making a simple API call"""
         try:
@@ -793,6 +800,13 @@ class AnthropicProvider(AIProvider):
 
     def get_embedding_model(self) -> str:
         return self.embedding_provider.get_embedding_model()
+
+    @property
+    def model_name(self) -> str:
+        """Embedding model name, delegating to embedding_provider."""
+        if self.embedding_provider and hasattr(self.embedding_provider, 'model_name'):
+            return self.embedding_provider.model_name
+        return self.extraction_model
 
     def validate_api_key(self) -> bool:
         """Validate Anthropic API key by making a simple API call"""
@@ -1188,6 +1202,13 @@ class OllamaProvider(AIProvider):
 
     def get_embedding_model(self) -> str:
         return self.embedding_provider.get_embedding_model()
+
+    @property
+    def model_name(self) -> str:
+        """Embedding model name, delegating to embedding_provider."""
+        if self.embedding_provider and hasattr(self.embedding_provider, 'model_name'):
+            return self.embedding_provider.model_name
+        return self.extraction_model
 
     def validate_api_key(self) -> bool:
         """

@@ -5,13 +5,12 @@
 --
 -- Rationale:
 -- The embedding_config table only tracked text embedding models. Image embeddings
--- were hardcoded to Nomic Vision v1.5. As we move toward multimodal models like
--- SigLIP 2, we need a unified profile that covers both text and image embedding
--- models with a vector_space compatibility tag.
+-- were hardcoded to Nomic Vision v1.5. We need a unified profile that covers
+-- both text and image embedding models with a vector_space compatibility tag.
 --
 -- A "profile" is the atomic unit: create, export, import, activate, regenerate.
 -- Each profile has two slots (text model + image model) and a vector_space tag.
--- For multimodal models like SigLIP, both slots point to the same model.
+-- For multimodal models, both slots point to the same model (multimodal=true).
 
 -- ============================================================================
 -- New Table: kg_api.embedding_profile (idempotent via IF NOT EXISTS)
@@ -255,38 +254,6 @@ BEGIN
             RENAME TO idx_embedding_config_legacy_unique_active;
 
         RAISE NOTICE 'Migrated embedding_config → embedding_profile';
-    END IF;
-
-    -- 3. Seed SigLIP 2 Base profile (inactive, for future use)
-    IF NOT EXISTS (
-        SELECT 1 FROM kg_api.embedding_profile WHERE vector_space = 'siglip2-base'
-    ) THEN
-        INSERT INTO kg_api.embedding_profile (
-            name, vector_space, multimodal,
-            text_provider, text_model_name, text_loader, text_revision,
-            text_dimensions, text_precision, text_trust_remote_code,
-            device, batch_size, normalize_embeddings,
-            active, delete_protected, change_protected,
-            updated_by
-        ) VALUES (
-            'SigLIP 2 Base',                         -- name
-            'siglip2-base',                          -- vector_space
-            TRUE,                                    -- multimodal (single model for text + image)
-            'local',                                 -- text_provider
-            'google/siglip2-base-patch16-224',       -- text_model_name
-            'transformers',                          -- text_loader (AutoModel, not sentence-transformers)
-            'main',                                  -- text_revision
-            768,                                     -- text_dimensions
-            'float16',                               -- text_precision
-            FALSE,                                   -- text_trust_remote_code
-            'cpu',                                   -- device
-            8,                                       -- batch_size
-            TRUE,                                    -- normalize_embeddings
-            FALSE,                                   -- active (inactive seed)
-            FALSE,                                   -- delete_protected
-            FALSE,                                   -- change_protected
-            'migration-055'                          -- updated_by
-        );
     END IF;
 
     RAISE NOTICE 'Migration 055: embedding_profile table ready';
