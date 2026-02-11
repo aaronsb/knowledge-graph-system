@@ -20,7 +20,8 @@ _PROFILE_COLUMNS = """
     device, max_memory_mb, num_threads, batch_size,
     max_seq_length, normalize_embeddings,
     active, delete_protected, change_protected,
-    created_at, updated_at, updated_by
+    created_at, updated_at, updated_by,
+    text_query_prefix, text_document_prefix
 """
 
 
@@ -57,6 +58,8 @@ def _row_to_dict(row) -> Dict[str, Any]:
         "created_at": row[27],
         "updated_at": row[28],
         "updated_by": row[29],
+        "text_query_prefix": row[30],
+        "text_document_prefix": row[31],
         # Backward-compat aliases used by model manager and routes
         "provider": row[4],            # text_provider
         "model_name": row[5],          # text_model_name
@@ -187,6 +190,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                         image_dimensions, image_precision, image_trust_remote_code,
                         device, max_memory_mb, num_threads, batch_size,
                         max_seq_length, normalize_embeddings,
+                        text_query_prefix, text_document_prefix,
                         updated_by, active
                     ) VALUES (
                         %s, %s, %s,
@@ -195,6 +199,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                         %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s,
+                        %s, %s,
                         %s, %s,
                         %s, FALSE
                     )
@@ -208,6 +213,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                     config.get('device', 'cpu'), config.get('max_memory_mb'),
                     config.get('num_threads'), config.get('batch_size', 8),
                     config.get('max_seq_length'), config.get('normalize_embeddings', True),
+                    config.get('text_query_prefix'), config.get('text_document_prefix'),
                     updated_by
                 ))
 
@@ -659,6 +665,8 @@ def export_embedding_profile(profile_id: int) -> Optional[Dict[str, Any]]:
                 "dimensions": config["text_dimensions"],
                 "precision": config.get("text_precision"),
                 "trust_remote_code": config.get("text_trust_remote_code", False),
+                "query_prefix": config.get("text_query_prefix"),
+                "document_prefix": config.get("text_document_prefix"),
             },
             "resources": {
                 "device": config.get("device"),

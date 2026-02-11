@@ -327,7 +327,7 @@ def _generate_source_search_embedding(query: str) -> np.ndarray:
         HTTPException(500): If embedding generation fails or returns empty
     """
     provider = get_provider()
-    embedding_result = provider.generate_embedding(query)
+    embedding_result = provider.generate_embedding(query, purpose="query")
 
     # Extract embedding vector
     if isinstance(embedding_result, dict):
@@ -570,7 +570,7 @@ async def search_concepts(
     try:
         # Generate embedding for query
         provider = get_provider()
-        embedding_result = provider.generate_embedding(request.query)
+        embedding_result = provider.generate_embedding(request.query, purpose="query")
 
         # Extract embedding vector
         if isinstance(embedding_result, dict):
@@ -1510,10 +1510,10 @@ async def find_connection_by_search(
 
     try:
         # Search for concepts matching both queries
-        from_embedding_result = provider.generate_embedding(request.from_query)
+        from_embedding_result = provider.generate_embedding(request.from_query, purpose="query")
         from_embedding = from_embedding_result['embedding'] if isinstance(from_embedding_result, dict) else from_embedding_result
 
-        to_embedding_result = provider.generate_embedding(request.to_query)
+        to_embedding_result = provider.generate_embedding(request.to_query, purpose="query")
         to_embedding = to_embedding_result['embedding'] if isinstance(to_embedding_result, dict) else to_embedding_result
 
         # Find top matching concepts for each query using request threshold

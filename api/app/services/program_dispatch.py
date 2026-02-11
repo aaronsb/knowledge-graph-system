@@ -180,7 +180,7 @@ def dispatch_api(ctx: DispatchContext, op: ApiOp) -> WorkingGraph:
 
 def _dispatch_search_concepts(ctx: DispatchContext, params: Dict[str, Any]) -> WorkingGraph:
     """Vector search -> concept nodes."""
-    embedding_result = ctx.provider.generate_embedding(params['query'])
+    embedding_result = ctx.provider.generate_embedding(params['query'], purpose="query")
     if isinstance(embedding_result, dict):
         embedding = embedding_result['embedding']
     else:
@@ -211,7 +211,7 @@ def _dispatch_search_sources(ctx: DispatchContext, params: Dict[str, Any]) -> Wo
     import numpy as np
     from api.app.routes.queries import _search_source_embeddings_by_similarity
 
-    embedding_result = ctx.provider.generate_embedding(params['query'])
+    embedding_result = ctx.provider.generate_embedding(params['query'], purpose="query")
     if isinstance(embedding_result, dict):
         embedding = embedding_result['embedding']
     else:

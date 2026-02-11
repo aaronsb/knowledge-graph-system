@@ -35,6 +35,8 @@ function createEmbeddingCreateCommand(client: KnowledgeGraphClient): Command {
     .option('--image-loader <loader>', 'Image loader: sentence-transformers, transformers, api')
     .option('--image-revision <rev>', 'Image model revision/commit hash')
     .option('--image-trust-remote-code', 'Trust remote code for image model', false)
+    .option('--text-query-prefix <prefix>', 'Text prefix for search queries (e.g. "search_query: ")')
+    .option('--text-document-prefix <prefix>', 'Text prefix for document ingestion (e.g. "search_document: ")')
     .option('--device <device>', 'Device: cpu, cuda, mps')
     .option('--memory <mb>', 'Max memory in MB', parseInt)
     .option('--threads <n>', 'Number of threads', parseInt)
@@ -69,6 +71,8 @@ function createEmbeddingCreateCommand(client: KnowledgeGraphClient): Command {
             config.text_dimensions = profile.text.dimensions;
             config.text_precision = profile.text.precision;
             config.text_trust_remote_code = profile.text.trust_remote_code;
+            config.text_query_prefix = profile.text.query_prefix;
+            config.text_document_prefix = profile.text.document_prefix;
           }
 
           // Image slot
@@ -112,6 +116,8 @@ function createEmbeddingCreateCommand(client: KnowledgeGraphClient): Command {
           if (options.textLoader) config.text_loader = options.textLoader;
           if (options.textRevision) config.text_revision = options.textRevision;
           if (options.textTrustRemoteCode) config.text_trust_remote_code = true;
+          if (options.textQueryPrefix) config.text_query_prefix = options.textQueryPrefix;
+          if (options.textDocumentPrefix) config.text_document_prefix = options.textDocumentPrefix;
 
           if (options.precision) config.text_precision = options.precision;
 
@@ -258,6 +264,9 @@ function createEmbeddingListCommand(client: KnowledgeGraphClient): Command {
             console.log(`    ${colors.ui.key('Text:')} ${colors.ui.value(config.text_provider || config.provider)} / ${colors.ui.value(config.text_model_name || config.model_name || 'N/A')}`);
             if (config.text_dimensions || config.embedding_dimensions) {
               console.log(`      ${colors.ui.key('Dims:')} ${colors.ui.value((config.text_dimensions || config.embedding_dimensions).toString())}  ${colors.ui.key('Loader:')} ${colors.ui.value(config.text_loader || 'auto')}`);
+            }
+            if (config.text_query_prefix || config.text_document_prefix) {
+              console.log(`      ${colors.ui.key('Prefixes:')} query=${colors.ui.value(JSON.stringify(config.text_query_prefix || ''))} doc=${colors.ui.value(JSON.stringify(config.text_document_prefix || ''))}`);
             }
 
             // Image slot

@@ -112,8 +112,8 @@ class AIProvider(ABC):
         pass
 
     @abstractmethod
-    def generate_embedding(self, text: str) -> List[float]:
-        """Generate vector embedding for text"""
+    def generate_embedding(self, text: str, purpose: str = "document") -> List[float]:
+        """Generate vector embedding for text. Purpose: 'query' or 'document'."""
         pass
 
     @abstractmethod
@@ -296,7 +296,7 @@ class OpenAIProvider(AIProvider):
                 e.pos
             )
 
-    def generate_embedding(self, text: str) -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
         """Generate embedding using the system embedding provider.
 
         All embedding generation goes through the configured embedding provider
@@ -308,7 +308,7 @@ class OpenAIProvider(AIProvider):
         Returns dict with 'embedding' (vector) and 'tokens' (usage info)
         """
         if self.embedding_provider:
-            return self.embedding_provider.generate_embedding(text)
+            return self.embedding_provider.generate_embedding(text, purpose=purpose)
 
         raise RuntimeError(
             "No embedding provider configured. OpenAI reasoning provider cannot "
@@ -494,15 +494,15 @@ class LocalEmbeddingProvider(AIProvider):
             "Use OpenAI or Anthropic for extraction."
         )
 
-    def generate_embedding(self, text: str) -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
         """
-        Generate embedding using local sentence-transformers model.
+        Generate embedding using local model with purpose-aware task prefix.
 
         Returns dict with 'embedding' (vector), 'model', and 'tokens' (0 for local).
         This matches the interface expected by the rest of the system.
         """
         try:
-            embedding = self.model_manager.generate_embedding(text)
+            embedding = self.model_manager.generate_embedding(text, purpose=purpose)
 
             return {
                 "embedding": embedding,
@@ -691,9 +691,9 @@ class AnthropicProvider(AIProvider):
         except json.JSONDecodeError as e:
             raise Exception(f"Failed to parse JSON from Claude response: {e}\nResponse: {text}")
 
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str, purpose: str = "document") -> List[float]:
         """Generate embedding using the configured embedding provider"""
-        return self.embedding_provider.generate_embedding(text)
+        return self.embedding_provider.generate_embedding(text, purpose=purpose)
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
         """
@@ -1093,9 +1093,9 @@ class OllamaProvider(AIProvider):
                 e.pos
             )
 
-    def generate_embedding(self, text: str) -> Dict[str, Any]:
+    def generate_embedding(self, text: str, purpose: str = "document") -> Dict[str, Any]:
         """Generate embedding using the configured embedding provider"""
-        return self.embedding_provider.generate_embedding(text)
+        return self.embedding_provider.generate_embedding(text, purpose=purpose)
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
         """

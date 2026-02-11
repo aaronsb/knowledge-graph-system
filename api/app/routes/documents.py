@@ -159,7 +159,7 @@ def _generate_query_embedding(query: str) -> np.ndarray:
     from ..lib.ai_providers import get_provider
 
     provider = get_provider()
-    embedding_result = provider.generate_embedding(query)
+    embedding_result = provider.generate_embedding(query, purpose="query")
 
     # Extract embedding vector
     if isinstance(embedding_result, dict):
