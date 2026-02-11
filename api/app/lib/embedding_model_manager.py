@@ -101,6 +101,8 @@ class EmbeddingModelManager:
         if self.model_revision:
             logger.info(f"  Revision: {self.model_revision}")
 
+        self._device = device
+
         if self.loader == 'sentence-transformers':
             self._load_sentence_transformers(device)
         elif self.loader == 'transformers':
@@ -219,7 +221,6 @@ class EmbeddingModelManager:
             if device in ('cuda', 'mps'):
                 self.model = self.model.to(device)
             self.model.eval()
-            self._device = device
 
             # Detect dimensions via a dummy forward pass
             dummy_input = self.tokenizer("hello", return_tensors="pt", padding=True, truncation=True)

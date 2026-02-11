@@ -16,7 +16,7 @@ Admin endpoints:
 
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Optional
+from typing import List, Optional
 
 from ..dependencies.auth import CurrentUser, require_permission
 from ..models.embedding import (
@@ -299,7 +299,7 @@ async def reload_embedding_model(
         )
 
 
-@admin_router.get("/configs", response_model=list)
+@admin_router.get("/configs", response_model=List[EmbeddingProfileDetail])
 async def list_embedding_configs(
     current_user: CurrentUser,
     _: None = Depends(require_permission("embedding_config", "read"))

@@ -65,12 +65,13 @@ def run_ingestion_worker(
         image_b64 = job_data["image_bytes"]
         image_bytes = base64.b64decode(image_b64)
 
-        # Step 1: Generate visual embedding (Nomic Vision v1.5)
-        logger.info("Generating visual embedding with Nomic Vision v1.5...")
-        from api.app.lib.visual_embeddings import generate_visual_embedding
+        # Step 1: Generate visual embedding from active profile
+        from api.app.lib.visual_embeddings import get_visual_embedding_generator, generate_visual_embedding
+        vis_gen = get_visual_embedding_generator()
+        logger.info(f"Generating visual embedding with {vis_gen.get_model_name()}...")
         try:
             visual_embedding = generate_visual_embedding(image_bytes)
-            logger.info(f"Visual embedding generated: 768-dim")
+            logger.info(f"Visual embedding generated: {len(visual_embedding)}-dim")
         except Exception as e:
             logger.error(f"Failed to generate visual embedding: {e}")
             raise Exception(f"Visual embedding generation failed: {str(e)}")
