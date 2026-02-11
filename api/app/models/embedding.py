@@ -55,6 +55,8 @@ class EmbeddingProfileTextSlot(BaseModel):
     dimensions: int
     precision: Optional[str] = None
     trust_remote_code: bool = False
+    query_prefix: Optional[str] = None
+    document_prefix: Optional[str] = None
 
 
 class EmbeddingProfileImageSlot(BaseModel):
