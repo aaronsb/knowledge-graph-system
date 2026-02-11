@@ -132,14 +132,24 @@ def run_ingestion_worker(
             raise Exception(f"Image storage failed: {str(e)}")
 
         # Step 4: Store image metadata in job_data for graph upsert
+        # Read image model info from the visual embedding generator (profile-driven)
+        from api.app.lib.visual_embeddings import get_visual_embedding_generator
+        try:
+            vis_gen = get_visual_embedding_generator()
+            visual_model_name = vis_gen.get_model_name()
+            visual_model_dim = vis_gen.get_embedding_dimension()
+        except Exception:
+            visual_model_name = "unknown"
+            visual_model_dim = len(visual_embedding) if visual_embedding else 768
+
         job_data["storage_key"] = storage_key
         job_data["visual_embedding"] = visual_embedding
         job_data["vision_metadata"] = {
             "provider": vision_provider.get_provider_name(),
             "model": vision_provider.get_model_name(),
             "vision_tokens": vision_tokens,
-            "visual_embedding_model": "nomic-ai/nomic-embed-vision-v1.5",
-            "visual_embedding_dimension": 768,
+            "visual_embedding_model": visual_model_name,
+            "visual_embedding_dimension": visual_model_dim,
             "prose_length": len(prose_description)
         }
 

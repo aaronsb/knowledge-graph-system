@@ -1,19 +1,16 @@
 """
-Visual Embedding generation using Nomic Embed Vision v1.5.
+Visual Embedding generation — profile-driven.
 
-Research Findings (ADR-057, Nov 2025):
-- Nomic Vision v1.5: 0.847 average top-3 similarity (27% better than CLIP)
-- 768-dimensional embeddings (same space as Nomic Text)
-- Excellent clustering quality for similar images
-- Local inference via transformers library (not Ollama)
-- Uses CLS token pooling strategy
+Reads image embedding configuration from the active embedding profile
+(kg_api.embedding_profile table, migration 055).
 
-See docs/research/vision-testing/ for comprehensive validation.
+For non-multimodal profiles: uses image_* fields.
+For multimodal profiles: uses text_* fields (same model handles both).
 
-Architecture Decision (ADR-043):
-- GPU acceleration when available (~1-2ms per image)
-- CPU fallback when VRAM insufficient (<500MB free)
-- Resource management to avoid VRAM contention
+Supports loaders:
+- transformers: AutoModel + AutoProcessor (Nomic Vision, SigLIP)
+- sentence-transformers: SentenceTransformer (less common for vision)
+- api: external API (no local model)
 """
 
 import os
@@ -28,28 +25,42 @@ logger = logging.getLogger(__name__)
 
 class VisualEmbeddingGenerator:
     """
-    Generate visual embeddings using Nomic Embed Vision v1.5.
+    Generate visual embeddings using the active profile's image model.
 
-    Uses transformers library with CLS token pooling for 768-dim embeddings.
+    Uses transformers library with CLS token pooling.
     Supports GPU acceleration with automatic CPU fallback.
     """
 
     def __init__(
         self,
         model_name: str = "nomic-ai/nomic-embed-vision-v1.5",
-        device: Optional[str] = None
+        device: Optional[str] = None,
+        loader: str = "transformers",
+        model_revision: Optional[str] = None,
+        trust_remote_code: bool = True,
+        dimensions: Optional[int] = None
     ):
         """
         Initialize visual embedding generator.
 
         Args:
-            model_name: Hugging Face model name (default: nomic-ai/nomic-embed-vision-v1.5)
+            model_name: Hugging Face model name
             device: Device to use ('mps', 'cuda', 'cpu', or None for auto-detect)
+            loader: How to load the model ('transformers', 'sentence-transformers', 'api')
+            model_revision: HuggingFace commit hash / version tag
+            trust_remote_code: Whether to trust remote code
+            dimensions: Expected embedding dimensions (for validation)
         """
-        from transformers import AutoModel, AutoProcessor
         from .device_selector import get_best_device, log_device_selection
 
         self.model_name = model_name
+        self.loader = loader
+        self.model_revision = model_revision
+        self.trust_remote_code = trust_remote_code
+        self._expected_dimensions = dimensions
+        self.model = None
+        self.processor = None
+        self._dimensions = dimensions
 
         # Auto-detect device if not specified
         if device is None:
@@ -58,118 +69,161 @@ class VisualEmbeddingGenerator:
 
         log_device_selection(model_name)
 
-        # TODO: Pin specific model version/revision for consistency
-        # Example: model_name = "nomic-ai/nomic-embed-vision-v1.5@abc123"
+        if loader == 'api':
+            logger.info(f"Visual embedding loader=api for {model_name}, no local model to load")
+            return
+
+        self._load_model()
+
+    def _load_model(self):
+        """Load the vision model based on loader type."""
+        if self.loader == 'transformers':
+            self._load_transformers()
+        elif self.loader == 'sentence-transformers':
+            self._load_sentence_transformers()
+        else:
+            raise RuntimeError(f"Unknown visual embedding loader: {self.loader}")
+
+    def _load_transformers(self):
+        """Load model via transformers AutoModel + AutoProcessor."""
+        from transformers import AutoModel, AutoProcessor
+
+        load_kwargs = {
+            "trust_remote_code": self.trust_remote_code,
+        }
+        if self.model_revision:
+            load_kwargs["revision"] = self.model_revision
 
         try:
-            # Try loading from local cache first (fast, no network)
-            # If not cached, download ONCE to persistent volume
-            # Use device_map instead of .to() to handle meta tensors properly
+            # Try loading from local cache first
             try:
-                logger.info(f"   Attempting to load from local cache...")
-
                 if self.device in ('cuda', 'mps'):
-                    # GPU devices (CUDA/MPS) use device_map for optimal placement
                     self.model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
+                        self.model_name,
                         device_map="auto",
-                        local_files_only=True  # Try cache first
+                        local_files_only=True,
+                        **load_kwargs
                     )
                 else:
-                    # For CPU, use low_cpu_mem_usage to avoid meta tensor issues
                     self.model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
+                        self.model_name,
                         low_cpu_mem_usage=False,
-                        local_files_only=True  # Try cache first
+                        local_files_only=True,
+                        **load_kwargs
                     )
 
+                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+                if self.model_revision:
+                    processor_kwargs["revision"] = self.model_revision
                 self.processor = AutoProcessor.from_pretrained(
-                    model_name,
-                    trust_remote_code=True,
-                    use_fast=True,
-                    local_files_only=True  # Try cache first
+                    self.model_name,
+                    local_files_only=True,
+                    **processor_kwargs
                 )
+                logger.info(f"  Loaded vision model from cache")
 
-                logger.info(f"   ✓ Loaded from local cache")
-
-            except (OSError, ValueError) as cache_error:
-                # Model not in cache - download to persistent volume (one-time operation)
-                logger.warning(f"   Model not in cache, downloading from HuggingFace...")
-                logger.warning(f"   This is a one-time download (~500MB-1GB)")
-                logger.warning(f"   Model will be cached in persistent volume for future startups")
+            except (OSError, ValueError):
+                logger.warning(f"  Vision model not in cache, downloading...")
 
                 if self.device in ('cuda', 'mps'):
-                    # GPU devices (CUDA/MPS) use device_map for optimal placement
                     self.model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
-                        device_map="auto"
-                        # local_files_only=False (default) - will download
+                        self.model_name,
+                        device_map="auto",
+                        **load_kwargs
                     )
                 else:
                     self.model = AutoModel.from_pretrained(
-                        model_name,
-                        trust_remote_code=True,
-                        low_cpu_mem_usage=False
+                        self.model_name,
+                        low_cpu_mem_usage=False,
+                        **load_kwargs
                     )
 
+                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+                if self.model_revision:
+                    processor_kwargs["revision"] = self.model_revision
                 self.processor = AutoProcessor.from_pretrained(
-                    model_name,
-                    trust_remote_code=True,
-                    use_fast=True
+                    self.model_name,
+                    **processor_kwargs
                 )
+                logger.info(f"  Downloaded and cached vision model")
 
-                logger.info(f"   ✓ Downloaded and cached to persistent volume")
-
-            # Set model to eval mode
             self.model.eval()
-
             logger.info(
-                f"✅ Nomic Vision model loaded successfully on {self.device}. "
-                f"Embedding dimension: 768"
+                f"Vision model loaded: {self.model_name} on {self.device}"
             )
 
         except Exception as e:
-            logger.error(f"❌ Failed to load Nomic Vision model: {e}")
-            logger.error(f"   This indicates a network or configuration issue")
+            logger.error(f"Failed to load vision model: {e}")
+            raise
+
+    def _load_sentence_transformers(self):
+        """Load model via sentence-transformers (less common for vision)."""
+        from sentence_transformers import SentenceTransformer
+
+        load_kwargs = {
+            "trust_remote_code": self.trust_remote_code,
+            "device": self.device,
+        }
+        if self.model_revision:
+            load_kwargs["revision"] = self.model_revision
+
+        try:
+            try:
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    local_files_only=True,
+                    **load_kwargs
+                )
+            except (OSError, ValueError):
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    **load_kwargs
+                )
+
+            self._dimensions = self.model.get_sentence_embedding_dimension()
+            logger.info(f"Vision model loaded (sentence-transformers): {self.model_name}")
+
+        except Exception as e:
+            logger.error(f"Failed to load vision model: {e}")
             raise
 
     def generate_embedding(self, image_bytes: bytes) -> np.ndarray:
         """
-        Generate 768-dimensional embedding for an image.
+        Generate embedding for an image.
 
         Args:
             image_bytes: Raw image bytes (PNG, JPEG, etc.)
 
         Returns:
-            numpy array of shape (768,) with normalized embedding
-
-        Raises:
-            ValueError: If image cannot be processed
+            numpy array with normalized embedding
         """
         import torch
 
         try:
-            # Load image
             image = Image.open(BytesIO(image_bytes)).convert('RGB')
 
-            # Process image
-            inputs = self.processor(images=image, return_tensors='pt').to(self.device)
+            if self.loader == 'transformers':
+                inputs = self.processor(images=image, return_tensors='pt').to(self.device)
 
-            # Generate embedding (CLS token pooling)
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                # Use CLS token (first token) as embedding
-                embedding = outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
+                    # CLS token (first token) as embedding
+                    embedding = outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
 
-            # Normalize embedding (L2 normalization for cosine similarity)
-            norm = np.linalg.norm(embedding)
-            if norm > 0:
-                embedding = embedding / norm
+                # L2 normalize
+                norm = np.linalg.norm(embedding)
+                if norm > 0:
+                    embedding = embedding / norm
 
-            return embedding
+                return embedding
+
+            elif self.loader == 'sentence-transformers':
+                # sentence-transformers can encode images directly
+                embedding = self.model.encode(image, normalize_embeddings=True, show_progress_bar=False)
+                return embedding
+
+            else:
+                raise ValueError(f"Cannot generate embedding with loader={self.loader}")
 
         except Exception as e:
             logger.error(f"Failed to generate visual embedding: {e}")
@@ -183,61 +237,56 @@ class VisualEmbeddingGenerator:
             images: List of raw image bytes
 
         Returns:
-            numpy array of shape (n_images, 768) with normalized embeddings
-
-        Note: Batch processing is more efficient for multiple images.
+            numpy array of shape (n_images, dims) with normalized embeddings
         """
         import torch
 
         try:
-            # Load all images
-            pil_images = []
-            for img_bytes in images:
-                img = Image.open(BytesIO(img_bytes)).convert('RGB')
-                pil_images.append(img)
+            pil_images = [
+                Image.open(BytesIO(img_bytes)).convert('RGB')
+                for img_bytes in images
+            ]
 
-            # Process batch
-            inputs = self.processor(images=pil_images, return_tensors='pt').to(self.device)
+            if self.loader == 'transformers':
+                inputs = self.processor(images=pil_images, return_tensors='pt').to(self.device)
 
-            # Generate embeddings
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                # Use CLS token (first token) for each image
-                embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
+                    embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
 
-            # Normalize each embedding
-            norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-            embeddings = embeddings / np.maximum(norms, 1e-10)  # Avoid division by zero
+                norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+                embeddings = embeddings / np.maximum(norms, 1e-10)
+                return embeddings
 
-            return embeddings
+            elif self.loader == 'sentence-transformers':
+                embeddings = self.model.encode(pil_images, normalize_embeddings=True, show_progress_bar=False)
+                return embeddings
+
+            else:
+                raise ValueError(f"Cannot batch embed with loader={self.loader}")
 
         except Exception as e:
             logger.error(f"Failed to generate batch embeddings: {e}")
             raise ValueError(f"Failed to process images: {e}")
 
     def get_embedding_dimension(self) -> int:
-        """Get the dimension of generated embeddings (always 768 for Nomic Vision)"""
-        return 768
+        """Get the dimension of generated embeddings."""
+        if self._dimensions:
+            return self._dimensions
+        if self._expected_dimensions:
+            return self._expected_dimensions
+        return 768  # Fallback for known models
 
     def get_model_name(self) -> str:
         """Get the model name"""
         return self.model_name
 
     def get_device(self) -> str:
-        """Get the device being used (cuda or cpu)"""
+        """Get the device being used"""
         return self.device
 
     def check_vram_availability(self) -> dict:
-        """
-        Check VRAM availability for resource management (ADR-043).
-
-        Returns:
-            Dict with:
-            - 'device': Current device
-            - 'vram_available_mb': VRAM available in MB (0 if CPU)
-            - 'vram_total_mb': Total VRAM in MB (0 if CPU)
-            - 'can_run_on_gpu': Whether GPU has sufficient VRAM
-        """
+        """Check VRAM availability for resource management."""
         import torch
 
         if self.device == 'cpu':
@@ -250,15 +299,13 @@ class VisualEmbeddingGenerator:
 
         try:
             if torch.cuda.is_available():
-                vram_free = torch.cuda.mem_get_info()[0] / 1024**2  # Convert to MB
+                vram_free = torch.cuda.mem_get_info()[0] / 1024**2
                 vram_total = torch.cuda.mem_get_info()[1] / 1024**2
-                can_run = vram_free > 500  # Need > 500MB free (ADR-043)
-
                 return {
                     'device': 'cuda',
                     'vram_available_mb': int(vram_free),
                     'vram_total_mb': int(vram_total),
-                    'can_run_on_gpu': can_run
+                    'can_run_on_gpu': vram_free > 500
                 }
         except Exception as e:
             logger.warning(f"Failed to check VRAM: {e}")
@@ -271,8 +318,87 @@ class VisualEmbeddingGenerator:
         }
 
 
-# Global instance (lazy loaded)
+# Global instance
 _embedding_generator: Optional[VisualEmbeddingGenerator] = None
+
+
+def _get_image_config_from_profile(config: dict) -> dict:
+    """
+    Extract image model configuration from an embedding profile.
+
+    For multimodal profiles, uses text_* fields.
+    For non-multimodal profiles, uses image_* fields.
+    """
+    if config.get('multimodal'):
+        return {
+            'model_name': config['text_model_name'],
+            'loader': config.get('text_loader', 'transformers'),
+            'revision': config.get('text_revision'),
+            'trust_remote_code': config.get('text_trust_remote_code', False),
+            'dimensions': config.get('text_dimensions'),
+            'device': config.get('device'),
+        }
+    elif config.get('image_model_name'):
+        return {
+            'model_name': config['image_model_name'],
+            'loader': config.get('image_loader', 'transformers'),
+            'revision': config.get('image_revision'),
+            'trust_remote_code': config.get('image_trust_remote_code', True),
+            'dimensions': config.get('image_dimensions'),
+            'device': config.get('device'),
+        }
+    else:
+        # Text-only profile — no image model
+        return None
+
+
+async def init_visual_embedding_generator() -> Optional[VisualEmbeddingGenerator]:
+    """
+    Initialize the global visual embedding generator at startup.
+
+    Reads from the active embedding profile's image configuration.
+    For text-only profiles, returns None (no image embedding support).
+
+    Returns:
+        VisualEmbeddingGenerator instance if image model configured, None otherwise.
+    """
+    global _embedding_generator
+    import asyncio
+    from .embedding_config import load_active_embedding_config
+
+    config = await asyncio.to_thread(load_active_embedding_config)
+
+    if config is None:
+        logger.info("No embedding profile — visual embeddings disabled")
+        return None
+
+    image_config = _get_image_config_from_profile(config)
+
+    if image_config is None:
+        logger.info("Text-only profile — visual embeddings disabled")
+        return None
+
+    if image_config['loader'] == 'api':
+        logger.info(f"Image loader=api for {image_config['model_name']}, no local model to load")
+        return None
+
+    logger.info(f"Initializing visual embedding generator: {image_config['model_name']}")
+
+    try:
+        _embedding_generator = VisualEmbeddingGenerator(
+            model_name=image_config['model_name'],
+            device=image_config.get('device'),
+            loader=image_config['loader'],
+            model_revision=image_config.get('revision'),
+            trust_remote_code=image_config.get('trust_remote_code', True),
+            dimensions=image_config.get('dimensions'),
+        )
+        logger.info(f"Visual embedding generator initialized: {image_config['model_name']}")
+        return _embedding_generator
+
+    except Exception as e:
+        logger.error(f"Failed to initialize visual embedding generator: {e}")
+        raise
 
 
 def get_visual_embedding_generator(
@@ -283,46 +409,56 @@ def get_visual_embedding_generator(
     """
     Get or create global visual embedding generator instance.
 
+    If no instance exists and no model_name given, reads from active profile.
+
     Args:
-        model_name: Hugging Face model name (default from env or nomic-ai/nomic-embed-vision-v1.5)
-        device: Device to use ('cuda', 'cpu', or None for auto-detect)
-        force_reload: Force reload the model (useful for testing)
+        model_name: Explicit model name override
+        device: Device override
+        force_reload: Force reload the model
 
     Returns:
         VisualEmbeddingGenerator instance
-
-    Examples:
-        # Use default (Nomic Vision v1.5 on auto-detected device)
-        generator = get_visual_embedding_generator()
-
-        # Force CPU
-        generator = get_visual_embedding_generator(device='cpu')
-
-        # Force GPU
-        generator = get_visual_embedding_generator(device='cuda')
     """
     global _embedding_generator
 
-    # Use environment variable or default
-    if model_name is None:
-        model_name = os.getenv(
-            "IMAGE_EMBEDDING_MODEL",
-            "nomic-ai/nomic-embed-vision-v1.5"
-        )
-
     # Return cached instance if compatible
     if _embedding_generator is not None and not force_reload:
-        if (_embedding_generator.get_model_name() == model_name and
-            (device is None or _embedding_generator.get_device() == device)):
+        if (model_name is None or _embedding_generator.get_model_name() == model_name) and \
+           (device is None or _embedding_generator.get_device() == device):
             return _embedding_generator
 
-    # Create new instance
-    logger.info(f"Creating new visual embedding generator: {model_name}")
+    # If explicit model_name, use it directly
+    if model_name:
+        _embedding_generator = VisualEmbeddingGenerator(
+            model_name=model_name,
+            device=device
+        )
+        return _embedding_generator
+
+    # Otherwise, read from active profile
+    from .embedding_config import load_active_embedding_config
+    config = load_active_embedding_config()
+
+    if config:
+        image_config = _get_image_config_from_profile(config)
+        if image_config and image_config['loader'] != 'api':
+            _embedding_generator = VisualEmbeddingGenerator(
+                model_name=image_config['model_name'],
+                device=image_config.get('device') or device,
+                loader=image_config['loader'],
+                model_revision=image_config.get('revision'),
+                trust_remote_code=image_config.get('trust_remote_code', True),
+                dimensions=image_config.get('dimensions'),
+            )
+            return _embedding_generator
+
+    # Fallback: use default model name from env or hardcoded default
+    fallback_model = os.getenv("IMAGE_EMBEDDING_MODEL", "nomic-ai/nomic-embed-vision-v1.5")
+    logger.info(f"Creating visual embedding generator with fallback: {fallback_model}")
     _embedding_generator = VisualEmbeddingGenerator(
-        model_name=model_name,
+        model_name=fallback_model,
         device=device
     )
-
     return _embedding_generator
 
 
@@ -334,15 +470,7 @@ def generate_visual_embedding(image_bytes: bytes) -> List[float]:
         image_bytes: Raw image bytes
 
     Returns:
-        List of 768 floats (normalized embedding)
-
-    Examples:
-        # Generate embedding for an image
-        with open('diagram.jpg', 'rb') as f:
-            embedding = generate_visual_embedding(f.read())
-
-        # embedding is 768-dimensional
-        assert len(embedding) == 768
+        List of floats (normalized embedding)
     """
     generator = get_visual_embedding_generator()
     embedding = generator.generate_embedding(image_bytes)
@@ -357,16 +485,7 @@ def generate_visual_embeddings_batch(images: List[bytes]) -> List[List[float]]:
         images: List of raw image bytes
 
     Returns:
-        List of embeddings (each 768 floats)
-
-    Examples:
-        # Generate embeddings for multiple images
-        image_files = ['img1.jpg', 'img2.jpg', 'img3.jpg']
-        images = [open(f, 'rb').read() for f in image_files]
-        embeddings = generate_visual_embeddings_batch(images)
-
-        # embeddings[i] is 768-dimensional
-        assert all(len(emb) == 768 for emb in embeddings)
+        List of embeddings (each a list of floats)
     """
     generator = get_visual_embedding_generator()
     embeddings = generator.generate_embeddings_batch(images)
@@ -378,18 +497,7 @@ def check_visual_embedding_health() -> dict:
     Health check for visual embedding system.
 
     Returns:
-        Dict with:
-        - 'status': 'healthy' or 'unhealthy'
-        - 'model': Model name
-        - 'device': Current device
-        - 'vram_info': VRAM status (if GPU)
-        - 'error': Error message (if unhealthy)
-
-    Examples:
-        # Check if visual embeddings are working
-        health = check_visual_embedding_health()
-        if health['status'] == 'healthy':
-            print(f"Visual embeddings ready on {health['device']}")
+        Dict with status, model, device, and error info.
     """
     try:
         generator = get_visual_embedding_generator()
@@ -402,19 +510,15 @@ def check_visual_embedding_health() -> dict:
         )
 
         embedding = generator.generate_embedding(test_image)
+        dim = len(embedding)
 
-        # Verify embedding
-        if len(embedding) != 768:
-            raise ValueError(f"Expected 768-dim embedding, got {len(embedding)}")
-
-        # Check VRAM
         vram_info = generator.check_vram_availability()
 
         return {
             'status': 'healthy',
             'model': generator.get_model_name(),
             'device': generator.get_device(),
-            'embedding_dimension': 768,
+            'embedding_dimension': dim,
             'vram_info': vram_info
         }
 
