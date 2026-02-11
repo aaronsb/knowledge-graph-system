@@ -26,7 +26,8 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 
 **Semantic Resolution:**
 - Use `from_label`/`to_label` to reference concepts by name instead of ID
-- Resolution uses vector similarity (85% threshold) to find matching concepts
+- Resolution uses vector similarity (75% threshold) to find matching concepts
+- Near-misses (60-75%) return "Did you mean?" suggestions with concept IDs
 
 **Examples:**
 - Create concept: `{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}`
@@ -45,7 +46,7 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
   ]
 }
 ```
-Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.
+Queue executes sequentially, continues past errors by default (set continue_on_error=false to stop on first error). Max 20 operations.
 
 **Parameters:**
 
@@ -54,8 +55,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 - `entity` (`string`) - Entity type (required for create/edit/delete/list, not for queue)
   - Allowed values: `concept`, `edge`
 - `operations` (`array`) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.
-- `continue_on_error` (`boolean`) - For queue: continue executing after errors (default: false, stop on first error)
-  - Default: `false`
+- `continue_on_error` (`boolean`) - For queue: continue executing after errors (default: true). Set false to stop on first error.
+  - Default: `true`
 - `label` (`string`) - Concept label (required for create concept)
 - `ontology` (`string`) - Ontology/namespace (required for create concept, optional filter for list)
 - `description` (`string`) - Concept description (optional)

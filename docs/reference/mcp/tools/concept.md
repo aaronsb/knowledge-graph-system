@@ -6,7 +6,9 @@
 
 Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
 
-For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.
+For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision. Note: connect traverses semantic edges only (IMPLIES, SUPPORTS, CONTRADICTS, etc.) — manually-created edges with no traversal history may not appear in paths. Use program/Cypher for comprehensive traversal.
+
+If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.
 
 For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
 

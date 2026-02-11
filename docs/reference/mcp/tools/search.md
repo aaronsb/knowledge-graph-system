@@ -30,6 +30,8 @@ RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW 
 
 For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
 
+ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
