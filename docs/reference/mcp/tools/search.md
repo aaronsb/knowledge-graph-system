@@ -32,6 +32,8 @@ For multi-step exploration, compose searches into a GraphProgram (program tool) 
 
 ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.
 
+To verify a result, use source to retrieve the original text behind any evidence, or concept (action: "details") to see all evidence and relationships for a concept.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**

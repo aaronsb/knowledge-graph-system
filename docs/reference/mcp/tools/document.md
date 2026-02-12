@@ -12,7 +12,7 @@ Three actions available:
 - "concepts": Get all concepts extracted from a document
 
 Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
-Use search tool with type="documents" to find documents semantically.
+Use search tool with type="documents" to find documents semantically. Use document (action: "concepts") to see what was extracted, then concept (action: "details") or source to drill into specifics.
 
 **Parameters:**
 

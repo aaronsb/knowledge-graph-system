@@ -153,7 +153,7 @@ async def _execute_one(
 
     # --- CypherOp / ApiOp ---
     if isinstance(op, CypherOp):
-        r = await asyncio.to_thread(dispatch_cypher, ctx, op)
+        r = await asyncio.to_thread(dispatch_cypher, ctx, op, w)
         operation_type = 'cypher'
     elif isinstance(op, ApiOp):
         r = await asyncio.to_thread(dispatch_api, ctx, op)

@@ -21,6 +21,8 @@ EPISTEMIC STATUS CLASSIFICATIONS:
 
 Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
 
+Concept (action: "related") and connect accept include_epistemic_status/exclude_epistemic_status filters to narrow traversals by reliability. Use search to find concepts in contested areas, then epistemic_status to understand why.
+
 **Parameters:**
 
 - `action` (`string`) **(required)** - Operation: "list" (all types), "show" (specific type), "measure" (run measurement)

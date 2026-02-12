@@ -21,6 +21,8 @@ Use Cases:
 - Discover concepts balanced between opposing ideas
 - Map semantic dimensions in the knowledge graph
 
+Requires concept IDs for poles — use search to find opposing concepts first. Use concept (action: "details") to inspect pole concepts before analysis.
+
 **Parameters:**
 
 - `positive_pole_id` (`string`) **(required)** - Concept ID for positive pole (e.g., ID for "Modern")
