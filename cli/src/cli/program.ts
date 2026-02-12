@@ -248,10 +248,16 @@ export const programCommand = setCommandHelp(
           }
 
           if (!options.logOnly && result.result.links.length > 0) {
+            const nodeLabels = new Map<string, string>();
+            for (const node of result.result.nodes) {
+              nodeLabels.set(node.concept_id, node.label);
+            }
             console.log('\n' + colors.stats.section('Links'));
             for (const link of result.result.links.slice(0, 30)) {
+              const from = nodeLabels.get(link.from_id) || link.from_id;
+              const to = nodeLabels.get(link.to_id) || link.to_id;
               console.log(
-                `  ${colors.status.dim(link.from_id)} → ${colors.ui.key(link.relationship_type)} → ${colors.status.dim(link.to_id)}`
+                `  ${colors.status.dim(from)} → ${colors.ui.key(link.relationship_type)} → ${colors.status.dim(to)}`
               );
             }
             if (result.result.links.length > 30) {

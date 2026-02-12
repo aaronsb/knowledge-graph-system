@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-02-11
+> Last updated: 2026-02-12
 
 ---
 
@@ -61,6 +61,8 @@ For multi-step exploration, compose searches into a GraphProgram (program tool) 
 
 ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.
 
+To verify a result, use source to retrieve the original text behind any evidence, or concept (action: "details") to see all evidence and relationships for a concept.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
@@ -87,7 +89,7 @@ For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and wor
 
 If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.
 
-For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. For example, seed from a search then expand via Cypher using $W_IDS to reference accumulated concept IDs. See the program tool and program/syntax resource for this and other composition patterns.
 
 **Parameters:**
 
@@ -223,6 +225,8 @@ Use when you need to:
 - Retrieve images for visual analysis
 - Check character offsets for highlighting
 
+Source IDs appear in search results and concept details evidence. Use concept (action: "details") to see all evidence for a concept, or search (type: "sources") to find passages directly.
+
 **Parameters:**
 
 - `source_id` (`string`) **(required)** - Source ID from evidence or search results
@@ -247,6 +251,8 @@ EPISTEMIC STATUS CLASSIFICATIONS:
 - UNCLASSIFIED: Doesn't fit known patterns
 
 Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
+
+Concept (action: "related") and connect accept include_epistemic_status/exclude_epistemic_status filters to narrow traversals by reliability. Use search to find concepts in contested areas, then epistemic_status to understand why.
 
 **Parameters:**
 
@@ -281,6 +287,8 @@ Use Cases:
 - Identify position-grounding correlation patterns
 - Discover concepts balanced between opposing ideas
 - Map semantic dimensions in the knowledge graph
+
+Requires concept IDs for poles — use search to find opposing concepts first. Use concept (action: "details") to inspect pole concepts before analysis.
 
 **Parameters:**
 
@@ -336,7 +344,7 @@ Three actions available:
 - "concepts": Get all concepts extracted from a document
 
 Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
-Use search tool with type="documents" to find documents semantically.
+Use search tool with type="documents" to find documents semantically. Use document (action: "concepts") to see what was extracted, then concept (action: "details") or source to drill into specifics.
 
 **Parameters:**
 

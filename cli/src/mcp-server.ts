@@ -295,7 +295,9 @@ RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW 
 
 For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
 
-ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.
+ESCALATION: For analytical questions or exploring more than 2 concepts, go directly to the program tool — one composed query replaces many individual calls.
+
+To verify a result, use source to retrieve the original text behind any evidence, or concept (action: "details") to see all evidence and relationships for a concept.
 
 Use 2-3 word phrases (e.g., "linear thinking patterns").`,
         inputSchema: {
@@ -342,7 +344,7 @@ For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and wor
 
 If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.
 
-For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.`,
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. For example, seed from a search then expand via Cypher using $W_IDS to reference accumulated concept IDs. See the program tool and program/syntax resource for this and other composition patterns.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -668,7 +670,9 @@ Use when you need to:
 - Verify extracted concepts against original source
 - Get the full context of a text passage
 - Retrieve images for visual analysis
-- Check character offsets for highlighting`,
+- Check character offsets for highlighting
+
+Source IDs appear in search results and concept details evidence. Use concept (action: "details") to see all evidence for a concept, or search (type: "sources") to find passages directly.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -697,7 +701,9 @@ EPISTEMIC STATUS CLASSIFICATIONS:
 - INSUFFICIENT_DATA: <3 successful measurements
 - UNCLASSIFIED: Doesn't fit known patterns
 
-Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.`,
+Use for filtering relationships by epistemic reliability, identifying contested knowledge areas, and curating high-confidence vs exploratory subgraphs.
+
+Concept (action: "related") and connect accept include_epistemic_status/exclude_epistemic_status filters to narrow traversals by reliability. Use search to find concepts in contested areas, then epistemic_status to understand why.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -753,7 +759,9 @@ Use Cases:
 - Explore conceptual spectrums and gradients
 - Identify position-grounding correlation patterns
 - Discover concepts balanced between opposing ideas
-- Map semantic dimensions in the knowledge graph`,
+- Map semantic dimensions in the knowledge graph
+
+Requires concept IDs for poles — use search to find opposing concepts first. Use concept (action: "details") to inspect pole concepts before analysis.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -853,7 +861,7 @@ Three actions available:
 - "concepts": Get all concepts extracted from a document
 
 Documents are aggregated from source chunks and stored in Garage (S3-compatible storage).
-Use search tool with type="documents" to find documents semantically.`,
+Use search tool with type="documents" to find documents semantically. Use document (action: "concepts") to see what was extracted, then concept (action: "details") or source to drill into specifics.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -1085,7 +1093,7 @@ Queue executes sequentially, continues past errors by default (set continue_on_e
         name: 'program',
         description: `Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
-Use search/connect/related for quick associative exploration (reflexive lookups). Use program for deliberate multi-step reasoning — when reflexive tools aren't giving you what you need. If you're repeating connect/search calls without converging, this is the tool you want.
+Use search/connect/related for quick lookups (one concept, one path). Use program when you need the neighborhood of more than 2 concepts, want to combine search with traversal, or are asking an analytical question about graph structure. If you've made 3+ individual tool calls without converging, you should already be here.
 
 Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
 Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
@@ -2724,6 +2732,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const lines: string[] = [];
               const totalMs = result.log.reduce((sum: number, e: any) => sum + e.duration_ms, 0);
 
+              // Build id → label map for readable link output
+              const nodeLabels = new Map<string, string>();
+              for (const node of result.result.nodes) {
+                nodeLabels.set(node.concept_id, node.label);
+              }
+
               if (result.aborted) {
                 lines.push(`✗ Aborted at statement ${result.aborted.statement}: ${result.aborted.reason}`);
               } else {
@@ -2760,7 +2774,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               if (result.result.links.length > 0) {
                 lines.push('\nLinks:');
                 for (const link of result.result.links.slice(0, 30)) {
-                  lines.push(`  ${link.from_id} → ${link.relationship_type} → ${link.to_id}`);
+                  const from = nodeLabels.get(link.from_id) || link.from_id;
+                  const to = nodeLabels.get(link.to_id) || link.to_id;
+                  lines.push(`  ${from} → ${link.relationship_type} → ${to}`);
                 }
                 if (result.result.links.length > 30) {
                   lines.push(`  ... and ${result.result.links.length - 30} more`);
@@ -2826,6 +2842,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               const result = await client.chainPrograms(toolArgs.deck as any[]);
               const lines: string[] = [];
 
+              // Build id → label map for readable link output
+              const nodeLabels = new Map<string, string>();
+              for (const node of result.result.nodes) {
+                nodeLabels.set(node.concept_id, node.label);
+              }
+
               if (result.aborted) {
                 lines.push(`✗ Chain aborted at statement ${result.aborted.statement}: ${result.aborted.reason}`);
               } else {
@@ -2860,7 +2882,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               if (result.result.links.length > 0) {
                 lines.push('\nLinks:');
                 for (const link of result.result.links.slice(0, 30)) {
-                  lines.push(`  ${link.from_id} → ${link.relationship_type} → ${link.to_id}`);
+                  const from = nodeLabels.get(link.from_id) || link.from_id;
+                  const to = nodeLabels.get(link.to_id) || link.to_id;
+                  lines.push(`  ${from} → ${link.relationship_type} → ${to}`);
                 }
                 if (result.result.links.length > 30) {
                   lines.push(`  ... and ${result.result.links.length - 30} more`);

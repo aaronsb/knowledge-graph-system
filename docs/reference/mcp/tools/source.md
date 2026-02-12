@@ -15,6 +15,8 @@ Use when you need to:
 - Retrieve images for visual analysis
 - Check character offsets for highlighting
 
+Source IDs appear in search results and concept details evidence. Use concept (action: "details") to see all evidence for a concept, or search (type: "sources") to find passages directly.
+
 **Parameters:**
 
 - `source_id` (`string`) **(required)** - Source ID from evidence or search results

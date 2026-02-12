@@ -42,8 +42,14 @@ class DispatchContext:
 # CypherOp dispatch
 # ---------------------------------------------------------------------------
 
-def dispatch_cypher(ctx: DispatchContext, op: CypherOp) -> WorkingGraph:
-    """Execute CypherOp and map AGE results to WorkingGraph."""
+def dispatch_cypher(
+    ctx: DispatchContext, op: CypherOp, w: Optional[WorkingGraph] = None
+) -> WorkingGraph:
+    """Execute CypherOp and map AGE results to WorkingGraph.
+
+    When w is provided, concept IDs from the working graph are available
+    as $W_IDS in the Cypher query (seed-then-expand pattern).
+    """
     from api.app.services.cypher_guard import check_cypher_safety
 
     # Defense-in-depth: re-check safety at execution time even though
@@ -61,7 +67,12 @@ def dispatch_cypher(ctx: DispatchContext, op: CypherOp) -> WorkingGraph:
     if op.limit and 'LIMIT' not in query.upper():
         query = f"{query} LIMIT {op.limit}"
 
-    records = ctx.client._execute_cypher(query)
+    # Bind $W_IDS from the working graph if the query references it
+    params: Optional[Dict[str, Any]] = None
+    if w is not None and '$W_IDS' in query:
+        params = {"W_IDS": [n.concept_id for n in w.nodes]}
+
+    records = ctx.client._execute_cypher(query, params=params)
     return _parse_age_results(records)
 
 

@@ -10,7 +10,7 @@ For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and wor
 
 If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.
 
-For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
+For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. For example, seed from a search then expand via Cypher using $W_IDS to reference accumulated concept IDs. See the program tool and program/syntax resource for this and other composition patterns.
 
 **Parameters:**
 
