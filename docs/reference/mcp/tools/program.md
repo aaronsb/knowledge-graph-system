@@ -6,7 +6,7 @@
 
 Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
-Use search/connect/related for quick associative exploration (reflexive lookups). Use program for deliberate multi-step reasoning — when reflexive tools aren't giving you what you need. If you're repeating connect/search calls without converging, this is the tool you want.
+Use search/connect/related for quick lookups (one concept, one path). Use program when you need the neighborhood of more than 2 concepts, want to combine search with traversal, or are asking an analytical question about graph structure. If you've made 3+ individual tool calls without converging, you should already be here.
 
 Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
 Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
@@ -45,7 +45,7 @@ Each statement applies an operator to merge/filter results into a mutable Workin
   /search/concepts   — params: query (required), min_similarity?, limit?
   /search/sources    — params: query (required), min_similarity?, limit?
   /concepts/details  — params: concept_id (required)
-  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?
+  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?  [returns nodes + edges in programs]
   /concepts/batch    — params: concept_ids (required, list)
   /vocabulary/status — params: relationship_type?, status_filter?
 

@@ -292,18 +292,40 @@ def _dispatch_concepts_details(ctx: DispatchContext, params: Dict[str, Any]) -> 
 
 
 def _dispatch_concepts_related(ctx: DispatchContext, params: Dict[str, Any]) -> WorkingGraph:
-    """Neighborhood exploration -> concept nodes."""
+    """Neighborhood exploration -> concept nodes + edges between them.
+
+    Uses graph.neighborhood() for BFS discovery, then fetches actual edges
+    between the seed concept and all discovered neighbors so that programs
+    get usable topology (not just a node list).
+    """
+    seed_id = params['concept_id']
     results = ctx.client.graph.neighborhood(
-        concept_id=params['concept_id'],
+        concept_id=seed_id,
         max_depth=params.get('max_depth', 2),
         relationship_types=params.get('relationship_types'),
     )
 
+    neighbor_ids = [r['concept_id'] for r in results]
+    if not neighbor_ids:
+        return WorkingGraph(nodes=[], links=[])
+
+    # All concept IDs in the neighborhood (seed + neighbors)
+    all_ids = [seed_id] + neighbor_ids
+
+    # Fetch edges where both endpoints are in the neighborhood
+    edge_rows = ctx.client._execute_cypher(
+        "MATCH (c:Concept)-[r]->(t:Concept) "
+        "WHERE c.concept_id IN $ids AND t.concept_id IN $ids "
+        "RETURN c, r, t",
+        params={"ids": all_ids},
+    )
+
+    if edge_rows:
+        return _parse_age_results(edge_rows)
+
+    # No edges found — return nodes only (still useful for set operations)
     nodes = [
-        RawNode(
-            concept_id=r['concept_id'],
-            label=r.get('label', ''),
-        )
+        RawNode(concept_id=r['concept_id'], label=r.get('label', ''))
         for r in results
     ]
     return WorkingGraph(nodes=nodes, links=[])
