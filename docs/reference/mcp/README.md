@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-02-06
+> Last updated: 2026-02-11
 
 ---
 
@@ -59,6 +59,8 @@ RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW 
 
 For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.
 
+ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.
+
 Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 **Parameters:**
@@ -81,7 +83,9 @@ Use 2-3 word phrases (e.g., "linear thinking patterns").
 
 Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).
 
-For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.
+For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision. Note: connect traverses semantic edges only (IMPLIES, SUPPORTS, CONTRADICTS, etc.) — manually-created edges with no traversal history may not appear in paths. Use program/Cypher for comprehensive traversal.
+
+If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.
 
 For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.
 
@@ -373,7 +377,8 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 
 **Semantic Resolution:**
 - Use `from_label`/`to_label` to reference concepts by name instead of ID
-- Resolution uses vector similarity (85% threshold) to find matching concepts
+- Resolution uses vector similarity (75% threshold) to find matching concepts
+- Near-misses (60-75%) return "Did you mean?" suggestions with concept IDs
 
 **Examples:**
 - Create concept: `{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}`
@@ -392,7 +397,7 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
   ]
 }
 ```
-Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.
+Queue executes sequentially, continues past errors by default (set continue_on_error=false to stop on first error). Max 20 operations.
 
 **Parameters:**
 
@@ -401,8 +406,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 - `entity` (`string`) - Entity type (required for create/edit/delete/list, not for queue)
   - Allowed values: `concept`, `edge`
 - `operations` (`array`) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.
-- `continue_on_error` (`boolean`) - For queue: continue executing after errors (default: false, stop on first error)
-  - Default: `false`
+- `continue_on_error` (`boolean`) - For queue: continue executing after errors (default: true). Set false to stop on first error.
+  - Default: `true`
 - `label` (`string`) - Concept label (required for create concept)
 - `ontology` (`string`) - Ontology/namespace (required for create concept, optional filter for list)
 - `description` (`string`) - Concept description (optional)
@@ -437,6 +442,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 
 Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
+Use search/connect/related for quick associative exploration (reflexive lookups). Use program for deliberate multi-step reasoning — when reflexive tools aren't giving you what you need. If you're repeating connect/search calls without converging, this is the tool you want.
+
 Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
 Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
 
@@ -461,6 +468,11 @@ Each statement applies an operator to merge/filter results into a mutable Workin
 **CypherOp** — run read-only openCypher against the source graph:
   { type: "cypher", query: "MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t", limit?: 20 }
   Queries must be read-only (no CREATE/SET/DELETE/MERGE). RETURN nodes and relationships.
+
+**AGE Cypher gotchas** (Apache AGE openCypher differs from Neo4j):
+- Filter relationship types with WHERE, not inline: `WHERE type(r) IN ['SUPPORTS', 'CONTRADICTS']` (NOT `[r:SUPPORTS|CONTRADICTS]`)
+- Reference working graph concepts: `WHERE c.concept_id IN $W_IDS`
+- Always RETURN both nodes and relationships for full path data
 
 **ApiOp** — call internal service functions (no HTTP):
   { type: "api", endpoint: "/search/concepts", params: { query: "...", limit: 10 } }

@@ -165,7 +165,12 @@ export function formatConnectionPaths(result: FindConnectionBySearchResponse): s
   output += `Max Hops: ${result.max_hops}\n\n`;
 
   if (result.count === 0) {
-    output += `No connection found within ${result.max_hops} hops\n`;
+    output += `No connection found within ${result.max_hops} hops.\n\n`;
+    output += `**Suggestions:**\n`;
+    output += `- Try increasing max_hops (current: ${result.max_hops})\n`;
+    output += `- Use the **program** tool with Cypher for flexible path queries that can traverse all edge types\n`;
+    output += `- Check concept details to verify both endpoints exist and have relationships\n`;
+    output += `- Do not repeat connect with the same parameters — if no path exists, escalate to program\n`;
     return output;
   }
 

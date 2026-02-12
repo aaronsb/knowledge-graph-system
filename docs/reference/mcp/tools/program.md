@@ -6,6 +6,8 @@
 
 Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 
+Use search/connect/related for quick associative exploration (reflexive lookups). Use program for deliberate multi-step reasoning — when reflexive tools aren't giving you what you need. If you're repeating connect/search calls without converging, this is the tool you want.
+
 Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
 Each statement applies an operator to merge/filter results into a mutable Working Graph (W).
 
@@ -30,6 +32,11 @@ Each statement applies an operator to merge/filter results into a mutable Workin
 **CypherOp** — run read-only openCypher against the source graph:
   { type: "cypher", query: "MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t", limit?: 20 }
   Queries must be read-only (no CREATE/SET/DELETE/MERGE). RETURN nodes and relationships.
+
+**AGE Cypher gotchas** (Apache AGE openCypher differs from Neo4j):
+- Filter relationship types with WHERE, not inline: `WHERE type(r) IN ['SUPPORTS', 'CONTRADICTS']` (NOT `[r:SUPPORTS|CONTRADICTS]`)
+- Reference working graph concepts: `WHERE c.concept_id IN $W_IDS`
+- Always RETURN both nodes and relationships for full path data
 
 **ApiOp** — call internal service functions (no HTTP):
   { type: "api", endpoint: "/search/concepts", params: { query: "...", limit: 10 } }

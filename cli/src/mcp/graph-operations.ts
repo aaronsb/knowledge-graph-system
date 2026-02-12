@@ -259,10 +259,13 @@ export class GraphOperationExecutor {
    * @throws Error if no confident match found
    */
   async resolveConceptByLabel(label: string): Promise<string> {
+    // Thresholds: 0.75 accept, 0.6 floor for suggestions.
+    // CLI validation.ts uses 0.70 for its own search — intentionally different
+    // because graph edits need higher confidence than exploratory search.
     const searchResult = await this.client.searchConcepts({
       query: label,
-      limit: 1,
-      min_similarity: 0.85,
+      limit: 3,
+      min_similarity: 0.6,
     });
 
     if (searchResult.count === 0) {
@@ -272,13 +275,18 @@ export class GraphOperationExecutor {
     }
 
     const match = searchResult.results[0];
-    if (match.score < 0.85) {
-      throw new Error(
-        `No confident match for "${label}". Best match: "${match.label}" (${(match.score * 100).toFixed(1)}% similarity). Use concept_id for precise reference.`
-      );
+    if (match.score >= 0.75) {
+      return match.concept_id;
     }
 
-    return match.concept_id;
+    // Near-miss: provide "did you mean?" suggestion
+    const suggestions = searchResult.results
+      .slice(0, 3)
+      .map(r => `"${r.label}" (${(r.score * 100).toFixed(1)}%, id: ${r.concept_id})`)
+      .join(', ');
+    throw new Error(
+      `No confident match for "${label}". Did you mean: ${suggestions}? Use concept_id for precise reference.`
+    );
   }
 
   /**
@@ -577,7 +585,7 @@ export class GraphOperationExecutor {
    */
   async executeQueue(
     operations: QueueOperation[],
-    continueOnError: boolean = false
+    continueOnError: boolean = true
   ): Promise<QueueExecutionResult> {
     const results: QueueOperationResult[] = [];
     let stopIndex = -1;
