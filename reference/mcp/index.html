@@ -9634,7 +9634,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2026-02-06</p>
+Last updated: 2026-02-11</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -9678,6 +9678,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - Use with document tool for content retrieval</p>
 <p>RECOMMENDED WORKFLOW: After search, use concept (action: "connect") to find HOW concepts relate - this reveals narrative flows and cause/effect chains that individual searches cannot show. Connection paths are often more valuable than isolated concepts.</p>
 <p>For multi-step exploration, compose searches into a GraphProgram (program tool) instead of making individual calls. One program can seed from search, expand relationships, and filter — all server-side in a single round-trip. Use program (action: "list") to find reusable stored programs, or read the program/syntax resource for composition examples.</p>
+<p>ESCALATION: If you find yourself making multiple search/connect calls without converging on an answer, switch to the program tool — one composed query replaces many individual calls.</p>
 <p>Use 2-3 word phrases (e.g., "linear thinking patterns").</p>
 <p><strong>Parameters:</strong></p>
 <ul>
@@ -9696,7 +9697,8 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <hr />
 <h3 id="concept">concept</h3>
 <p>Work with concepts: get details (ALL evidence + relationships), find related concepts (neighborhood exploration), or discover connections (paths between concepts).</p>
-<p>For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision.</p>
+<p>For "connect" action, defaults (threshold=0.5, max_hops=5) match the CLI and work well for most queries. Use higher thresholds (0.75+) only if you need to narrow results for precision. Note: connect traverses semantic edges only (IMPLIES, SUPPORTS, CONTRADICTS, etc.) — manually-created edges with no traversal history may not appear in paths. Use program/Cypher for comprehensive traversal.</p>
+<p>If connect returns no paths or you need to combine multiple lookups, escalate to the program tool — one composed query replaces many individual calls. Do not repeat connect hoping for different results.</p>
 <p>For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. See the program tool and program/syntax resource.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
@@ -9943,7 +9945,8 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 - "match_only": Only link to existing, error if no match</p>
 <p><strong>Semantic Resolution:</strong>
 - Use <code>from_label</code>/<code>to_label</code> to reference concepts by name instead of ID
-- Resolution uses vector similarity (85% threshold) to find matching concepts</p>
+- Resolution uses vector similarity (75% threshold) to find matching concepts
+- Near-misses (60-75%) return "Did you mean?" suggestions with concept IDs</p>
 <p><strong>Examples:</strong>
 - Create concept: <code>{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}</code>
 - Create edge: <code>{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}</code>
@@ -9959,7 +9962,7 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
 </code></pre></div>
-Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.</p>
+Queue executes sequentially, continues past errors by default (set continue_on_error=false to stop on first error). Max 20 operations.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation to perform. Use "queue" to batch multiple operations.</li>
@@ -9967,8 +9970,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <li><code>entity</code> (<code>string</code>) - Entity type (required for create/edit/delete/list, not for queue)</li>
 <li>Allowed values: <code>concept</code>, <code>edge</code></li>
 <li><code>operations</code> (<code>array</code>) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.</li>
-<li><code>continue_on_error</code> (<code>boolean</code>) - For queue: continue executing after errors (default: false, stop on first error)</li>
-<li>Default: <code>false</code></li>
+<li><code>continue_on_error</code> (<code>boolean</code>) - For queue: continue executing after errors (default: true). Set false to stop on first error.</li>
+<li>Default: <code>true</code></li>
 <li><code>label</code> (<code>string</code>) - Concept label (required for create concept)</li>
 <li><code>ontology</code> (<code>string</code>) - Ontology/namespace (required for create concept, optional filter for list)</li>
 <li><code>description</code> (<code>string</code>) - Concept description (optional)</li>
@@ -10000,6 +10003,7 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <hr />
 <h3 id="program">program</h3>
 <p>Compose and execute GraphProgram queries against the knowledge graph (ADR-500).</p>
+<p>Use search/connect/related for quick associative exploration (reflexive lookups). Use program for deliberate multi-step reasoning — when reflexive tools aren't giving you what you need. If you're repeating connect/search calls without converging, this is the tool you want.</p>
 <p>Programs are JSON ASTs that compose Cypher queries and API calls using set-algebra operators.
 Each statement applies an operator to merge/filter results into a mutable Working Graph (W).</p>
 <p><strong>Actions:</strong>
@@ -10020,6 +10024,10 @@ Each statement applies an operator to merge/filter results into a mutable Workin
 <p><strong>CypherOp</strong> — run read-only openCypher against the source graph:
   { type: "cypher", query: "MATCH (c:Concept)-[r]-&gt;(t:Concept) RETURN c, r, t", limit?: 20 }
   Queries must be read-only (no CREATE/SET/DELETE/MERGE). RETURN nodes and relationships.</p>
+<p><strong>AGE Cypher gotchas</strong> (Apache AGE openCypher differs from Neo4j):
+- Filter relationship types with WHERE, not inline: <code>WHERE type(r) IN ['SUPPORTS', 'CONTRADICTS']</code> (NOT <code>[r:SUPPORTS|CONTRADICTS]</code>)
+- Reference working graph concepts: <code>WHERE c.concept_id IN $W_IDS</code>
+- Always RETURN both nodes and relationships for full path data</p>
 <p><strong>ApiOp</strong> — call internal service functions (no HTTP):
   { type: "api", endpoint: "/search/concepts", params: { query: "...", limit: 10 } }</p>
 <p>Allowed endpoints:

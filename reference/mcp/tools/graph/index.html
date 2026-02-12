@@ -9356,7 +9356,8 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 - "match_only": Only link to existing, error if no match</p>
 <p><strong>Semantic Resolution:</strong>
 - Use <code>from_label</code>/<code>to_label</code> to reference concepts by name instead of ID
-- Resolution uses vector similarity (85% threshold) to find matching concepts</p>
+- Resolution uses vector similarity (75% threshold) to find matching concepts
+- Near-misses (60-75%) return "Did you mean?" suggestions with concept IDs</p>
 <p><strong>Examples:</strong>
 - Create concept: <code>{action: "create", entity: "concept", label: "CAP Theorem", ontology: "distributed-systems"}</code>
 - Create edge: <code>{action: "create", entity: "edge", from_label: "CAP Theorem", to_label: "Partition Tolerance", relationship_type: "REQUIRES"}</code>
@@ -9372,7 +9373,7 @@ Use for manual curation, agent-driven knowledge building, and precise graph mani
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
 </code></pre></div>
-Queue executes sequentially, stops on first error (unless continue_on_error=true). Max 20 operations.</p>
+Queue executes sequentially, continues past errors by default (set continue_on_error=false to stop on first error). Max 20 operations.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation to perform. Use "queue" to batch multiple operations.</li>
@@ -9380,8 +9381,8 @@ Queue executes sequentially, stops on first error (unless continue_on_error=true
 <li><code>entity</code> (<code>string</code>) - Entity type (required for create/edit/delete/list, not for queue)</li>
 <li>Allowed values: <code>concept</code>, <code>edge</code></li>
 <li><code>operations</code> (<code>array</code>) - Array of operations for queue action (max 20). Each has op, entity, and action-specific fields.</li>
-<li><code>continue_on_error</code> (<code>boolean</code>) - For queue: continue executing after errors (default: false, stop on first error)</li>
-<li>Default: <code>false</code></li>
+<li><code>continue_on_error</code> (<code>boolean</code>) - For queue: continue executing after errors (default: true). Set false to stop on first error.</li>
+<li>Default: <code>true</code></li>
 <li><code>label</code> (<code>string</code>) - Concept label (required for create concept)</li>
 <li><code>ontology</code> (<code>string</code>) - Ontology/namespace (required for create concept, optional filter for list)</li>
 <li><code>description</code> (<code>string</code>) - Concept description (optional)</li>
