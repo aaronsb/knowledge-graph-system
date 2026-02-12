@@ -387,7 +387,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
             relationship_types: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"])',
+              description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — if the first hop is structural, filtering to semantic types may return empty. Omit for broadest results, then narrow.',
             },
             // ADR-065: Epistemic status filtering (for related and connect)
             include_epistemic_status: {
@@ -1132,7 +1132,7 @@ Each statement applies an operator to merge/filter results into a mutable Workin
   /search/concepts   — params: query (required), min_similarity?, limit?
   /search/sources    — params: query (required), min_similarity?, limit?
   /concepts/details  — params: concept_id (required)
-  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?
+  /concepts/related  — params: concept_id (required), max_depth?, relationship_types?  [returns nodes + edges in programs]
   /concepts/batch    — params: concept_ids (required, list)
   /vocabulary/status — params: relationship_type?, status_filter?
 
@@ -1144,6 +1144,9 @@ Each statement applies an operator to merge/filter results into a mutable Workin
         query: "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
       label: "expand relationships" }
   ]}
+
+**Alternative** — API-only composition (no Cypher needed):
+  Use /concepts/related to expand from a known concept ID. Inside programs, related returns both nodes and edges (topology), making it suitable for graph exploration without writing Cypher.
 
 Read the program/syntax resource for the complete language reference with more examples.`,
         inputSchema: {
@@ -3135,7 +3138,8 @@ Allowed endpoints and their parameters:
   /concepts/related
     Required: concept_id (string)
     Optional: max_depth (integer, default 2), relationship_types (string array)
-    Returns: neighborhood concept nodes
+    Returns: neighborhood concept nodes + edges between them (full topology).
+    Note: relationship_types constrains traversal — omit for broadest results.
 
   /concepts/batch
     Required: concept_ids (string array)
