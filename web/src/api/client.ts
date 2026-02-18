@@ -690,6 +690,23 @@ class APIClient {
     return response.data;
   }
 
+  /**
+   * API root info including document ingestion epoch
+   */
+  async getApiInfo(): Promise<{ epoch: number; status: string }> {
+    const response = await this.client.get<{ epoch: number; status: string }>('/');
+    return response.data;
+  }
+
+  /**
+   * Graph change epoch (cache invalidation counter).
+   * Increments on any graph mutation (concept/edge/source create/delete).
+   */
+  async getDatabaseEpoch(): Promise<number> {
+    const response = await this.client.get<{ epoch: number }>('/database/epoch');
+    return response.data.epoch ?? 0;
+  }
+
   // ============================================================
   // ADMIN / OAUTH CLIENT MANAGEMENT
   // ============================================================

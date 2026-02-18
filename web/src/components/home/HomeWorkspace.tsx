@@ -34,6 +34,7 @@ interface SystemStatus {
     ontologies: number;
   };
   health?: boolean;
+  epoch?: number;
 }
 
 /** Welcome page showing login prompt (unauthenticated) or system status dashboard
@@ -56,8 +57,8 @@ export const HomeWorkspace: React.FC = () => {
   const loadStatus = async () => {
     setLoading(true);
     try {
-      // Load health, stats, and ontologies in parallel
-      const [health, stats, ontologies] = await Promise.all([
+      // Load health, stats, ontologies, and API info in parallel
+      const [health, stats, ontologies, apiInfo] = await Promise.all([
         apiClient.healthCheck().catch(err => {
           console.error('Health check failed:', err);
           return { status: 'error' };
@@ -69,6 +70,10 @@ export const HomeWorkspace: React.FC = () => {
         apiClient.listOntologies().catch(err => {
           console.error('Ontologies fetch failed:', err);
           return { ontologies: [], count: 0 };
+        }),
+        apiClient.getApiInfo().catch(err => {
+          console.error('API info failed:', err);
+          return { epoch: 0, status: 'error' };
         }),
       ]);
 
@@ -84,6 +89,7 @@ export const HomeWorkspace: React.FC = () => {
 
       setStatus({
         health: isOnline,
+        epoch: apiInfo.epoch || 0,
         database: {
           concepts,
           relationships,
@@ -223,7 +229,7 @@ export const HomeWorkspace: React.FC = () => {
                 Loading status...
               </div>
             ) : status ? (
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-6 gap-4">
                 <div className="p-4 rounded-lg bg-card border border-border dark:border-gray-800">
                   <div className="flex items-center gap-2 mb-2">
                     {status.health ? (
@@ -267,6 +273,14 @@ export const HomeWorkspace: React.FC = () => {
                   </div>
                   <div className="text-2xl font-bold text-card-foreground dark:text-gray-200">
                     {status.database?.sources?.toLocaleString() || 0}
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-card border border-border dark:border-gray-800">
+                  <div className="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-2">
+                    Docs Ingested
+                  </div>
+                  <div className="text-2xl font-bold text-card-foreground dark:text-gray-200">
+                    {status.epoch?.toLocaleString() || 0}
                   </div>
                 </div>
               </div>
