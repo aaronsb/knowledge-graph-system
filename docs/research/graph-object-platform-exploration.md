@@ -409,6 +409,54 @@ graph itself. The web UI becomes the workspace where a human collaborates
 with this agent — viewing what it found, steering where it looks, approving
 what it ingests.
 
+### Agent Runtime: Client-Side in the Browser
+
+The agent loop runs in the browser, not on the server. No new server-side
+agent infrastructure needed. The web app already has:
+
+- OAuth tokens (authenticated API access)
+- AI provider keys (stored encrypted in the platform, retrievable via API)
+- REST client wrapping MCP tool endpoints (`web/src/api/client.ts`)
+
+The chat client is a standard agent loop:
+
+```
+Browser (client-side):
+
+  ┌─────────────────────────────────────────────┐
+  │  Chat Component                             │
+  │                                             │
+  │  User message                               │
+  │       │                                     │
+  │       ▼                                     │
+  │  LLM API call ──→ Anthropic/OpenAI          │
+  │       │            (direct from browser,    │
+  │       │             using platform keys)    │
+  │       ▼                                     │
+  │  Tool use response                          │
+  │       │                                     │
+  │       ▼                                     │
+  │  Resolve against ──→ KG REST API            │
+  │  API client           (same endpoints       │
+  │       │                MCP server uses)     │
+  │       ▼                                     │
+  │  Feed results back to LLM                   │
+  │       │                                     │
+  │       ▼                                     │
+  │  Render response + tool activity             │
+  └─────────────────────────────────────────────┘
+```
+
+This is the same pattern as Claude Desktop, Cursor, or any tool-calling
+chat client. The difference is the tool surface: instead of filesystem
+and terminal tools, the tools are knowledge graph operations — search,
+explore, ingest, connect, program execution.
+
+The system prompt is seeded with the user's ontology grants and the graph's
+current state (session_context already provides recent concepts). The
+conversation history is the agent's working memory. The graph is the
+agent's long-term memory.
+
 ### Agent Workspace in the UI
 
 ```
