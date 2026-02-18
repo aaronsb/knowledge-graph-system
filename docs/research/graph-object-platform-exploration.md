@@ -728,6 +728,27 @@ participate in the same semantic network using the same relationship types.
 The reasoning core doesn't need to learn new edge semantics — it already
 understands what `PRODUCES` and `USES_INFORMATION_FROM` mean.
 
+**Edge vocabulary is dynamic, not fixed.** The 336 relationship types in the
+graph today are LLM-generated during ingestion — the reasoning core invents
+edge types as it encounters relationships in documents. This produces a
+natural vocabulary explosion (336 types for 1367 concepts). The vocabulary
+consolidation worker exists to reduce this: semantically deduplicating
+edge types by merging near-synonyms while preserving the edges themselves.
+
+For example, `USES_INFORMATION_FROM`, `INFORMED_BY`, `BASED_ON`,
+`DERIVED_FROM`, and `LEARNS_FROM` might consolidate into a single
+canonical type. The edges survive — only the type label changes. And
+because each edge has epistemic vector scoring (grounding strength,
+confidence), the relationship intent is preserved regardless of what
+the type is named. A data source connected via `INFORMED_BY` carries
+the same grounding measurement as one connected via `USES_INFORMATION_FROM`.
+
+This means new node types benefit from vocabulary consolidation
+automatically. As edge types are cleaned up and canonicalized, cross-type
+edges (concept → data source) get the same treatment as same-type edges
+(concept → concept). The vocabulary worker doesn't need to know about
+node types — it operates on edge semantics.
+
 **What this requires in AGE:**
 - New node labels (`DataSource`, `DataSink`, `Connector`)
 - Edges between existing `Concept` nodes and new node types
@@ -738,6 +759,7 @@ understands what `PRODUCES` and `USES_INFORMATION_FROM` mean.
 - New edge type vocabulary
 - New epistemic classification logic
 - Changes to the reasoning core's understanding of relationships
+- Changes to vocabulary consolidation — it already works on edge semantics
 
 ## Implementation Phases
 
