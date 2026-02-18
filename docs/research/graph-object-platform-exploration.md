@@ -212,6 +212,133 @@ Per-ontology breakdown of graph objects by type:
 - Future: connectors, sources, sinks
 - Could show type-specific schemas and creation forms
 
+## Embedding Unification
+
+The key enabler for cross-type discovery: all node types share the same
+embedding space. Concepts already have embeddings. If sources, sinks, and
+connectors also have embeddings (derived from their descriptions, schemas,
+tool definitions, or cached query results), then vector similarity works
+across types automatically.
+
+```
+Embedding Space (shared):
+
+  "database replication"  ←── concept (from ingested paper)
+         ↕ cosine similarity
+  "PostgreSQL monitoring" ←── connector (MCP server tool description)
+         ↕ cosine similarity
+  "DB metrics dashboard"  ←── data source (Grafana endpoint description)
+         ↕ cosine similarity
+  "backup verification"   ←── data sink (webhook purpose description)
+```
+
+### What Gets Embedded Per Type
+
+| Node Type | Embedding Source |
+|-----------|-----------------|
+| Concept | Label + description (existing) |
+| Connector | MCP tool descriptions, resource descriptions |
+| Data Source | Schema description, cached sample data summary |
+| Data Sink | Purpose description, filter/transform template |
+
+### Ingestion Becomes Graph-Aware
+
+When a document is ingested, the reasoning core:
+
+1. Extracts concepts (existing behavior)
+2. Embeds them (existing behavior)
+3. Matches against existing concepts (existing behavior)
+4. **NEW:** Also matches against connectors, sources, sinks
+5. **NEW:** Creates cross-type edges where similarity is high
+6. **NEW:** The graph grows its own operational wiring as knowledge enters
+
+A document about Kubernetes pod autoscaling gets ingested. The reasoning
+system extracts concepts, but also discovers: "there's a Kubernetes MCP
+server connector in the graph with similar embeddings" and creates an edge.
+No manual wiring. The graph learns what tools are relevant to what knowledge.
+
+### Operational Ontologies
+
+Custom ontologies can emerge that describe not just knowledge domains but
+operational contexts — the combination of concepts, tools, sources, and sinks
+that together represent a capability:
+
+```
+Ontology: "database-operations"
+  ├── Concepts: replication, failover, backup, indexing, ...
+  ├── Connectors: PostgreSQL MCP, MySQL MCP
+  ├── Sources: Grafana metrics, slow query logs
+  └── Sinks: PagerDuty webhook, backup verification endpoint
+```
+
+This ontology isn't just "knowledge about databases" — it's a complete
+operational surface. An agent can ask: "what do I know about databases,
+what tools can I use, where does the data come from, and where do results
+go?"
+
+## Platform Agent
+
+The final evolution: the platform itself runs an agent loop.
+
+Currently, KG is a tool surface — external agents (Claude Desktop, Cursor,
+etc.) connect via MCP and query the graph. The platform is passive. But if
+the web platform has its own agent loop with the graph as context, it
+becomes active:
+
+```
+Current:
+  External Agent ──MCP──→ KG (passive tool surface)
+
+Proposed:
+  External Agent ──MCP──→ KG
+                           │
+                    ┌──────┴───────┐
+                    │ Platform     │
+                    │ Agent Loop   │
+                    │              │
+                    │ - Full graph │
+                    │   as context │
+                    │ - Follows    │
+                    │   connector  │
+                    │   edges      │
+                    │ - Chains     │
+                    │   MCP calls  │
+                    │ - Reasons    │
+                    │   about what │
+                    │   to explore │
+                    └──────────────┘
+```
+
+The platform agent has advantages an external agent doesn't:
+
+- **Full graph context** — not just search results, but topology, scores,
+  epochs, ontology structure
+- **Connector traversal** — can follow edges to external MCP servers,
+  chain tool calls, bring results back into the graph
+- **Persistent reasoning** — not limited to a single conversation context;
+  the graph IS the persistent memory
+- **Self-improving** — ingesting new documents enriches the context the
+  agent reasons with; the agent can even trigger ingestion of sources it
+  discovers through connectors
+
+This is comparable to Claude Desktop but purpose-built: the agent's "desktop"
+is the knowledge graph, and its "tools" are the connectors embedded in the
+graph itself. The web UI becomes the workspace where a human collaborates
+with this agent — viewing what it found, steering where it looks, approving
+what it ingests.
+
+### Agent Workspace in the UI
+
+```
+Sidebar:
+  ...
+  Agent                             ← new top-level
+    ├── Chat                        ← conversation with platform agent
+    ├── Context                     ← what the agent currently "knows"
+    ├── Connector Status            ← live MCP server health
+    └── Activity Log                ← what the agent did, what it found
+```
+
 ## Implementation Phases
 
 ### Phase 1: Ontology as First-Class UI Object
@@ -225,17 +352,25 @@ Per-ontology breakdown of graph objects by type:
 - Show concept counts, source counts per ontology
 - Surface graph node schema in the UI
 
-### Phase 3: New Node Types (requires API work)
-- Design Data Source / Sink node schema
+### Phase 3: New Node Types + Embedding Unification
+- Design Data Source / Sink / Connector node schemas
+- All types get embeddings in the shared vector space
 - Add Cypher node labels beyond Concept/Source
-- Create management UIs per type
-- Connector edges (READS_FROM, WRITES_TO)
+- Cross-type similarity matching during ingestion
+- Connector edges (READS_FROM, WRITES_TO, QUERIES)
 
 ### Phase 4: Meta-MCP / Connector Nodes
 - MCP server discovery as graph nodes
-- Connector configuration UI
+- Connector configuration and health monitoring UI
 - Agent routing through knowledge graph
-- KG as meta-tool-surface
+- Operational ontologies (concepts + tools + sources + sinks)
+
+### Phase 5: Platform Agent
+- Agent loop running inside the platform
+- Graph as persistent context
+- Connector traversal and tool chaining
+- Agent workspace in web UI (chat, context, activity)
+- Human-in-the-loop for ingestion approval, steering
 
 ## Open Questions
 
@@ -256,3 +391,20 @@ Per-ontology breakdown of graph objects by type:
 
 5. **Graph schema evolution** — Adding new node labels to Apache AGE requires
    migrations. How do we handle schema evolution as new types are added?
+
+6. **Embedding space compatibility** — MCP tool descriptions and document
+   concepts use different vocabularies. Do they embed well in the same space?
+   May need embedding model selection or fine-tuning for cross-type matching.
+
+7. **Agent LLM selection** — The platform agent needs an LLM. Same provider
+   as extraction? Configurable? Does the agent's model choice affect how it
+   reasons about the graph?
+
+8. **Connector authentication** — MCP servers may require auth. How does the
+   platform agent authenticate to external tools? Per-connector credential
+   storage? OAuth delegation?
+
+9. **Agent autonomy boundaries** — How much can the platform agent do without
+   human approval? Ingest new sources? Create connectors? Modify ontologies?
+   The same approval gates that exist for ingestion jobs could extend to
+   agent actions.
