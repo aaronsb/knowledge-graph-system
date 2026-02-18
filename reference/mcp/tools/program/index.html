@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
     
     
       
@@ -4415,6 +4415,34 @@
     
   
     search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../session_context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    session_context &amp; session_ingest
   
 
     
@@ -9382,6 +9410,8 @@ Each statement applies an operator to merge/filter results into a mutable Workin
         query: "MATCH (c:Concept)-[r]-&gt;(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
       label: "expand relationships" }
   ]}</p>
+<p><strong>Alternative</strong> — API-only composition (no Cypher needed):
+  Use /concepts/related to expand from a known concept ID. Inside programs, related returns both nodes and edges (topology), making it suitable for graph exploration without writing Cypher.</p>
 <p>Read the program/syntax resource for the complete language reference with more examples.</p>
 <p><strong>Parameters:</strong></p>
 <ul>

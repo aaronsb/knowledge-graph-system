@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
     
     
       
@@ -4415,6 +4415,34 @@
     
   
     search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../session_context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    session_context &amp; session_ingest
   
 
     
@@ -9358,7 +9386,7 @@
 <li>Default: <code>true</code></li>
 <li><code>max_depth</code> (<code>number</code>) - Max traversal depth for related (1-5, default: 2)</li>
 <li>Default: <code>2</code></li>
-<li><code>relationship_types</code> (<code>array</code>) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — omit for broadest results, then narrow.</li>
+<li><code>relationship_types</code> (<code>array</code>) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — if the first hop is structural, filtering to semantic types may return empty. Omit for broadest results, then narrow.</li>
 <li><code>include_epistemic_status</code> (<code>array</code>) - Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])</li>
 <li><code>exclude_epistemic_status</code> (<code>array</code>) - Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])</li>
 <li><code>connection_mode</code> (<code>string</code>) - Connection mode: "exact" (IDs) or "semantic" (phrases)</li>
