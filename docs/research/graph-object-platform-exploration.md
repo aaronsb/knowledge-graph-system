@@ -490,24 +490,79 @@ External Agent (Claude Code, Claude Desktop, etc.)
 ```
 
 The external agent doesn't need to drive the search → connect → program →
-interpret cycle itself. It asks one question and gets back a reasoned
-answer with sources and a confidence signal (including what ontologies
-were inaccessible).
+interpret cycle itself. It submits a question and picks up the answer when
+it's ready.
+
+### Async Mailbox Pattern
+
+MCP tool calls are synchronous and bounded. An agent loop doing multi-hop
+reasoning, connector chaining, and cross-ontology traversal can't complete
+in a single tool call timeout. And blocking the calling agent's context
+window on a long-running reasoning chain is wasteful.
+
+The solution: async mailbox, same pattern as ingestion jobs.
+
+```
+External Agent                        Platform
+     │                                     │
+     │  MCP tool: ask_knowledge_agent      │
+     │  { question, ontology_scope }       │
+     │                                     │
+     │  ← { request_id: "abc",            │
+     │       status: "accepted" }          │
+     │                                     │
+     │  ... agent continues other work     │  ... platform agent loop
+     │  ... not blocked                    │  ... searches, traverses,
+     │                                     │  ... chains connectors,
+     │                                     │  ... reasons about results
+     │                                     │
+     │  MCP tool: check_agent_inbox        │
+     │  ← { pending: 1,                   │
+     │       requests: [{                  │
+     │         id: "abc",                  │
+     │         status: "completed"         │
+     │       }] }                          │
+     │                                     │
+     │  MCP tool: get_agent_result         │
+     │  { request_id: "abc" }              │
+     │                                     │
+     │  ← { answer: "...",                │
+     │       sources: [...],               │
+     │       confidence: 0.85,             │
+     │       ontologies_used: [...],       │
+     │       ontologies_blocked: [...],    │
+     │       reasoning_steps: 7 }          │
+```
+
+This maps directly onto the existing job infrastructure:
+- Submit → job ID (same as ingestion submit)
+- Poll status (same as job status check)
+- Retrieve result (same as job result)
+- Permission gating via OAuth grants (same as job permissions)
+
+The calling agent isn't blocked. It can submit multiple questions, do other
+work, and collect answers when ready. The platform agent runs independently,
+at its own pace, with full graph context.
+
+**Three MCP tools for agent delegation:**
+
+| Tool | Purpose | Sync |
+|------|---------|------|
+| `ask_knowledge_agent` | Submit a question | Yes (returns request_id immediately) |
+| `check_agent_inbox` | Poll for completed results | Yes (returns status list) |
+| `get_agent_result` | Retrieve a completed answer | Yes (returns answer + metadata) |
 
 **Two agent patterns, one platform:**
 
 | Pattern | Runtime | Auth | Use Case |
 |---------|---------|------|----------|
 | Browser agent | Client-side (React) | User's OAuth token | Interactive exploration, human-in-the-loop |
-| API agent | Server-side (API endpoint) | OAuth grant, role-permissioned | External agent delegation, "phone a friend" |
+| API agent (mailbox) | Server-side (async) | OAuth grant, role-permissioned | External agent delegation, "phone a friend" |
 
 Both use the same MCP tools internally. Both respect ontology gating.
 Both use the platform's configured AI provider. The difference is where
-the agent loop runs and who initiates it.
-
-The API agent endpoint is just another permissioned resource — roles
-determine who can call it, grants determine which ontologies the agent
-can access for that caller. Standard OAuth/RBAC, nothing new.
+the agent loop runs, who initiates it, and whether it's synchronous
+(browser chat) or async (mailbox).
 
 ### Agent Workspace in the UI
 
