@@ -359,44 +359,49 @@ agents — an active reasoning entity with the graph as persistent context.
 ```
 Architecture:
 
-  External Agent ──MCP──→ MCP Server (thin delegation)
-                                │
-                                ▼
-                         Platform Agent
-                          │         │
-              ┌───────────┘         └───────────┐
-              ▼                                 ▼
-    Ontology-Gated              Full Graph Context
-    View for External           (platform agent has
-    Agent's Query               unrestricted access)
-                                        │
-                                        ▼
-                                Connector Edges
-                                        │
-                                        ▼
-                                External MCP Servers
-                                (tool chaining)
+  External Agent ──MCP──→ ┌─────────────────────┐
+                          │                     │
+  Platform Agent ──MCP──→ │   MCP Server        │
+  (web UI)                │   (one platform)    │
+                          │                     │
+                          │   Same tools        │
+                          │   Same OAuth grants │
+                          │   Same ontology     │
+                          │   gating            │
+                          │                     │
+                          └─────────┬───────────┘
+                                    │
+                              Graph + Connectors
 ```
 
-The MCP server that external agents connect to (the one Claude Code uses
-right now) becomes a thin proxy. It passes the question to the platform
-agent, which reasons about it with full graph context, follows connector
-edges to other MCP servers if needed, and returns a grounded answer.
+There is no separate "internal agent API." The existing MCP server is the
+agent capability surface for everyone. The platform agent running in the
+web UI connects to the same MCP server as an external agent like Claude
+Code. Same tools, same auth flow, same permission model. The differences
+are just configuration:
 
-The platform agent has advantages an external agent doesn't:
+- **Tool filtering**: Disable local-only tools (file path ingestion,
+  directory scanning) for the platform agent. Disable web-UI-only tools
+  for external CLI agents. The core graph tools are shared.
+- **OAuth grants**: The platform agent is another OAuth client with its
+  own scoped grants. Ontology access is controlled the same way as any
+  external client.
+- **No special code paths**: The MCP server doesn't know or care who's
+  calling. This means the agent experience (prompt, tool selection,
+  context management) can iterate without touching infrastructure.
 
-- **Full graph context** — not just search results, but topology, scores,
-  epochs, ontology structure
+The platform agent's advantages come from its persistent position, not
+from privileged access:
+
+- **Persistent context** — not limited to a single conversation; the
+  graph IS the persistent memory
 - **Connector traversal** — can follow edges to external MCP servers,
   chain tool calls, bring results back into the graph
-- **Persistent reasoning** — not limited to a single conversation context;
-  the graph IS the persistent memory
 - **Self-improving** — ingesting new documents enriches the context the
-  agent reasons with; the agent can even trigger ingestion of sources it
+  agent reasons with; the agent can trigger ingestion of sources it
   discovers through connectors
-- **Ontology-aware delegation** — when an external agent asks a question,
-  the platform agent knows which ontologies are relevant, which are
-  accessible to that agent, and can report what it couldn't see
+- **Ontology-aware** — knows which ontologies are relevant, which are
+  accessible, and can report what it couldn't see
 
 This is comparable to Claude Desktop but purpose-built: the agent's "desktop"
 is the knowledge graph, and its "tools" are the connectors embedded in the
