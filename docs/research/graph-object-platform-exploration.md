@@ -276,38 +276,112 @@ operational surface. An agent can ask: "what do I know about databases,
 what tools can I use, where does the data come from, and where do results
 go?"
 
+## Ontology-Gated Access and Epistemic Permissions
+
+External agents connect via MCP. Today, the MCP server executes queries
+directly. In this architecture, the MCP server delegates to the platform
+agent, which reasons about the question with graph context.
+
+The critical design: **access is ontology-gated, and the agent knows it.**
+
+```
+External Agent ──MCP──→ Platform Agent
+                              │
+                    ┌─────────┴──────────┐
+                    │  Ontology-Gated    │
+                    │  Graph View        │
+                    │                    │
+                    │  Granted:          │
+                    │    ontology-A ✓    │
+                    │    ontology-B ✓    │
+                    │                    │
+                    │  Visible but       │
+                    │  not traversable:  │
+                    │    edge → onto-C ◐ │
+                    │    edge → onto-D ◐ │
+                    │                    │
+                    │  The agent KNOWS   │
+                    │  what it can't see │
+                    └────────────────────┘
+```
+
+### Not a Wall — A Quality Knob
+
+Traditional access control: "permission denied, you can't see this."
+
+Ontology-gated epistemic access: "I can see an edge crosses into ontology C,
+which I don't have access to. My answer is based on ontologies A and B.
+There may be relevant knowledge in C that would improve this answer."
+
+This serves three purposes simultaneously:
+
+**Security.** Scope what an external agent can see. A customer-facing agent
+gets access to the product ontology but not internal engineering ontologies.
+The boundary is the ontology, which is already the organizational unit for
+knowledge.
+
+**Epistemic honesty.** The agent self-reports confidence based on what it
+can and can't see. Cross-ontology edges that can't be followed are a
+measurable signal: "I know my answer is incomplete because N edges lead to
+knowledge I can't access." This reduces hallucination — the agent knows
+what it doesn't know, rather than confabulating.
+
+**Ablation.** Researchers (or the system itself) can restrict access to
+study how knowledge connectivity affects answer quality. Run the same query
+with full access vs. single-ontology access. Measure the difference. This
+is a first-class feature, not a limitation.
+
+### Hallucination Reduction Through Data Access
+
+The core philosophy: hallucinations come from gaps between what an agent
+is asked and what it can see. The remedy is not better prompting — it's
+granting access to data. The knowledge graph is the data. Ontology gating
+makes this tunable:
+
+```
+Access Level          Quality Signal
+─────────────         ──────────────
+Full graph access  →  Highest quality, all edges traversable
+Multi-ontology     →  Good quality, some cross-ontology edges blocked
+Single ontology    →  Focused but potentially incomplete
+No graph access    →  Agent hallucinates (baseline for comparison)
+```
+
+This is measurable. The grounding scores, epistemic status classifications,
+and cross-ontology edge counts already exist in the system. The permission
+model maps directly onto the quality model.
+
 ## Platform Agent
 
-The final evolution: the platform itself runs an agent loop.
-
-Currently, KG is a tool surface — external agents (Claude Desktop, Cursor,
-etc.) connect via MCP and query the graph. The platform is passive. But if
-the web platform has its own agent loop with the graph as context, it
-becomes active:
+The platform itself runs an agent loop. Not just a tool surface for external
+agents — an active reasoning entity with the graph as persistent context.
 
 ```
-Current:
-  External Agent ──MCP──→ KG (passive tool surface)
+Architecture:
 
-Proposed:
-  External Agent ──MCP──→ KG
-                           │
-                    ┌──────┴───────┐
-                    │ Platform     │
-                    │ Agent Loop   │
-                    │              │
-                    │ - Full graph │
-                    │   as context │
-                    │ - Follows    │
-                    │   connector  │
-                    │   edges      │
-                    │ - Chains     │
-                    │   MCP calls  │
-                    │ - Reasons    │
-                    │   about what │
-                    │   to explore │
-                    └──────────────┘
+  External Agent ──MCP──→ MCP Server (thin delegation)
+                                │
+                                ▼
+                         Platform Agent
+                          │         │
+              ┌───────────┘         └───────────┐
+              ▼                                 ▼
+    Ontology-Gated              Full Graph Context
+    View for External           (platform agent has
+    Agent's Query               unrestricted access)
+                                        │
+                                        ▼
+                                Connector Edges
+                                        │
+                                        ▼
+                                External MCP Servers
+                                (tool chaining)
 ```
+
+The MCP server that external agents connect to (the one Claude Code uses
+right now) becomes a thin proxy. It passes the question to the platform
+agent, which reasons about it with full graph context, follows connector
+edges to other MCP servers if needed, and returns a grounded answer.
 
 The platform agent has advantages an external agent doesn't:
 
@@ -320,6 +394,9 @@ The platform agent has advantages an external agent doesn't:
 - **Self-improving** — ingesting new documents enriches the context the
   agent reasons with; the agent can even trigger ingestion of sources it
   discovers through connectors
+- **Ontology-aware delegation** — when an external agent asks a question,
+  the platform agent knows which ontologies are relevant, which are
+  accessible to that agent, and can report what it couldn't see
 
 This is comparable to Claude Desktop but purpose-built: the agent's "desktop"
 is the knowledge graph, and its "tools" are the connectors embedded in the
@@ -335,6 +412,7 @@ Sidebar:
   Agent                             ← new top-level
     ├── Chat                        ← conversation with platform agent
     ├── Context                     ← what the agent currently "knows"
+    ├── Permissions                 ← ontology grants per client
     ├── Connector Status            ← live MCP server health
     └── Activity Log                ← what the agent did, what it found
 ```
