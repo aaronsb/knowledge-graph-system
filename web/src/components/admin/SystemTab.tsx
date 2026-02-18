@@ -43,6 +43,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbCounters, setDbCounters] = useState<any>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
+  const [docsIngested, setDocsIngested] = useState<number>(0);
   const [graphEpoch, setGraphEpoch] = useState<number>(0);
   const [embeddingConfigs, setEmbeddingConfigs] = useState<EmbeddingConfig[]>([]);
   const [extractionConfig, setExtractionConfig] = useState<ExtractionConfig | null>(null);
@@ -68,7 +69,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [status, stats, counters, scheduler, embeddings, extraction, keys, apiInfo] = await Promise.all([
+      const [status, stats, counters, scheduler, embeddings, extraction, keys, apiInfo, dbEpoch] = await Promise.all([
         apiClient.getSystemStatus().catch(() => null),
         apiClient.getDatabaseStats().catch(() => null),
         apiClient.getDatabaseCounters().catch(() => null),
@@ -77,12 +78,14 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         apiClient.getExtractionConfig().catch(() => null),
         apiClient.listApiKeys().catch(() => []),
         apiClient.getApiInfo().catch(() => ({ epoch: 0, status: 'error' })),
+        apiClient.getDatabaseEpoch().catch(() => 0),
       ]);
       setSystemStatus(status);
       setDbStats(stats);
       setDbCounters(counters);
       setSchedulerStatus(scheduler);
-      setGraphEpoch(apiInfo.epoch || 0);
+      setDocsIngested(apiInfo.epoch || 0);
+      setGraphEpoch(dbEpoch);
       setEmbeddingConfigs(embeddings);
       setExtractionConfig(extraction);
       setApiKeys(keys);
@@ -415,7 +418,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         icon={<Activity className="w-5 h-5" />}
       >
         {schedulerStatus?.jobs_by_status ? (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <div className="p-4 bg-status-warning/10 rounded-lg">
               <div className="text-2xl font-bold text-status-warning">
                 {(schedulerStatus.jobs_by_status.pending ?? 0) + (schedulerStatus.jobs_by_status.awaiting_approval ?? 0)}
@@ -439,6 +442,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                 {schedulerStatus.jobs_by_status.failed ?? 0}
               </div>
               <div className="text-sm text-destructive">Failed</div>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="text-2xl font-bold text-foreground">
+                {docsIngested.toLocaleString()}
+              </div>
+              <div className="text-sm text-muted-foreground">Docs Ingested</div>
             </div>
             <div className="p-4 bg-muted/50 rounded-lg">
               <div className="text-2xl font-bold text-foreground">

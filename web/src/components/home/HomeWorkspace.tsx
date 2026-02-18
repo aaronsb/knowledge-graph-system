@@ -277,7 +277,7 @@ export const HomeWorkspace: React.FC = () => {
                 </div>
                 <div className="p-4 rounded-lg bg-card border border-border dark:border-gray-800">
                   <div className="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-2">
-                    Epoch
+                    Docs Ingested
                   </div>
                   <div className="text-2xl font-bold text-card-foreground dark:text-gray-200">
                     {status.epoch?.toLocaleString() || 0}
