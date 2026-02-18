@@ -42,15 +42,31 @@ Everything flows one direction. The graph is a destination, not a workspace.
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Graph Object Platform                        │
 │                                                                 │
-│  Node Types (extensible):                                       │
-│    ├── Concept       (knowledge unit, extracted or manual)       │
-│    ├── Source         (data source — file, API, stream)          │
-│    ├── Sink           (data destination — export, webhook)       │
-│    ├── Connector      (live binding — MCP server, query)         │
+│  ┌───────────────────────────────────────────────────────┐      │
+│  │              Reasoning Core (LLM)                     │      │
+│  │                                                       │      │
+│  │  The nucleus. Concepts and semantic edges flow         │      │
+│  │  through LLM extraction, grounding, and epistemic     │      │
+│  │  measurement. This is what makes it a KNOWLEDGE        │      │
+│  │  graph, not just a graph database.                    │      │
+│  │                                                       │      │
+│  │  Documents → Extract → Ground → Measure → Evolve      │      │
+│  └───────────────────────────────────────────────────────┘      │
+│         ▲                                                       │
+│         │ reasoning boundary                                    │
+│         ▼                                                       │
+│  Node Types:                                                    │
+│    ├── Concept ★     (knowledge unit — reasoning-managed)       │
+│    ├── Source         (data source — mechanical)                 │
+│    ├── Sink           (data destination — mechanical)            │
+│    ├── Connector      (live binding — mechanical)               │
 │    └── ...future types                                          │
 │                                                                 │
+│  ★ = passes through reasoning core                              │
+│      All other types are structural/mechanical                  │
+│                                                                 │
 │  Object Management Classes:                                     │
-│    ├── Ingest         (bulk creation from documents)             │
+│    ├── Ingest         (bulk creation via reasoning core)         │
 │    ├── Editor         (individual CRUD, any node type)           │
 │    ├── Connector Mgr  (configure live external bindings)         │
 │    └── ...future classes                                        │
@@ -59,12 +75,24 @@ Everything flows one direction. The graph is a destination, not a workspace.
 │    └── Ontology       (container for nodes of any type)          │
 │                                                                 │
 │  Relationships:                                                 │
-│    ├── Semantic edges     (IMPLIES, SUPPORTS, CONTRADICTS...)    │
-│    ├── Structural edges   (APPEARS, EVIDENCED_BY, FROM_SOURCE)   │
-│    └── Connector edges    (READS_FROM, WRITES_TO, QUERIES)       │
+│    ├── Semantic edges ★  (IMPLIES, SUPPORTS, CONTRADICTS...)    │
+│    ├── Structural edges  (APPEARS, EVIDENCED_BY, FROM_SOURCE)   │
+│    └── Connector edges   (READS_FROM, WRITES_TO, QUERIES)       │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+The reasoning core is the differentiator. Mechanical nodes (sources, sinks,
+connectors) are managed directly — CRUD operations, configuration, wiring.
+Knowledge nodes (concepts) pass through LLM reasoning: extraction, vector
+matching against existing concepts, grounding measurement, epistemic
+classification. The platform generalizes its object model while keeping
+reasoning at the center.
+
+This matters because when a connector points to an external MCP server, and
+a concept has an edge to that connector, the reasoning system can chain:
+"I found this concept, and I know where to learn more about it." The graph
+doesn't just store knowledge — it reasons about where to find more.
 
 ### What Changes
 
@@ -122,6 +150,18 @@ Properties:
 An edge from a Concept to a Connector might mean "this concept can be
 explored further via this MCP server." The graph becomes a routing layer
 for AI agent tool use.
+
+Critically, this still flows through the reasoning core. When new documents
+are ingested, the LLM doesn't just extract concepts — it could also recognize
+that a concept relates to a known connector's domain and create that edge.
+The reasoning system manages the *knowledge about tools*, not just the
+knowledge from documents. Ingestion becomes: "here's a document, understand
+it, place it in the graph, and figure out what else in the graph it connects
+to — including external tool surfaces."
+
+This is the meta-MCP idea: KG reasons about which tools are relevant to
+which knowledge, and an agent querying the graph gets back not just concepts
+but *paths to more information* through connected MCP servers.
 
 ## UI Restructuring
 
