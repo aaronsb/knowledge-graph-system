@@ -53,6 +53,13 @@ const statusConfig: Record<JobStatusValue, {
     textClass: 'text-status-info',
     iconClass: 'text-status-info animate-spin',
   },
+  running: {
+    icon: Loader2,
+    label: 'Processing',
+    bgClass: 'bg-status-info/20',
+    textClass: 'text-status-info',
+    iconClass: 'text-status-info animate-spin',
+  },
   approved: {
     icon: CheckCircle2,
     label: 'Approved',

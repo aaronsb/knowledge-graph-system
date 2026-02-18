@@ -26,11 +26,11 @@ export function formatJobList(jobs: JobStatus[]): string {
 
   // Status summary
   output += '## Status Summary\n\n';
-  const statusOrder = ['processing', 'awaiting_approval', 'pending', 'approved', 'queued', 'completed', 'failed', 'cancelled'];
+  const statusOrder = ['running', 'processing', 'awaiting_approval', 'pending', 'approved', 'queued', 'completed', 'failed', 'cancelled'];
   statusOrder.forEach(status => {
     if (byStatus[status] && byStatus[status].length > 0) {
       const icon = status === 'completed' ? '✓' :
-                   status === 'processing' ? '▶' :
+                   (status === 'processing' || status === 'running') ? '▶' :
                    status === 'awaiting_approval' ? '⏳' :
                    status === 'failed' ? '✗' :
                    status === 'cancelled' ? '⊘' : '○';
@@ -44,7 +44,7 @@ export function formatJobList(jobs: JobStatus[]): string {
 
   jobs.forEach((job, idx) => {
     const statusIcon = job.status === 'completed' ? '✓' :
-                       job.status === 'processing' ? '▶' :
+                       (job.status === 'processing' || job.status === 'running') ? '▶' :
                        job.status === 'awaiting_approval' ? '⏳' :
                        job.status === 'failed' ? '✗' :
                        job.status === 'cancelled' ? '⊘' : '○';
@@ -65,8 +65,8 @@ export function formatJobList(jobs: JobStatus[]): string {
       output += `- **Ontology:** ${job.ontology}\n`;
     }
 
-    // Progress for processing jobs
-    if (job.status === 'processing' && job.progress) {
+    // Progress for processing/running jobs
+    if ((job.status === 'processing' || job.status === 'running') && job.progress) {
       const p = job.progress;
       if (p.percent !== undefined) {
         output += `- **Progress:** ${p.percent}%`;
