@@ -534,15 +534,80 @@ External Agent                        Platform
      │       reasoning_steps: 7 }          │
 ```
 
-This maps directly onto the existing job infrastructure:
-- Submit → job ID (same as ingestion submit)
-- Poll status (same as job status check)
-- Retrieve result (same as job result)
-- Permission gating via OAuth grants (same as job permissions)
+### Jobs as Mailbox Infrastructure
 
-The calling agent isn't blocked. It can submit multiple questions, do other
-work, and collect answers when ready. The platform agent runs independently,
-at its own pace, with full graph context.
+This isn't a new system — it's the existing job queue with a new job type.
+The job system already provides everything the mailbox needs:
+
+```
+Existing job infrastructure:
+  ✓ Job creation with user ownership
+  ✓ Status lifecycle (pending → running → completed → failed)
+  ✓ Permission scoping (user sees own jobs, admin sees all)
+  ✓ Cost tracking (LLM calls have cost, same as extraction)
+  ✓ Result storage
+  ✓ Web UI job monitoring
+  ✓ Epoch tracking
+```
+
+A mailbox is a job queue scoped to a user + external client identity:
+
+```
+Dispatch flow:
+
+  External Agent (OAuth client "claude-code-abc")
+       │
+       │  ask_knowledge_agent { question, effort: "standard" }
+       │
+       ▼
+  MCP Server
+       │  Resolves: user 123 has mailbox grant for client "claude-code-abc"
+       │
+       ▼
+  Job Queue
+       │  Creates: job_type: "agent_query"
+       │           user_id: 123
+       │           client_id: "claude-code-abc"
+       │           mailbox_id: uuid
+       │           effort: "standard"
+       │           ontology_scope: [granted ontologies]
+       │
+       │  Returns: job_id (scoped to user)
+       │
+       ▼
+  Platform Agent Worker
+       │  Picks up job, runs bounded agent loop
+       │  Tool calls against MCP endpoints (internal)
+       │  Ontology-gated to job's scope
+       │
+       ▼
+  Job completes
+       │  Result stored in job record
+       │  Context injection: notify waiting agent/MCP session
+       │  that conversation can move forward
+```
+
+The calling agent checks `check_agent_inbox` which is really just
+`GET /jobs?type=agent_query&client_id=X&status=completed` — a filtered
+job list. `get_agent_result` is just `GET /jobs/{id}` with the answer
+payload.
+
+**Context injection on completion**: When the agent_query job finishes,
+the system can notify the MCP session that dispatched it. This could be:
+- A server-sent event on an existing SSE connection
+- A flag in the next `check_agent_inbox` poll
+- A webhook to a registered callback (if the caller supports it)
+
+The calling agent doesn't need to poll aggressively. It submits the
+question, continues other work, and gets notified or checks back later.
+
+**Job queue benefits that come for free:**
+- Concurrent query limits per user (existing rate limiting)
+- Job cost tracking (LLM calls during reasoning have measurable cost)
+- Job history (what questions were asked, what was found, audit trail)
+- Admin visibility (admin can see all agent queries across users)
+- Job cancellation (caller can cancel a long-running query)
+- The web UI Jobs workspace already displays all of this
 
 ### Bounded Effort and Loop Safety
 
