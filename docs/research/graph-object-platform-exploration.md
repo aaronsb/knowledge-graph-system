@@ -544,13 +544,59 @@ The calling agent isn't blocked. It can submit multiple questions, do other
 work, and collect answers when ready. The platform agent runs independently,
 at its own pace, with full graph context.
 
+### Bounded Effort and Loop Safety
+
+The calling agent specifies how hard the platform agent should try.
+This bounds the reasoning loop — preventing runaway tool chains while
+letting the caller trade latency for thoroughness.
+
+```
+ask_knowledge_agent {
+  question: "How does CAP theorem relate to our system design?",
+  ontology_scope: ["distributed-systems", "architecture"],
+  effort: "thorough"          ← caller controls depth
+}
+```
+
+**Effort levels:**
+
+| Level | Tool calls | Behavior |
+|-------|-----------|----------|
+| `quick` | 3-5 | Direct search, surface-level answer. Fast. |
+| `standard` | 8-12 | Search + expand neighborhoods + follow connections. |
+| `thorough` | 15-25 | Multi-hop traversal, cross-ontology exploration, connector chaining. |
+| `exhaustive` | 30-50 | Deep dive. Follow every relevant path. Used rarely. |
+
+The platform agent's system prompt includes the budget:
+
+> "You have up to N tool calls to answer this question. You are on
+> call M of N. Prioritize the most promising paths first."
+
+As the loop progresses, the injected steering shifts:
+
+- **Early** (1-3 of N): "Explore broadly, identify promising directions"
+- **Mid** (N/2): "You've used half your budget. Focus on the strongest leads"
+- **Late** (N-2): "Final calls. Synthesize what you've found"
+- **Done** (N): "Respond with your best answer given what you found"
+
+This serves multiple purposes:
+
+- **Safety**: The loop always terminates. No runaway chains.
+- **Cost control**: Fewer tool calls = fewer LLM invocations = lower cost.
+  The caller decides the cost/quality tradeoff.
+- **Predictability**: The calling agent knows roughly how long to wait.
+  `quick` returns in seconds, `exhaustive` might take a minute.
+- **Transparency**: The result includes how many calls were used, what
+  paths were explored, and whether the budget was sufficient. "Answered
+  in 8/12 calls" vs "used all 25 calls, may benefit from exhaustive."
+
 **Three MCP tools for agent delegation:**
 
 | Tool | Purpose | Sync |
 |------|---------|------|
-| `ask_knowledge_agent` | Submit a question | Yes (returns request_id immediately) |
+| `ask_knowledge_agent` | Submit a question + effort level | Yes (returns request_id immediately) |
 | `check_agent_inbox` | Poll for completed results | Yes (returns status list) |
-| `get_agent_result` | Retrieve a completed answer | Yes (returns answer + metadata) |
+| `get_agent_result` | Retrieve answer + reasoning metadata | Yes (returns answer + metadata) |
 
 **Two agent patterns, one platform:**
 
