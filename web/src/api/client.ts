@@ -690,6 +690,14 @@ class APIClient {
     return response.data;
   }
 
+  /**
+   * API root info including graph epoch
+   */
+  async getApiInfo(): Promise<{ epoch: number; status: string }> {
+    const response = await this.client.get<{ epoch: number; status: string }>('/');
+    return response.data;
+  }
+
   // ============================================================
   // ADMIN / OAUTH CLIENT MANAGEMENT
   // ============================================================
