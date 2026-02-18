@@ -457,6 +457,58 @@ current state (session_context already provides recent concepts). The
 conversation history is the agent's working memory. The graph is the
 agent's long-term memory.
 
+### API Agent Endpoint: "Phone a Friend"
+
+The second agent access pattern: a server-side API endpoint that external
+agents call through MCP as a single tool.
+
+```
+External Agent (Claude Code, Claude Desktop, etc.)
+       │
+       │  MCP tool call: "ask_knowledge_agent"
+       │  { question: "...", ontology_scope: [...] }
+       │
+       ▼
+  MCP Server
+       │
+       │  Forwards to API endpoint
+       │
+       ▼
+  POST /agent/ask                    ← permissioned resource
+       │                               (role-gated, ontology-scoped)
+       │
+       ▼
+  Server-side agent loop
+       │
+       │  - Runs same tool-calling pattern
+       │  - Uses platform's AI provider keys
+       │  - Scoped to caller's ontology grants
+       │  - Multi-hop traversal, connector chaining
+       │
+       ▼
+  Grounded answer + sources + confidence signal
+```
+
+The external agent doesn't need to drive the search → connect → program →
+interpret cycle itself. It asks one question and gets back a reasoned
+answer with sources and a confidence signal (including what ontologies
+were inaccessible).
+
+**Two agent patterns, one platform:**
+
+| Pattern | Runtime | Auth | Use Case |
+|---------|---------|------|----------|
+| Browser agent | Client-side (React) | User's OAuth token | Interactive exploration, human-in-the-loop |
+| API agent | Server-side (API endpoint) | OAuth grant, role-permissioned | External agent delegation, "phone a friend" |
+
+Both use the same MCP tools internally. Both respect ontology gating.
+Both use the platform's configured AI provider. The difference is where
+the agent loop runs and who initiates it.
+
+The API agent endpoint is just another permissioned resource — roles
+determine who can call it, grants determine which ontologies the agent
+can access for that caller. Standard OAuth/RBAC, nothing new.
+
 ### Agent Workspace in the UI
 
 ```
