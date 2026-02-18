@@ -58,6 +58,9 @@ Each statement applies an operator to merge/filter results into a mutable Workin
       label: "expand relationships" }
   ]}
 
+**Alternative** — API-only composition (no Cypher needed):
+  Use /concepts/related to expand from a known concept ID. Inside programs, related returns both nodes and edges (topology), making it suitable for graph exploration without writing Cypher.
+
 Read the program/syntax resource for the complete language reference with more examples.
 
 **Parameters:**

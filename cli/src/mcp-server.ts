@@ -17,6 +17,7 @@ import {
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { createClientFromEnv, KnowledgeGraphClient } from './api/client.js';
+import { getConfig } from './lib/config.js';
 import { AuthClient } from './lib/auth/auth-client.js';
 import { McpAllowlistManager } from './lib/mcp-allowlist.js';
 import {
@@ -59,6 +60,8 @@ import {
   formatProposalList,
   formatProposalDetail,
   formatAnnealingCycleResult,
+  formatSessionContext,
+  formatSessionIngest,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -258,6 +261,68 @@ function createAuthenticatedClient(): KnowledgeGraphClient {
 let client: KnowledgeGraphClient;
 
 /**
+ * Fetch recent concepts from the graph for session context.
+ * Returns a compact summary and structured data. Fails gracefully if API is unreachable.
+ */
+async function fetchRecentConcepts(limit: number, ontology: string | null): Promise<{
+  summary: string;
+  concepts: Array<{ label: string; concept_id: string; ontology: string | null; created_at_epoch: number }>;
+}> {
+  try {
+    let query = 'MATCH (c:Concept) WHERE c.created_at_epoch IS NOT NULL';
+    if (ontology) {
+      // Whitelist validation — ontology names are slugified strings
+      if (!/^[a-zA-Z0-9_\-. ()]+$/.test(ontology)) {
+        return { summary: `Invalid ontology name: ${ontology}`, concepts: [] };
+      }
+      query += ` AND c.ontology = '${ontology}'`;
+    }
+    query += ' RETURN c ORDER BY c.created_at_epoch DESC';
+
+    const result = await client.executeProgram({
+      program: {
+        version: 1,
+        statements: [{
+          op: '+',
+          operation: { type: 'cypher', query, limit },
+          label: 'recent_concepts',
+        }],
+      },
+    });
+
+    const nodes = result.result.nodes || [];
+    const concepts = nodes.map((n) => ({
+      label: n.label,
+      concept_id: n.concept_id,
+      ontology: (n.ontology as string) ?? null,
+      created_at_epoch: (n.properties?.created_at_epoch as number) ?? 0,
+    }));
+
+    if (concepts.length === 0) {
+      return { summary: 'No concepts in the knowledge graph yet.', concepts: [] };
+    }
+
+    const labels = concepts.map((c) => c.label).join(' | ');
+    return { summary: `Recent concepts (${concepts.length}): ${labels}`, concepts };
+  } catch {
+    return { summary: 'Knowledge graph unavailable — API server may not be running.', concepts: [] };
+  }
+}
+
+/**
+ * Resolve the ontology name for session ingest.
+ * Priority: config oauth_client_name > env KG_OAUTH_CLIENT_ID > 'sessions'
+ */
+function getSessionOntology(): string {
+  const config = getConfig();
+  const clientName = config.get('auth.oauth_client_name') as string | undefined;
+  if (clientName) return clientName;
+  const envClientId = process.env.KG_OAUTH_CLIENT_ID;
+  if (envClientId) return envClientId;
+  return 'sessions';
+}
+
+/**
  * Tool Definitions
  *
  * Consolidated from 22 tools to 6 tools + 5 resources (ADR-013)
@@ -265,6 +330,32 @@ let client: KnowledgeGraphClient;
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Build dynamic session context
+  const config = getConfig();
+  let sessionContextDescription: string;
+  if (config.getSessionContextEnabled()) {
+    const { summary } = await fetchRecentConcepts(
+      config.getSessionContextLimit(),
+      config.getSessionContextOntology()
+    );
+    sessionContextDescription = `Recent knowledge graph activity. This tool provides active, unsolicited state information about the knowledge graph — what concepts were most recently created or encountered.
+
+${summary}
+
+Call this tool to refresh context, adjust the limit, or filter by ontology. Results include concept labels, IDs, ontology, and creation epoch.`;
+  } else {
+    sessionContextDescription = 'Read recent knowledge graph activity. Session context is currently disabled in config (~/.config/kg/config.json session.context_enabled).';
+  }
+
+  const sessionOntology = getSessionOntology();
+  const sessionIngestDescription = `Save a session summary to the knowledge graph for cross-session memory.
+
+**IMPORTANT: Before your session ends or context compacts, call this tool with a summary of key topics, decisions, and insights from this session.**
+
+Text is ingested into the "${sessionOntology}" ontology, creating concepts that will appear in session_context on your next connection. The ingest job is auto-approved.
+
+Input: text (required) — your session summary. Optional: filename for source tracking.`;
+
   return {
     tools: [
       {
@@ -1195,6 +1286,43 @@ Read the program/syntax resource for the complete language reference with more e
             },
           },
           required: ['action'],
+        },
+      },
+      {
+        name: 'session_context',
+        description: sessionContextDescription,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Maximum concepts to return (default: 10, max: 50)',
+              default: 10,
+            },
+            ontology: {
+              type: 'string',
+              description: 'Filter by ontology name (default: all ontologies)',
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'session_ingest',
+        description: sessionIngestDescription,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            text: {
+              type: 'string',
+              description: 'Session summary text to ingest into the knowledge graph',
+            },
+            filename: {
+              type: 'string',
+              description: 'Optional filename for source tracking (e.g., "session-2025-01-15.md")',
+            },
+          },
+          required: ['text'],
         },
       },
     ],
@@ -2912,6 +3040,44 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           default:
             throw new Error(`Unknown program action: ${action}. Use: validate, create, get, list, execute, or chain`);
         }
+      }
+
+      case 'session_context': {
+        const limit = Math.min((toolArgs.limit as number) || 10, 50);
+        const ontology = (toolArgs.ontology as string) || null;
+        const { summary, concepts } = await fetchRecentConcepts(limit, ontology);
+
+        return {
+          content: [{
+            type: 'text',
+            text: formatSessionContext(concepts, summary),
+          }],
+        };
+      }
+
+      case 'session_ingest': {
+        const text = toolArgs.text as string;
+        if (!text) {
+          throw new Error('text is required');
+        }
+
+        const ontology = getSessionOntology();
+        const result = await client.ingestText(text, {
+          ontology,
+          filename: (toolArgs.filename as string) || undefined,
+          auto_approve: true,
+          force: false,
+          processing_mode: 'serial',
+          options: {
+            target_words: 1000,
+            overlap_words: 200,
+          },
+          source_type: 'mcp',
+        });
+
+        return {
+          content: [{ type: 'text', text: formatSessionIngest(result) }],
+        };
       }
 
       default:

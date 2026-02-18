@@ -63,7 +63,7 @@ export interface JobResult {
 export interface JobStatus {
   job_id: string;
   job_type: string;
-  status: 'pending' | 'awaiting_approval' | 'approved' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'awaiting_approval' | 'approved' | 'queued' | 'processing' | 'running' | 'completed' | 'failed' | 'cancelled';
   user_id?: number;  // User ID who submitted the job (from kg_auth.users)
   username?: string;  // Username who submitted the job
   progress?: JobProgress;

@@ -11,7 +11,8 @@ export type JobStatusValue =
   | 'awaiting_approval' // Analysis complete, requires user approval
   | 'approved'          // User approved, waiting to process
   | 'queued'            // Legacy state (same as approved)
-  | 'processing'        // Currently running
+  | 'processing'        // Currently running (legacy/SQLite name)
+  | 'running'           // Currently running (PostgreSQL name)
   | 'completed'         // Successfully finished
   | 'failed'            // Error occurred
   | 'cancelled';        // User cancelled or expired

@@ -39,7 +39,7 @@ import {
 const STATUS_FILTERS: { value: JobStatusValue | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'awaiting_approval', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
+  { value: 'running', label: 'Processing' },
   { value: 'completed', label: 'Completed' },
   { value: 'failed', label: 'Failed' },
   { value: 'cancelled', label: 'Cancelled' },
@@ -144,14 +144,14 @@ export const JobsWorkspace: React.FC = () => {
   // Auto-refresh when there are active jobs
   useEffect(() => {
     const hasActiveJobs = jobs.some(j =>
-      ['pending', 'awaiting_approval', 'approved', 'queued', 'processing'].includes(j.status)
+      ['pending', 'awaiting_approval', 'approved', 'queued', 'processing', 'running'].includes(j.status)
     );
 
     if (hasActiveJobs) {
       refreshIntervalRef.current = setInterval(() => {
         fetchJobs();
         // Also refresh selected job if it's active
-        if (selectedJob && ['pending', 'awaiting_approval', 'approved', 'queued', 'processing'].includes(selectedJob.status)) {
+        if (selectedJob && ['pending', 'awaiting_approval', 'approved', 'queued', 'processing', 'running'].includes(selectedJob.status)) {
           fetchJobDetails(selectedJob.job_id);
         }
       }, 3000);
@@ -275,7 +275,7 @@ export const JobsWorkspace: React.FC = () => {
   // Render job row
   const renderJobRow = (job: JobStatus) => {
     const isSelected = selectedJob?.job_id === job.job_id;
-    const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing'].includes(job.status);
+    const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing', 'running'].includes(job.status);
 
     return (
       <div
@@ -303,7 +303,7 @@ export const JobsWorkspace: React.FC = () => {
           </div>
 
           {/* Progress (for processing jobs) */}
-          {job.status === 'processing' && job.progress?.percent !== undefined && (
+          {(job.status === 'processing' || job.status === 'running') && job.progress?.percent !== undefined && (
             <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div
@@ -357,7 +357,7 @@ export const JobsWorkspace: React.FC = () => {
     if (!selectedJob) return null;
 
     const job = selectedJob;
-    const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing'].includes(job.status);
+    const isActionable = ['awaiting_approval', 'approved', 'queued', 'processing', 'running'].includes(job.status);
 
     return (
       <div className="h-full flex flex-col bg-card">
@@ -481,7 +481,7 @@ export const JobsWorkspace: React.FC = () => {
           )}
 
           {/* Progress */}
-          {job.progress && job.status === 'processing' && (
+          {job.progress && (job.status === 'processing' || job.status === 'running') && (
             <div className="bg-status-info/20 rounded-lg p-3">
               <ProgressIndicator progress={job.progress} variant="detailed" />
             </div>

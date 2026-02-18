@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-02-12
+> Last updated: 2026-02-18
 
 ---
 
@@ -106,7 +106,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `true`
 - `max_depth` (`number`) - Max traversal depth for related (1-5, default: 2)
   - Default: `2`
-- `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — omit for broadest results, then narrow.
+- `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — if the first hop is structural, filtering to semantic types may return empty. Omit for broadest results, then narrow.
 - `include_epistemic_status` (`array`) - Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])
 - `exclude_epistemic_status` (`array`) - Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])
 - `connection_mode` (`string`) - Connection mode: "exact" (IDs) or "semantic" (phrases)
@@ -501,6 +501,9 @@ Each statement applies an operator to merge/filter results into a mutable Workin
         query: "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.concept_id IN $W_IDS RETURN c, r, t" },
       label: "expand relationships" }
   ]}
+
+**Alternative** — API-only composition (no Cypher needed):
+  Use /concepts/related to expand from a known concept ID. Inside programs, related returns both nodes and edges (topology), making it suitable for graph exploration without writing Cypher.
 
 Read the program/syntax resource for the complete language reference with more examples.
 
