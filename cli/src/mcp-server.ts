@@ -271,9 +271,11 @@ async function fetchRecentConcepts(limit: number, ontology: string | null): Prom
   try {
     let query = 'MATCH (c:Concept) WHERE c.created_at_epoch IS NOT NULL';
     if (ontology) {
-      // Escape single quotes for Cypher safety
-      const safeOntology = ontology.replace(/'/g, "''");
-      query += ` AND c.ontology = '${safeOntology}'`;
+      // Whitelist validation — ontology names are slugified strings
+      if (!/^[a-zA-Z0-9_\-. ()]+$/.test(ontology)) {
+        return { summary: `Invalid ontology name: ${ontology}`, concepts: [] };
+      }
+      query += ` AND c.ontology = '${ontology}'`;
     }
     query += ' RETURN c ORDER BY c.created_at_epoch DESC';
 
