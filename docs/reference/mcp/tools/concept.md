@@ -27,7 +27,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `true`
 - `max_depth` (`number`) - Max traversal depth for related (1-5, default: 2)
   - Default: `2`
-- `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — omit for broadest results, then narrow.
+- `relationship_types` (`array`) - Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — if the first hop is structural, filtering to semantic types may return empty. Omit for broadest results, then narrow.
 - `include_epistemic_status` (`array`) - Only include relationships with these epistemic statuses (e.g., ["AFFIRMATIVE", "CONTESTED"])
 - `exclude_epistemic_status` (`array`) - Exclude relationships with these epistemic statuses (e.g., ["HISTORICAL", "INSUFFICIENT_DATA"])
 - `connection_mode` (`string`) - Connection mode: "exact" (IDs) or "semantic" (phrases)

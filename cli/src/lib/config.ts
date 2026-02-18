@@ -43,6 +43,13 @@ export interface SearchConfig {
   showImages?: boolean;            // Display images inline by default in search results (default: true)
 }
 
+export interface SessionConfig {
+  // Cross-session context for MCP agents
+  context_enabled?: boolean;         // Enable dynamic context in tool listing (default: true)
+  context_limit?: number;            // Number of recent concepts to show (default: 10)
+  context_ontology?: string | null;  // Filter to specific ontology (default: null = all)
+}
+
 export interface KgConfig {
   username?: string;
   secret?: string;  // API key (never store password!)
@@ -53,6 +60,7 @@ export interface KgConfig {
   aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
   display?: DisplayConfig;  // ADR-057: Display preferences
   search?: SearchConfig;    // ADR-057: Search command defaults
+  session?: SessionConfig;  // Cross-session MCP agent context
 }
 
 export class ConfigManager {
@@ -122,6 +130,11 @@ export class ConfigManager {
       search: {
         showEvidence: true,  // Show evidence quotes by default
         showImages: true     // Display images inline by default
+      },
+      session: {
+        context_enabled: true,   // Show recent concepts in MCP tool listing
+        context_limit: 10,       // Number of recent concepts
+        context_ontology: null   // All ontologies
       }
     };
   }
@@ -606,6 +619,29 @@ export class ConfigManager {
     }
     this.config.search.showImages = enabled;
     this.save();
+  }
+
+  // ========== Session Methods ==========
+
+  /**
+   * Check if session context is enabled for MCP tool listing
+   */
+  getSessionContextEnabled(): boolean {
+    return this.config.session?.context_enabled ?? true;
+  }
+
+  /**
+   * Get number of recent concepts to show in session context
+   */
+  getSessionContextLimit(): number {
+    return this.config.session?.context_limit ?? 10;
+  }
+
+  /**
+   * Get ontology filter for session context (null = all ontologies)
+   */
+  getSessionContextOntology(): string | null {
+    return this.config.session?.context_ontology ?? null;
   }
 }
 

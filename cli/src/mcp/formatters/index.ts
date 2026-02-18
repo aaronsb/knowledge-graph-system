@@ -67,6 +67,9 @@ export {
   formatGraphQueueResult,
 } from './graph.js';
 
+// Session context formatters
+export { formatSessionContext, formatSessionIngest } from './session.js';
+
 // Ontology formatters (ADR-200)
 export {
   formatOntologyList,
