@@ -114,6 +114,7 @@ const typeFormatters: Record<ColumnType, (value: string, rawValue?: any) => stri
       case 'completed': return colors.status.success('✓ completed');
       case 'failed': return colors.status.error('✗ failed');
       case 'processing': return colors.status.info('⚙ processing');
+      case 'running': return colors.status.info('⚙ running');
       case 'approved': return colors.status.success('✓ approved');
       case 'awaiting_approval': return colors.status.warning('⏸ awaiting');
       case 'pending': return colors.status.dim('○ pending');

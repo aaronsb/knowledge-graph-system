@@ -421,7 +421,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
             </div>
             <div className="p-4 bg-status-info/20 rounded-lg">
               <div className="text-2xl font-bold text-status-info">
-                {schedulerStatus.jobs_by_status.processing ?? 0}
+                {(schedulerStatus.jobs_by_status.processing ?? 0) + (schedulerStatus.jobs_by_status.running ?? 0)}
               </div>
               <div className="text-sm text-status-info">Running</div>
             </div>
