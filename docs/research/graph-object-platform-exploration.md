@@ -688,6 +688,57 @@ Sidebar:
     └── Activity Log                ← what the agent did, what it found
 ```
 
+## Edge Vocabulary: Already Sufficient
+
+Querying the actual graph reveals that the existing edge vocabulary already
+describes source/sink relationships naturally. No new edge types needed.
+
+**Data-flow edge types already in the vocabulary:**
+
+| Edge Type | Edges | Source/Sink semantics |
+|-----------|-------|----------------------|
+| `USES_INFORMATION_FROM` | 78 | "reads from" — the source relationship |
+| `PRODUCES` | 28+ | "outputs to" — the sink relationship |
+| `MONITORS` / `MONITORED_BY` | 4 | Observability relationship |
+| `CONVERTS_TO` / `TRANSFORMS` | 8 | Data transformation |
+| `INPUT_TO` / `PROCESSES` | 2 | Processing pipeline |
+| `CONTROLS` | 5 | Control/steering |
+| `CONSUMES` | exists | Consumption relationship |
+
+These edge types already have epistemic status classifications and grounding
+measurements. They already flow through the reasoning core during ingestion.
+
+**The insight:** A `DataSource` node connected to a Concept via
+`USES_INFORMATION_FROM` is immediately legible to the existing system.
+The edge type means the same thing whether both endpoints are concepts
+or one is a data source:
+
+```
+Current (concept to concept):
+  Electrical Systems ──USES_INFORMATION_FROM──→ Output
+
+Future (concept to data source):
+  Signal Flow ──USES_INFORMATION_FROM──→ [DataSource: Grafana dashboard]
+
+Same edge type. Same grounding measurement. Same epistemic classification.
+```
+
+This means new node types don't need a parallel edge vocabulary. They
+participate in the same semantic network using the same relationship types.
+The reasoning core doesn't need to learn new edge semantics — it already
+understands what `PRODUCES` and `USES_INFORMATION_FROM` mean.
+
+**What this requires in AGE:**
+- New node labels (`DataSource`, `DataSink`, `Connector`)
+- Edges between existing `Concept` nodes and new node types
+- Same `relationship_type` vocabulary as concept-to-concept edges
+- Grounding and epistemic measurement extends to cross-type edges
+
+**What this does NOT require:**
+- New edge type vocabulary
+- New epistemic classification logic
+- Changes to the reasoning core's understanding of relationships
+
 ## Implementation Phases
 
 ### Phase 1: Ontology as First-Class UI Object
