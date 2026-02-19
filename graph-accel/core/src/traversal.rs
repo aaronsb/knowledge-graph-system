@@ -1536,4 +1536,56 @@ mod tests {
         let paths = k_shortest_paths(&g, 999, 0, 10, 5, TraversalDirection::Both, None);
         assert!(paths.is_empty());
     }
+
+    // --- Two-phase loading tests (mimics ext load_vertices + load_edges) ---
+
+    #[test]
+    fn test_two_phase_loading_bfs() {
+        // Reproduce the ext loading path: add_node first, then add_edge
+        let mut g = Graph::new();
+
+        // Phase 1: load vertices (like ext load_vertices)
+        g.add_node(100, "Concept".into(), Some("concept_a".into()));
+        g.add_node(200, "Concept".into(), Some("concept_b".into()));
+        g.add_node(300, "Concept".into(), Some("concept_c".into()));
+
+        // Phase 2: load edges (like ext load_edges)
+        let rt = g.intern_rel_type("SUBSUMES");
+        g.add_edge(100, 200, rt, Edge::NO_CONFIDENCE);
+        g.add_edge(100, 300, rt, Edge::NO_CONFIDENCE);
+
+        // Verify degree sees edges
+        assert_eq!(g.neighbors_out(100).len(), 2);
+        assert_eq!(g.neighbors_in(200).len(), 1);
+
+        // Verify BFS finds neighbors
+        let result = bfs_neighborhood(&g, 100, 2, TraversalDirection::Both, None);
+        assert_eq!(
+            result.neighbors.len(), 2,
+            "BFS should find 2 neighbors from node 100, found {}",
+            result.neighbors.len()
+        );
+    }
+
+    #[test]
+    fn test_two_phase_loading_app_id_resolution() {
+        let mut g = Graph::new();
+
+        // Phase 1: vertices
+        g.add_node(100, "Concept".into(), Some("concept_a".into()));
+        g.add_node(200, "Concept".into(), Some("concept_b".into()));
+
+        // Phase 2: edges
+        let rt = g.intern_rel_type("SUBSUMES");
+        g.add_edge(100, 200, rt, Edge::NO_CONFIDENCE);
+
+        // Resolve app_id → internal NodeId
+        let resolved = g.resolve_app_id("concept_a").unwrap();
+        assert_eq!(resolved, 100);
+
+        // BFS via resolved ID
+        let result = bfs_neighborhood(&g, resolved, 1, TraversalDirection::Both, None);
+        assert_eq!(result.neighbors.len(), 1);
+        assert_eq!(result.neighbors[0].node_id, 200);
+    }
 }

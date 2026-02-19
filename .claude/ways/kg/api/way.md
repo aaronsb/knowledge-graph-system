@@ -35,10 +35,24 @@ client.facade.count_concepts()
 client._execute_cypher("MATCH (n) RETURN n")
 ```
 
+## GraphFacade (graph_accel integration)
+
+`GraphFacade` in `api/app/lib/graph_facade.py` wraps graph_accel with
+Cypher fallback. Key patterns:
+
+- **Dedicated connection**: `_accel_conn` is pinned so the in-memory graph
+  persists across requests. Don't use the regular AGEClient connection.
+- **Optional params → NULL, not NaN**: Rust `Option<f64>` maps `NULL` to
+  `None` (skip filter). `float('nan')` maps to `Some(NaN)` which silently
+  rejects all comparisons (`x >= NaN` is always false in IEEE 754).
+- **GUC lifecycle**: GUCs are set once on first load (`_set_accel_gucs`),
+  then `ensure_fresh()` handles generation-based reloads using the
+  session-level GUCs already in place.
+
 ## After API Changes
 
 ```bash
-./operator.sh restart api
+./operator.sh restart api    # or hot-reload (dev mode watches for changes)
 ```
 
 ## Testing Endpoints
