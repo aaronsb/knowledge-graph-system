@@ -14,6 +14,8 @@ The service:
 import json
 import logging
 import hashlib
+import math
+from collections import Counter
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Literal
 import numpy as np
@@ -729,9 +731,9 @@ class EmbeddingProjectionService:
         # Higher percentiles merge too aggressively; lower ones fragment.
         eps = float(np.percentile(k_distances, 40))
 
-        # Floor at 1% of data range to avoid degenerate eps
-        data_range = float(np.max(np.ptp(projection, axis=0)))
-        eps = max(eps, data_range * 0.01)
+        # Floor at 1% of data range (minimum 1e-6) to avoid degenerate eps=0
+        data_range = float(np.max(projection.max(axis=0) - projection.min(axis=0)))
+        eps = max(eps, data_range * 0.01, 1e-6)
 
         # Run DBSCAN
         db = DBSCAN(eps=eps, min_samples=min_samples)
@@ -742,7 +744,7 @@ class EmbeddingProjectionService:
         unique.discard(-1)
         cluster_sizes = {}
         for label in unique:
-            cluster_sizes[int(label)] = int(np.sum(labels == label))
+            cluster_sizes[str(int(label))] = int(np.sum(labels == label))
         noise_count = int(np.sum(labels == -1))
 
         logger.info(
@@ -793,9 +795,6 @@ class EmbeddingProjectionService:
         Returns:
             Dict mapping cluster_id -> descriptive name string
         """
-        import math
-        from collections import Counter
-
         unique = set(labels)
         unique.discard(-1)
         if not unique:
@@ -825,26 +824,31 @@ class EmbeddingProjectionService:
                 doc_freq[w] += 1
 
         # Score terms per cluster: tf * idf
-        # Use plain int keys for JSON serialization
-        cluster_names: Dict[int, str] = {}
+        # Use str keys to match Pydantic Dict[str, str] models
+        cluster_names: Dict[str, str] = {}
         for cid in sorted(int(c) for c in unique):
             wc = cluster_words.get(cid, Counter())
+            key = str(cid)
             if not wc:
-                cluster_names[cid] = f"Cluster {cid}"
+                cluster_names[key] = f"Cluster {cid}"
                 continue
 
             total = sum(wc.values())
             scored = []
             for w, count in wc.items():
                 tf = count / total
-                idf = math.log(num_clusters / doc_freq[w]) if doc_freq[w] < num_clusters else 0.1
-                scored.append((w, tf * idf, count))
+                if num_clusters <= 1:
+                    # Single cluster: rank by frequency only
+                    scored.append((w, tf, count))
+                else:
+                    idf = math.log(num_clusters / doc_freq[w]) if doc_freq[w] < num_clusters else 0.1
+                    scored.append((w, tf * idf, count))
 
             # Sort by score desc, break ties by raw count
             scored.sort(key=lambda x: (-x[1], -x[2]))
             # Take top 2 terms, title-case
             top = [s[0].title() for s in scored[:2]]
-            cluster_names[cid] = " ".join(top) if top else f"Cluster {cid}"
+            cluster_names[key] = " ".join(top) if top else f"Cluster {cid}"
 
         return cluster_names
 

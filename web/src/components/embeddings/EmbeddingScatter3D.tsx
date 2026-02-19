@@ -112,7 +112,7 @@ const fragmentShader = `
 
 interface Props {
   points: EmbeddingPoint[];
-  onSelectPoint: (point: EmbeddingPoint | null, screenPos?: { x: number; y: number }) => void;
+  onSelectPoint: (point: EmbeddingPoint | null) => void;
   onContextMenu?: (point: EmbeddingPoint, screenPos: { x: number; y: number }) => void;
   selectedPoint: EmbeddingPoint | null;
 }

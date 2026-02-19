@@ -10,7 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, FolderOpen } from 'lucide-react';
 import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp, ClusterPalette } from './types';
+import type { ClusterSortKey } from './ClusterLegend';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
+import { ClusterLegend, NOISE_COLOR, clusterColor } from './ClusterLegend';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay } from '../../hooks/useQueryReplay';
@@ -27,38 +29,7 @@ const ONTOLOGY_COLORS = [
   '#aaff44', // bright lime
 ];
 
-// Cluster color palettes — 20 colors each, designed for dark backgrounds
-const CLUSTER_PALETTES: Record<ClusterPalette, { label: string; colors: string[] }> = {
-  bold: {
-    label: 'Bold',
-    colors: [
-      '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4',
-      '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990',
-      '#dcbeff', '#9a6324', '#fffac8', '#800000', '#aaffc3',
-      '#808000', '#ffd8b1', '#000075', '#a9a9a9', '#ffe119',
-    ],
-  },
-  'warm-cool': {
-    label: 'Warm → Cool',
-    colors: [
-      '#ff1744', '#ff5722', '#ff9100', '#ffab00', '#ffd600',
-      '#c6ff00', '#76ff03', '#00e676', '#1de9b6', '#00e5ff',
-      '#00b0ff', '#2979ff', '#3d5afe', '#651fff', '#d500f9',
-      '#ff4081', '#ff6e40', '#ffab40', '#69f0ae', '#40c4ff',
-    ],
-  },
-  earth: {
-    label: 'Earth',
-    colors: [
-      '#bf360c', '#e65100', '#f57f17', '#827717', '#33691e',
-      '#1b5e20', '#004d40', '#006064', '#01579b', '#0d47a1',
-      '#1a237e', '#311b92', '#4a148c', '#880e4f', '#b71c1c',
-      '#3e2723', '#455a64', '#546e7a', '#78909c', '#8d6e63',
-    ],
-  },
-};
-const CLUSTER_PALETTE_ORDER: ClusterPalette[] = ['bold', 'warm-cool', 'earth'];
-const NOISE_COLOR = '#555555';
+// Cluster palette constants imported from ClusterLegend
 
 // Color scheme descriptions
 const COLOR_SCHEME_INFO: Record<ColorScheme, { label: string; description: string }> = {
@@ -300,7 +271,7 @@ export function EmbeddingLandscapeWorkspace() {
   // Cluster visualization controls
   const [highlightedClusters, setHighlightedClusters] = useState<Set<number> | null>(null);
   const [clusterPalette, setClusterPalette] = useState<ClusterPalette>('bold');
-  const [clusterSort, setClusterSort] = useState<{ key: 'color' | 'count' | 'name'; desc: boolean }>({ key: 'name', desc: false });
+  const [clusterSort, setClusterSort] = useState<{ key: ClusterSortKey; desc: boolean }>({ key: 'name', desc: false });
 
   // Distance metric for projection (cosine best for embeddings)
   const [metric, setMetric] = useState<DistanceMetric>('cosine');
@@ -383,15 +354,12 @@ export function EmbeddingLandscapeWorkspace() {
 
       // If queued (large dataset), poll until the job completes
       if (result.status === 'queued' && result.job_id) {
-        const maxAttempts = 60; // up to 60s
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(r => setTimeout(r, 1000));
-          const job = await apiClient.getJob(result.job_id);
-          if (job.status === 'completed') break;
-          if (job.status === 'failed') {
-            setError('Projection job failed');
-            return;
-          }
+        const finalJob = await apiClient.pollJobUntilComplete(result.job_id, {
+          intervalMs: 1000,
+        });
+        if (finalJob.status === 'failed') {
+          setError('Projection job failed');
+          return;
         }
       }
 
@@ -481,7 +449,7 @@ export function EmbeddingLandscapeWorkspace() {
             color = '#1a1a1a'; // nearly invisible
           } else {
             color = p.clusterId != null
-              ? CLUSTER_PALETTES[clusterPalette].colors[p.clusterId % CLUSTER_PALETTES[clusterPalette].colors.length]
+              ? clusterColor(clusterPalette, p.clusterId)
               : NOISE_COLOR;
           }
           break;
@@ -946,149 +914,19 @@ export function EmbeddingLandscapeWorkspace() {
                 </div>
               </div>
             )}
-            {colorScheme === 'cluster' && (
-              <div className="space-y-0.5">
-                {globalProjection?.statistics.cluster_count != null && globalProjection.statistics.cluster_count > 0 ? (
-                  <>
-                    {/* Palette switcher */}
-                    <div className="flex gap-0.5 rounded overflow-hidden mb-1.5" style={{ width: '160px' }}>
-                      {CLUSTER_PALETTE_ORDER.map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setClusterPalette(p)}
-                          className={`flex-1 py-1 text-[10px] transition-colors ${
-                            clusterPalette === p
-                              ? 'bg-primary/30 text-primary'
-                              : 'bg-accent/30 text-muted-foreground hover:bg-accent/50'
-                          }`}
-                        >
-                          {CLUSTER_PALETTES[p].label}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Clear filter button */}
-                    {highlightedClusters !== null && (
-                      <button
-                        onClick={() => setHighlightedClusters(null)}
-                        className="text-[10px] text-primary hover:text-primary/80 mb-1 underline"
-                      >
-                        Show all
-                      </button>
-                    )}
-                    {/* Sort header */}
-                    <div className="flex items-center gap-1.5 px-1 pb-1 mb-0.5 border-b border-border/30" style={{ maxWidth: '200px' }}>
-                      {([
-                        { key: 'color' as const, label: '●', width: 'w-2.5', title: 'Sort by palette order' },
-                        { key: 'name' as const, label: 'Name', width: 'flex-1', title: 'Sort by name' },
-                        { key: 'count' as const, label: '#', width: 'w-6', title: 'Sort by count' },
-                      ] as const).map(col => (
-                        <button
-                          key={col.key}
-                          onClick={() => setClusterSort(prev =>
-                            prev.key === col.key
-                              ? { key: col.key, desc: !prev.desc }
-                              : { key: col.key, desc: col.key === 'count' }
-                          )}
-                          className={`text-[9px] font-medium ${col.width} text-left transition-colors ${
-                            clusterSort.key === col.key
-                              ? 'text-primary'
-                              : 'text-muted-foreground/50 hover:text-muted-foreground'
-                          }`}
-                          title={col.title}
-                        >
-                          {col.label}
-                          {clusterSort.key === col.key && (
-                            <span className="ml-0.5">{clusterSort.desc ? '↓' : '↑'}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="max-h-[60vh] overflow-y-auto space-y-0.5 pr-1" style={{ maxWidth: '200px' }}>
-                      {Object.entries(globalProjection.statistics.cluster_sizes || {})
-                        .map(([clusterId, size]) => ({
-                          id: parseInt(clusterId),
-                          name: globalProjection.statistics.cluster_names?.[clusterId] || `Cluster ${clusterId}`,
-                          size,
-                        }))
-                        .sort((a, b) => {
-                          let cmp: number;
-                          switch (clusterSort.key) {
-                            case 'color':
-                              cmp = (a.id % CLUSTER_PALETTES[clusterPalette].colors.length)
-                                  - (b.id % CLUSTER_PALETTES[clusterPalette].colors.length);
-                              break;
-                            case 'count':
-                              cmp = a.size - b.size;
-                              break;
-                            case 'name':
-                            default:
-                              cmp = a.name.localeCompare(b.name);
-                              break;
-                          }
-                          return clusterSort.desc ? -cmp : cmp;
-                        })
-                        .map(({ id, name, size }) => {
-                          const isActive = highlightedClusters === null || highlightedClusters.has(id);
-                          return (
-                            <button
-                              key={id}
-                              onClick={() => {
-                                setHighlightedClusters(prev => {
-                                  if (prev === null) {
-                                    // First click: highlight only this cluster
-                                    return new Set([id]);
-                                  }
-                                  const next = new Set(prev);
-                                  if (next.has(id)) {
-                                    next.delete(id);
-                                    // If nothing left, show all
-                                    return next.size === 0 ? null : next;
-                                  } else {
-                                    next.add(id);
-                                    return next;
-                                  }
-                                });
-                              }}
-                              className={`flex items-center gap-1.5 w-full text-left rounded px-1 py-0.5 transition-opacity ${
-                                isActive ? 'opacity-100' : 'opacity-30'
-                              } hover:bg-accent/30`}
-                              title={`${name} (${size} points) — click to toggle`}
-                            >
-                              <div
-                                className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                style={{ backgroundColor: CLUSTER_PALETTES[clusterPalette].colors[id % CLUSTER_PALETTES[clusterPalette].colors.length] }}
-                              />
-                              <span className="text-[10px] text-muted-foreground truncate flex-1">
-                                {name}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground/40 flex-shrink-0 tabular-nums">
-                                {size}
-                              </span>
-                            </button>
-                          );
-                        })}
-                    </div>
-                    {globalProjection.statistics.cluster_noise_count != null && globalProjection.statistics.cluster_noise_count > 0 && (
-                      <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-border/30 px-1">
-                        <div
-                          className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                          style={{ backgroundColor: NOISE_COLOR }}
-                        />
-                        <span className="text-[10px] text-muted-foreground/60 flex-1">
-                          noise
-                        </span>
-                        <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                          {globalProjection.statistics.cluster_noise_count}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-[10px] text-muted-foreground/60">
-                    No clusters — regenerate projection
-                  </div>
-                )}
-              </div>
+            {colorScheme === 'cluster' && globalProjection && (
+              <ClusterLegend
+                clusterCount={globalProjection.statistics.cluster_count ?? 0}
+                clusterSizes={globalProjection.statistics.cluster_sizes ?? {}}
+                clusterNames={globalProjection.statistics.cluster_names ?? {}}
+                noiseCount={globalProjection.statistics.cluster_noise_count ?? 0}
+                highlightedClusters={highlightedClusters}
+                onHighlightChange={setHighlightedClusters}
+                palette={clusterPalette}
+                onPaletteChange={setClusterPalette}
+                sort={clusterSort}
+                onSortChange={setClusterSort}
+              />
             )}
             <div className="text-muted-foreground/60 mt-2 pt-2 border-t border-border">
               {stats.totalConcepts} points
@@ -1118,7 +956,7 @@ export function EmbeddingLandscapeWorkspace() {
                   <span className="flex items-center gap-1">
                     <span
                       className="inline-block w-2 h-2 rounded-sm"
-                      style={{ backgroundColor: CLUSTER_PALETTES[clusterPalette].colors[contextMenu.point.clusterId % CLUSTER_PALETTES[clusterPalette].colors.length] }}
+                      style={{ backgroundColor: clusterColor(clusterPalette, contextMenu.point.clusterId) }}
                     />
                     {globalProjection?.statistics.cluster_names?.[String(contextMenu.point.clusterId)] || `Cluster ${contextMenu.point.clusterId}`}
                   </span>
