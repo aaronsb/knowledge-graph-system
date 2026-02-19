@@ -47,6 +47,9 @@ See [Quick Start Guide](docs/operating/quick-start.md) for details.
 ![CLI with Inline Image Evidence](docs/media/screenshots/cli-search-with-images.png)
 *Command-line search returns concepts with source images rendered inline via chafa*
 
+![Embedding Landscape with DBSCAN Clusters](docs/media/screenshots/web-embedding-landscape-clusters.png)
+*t-SNE embedding landscape with auto-detected clusters, named by topic via TF-IDF*
+
 ## What You Can Do
 
 **Ingest documents** — PDFs, markdown, images, text. The system extracts concepts, relationships, and evidence automatically.

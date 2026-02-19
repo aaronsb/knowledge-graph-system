@@ -39,6 +39,7 @@ class ProjectionConceptResponse(BaseModel):
     diversity_related_count: Optional[int] = None
     ontology: Optional[str] = None  # Source ontology (for cross-ontology mode)
     item_type: Optional[str] = None  # Item type (for combined mode)
+    cluster_id: Optional[int] = None  # DBSCAN cluster assignment (None = noise)
 
 
 class ProjectionParametersResponse(BaseModel):
@@ -60,6 +61,10 @@ class ProjectionStatisticsResponse(BaseModel):
     embedding_dims: int
     grounding_range: Optional[List[float]] = None
     diversity_range: Optional[List[float]] = None
+    cluster_count: Optional[int] = None
+    cluster_sizes: Optional[Dict[str, int]] = None
+    cluster_names: Optional[Dict[str, str]] = None
+    cluster_noise_count: Optional[int] = None
 
 
 class ProjectionDatasetResponse(BaseModel):
