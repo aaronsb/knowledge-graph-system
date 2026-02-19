@@ -9,9 +9,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, FolderOpen } from 'lucide-react';
-import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp } from './types';
+import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp, ClusterPalette } from './types';
+import type { ClusterSortKey } from './ClusterLegend';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
-import { NodeInfoBox } from '../../explorers/common/NodeInfoBox';
+import { ClusterLegend, NOISE_COLOR, clusterColor } from './ClusterLegend';
 import { IconRailPanel } from '../shared/IconRailPanel';
 import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay } from '../../hooks/useQueryReplay';
@@ -28,6 +29,8 @@ const ONTOLOGY_COLORS = [
   '#aaff44', // bright lime
 ];
 
+// Cluster palette constants imported from ClusterLegend
+
 // Color scheme descriptions
 const COLOR_SCHEME_INFO: Record<ColorScheme, { label: string; description: string }> = {
   ontology: {
@@ -41,6 +44,10 @@ const COLOR_SCHEME_INFO: Record<ColorScheme, { label: string; description: strin
   position: {
     label: 'By Position',
     description: 'Color wheel around Y axis, brightness by height',
+  },
+  cluster: {
+    label: 'By Cluster',
+    description: 'DBSCAN spatial clusters — bold distinct colors',
   },
 };
 
@@ -246,7 +253,6 @@ export function EmbeddingLandscapeWorkspace() {
   const [ontologyColors, setOntologyColors] = useState<Map<string, string>>(new Map());
 
   const [selectedConcept, setSelectedConcept] = useState<EmbeddingPoint | null>(null);
-  const [selectedScreenPos, setSelectedScreenPos] = useState<{ x: number; y: number } | null>(null);
 
   // Context menu state for right-click actions
   const [contextMenu, setContextMenu] = useState<{
@@ -261,6 +267,11 @@ export function EmbeddingLandscapeWorkspace() {
 
   // Color scheme for visualization
   const [colorScheme, setColorScheme] = useState<ColorScheme>('ontology');
+
+  // Cluster visualization controls
+  const [highlightedClusters, setHighlightedClusters] = useState<Set<number> | null>(null);
+  const [clusterPalette, setClusterPalette] = useState<ClusterPalette>('bold');
+  const [clusterSort, setClusterSort] = useState<{ key: ClusterSortKey; desc: boolean }>({ key: 'name', desc: false });
 
   // Distance metric for projection (cosine best for embeddings)
   const [metric, setMetric] = useState<DistanceMetric>('cosine');
@@ -333,13 +344,24 @@ export function EmbeddingLandscapeWorkspace() {
       setError(null);
 
       // Regenerate global projection (all ontologies together with global centering)
-      await apiClient.regenerateProjection('__all__', {
+      const result = await apiClient.regenerateProjection('__all__', {
         force: true,
         perplexity,
         metric,
         refresh_grounding: refreshGrounding,
         embedding_source: 'concepts',
       });
+
+      // If queued (large dataset), poll until the job completes
+      if (result.status === 'queued' && result.job_id) {
+        const finalJob = await apiClient.pollJobUntilComplete(result.job_id, {
+          intervalMs: 1000,
+        });
+        if (finalJob.status === 'failed') {
+          setError('Projection job failed');
+          return;
+        }
+      }
 
       // Reload the projection
       await loadGlobalProjection();
@@ -374,6 +396,7 @@ export function EmbeddingLandscapeWorkspace() {
       grounding: number | null;
       ontologyColor: string;
       itemType: ProjectionItemType;
+      clusterId: number | null;
     }> = [];
 
     globalProjection.concepts.forEach(concept => {
@@ -392,6 +415,7 @@ export function EmbeddingLandscapeWorkspace() {
         grounding: concept.grounding_strength,
         ontologyColor: ontologyColors.get(ontology) || '#888888',
         itemType: (concept.item_type as ProjectionItemType) || 'concept',
+        clusterId: concept.cluster_id ?? null,
       });
     });
 
@@ -418,6 +442,18 @@ export function EmbeddingLandscapeWorkspace() {
         case 'position':
           color = positionToColor(p.x, p.y, p.z, bounds);
           break;
+        case 'cluster': {
+          const dimmed = highlightedClusters !== null &&
+            (p.clusterId == null || !highlightedClusters.has(p.clusterId));
+          if (dimmed) {
+            color = '#1a1a1a'; // nearly invisible
+          } else {
+            color = p.clusterId != null
+              ? clusterColor(clusterPalette, p.clusterId)
+              : NOISE_COLOR;
+          }
+          break;
+        }
         case 'ontology':
         default:
           color = p.ontologyColor;
@@ -434,9 +470,10 @@ export function EmbeddingLandscapeWorkspace() {
         grounding: p.grounding,
         color,
         itemType: p.itemType,
+        clusterId: p.clusterId,
       };
     });
-  }, [globalProjection, ontologyVisibility, ontologyColors, colorScheme, groundingScale, groundingRamp]);
+  }, [globalProjection, ontologyVisibility, ontologyColors, colorScheme, groundingScale, groundingRamp, highlightedClusters, clusterPalette]);
 
   // Get list of ontologies for UI
   const ontologyList = useMemo(() => {
@@ -459,8 +496,9 @@ export function EmbeddingLandscapeWorkspace() {
     };
   }, [ontologyList, points, globalProjection]);
 
-  // Context menu handlers
+  // Context menu handlers — right-click opens info + actions
   const handleContextMenu = useCallback((point: EmbeddingPoint, screenPos: { x: number; y: number }) => {
+    setSelectedConcept(point);
     setContextMenu({
       x: screenPos.x,
       y: screenPos.y,
@@ -470,6 +508,7 @@ export function EmbeddingLandscapeWorkspace() {
 
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
+    setSelectedConcept(null);
   }, []);
 
   // Navigate to explorer with concept (similarity search)
@@ -603,7 +642,10 @@ export function EmbeddingLandscapeWorkspace() {
                       {(Object.keys(COLOR_SCHEME_INFO) as ColorScheme[]).map(scheme => (
                         <button
                           key={scheme}
-                          onClick={() => setColorScheme(scheme)}
+                          onClick={() => {
+                            setColorScheme(scheme);
+                            if (scheme !== 'cluster') setHighlightedClusters(null);
+                          }}
                           className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
                             colorScheme === scheme
                               ? 'bg-primary/20 text-primary border border-primary/30'
@@ -773,9 +815,8 @@ export function EmbeddingLandscapeWorkspace() {
         ) : (
           <EmbeddingScatter3D
             points={points}
-            onSelectPoint={(point, screenPos) => {
+            onSelectPoint={(point) => {
               setSelectedConcept(point);
-              setSelectedScreenPos(screenPos || null);
             }}
             onContextMenu={handleContextMenu}
             selectedPoint={selectedConcept}
@@ -873,33 +914,27 @@ export function EmbeddingLandscapeWorkspace() {
                 </div>
               </div>
             )}
+            {colorScheme === 'cluster' && globalProjection && (
+              <ClusterLegend
+                clusterCount={globalProjection.statistics.cluster_count ?? 0}
+                clusterSizes={globalProjection.statistics.cluster_sizes ?? {}}
+                clusterNames={globalProjection.statistics.cluster_names ?? {}}
+                noiseCount={globalProjection.statistics.cluster_noise_count ?? 0}
+                highlightedClusters={highlightedClusters}
+                onHighlightChange={setHighlightedClusters}
+                palette={clusterPalette}
+                onPaletteChange={setClusterPalette}
+                sort={clusterSort}
+                onSortChange={setClusterSort}
+              />
+            )}
             <div className="text-muted-foreground/60 mt-2 pt-2 border-t border-border">
               {stats.totalConcepts} points
             </div>
           </div>
         )}
 
-        {/* Selected concept info - using shared NodeInfoBox */}
-        {selectedConcept && selectedScreenPos && (
-          <div className="absolute inset-0 pointer-events-none overflow-visible">
-            <NodeInfoBox
-              info={{
-                nodeId: selectedConcept.id,
-                label: selectedConcept.label,
-                group: selectedConcept.ontology,
-                degree: 0, // Not available in projection data
-                x: selectedScreenPos.x,
-                y: selectedScreenPos.y,
-              }}
-              onDismiss={() => {
-                setSelectedConcept(null);
-                setSelectedScreenPos(null);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Context menu for right-click actions */}
+        {/* Context menu for right-click — info + actions */}
         {contextMenu && (
           <div
             className="absolute z-[9999] bg-card border border-border rounded-lg shadow-xl py-1 min-w-[220px]"
@@ -912,6 +947,20 @@ export function EmbeddingLandscapeWorkspace() {
               </div>
               <div className="text-xs text-muted-foreground truncate">
                 {contextMenu.point.ontology}
+              </div>
+              <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground/70">
+                {contextMenu.point.grounding != null && (
+                  <span>grounding: {contextMenu.point.grounding.toFixed(2)}</span>
+                )}
+                {contextMenu.point.clusterId != null && (
+                  <span className="flex items-center gap-1">
+                    <span
+                      className="inline-block w-2 h-2 rounded-sm"
+                      style={{ backgroundColor: clusterColor(clusterPalette, contextMenu.point.clusterId) }}
+                    />
+                    {globalProjection?.statistics.cluster_names?.[String(contextMenu.point.clusterId)] || `Cluster ${contextMenu.point.clusterId}`}
+                  </span>
+                )}
               </div>
             </div>
             <div className="py-1">

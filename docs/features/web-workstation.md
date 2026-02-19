@@ -75,15 +75,17 @@ Project concepts onto a semantic spectrum between two poles.
 
 ![Embedding Landscape](../media/screenshots/web-embedding-landscape.png)
 
-3D visualization of all concept embeddings using t-SNE or UMAP.
+3D visualization of all concept embeddings using t-SNE or UMAP with automatic DBSCAN cluster detection.
 
 **What you can do:**
 - See the overall shape of your semantic space
-- Identify natural clusters before diving into details
-- Click two concepts to preview a polarity axis
+- View auto-detected clusters with TF-IDF-derived names
+- Toggle cluster visibility to focus on specific regions
+- Switch color palettes (Bold, Warm→Cool, Earth) and sort by name, count, or color
+- Right-click any concept for details and to examine in force graph
 - Plan analysis based on what you see
 
-**Best for:** Discovering semantic dimensions, validating embeddings, global overview before detailed exploration.
+**Best for:** Discovering semantic dimensions, identifying topic clusters, validating embeddings, global overview before detailed exploration.
 
 ---
 

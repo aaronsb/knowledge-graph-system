@@ -112,7 +112,7 @@ const fragmentShader = `
 
 interface Props {
   points: EmbeddingPoint[];
-  onSelectPoint: (point: EmbeddingPoint | null, screenPos?: { x: number; y: number }) => void;
+  onSelectPoint: (point: EmbeddingPoint | null) => void;
   onContextMenu?: (point: EmbeddingPoint, screenPos: { x: number; y: number }) => void;
   selectedPoint: EmbeddingPoint | null;
 }
@@ -346,31 +346,9 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
     }
   }, []);
 
-  // Handle click for selection
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    if (!containerRef.current || !pointsRef.current || !cameraRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-    const intersects = raycasterRef.current.intersectObject(pointsRef.current);
-
-    if (intersects.length > 0) {
-      const idx = intersects[0].index;
-      if (idx !== undefined) {
-        const point = pointDataRef.current[idx];
-        // Pass container-relative coordinates for info box positioning
-        const screenPos = {
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top
-        };
-        onSelectPoint(point || null, screenPos);
-      }
-    } else {
-      onSelectPoint(null);
-    }
+  // Left click deselects (orbit controls handle pan/rotate natively)
+  const handleClick = useCallback(() => {
+    onSelectPoint(null);
   }, [onSelectPoint]);
 
   // Handle right-click for context menu

@@ -14,6 +14,8 @@ The service:
 import json
 import logging
 import hashlib
+import math
+from collections import Counter
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Literal
 import numpy as np
@@ -27,6 +29,14 @@ try:
 except ImportError:
     TSNE_AVAILABLE = False
     logger.warning("sklearn.manifold.TSNE not available")
+
+try:
+    from sklearn.cluster import DBSCAN
+    from sklearn.neighbors import NearestNeighbors
+    DBSCAN_AVAILABLE = True
+except ImportError:
+    DBSCAN_AVAILABLE = False
+    logger.warning("sklearn.cluster.DBSCAN not available")
 
 try:
     from umap import UMAP
@@ -685,6 +695,163 @@ class EmbeddingProjectionService:
 
         return projection.astype(np.float32)
 
+    def _compute_clusters(self, projection: np.ndarray, min_samples: int = 5) -> Dict[str, Any]:
+        """Run DBSCAN on projected coordinates to identify spatial clusters.
+
+        Auto-tunes eps using the 40th percentile of k-NN distances. This
+        produces clusters where no single cluster dominates, giving a
+        "political map" coloring of the embedding space.
+
+        Args:
+            projection: (N, D) array of projected coordinates
+            min_samples: DBSCAN min_samples parameter
+
+        Returns:
+            Dict with cluster_labels, cluster_count, cluster_sizes,
+            eps_used, noise_count
+        """
+        if not DBSCAN_AVAILABLE or len(projection) < min_samples:
+            return {
+                "cluster_labels": np.full(len(projection), -1, dtype=int),
+                "cluster_count": 0,
+                "cluster_sizes": {},
+                "eps_used": 0.0,
+                "noise_count": len(projection),
+            }
+
+        # Compute k-NN distances for eps estimation
+        k = min_samples
+        nn = NearestNeighbors(n_neighbors=k)
+        nn.fit(projection)
+        distances, _ = nn.kneighbors(projection)
+        k_distances = np.sort(distances[:, -1])
+
+        # Use 40th percentile — empirically produces balanced clusters where
+        # no single cluster dominates (largest ~10% of points).
+        # Higher percentiles merge too aggressively; lower ones fragment.
+        eps = float(np.percentile(k_distances, 40))
+
+        # Floor at 1% of data range (minimum 1e-6) to avoid degenerate eps=0
+        data_range = float(np.max(projection.max(axis=0) - projection.min(axis=0)))
+        eps = max(eps, data_range * 0.01, 1e-6)
+
+        # Run DBSCAN
+        db = DBSCAN(eps=eps, min_samples=min_samples)
+        labels = db.fit_predict(projection)
+
+        # Compute stats
+        unique = set(labels)
+        unique.discard(-1)
+        cluster_sizes = {}
+        for label in unique:
+            cluster_sizes[str(int(label))] = int(np.sum(labels == label))
+        noise_count = int(np.sum(labels == -1))
+
+        logger.info(
+            f"DBSCAN clustering: {len(unique)} clusters, "
+            f"{noise_count} noise points, eps={eps:.3f}"
+        )
+
+        return {
+            "cluster_labels": labels,
+            "cluster_count": len(unique),
+            "cluster_sizes": cluster_sizes,
+            "eps_used": eps,
+            "noise_count": noise_count,
+        }
+
+    # Common English stop words for cluster naming
+    _STOP_WORDS = frozenset({
+        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+        "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
+        "being", "have", "has", "had", "do", "does", "did", "will", "would",
+        "could", "should", "may", "might", "shall", "can", "need", "must",
+        "not", "no", "nor", "so", "if", "then", "than", "that", "this",
+        "these", "those", "it", "its", "as", "up", "out", "about", "into",
+        "over", "after", "before", "between", "under", "above", "below",
+        "all", "each", "every", "both", "few", "more", "most", "other",
+        "some", "such", "only", "own", "same", "too", "very", "just",
+        "because", "through", "during", "while", "where", "when", "how",
+        "what", "which", "who", "whom", "why", "any", "many", "much",
+        "also", "back", "even", "still", "well", "way", "use", "her",
+        "his", "he", "she", "they", "we", "you", "your", "their", "our",
+        "us", "me", "my", "based", "using", "used", "via", "per", "vs",
+    })
+
+    def _name_clusters(
+        self,
+        labels: np.ndarray,
+        items: List[Dict[str, Any]],
+    ) -> Dict[int, str]:
+        """Derive descriptive names for clusters from concept labels.
+
+        Uses TF-IDF-style scoring: terms frequent within a cluster but rare
+        across other clusters get the highest score. Top 2 terms form the name.
+
+        Args:
+            labels: DBSCAN cluster assignment per item (-1 = noise)
+            items: List of item dicts with "label" keys
+
+        Returns:
+            Dict mapping cluster_id -> descriptive name string
+        """
+        unique = set(labels)
+        unique.discard(-1)
+        if not unique:
+            return {}
+
+        # Tokenize: collect word counts per cluster
+        cluster_words: Dict[int, Counter] = {}
+        for i, item in enumerate(items):
+            cid = int(labels[i])
+            if cid == -1:
+                continue
+            if cid not in cluster_words:
+                cluster_words[cid] = Counter()
+            words = item.get("label", "").lower().split()
+            for w in words:
+                # Strip non-alpha chars, skip short/stop words
+                w = w.strip("()-/,:;\"'")
+                if len(w) <= 2 or w in self._STOP_WORDS:
+                    continue
+                cluster_words[cid][w] += 1
+
+        # Document frequency: how many clusters contain each term
+        num_clusters = len(unique)
+        doc_freq: Counter = Counter()
+        for wc in cluster_words.values():
+            for w in wc:
+                doc_freq[w] += 1
+
+        # Score terms per cluster: tf * idf
+        # Use str keys to match Pydantic Dict[str, str] models
+        cluster_names: Dict[str, str] = {}
+        for cid in sorted(int(c) for c in unique):
+            wc = cluster_words.get(cid, Counter())
+            key = str(cid)
+            if not wc:
+                cluster_names[key] = f"Cluster {cid}"
+                continue
+
+            total = sum(wc.values())
+            scored = []
+            for w, count in wc.items():
+                tf = count / total
+                if num_clusters <= 1:
+                    # Single cluster: rank by frequency only
+                    scored.append((w, tf, count))
+                else:
+                    idf = math.log(num_clusters / doc_freq[w]) if doc_freq[w] < num_clusters else 0.1
+                    scored.append((w, tf * idf, count))
+
+            # Sort by score desc, break ties by raw count
+            scored.sort(key=lambda x: (-x[1], -x[2]))
+            # Take top 2 terms, title-case
+            top = [s[0].title() for s in scored[:2]]
+            cluster_names[key] = " ".join(top) if top else f"Cluster {cid}"
+
+        return cluster_names
+
     def generate_projection_dataset(
         self,
         ontology: str,
@@ -814,6 +981,14 @@ class EmbeddingProjectionService:
             center=center
         )
 
+        # Run DBSCAN clustering on projected coordinates
+        cluster_result = self._compute_clusters(projection)
+        cluster_labels = cluster_result["cluster_labels"]
+
+        # Derive descriptive names for each cluster from concept labels
+        cluster_names = self._name_clusters(cluster_labels, items)
+        cluster_result["cluster_names"] = cluster_names
+
         # Batch compute fresh grounding if requested (only for concepts)
         fresh_groundings = {}
         if include_grounding and refresh_grounding and embedding_source in ("concepts", "combined"):
@@ -846,7 +1021,8 @@ class EmbeddingProjectionService:
                 "label": item["label"],
                 "x": coords[0],
                 "y": coords[1],
-                "z": coords[2] if n_components == 3 else 0.0
+                "z": coords[2] if n_components == 3 else 0.0,
+                "cluster_id": int(cluster_labels[i]) if cluster_labels[i] != -1 else None
             }
 
             # Add item type for combined mode
@@ -891,6 +1067,12 @@ class EmbeddingProjectionService:
             stats["grounding_range"] = [min(grounding_values), max(grounding_values)]
         if diversity_values:
             stats["diversity_range"] = [min(diversity_values), max(diversity_values)]
+
+        # Cluster statistics
+        stats["cluster_count"] = cluster_result["cluster_count"]
+        stats["cluster_sizes"] = cluster_result["cluster_sizes"]
+        stats["cluster_names"] = cluster_result["cluster_names"]
+        stats["cluster_noise_count"] = cluster_result["noise_count"]
 
         # Generate changelist ID for cache invalidation
         changelist_id = self._generate_changelist_id(f"{ontology}:{embedding_source}", len(items))

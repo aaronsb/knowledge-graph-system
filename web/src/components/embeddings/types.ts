@@ -2,7 +2,7 @@
  * Type definitions for Embedding Landscape visualization (ADR-078)
  */
 
-export type ColorScheme = 'ontology' | 'grounding' | 'position';
+export type ColorScheme = 'ontology' | 'grounding' | 'position' | 'cluster';
 
 // Color scale for grounding visualization
 export type GroundingScale = 'linear' | 'sqrt' | 'log';
@@ -14,6 +14,9 @@ export type GroundingColorRamp =
   | 'purple-white-green' // Colorblind-friendly
   | 'brown-white-teal'  // Colorblind-safe, earthy
   | 'purple-white-orange'; // High contrast
+
+// Color palettes for cluster visualization
+export type ClusterPalette = 'bold' | 'warm-cool' | 'earth';
 
 // Embedding sources available for projection
 export type EmbeddingSource = 'concepts' | 'sources' | 'vocabulary' | 'combined';
@@ -32,6 +35,7 @@ export interface ProjectionConcept {
   diversity_related_count: number | null;
   ontology?: string;  // Source ontology (for cross-ontology mode)
   item_type?: ProjectionItemType;  // For distinguishing in combined view
+  cluster_id?: number | null;  // DBSCAN cluster assignment (null = noise)
 }
 
 // Distance metric for projection algorithm
@@ -58,6 +62,10 @@ export interface ProjectionData {
     embedding_dims: number;
     grounding_range: [number, number] | null;
     diversity_range: [number, number] | null;
+    cluster_count?: number;
+    cluster_sizes?: Record<string, number>;
+    cluster_names?: Record<string, string>;
+    cluster_noise_count?: number;
   };
 }
 
@@ -71,6 +79,7 @@ export interface EmbeddingPoint {
   grounding: number | null;
   color: string;
   itemType: ProjectionItemType;
+  clusterId?: number | null;
 }
 
 export interface OntologySelection {
