@@ -327,6 +327,52 @@ class TestFindPaths:
             paths = facade.find_paths('c_a', 'c_z', max_paths=5)
             assert paths == []
 
+    def test_accel_single_path_filters_phantom_nodes(self, facade):
+        """Single path through non-Concept node (no app_id) → returns None."""
+        facade._accel_available = True
+
+        with patch.object(facade, '_execute_sql') as mock_sql, \
+             patch.object(facade, '_concept_exists', return_value=True), \
+             patch.object(facade, '_find_path_bfs', return_value=None):
+            mock_sql.return_value = [
+                {'step': 0, 'app_id': 'c_a', 'label': 'Concept', 'rel_type': None, 'direction': None},
+                {'step': 1, 'app_id': None, 'label': '', 'rel_type': 'APPEARS', 'direction': 'outgoing'},
+                {'step': 2, 'app_id': 'c_b', 'label': 'Concept', 'rel_type': 'APPEARS', 'direction': 'incoming'},
+            ]
+
+            result = facade.find_path('c_a', 'c_b')
+            # Phantom path filtered, falls through to BFS which returns None
+            assert result is None
+
+    def test_accel_multi_path_filters_phantom_paths(self, facade):
+        """Paths through non-Concept nodes are excluded from multi-path results."""
+        facade._accel_available = True
+
+        with patch.object(facade, '_execute_sql') as mock_sql, \
+             patch.object(facade, '_hydrate_concepts') as mock_hydrate:
+            mock_sql.return_value = [
+                # Path 0: phantom (goes through Source with no app_id)
+                {'path_index': 0, 'step': 0, 'app_id': 'c_a', 'label': 'Concept', 'rel_type': None, 'direction': None},
+                {'path_index': 0, 'step': 1, 'app_id': None, 'label': '', 'rel_type': 'APPEARS', 'direction': 'outgoing'},
+                {'path_index': 0, 'step': 2, 'app_id': 'c_b', 'label': 'Concept', 'rel_type': 'APPEARS', 'direction': 'incoming'},
+                # Path 1: clean semantic path
+                {'path_index': 1, 'step': 0, 'app_id': 'c_a', 'label': 'Concept', 'rel_type': None, 'direction': None},
+                {'path_index': 1, 'step': 1, 'app_id': 'c_c', 'label': 'Concept', 'rel_type': 'CONTAINS', 'direction': 'outgoing'},
+                {'path_index': 1, 'step': 2, 'app_id': 'c_b', 'label': 'Concept', 'rel_type': 'CONTAINS', 'direction': 'outgoing'},
+            ]
+            mock_hydrate.return_value = {
+                'c_a': {'concept_id': 'c_a', 'label': 'A', 'description': ''},
+                'c_b': {'concept_id': 'c_b', 'label': 'B', 'description': ''},
+                'c_c': {'concept_id': 'c_c', 'label': 'C', 'description': ''},
+            }
+
+            paths = facade.find_paths('c_a', 'c_b', max_paths=5)
+
+            # Only the clean path survives
+            assert len(paths) == 1
+            assert paths[0]['hops'] == 2
+            assert paths[0]['path_nodes'][1]['concept_id'] == 'c_c'
+
     def test_same_node_returns_self_path(self, facade):
         """from_id == to_id returns single-node path."""
         with patch.object(facade, '_hydrate_concepts') as mock_hydrate:

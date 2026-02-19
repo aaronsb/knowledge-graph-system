@@ -344,6 +344,7 @@ class GraphFacade:
                     if all(r.get('label', '') in type_set
                            for r in p.get('path_rels', []))
                 ]
+            paths = paths[:max_paths]
             logger.debug(f"find_paths: graph_accel returned {len(paths)} paths")
             return paths
 
@@ -395,16 +396,19 @@ class GraphFacade:
 
         return self._accel_path_rows_to_dict(rows)
 
-    def _accel_path_rows_to_dict(self, rows: List[Dict]) -> Dict[str, Any]:
+    def _accel_path_rows_to_dict(self, rows: List[Dict]) -> Optional[Dict[str, Any]]:
         """Convert graph_accel_path rows to the path dict format.
 
         graph_accel returns: step, app_id, label, rel_type, direction
         We need: path_nodes [{concept_id, label, description}],
                  path_rels [{label, properties}], hops
 
-        Nodes without app_id (Source, Instance) use their AGE vertex label
-        as a fallback display name.
+        Returns None if the path traverses non-Concept nodes (phantom
+        references from dangling edges to Source/Instance/Ontology).
         """
+        if any(not row.get('app_id') for row in rows):
+            return None
+
         node_ids = [row['app_id'] for row in rows]
         path_rels = []
 
@@ -427,7 +431,6 @@ class GraphFacade:
             if data:
                 path_nodes.append(data)
             else:
-                # Non-Concept node (Source, Instance) — use AGE label
                 path_nodes.append({
                     "concept_id": nid or '',
                     "label": row.get('label', '') or '',
@@ -473,6 +476,13 @@ class GraphFacade:
         result = []
         for pi in sorted(paths_by_index.keys()):
             path_rows = paths_by_index[pi]
+
+            # Skip paths containing non-Concept nodes (phantom references
+            # from dangling edges to Source/Instance/Ontology nodes that
+            # aren't loaded in the in-memory graph).
+            if any(not row.get('app_id') for row in path_rows):
+                continue
+
             path_nodes = []
             path_rels = []
 
@@ -482,7 +492,6 @@ class GraphFacade:
                 if data:
                     path_nodes.append(data)
                 else:
-                    # Non-Concept node (Source, Instance) — use AGE label
                     path_nodes.append({
                         "concept_id": nid or '',
                         "label": row.get('label', '') or '',
@@ -982,12 +991,49 @@ class GraphFacade:
         )
         _accel_conn.autocommit = True
 
-        # Set GUCs once for the connection lifetime
         with _accel_conn.cursor() as cur:
             cur.execute("SET graph_accel.node_id_property = 'concept_id'")
 
         logger.info("graph_accel: created dedicated connection")
         return _accel_conn
+
+    # Provenance/bookkeeping edge types that connect Concepts to
+    # infrastructure nodes (Source, Instance, Ontology). Loading these
+    # creates phantom paths through co-occurrence rather than semantics.
+    _INFRA_EDGE_TYPES = frozenset({
+        'APPEARS', 'EVIDENCED_BY', 'FROM_SOURCE',
+        'SCOPED_BY', 'HAS_SOURCE', 'IMAGES',
+    })
+
+    def _set_accel_gucs(self, cur) -> None:
+        """Set graph_accel GUCs for semantic-only graph loading.
+
+        Called after graph_accel_status() has loaded the shared library
+        (which registers the GUCs), but before graph_accel_load().
+        """
+        cur.execute("SET graph_accel.node_labels = 'Concept'")
+        # Build edge type include list by excluding infrastructure types
+        cur.execute(
+            "SELECT l.name FROM ag_catalog.ag_label l "
+            "JOIN ag_catalog.ag_graph g ON l.graph = g.graphid "
+            "WHERE g.name = 'knowledge_graph' AND l.kind = 'e' "
+            "AND l.name NOT LIKE '\\_%'"  # skip internal _ag_label_edge
+        )
+        all_edge_types = {row['name'] for row in cur.fetchall()}
+        semantic_types = sorted(all_edge_types - self._INFRA_EDGE_TYPES)
+        if semantic_types:
+            edge_types_csv = ','.join(semantic_types)
+            cur.execute(f"SET graph_accel.edge_types = %s", (edge_types_csv,))
+        else:
+            logger.warning(
+                "graph_accel: no semantic edge types found — "
+                "edge_types GUC not set (defaults to *)"
+            )
+        logger.info(
+            f"graph_accel: GUCs set — node_labels=Concept, "
+            f"edge_types={len(semantic_types)} semantic / "
+            f"{len(all_edge_types)} total"
+        )
 
     def _execute_sql(
         self,
@@ -1007,12 +1053,18 @@ class GraphFacade:
             conn = self._get_accel_connection()
             try:
                 with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                    # Ensure graph is loaded in this backend
+                    # Ensure graph is loaded in this backend.
+                    # graph_accel_status() triggers library loading, which
+                    # registers GUCs — must call this before setting GUCs.
                     cur.execute("SELECT status FROM graph_accel_status()")
                     status_row = cur.fetchone()
                     backend_status = status_row['status'] if status_row else 'unknown'
                     if backend_status == 'not_loaded':
                         logger.info("graph_accel: loading graph...")
+                        # Set GUCs now that the library is loaded and GUCs
+                        # are registered. These filter what gets loaded into
+                        # the in-memory graph.
+                        self._set_accel_gucs(cur)
                         cur.execute(
                             "SELECT * FROM graph_accel_load(%s)",
                             ('knowledge_graph',)
