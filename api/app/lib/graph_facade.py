@@ -194,14 +194,13 @@ class GraphFacade:
         min_confidence: Optional[float]
     ) -> List[Dict[str, Any]]:
         """graph_accel fast path for neighborhood."""
-        # NaN sentinel means "no filter" in graph_accel
-        conf_param = min_confidence if min_confidence is not None else float('nan')
-
+        # Pass NULL for no confidence filter — Rust Option<f64> maps
+        # None → skip filter, Some(NaN) → reject all (NaN >= x is false).
         rows = self._execute_sql(
             "SELECT app_id, label, distance, path_types "
             "FROM graph_accel_neighborhood(%s, %s, %s, %s) "
             "WHERE label = 'Concept' AND distance > 0",
-            (concept_id, max_depth, direction, conf_param)
+            (concept_id, max_depth, direction, min_confidence)
         )
 
         # graph_accel 'label' is the AGE vertex label ("Concept"), not
@@ -383,12 +382,10 @@ class GraphFacade:
         min_confidence: Optional[float]
     ) -> Optional[Dict[str, Any]]:
         """graph_accel fast path for shortest path."""
-        conf_param = min_confidence if min_confidence is not None else float('nan')
-
         rows = self._execute_sql(
             "SELECT step, app_id, label, rel_type, direction "
             "FROM graph_accel_path(%s, %s, %s, %s, %s)",
-            (from_id, to_id, max_hops, direction, conf_param)
+            (from_id, to_id, max_hops, direction, min_confidence)
         )
 
         if not rows:
@@ -802,11 +799,10 @@ class GraphFacade:
             List of dicts with from_app_id, to_app_id, rel_type
         """
         if self._accel_ready:
-            conf_param = min_confidence if min_confidence is not None else float('nan')
             rows = self._execute_sql(
                 "SELECT from_app_id, from_label, to_app_id, to_label, rel_type "
                 "FROM graph_accel_subgraph(%s, %s, %s, %s)",
-                (start_id, max_depth, direction, conf_param)
+                (start_id, max_depth, direction, min_confidence)
             )
             return [dict(r) for r in rows]
 
