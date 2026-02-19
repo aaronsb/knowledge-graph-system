@@ -1024,6 +1024,11 @@ class GraphFacade:
         if semantic_types:
             edge_types_csv = ','.join(semantic_types)
             cur.execute(f"SET graph_accel.edge_types = %s", (edge_types_csv,))
+        else:
+            logger.warning(
+                "graph_accel: no semantic edge types found — "
+                "edge_types GUC not set (defaults to *)"
+            )
         logger.info(
             f"graph_accel: GUCs set — node_labels=Concept, "
             f"edge_types={len(semantic_types)} semantic / "
