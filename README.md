@@ -32,11 +32,6 @@ cd knowledge-graph-system
 ./operator.sh start   # Start containers
 ```
 
-**Access points:**
-- **Web UI**: http://localhost:3000
-- **API**: http://localhost:8000/docs
-- **CLI**: `kg search "your query"`
-
 See [Quick Start Guide](docs/operating/quick-start.md) for details.
 
 ## See It In Action
