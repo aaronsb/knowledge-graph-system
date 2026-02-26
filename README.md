@@ -1,5 +1,9 @@
 # Knowledge Graph System
 
+![License](https://img.shields.io/github/license/aaronsb/knowledge-graph-system)
+![GitHub stars](https://img.shields.io/github/stars/aaronsb/knowledge-graph-system?style=social)
+![Latest Release](https://img.shields.io/github/v/release/aaronsb/knowledge-graph-system?include_prereleases&label=version)
+
 A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
 
 ![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph-hero.png)
