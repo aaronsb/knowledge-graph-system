@@ -6,7 +6,7 @@
 
 A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
 
-**κ(G)** — vertex connectivity of a graph. The minimum number of connections you'd need to cut before the graph falls apart. A measure of how robust the structure is.
+**[κ(G)](https://en.wikipedia.org/wiki/Connectivity_(graph_theory))** — vertex connectivity of a graph. The minimum number of connections you'd need to cut before the graph falls apart. A measure of how robust the structure is.
 
 Also **kg** — the unit of mass. Because knowledge here has weight. Grounding scores measure how heavy an idea is: well-evidenced claims carry more than thin ones. Contested concepts weigh differently than unchallenged ones.
 
