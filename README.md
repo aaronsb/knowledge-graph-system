@@ -1,4 +1,4 @@
-# kg — κ(G)
+# Kappa Graph — κ(G)
 
 ![License](https://img.shields.io/github/license/aaronsb/knowledge-graph-system)
 ![GitHub stars](https://img.shields.io/github/stars/aaronsb/knowledge-graph-system?style=social)
