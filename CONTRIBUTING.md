@@ -60,4 +60,4 @@ Use the [bug report template](https://github.com/aaronsb/knowledge-graph-system/
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
+By contributing, you agree that your contributions will be licensed under the project's [Apache License 2.0](LICENSE).
