@@ -1,10 +1,14 @@
-# Knowledge Graph System
+# kg — κ(G)
 
 ![License](https://img.shields.io/github/license/aaronsb/knowledge-graph-system)
 ![GitHub stars](https://img.shields.io/github/stars/aaronsb/knowledge-graph-system?style=social)
 ![Latest Release](https://img.shields.io/github/v/release/aaronsb/knowledge-graph-system?include_prereleases&label=version)
 
 A semantic knowledge graph that extracts concepts from documents, tracks how well-supported they are, and remembers where sources disagree.
+
+**κ(G)** — vertex connectivity of a graph. The minimum number of connections you'd need to cut before the graph falls apart. A measure of how robust the structure is.
+
+Also **kg** — the unit of mass. Because knowledge here has weight. Grounding scores measure how heavy an idea is: well-evidenced claims carry more than thin ones. Contested concepts weigh differently than unchallenged ones.
 
 ![2D Force Graph Explorer](docs/media/screenshots/web-2d-force-graph-hero.png)
 
@@ -124,7 +128,7 @@ Documents ──→ [FastAPI] ──→ LLM Extraction ──→ [PostgreSQL + A
 
 Most systems that store knowledge for retrieval — vector databases, RAG pipelines, knowledge graphs — optimize for finding relevant content. They can tell you *what* matches your query. They can't tell you how well-supported it is, whether sources disagree about it, or where the evidence actually came from.
 
-This system adds an epistemic layer on top of the graph. Every concept carries a **grounding score** computed from supporting vs. contradicting evidence — not a label, but a measurement. A concept backed by 47 sources with 12 contradictions scores differently than one with a single unchallenged mention. When sources disagree, the system preserves both sides rather than picking a winner.
+kg adds an epistemic layer on top of the graph. Every concept carries a **grounding score** computed from supporting vs. contradicting evidence — not a label, but a measurement. A concept backed by 47 sources with 12 contradictions scores differently than one with a single unchallenged mention. When sources disagree, the system preserves both sides rather than picking a winner.
 
 **Semantic diversity** provides a second signal. Well-established knowledge tends to connect across independent domains. Narrow claims that only reference each other score lower. In testing, Apollo 11 mission data showed 37.7% diversity across 33 concepts; moon landing conspiracy content showed 23.2% across 3.
 
@@ -132,7 +136,7 @@ The system also handles images. Feed it street view photos and the extracted rel
 
 ### How It Compares
 
-| Capability | This System | GraphRAG | Zep/Graphiti | Vector DBs |
+| Capability | kg | GraphRAG | Zep/Graphiti | Vector DBs |
 |------------|-------------|----------|--------------|------------|
 | Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No |
 | Grounding scores | Continuous -1 to +1 | Source citations only | No | Similarity only |
@@ -142,7 +146,7 @@ The system also handles images. Feed it street view photos and the extracted rel
 | Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Some local |
 | Dynamic vocabulary | Emergent + consolidation | Fixed schema | Fixed schema | N/A |
 
-Zep/Graphiti has better temporal tracking (bi-temporal model). GraphRAG has broader community adoption. This system fills the gap for epistemic metrics — measuring confidence rather than just retrieving content.
+Zep/Graphiti has better temporal tracking (bi-temporal model). GraphRAG has broader community adoption. kg fills the gap for epistemic metrics — measuring confidence rather than just retrieving content.
 
 ## Why Try It
 
@@ -153,11 +157,11 @@ If you need:
 - **Local operation** — running without cloud API dependencies
 - **Unix integration** — using standard tools on semantic data
 
-This system was built for those requirements. Most alternatives optimize for retrieval accuracy or comprehensiveness. We optimize for *knowing what you know and how well you know it*.
+kg was built for those requirements. Most alternatives optimize for retrieval accuracy or comprehensiveness. kg optimizes for *knowing what you know and how well you know it*.
 
 ## License
 
-**Elastic License 2.0** — Free for internal use and product integration. Not permitted as a managed service.
+**Apache License 2.0** — Use, modify, distribute freely. Patent grant included.
 
 ## Acknowledgments
 
