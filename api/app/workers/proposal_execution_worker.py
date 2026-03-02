@@ -44,6 +44,11 @@ def run_proposal_execution_worker(
         f"proposal={proposal_id}, triggered_by={triggered_by}"
     )
 
+    # ADR-100: Check for cancellation before start
+    if job_queue.is_job_cancelled(job_id):
+        logger.info(f"Proposal execution job {job_id} cancelled before start")
+        return {"status": "cancelled"}
+
     job_queue.update_job(job_id, {
         "progress": {"stage": "loading_proposal", "percent": 0}
     })

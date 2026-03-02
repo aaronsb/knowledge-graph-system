@@ -126,8 +126,7 @@ async def run_image_job_analysis(job_id: str, auto_approve: bool = False):
                 "approved_at": to_iso(timedelta_from_now()),
                 "approved_by": "auto"
             })
-            # Execute immediately (ADR-031: Non-blocking execution)
-            queue.execute_job_async(job_id)
+            # ADR-100: Lane manager will claim the approved job
 
     except Exception as e:
         # If analysis fails, mark job as failed

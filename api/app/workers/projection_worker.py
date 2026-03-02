@@ -62,6 +62,11 @@ def run_projection_worker(
 
         logger.info(f"📊 Projection worker started: {job_id}")
 
+        # ADR-100: Check for cancellation before expensive computation
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Projection job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         # Update progress
         job_queue.update_job(job_id, {
             "status": "processing",

@@ -11,17 +11,20 @@ from datetime import datetime
 from pathlib import Path
 
 
-class HealthCheckFilter(logging.Filter):
+class PollingEndpointFilter(logging.Filter):
     """
-    Filter out health check requests from Uvicorn access logs.
+    Filter out high-frequency polling endpoints from Uvicorn access logs.
 
-    Health checks run every 10 seconds and create excessive log noise.
-    This filter suppresses /health endpoint logs while keeping all other requests visible.
+    These endpoints are polled every few seconds and create excessive log noise:
+    - /health: container health checks (every 10s)
+    - /database/epoch: FUSE driver change detection (every 5s)
     """
+
+    _suppressed_paths = ("/health", "/database/epoch")
+
     def filter(self, record: logging.LogRecord) -> bool:
-        # Suppress logs containing "/health" path
         message = record.getMessage()
-        return "/health" not in message
+        return not any(path in message for path in self._suppressed_paths)
 
 
 def setup_logging(log_level: str = "INFO") -> logging.Logger:
@@ -82,7 +85,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     # Configure Uvicorn loggers for consistent formatting and filtering
     # 1. uvicorn.access - HTTP access logs (filter out health checks)
     uvicorn_access = logging.getLogger("uvicorn.access")
-    uvicorn_access.addFilter(HealthCheckFilter())
+    uvicorn_access.addFilter(PollingEndpointFilter())
     uvicorn_access.handlers.clear()
     uvicorn_access_handler = logging.StreamHandler()
     uvicorn_access_handler.setFormatter(console_formatter)

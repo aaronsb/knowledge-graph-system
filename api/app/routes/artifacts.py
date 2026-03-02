@@ -607,8 +607,7 @@ async def regenerate_artifact(
                 "approved_by": current_user.username
             })
 
-            # Start job in background
-            background_tasks.add_task(queue.queue_serial_job, job_id)
+            # ADR-100: Lane manager will claim the approved job
 
             logger.info(f"Artifact {artifact_id} regeneration job submitted: {job_id}")
 

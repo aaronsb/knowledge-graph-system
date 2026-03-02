@@ -67,6 +67,11 @@ def run_vocab_consolidate_worker(
         )
 
         # Initialize manager and client
+        # ADR-100: Check for cancellation before start
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Vocab consolidation job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         manager = get_vocabulary_manager()
         client = AGEClient()
 

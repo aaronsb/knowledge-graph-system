@@ -112,6 +112,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-# Start FastAPI server with uvicorn
-# Production mode by default; dev overlay adds --reload for hot reload
-CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start FastAPI server with uvicorn (multi-worker in both dev and prod)
+CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

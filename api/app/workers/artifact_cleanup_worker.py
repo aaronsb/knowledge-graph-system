@@ -75,6 +75,11 @@ def run_artifact_cleanup_worker(
                     garage_errors = 0
 
                     for artifact_id, artifact_type, garage_key, owner_id in expired:
+                        # ADR-100: Check for cancellation between deletions
+                        if job_queue.is_job_cancelled(job_id):
+                            logger.info(f"Artifact cleanup cancelled after {garage_deleted} deletions")
+                            break
+
                         if garage_key:
                             try:
                                 storage.delete(garage_key)

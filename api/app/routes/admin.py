@@ -392,9 +392,7 @@ async def restore_backup(
 
         logger.info(f"Created restore job {job_id} for temp file {temp_path}")
 
-        # Execute restore job immediately (authenticated operations don't need approval)
-        # ADR-031: Use execute_job_async for non-blocking execution
-        background_tasks.add_task(job_queue.execute_job_async, job_id)
+        # ADR-100: Lane manager will claim the approved job
 
         return {
             "job_id": job_id,

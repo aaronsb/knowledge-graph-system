@@ -415,6 +415,24 @@ class PostgreSQLJobQueue(JobQueue):
         finally:
             self._return_connection(conn)
 
+    def is_job_cancelled(self, job_id: str) -> bool:
+        """Check if a running job has been flagged for cancellation (ADR-100).
+
+        Workers call this at yield points (chunk boundaries, loop iterations)
+        to detect cancellation requests from the admin API.
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT cancelled FROM kg_api.jobs WHERE job_id = %s",
+                    (job_id,)
+                )
+                row = cur.fetchone()
+                return bool(row and row[0])
+        finally:
+            self._return_connection(conn)
+
     def list_jobs(
         self,
         status: Optional[str] = None,
@@ -776,8 +794,11 @@ class PostgreSQLJobQueue(JobQueue):
 
     def execute_job(self, job_id: str):
         """
-        Execute a job (called by BackgroundTasks).
-        Bridge between FastAPI and worker functions.
+        Execute a job (called by lane manager or BackgroundTasks).
+        Bridge between job dispatch and worker functions.
+
+        ADR-100: The lane manager's claim query already sets status='running'.
+        This method skips the redundant status update.
         """
         job = self.get_job(job_id)
         if not job:
@@ -792,18 +813,22 @@ class PostgreSQLJobQueue(JobQueue):
             })
             return
 
-        # Update to running
-        self.update_job(job_id, {"status": "running"})
-
         try:
             # Execute worker (pass queue ref for progress updates)
             result = worker_func(job["job_data"], job_id, self)
 
-            # Mark completed
-            self.update_job(job_id, {
-                "status": "completed",
-                "result": result
-            })
+            # ADR-100: Workers return {"status": "cancelled"} when they detect
+            # the cancellation flag. Reflect that in the job status.
+            if isinstance(result, dict) and result.get("status") == "cancelled":
+                self.update_job(job_id, {
+                    "status": "cancelled",
+                    "result": result
+                })
+            else:
+                self.update_job(job_id, {
+                    "status": "completed",
+                    "result": result
+                })
 
         except Exception as e:
             # Mark failed
@@ -811,10 +836,6 @@ class PostgreSQLJobQueue(JobQueue):
                 "status": "failed",
                 "error": str(e)
             })
-        finally:
-            # If this was a serial job, process next in queue (database-backed)
-            if job.get("processing_mode") == "serial":
-                self._process_next_serial_job()
 
     def queue_serial_job(self, job_id: str):
         """

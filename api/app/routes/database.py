@@ -34,7 +34,7 @@ def get_age_client() -> AGEClient:
 
 
 @router.get("/stats", response_model=DatabaseStatsResponse)
-async def get_database_stats(
+def get_database_stats(
     current_user: CurrentUser
 ):
     """
@@ -124,7 +124,7 @@ async def get_database_stats(
 
 
 @router.get("/info", response_model=DatabaseInfoResponse)
-async def get_database_info(
+def get_database_info(
     current_user: CurrentUser
 ):
     """
@@ -180,7 +180,7 @@ async def get_database_info(
 
 
 @router.get("/health", response_model=DatabaseHealthResponse)
-async def check_database_health():
+def check_database_health():
     """
     Check database health and connectivity.
 
@@ -267,7 +267,7 @@ async def check_database_health():
 
 
 @router.get("/epoch")
-async def get_graph_epoch(
+def get_graph_epoch(
     current_user: CurrentUser
 ):
     """
@@ -298,7 +298,7 @@ async def get_graph_epoch(
 
 
 @router.get("/counters")
-async def get_graph_counters(
+def get_graph_counters(
     current_user: CurrentUser
 ):
     """
@@ -377,7 +377,7 @@ async def get_graph_counters(
 
 
 @router.post("/counters/refresh")
-async def refresh_graph_counters(
+def refresh_graph_counters(
     current_user: CurrentUser
 ):
     """
@@ -436,7 +436,7 @@ async def refresh_graph_counters(
 
 
 @router.post("/query", response_model=CypherQueryResponse)
-async def execute_cypher_query(
+def execute_cypher_query(
     request: CypherQueryRequest,
     current_user: CurrentUser
 ):

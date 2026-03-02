@@ -30,11 +30,15 @@ import os
 from typing import Optional, Annotated, Dict, Any
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
+import logging
 import psycopg2
+from psycopg2.pool import ThreadedConnectionPool
 
 from api.app.lib.auth import decode_access_token, verify_api_key
 from api.app.lib.oauth_utils import hash_token
 from api.app.models.auth import UserInDB, TokenData
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -56,22 +60,91 @@ api_key_scheme = HTTPBearer(
 
 
 # =============================================================================
-# Database Connection Helper
+# Database Connection Pool (shared across auth/permission checks)
 # =============================================================================
+# Replaces per-request psycopg2.connect() calls that created unpooled
+# connections on every authenticated request (2 raw conns per request).
+# With web UI polling every 3s and lane manager polling, the raw connection
+# churn caused timeouts under concurrent load (#346).
+
+_auth_pool: Optional[ThreadedConnectionPool] = None
+_auth_pool_lock = __import__("threading").Lock()
+
+
+def _get_auth_pool() -> ThreadedConnectionPool:
+    """Lazily initialize the auth connection pool (thread-safe)."""
+    global _auth_pool
+    if _auth_pool is not None and not _auth_pool.closed:
+        return _auth_pool
+    with _auth_pool_lock:
+        # Double-check after acquiring lock
+        if _auth_pool is None or _auth_pool.closed:
+            _auth_pool = ThreadedConnectionPool(
+                minconn=1,
+                maxconn=5,
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", "5432")),
+                database=os.getenv("POSTGRES_DB", "knowledge_graph"),
+                user=os.getenv("POSTGRES_USER", "admin"),
+                password=os.environ["POSTGRES_PASSWORD"],
+            )
+            logger.info("Auth connection pool initialized (min=1, max=5)")
+    return _auth_pool
+
+
+class _PooledConnection:
+    """Wrapper that returns connection to pool on close() instead of destroying it.
+
+    Allows callers that do `conn = get_db_connection(); try: ...; finally: conn.close()`
+    to work unchanged — close() returns the connection to the pool.
+    """
+
+    def __init__(self, conn, pool: ThreadedConnectionPool):
+        self._conn = conn
+        self._pool = pool
+
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        """Return connection to pool instead of closing it."""
+        try:
+            self._conn.reset()
+            self._pool.putconn(self._conn)
+        except Exception:
+            # Connection is broken — discard it rather than poison the pool
+            self._pool.putconn(self._conn, close=True)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    @property
+    def autocommit(self):
+        return self._conn.autocommit
+
+    @autocommit.setter
+    def autocommit(self, value):
+        self._conn.autocommit = value
+
 
 def get_db_connection():
-    """
-    Get PostgreSQL database connection.
+    """Get a pooled PostgreSQL connection for auth/permission operations.
 
-    Uses environment variables for configuration.
+    Returns a wrapper whose close() returns the connection to the pool.
+    Callers use the same try/finally pattern as before.
     """
-    return psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST", "localhost"),
-        port=int(os.getenv("POSTGRES_PORT", "5432")),
-        database=os.getenv("POSTGRES_DB", "knowledge_graph"),
-        user=os.getenv("POSTGRES_USER", "admin"),
-        password=os.environ["POSTGRES_PASSWORD"]
-    )
+    pool = _get_auth_pool()
+    conn = pool.getconn()
+    return _PooledConnection(conn, pool)
 
 
 # =============================================================================

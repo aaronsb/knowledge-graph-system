@@ -126,9 +126,9 @@ class JobScheduler:
             serial_jobs.sort(key=lambda j: j.get("created_at", ""))
             oldest_job = serial_jobs[0]
 
-            logger.info(f"Found stuck approved job, starting: {oldest_job['job_id']}")
-            # Use queue_serial_job which handles database state atomically
-            queue.queue_serial_job(oldest_job["job_id"])
+            # ADR-100: Stuck approved jobs will be claimed by lane manager poll loops.
+            # No manual dispatch needed — just log for visibility.
+            logger.info(f"Found stuck approved job (lane manager will claim): {oldest_job['job_id']}")
 
     async def cleanup_jobs(self):
         """
@@ -197,7 +197,64 @@ class JobScheduler:
         if deleted_failed > 0:
             logger.info(f"Deleted {deleted_failed} old failed jobs")
 
-        # Task 4: Annealing proposal lifecycle cleanup
+        # Task 4 (ADR-100): Reap stale running jobs past their lane timeout.
+        # NOTE: The JOIN assumes each job_type appears in exactly one lane.
+        # If a job_type were in multiple lanes, it could match against the
+        # wrong lane's stale_timeout_minutes. The worker_registry enforces
+        # this by assigning each type to a single lane.
+        try:
+            conn = queue._get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE kg_api.jobs j
+                        SET status = 'approved',
+                            claimed_by = NULL,
+                            claimed_at = NULL,
+                            retries = j.retries + 1
+                        FROM kg_api.worker_lanes wl
+                        WHERE j.status = 'running'
+                          AND j.claimed_at IS NOT NULL
+                          AND j.claimed_at < NOW() - (wl.stale_timeout_minutes || ' minutes')::INTERVAL
+                          AND j.job_type = ANY(wl.job_types)
+                          AND j.retries < j.max_retries
+                        RETURNING j.job_id, j.job_type, j.retries, j.max_retries
+                    """)
+                    reaped = cur.fetchall()
+                    conn.commit()
+
+                    for job_id, job_type, retries, max_retries in reaped:
+                        logger.warning(
+                            f"Reaped stale job {job_id} ({job_type}), "
+                            f"retry {retries}/{max_retries} — returned to approved"
+                        )
+
+                    # Also fail jobs that exceeded max_retries
+                    cur.execute("""
+                        UPDATE kg_api.jobs j
+                        SET status = 'failed',
+                            error = 'Exceeded max retries after stale timeouts',
+                            completed_at = NOW()
+                        FROM kg_api.worker_lanes wl
+                        WHERE j.status = 'running'
+                          AND j.claimed_at IS NOT NULL
+                          AND j.claimed_at < NOW() - (wl.stale_timeout_minutes || ' minutes')::INTERVAL
+                          AND j.job_type = ANY(wl.job_types)
+                          AND j.retries >= j.max_retries
+                        RETURNING j.job_id, j.job_type
+                    """)
+                    failed = cur.fetchall()
+                    conn.commit()
+
+                    for job_id, job_type in failed:
+                        logger.error(f"Failed stale job {job_id} ({job_type}) — exceeded max retries")
+
+            finally:
+                queue._return_connection(conn)
+        except Exception as e:
+            logger.error(f"Error reaping stale jobs: {e}", exc_info=True)
+
+        # Task 5: Annealing proposal lifecycle cleanup
         try:
             conn = queue._get_connection()
             try:
@@ -242,9 +299,9 @@ class JobScheduler:
                                 "status": "approved",
                                 "approved_by": "scheduler_recovery",
                             })
-                            queue.execute_job_async(exec_job_id)
+                            # ADR-100: Lane manager will claim the approved job
                             logger.info(
-                                f"Re-dispatched stranded proposal {proposal_id} "
+                                f"Re-enqueued stranded proposal {proposal_id} "
                                 f"as job {exec_job_id}"
                             )
                         except Exception as e:

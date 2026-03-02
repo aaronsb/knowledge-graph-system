@@ -64,7 +64,8 @@ COMMENT ON COLUMN public.schema_migrations.applied_at IS 'Timestamp when migrati
 -- KG_API SCHEMA - Operational State
 -- ============================================================================
 
--- Job Queue (ADR-014, ADR-024)
+-- Job Queue (ADR-014, ADR-024, ADR-100)
+-- Note: table renamed from ingestion_jobs to jobs in migration 019
 CREATE TABLE kg_api.ingestion_jobs (
     job_id VARCHAR(50) PRIMARY KEY,
     job_type VARCHAR(50) NOT NULL,
@@ -86,6 +87,13 @@ CREATE TABLE kg_api.ingestion_jobs (
     result JSONB,
     analysis JSONB,            -- Pre-ingestion cost estimates (ADR-014)
     processing_mode VARCHAR(20) DEFAULT 'serial' CHECK (processing_mode IN ('serial', 'parallel')),
+    -- ADR-100: Database-driven job dispatch columns
+    priority INTEGER NOT NULL DEFAULT 0,            -- Higher = claimed first
+    claimed_by TEXT,                                 -- Worker ID that claimed this job
+    claimed_at TIMESTAMPTZ,                          -- When claimed
+    cancelled BOOLEAN NOT NULL DEFAULT FALSE,        -- Cooperative cancellation flag
+    retries INTEGER NOT NULL DEFAULT 0,              -- Times re-queued after stale timeout
+    max_retries INTEGER NOT NULL DEFAULT 3,          -- Max retries before failing
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
@@ -100,8 +108,27 @@ CREATE INDEX idx_jobs_ontology ON kg_api.ingestion_jobs(ontology);
 CREATE INDEX idx_jobs_created_at ON kg_api.ingestion_jobs(created_at DESC);
 CREATE INDEX idx_jobs_client_id ON kg_api.ingestion_jobs(client_id);
 CREATE INDEX idx_jobs_content_hash ON kg_api.ingestion_jobs(content_hash);
+-- ADR-100: Claim query index (poll-and-claim dispatch)
+CREATE INDEX idx_jobs_claim ON kg_api.ingestion_jobs (status, priority DESC, created_at ASC)
+    WHERE status = 'approved';
+-- ADR-100: Stale job recovery index
+CREATE INDEX idx_jobs_stale_recovery ON kg_api.ingestion_jobs (claimed_at)
+    WHERE status = 'running' AND claimed_at IS NOT NULL;
 
-COMMENT ON TABLE kg_api.ingestion_jobs IS 'Job queue (replaces SQLite jobs.db) - ADR-014, ADR-024';
+COMMENT ON TABLE kg_api.ingestion_jobs IS 'Job queue (replaces SQLite jobs.db) - ADR-014, ADR-024, ADR-100';
+
+-- Worker Lanes (ADR-100)
+CREATE TABLE kg_api.worker_lanes (
+    name         TEXT PRIMARY KEY,
+    job_types    TEXT[] NOT NULL,
+    max_slots    INTEGER NOT NULL DEFAULT 1,
+    poll_interval_ms INTEGER NOT NULL DEFAULT 5000,
+    stale_timeout_minutes INTEGER NOT NULL DEFAULT 30,
+    enabled      BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE kg_api.worker_lanes IS 'Worker lane configuration for database-driven job dispatch (ADR-100)';
 
 -- Active Sessions
 CREATE TABLE kg_api.sessions (
@@ -772,7 +799,8 @@ VALUES
     ('jobs', 'Ingestion job management', ARRAY['read', 'write', 'approve', 'delete'], FALSE, 'system'),
     ('users', 'User account management', ARRAY['read', 'write', 'delete'], FALSE, 'system'),
     ('roles', 'Role and permission management', ARRAY['read', 'write', 'delete'], FALSE, 'system'),
-    ('resources', 'Resource type registration', ARRAY['read', 'write', 'delete'], FALSE, 'system')
+    ('resources', 'Resource type registration', ARRAY['read', 'write', 'delete'], FALSE, 'system'),
+    ('workers', 'Worker lane management and job control (ADR-100)', ARRAY['view', 'manage'], FALSE, 'system')
 ON CONFLICT (resource_type) DO NOTHING;
 
 -- Seed builtin roles (ADR-028)
@@ -827,7 +855,10 @@ VALUES
     ('admin', 'roles', 'delete', 'global', TRUE),
     ('admin', 'resources', 'read', 'global', TRUE),
     ('admin', 'resources', 'write', 'global', TRUE),
-    ('admin', 'resources', 'delete', 'global', TRUE)
+    ('admin', 'resources', 'delete', 'global', TRUE),
+    -- admin: worker management (ADR-100)
+    ('admin', 'workers', 'view', 'global', TRUE),
+    ('admin', 'workers', 'manage', 'global', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Seed builtin relationship vocabulary (ADR-025)
@@ -879,6 +910,20 @@ VALUES
     ('synonym_threshold_moderate', '0.70', 'Moderate synonym threshold (review)', 'system'),
     ('low_value_threshold', '1.0', 'Value score threshold for pruning consideration', 'system')
 ON CONFLICT (key) DO NOTHING;
+
+-- Seed default worker lanes (ADR-100)
+INSERT INTO kg_api.worker_lanes (name, job_types, max_slots, poll_interval_ms, stale_timeout_minutes)
+VALUES
+    ('interactive',
+     ARRAY['ingestion', 'ingest_image', 'polarity'],
+     2, 2000, 30),
+    ('maintenance',
+     ARRAY['projection', 'vocab_refresh', 'epistemic_remeasurement', 'ontology_annealing', 'proposal_execution'],
+     1, 15000, 60),
+    ('system',
+     ARRAY['restore', 'vocab_consolidate', 'artifact_cleanup', 'source_embedding'],
+     1, 30000, 120)
+ON CONFLICT (name) DO NOTHING;
 
 -- Seed initial ontology version (ADR-026)
 INSERT INTO kg_api.ontology_versions (

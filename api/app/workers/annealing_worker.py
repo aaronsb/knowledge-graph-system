@@ -78,6 +78,11 @@ def run_annealing_worker(
             "progress": {"stage": "scoring", "percent": 10}
         })
 
+        # ADR-100: Check for cancellation before expensive scoring
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Annealing job {job_id} cancelled before scoring")
+            return {"status": "cancelled"}
+
         result = asyncio.run(manager.run_annealing_cycle(
             demotion_threshold=demotion_threshold,
             promotion_min_degree=promotion_min_degree,
@@ -93,6 +98,11 @@ def run_annealing_worker(
         proposal_ids = result.get("proposal_ids", [])
 
         if automation_level == "autonomous" and not dry_run and proposal_ids:
+            # ADR-100: Check for cancellation before dispatching proposals
+            if job_queue.is_job_cancelled(job_id):
+                logger.info(f"Annealing job {job_id} cancelled before proposal dispatch")
+                return {"status": "cancelled", **result}
+
             job_queue.update_job(job_id, {
                 "progress": {"stage": "executing_proposals", "percent": 90}
             })
@@ -180,12 +190,12 @@ def _auto_approve_and_dispatch(
                     "status": "approved",
                     "approved_by": "annealing_worker",
                 })
-                job_queue.execute_job_async(exec_job_id)
+                # ADR-100: Lane manager will claim the approved job
                 dispatched += 1
 
                 logger.info(
                     f"Auto-approved proposal {proposal_id}, "
-                    f"dispatched execution job {exec_job_id}"
+                    f"enqueued execution job {exec_job_id}"
                 )
             except Exception as e:
                 logger.error(

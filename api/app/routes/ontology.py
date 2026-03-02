@@ -450,10 +450,10 @@ async def review_proposal(
                     "status": "approved",
                     "approved_by": reviewer,
                 })
-                queue.execute_job_async(exec_job_id)
+                # ADR-100: Lane manager will claim the approved job
                 proposal.execution_job_id = exec_job_id
                 logger.info(
-                    f"Dispatched execution job {exec_job_id} for "
+                    f"Enqueued execution job {exec_job_id} for "
                     f"proposal {proposal_id}"
                 )
             except Exception as e:
@@ -537,7 +537,7 @@ async def trigger_annealing_cycle(
         "status": "approved",
         "approved_by": current_user.username if current_user else "api",
     })
-    queue.execute_job_async(job_id)
+    # ADR-100: Lane manager will claim the approved job
 
     # Return immediately with job info — client can poll job status
     # For dry_run or small graphs, this completes quickly
