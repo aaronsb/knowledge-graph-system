@@ -21,7 +21,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
     response_model=JobStatus,
     summary="Get job status"
 )
-async def get_job_status(
+def get_job_status(
     job_id: str,
     current_user: CurrentUser
 ):
@@ -68,7 +68,7 @@ async def get_job_status(
     response_model=List[JobStatus],
     summary="List jobs"
 )
-async def list_jobs(
+def list_jobs(
     current_user: CurrentUser,
     status: Optional[str] = Query(
         None,
@@ -121,7 +121,7 @@ async def list_jobs(
     "/{job_id}",
     summary="Cancel or delete a job"
 )
-async def cancel_or_delete_job(
+def cancel_or_delete_job(
     job_id: str,
     current_user: CurrentUser,
     purge: bool = Query(False, description="Permanently delete job record"),
@@ -210,7 +210,7 @@ async def cancel_or_delete_job(
     "/{job_id}/approve",
     summary="Approve a job for processing"
 )
-async def approve_job(
+def approve_job(
     job_id: str,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser
@@ -281,7 +281,7 @@ async def approve_job(
     "",
     summary="Delete jobs with filters"
 )
-async def delete_jobs(
+def delete_jobs(
     current_user: CurrentUser,
     confirm: bool = Query(False, description="Must set to true to confirm deletion"),
     dry_run: bool = Query(False, description="Preview what would be deleted without deleting"),

@@ -371,7 +371,7 @@ app.include_router(storage_admin.router)  # Storage diagnostics
 
 # Root endpoint
 @app.get("/", tags=["health"])
-async def root():
+def root():
     """API health check and info"""
     try:
         queue = get_job_queue()
@@ -424,7 +424,7 @@ async def root():
 
 
 @app.get("/health", tags=["health"])
-async def health():
+def health():
     """
     Health check endpoint with component status.
 
