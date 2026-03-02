@@ -1,9 +1,10 @@
 """
-IngestionMixin — Write-back queue and ingestion submission.
+IngestionMixin — Write-back queue, ingestion submission, and job polling.
 
-Handles the background flush task, API submission, and cache invalidation
-after ingestion completes. Also defines module-level constants shared by
-other mixins (WRITE_BACK_DELAY, MAX_INGESTION_SIZE, IMAGE_EXTENSIONS).
+Handles the background flush task, API submission, active job polling,
+and cache invalidation after ingestion completes. Also defines module-level
+constants shared by other mixins (WRITE_BACK_DELAY, MAX_INGESTION_SIZE,
+IMAGE_EXTENSIONS).
 """
 
 import logging
@@ -21,6 +22,10 @@ MAX_INGESTION_SIZE = 50 * 1024 * 1024
 # Zero = flush on next background tick (~1s). Non-zero gives editors time
 # to finish their create→write→release→rename dance before we commit.
 WRITE_BACK_DELAY = 0
+
+# How often to poll active jobs for completion (seconds).
+# Balances responsiveness (flag files disappear promptly) against API load.
+JOB_POLL_INTERVAL = 5
 
 # Supported image extensions (matches API's _is_image_file and CLI's isImageFile)
 IMAGE_EXTENSIONS = frozenset({'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'})
@@ -52,6 +57,47 @@ class IngestionMixin:
             for key, entry in ready:
                 del self._pending_ingestions[key]
                 await self._ingest_and_notify(entry)
+
+    async def _poll_active_jobs(self):
+        """Background task: poll tracked jobs for completion.
+
+        Without this, .ingesting flag files only clear when explicitly read.
+        This loop polls the API every JOB_POLL_INTERVAL seconds for any
+        tracked jobs and marks terminal ones for removal, so the next
+        directory listing drops the flag file.
+        """
+        import trio
+        from ..job_tracker import TERMINAL_JOB_STATUSES
+
+        while True:
+            await trio.sleep(JOB_POLL_INTERVAL)
+            # Snapshot job list to avoid mutation during iteration
+            jobs = list(self._job_tracker._jobs.values())
+            if not jobs:
+                continue
+
+            for job in jobs:
+                if job.marked_for_removal:
+                    continue
+                try:
+                    data = await self._api.get(f"/jobs/{job.job_id}")
+                    status = data.get("status", "unknown")
+                    if status in TERMINAL_JOB_STATUSES:
+                        self._job_tracker.mark_job_status(job.job_id, status)
+                        log.info(f"Job {job.job_id} completed ({status}), clearing flag")
+                        # Invalidate ingest dir so next readdir drops the file
+                        for find_fn in (self._find_ingest_dir_inode, self._find_documents_dir_inode):
+                            dir_inode = find_fn(job.ontology)
+                            if dir_inode:
+                                self._invalidate_cache(dir_inode)
+                                try:
+                                    pyfuse3.invalidate_inode(dir_inode, attr_only=False)
+                                except Exception:
+                                    pass
+                except Exception as e:
+                    # Job may have been deleted or API unreachable
+                    log.debug(f"Poll failed for job {job.job_id}: {e}")
+                    self._job_tracker.mark_job_not_found(job.job_id)
 
     async def _ingest_and_notify(self, entry: dict):
         """Submit a write-back entry to the ingestion API and invalidate caches."""
