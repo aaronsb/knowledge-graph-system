@@ -357,6 +357,16 @@ def run_ingestion_worker(
                 logger.debug(f"⏭️  Skipping chunk {i} (already processed)")
                 continue
 
+            # ADR-100: Check for cancellation at chunk boundary
+            if job_queue.is_job_cancelled(job_id):
+                logger.info(f"Job {job_id} cancelled at chunk {i}/{len(chunks)}")
+                return {
+                    "status": "cancelled",
+                    "chunks_processed": i - 1,
+                    "chunks_total": len(chunks),
+                    "stats": stats.to_dict()
+                }
+
             # Process chunk
             recent_concept_ids = process_chunk(
                 chunk=chunk,

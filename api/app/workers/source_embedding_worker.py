@@ -62,6 +62,11 @@ def run_source_embedding_worker(
     try:
         logger.info(f"📝 Source embedding worker started: {job_id}")
 
+        # ADR-100: Check for cancellation before start
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Source embedding job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         # Update progress
         job_queue.update_job(job_id, {
             "status": "processing",

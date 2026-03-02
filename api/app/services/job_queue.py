@@ -415,6 +415,24 @@ class PostgreSQLJobQueue(JobQueue):
         finally:
             self._return_connection(conn)
 
+    def is_job_cancelled(self, job_id: str) -> bool:
+        """Check if a running job has been flagged for cancellation (ADR-100).
+
+        Workers call this at yield points (chunk boundaries, loop iterations)
+        to detect cancellation requests from the admin API.
+        """
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT cancelled FROM kg_api.jobs WHERE job_id = %s",
+                    (job_id,)
+                )
+                row = cur.fetchone()
+                return bool(row and row[0])
+        finally:
+            self._return_connection(conn)
+
     def list_jobs(
         self,
         status: Optional[str] = None,

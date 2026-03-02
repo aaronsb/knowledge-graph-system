@@ -67,6 +67,11 @@ def run_restore_worker(
     client = None
 
     try:
+        # ADR-100: Check for cancellation before restore
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Restore job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         # Stage 1: Create checkpoint backup (ADR-015 Safety Pattern)
         logger.info(f"[{job_id}] Creating checkpoint backup before restore")
         job_queue.update_job(job_id, {

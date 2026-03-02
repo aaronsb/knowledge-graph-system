@@ -59,6 +59,11 @@ def run_vocab_refresh_worker(
             f"Vocab refresh params: only_computed={only_computed}"
         )
 
+        # ADR-100: Check for cancellation before start
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Vocab refresh job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         # Initialize categorizer and client
         db_client = AGEClient()
         categorizer = VocabularyCategorizer(db_client)

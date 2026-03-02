@@ -58,6 +58,11 @@ def run_epistemic_remeasurement_worker(
             f"Epistemic re-measurement params: sample_size={sample_size}, store={store}"
         )
 
+        # ADR-100: Check for cancellation before start
+        if job_queue.is_job_cancelled(job_id):
+            logger.info(f"Epistemic remeasurement job {job_id} cancelled before start")
+            return {"status": "cancelled"}
+
         # Initialize service
         client = AGEClient()
         service = EpistemicStatusService(client)

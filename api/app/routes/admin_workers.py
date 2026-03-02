@@ -9,11 +9,21 @@ All endpoints require workers:view or workers:manage RBAC permissions.
 """
 
 import logging
+from typing import Optional
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 
 from ..dependencies.auth import CurrentUser
 from ..services.job_queue import get_job_queue
+
+
+class LaneUpdate(BaseModel):
+    """Request body for updating a worker lane."""
+    max_slots: Optional[int] = Field(None, ge=0, le=10, description="Max concurrent jobs")
+    poll_interval_ms: Optional[int] = Field(None, ge=500, le=120000, description="Poll interval in ms")
+    stale_timeout_minutes: Optional[int] = Field(None, ge=5, le=1440, description="Stale job timeout in minutes")
+    enabled: Optional[bool] = Field(None, description="Enable/disable the lane")
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin/workers", tags=["admin-workers"])
@@ -75,7 +85,7 @@ def list_lanes(current_user: CurrentUser):
 
 
 @router.patch("/lanes/{lane_name}", summary="Update lane configuration")
-def update_lane(lane_name: str, current_user: CurrentUser, **kwargs):
+def update_lane(lane_name: str, body: LaneUpdate, current_user: CurrentUser):
     """
     Update a worker lane's configuration. Changes take effect on the next poll cycle.
 
@@ -85,19 +95,39 @@ def update_lane(lane_name: str, current_user: CurrentUser, **kwargs):
     """
     _check_permission(current_user, "manage")
 
-    # Parse request body manually since we use **kwargs
-    from fastapi import Request
-    # This will be called with query params or JSON body
+    updates = body.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=422, detail="No fields to update")
+
     queue = get_job_queue()
     conn = queue._get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Verify lane exists
             cur.execute("SELECT * FROM kg_api.worker_lanes WHERE name = %s", (lane_name,))
-            if not cur.fetchone():
+            old = cur.fetchone()
+            if not old:
                 raise HTTPException(status_code=404, detail=f"Lane not found: {lane_name}")
 
-        return {"message": f"Lane {lane_name} exists (full PATCH support in next iteration)"}
+            # Build dynamic SET clause
+            set_parts = []
+            params = []
+            for col, val in updates.items():
+                set_parts.append(f"{col} = %s")
+                params.append(val)
+            set_parts.append("updated_at = NOW()")
+            params.append(lane_name)
+
+            cur.execute(
+                f"UPDATE kg_api.worker_lanes SET {', '.join(set_parts)} WHERE name = %s RETURNING *",
+                params
+            )
+            updated = dict(cur.fetchone())
+            conn.commit()
+
+        changed = {k: {"old": old[k], "new": updates[k]} for k in updates}
+        logger.info(f"Updated lane {lane_name} by {current_user.username}: {changed}")
+        return {"lane": updated, "changed": changed}
     finally:
         queue._return_connection(conn)
 
