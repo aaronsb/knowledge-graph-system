@@ -48,6 +48,7 @@
     --font-display: "Space Grotesk", sans-serif;
     --font-body: "IBM Plex Sans Condensed", sans-serif;
     --font-mono: "JetBrains Mono", monospace;
+    --font-scale: 1;
 
     /* Status colors (constant across modes) */
     --status-active: 145 65% 45%;
@@ -116,6 +117,9 @@
 }
 
 @layer base {
+  html {
+    font-size: calc(16px * var(--font-scale, 1));
+  }
   * {
     @apply border-border;
   }
