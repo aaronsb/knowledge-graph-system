@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../ADR-031-encrypted-api-key-storage/">
+        <link rel="prev" href="../../features/rest-api/">
       
       
-        <link rel="next" href="../ADR-060-endpoint-security-architecture/">
+        <link rel="next" href="../CLI_DEVELOPMENT/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
-        <title>ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication - Knowledge Graph System</title>
+        <title>Async Architecture and Worker Lanes - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-054-oauth-20-client-management-for-multi-client-authentication" class="md-skip">
+        <a href="#async-architecture-and-worker-lanes" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+              Async Architecture and Worker Lanes
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/" class="md-nav__link">
+      <a href="../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/glossary/" class="md-nav__link">
+      <a href="../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/" class="md-nav__link">
+      <a href="../../features/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/web-workstation/" class="md-nav__link">
+      <a href="../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/cli/" class="md-nav__link">
+      <a href="../../features/cli/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/mcp-server/" class="md-nav__link">
+      <a href="../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../features/rest-api/" class="md-nav__link">
+      <a href="../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -608,18 +608,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -640,7 +642,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -655,10 +657,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async Architecture and Worker Lanes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -674,6 +703,214 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#process-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-lanes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worker Lanes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worker Lanes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-lane-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Lane Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#poll-and-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Poll-and-Claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thread-pool-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thread Pool Inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-pools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection Pools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concurrency-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency Controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-to-increase-slots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to increase slots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-reduce-poll-interval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to reduce poll interval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-drain-a-lane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to drain a lane
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#admin-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Resource
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RBAC
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -686,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -714,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -742,7 +979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -770,7 +1007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -798,7 +1035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -826,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -854,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -882,7 +1119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -910,7 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -938,7 +1175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -966,7 +1203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -994,7 +1231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -1022,7 +1259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1050,7 +1287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1078,7 +1315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1106,7 +1343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1134,7 +1371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/exploring/" class="md-nav__link">
+      <a href="../exploring/" class="md-nav__link">
         
   
   
@@ -1162,7 +1399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/querying/" class="md-nav__link">
+      <a href="../querying/" class="md-nav__link">
         
   
   
@@ -1190,7 +1427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1272,7 +1509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/" class="md-nav__link">
+      <a href="../../manual/" class="md-nav__link">
         
   
   
@@ -1347,7 +1584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1430,7 +1667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1458,7 +1695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1541,7 +1778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1569,7 +1806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1597,7 +1834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1625,7 +1862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1653,7 +1890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1681,7 +1918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1764,7 +2001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1792,7 +2029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1875,7 +2112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1903,7 +2140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1931,7 +2168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1959,7 +2196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2042,7 +2279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2070,7 +2307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2153,7 +2390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2181,7 +2418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2209,7 +2446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2237,7 +2474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2265,7 +2502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2293,7 +2530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2321,7 +2558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2349,7 +2586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2377,7 +2614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2405,7 +2642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2433,7 +2670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2523,7 +2760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2605,7 +2842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/" class="md-nav__link">
+      <a href="../../operating/" class="md-nav__link">
         
   
   
@@ -2633,7 +2870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2661,7 +2898,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/client-tools/" class="md-nav__link">
+      <a href="../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2689,7 +2926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/configuration/" class="md-nav__link">
+      <a href="../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2717,7 +2954,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2745,7 +2982,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/production/" class="md-nav__link">
+      <a href="../../operating/production/" class="md-nav__link">
         
   
   
@@ -2773,7 +3010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/quick-start/" class="md-nav__link">
+      <a href="../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2801,7 +3038,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2829,7 +3066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../operating/upgrading/" class="md-nav__link">
+      <a href="../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2911,7 +3148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -2939,7 +3176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2967,7 +3204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -2995,7 +3232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3023,7 +3260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3098,7 +3335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -3126,7 +3363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3209,7 +3446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/" class="md-nav__link">
+      <a href="../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3284,7 +3521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3312,7 +3549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3340,7 +3577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -3368,7 +3605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -3396,7 +3633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -3424,7 +3661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -3452,7 +3689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -3480,7 +3717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -3508,7 +3745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -3536,7 +3773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -3564,7 +3801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -3592,7 +3829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -3675,7 +3912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/cli/media/" class="md-nav__link">
+      <a href="../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -3766,7 +4003,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/fuse/" class="md-nav__link">
+      <a href="../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -3849,7 +4086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/" class="md-nav__link">
+      <a href="../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -3924,7 +4161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -4007,7 +4244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4035,7 +4272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4063,7 +4300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4091,7 +4328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4119,7 +4356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4147,7 +4384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4175,7 +4412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -4203,7 +4440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -4231,7 +4468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4259,7 +4496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -4287,7 +4524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4315,7 +4552,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -4343,7 +4580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -4371,7 +4608,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -4399,7 +4636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -4427,7 +4664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -4475,20 +4712,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -4509,7 +4744,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4527,7 +4762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../INDEX/" class="md-nav__link">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
         
   
   
@@ -4602,7 +4837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -4637,7 +4872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -4672,7 +4907,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -4707,7 +4942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -4742,7 +4977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -4777,7 +5012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -4812,7 +5047,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -4847,7 +5082,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -4882,7 +5117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -4972,7 +5207,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -5007,7 +5242,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5042,7 +5277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5077,7 +5312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5112,7 +5347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5147,7 +5382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5182,7 +5417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5217,7 +5452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5252,7 +5487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5287,7 +5522,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5369,7 +5604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -5410,20 +5645,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_4" >
         
           
           <label class="md-nav__link" for="__nav_9_4" id="__nav_9_4_label" tabindex="0">
@@ -5444,7 +5677,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5462,7 +5695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -5497,7 +5730,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -5532,7 +5765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -5567,7 +5800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -5599,44 +5832,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--Accepted"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -5659,459 +5858,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#current-authentication-limitations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current Authentication Limitations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-oauth-20" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why OAuth 2.0?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Schema
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#new-tables-5-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New Tables (5 tables)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#existing-table-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Existing Table Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Endpoints
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#client-registration-admin-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Client Registration (Admin Only)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#oauth-flows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OAuth Flows
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-management-updated" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Management (Updated)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#flow-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Flow Implementations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Flow Implementations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-authorization-code-pkce-web-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Authorization Code + PKCE (Web App)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-device-authorization-grant-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Device Authorization Grant (CLI)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-client-credentials-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Client Credentials (MCP Server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#builtin-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Builtin Clients
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-lifetimes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Lifetimes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scopes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-keep-jwt-password-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 1: Keep JWT Password Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-api-keys-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 2: API Keys Only
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-external-oauth-provider-auth0-okta" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 3: External OAuth Provider (Auth0, Okta)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-session-based-auth-cookies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 4: Session-Based Auth (Cookies)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Database Schema (1 week) ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: API Endpoints (1 week) ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-cli-commands-3-days" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: CLI Commands (3 days)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-testing-documentation-1-week" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Testing &amp; Documentation (1 week)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6124,7 +5870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6159,7 +5905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6194,7 +5940,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6229,7 +5975,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6319,7 +6065,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -6354,7 +6100,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -6389,7 +6135,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -6424,7 +6170,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -6459,7 +6205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6494,7 +6240,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6584,7 +6330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -6619,7 +6365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -6654,7 +6400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -6689,7 +6435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -6724,7 +6470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -6759,7 +6505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -6794,7 +6540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -6829,7 +6575,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -6864,7 +6610,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -6899,7 +6645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -6934,7 +6680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -6969,7 +6715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7004,7 +6750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7039,7 +6785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7129,7 +6875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -7164,7 +6910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -7199,7 +6945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -7234,7 +6980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -7269,7 +7015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -7304,7 +7050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -7339,7 +7085,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -7374,7 +7120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -7409,7 +7155,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -7444,7 +7190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -7479,7 +7225,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -7569,7 +7315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7604,7 +7350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -7639,7 +7385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -7674,7 +7420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -7709,7 +7455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -7744,7 +7490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -7779,7 +7525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -7814,7 +7560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -7849,7 +7595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -7939,7 +7685,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -7974,7 +7720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -8009,7 +7755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -8044,7 +7790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -8079,7 +7825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -8114,7 +7860,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -8149,7 +7895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -8184,7 +7930,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -8219,7 +7965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -8254,7 +8000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -8289,7 +8035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -8324,7 +8070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -8359,7 +8105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -8394,7 +8140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -8484,7 +8230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -8519,7 +8265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -8609,7 +8355,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -8644,7 +8390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -8679,7 +8425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -8714,7 +8460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -8749,7 +8495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -8784,7 +8530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -8819,7 +8565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8854,7 +8600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -8889,7 +8635,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -8924,7 +8670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8959,7 +8705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -8994,7 +8740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -9029,7 +8775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9126,7 +8872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -9154,7 +8900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -9182,7 +8928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
+      <a href="../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -9210,7 +8956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -9238,7 +8984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
+      <a href="../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -9266,7 +9012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -9294,7 +9040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
+      <a href="../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -9322,7 +9068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
+      <a href="../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -9350,7 +9096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/t-sne-viz/" class="md-nav__link">
+      <a href="../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -9425,7 +9171,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/vision-testing/" class="md-nav__link">
+      <a href="../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -9453,7 +9199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -9481,7 +9227,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -9509,7 +9255,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9599,7 +9345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -9627,7 +9373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -9655,7 +9401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9683,7 +9429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -9711,7 +9457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -9739,7 +9485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -9767,7 +9513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -9795,7 +9541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -9861,22 +9607,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#process-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
+        Process Model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Context">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worker-lanes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worker Lanes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worker Lanes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#current-authentication-limitations" class="md-nav__link">
+  <a href="#default-lane-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current Authentication Limitations
+        Default Lane Configuration
       
     </span>
   </a>
@@ -9884,10 +9641,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#why-oauth-20" class="md-nav__link">
+  <a href="#poll-and-claim" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why OAuth 2.0?
+        Poll-and-Claim
       
     </span>
   </a>
@@ -9900,34 +9657,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
+  <a href="#thread-pool-inventory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Decision
+        Thread Pool Inventory
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Decision">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-pools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection Pools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concurrency-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency Controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuning">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#database-schema" class="md-nav__link">
+  <a href="#when-to-increase-slots" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Database Schema
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#new-tables-5-tables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New Tables (5 tables)
+        When to increase slots
       
     </span>
   </a>
@@ -9935,38 +9713,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#existing-table-changes" class="md-nav__link">
+  <a href="#when-to-reduce-poll-interval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Existing Table Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Endpoints
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#client-registration-admin-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Client Registration (Admin Only)
+        When to reduce poll interval
       
     </span>
   </a>
@@ -9974,109 +9724,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#oauth-flows" class="md-nav__link">
+  <a href="#when-to-drain-a-lane" class="md-nav__link">
     <span class="md-ellipsis">
       
-        OAuth Flows
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-management-updated" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Management (Updated)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#flow-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Flow Implementations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Flow Implementations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-authorization-code-pkce-web-app" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Authorization Code + PKCE (Web App)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-device-authorization-grant-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Device Authorization Grant (CLI)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-client-credentials-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Client Credentials (MCP Server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#builtin-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Builtin Clients
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#token-lifetimes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Lifetimes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scopes
+        When to drain a lane
       
     </span>
   </a>
@@ -10089,193 +9740,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
+  <a href="#admin-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Consequences
+        Admin Endpoints
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#cli-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
+        CLI Reference
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-keep-jwt-password-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 1: Keep JWT Password Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-api-keys-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 2: API Keys Only
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-external-oauth-provider-auth0-okta" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 3: External OAuth Provider (Auth0, Okta)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-session-based-auth-cookies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 4: Session-Based Auth (Cookies)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-plan" class="md-nav__link">
+  <a href="#mcp-resource" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Plan
+        MCP Resource
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Implementation Plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-database-schema-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Database Schema (1 week) ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-api-endpoints-1-week-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: API Endpoints (1 week) ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-client-libraries-1-week-in-progress" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-cli-commands-3-days" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: CLI Commands (3 days)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-testing-documentation-1-week" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Testing &amp; Documentation (1 week)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
+  <a href="#rbac" class="md-nav__link">
     <span class="md-ellipsis">
       
-        References
+        RBAC
       
     </span>
   </a>
@@ -10302,515 +9803,301 @@
   
 
 
-<h1 id="adr-054-oauth-20-client-management-for-multi-client-authentication">ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication</h1>
+<h1 id="async-architecture-and-worker-lanes">Async Architecture and Worker Lanes</h1>
 <h2 id="overview">Overview</h2>
-<p>Authentication gets complicated when you have multiple types of clients. A web browser can't safely store secrets. A command-line tool needs to work on headless servers where you can't open a browser. A background service shouldn't require a user to be logged in. Using the same authentication approach for all three creates security holes.</p>
-<p>This is the situation we faced with the knowledge graph system. Our initial JWT password flow worked fine for the CLI - type username and password, get a token. But what about the web visualization app? We can't have users typing their password into JavaScript that runs in the browser; that's a security nightmare. And what about the MCP server that runs in the background? It shouldn't need a human to log in every time it starts.</p>
-<p>OAuth 2.0 solves this by providing different "flows" for different client types. Web apps use "Authorization Code + PKCE" where the browser redirects through an authorization page and never sees the password. CLI tools use "Device Authorization" where you get a code to enter in a browser (like pairing a Roku). Background services use "Client Credentials" with a secret that acts like a service account. Each flow is designed for its specific security context.</p>
-<p>This ADR implements proper OAuth 2.0 client management, replacing our simple JWT password flow with a comprehensive system that knows the difference between a web browser, CLI tool, and background service. It provides client identification (who accessed the API), audit trails, per-client token revocation, and refresh tokens for long-lived sessions. It's the professional-grade authentication that multi-client systems need.</p>
-<hr />
-<h2 id="context">Context</h2>
-<p>The knowledge graph system currently uses JWT tokens (password flow) and API keys for authentication. This works for the CLI but creates security problems for other client types:</p>
-<h3 id="current-authentication-limitations">Current Authentication Limitations</h3>
-<p><strong>Web Application (viz-app):</strong>
-- Would require password flow (username/password sent to JavaScript)
-- <strong>Security risk:</strong> Credentials exposed to browser environment
-- No standard way to handle browser-based authentication
-- No refresh tokens for long-lived sessions</p>
-<p><strong>CLI (kg):</strong>
-- JWT works but lacks client application identity
-- Can't distinguish <code>kg</code> CLI from other tools using the API
-- No refresh mechanism (user must re-login after 60 minutes)
-- No audit trail per client application</p>
-<p><strong>MCP Server:</strong>
-- No dedicated machine-to-machine authentication
-- Currently shares user's JWT or API key (not ideal)
-- No service account concept
-- Requires user to be logged in (doesn't work for background services)</p>
-<h3 id="why-oauth-20">Why OAuth 2.0?</h3>
-<p>OAuth 2.0 provides <strong>appropriate authentication flows for each client type:</strong></p>
+<p>The knowledge graph platform processes documents through a multi-stage pipeline: chunking, LLM extraction, concept matching, and graph upsert. Each stage involves CPU-bound or I/O-bound work that must run concurrently without starving the API server or exhausting database connections.</p>
+<p>ADR-100 replaced the original in-memory thread dispatch model with <strong>database-driven worker lanes</strong> — typed job queues coordinated entirely through PostgreSQL, with no in-memory dispatch state.</p>
+<h2 id="process-model">Process Model</h2>
+<p>The API runs as a <strong>FastAPI application under Uvicorn with 2 OS-level worker processes</strong> (<code>--workers 2</code> in the Dockerfile). Each process is a full Python interpreter with its own event loop and thread pools.</p>
+<p>Only one process becomes the <strong>dispatch leader</strong>. On startup, each process attempts a PostgreSQL session-level advisory lock (<code>pg_try_advisory_lock(100_000_001)</code> in <code>api/app/main.py</code>). The winner starts:</p>
+<ul>
+<li><strong>LaneManager</strong> — poll loops that claim and execute jobs</li>
+<li><strong>JobScheduler</strong> — lifecycle cleanup (stale recovery, expired job cancellation)</li>
+<li><strong>ScheduledJobsManager</strong> — cron-like maintenance job creation</li>
+</ul>
+<p>The non-leader process handles HTTP requests only. If the leader process dies, the next restart races for the lock again.</p>
+<h2 id="worker-lanes">Worker Lanes</h2>
+<p>A <strong>lane</strong> is a named polling loop with its own concurrency limit and job type affinity. Lane configuration lives in the <code>kg_api.worker_lanes</code> PostgreSQL table and is re-read on every poll cycle — changes take effect without a container restart.</p>
+<h3 id="default-lane-configuration">Default Lane Configuration</h3>
 <table>
 <thead>
 <tr>
-<th>Client</th>
-<th>OAuth Flow</th>
-<th>Client Type</th>
-<th>Why</th>
+<th>Lane</th>
+<th>Job Types</th>
+<th>Slots</th>
+<th>Poll Interval</th>
+<th>Stale Timeout</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>viz-app</strong></td>
-<td>Authorization Code + PKCE</td>
-<td>Public (no secret)</td>
-<td>Standard for browser apps, no password exposure</td>
+<td><code>interactive</code></td>
+<td>ingestion, ingest_image, polarity</td>
+<td>2</td>
+<td>2s</td>
+<td>30m</td>
 </tr>
 <tr>
-<td><strong>kg CLI</strong></td>
-<td>Device Authorization Grant</td>
-<td>Public (no secret)</td>
-<td>User-friendly, works on headless machines</td>
+<td><code>maintenance</code></td>
+<td>projection, vocab_refresh, epistemic_remeasurement, ontology_annealing, proposal_execution</td>
+<td>1</td>
+<td>15s</td>
+<td>60m</td>
 </tr>
 <tr>
-<td><strong>MCP Server</strong></td>
-<td>Client Credentials</td>
-<td>Confidential (has secret)</td>
-<td>Machine-to-machine, no user interaction</td>
+<td><code>system</code></td>
+<td>restore, vocab_consolidate, artifact_cleanup, source_embedding</td>
+<td>1</td>
+<td>30s</td>
+<td>120m</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Key benefits:</strong>
-1. <strong>Client identification</strong> - Know which app/tool accessed the API
-2. <strong>Audit trail</strong> - "User X via web app" vs. "User X via CLI"
-3. <strong>Per-client revocation</strong> - Revoke web app without affecting CLI
-4. <strong>Refresh tokens</strong> - Long-lived sessions without re-authentication
-5. <strong>Industry standard</strong> - Well-understood security properties</p>
-<h2 id="decision">Decision</h2>
-<p>Implement <strong>OAuth 2.0 client registration and token management</strong> with support for three grant types:</p>
+<p>Lane separation guarantees that a long-running t-SNE projection in the maintenance lane cannot prevent an ingestion job from claiming an interactive slot.</p>
+<h3 id="poll-and-claim">Poll-and-Claim</h3>
+<p>Each lane runs an async polling loop in <code>api/app/services/lane_manager.py</code>. On each cycle:</p>
 <ol>
-<li><strong>Authorization Code + PKCE</strong> (web apps)</li>
-<li><strong>Device Authorization Grant</strong> (CLI tools)</li>
-<li><strong>Client Credentials</strong> (background services)</li>
+<li>Check if slots are available (<code>active_jobs &lt; max_slots</code>)</li>
+<li>Attempt an atomic claim query against the jobs table</li>
+<li>If a job is claimed, submit it to the <code>ThreadPoolExecutor</code> for execution</li>
+<li>If no job available, sleep for the lane's <code>poll_interval_ms</code></li>
 </ol>
-<p><strong>Key principle:</strong> OAuth 2.0 <strong>replaces</strong> JWT password flow and API keys as the primary authentication mechanism. Legacy systems removed immediately (no users to migrate).</p>
-<h3 id="database-schema">Database Schema</h3>
-<h4 id="new-tables-5-tables">New Tables (5 tables)</h4>
-<p><strong><code>kg_auth.oauth_clients</code> - Registered client applications</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">client_secret_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span><span class="w">  </span><span class="c1">-- bcrypt hash, NULL for public clients</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">client_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">client_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;public&#39; or &#39;confidential&#39;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">grant_types</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[]</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Allowed grant types</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="n">redirect_uris</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span><span class="w">  </span><span class="c1">-- For authorization code flow</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span><span class="w">  </span><span class="c1">-- Allowed scopes</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="n">is_active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="n">metadata</span><span class="w"> </span><span class="n">JSONB</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_authorization_codes</code> - Temporary codes (authorization code flow)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_authorization_codes</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">redirect_uri</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="n">code_challenge</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span><span class="w">  </span><span class="c1">-- PKCE</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="n">code_challenge_method</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;S256&#39; or &#39;plain&#39;</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 10 minutes</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">used</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_device_codes</code> - Device authorization codes (CLI flow)</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_device_codes</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">device_code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">user_code</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Human-friendly: ABCD-1234</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span><span class="w">  </span><span class="c1">-- NULL until authorized</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="n">status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;pending&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">-- pending, authorized, denied, expired</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 10 minutes</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_access_tokens</code> - Issued access tokens</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_access_tokens</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span><span class="w">  </span><span class="c1">-- NULL for client_credentials</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 1 hour</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">revoked</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">);</span>
-</code></pre></div></p>
-<p><strong><code>kg_auth.oauth_refresh_tokens</code> - Long-lived refresh tokens</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_refresh_tokens</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">client_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="p">(</span><span class="n">client_id</span><span class="p">),</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="n">scopes</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">access_token_hash</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_access_tokens</span><span class="p">(</span><span class="n">token_hash</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">expires_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 7-30 days</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">revoked</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="n">last_used</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">);</span>
-</code></pre></div></p>
-<h4 id="existing-table-changes">Existing Table Changes</h4>
-<p><strong>Rename <code>kg_auth.oauth_tokens</code> to clarify purpose:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_tokens</span><span class="w"> </span><span class="k">RENAME</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">oauth_external_provider_tokens</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_external_provider_tokens</span><span class="w"> </span><span class="k">IS</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="s1">&#39;OAuth tokens FROM external providers (Google, GitHub, etc.) - not tokens issued by our system&#39;</span><span class="p">;</span>
-</code></pre></div></p>
-<p><strong>Remove legacy auth tables (no migration needed - no users exist):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">api_keys</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">;</span><span class="w">  </span><span class="c1">-- Replaced by OAuth</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1">-- Keep kg_auth.users table (still needed for user accounts)</span>
-</code></pre></div></p>
-<h3 id="api-endpoints">API Endpoints</h3>
-<h4 id="client-registration-admin-only">Client Registration (Admin Only)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>POST   /auth/oauth/clients          # Register new client
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>GET    /auth/oauth/clients          # List clients
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>GET    /auth/oauth/clients/{id}     # Get client details
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>PATCH  /auth/oauth/clients/{id}     # Update client
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>DELETE /auth/oauth/clients/{id}     # Delete client
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>POST   /auth/oauth/clients/{id}/rotate-secret  # Rotate confidential client secret
+<p>The claim query uses <code>FOR UPDATE SKIP LOCKED</code> so multiple lanes can poll concurrently without blocking:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;running&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">claimed_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">:</span><span class="n">worker_id</span><span class="p">,</span><span class="w"> </span><span class="n">claimed_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">job_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">job_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;approved&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">job_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">ANY</span><span class="p">(:</span><span class="n">claimable_types</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">priority</span><span class="w"> </span><span class="k">DESC</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="k">ASC</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="k">FOR</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="n">SKIP</span><span class="w"> </span><span class="n">LOCKED</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">RETURNING</span><span class="w"> </span><span class="o">*</span><span class="p">;</span>
 </code></pre></div>
-<h4 id="oauth-flows">OAuth Flows</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GET    /auth/oauth/authorize        # Authorization endpoint (web flow)
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>POST   /auth/oauth/device           # Device authorization request (CLI flow)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>POST   /auth/oauth/token            # Token endpoint (all flows)
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>POST   /auth/oauth/revoke           # Revoke token
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>GET    /auth/oauth/device-status    # Check device code status (for UI)
-</code></pre></div>
-<h4 id="user-management-updated">User Management (Updated)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>POST   /auth/register               # Create user (unchanged)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>DELETE /auth/login                  # REMOVED (use OAuth flows instead)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>DELETE /auth/me                     # REMOVED (get user from OAuth token)
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>GET    /users/me                    # Get current user from OAuth token
-</code></pre></div>
-<h3 id="flow-implementations">Flow Implementations</h3>
-<h4 id="1-authorization-code-pkce-web-app">1. Authorization Code + PKCE (Web App)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>│ Browser │                                  │   API   │
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>     │                                             │
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>     │ 1. User clicks &quot;Login&quot;                     │
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>     │                                             │
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>     │ 2. Redirect to /auth/oauth/authorize       │
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>     │    ?client_id=viz-app                      │
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>     │    &amp;redirect_uri=https://viz.../callback   │
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>     │    &amp;code_challenge=&lt;hash&gt;                  │
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>     │                                             │
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>     │ 3. User enters credentials                 │
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>     │                                             │
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>     │ 4. Redirect with authorization code        │
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>     │    ?code=xyz123                            │
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>     │                                             │
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>     │ 5. Exchange code for tokens                │
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>     │    POST /auth/oauth/token                  │
-<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>     │                                             │
-<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>     │ 6. access_token + refresh_token            │
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>     │◀────────────────────────────────────────────
-</code></pre></div>
-<h4 id="2-device-authorization-grant-cli">2. Device Authorization Grant (CLI)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>│   CLI   │                                  │   API   │
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>     │                                             │
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>     │ 1. kg login                                │
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>     │                                             │
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>     │ 2. device_code + user_code                 │
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>     │    &quot;Visit https://.../device&quot;              │
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>     │    &quot;Enter code: ABCD-1234&quot;                 │
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>     │                                             │
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>     │ [User opens browser, enters code]          │
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>     │                                             │
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>     │ 3. Poll /auth/oauth/token every 5s         │
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>     │                                             │
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>     │ 4. authorization_pending...                │
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>     │                                             │
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>     │ [User completes auth in browser]           │
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>     │                                             │
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>     │ 5. access_token + refresh_token            │
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>     │◀────────────────────────────────────────────
-</code></pre></div>
-<h4 id="3-client-credentials-mcp-server">3. Client Credentials (MCP Server)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>┌─────────┐                                  ┌─────────┐
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>│   MCP   │                                  │   API   │
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>└────┬────┘                                  └────┬────┘
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>     │                                             │
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>     │ 1. POST /auth/oauth/token                  │
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>     │    grant_type=client_credentials           │
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>     │    client_id=mcp-server-123                │
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>     │    client_secret=&lt;secret&gt;                  │
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>     │────────────────────────────────────────────▶
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>     │                                             │
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>     │ 2. access_token (no refresh token)         │
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>     │◀────────────────────────────────────────────
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>     │                                             │
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>     │ [Use token until expiry, then re-auth]     │
-</code></pre></div>
-<h3 id="builtin-clients">Builtin Clients</h3>
-<p>The system will include three pre-registered clients:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">oauth_clients</span><span class="w"> </span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span><span class="w"> </span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">client_type</span><span class="p">,</span><span class="w"> </span><span class="n">grant_types</span><span class="p">,</span><span class="w"> </span><span class="n">redirect_uris</span><span class="p">,</span><span class="w"> </span><span class="n">scopes</span><span class="p">)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">VALUES</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-cli&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph CLI&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;urn:ietf:params:oauth:grant-type:device_code&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;refresh_token&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">   </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]),</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-viz&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph Visualizer&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;authorization_code&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;refresh_token&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;http://localhost:3000/callback&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;https://viz.kg.example.com/callback&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]),</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="p">(</span><span class="s1">&#39;kg-mcp&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge Graph MCP Server&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;confidential&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;client_credentials&#39;</span><span class="p">],</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">   </span><span class="k">NULL</span><span class="p">,</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">   </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read:*&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write:*&#39;</span><span class="p">]);</span>
-</code></pre></div>
-<p><strong>Note:</strong> For <code>kg-mcp</code> confidential client, a client secret must be generated during setup:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>oauth<span class="w"> </span>clients<span class="w"> </span>rotate-secret<span class="w"> </span>kg-mcp
-</code></pre></div></p>
-<h3 id="token-lifetimes">Token Lifetimes</h3>
+<h2 id="thread-pool-inventory">Thread Pool Inventory</h2>
 <table>
 <thead>
 <tr>
-<th>Token Type</th>
-<th>Lifetime</th>
-<th>Rationale</th>
+<th>Pool</th>
+<th>Location</th>
+<th>Workers</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Authorization Code</td>
-<td>10 minutes</td>
-<td>Single-use, short-lived</td>
+<td>Lane executor</td>
+<td><code>lane_manager.py</code></td>
+<td>4 (<code>MAX_CONCURRENT_JOBS</code>)</td>
+<td>Runs claimed jobs in threads</td>
 </tr>
 <tr>
-<td>Device Code</td>
-<td>10 minutes</td>
-<td>User must act quickly</td>
+<td>Legacy job executor</td>
+<td><code>job_queue.py</code></td>
+<td>4 (<code>MAX_CONCURRENT_JOBS</code>)</td>
+<td>Fallback if lane manager unavailable</td>
 </tr>
 <tr>
-<td>Access Token</td>
-<td>1 hour</td>
-<td>Balance security vs. UX</td>
+<td>Local embedding</td>
+<td><code>embedding_worker.py</code></td>
+<td>1 (fixed)</td>
+<td>Serializes GPU/CPU model access</td>
 </tr>
 <tr>
-<td>Refresh Token (CLI)</td>
-<td>7 days</td>
-<td>Weekly re-auth acceptable</td>
-</tr>
-<tr>
-<td>Refresh Token (Web)</td>
-<td>30 days</td>
-<td>Monthly re-auth acceptable</td>
-</tr>
-<tr>
-<td>Client Credentials Token</td>
-<td>1 hour</td>
-<td>Can re-auth automatically</td>
+<td>Graph parallelizer</td>
+<td><code>graph_parallelizer.py</code></td>
+<td>8 (per-request)</td>
+<td>Multi-hop Cypher fan-out</td>
 </tr>
 </tbody>
 </table>
-<h3 id="scopes">Scopes</h3>
-<p>Initial scope set (aligned with RBAC resources from ADR-028):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>read:concepts       - Read concept graph
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>write:concepts      - Create/modify concepts
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>delete:concepts     - Delete concepts
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>read:vocabulary     - Read edge vocabulary
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>write:vocabulary    - Manage edge vocabulary
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>approve:vocabulary  - Approve vocabulary changes
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>read:jobs           - View ingestion jobs
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>write:jobs          - Submit ingestion jobs
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>approve:jobs        - Approve job execution
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>read:users          - List users (admin)
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>write:users         - Manage users (admin)
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>delete:users        - Delete users (admin)
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>admin:*             - Full administrative access
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>read:*              - Read-only access to everything
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>write:*             - Read + write access to everything
+<p>All heavy work (database queries, LLM calls, embeddings) runs in synchronous threads. The async event loop orchestrates via <code>loop.run_in_executor()</code>.</p>
+<h2 id="connection-pools">Connection Pools</h2>
+<p>The platform uses <strong>psycopg2's <code>ThreadedConnectionPool</code></strong> (synchronous). There is no async database driver.</p>
+<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th>Location</th>
+<th>Min/Max</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Job queue</td>
+<td><code>job_queue.py</code></td>
+<td>1/10</td>
+<td>Job lifecycle and claim operations</td>
+</tr>
+<tr>
+<td>AGEClient</td>
+<td><code>age_client/base.py</code></td>
+<td>1/20</td>
+<td>Cypher graph queries</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><code>dependencies/auth.py</code></td>
+<td>1/5</td>
+<td>RBAC permission checks</td>
+</tr>
+</tbody>
+</table>
+<p>Each <code>AGEClient()</code> instantiation creates its own pool. With default lane config (4 total slots), worst case is ~80 connections from workers plus the job queue and auth pools. The lane model bounds this indirectly by limiting concurrent workers.</p>
+<h2 id="concurrency-controls">Concurrency Controls</h2>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Mechanism</th>
+<th>Default</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI provider rate limiting</td>
+<td><code>threading.Semaphore</code> per provider</td>
+<td>ollama=1, anthropic=4, openai=8</td>
+<td><code>rate_limiter.py</code></td>
+</tr>
+<tr>
+<td>Global graph workers</td>
+<td><code>threading.Semaphore</code> singleton</td>
+<td>8</td>
+<td><code>graph_parallelizer.py</code></td>
+</tr>
+<tr>
+<td>Lane slot enforcement</td>
+<td>In-memory set + <code>call_soon_threadsafe</code></td>
+<td>Per lane config</td>
+<td><code>lane_manager.py</code></td>
+</tr>
+<tr>
+<td>Job claim atomicity</td>
+<td><code>FOR UPDATE SKIP LOCKED</code></td>
+<td>—</td>
+<td><code>lane_manager.py</code></td>
+</tr>
+<tr>
+<td>API backoff</td>
+<td>Exponential retry with jitter</td>
+<td>60s cap</td>
+<td><code>rate_limiter.py</code></td>
+</tr>
+<tr>
+<td>Cancellation</td>
+<td>Poll <code>cancelled</code> column at chunk boundaries</td>
+<td>—</td>
+<td><code>job_queue.py</code></td>
+</tr>
+<tr>
+<td>Global thread cap</td>
+<td><code>MAX_CONCURRENT_THREADS</code> env var</td>
+<td>32</td>
+<td><code>rate_limiter.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tuning">Tuning</h2>
+<h3 id="when-to-increase-slots">When to increase slots</h3>
+<p>If ingestion jobs are queuing behind each other and the system has CPU/memory headroom, increase the interactive lane's <code>max_slots</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Via API (takes effect on next poll cycle)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span>http://localhost:8000/admin/workers/lanes/interactive<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;max_slots&quot;: 3}&#39;</span>
 </code></pre></div>
-<p><strong>Wildcard support:</strong> <code>*</code> can be used for "all actions on all resources"</p>
-<h2 id="consequences">Consequences</h2>
-<h3 id="positive">Positive</h3>
-<ol>
-<li><strong>Security</strong></li>
-<li>Web app no longer exposes passwords to JavaScript</li>
-<li>Each client type uses appropriate flow</li>
-<li>
-<p>PKCE prevents authorization code interception</p>
-</li>
-<li>
-<p><strong>Client Identification</strong></p>
-</li>
-<li>Audit trail shows which app accessed API</li>
-<li>Per-client token revocation</li>
-<li>
-<p>Usage statistics per client</p>
-</li>
-<li>
-<p><strong>Token Management</strong></p>
-</li>
-<li>Refresh tokens enable long-lived sessions</li>
-<li>Automatic token expiry and cleanup</li>
-<li>
-<p>Token revocation per client or user</p>
-</li>
-<li>
-<p><strong>Standards Compliance</strong></p>
-</li>
-<li>OAuth 2.0 is industry standard (RFC 6749)</li>
-<li>Well-understood security properties</li>
-<li>
-<p>Many libraries and tools available</p>
-</li>
-<li>
-<p><strong>User Experience</strong></p>
-</li>
-<li>CLI: User-friendly device flow (enter code in browser)</li>
-<li>Web: Standard redirect-based flow</li>
-<li>MCP: Automatic machine-to-machine auth</li>
-</ol>
-<h3 id="negative">Negative</h3>
-<ol>
-<li><strong>Complexity</strong></li>
-<li>More database tables (5 new tables)</li>
-<li>More API endpoints (6 new endpoints)</li>
-<li>
-<p>More flows to implement and test</p>
-</li>
-<li>
-<p><strong>Breaking Changes</strong></p>
-</li>
-<li>Removes JWT password flow (<code>POST /auth/login</code>)</li>
-<li>Removes API keys (<code>kg_auth.api_keys</code> table)</li>
-<li>Clients must adopt OAuth flows</li>
-<li>
-<p><strong>Mitigation:</strong> No existing users, can make immediate changes</p>
-</li>
-<li>
-<p><strong>Token Storage</strong></p>
-</li>
-<li>More database records (codes, tokens)</li>
-<li>Cleanup jobs required</li>
-<li>
-<p>Monitoring token usage</p>
-</li>
-<li>
-<p><strong>Implementation Effort</strong></p>
-</li>
-<li>Estimated 2-3 weeks development</li>
-<li>Testing all flows thoroughly</li>
-<li>Client library updates</li>
-<li>Documentation</li>
-</ol>
-<h3 id="neutral">Neutral</h3>
-<ol>
-<li><strong>RBAC Integration</strong></li>
-<li>OAuth scopes map to RBAC permissions</li>
-<li>Token contains scopes, API checks against RBAC</li>
-<li>
-<p>No changes to RBAC system (ADR-028)</p>
-</li>
-<li>
-<p><strong>External OAuth Providers</strong></p>
-</li>
-<li>Table already exists (<code>oauth_external_provider_tokens</code>)</li>
-<li>Can add "Login with Google/GitHub" later</li>
-<li>Orthogonal to our OAuth server implementation</li>
-</ol>
-<h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="alternative-1-keep-jwt-password-flow">Alternative 1: Keep JWT Password Flow</h3>
-<p><strong>Pros:</strong> No changes needed, already works
-<strong>Cons:</strong> Insecure for web apps, no client identification, not following standards
-<strong>Verdict:</strong> ❌ Not suitable for web application</p>
-<h3 id="alternative-2-api-keys-only">Alternative 2: API Keys Only</h3>
-<p><strong>Pros:</strong> Simple, already implemented
-<strong>Cons:</strong> No user interaction flow, no refresh mechanism, no client identification
-<strong>Verdict:</strong> ❌ Not suitable for interactive applications</p>
-<h3 id="alternative-3-external-oauth-provider-auth0-okta">Alternative 3: External OAuth Provider (Auth0, Okta)</h3>
-<p><strong>Pros:</strong> Professionally maintained, advanced features (MFA, SSO)
-<strong>Cons:</strong> External dependency, cost, less control, privacy concerns
-<strong>Verdict:</strong> ⚠️ Consider for enterprise, overkill for most users</p>
-<h3 id="alternative-4-session-based-auth-cookies">Alternative 4: Session-Based Auth (Cookies)</h3>
-<p><strong>Pros:</strong> Simple for web apps, no token management
-<strong>Cons:</strong> Doesn't work for CLI/MCP, not RESTful, CSRF concerns
-<strong>Verdict:</strong> ❌ Not suitable for multi-client architecture</p>
-<h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-database-schema-1-week-completed">Phase 1: Database Schema (1 week) ✅ COMPLETED</h3>
-<ul>
-<li>[x] Create 5 new OAuth tables</li>
-<li>[x] Rename <code>oauth_tokens</code> → <code>oauth_external_provider_tokens</code></li>
-<li>[x] Drop <code>api_keys</code> table</li>
-<li>[x] Add indexes for performance</li>
-<li>[x] Seed builtin clients</li>
-</ul>
-<h3 id="phase-2-api-endpoints-1-week-completed">Phase 2: API Endpoints (1 week) ✅ COMPLETED</h3>
-<ul>
-<li>[x] Client registration API (admin)</li>
-<li>[x] Authorization endpoint (<code>GET /auth/oauth/authorize</code>) - Placeholder</li>
-<li>[x] Device authorization endpoint (<code>POST /auth/oauth/device</code>)</li>
-<li>[x] Token endpoint (<code>POST /auth/oauth/token</code>) - all grant types</li>
-<li>[x] Token revocation endpoint (<code>POST /auth/oauth/revoke</code>)</li>
-<li>[x] Remove legacy endpoints (<code>/auth/login</code>)</li>
-</ul>
-<h3 id="phase-3-client-libraries-1-week-in-progress">Phase 3: Client Libraries (1 week) 🚧 IN PROGRESS</h3>
-<p><strong>Priority:</strong> CLI (device flow) and MCP (client credentials) first</p>
-<ul>
-<li>[ ] Update <code>KnowledgeGraphClient</code> to support OAuth</li>
-<li>[ ] Implement device flow for CLI (<code>DeviceAuthFlow</code> class)</li>
-<li>[ ] Implement client credentials for MCP (<code>ClientCredentialsAuth</code> class)</li>
-<li>[ ] Add token refresh logic</li>
-<li>[ ] Update token storage in config</li>
-</ul>
-<p><strong>Deferred to future:</strong> viz-app Authorization Code + PKCE flow will be implemented once CLI and MCP are stable and tested. The <code>kg-viz</code> client is pre-registered in the database and the backend endpoints are ready, but the frontend implementation is postponed.</p>
-<h3 id="phase-4-cli-commands-3-days">Phase 4: CLI Commands (3 days)</h3>
-<ul>
-<li>[ ] Update <code>kg login</code> to use device flow</li>
-<li>[ ] Update <code>kg logout</code> to revoke tokens</li>
-<li>[ ] Add <code>kg admin oauth clients</code> commands</li>
-<li>[ ] Add <code>kg admin oauth tokens</code> commands (list/revoke)</li>
-</ul>
-<h3 id="phase-5-testing-documentation-1-week">Phase 5: Testing &amp; Documentation (1 week)</h3>
-<ul>
-<li>[ ] Unit tests for all flows</li>
-<li>[ ] Integration tests</li>
-<li>[ ] Security tests (PKCE, token validation, etc.)</li>
-<li>[ ] Update authentication guide</li>
-<li>[ ] Create OAuth integration guides (web/CLI/MCP)</li>
-<li>[ ] API reference documentation</li>
-</ul>
-<p><strong>Total estimated time:</strong> 4-5 weeks (excluding viz-app frontend)</p>
-<h2 id="references">References</h2>
-<p><strong>OAuth 2.0 Specifications:</strong>
-- RFC 6749: OAuth 2.0 Authorization Framework
-- RFC 7636: Proof Key for Code Exchange (PKCE)
-- RFC 8628: OAuth 2.0 Device Authorization Grant
-- RFC 7009: OAuth 2.0 Token Revocation</p>
-<p><strong>Related:</strong>
-- ADR-027: User Management API (superseded for OAuth)
-- ADR-028: Dynamic RBAC System (unchanged)
-- ADR-024: Multi-Schema PostgreSQL Architecture (kg_auth schema)</p>
-<p><strong>Implementation Resources:</strong>
-- https://oauth.net/2/
-- https://www.oauth.com/
-- https://auth0.com/docs/authenticate/protocols/oauth
-- https://github.com/panva/oauth4webapi (JavaScript OAuth library)
-- https://authlib.org/ (Python OAuth library)</p>
-<hr />
-<p><strong>Decision Date:</strong> 2025-11-01
-<strong>Implementation Status:</strong> Accepted, Ready for Implementation
-<strong>Breaking Changes:</strong> Yes (removes JWT password flow and API keys)
-<strong>Migration Required:</strong> No (no existing users)</p>
+<h3 id="when-to-reduce-poll-interval">When to reduce poll interval</h3>
+<p>If the 2-second interactive poll delay is noticeable for user-triggered ingestion, reduce <code>poll_interval_ms</code>. Lower values increase database polling load slightly.</p>
+<h3 id="when-to-drain-a-lane">When to drain a lane</h3>
+<p>For maintenance operations (database migrations, schema changes), drain a lane to stop claiming new jobs while letting running jobs finish:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>PATCH<span class="w"> </span>http://localhost:8000/admin/workers/lanes/maintenance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;enabled&quot;: false}&#39;</span>
+</code></pre></div>
+<p>Re-enable with <code>{"enabled": true}</code> when done.</p>
+<h2 id="admin-endpoints">Admin Endpoints</h2>
+<p>All endpoints require authentication and <code>workers:view</code> or <code>workers:manage</code> RBAC permissions.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Permission</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/admin/workers/status</code></td>
+<td><code>workers:view</code></td>
+<td>Slot utilization, running jobs, queue depth</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/admin/workers/lanes</code></td>
+<td><code>workers:view</code></td>
+<td>Per-lane config with utilization</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/admin/workers/lanes/{name}</code></td>
+<td><code>workers:manage</code></td>
+<td>Update lane config at runtime</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/admin/workers/jobs/{id}/cancel</code></td>
+<td><code>workers:manage</code></td>
+<td>Cancel a running job (sets cancelled flag)</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/admin/workers/jobs/{id}/priority</code></td>
+<td><code>workers:manage</code></td>
+<td>Reprioritize a queued job</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cli-reference">CLI Reference</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>workers<span class="w">          </span><span class="c1"># Slot overview, lane summary, active jobs</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>workers<span class="w"> </span>lanes<span class="w">    </span><span class="c1"># Per-lane config detail with utilization</span>
+</code></pre></div>
+<h2 id="mcp-resource">MCP Resource</h2>
+<p>The <code>workers/status</code> MCP resource combines both status and lane data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Resource URI: workers/status
+</code></pre></div>
+<h2 id="rbac">RBAC</h2>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Scope</th>
+<th>Grants</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workers:view</code></td>
+<td>Platform</td>
+<td>Read lane config, slot utilization, queue depth</td>
+</tr>
+<tr>
+<td><code>workers:manage</code></td>
+<td>Platform</td>
+<td>Cancel jobs, reprioritize, modify lane config, drain/resume lanes</td>
+</tr>
+</tbody>
+</table>
+<p>Both permissions are granted to the <code>platform_admin</code> role by the ADR-100 migration. Custom roles can be granted either permission independently via the RBAC system.</p>
 
 
 
 
 
 
-
-  
-  
 
 
 
@@ -10854,10 +10141,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
