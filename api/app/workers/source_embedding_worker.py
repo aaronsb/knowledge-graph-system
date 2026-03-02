@@ -292,10 +292,43 @@ def generate_source_embeddings(
         # Step 3: Get embedding worker
         embedding_worker = get_embedding_worker()
 
-        # Step 4: Generate embeddings for each chunk and store
+        # Step 4: Generate embeddings for each chunk (no DB transaction held)
+        prepared_rows = []
+
+        for chunk in chunks:
+            chunk_hash = sha256_text(chunk.text)
+
+            # LLM API call — potentially seconds of latency per chunk
+            embedding_response = embedding_worker.generate_concept_embedding(chunk.text)
+            embedding_vector = embedding_response["embedding"]
+
+            embedding_array = np.array(embedding_vector, dtype=np.float32)
+            embedding_bytes = embedding_array.tobytes()
+
+            prepared_rows.append((
+                source_id,
+                chunk.index,
+                chunk_strategy,
+                chunk.start_offset,
+                chunk.end_offset,
+                chunk.text,
+                chunk_hash,
+                source_hash,
+                psycopg2.Binary(embedding_bytes),
+                embedding_model,
+                embedding_dimension,
+                embedding_provider
+            ))
+
+            logger.debug(
+                f"Chunk {chunk.index}: embedding generated, "
+                f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
+                f"hash={chunk_hash[:16]}..."
+            )
+
+        # Step 5: Bulk INSERT all embeddings in a short-lived transaction
         embedding_ids = []
 
-        # Connect to PostgreSQL for source_embeddings table
         conn = psycopg2.connect(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -306,22 +339,7 @@ def generate_source_embeddings(
 
         try:
             with conn.cursor() as cursor:
-                # All inserts in single transaction for atomicity
-                for chunk in chunks:
-                    # Calculate chunk hash
-                    chunk_hash = sha256_text(chunk.text)
-
-                    # Generate embedding for this chunk
-                    embedding_response = embedding_worker.generate_concept_embedding(chunk.text)
-                    embedding_vector = embedding_response["embedding"]
-
-                    # Convert embedding to binary format (PostgreSQL BYTEA)
-                    # Convert to numpy array and then to bytes
-                    embedding_array = np.array(embedding_vector, dtype=np.float32)
-                    embedding_bytes = embedding_array.tobytes()
-
-                    # Insert into source_embeddings table
-                    # Use ON CONFLICT DO NOTHING for idempotency (same source + chunk = same embedding)
+                for row in prepared_rows:
                     cursor.execute("""
                         INSERT INTO kg_api.source_embeddings (
                             source_id,
@@ -339,50 +357,23 @@ def generate_source_embeddings(
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (source_id, chunk_index, chunk_strategy) DO NOTHING
                         RETURNING embedding_id
-                    """, (
-                        source_id,
-                        chunk.index,
-                        chunk_strategy,
-                        chunk.start_offset,
-                        chunk.end_offset,
-                        chunk.text,
-                        chunk_hash,
-                        source_hash,
-                        psycopg2.Binary(embedding_bytes),
-                        embedding_model,
-                        embedding_dimension,
-                        embedding_provider
-                    ))
+                    """, row)
 
                     result = cursor.fetchone()
                     if result:
-                        embedding_id = result[0]
-                        embedding_ids.append(embedding_id)
-                        logger.debug(
-                            f"Chunk {chunk.index}: embedding_id={embedding_id}, "
-                            f"offsets=[{chunk.start_offset}:{chunk.end_offset}], "
-                            f"hash={chunk_hash[:16]}..."
-                        )
-                    else:
-                        # Embedding already exists (ON CONFLICT DO NOTHING)
-                        logger.debug(
-                            f"Chunk {chunk.index}: already exists, "
-                            f"offsets=[{chunk.start_offset}:{chunk.end_offset}]"
-                        )
+                        embedding_ids.append(result[0])
 
-                # Commit all inserts (atomic transaction)
                 conn.commit()
                 logger.debug(f"Stored {len(embedding_ids)} embeddings in database")
 
         except Exception as e:
-            # Rollback transaction on any error
             conn.rollback()
             logger.error(f"Failed to store embeddings, transaction rolled back: {str(e)}")
             raise
         finally:
             conn.close()
 
-        # Step 5: Update Source.content_hash in AGE graph
+        # Step 6: Update Source.content_hash in AGE graph
         with AGEClient() as age_client:
             # Use facade for namespace-safe query (ADR-048)
             age_client.facade.execute_raw("""
