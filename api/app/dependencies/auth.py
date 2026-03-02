@@ -116,9 +116,10 @@ class _PooledConnection:
         """Return connection to pool instead of closing it."""
         try:
             self._conn.reset()
+            self._pool.putconn(self._conn)
         except Exception:
-            pass
-        self._pool.putconn(self._conn)
+            # Connection is broken — discard it rather than poison the pool
+            self._pool.putconn(self._conn, close=True)
 
     def __enter__(self):
         return self

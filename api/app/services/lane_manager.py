@@ -160,9 +160,11 @@ class LaneManager:
         finally:
             # Release the slot on the event loop thread (all _active_jobs mutations
             # happen on the event loop to avoid cross-thread set mutation).
+            # Use a lambda so _active_jobs[lane_name] is resolved on the event loop
+            # thread, not on the worker thread at call_soon_threadsafe time.
             if self._loop and self._loop.is_running():
                 self._loop.call_soon_threadsafe(
-                    self._active_jobs.get(lane_name, set()).discard, job_id
+                    lambda: self._active_jobs.get(lane_name, set()).discard(job_id)
                 )
             else:
                 # Fallback during shutdown when loop may be closing
