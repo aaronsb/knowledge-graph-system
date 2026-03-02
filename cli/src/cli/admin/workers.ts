@@ -10,7 +10,8 @@ import { separator, coloredCount } from '../colors';
 
 function formatDuration(startedAt: string | null): string {
   if (!startedAt) return 'unknown';
-  const seconds = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+  const utcTimestamp = startedAt.endsWith('Z') ? startedAt : startedAt + 'Z';
+  const seconds = Math.floor((Date.now() - new Date(utcTimestamp).getTime()) / 1000);
   if (seconds < 60) return `${seconds}s`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
   return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;

@@ -517,7 +517,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
               <div className="space-y-1 mb-4">
                 <div className="text-sm font-medium text-foreground">Active Jobs</div>
                 {workerStatus.running_jobs.map((job) => {
-                  const startedAt = job.started_at ? new Date(job.started_at) : null;
+                  const startedAt = job.started_at ? new Date(job.started_at.endsWith('Z') ? job.started_at : job.started_at + 'Z') : null;
                   const durationSeconds = startedAt
                     ? Math.floor((Date.now() - startedAt.getTime()) / 1000)
                     : null;

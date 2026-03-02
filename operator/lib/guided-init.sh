@@ -323,7 +323,7 @@ echo -e "${BOLD}Step 5/7: Configuring embedding provider${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5)..."
-docker exec kg-operator python /workspace/operator/configure.py embedding 2
+docker exec kg-operator python /workspace/operator/configure.py embedding --provider local
 echo ""
 
 # Step 6: Store OpenAI API key with validation loop
