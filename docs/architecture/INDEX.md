@@ -33,6 +33,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-083](./infrastructure/ADR-083-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted |
 | [ADR-086](./infrastructure/ADR-086-deployment-topology.md) | Deployment Topology (Dev/Stable Split) | Draft |
 | [ADR-088](./infrastructure/ADR-088-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
+| [ADR-100](./infrastructure/ADR-100-database-driven-job-dispatch.md) | Database-Driven Job Dispatch | Accepted |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
@@ -43,7 +44,8 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-024](./database-schema/ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL Architecture | Proposed |
 | [ADR-040](./database-schema/ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed |
 | [ADR-061](./database-schema/ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
-| [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Draft |
+| [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Accepted |
+| [ADR-201](./database-schema/ADR-201-in-memory-graph-acceleration-extension.md) | In-Memory Graph Acceleration Extension | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
@@ -90,6 +92,7 @@ _Pathfinding, projections, diversity, search_
 | [ADR-076](./query-search/ADR-076-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Proposed |
 | [ADR-076.1](./query-search/ADR-076.1-pathfinding-baseline.md) | Pathfinding Performance Baseline | Accepted |
 | [ADR-084](./query-search/ADR-084-document-search.md) | Document-Level Search | Proposed |
+| [ADR-500](./query-search/ADR-500-graph-program-dsl-and-ast-architecture.md) | Graph Program DSL and AST Architecture | Draft |
 
 ## Vocabulary
 _Relationships, grounding, categorization_
@@ -124,7 +127,7 @@ _CLI, web, FUSE, MCP, visualization_
 | [ADR-036](./user-interfaces/ADR-036-universal-visual-query-builder.md) | Universal Visual Query Builder | Proposed |
 | [ADR-064](./user-interfaces/ADR-064-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed |
 | [ADR-067](./user-interfaces/ADR-067-web-app-workstation-architecture.md) | Web Application Workstation Architecture | Proposed |
-| [ADR-069](./user-interfaces/ADR-069-semantic-fuse-filesystem.md) | Semantic FUSE Filesystem | Proposed |
+| [ADR-069](./user-interfaces/ADR-069-semantic-fuse-filesystem.md) | Semantic FUSE Filesystem | Accepted |
 | [ADR-069.1](./user-interfaces/ADR-069.1-fuse-implementation-specifics.md) | FUSE Driver Implementation Specifics | Proposed |
 | [ADR-075](./user-interfaces/ADR-075-postmodern-theme.md) | Postmodern Theme System | Proposed |
 | [ADR-078](./visualization/ADR-078-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Accepted |
