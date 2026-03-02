@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../lifecycle/">
+        <link rel="prev" href="../ADR-088-semantic-election-protocol/">
       
       
-        <link rel="next" href="../specification/">
+        <link rel="next" href="../../ingestion-content/ADR-014-job-approval-workflow/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
-        <title>GraphProgram Security Model - Knowledge Graph System</title>
+        <title>ADR-100: Database-Driven Job Dispatch - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#graphprogram-security-model" class="md-skip">
+        <a href="#adr-100-database-driven-job-dispatch" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              GraphProgram Security Model
+              ADR-100: Database-Driven Job Dispatch
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+      <a href="../../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/glossary/" class="md-nav__link">
+      <a href="../../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/web-workstation/" class="md-nav__link">
+      <a href="../../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cli/" class="md-nav__link">
+      <a href="../../../features/cli/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/mcp-server/" class="md-nav__link">
+      <a href="../../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/rest-api/" class="md-nav__link">
+      <a href="../../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -658,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -714,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -770,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -826,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -854,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -882,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -910,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -938,7 +938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -966,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1022,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1050,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1078,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1106,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/exploring/" class="md-nav__link">
+      <a href="../../../guides/exploring/" class="md-nav__link">
         
   
   
@@ -1134,7 +1134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/querying/" class="md-nav__link">
+      <a href="../../../guides/querying/" class="md-nav__link">
         
   
   
@@ -1162,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1244,7 +1244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -1319,7 +1319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1402,7 +1402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1430,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1513,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1653,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1736,7 +1736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1764,7 +1764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1847,7 +1847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1875,7 +1875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1903,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1931,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2014,7 +2014,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2042,7 +2042,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2125,7 +2125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2153,7 +2153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2181,7 +2181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2209,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2237,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2265,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2293,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2321,7 +2321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2349,7 +2349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2377,7 +2377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2405,7 +2405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2495,7 +2495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2577,7 +2577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/" class="md-nav__link">
+      <a href="../../../operating/" class="md-nav__link">
         
   
   
@@ -2605,7 +2605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2633,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/client-tools/" class="md-nav__link">
+      <a href="../../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2661,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/configuration/" class="md-nav__link">
+      <a href="../../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2689,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2717,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/production/" class="md-nav__link">
+      <a href="../../../operating/production/" class="md-nav__link">
         
   
   
@@ -2745,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/quick-start/" class="md-nav__link">
+      <a href="../../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2773,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2801,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/upgrading/" class="md-nav__link">
+      <a href="../../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2883,7 +2883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -2911,7 +2911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2939,7 +2939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -2967,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -2995,7 +2995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3070,7 +3070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3098,7 +3098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3181,7 +3181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3256,7 +3256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3284,7 +3284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3312,7 +3312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -3340,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -3368,7 +3368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -3396,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -3424,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -3452,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -3480,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -3508,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -3536,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -3564,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -3647,7 +3647,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -3738,7 +3738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/fuse/" class="md-nav__link">
+      <a href="../../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -3821,7 +3821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -3896,7 +3896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -3979,7 +3979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4007,7 +4007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4035,7 +4035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4063,7 +4063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4091,7 +4091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4119,7 +4119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/graph/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4147,7 +4147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -4175,7 +4175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -4203,7 +4203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4231,7 +4231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -4259,7 +4259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4287,7 +4287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -4315,7 +4315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/program/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -4343,7 +4343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -4371,7 +4371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -4399,7 +4399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -4447,18 +4447,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -4479,7 +4481,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4497,7 +4499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/INDEX/" class="md-nav__link">
+      <a href="../../INDEX/" class="md-nav__link">
         
   
   
@@ -4572,7 +4574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -4607,7 +4609,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -4642,7 +4644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -4677,7 +4679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -4712,7 +4714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -4747,7 +4749,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -4782,7 +4784,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -4817,7 +4819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -4852,7 +4854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -4942,7 +4944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -4977,7 +4979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5012,7 +5014,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5047,7 +5049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5082,7 +5084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5117,7 +5119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5152,7 +5154,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5187,7 +5189,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5222,7 +5224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5257,7 +5259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5339,7 +5341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -5430,7 +5432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -5465,7 +5467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -5500,7 +5502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -5535,7 +5537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -5570,7 +5572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -5605,7 +5607,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -5640,7 +5642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -5675,7 +5677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -5710,7 +5712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -5800,7 +5802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -5835,7 +5837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -5870,7 +5872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -5905,7 +5907,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -5940,7 +5942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -5975,7 +5977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6015,18 +6017,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" checked>
         
           
           <label class="md-nav__link" for="__nav_9_6" id="__nav_9_6_label" tabindex="0">
@@ -6047,7 +6051,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -6065,7 +6069,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -6100,7 +6104,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -6135,7 +6139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -6170,7 +6174,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -6205,7 +6209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -6240,7 +6244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -6275,7 +6279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -6310,7 +6314,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -6345,7 +6349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -6380,7 +6384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -6415,7 +6419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -6450,7 +6454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -6485,7 +6489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -6517,10 +6521,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-100: Database-Driven Job Dispatch
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -6543,6 +6581,314 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-works-well-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What works well today
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-change-poll-and-claim-replaces-push-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core change: poll-and-claim replaces push-dispatch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-claim-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job claim mechanism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-lanes-database-configured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worker lanes (database-configured)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#poll-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Poll loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-control-operations-worker-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job control operations (worker-level)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#priority-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority column
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-job-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale job recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serial-ordering-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serial ordering preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rbac-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RBAC integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-pool-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection pool changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#external-message-broker-redis-rabbitmq-celery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External message broker (Redis, RabbitMQ, Celery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asyncioqueue-replacing-threadpoolexecutor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        asyncio.Queue replacing ThreadPoolExecutor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listennotify-instead-of-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LISTEN/NOTIFY instead of polling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-current-model-just-increase-pool-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep current model, just increase pool size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -6610,7 +6956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -6645,7 +6991,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -6680,7 +7026,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -6715,7 +7061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -6750,7 +7096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -6785,7 +7131,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -6820,7 +7166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -6855,7 +7201,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -6890,7 +7236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -6925,7 +7271,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -6960,7 +7306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -7050,7 +7396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7085,7 +7431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -7120,7 +7466,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -7155,7 +7501,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -7190,7 +7536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -7225,7 +7571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -7260,7 +7606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -7295,7 +7641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -7330,7 +7676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -7420,7 +7766,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -7455,7 +7801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -7490,7 +7836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -7525,7 +7871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -7560,7 +7906,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -7595,7 +7941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -7630,7 +7976,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -7665,7 +8011,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -7700,7 +8046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -7735,7 +8081,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -7770,7 +8116,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -7805,7 +8151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -7840,7 +8186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -7875,7 +8221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -7965,7 +8311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -8000,7 +8346,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -8090,7 +8436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -8125,7 +8471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -8160,7 +8506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -8195,7 +8541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -8230,7 +8576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -8265,7 +8611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -8300,7 +8646,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8335,7 +8681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -8370,7 +8716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -8405,7 +8751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -8440,7 +8786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -8475,7 +8821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -8510,7 +8856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -8607,7 +8953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -8635,7 +8981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -8663,7 +9009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/epistemic-confidence/" class="md-nav__link">
+      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -8691,7 +9037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -8719,7 +9065,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/headless-install-analysis/" class="md-nav__link">
+      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -8747,7 +9093,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -8775,7 +9121,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/polarity-axis-findings/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -8803,7 +9149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/polarity-axis-visualization/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -8831,7 +9177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/t-sne-viz/" class="md-nav__link">
+      <a href="../../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -8906,7 +9252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/vision-testing/" class="md-nav__link">
+      <a href="../../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -8934,7 +9280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -8962,7 +9308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -8990,7 +9336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9080,7 +9426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -9108,7 +9454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -9136,7 +9482,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9164,7 +9510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -9192,7 +9538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -9220,7 +9566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -9248,7 +9594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -9276,7 +9622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -9331,88 +9677,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#terminology" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Terminology
+        Context
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-pattern-code-signing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Pattern: Code Signing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#defense-in-depth-layers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Defense-in-Depth Layers
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Defense-in-Depth Layers">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#layer-1-ast-type-system" class="md-nav__link">
+  <a href="#what-works-well-today" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Layer 1: AST Type System
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#layer-2-validator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layer 2: Validator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#layer-3-storage-and-ownership" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layer 3: Storage and Ownership
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#layer-4-per-statement-execution-guards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layer 4: Per-Statement Execution Guards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#layer-5-database-level-constraints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layer 5: Database-Level Constraints
+        What works well today
       
     </span>
   </a>
@@ -9425,22 +9705,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#threat-model" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Threat Model
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Threat Model">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#t1-malicious-client-crafting-programs" class="md-nav__link">
+  <a href="#core-change-poll-and-claim-replaces-push-dispatch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T1: Malicious Client Crafting Programs
+        Core change: poll-and-claim replaces push-dispatch
       
     </span>
   </a>
@@ -9448,10 +9728,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t2-bypassing-the-notarization" class="md-nav__link">
+  <a href="#job-claim-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T2: Bypassing the Notarization
+        Job claim mechanism
       
     </span>
   </a>
@@ -9459,10 +9739,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t3-injection-via-cypher" class="md-nav__link">
+  <a href="#worker-lanes-database-configured" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T3: Injection via Cypher
+        Worker lanes (database-configured)
       
     </span>
   </a>
@@ -9470,10 +9750,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t4-apiop-endpoint-abuse" class="md-nav__link">
+  <a href="#poll-loop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T4: ApiOp Endpoint Abuse
+        Poll loop
       
     </span>
   </a>
@@ -9481,10 +9761,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t5-ownership-and-multi-tenancy" class="md-nav__link">
+  <a href="#job-control-operations-worker-level" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T5: Ownership and Multi-Tenancy
+        Job control operations (worker-level)
       
     </span>
   </a>
@@ -9492,10 +9772,76 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#t6-post-notarization-mutation" class="md-nav__link">
+  <a href="#priority-column" class="md-nav__link">
     <span class="md-ellipsis">
       
-        T6: Post-Notarization Mutation
+        Priority column
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stale-job-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stale job recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serial-ordering-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serial ordering preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rbac-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RBAC integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-pool-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection pool changes
       
     </span>
   </a>
@@ -9508,57 +9854,113 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#capability-based-security" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Capability-Based Security
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-guaranteed" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What IS Guaranteed
+        Negative
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-not-guaranteed" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What IS NOT Guaranteed
+        Neutral
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#security-boundaries-summary" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Boundaries Summary
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#external-message-broker-redis-rabbitmq-celery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External message broker (Redis, RabbitMQ, Celery)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendations-for-implementers" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#asyncioqueue-replacing-threadpoolexecutor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recommendations for Implementers
+        asyncio.Queue replacing ThreadPoolExecutor
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listennotify-instead-of-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LISTEN/NOTIFY instead of polling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-current-model-just-increase-pool-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep current model, just increase pool size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -9582,484 +9984,267 @@
   
 
 
-<h1 id="graphprogram-security-model">GraphProgram Security Model</h1>
-<p>This document defines the security guarantees, threat model, and defense-in-depth
-architecture for the GraphProgram system (ADR-500). It is written for implementers
-building the executor and validators, and for security reviewers evaluating the
-system's trust boundaries.</p>
-<h2 id="terminology">Terminology</h2>
-<table>
-<thead>
-<tr>
-<th>Term</th>
-<th>Definition</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>H</strong></td>
-<td>The persistent knowledge graph. Immutable during query execution.</td>
-</tr>
-<tr>
-<td><strong>W</strong></td>
-<td>The working subgraph. Ephemeral, built during program execution.</td>
-</tr>
-<tr>
-<td><strong>Notarization</strong></td>
-<td>Server-side validation and storage of a <code>GraphProgram</code> AST.</td>
-</tr>
-<tr>
-<td><strong><code>Operator</code></strong></td>
-<td>One of <code>+</code> (union), <code>-</code> (difference), <code>&amp;</code> (intersect), <code>?</code> (optional), <code>!</code> (assert).</td>
-</tr>
-</tbody>
-</table>
-<p>For the complete validation rule catalog (V001, V002, etc.), see
-<a href="../validation/">validation.md</a>.</p>
-<h2 id="core-pattern-code-signing">Core Pattern: Code Signing</h2>
-<p>GraphProgram uses a <strong>code-signing pattern</strong> for program trust:</p>
+<h1 id="adr-100-database-driven-job-dispatch">ADR-100: Database-Driven Job Dispatch</h1>
+<h2 id="context">Context</h2>
+<p>The current job system has two dispatch paths that evolved independently:</p>
 <ol>
-<li>Any client (web, CLI, MCP, agent) authors a <code>GraphProgram</code> JSON AST.</li>
-<li>The client submits the AST to the API (<code>POST /programs</code>).</li>
-<li>The API <strong>validates</strong> and <strong>notarizes</strong> the program -- structural checks, safety
-   checks, and boundedness analysis all pass.</li>
-<li>The notarized program is stored in <code>kg_api.query_definitions</code> with an <code>owner_id</code>,
-   timestamp, and definition type <code>program</code>.</li>
-<li>Clients retrieve notarized programs and execute them via <code>POST /programs/execute</code>.</li>
+<li>
+<p><strong>Serial ingestion</strong> — <code>queue_serial_job()</code> spawns raw <code>threading.Thread</code> instances outside the pool. A completing job calls <code>_process_next_serial_job()</code> to chain the next one from within the thread.</p>
+</li>
+<li>
+<p><strong>System/parallel jobs</strong> — <code>execute_job_async()</code> submits to a shared <code>ThreadPoolExecutor</code> with 4 slots. Projection (t-SNE), vocab refresh, annealing, and parallel ingestion all compete for these slots.</p>
+</li>
 </ol>
-<p><strong>The notarization is a trust stamp, not a privilege gate.</strong> A client that bypasses
-notarization and submits an un-notarized AST directly to the executor still faces the
-same per-statement guards (authentication, rate limiting, read-only enforcement,
-namespace safety) that apply to all query execution. Notarization adds structural
-guarantees on top of the existing execution guards -- it does not replace them.</p>
-<h2 id="defense-in-depth-layers">Defense-in-Depth Layers</h2>
-<p>The system provides five defense layers. Each layer is independent -- a failure
-in one layer does not compromise the others.</p>
-<h3 id="layer-1-ast-type-system">Layer 1: AST Type System</h3>
-<p>The <code>GraphProgram</code> AST is defined as a Pydantic discriminated union. The type
-system itself is a whitelist:</p>
-<ul>
-<li><code>Statement.operation</code> must be one of <code>CypherOp</code>, <code>ApiOp</code>, or <code>ConditionalOp</code>.</li>
-<li><code>Statement.op</code> must be a valid <code>Operator</code>: <code>+</code>, <code>-</code>, <code>&amp;</code>, <code>?</code>, or <code>!</code>.</li>
-<li><code>Condition.test</code> must be one of the enumerated test types (<code>has_results</code>,
-  <code>empty</code>, <code>count_gte</code>, <code>count_lte</code>, <code>has_ontology</code>, <code>has_relationship</code>).</li>
-</ul>
-<p>Unknown operation types, unknown operators, and unknown condition tests are
-rejected at deserialization before any validation logic runs. This means the
-expressible operation set is fixed by the type definitions -- adding a new
-capability requires an explicit AST type change.</p>
-<p><strong>What this layer guarantees:</strong>
-- Programs cannot contain operation types not defined in the schema.
-- Malformed JSON or unexpected fields are rejected before validation.</p>
-<p><strong>What this layer does NOT guarantee:</strong>
-- The content of a <code>CypherOp.query</code> string is syntactically valid Cypher.
-- The <code>ApiOp.endpoint</code> is in the allowlist.
-- The program is bounded or safe to execute.</p>
-<h3 id="layer-2-validator">Layer 2: Validator</h3>
-<p>The validator (<code>POST /programs/validate</code>) performs structural and safety checks
-on a well-typed AST. The full rule catalog is in <a href="../validation/">validation.md</a>.
-The security-relevant checks are:</p>
+<p>This creates three observable problems:</p>
+<p><strong>Thread pool starvation.</strong> A t-SNE projection is CPU-bound for 30-120+ seconds. A vocab refresh makes serialized embedding API calls across 50+ types. When system jobs fill all 4 pool slots, any parallel-mode ingestion job queues behind them with no visibility into why.</p>
+<p><strong>In-memory dispatch state.</strong> The <code>ThreadPoolExecutor</code>'s internal queue and the serial chaining logic (<code>_process_next_serial_job</code>) are in-process memory. If the API container restarts, queued pool submissions are lost and the serial chain breaks. Jobs left in <code>running</code> state require manual intervention.</p>
+<p><strong>Connection pool proliferation.</strong> Each worker instantiates its own <code>AGEClient</code> with a <code>ThreadedConnectionPool(1, 20)</code>. Under 4 concurrent jobs plus the queue's own pool, PostgreSQL can see 80+ connections competing for shared buffers and row-level locks. Ingestion MERGE operations stall when projection workers hold long-running reads.</p>
+<p>Additionally, the two dispatch paths make the system hard to reason about: serial jobs bypass the pool entirely, system jobs go through it, and there's no unified model for backpressure, priority, or observability.</p>
+<h3 id="what-works-well-today">What works well today</h3>
+<p>The job <em>state machine</em> (pending → approved → running → completed/failed) is already in PostgreSQL. The worker registry, progress tracking via SSE, and checkpoint/resume are solid. ADR-014's approval workflow and ADR-050's scheduling layer both work correctly. The problem is specifically in <strong>how work gets dispatched to threads</strong>, not in the job lifecycle itself.</p>
+<h2 id="decision">Decision</h2>
+<p>Replace in-memory thread dispatch with a database-driven claim model. Workers poll PostgreSQL for claimable work using atomic <code>UPDATE ... RETURNING</code> instead of being handed work by in-memory submission.</p>
+<h3 id="core-change-poll-and-claim-replaces-push-dispatch">Core change: poll-and-claim replaces push-dispatch</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Current:  approve → in-memory submit → thread runs job
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Proposed: approve → job sits in DB → worker polls → atomic claim → worker runs job
+</code></pre></div>
+<p>The job table becomes the sole coordination point. No in-memory queues, no thread chaining.</p>
+<h3 id="job-claim-mechanism">Job claim mechanism</h3>
+<p>Workers claim jobs atomically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;running&#39;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">claimed_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">:</span><span class="n">worker_id</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">claimed_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;approved&#39;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="n">job_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">ANY</span><span class="p">(:</span><span class="n">claimable_types</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">priority</span><span class="w"> </span><span class="k">DESC</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="k">ASC</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="k">FOR</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="n">SKIP</span><span class="w"> </span><span class="n">LOCKED</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">RETURNING</span><span class="w"> </span><span class="o">*</span><span class="p">;</span>
+</code></pre></div>
+<p><code>FOR UPDATE SKIP LOCKED</code> ensures multiple worker threads can poll concurrently without blocking each other — if one row is being claimed, the next worker skips it and tries the next eligible job.</p>
+<h3 id="worker-lanes-database-configured">Worker lanes (database-configured)</h3>
+<p>Instead of one shared pool, define typed lanes with independent slot budgets. Lane definitions live in a <code>kg_api.worker_lanes</code> table so they can be tuned at runtime without restarting the container:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">worker_lanes</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">name</span><span class="w">         </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">job_types</span><span class="w">    </span><span class="nb">TEXT</span><span class="p">[]</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">          </span><span class="c1">-- job types this lane claims</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">max_slots</span><span class="w">    </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="n">poll_interval_ms</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="n">stale_timeout_minutes</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="n">enabled</span><span class="w">      </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="n">updated_at</span><span class="w">   </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">);</span>
+</code></pre></div>
+<p>Default lane configuration (seeded by migration):</p>
 <table>
 <thead>
 <tr>
-<th>Check</th>
-<th>What it catches</th>
+<th>Lane</th>
+<th>Types</th>
+<th>Slots</th>
+<th>Poll Interval</th>
+<th>Rationale</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Boundedness</strong></td>
-<td>Total operation count is statically computable and within limits (default: 100). Conditional branches contribute their longer path.</td>
+<td><code>interactive</code></td>
+<td>ingestion, ingest_image, polarity</td>
+<td>2</td>
+<td>2s</td>
+<td>User-initiated, latency-sensitive</td>
 </tr>
 <tr>
-<td><strong>Cypher safety</strong></td>
-<td>Write keywords (<code>CREATE</code>, <code>DELETE</code>, <code>SET</code>, <code>REMOVE</code>, <code>MERGE</code>, <code>DROP</code>, <code>DETACH</code>) are rejected. Unbounded <code>MATCH</code> without <code>LIMIT</code> is flagged.</td>
+<td><code>maintenance</code></td>
+<td>projection, vocab_refresh, epistemic_remeasurement, ontology_annealing, proposal_execution</td>
+<td>1</td>
+<td>15s</td>
+<td>Background, can wait</td>
 </tr>
 <tr>
-<td><strong><code>ApiOp</code> allowlist</strong></td>
-<td><code>endpoint</code> must be in the permitted set of internal API paths (e.g., <code>/search/concepts</code>, <code>/search/sources</code>, <code>/vocabulary/status</code>).</td>
-</tr>
-<tr>
-<td><strong>Parameter resolution</strong></td>
-<td>All <code>$param</code> references resolve to declared parameters or provided values.</td>
-</tr>
-<tr>
-<td><strong>Nesting depth</strong></td>
-<td><code>ConditionalOp</code> nesting does not exceed the maximum (default: 3).</td>
-</tr>
-<tr>
-<td><strong>Required fields</strong></td>
-<td>All required fields are present and correctly typed.</td>
+<td><code>system</code></td>
+<td>restore, vocab_consolidate, artifact_cleanup, source_embedding</td>
+<td>1</td>
+<td>30s</td>
+<td>Infrastructure housekeeping</td>
 </tr>
 </tbody>
 </table>
-<p><strong>What this layer guarantees:</strong>
-- A notarized program will not attempt write operations via Cypher.
-- A notarized program will not call arbitrary API endpoints.
-- A notarized program has a statically-determinable maximum operation count.
-- All parameter references are resolvable.</p>
-<p><strong>What this layer does NOT guarantee:</strong>
-- Cypher queries will return results (they may match nothing).
-- Cypher queries will perform well (no cost-based optimization).
-- <code>ApiOp</code> parameters are semantically valid (e.g., <code>min_similarity: 999</code>).
-- The program produces useful output.</p>
-<h3 id="layer-3-storage-and-ownership">Layer 3: Storage and Ownership</h3>
-<p>Notarized programs are stored in <code>kg_api.query_definitions</code>:</p>
-<ul>
-<li><code>owner_id</code>: The authenticated user who created the program.</li>
-<li><code>created_at</code> / <code>updated_at</code>: Timestamps for audit trail.</li>
-<li><code>definition_type</code>: Set to <code>program</code> for GraphProgram ASTs.</li>
-</ul>
-<p><strong>Access control rules (from <code>query_definitions.py</code>):</strong></p>
+<p>Each lane is a polling loop with its own concurrency limit. A t-SNE job filling the maintenance lane cannot prevent an ingest job from claiming an interactive slot.</p>
+<p>Slot counts and poll intervals are read from the table on each poll cycle, so changes take effect within one interval — no restart needed. Environment variables can override as a bootstrap mechanism before the database is available.</p>
+<h3 id="poll-loop">Poll loop</h3>
+<p>Each lane runs a simple async polling loop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">lane_loop</span><span class="p">(</span><span class="n">lane_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">while</span> <span class="n">running</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        <span class="n">config</span> <span class="o">=</span> <span class="k">await</span> <span class="n">load_lane_config</span><span class="p">(</span><span class="n">lane_name</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">poll_interval_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>            <span class="k">continue</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="k">async</span> <span class="k">with</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_slots</span><span class="p">):</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>            <span class="n">job</span> <span class="o">=</span> <span class="k">await</span> <span class="n">claim_next_job</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">job_types</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>            <span class="k">if</span> <span class="n">job</span><span class="p">:</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>                <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>                    <span class="n">executor</span><span class="p">,</span> <span class="n">execute_job</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>                <span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">poll_interval_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="job-control-operations-worker-level">Job control operations (worker-level)</h3>
+<p>The existing <code>/jobs</code> routes (list, cancel, approve, delete, SSE) manage the <strong>job lifecycle</strong> — a user's view of their ingestion work. Those routes remain unchanged.</p>
+<p>This ADR adds a separate set of <strong>worker-level controls</strong> for platform operators. The distinction: existing job controls answer "what's happening with my ingest?" while these answer "what's consuming worker capacity and how do I intervene?"</p>
+<p>The gap today: <code>DELETE /jobs/{id}</code> refuses to cancel a job in <code>processing</code>/<code>running</code> state. A runaway t-SNE or vocab refresh has no kill switch — you wait or restart the container.</p>
 <table>
 <thead>
 <tr>
 <th>Operation</th>
-<th>Who can perform it</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>List</td>
-<td>Owner sees own programs; <code>admin</code>/<code>platform_admin</code> see all</td>
-</tr>
-<tr>
-<td>Read</td>
-<td>Owner or admin</td>
-</tr>
-<tr>
-<td>Update</td>
-<td>Owner or admin</td>
-</tr>
-<tr>
-<td>Delete</td>
-<td>Owner or admin</td>
-</tr>
-</tbody>
-</table>
-<p>Programs with <code>owner_id = NULL</code> (system-provided programs) are visible to all
-authenticated users.</p>
-<p><strong>What this layer guarantees:</strong>
-- Programs have author attribution.
-- Non-admin users cannot read, modify, or delete other users' programs.
-- The stored AST is the exact AST that was validated (no post-notarization mutation
-  by unauthorized parties).</p>
-<p><strong>What this layer does NOT guarantee:</strong>
-- Programs are immutable after notarization. The owner (or admin) can update the
-  stored definition. A re-validation step on update is recommended but not
-  currently enforced.
-- Cross-user program sharing. There is no grants or sharing model yet.</p>
-<h3 id="layer-4-per-statement-execution-guards">Layer 4: Per-Statement Execution Guards</h3>
-<p>When the executor runs a program's statements, each statement passes through the
-same guards that apply to direct query execution:</p>
-<table>
-<thead>
-<tr>
-<th>Guard</th>
-<th>Mechanism</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Authentication</strong></td>
-<td>OAuth 2.0 access token required (<code>get_current_user</code> / <code>CurrentUser</code> dependency)</td>
-<td><code>dependencies/auth.py</code></td>
-</tr>
-<tr>
-<td><strong>Authorization</strong></td>
-<td>Role-based and permission-based access control (<code>require_role</code>, <code>require_permission</code>, <code>require_scope</code>)</td>
-<td><code>dependencies/auth.py</code></td>
-</tr>
-<tr>
-<td><strong>Namespace safety</strong></td>
-<td><code>GraphQueryFacade</code> enforces explicit labels on Cypher queries, preventing namespace collisions between concept and vocabulary graphs</td>
-<td><code>lib/query_facade.py</code> (ADR-048)</td>
-</tr>
-<tr>
-<td><strong>Audit logging</strong></td>
-<td><code>QueryAuditLog</code> tracks every query with timestamp, namespace, and raw/safe classification</td>
-<td><code>lib/query_facade.py</code></td>
-</tr>
-<tr>
-<td><strong>Rate limiting</strong></td>
-<td>Per-user rate limits apply to the executor endpoint the same as any other endpoint</td>
-<td>Application middleware</td>
-</tr>
-</tbody>
-</table>
-<p><strong>What this layer guarantees:</strong>
-- An unauthenticated client cannot execute programs.
-- Every Cypher statement is audited.
-- Namespace collisions between concept and vocabulary graphs are prevented
-  for facade-routed queries.</p>
-<p><strong>What this layer does NOT guarantee:</strong>
-- That all Cypher goes through the facade. The current <code>POST /cypher</code> endpoint
-  executes raw queries via <code>client._execute_cypher()</code> directly without facade
-  routing. The program executor should use the facade, but this is an
-  implementation requirement, not a current enforcement.</p>
-<h3 id="layer-5-database-level-constraints">Layer 5: Database-Level Constraints</h3>
-<p>Apache AGE and PostgreSQL provide the final defense layer:</p>
-<table>
-<thead>
-<tr>
-<th>Constraint</th>
+<th>Analogy</th>
 <th>Effect</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Cypher syntax validation</strong></td>
-<td>AGE rejects syntactically invalid Cypher</td>
+<td><strong>cancel running job</strong></td>
+<td><code>kill</code></td>
+<td>Set <code>cancelled</code> flag. Worker checks the flag at the next checkpoint/chunk boundary and stops gracefully. Unlike the existing cancel (which only works on queued jobs), this targets jobs already executing.</td>
 </tr>
 <tr>
-<td><strong>Graph schema</strong></td>
-<td>Node labels (<code>:Concept</code>, <code>:Source</code>, <code>:Instance</code>, <code>:VocabType</code>) enforce structure</td>
+<td><strong>reprioritize</strong></td>
+<td><code>nice</code></td>
+<td>Change the <code>priority</code> column on a queued job. Higher priority jobs are claimed first (<code>ORDER BY priority DESC</code>).</td>
 </tr>
 <tr>
-<td><strong>Connection limits</strong></td>
-<td>PostgreSQL <code>max_connections</code> bounds concurrent access</td>
+<td><strong>inspect workers</strong></td>
+<td><code>ps</code></td>
+<td>Return slot utilization per lane, which jobs occupy which slots, queue depth per lane, and claim timestamps. Not a duplicate of <code>GET /jobs</code> — this is the worker topology view.</td>
 </tr>
 <tr>
-<td><strong>Transaction isolation</strong></td>
-<td>Each query runs in a transaction; failures roll back cleanly</td>
+<td><strong>drain lane</strong></td>
+<td><code>kill -STOP</code> (lane)</td>
+<td>Set <code>enabled = FALSE</code> on a lane. The poll loop stops claiming new jobs; running jobs finish naturally.</td>
 </tr>
 <tr>
-<td><strong>Read-only connections</strong></td>
-<td>If the database connection is configured read-only, write attempts fail regardless of what the application allows</td>
+<td><strong>resume lane</strong></td>
+<td><code>kill -CONT</code> (lane)</td>
+<td>Set <code>enabled = TRUE</code>. Polling resumes.</td>
 </tr>
 </tbody>
 </table>
-<p><strong>What this layer guarantees:</strong>
-- Invalid Cypher never executes.
-- The database schema constrains what nodes and relationships can exist.</p>
-<p><strong>What this layer does NOT guarantee:</strong>
-- Query performance. A valid query can still be expensive.
-- That the application uses read-only connections (this is a deployment choice).</p>
-<h2 id="threat-model">Threat Model</h2>
-<h3 id="t1-malicious-client-crafting-programs">T1: Malicious Client Crafting Programs</h3>
-<p><strong>Threat:</strong> An authenticated user submits a program designed to exfiltrate data,
-corrupt H (the persistent knowledge graph), or cause denial of service.</p>
-<p><strong>Mitigations:</strong>
-- <strong>Write operations:</strong> Layer 2 (validator) rejects Cypher containing write
-  keywords. Layer 5 (database) rejects writes if using read-only connections.
-- <strong>Data exfiltration:</strong> Not mitigated by the program system itself. An
-  authenticated user with <code>graph:execute</code> permission can already read any
-  data they can query. Programs do not expand read access beyond what the
-  user's role permits.
-- <strong>Denial of service via expensive queries:</strong> Layer 2 enforces bounded
-  operation count. However, individual queries can still be expensive
-  (e.g., <code>MATCH (c:Concept)-[*1..10]-(n) RETURN c, n LIMIT 1000</code>). This
-  is partially mitigated by query timeouts (PostgreSQL <code>statement_timeout</code>)
-  but is not fully solved at the program level.
-- <strong>ApiOp abuse:</strong> Layer 2 restricts endpoints to the allowlist. Parameters
-  are passed to internal service functions, not to arbitrary HTTP endpoints.</p>
-<p><strong>Residual risk:</strong> An authenticated user can craft expensive-but-valid queries.
-This is a resource management concern, not a privilege escalation. Mitigation
-options include per-user query budgets, statement-level timeouts, and EXPLAIN
-cost estimation.</p>
-<h3 id="t2-bypassing-the-notarization">T2: Bypassing the Notarization</h3>
-<p><strong>Threat:</strong> A client submits an un-notarized AST directly to the executor, skipping
-validation.</p>
-<p><strong>Mitigations:</strong>
-- The executor should re-validate incoming ASTs before execution (defense in
-  depth). Even without re-validation, per-statement guards (Layer 4) still
-  apply: authentication, audit logging, namespace safety.
-- <strong>No privilege escalation.</strong> Bypassing the notarization does not grant access to
-  write operations, admin endpoints, or other users' data. The notarization
-  provides structural guarantees (well-formedness, boundedness); the execution
-  guards provide access control.</p>
-<p><strong>Recommendation:</strong> The executor should always re-validate before execution.
-This makes the notarization a caching optimization (skip validation for known-good
-programs) rather than a security gate.</p>
-<h3 id="t3-injection-via-cypher">T3: Injection via Cypher</h3>
-<p><strong>Threat:</strong> A program contains Cypher that exploits string interpolation to
-inject unintended operations.</p>
-<p><strong>Mitigations:</strong>
-- <strong>Parameter substitution:</strong> <code>$param</code> references are resolved by the executor
-  and passed as query parameters (not string-interpolated into the Cypher text)
-  where the database driver supports parameterized queries.
-- <strong>Write-keyword rejection:</strong> Layer 2 scans Cypher strings for write keywords
-  before execution.</p>
-<p><strong>Residual risk:</strong> The write-keyword check is a string-level scan, not a
-Cypher parser. It cannot distinguish between a keyword in a string literal
-(<code>WHERE c.label = "CREATE"</code>) and an actual write operation. This is a
-conservative over-rejection: it may reject valid read-only queries that contain
-write keywords in string values. It will not under-reject (miss actual writes)
-because AGE also enforces write restrictions at the database level when
-read-only connections are used.</p>
-<p><strong>Note on string interpolation:</strong> The <code>GraphQueryFacade</code> methods build queries
-using Python f-strings for <code>WHERE</code> clauses (see <code>query_facade.py:133</code>). When
-user-supplied values flow into facade queries, they should use parameterized
-queries (<code>params</code> argument) rather than string interpolation to prevent
-injection. This is an existing concern independent of GraphProgram.</p>
-<h3 id="t4-apiop-endpoint-abuse">T4: ApiOp Endpoint Abuse</h3>
-<p><strong>Threat:</strong> A program uses <code>ApiOp</code> to call internal endpoints that perform
-mutations or access privileged data.</p>
-<p><strong>Mitigations:</strong>
-- <strong>Strict allowlist:</strong> The validator maintains a set of permitted <code>ApiOp</code>
-  endpoints. Only read-oriented internal service functions are allowed
-  (vector search, source search, epistemic status queries, batch concept
-  retrieval).
-- <strong>Internal dispatch:</strong> <code>ApiOp</code> statements are dispatched as direct function
-  calls within the API worker, not as HTTP requests. This means they inherit
-  the executor's authentication context and cannot bypass API-level guards.
-- <strong>Parameter validation:</strong> Each internal service function validates its own
-  parameters independently of the program system.</p>
-<p><strong>Residual risk:</strong> If a new internal endpoint is added to the allowlist without
-careful review, it could expose write or admin operations. The allowlist should
-be reviewed whenever new endpoints are added.</p>
-<h3 id="t5-ownership-and-multi-tenancy">T5: Ownership and Multi-Tenancy</h3>
-<p><strong>Threat:</strong> A user accesses, modifies, or executes another user's programs.</p>
-<p><strong>Mitigations:</strong>
-- Ownership checks on read, update, and delete operations (Layer 3).
-- Admin override requires <code>admin</code> or <code>platform_admin</code> role.
-- Programs execute with the <strong>caller's</strong> permissions, not the <strong>author's</strong>
-  permissions. If User A saves a program and User B executes it, User B's
-  authentication and authorization apply.</p>
-<p><strong>Residual risk:</strong> There is no cross-user sharing model. Programs are either
-private (owned by a user) or system-provided (<code>owner_id = NULL</code>). A future
-grants system would need careful scoping to avoid confused-deputy scenarios.</p>
-<h3 id="t6-post-notarization-mutation">T6: Post-Notarization Mutation</h3>
-<p><strong>Threat:</strong> A program is modified after notarization, bypassing validation.</p>
-<p><strong>Mitigations:</strong>
-- The <code>update_query_definition</code> endpoint allows the owner (or admin) to update
-  the stored definition.</p>
-<p><strong>Requirement:</strong> Updates to <code>program</code>-type definitions MUST trigger
-re-validation. The update endpoint MUST reject the update if validation fails.
-This is not optional — without mandatory re-validation, any owner can silently
-introduce write keywords, disallowed endpoints, or unbounded programs by
-editing a previously-notarized definition. As defense-in-depth, the executor
-SHOULD also verify a stored hash of the validated AST at execution time.</p>
-<h2 id="capability-based-security">Capability-Based Security</h2>
-<p>The AST type system functions as a capability-based security model:</p>
-<ul>
-<li><strong>The type definitions are the allow-list.</strong> There is no deny-list to bypass.
-  If an operation type doesn't exist in the discriminated union, it cannot be
-  expressed.</li>
-<li><strong>New capabilities require explicit type changes.</strong> Adding a new operation
-  type (e.g., <code>StreamOp</code>, <code>BatchWriteOp</code>) requires modifying the AST schema,
-  updating the validator, and updating the executor. This is a deliberate
-  friction -- capabilities cannot be added through configuration alone.</li>
-<li><strong>Conditions are a closed set.</strong> The <code>Condition</code> union defines exactly which
-  tests can be performed against W (the working subgraph). Adding new condition
-  types requires a schema change.</li>
-</ul>
-<p>This means the security surface is defined by the AST schema. A security review
-of the system should start with the type definitions and ask: "Can any
-expressible program cause harm?" The answer should be "no" for the current
-type set, and any new type addition should be evaluated against this question.</p>
-<h2 id="what-is-guaranteed">What IS Guaranteed</h2>
-<ol>
-<li><strong>Structural well-formedness.</strong> Notarized programs have valid operators, valid
-   operation types, and all required fields.</li>
-<li><strong>No write operations.</strong> Cypher statements in notarized programs do not contain
-   write keywords. Combined with read-only database connections, writes are
-   prevented at two independent layers.</li>
-<li><strong>Bounded execution.</strong> The maximum operation count is statically computable
-   from the AST. The executor can determine the cost ceiling before running any
-   statement.</li>
-<li><strong>ApiOp endpoint restriction.</strong> Only allowlisted internal endpoints can be
-   called via <code>ApiOp</code>.</li>
-<li><strong>Author attribution.</strong> Every notarized program records who created it and when.</li>
-<li><strong>Per-execution authentication.</strong> Every program execution requires a valid
-   OAuth token. Programs execute with the caller's permissions.</li>
-<li><strong>Audit trail.</strong> Every Cypher statement is logged via <code>QueryAuditLog</code> with
-   timestamp and namespace classification.</li>
-</ol>
-<h2 id="what-is-not-guaranteed">What IS NOT Guaranteed</h2>
-<ol>
-<li><strong>Runtime correctness.</strong> A notarized program may return empty results, match
-   non-existent concepts, or produce semantically meaningless output.</li>
-<li><strong>Performance.</strong> Individual queries may be slow. An unbounded <code>MATCH</code> with
-   a high <code>LIMIT</code> can consume significant database resources. The program-level
-   operation bound does not constrain individual query cost.</li>
-<li><strong>Data freshness.</strong> H may change between notarization and execution. Concepts
-   may be deleted, relationships may be added. Programs do not lock H.</li>
-<li><strong>Parameter semantic validity.</strong> The validator checks that <code>$param</code>
-   references resolve, but does not validate that parameter values are
-   meaningful (e.g., <code>min_similarity: -5</code> passes parameter resolution but is
-   semantically invalid).</li>
-<li><strong>Cross-user sharing.</strong> There is no mechanism for User A to grant User B
-   access to their programs. This is a future capability.</li>
-<li><strong>Immutability after notarization.</strong> Programs can be updated by the owner
-   without re-validation. This is a known gap.</li>
-</ol>
-<h2 id="security-boundaries-summary">Security Boundaries Summary</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                    Trust Boundary
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                         |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  Client (untrusted)     |     API Server (trusted)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  ───────────────────    |     ────────────────────
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  Author program ──────────&gt; Validate AST (Layer 1+2)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                         |     │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                         |     ├── Type check (Pydantic)
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                         |     ├── Write-keyword scan
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                         |     ├── ApiOp allowlist
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                         |     ├── Boundedness check
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                         |     └── Parameter resolution
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                         |
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  Submit for notarization ──&gt; Store notarized program (Layer 3)
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                         |     │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                         |     └── owner_id, timestamps
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                         |
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>  Execute program ─────────&gt; Per-statement guards (Layer 4)
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                         |     │
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>                         |     ├── OAuth authentication
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                         |     ├── Role/permission checks
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                         |     ├── Namespace safety (facade)
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                         |     ├── Audit logging
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                         |     └── Rate limiting
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>                         |
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>                         |   Database (Layer 5)
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>                         |     │
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>                         |     ├── Cypher syntax validation
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                         |     ├── Schema constraints
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                         |     ├── Connection limits
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>                         |     └── Read-only enforcement
+<p><strong>Cancel mechanism</strong>: Ingestion jobs already check for cancellation between chunks (the checkpoint/resume system). This ADR extends that pattern to all job types — workers check the <code>cancelled</code> flag at natural yield points (between t-SNE iterations, between vocab types, between embedding batches). The cancel sets the flag and the worker exits cleanly, preserving any partial state.</p>
+<h3 id="priority-column">Priority column</h3>
+<p>A <code>priority</code> column (integer, higher = more urgent, default 0) on the jobs table. User-initiated ingestion defaults to priority 10, scheduled maintenance to 0. The <code>reprioritize</code> operation allows an admin to bump or lower a job's priority at runtime.</p>
+<h3 id="stale-job-recovery">Stale job recovery</h3>
+<p>Jobs stuck in <code>running</code> beyond the lane's <code>stale_timeout_minutes</code> are reset to <code>approved</code> by the existing scheduler loop (ADR-050). The <code>claimed_by</code> and <code>claimed_at</code> columns make this query straightforward:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;approved&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">claimed_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">claimed_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">retries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">retries</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;running&#39;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">claimed_at</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;1 minute&#39;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">:</span><span class="n">stale_timeout</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">retries</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">max_retries</span><span class="p">;</span>
 </code></pre></div>
-<h2 id="recommendations-for-implementers">Recommendations for Implementers</h2>
+<h3 id="serial-ordering-preserved">Serial ordering preserved</h3>
+<p>Serial ingestion ordering is maintained by the claim query's <code>ORDER BY priority DESC, created_at ASC</code> combined with the interactive lane's slot count. With 2 interactive slots, two ingestion jobs can run concurrently (which is already possible today via raw threads). If strict single-file ordering is needed, the lane's <code>max_slots</code> can be set to 1 via the API.</p>
+<h3 id="rbac-integration">RBAC integration</h3>
+<p>Job control operations are gated by RBAC permissions (ADR-028). The migration adds these permissions to the platform admin role:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Scope</th>
+<th>Operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workers:manage</code></td>
+<td>Platform</td>
+<td>cancel, reprioritize, drain/resume lanes, modify lane config</td>
+</tr>
+<tr>
+<td><code>workers:view</code></td>
+<td>Platform</td>
+<td>inspect jobs, view lane status and slot utilization</td>
+</tr>
+</tbody>
+</table>
+<p>Both permissions are added to the <code>platform_admin</code> role by the migration. They are also available as resources in the RBAC system, so custom roles can be granted <code>workers:view</code> (for monitoring dashboards) or <code>workers:manage</code> (for operators) independently.</p>
+<p>The existing <code>jobs:read</code> permission (list/view own jobs) remains unchanged for non-admin users.</p>
+<h3 id="api-endpoints">API endpoints</h3>
+<p>These live under <code>/admin/workers/</code> to distinguish them from the existing <code>/jobs/</code> lifecycle routes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GET    /admin/workers/lanes              # List lanes, slot utilization    (workers:view)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>PATCH  /admin/workers/lanes/:name        # Update lane config              (workers:manage)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>GET    /admin/workers/status             # Slot utilization, queue depth   (workers:view)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>POST   /admin/workers/jobs/:id/cancel    # Cancel a running job            (workers:manage)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>PATCH  /admin/workers/jobs/:id/priority  # Reprioritize a queued job       (workers:manage)
+</code></pre></div>
+<p>The existing routes are unchanged:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>GET    /jobs                    # List jobs (user-scoped)          (jobs:read)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>GET    /jobs/:id                # Job status + progress            (jobs:read)
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>DELETE /jobs/:id                # Cancel queued / delete finished  (jobs:cancel)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>POST   /jobs/:id/approve        # Approve for processing           (jobs:cancel)
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>GET    /jobs/:id/stream         # SSE progress stream              (jobs:read)
+</code></pre></div>
+<h3 id="schema-migration">Schema migration</h3>
+<p>A single migration adds:</p>
 <ol>
-<li>
-<p><strong>Re-validate on execute.</strong> Do not trust that a stored program is still valid.
-   Re-run validation before execution, or verify a stored hash of the validated
-   AST.</p>
-</li>
-<li>
-<p><strong>Re-validate on update (MUST).</strong> When a <code>program</code>-type definition is updated
-   via <code>PUT /query-definitions/{id}</code>, re-run the validator. Reject the update if
-   validation fails. This is a security requirement, not a recommendation.</p>
-</li>
-<li>
-<p><strong>Route all Cypher through the facade.</strong> The program executor should use
-   <code>GraphQueryFacade</code> for all Cypher execution, not <code>client._execute_cypher()</code>
-   directly. This ensures namespace safety and audit logging.</p>
-</li>
-<li>
-<p><strong>Use parameterized queries.</strong> When substituting <code>$param</code> values into Cypher,
-   pass them as query parameters to the database driver, not via string
-   interpolation.</p>
-</li>
-<li>
-<p><strong>Set <code>statement_timeout</code>.</strong> Configure PostgreSQL <code>statement_timeout</code> for the
-   program executor's database sessions to bound individual query runtime.</p>
-</li>
-<li>
-<p><strong>Log program execution.</strong> In addition to per-statement query audit logs,
-   log program-level events: which program was executed, by whom, with what
-   parameters, and the resulting step log.</p>
-</li>
-<li>
-<p><strong>Review the ApiOp allowlist.</strong> When adding new internal endpoints, evaluate
-   whether they should be accessible via <code>ApiOp</code>. Default to exclusion.</p>
-</li>
+<li><code>kg_api.worker_lanes</code> table with default lane seed data</li>
+<li><code>priority</code> column on <code>kg_api.jobs</code> (default 0)</li>
+<li><code>claimed_by</code> and <code>claimed_at</code> columns on <code>kg_api.jobs</code></li>
+<li><code>cancelled</code> boolean column on <code>kg_api.jobs</code> (default FALSE)</li>
+<li><code>workers:manage</code> and <code>workers:view</code> permissions registered as RBAC resources</li>
+<li>Both permissions granted to <code>platform_admin</code> role</li>
 </ol>
+<h3 id="connection-pool-changes">Connection pool changes</h3>
+<p>This ADR does not prescribe connection pool consolidation, but the lane model naturally limits concurrency. With default lane config (2 + 1 + 1 = 4 concurrent workers), each with its own AGEClient, connection behavior is similar to today's <code>ThreadPoolExecutor(4)</code> but with predictable distribution. Adjusting lane slots adjusts the connection ceiling proportionally.</p>
+<p>A future ADR could address shared connection pooling if connection counts remain a concern.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li><strong>No in-memory dispatch state.</strong> All coordination is in PostgreSQL. Container restarts lose nothing — workers resume polling and reclaim stale jobs automatically.</li>
+<li><strong>Job types can't starve each other.</strong> Lane separation guarantees interactive work gets slots regardless of background load.</li>
+<li><strong>Observable backpressure.</strong> A query on the jobs table shows exactly how many jobs are queued per type and how long they've been waiting. No hidden ThreadPoolExecutor queue.</li>
+<li><strong>Crash recovery is automatic.</strong> Stale job reaping replaces the manual "find stuck running jobs" workflow.</li>
+<li><strong>Runtime tunable.</strong> Lane slot counts, poll intervals, and timeouts can be adjusted via API without container restarts. Performance tuning becomes an operational concern, not a deployment concern.</li>
+<li><strong>Process control.</strong> Admins can cancel runaway jobs, reprioritize work, and drain lanes for maintenance — capabilities that don't exist today.</li>
+<li><strong>RBAC from day one.</strong> Job control operations are permissioned resources, available to custom roles and auditable through the existing grant system.</li>
+<li><strong>Incremental migration.</strong> Can be implemented lane-by-lane — start with interactive, move maintenance, then system.</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li><strong>Polling latency.</strong> Jobs aren't started instantly on approval — there's up to one poll interval of delay. For interactive work (2s poll), this is acceptable. For truly instant dispatch, a <code>NOTIFY/LISTEN</code> optimization can be added later.</li>
+<li><strong>More SQL.</strong> The claim query, stale recovery, lane config table, and RBAC grants are new SQL that needs testing and maintenance.</li>
+<li><strong>Configuration surface.</strong> Lane definitions, slot counts, poll intervals, stale timeouts, and priority values are all tunable — more knobs means more things to get wrong. Sensible defaults mitigate this.</li>
+</ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li><strong>ADR-050 scheduler unchanged.</strong> The scheduler still creates jobs on schedule. It just stops calling <code>execute_job_async()</code> directly — the poll loop picks up approved jobs.</li>
+<li><strong>ADR-014 approval workflow unchanged.</strong> The approval step still transitions jobs to <code>approved</code>. The difference is what happens after: polling replaces push.</li>
+<li><strong>Worker code unchanged.</strong> The <code>execute_job()</code> method and individual worker functions don't change. Only the dispatch layer around them changes.</li>
+<li><strong>Serial chaining removed.</strong> <code>_process_next_serial_job()</code> and <code>queue_serial_job()</code> are deleted. The poll loop handles ordering naturally.</li>
+<li><strong>RBAC scope.</strong> <code>workers:manage</code> and <code>workers:view</code> are new permission resources. Existing user-facing job permissions (<code>jobs:read</code>) are unchanged.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="external-message-broker-redis-rabbitmq-celery">External message broker (Redis, RabbitMQ, Celery)</h3>
+<p>Would solve the in-memory state problem and add real job priorities, retries, and dead-letter queues. Rejected because:
+- Adds an infrastructure dependency to a system that currently only needs PostgreSQL
+- The job volume (tens per hour, not thousands per second) doesn't justify the complexity
+- PostgreSQL's <code>SKIP LOCKED</code> provides sufficient coordination for our scale</p>
+<h3 id="asyncioqueue-replacing-threadpoolexecutor"><code>asyncio.Queue</code> replacing <code>ThreadPoolExecutor</code></h3>
+<p>Would keep dispatch in-memory but make it async-native. Rejected because it doesn't solve the core problem: in-memory state is lost on restart, and there's no natural way to separate job types into lanes.</p>
+<h3 id="listennotify-instead-of-polling"><code>LISTEN/NOTIFY</code> instead of polling</h3>
+<p>PostgreSQL can push notifications when jobs are approved, eliminating poll latency. This is a valid optimization but adds complexity (persistent listener connections, reconnection logic). Polling is simpler to implement and debug. <code>LISTEN/NOTIFY</code> can be layered on later if the poll interval becomes a UX issue for interactive jobs.</p>
+<h3 id="keep-current-model-just-increase-pool-size">Keep current model, just increase pool size</h3>
+<p>More slots would reduce starvation but not eliminate it. Still loses state on restart, still has no type separation, and makes connection pool proliferation worse.</p>
 
 
 
 
 
 
+
+  
+  
 
 
 
@@ -10103,10 +10288,10 @@ type set, and any new type addition should be evaluated against this question.</
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
