@@ -157,23 +157,50 @@ class BaseMixin:
                 $$) as ({column_spec});
             """
 
-            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+            # Retry logic for AGE label creation race conditions.
+            # When two threads simultaneously CREATE a node with a label that doesn't
+            # exist yet, AGE auto-creates the label (DDL) and the loser gets
+            # "relation already exists". Retrying succeeds because the label now exists.
+            max_retries = 2
+            for attempt in range(max_retries + 1):
                 try:
-                    cur.execute(age_query)
+                    with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                        cur.execute(age_query)
+
+                        if fetch_one:
+                            result = cur.fetchone()
+                            if result:
+                                return {k: self._parse_agtype(v) for k, v in result.items()}
+                            return None
+                        else:
+                            results = cur.fetchall()
+                            return [
+                                {k: self._parse_agtype(v) for k, v in row.items()}
+                                for row in results
+                            ]
                 except Exception as e:
                     error_str = str(e)
 
-                    # Check if this is an expected race condition (parallel restore operations)
                     is_expected_race = (
                         "already exists" in error_str or
                         "Entity failed to be updated" in error_str
                     )
 
-                    # Log at appropriate level (DEBUG for expected races, ERROR for real problems)
+                    if is_expected_race and attempt < max_retries:
+                        logger.debug(
+                            "AGE label race condition (attempt %d/%d), retrying: %s",
+                            attempt + 1, max_retries, error_str.split('\n')[0]
+                        )
+                        # Roll back the failed transaction so the connection is usable
+                        conn.rollback()
+                        self._setup_age(conn)
+                        continue
+
+                    # Final attempt or non-race error: log and raise
                     log_level = logger.debug if is_expected_race else logger.error
 
                     log_level("=" * 80)
-                    log_level("Query execution failed" if not is_expected_race else "Expected concurrency conflict (will retry)")
+                    log_level("Query execution failed" if not is_expected_race else "Expected concurrency conflict (retries exhausted)")
                     log_level(f"Error: {e}")
                     log_level(f"Column spec: {column_spec}")
                     log_level(f"Original query length: {len(query)} chars")
@@ -186,20 +213,6 @@ class BaseMixin:
                             log_level(f"  {k}: {val_preview}")
                     log_level("=" * 80)
                     raise
-
-                if fetch_one:
-                    result = cur.fetchone()
-                    if result:
-                        # Parse all agtype values in the result dict
-                        return {k: self._parse_agtype(v) for k, v in result.items()}
-                    return None
-                else:
-                    results = cur.fetchall()
-                    # Parse all agtype values in each result dict
-                    return [
-                        {k: self._parse_agtype(v) for k, v in row.items()}
-                        for row in results
-                    ]
 
         finally:
             conn.commit()
