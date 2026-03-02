@@ -179,14 +179,16 @@ class OperatorConfig:
                 # Get the requested profile - by ID or by provider name
                 if provider_name:
                     cur.execute(
-                        """SELECT id, provider, model_name, embedding_dimensions, precision, device
-                           FROM kg_api.embedding_config WHERE provider = %s LIMIT 1""",
+                        """SELECT id, text_provider AS provider, text_model_name AS model_name,
+                                  text_dimensions AS embedding_dimensions, text_precision AS precision, device
+                           FROM kg_api.embedding_profile WHERE text_provider = %s LIMIT 1""",
                         (provider_name,)
                     )
                 else:
                     cur.execute(
-                        """SELECT id, provider, model_name, embedding_dimensions, precision, device
-                           FROM kg_api.embedding_config WHERE id = %s""",
+                        """SELECT id, text_provider AS provider, text_model_name AS model_name,
+                                  text_dimensions AS embedding_dimensions, text_precision AS precision, device
+                           FROM kg_api.embedding_profile WHERE id = %s""",
                         (profile_id,)
                     )
                 profile = cur.fetchone()
@@ -197,16 +199,16 @@ class OperatorConfig:
                     return False
 
                 # Show current active profile
-                cur.execute("SELECT id, provider, model_name FROM kg_api.embedding_config WHERE active = true")
+                cur.execute("SELECT id, text_provider AS provider, text_model_name AS model_name FROM kg_api.embedding_profile WHERE active = true")
                 current = cur.fetchone()
                 if current:
                     print(f"📝 Current: [{current['id']}] {current['provider']} / {current['model_name']}")
 
                 # Deactivate all profiles
-                cur.execute("UPDATE kg_api.embedding_config SET active = false")
+                cur.execute("UPDATE kg_api.embedding_profile SET active = false")
 
                 # Activate selected profile (use profile['id'] from query, not profile_id arg)
-                cur.execute("UPDATE kg_api.embedding_config SET active = true WHERE id = %s", (profile['id'],))
+                cur.execute("UPDATE kg_api.embedding_profile SET active = true WHERE id = %s", (profile['id'],))
 
                 conn.commit()
 
@@ -227,8 +229,10 @@ class OperatorConfig:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT id, provider, model_name, embedding_dimensions, precision, device, active
-                       FROM kg_api.embedding_config ORDER BY id"""
+                    """SELECT id, text_provider AS provider, text_model_name AS model_name,
+                              text_dimensions AS embedding_dimensions, text_precision AS precision,
+                              device, active
+                       FROM kg_api.embedding_profile ORDER BY id"""
                 )
                 profiles = cur.fetchall()
 
@@ -352,7 +356,7 @@ class OperatorConfig:
                     print("AI Extraction: Not configured")
 
                 # Embedding provider
-                cur.execute("SELECT provider, model_name, embedding_dimensions FROM kg_api.embedding_config WHERE active = true")
+                cur.execute("SELECT text_provider AS provider, text_model_name AS model_name, text_dimensions AS embedding_dimensions FROM kg_api.embedding_profile WHERE active = true")
                 embedding = cur.fetchone()
                 if embedding:
                     print(f"Embedding: {embedding['provider']} / {embedding['model_name']} ({embedding['embedding_dimensions']} dims)")

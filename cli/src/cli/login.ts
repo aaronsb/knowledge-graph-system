@@ -63,6 +63,7 @@ interface LoginOptions {
   username?: string;
   password?: string;
   rememberUsername?: boolean;
+  force?: boolean;
 }
 
 /**
@@ -74,17 +75,33 @@ async function loginCommand(options: LoginOptions) {
   // Check if already logged in (has OAuth client credentials)
   const existingCreds = config.getOAuthCredentials();
   if (existingCreds) {
-    console.log('');
-    console.log('\x1b[33m⚠️  Already logged in\x1b[0m');
-    console.log(`   Username: ${existingCreds.username || 'unknown'}`);
-    console.log(`   Client: ${existingCreds.client_name}`);
-    console.log(`   Client ID: ${existingCreds.client_id}`);
-    console.log(`   Scopes: ${existingCreds.scopes.join(', ')}`);
-    console.log('');
-    console.log('   To login as a different user, logout first:');
-    console.log('     \x1b[36mkg logout\x1b[0m');
-    console.log('');
-    process.exit(0);
+    if (options.force) {
+      // Clear stale credentials without server-side revocation
+      // (server may be a fresh deploy where the old client no longer exists)
+      console.log('');
+      console.log('\x1b[33m⚠️  Clearing existing credentials (--force)\x1b[0m');
+      config.delete('auth.oauth_client_id');
+      config.delete('auth.oauth_client_secret');
+      config.delete('auth.oauth_client_name');
+      config.delete('auth.oauth_scopes');
+      config.delete('auth.oauth_created_at');
+      config.delete('auth.token_type');
+      config.delete('auth.username');
+    } else {
+      console.log('');
+      console.log('\x1b[33m⚠️  Already logged in\x1b[0m');
+      console.log(`   Username: ${existingCreds.username || 'unknown'}`);
+      console.log(`   Client: ${existingCreds.client_name}`);
+      console.log(`   Client ID: ${existingCreds.client_id}`);
+      console.log(`   Scopes: ${existingCreds.scopes.join(', ')}`);
+      console.log('');
+      console.log('   To login as a different user, logout first:');
+      console.log('     \x1b[36mkg logout\x1b[0m');
+      console.log('   Or use --force to replace stale credentials:');
+      console.log('     \x1b[36mkg login --force\x1b[0m');
+      console.log('');
+      process.exit(0);
+    }
   }
 
   console.log('');
@@ -254,6 +271,7 @@ export const loginCommand_obj = setCommandHelp(
 )
   .option('-u, --username <username>', 'Username (will prompt if not provided - can be saved for future logins)')
   .option('-p, --password <password>', 'Password (will prompt if not provided - for scripted/non-interactive use)')
+  .option('-f, --force', 'Replace existing credentials (use after platform redeploy)')
   .option('--remember-username', 'Save username for future logins (default in non-interactive mode)')
   .option('--no-remember-username', 'Do not save username')
   .action(loginCommand);

@@ -223,7 +223,7 @@ def interactive_mode() -> int:
                 row = cur.fetchone()
                 extraction_provider = row[0] if row else None
 
-                cur.execute("SELECT provider FROM kg_api.embedding_config WHERE active = true LIMIT 1")
+                cur.execute("SELECT text_provider AS provider FROM kg_api.embedding_profile WHERE active = true LIMIT 1")
                 row = cur.fetchone()
                 embedding_provider = row[0] if row else None
 

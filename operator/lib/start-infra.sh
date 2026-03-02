@@ -142,7 +142,7 @@ if [ -n "$MIGRATION_LIST" ]; then
     echo "$MIGRATION_LIST" | sed 's/^/    • /'
 
     # Verify critical tables exist
-    CRITICAL_TABLES=("kg_api.ai_extraction_config" "kg_api.embedding_config")
+    CRITICAL_TABLES=("kg_api.ai_extraction_config" "kg_api.embedding_profile")
     MISSING_CRITICAL=()
     for table in "${CRITICAL_TABLES[@]}"; do
         IFS='.' read -r schema table_name <<< "$table"

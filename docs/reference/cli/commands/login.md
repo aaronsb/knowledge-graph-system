@@ -17,5 +17,6 @@ kg login [options]
 |--------|-------------|---------|
 | `-u, --username <username>` | Username (will prompt if not provided - can be saved for future logins) | - |
 | `-p, --password <password>` | Password (will prompt if not provided - for scripted/non-interactive use) | - |
+| `-f, --force` | Replace existing credentials (use after platform redeploy) | - |
 | `--remember-username` | Save username for future logins (default in non-interactive mode) | - |
 | `--no-remember-username` | Do not save username | - |
