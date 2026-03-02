@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-076.1-pathfinding-baseline/">
+        <link rel="prev" href="../ADR-201-in-memory-graph-acceleration-extension/">
       
       
-        <link rel="next" href="../ADR-500-graph-program-dsl-and-ast-architecture/">
+        <link rel="next" href="../../infrastructure/ADR-012-api-server-architecture/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-084: Document-Level Search - Knowledge Graph System</title>
+        <title>ADR-202: Timestamp Timezone Normalization - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-084-document-level-search" class="md-skip">
+        <a href="#adr-202-timestamp-timezone-normalization" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-084: Document-Level Search
+              ADR-202: Timestamp Timezone Normalization
             
           </span>
         </div>
@@ -5780,18 +5780,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_5" checked>
         
           
           <label class="md-nav__link" for="__nav_9_5" id="__nav_9_5_label" tabindex="0">
@@ -5812,7 +5814,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5830,7 +5832,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -5865,7 +5867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -5900,7 +5902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -5935,7 +5937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -5970,7 +5972,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6005,7 +6007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6037,10 +6039,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-202: Timestamp Timezone Normalization
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Proposed"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -6063,6 +6099,209 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem-observed-2026-03-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem (observed 2026-03-02)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-datetime-patterns-related-to-adr-056" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Datetime Patterns (related to ADR-056)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client-side-z-append-workaround" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client-Side Z-Append Workaround
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#draft-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Draft Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#follow-up-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-up Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7065,20 +7304,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_8" >
         
           
           <label class="md-nav__link" for="__nav_9_8" id="__nav_9_8_label" tabindex="0">
@@ -7099,7 +7336,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -7117,7 +7354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7152,7 +7389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -7187,7 +7424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -7222,7 +7459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -7257,7 +7494,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -7292,7 +7529,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -7327,7 +7564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -7359,44 +7596,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-084: Document-Level Search
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--Proposed"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -7419,264 +7622,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-two-endpoint-types-metadata-vs-content" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Two Endpoint Types: Metadata vs Content
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-search-by-query-phrasekeyword" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Search by Query (Phrase/Keyword)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-get-document-content" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Get Document Content
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-ontology-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Ontology Filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-full-ontology-export-defer-to-backup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Full Ontology Export (Defer to Backup)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-content-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Content Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-aggregation-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Aggregation Strategy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#8-concept-association" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Concept Association
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#9-implementation-phases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        9. Implementation Phases
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#a-full-text-search-postgresql-tsvector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A. Full-Text Search (PostgreSQL tsvector)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#b-search-at-document-embedding-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        B. Search at Document Embedding Level
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#c-return-only-document-ids" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C. Return Only Document IDs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related ADRs
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -7689,7 +7634,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -9690,6 +9635,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -9697,6 +9653,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem-observed-2026-03-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem (observed 2026-03-02)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-datetime-patterns-related-to-adr-056" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python Datetime Patterns (related to ADR-056)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -9713,10 +9708,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-two-endpoint-types-metadata-vs-content" class="md-nav__link">
+  <a href="#principle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Two Endpoint Types: Metadata vs Content
+        Principle
       
     </span>
   </a>
@@ -9724,10 +9719,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-search-by-query-phrasekeyword" class="md-nav__link">
+  <a href="#migration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Search by Query (Phrase/Keyword)
+        Migration
       
     </span>
   </a>
@@ -9735,76 +9730,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-get-document-content" class="md-nav__link">
+  <a href="#client-side-z-append-workaround" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Get Document Content
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-ontology-filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Ontology Filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-full-ontology-export-defer-to-backup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Full Ontology Export (Defer to Backup)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-content-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Content Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-aggregation-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Aggregation Strategy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#8-concept-association" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Concept Association
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#9-implementation-phases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        9. Implementation Phases
+        Client-Side Z-Append Workaround
       
     </span>
   </a>
@@ -9813,6 +9742,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#draft-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Draft Migration
+      
+    </span>
+  </a>
   
 </li>
       
@@ -9829,10 +9769,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
+  <a href="#benefits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positive
+        Benefits
       
     </span>
   </a>
@@ -9840,10 +9780,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
+  <a href="#trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Negative
+        Trade-offs
       
     </span>
   </a>
@@ -9851,10 +9791,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
+  <a href="#follow-up-work" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Neutral
+        Follow-up Work
       
     </span>
   </a>
@@ -9867,60 +9807,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#a-full-text-search-postgresql-tsvector" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A. Full-Text Search (PostgreSQL tsvector)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#b-search-at-document-embedding-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        B. Search at Document Embedding Level
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#c-return-only-document-ids" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        C. Return Only Document IDs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related ADRs
+        References
       
     </span>
   </a>
@@ -9947,205 +9837,251 @@
   
 
 
-<h1 id="adr-084-document-level-search">ADR-084: Document-Level Search</h1>
+<h1 id="adr-202-timestamp-timezone-normalization">ADR-202: Timestamp Timezone Normalization</h1>
+<h2 id="overview">Overview</h2>
+<p>The database schema has a split personality on timestamp types. Approximately 75 columns use <code>TIMESTAMP WITH TIME ZONE</code> (correct), but 15 columns — concentrated in the job dispatch tables introduced or modified over several migrations — use bare <code>TIMESTAMP</code> (without time zone). PostgreSQL stores bare timestamps without UTC offset, and when serialized via JSON they lack a <code>Z</code> suffix. JavaScript's <code>new Date()</code> then interprets these as local time, producing wrong durations and negative elapsed times on any client not running in UTC.</p>
+<p>This ADR normalizes all 15 bare <code>TIMESTAMP</code> columns to <code>TIMESTAMPTZ</code> and establishes the invariant: <strong>all timestamps in the system are stored, transmitted, and interpreted as UTC. Clients are responsible for local-time display.</strong></p>
 <h2 id="context">Context</h2>
-<p>The knowledge graph system excels at concept-level search - finding concepts semantically similar to a query. However, users often need to find the <strong>original documents</strong> that contain relevant information, not just the extracted concepts.</p>
-<p>Current state:
-- <code>POST /query/sources/search</code> searches source embeddings, returns <strong>chunks</strong>
-- <code>:DocumentMeta</code> nodes track documents with <code>garage_key</code> linking to original files
-- <code>(:DocumentMeta)-[:HAS_SOURCE]-&gt;(:Source)</code> links documents to their chunks
-- <code>(:Concept)-[:APPEARS]-&gt;(:Source)</code> links concepts to source chunks</p>
-<p><strong>Use cases:</strong>
-1. "Find documents about recursive algorithms" → ranked list of original documents
-2. "Which papers discuss this topic?" → documents with related concepts shown
-3. Load multiple relevant documents into a graph view for comparison</p>
+<h3 id="the-problem-observed-2026-03-02">The Problem (observed 2026-03-02)</h3>
+<p>The Workers panel in the web UI displayed negative durations (e.g., <code>-21584s</code>) for active jobs on a fresh install. Root cause:</p>
+<ol>
+<li><code>kg_api.jobs.started_at</code> is <code>TIMESTAMP WITHOUT TIME ZONE</code></li>
+<li>PostgreSQL serializes it as <code>2026-03-02 18:45:12</code> (no offset, no Z)</li>
+<li>FastAPI/Pydantic passes it through as-is in JSON</li>
+<li>Browser JavaScript: <code>new Date("2026-03-02 18:45:12")</code> — parsed as <strong>local time</strong> (CST, UTC-6)</li>
+<li><code>Date.now() - localParsed</code> yields a 6-hour error, producing negative elapsed times</li>
+</ol>
+<p>A client-side workaround (appending <code>Z</code> if missing) was applied to the CLI, web, and MCP formatter, but the real fix is ensuring the database emits proper <code>timestamptz</code> values.</p>
+<h3 id="audit-results">Audit Results</h3>
+<p><strong>15 bare <code>TIMESTAMP</code> columns across 5 tables:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Column</th>
+<th>Migration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kg_api.jobs</code></td>
+<td><code>created_at</code></td>
+<td>009</td>
+</tr>
+<tr>
+<td><code>kg_api.jobs</code></td>
+<td><code>started_at</code></td>
+<td>009</td>
+</tr>
+<tr>
+<td><code>kg_api.jobs</code></td>
+<td><code>approved_at</code></td>
+<td>009</td>
+</tr>
+<tr>
+<td><code>kg_api.jobs</code></td>
+<td><code>completed_at</code></td>
+<td>009</td>
+</tr>
+<tr>
+<td><code>kg_api.jobs</code></td>
+<td><code>expires_at</code></td>
+<td>009</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>created_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>updated_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>last_run_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>next_run_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>disabled_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.scheduled_jobs</code></td>
+<td><code>last_error_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.aggressiveness_profiles</code></td>
+<td><code>created_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>kg_api.aggressiveness_profiles</code></td>
+<td><code>updated_at</code></td>
+<td>050</td>
+</tr>
+<tr>
+<td><code>public.graph_metrics</code></td>
+<td><code>created_at</code></td>
+<td>016</td>
+</tr>
+<tr>
+<td><code>public.graph_metrics</code></td>
+<td><code>measured_at</code></td>
+<td>016</td>
+</tr>
+</tbody>
+</table>
+<p><strong>~75 columns already use <code>TIMESTAMPTZ</code></strong> — auth tables, embedding configs, ontology tables, etc.</p>
+<h3 id="python-datetime-patterns-related-to-adr-056">Python Datetime Patterns (related to ADR-056)</h3>
+<p>ADR-056 introduced <code>datetime_utils.py</code> with <code>utcnow()</code> and friends. However, adoption is incomplete (21 of 34 violations remain). Three competing patterns exist in the API:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Timezone</th>
+<th>Correct?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>datetime.now()</code></td>
+<td>Local (naive)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>datetime.utcnow()</code></td>
+<td>UTC (naive)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>datetime.now(timezone.utc)</code></td>
+<td>UTC (aware)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>datetime_utils.utcnow()</code></td>
+<td>UTC (aware)</td>
+<td>Yes (preferred)</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>TIMESTAMPTZ</code> columns, PostgreSQL + psycopg2 will return aware datetimes to Python, and naive inputs get auto-interpreted as the session timezone (UTC for our containers). This provides a safety net but does not eliminate the need to use aware datetimes in application code.</p>
 <h2 id="decision">Decision</h2>
-<h3 id="1-two-endpoint-types-metadata-vs-content">1. Two Endpoint Types: Metadata vs Content</h3>
-<p><strong>Metadata endpoints</strong> return document references and linked concepts:
-- Lightweight, fast responses
-- Used for discovery and navigation</p>
-<p><strong>Content endpoints</strong> return actual document data:
-- Full document file(s) from Garage
-- Chunks (source nodes the document was split into)
-- Heavier payloads, fetched on demand</p>
-<h3 id="2-search-by-query-phrasekeyword">2. Search by Query (Phrase/Keyword)</h3>
-<p><strong><code>POST /query/documents/search</code></strong> - Semantic search, returns metadata</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// Request</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">{</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;recursive depth patterns&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;min_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w">        </span><span class="c1">// score threshold (water level)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w">                  </span><span class="c1">// max results (default: 20, max: 100)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;optional-filter&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">}</span>
+<h3 id="principle">Principle</h3>
+<p><strong>UTC everywhere, client transforms to local.</strong></p>
+<ul>
+<li>Database: all columns <code>TIMESTAMPTZ</code></li>
+<li>API serialization: ISO 8601 with <code>Z</code> suffix (or <code>+00:00</code>)</li>
+<li>Python: <code>datetime_utils.utcnow()</code> per ADR-056</li>
+<li>JavaScript/TypeScript: parse as UTC, display in user's locale</li>
+</ul>
+<h3 id="migration">Migration</h3>
+<p>A single schema migration (<code>ALTER COLUMN ... TYPE TIMESTAMPTZ</code>) converts all 15 columns. PostgreSQL interprets existing bare timestamp values using the session timezone, which is <code>UTC</code> in our containers. This means existing data is preserved correctly — <code>2026-03-02 18:45:12</code> becomes <code>2026-03-02 18:45:12+00</code>.</p>
+<p><code>ALTER COLUMN ... TYPE TIMESTAMPTZ</code> acquires an <code>ACCESS EXCLUSIVE</code> lock on the table. For the tables involved (jobs, scheduled_jobs, aggressiveness_profiles, graph_metrics), this is acceptable:</p>
+<ul>
+<li><code>jobs</code>: active platform writes, but jobs are short-lived and the ALTER is fast</li>
+<li><code>scheduled_jobs</code>: low write frequency</li>
+<li><code>aggressiveness_profiles</code>: rarely written</li>
+<li><code>graph_metrics</code>: append-only, low frequency</li>
+</ul>
+<h3 id="client-side-z-append-workaround">Client-Side Z-Append Workaround</h3>
+<p>The Z-append workaround in <code>workers.ts</code>, <code>system.ts</code>, and <code>SystemTab.tsx</code> should be kept as defensive code even after migration — it costs nothing and protects against any future bare-timestamp regressions.</p>
+<h2 id="draft-migration">Draft Migration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">-- Migration 058: Normalize bare TIMESTAMP columns to TIMESTAMPTZ (ADR-202)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1">--</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1">-- All 15 bare TIMESTAMP columns across 5 tables are converted to TIMESTAMPTZ.</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1">-- PostgreSQL interprets existing values using session timezone (UTC in our containers),</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1">-- so data is preserved: &#39;2026-03-02 18:45:12&#39; becomes &#39;2026-03-02 18:45:12+00&#39;.</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1">--</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">-- This is safe to run on a live platform. Each ALTER acquires ACCESS EXCLUSIVE briefly.</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">// Response</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">{</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nt">&quot;documents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="nt">&quot;document_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256:abc123...&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="nt">&quot;filename&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;algorithms.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CS Research&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;document&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="nt">&quot;best_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span><span class="nt">&quot;source_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">&quot;resources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;document&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;garage_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;docs/abc123.md&quot;</span><span class="p">}</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">      </span><span class="p">],</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="nt">&quot;concept_ids&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;c-123&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;c-456&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;c-789&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span><span class="nt">&quot;returned&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span><span class="nt">&quot;total_matches&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">-- kg_api.jobs (5 columns) — introduced in migration 009</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">jobs</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">created_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">started_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">approved_at</span><span class="w">  </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">completed_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">expires_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">;</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1">-- kg_api.scheduled_jobs (6 columns) — introduced in migration 050</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">scheduled_jobs</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">created_at</span><span class="w">    </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">updated_at</span><span class="w">    </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">last_run_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">next_run_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">disabled_at</span><span class="w">   </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">last_error_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">;</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="c1">-- kg_api.aggressiveness_profiles (2 columns) — introduced in migration 050</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">aggressiveness_profiles</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">updated_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">;</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="c1">-- public.graph_metrics (2 columns) — introduced in migration 016</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">graph_metrics</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">created_at</span><span class="w">  </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">measured_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">;</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="c1">-- public.schema_migrations (1 column) — introduced in migration 040</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="c1">-- ============================================================</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">    </span><span class="k">ALTER</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">applied_at</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">;</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="k">COMMIT</span><span class="p">;</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="c1">-- Record migration</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">58</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;timestamp_timezone_normalization&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
 </code></pre></div>
-<p><strong>Limiting behavior:</strong>
-- <code>min_similarity</code> filters by score threshold first
-- <code>limit</code> caps results after threshold filter
-- Both combine: "top N documents above threshold"
-- No pagination in v1 (cursor-based pagination if needed later)</p>
-<h3 id="3-get-document-content">3. Get Document Content</h3>
-<p><strong><code>GET /documents/{document_id}/content</code></strong> - Fetch actual document</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Response for text document</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;document_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256:abc123...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;document&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">&quot;document&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;# Full markdown content here...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;utf-8&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="nt">&quot;chunks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">&quot;source_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256:abc123_chunk0&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">&quot;paragraph&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="nt">&quot;full_text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First chunk content...&quot;</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p">}</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">// Response for image (paired resources)</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">{</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">  </span><span class="nt">&quot;document_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256:img456...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">  </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;image&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="nt">&quot;image&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;base64-encoded-jpg...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="nt">&quot;prose&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The diagram shows a recursive tree traversal...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;base64&quot;</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="nt">&quot;chunks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">]</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="p">}</span>
-</code></pre></div>
-<p><strong>Content definition:</strong>
-- <strong>Documents</strong>: Single file (markdown, text, json, html)
-- <strong>Images</strong>: Image file + prose description (always paired)
-- <strong>Chunks</strong>: Source nodes created during ingestion (part of content)</p>
-<h3 id="4-ontology-filtering">4. Ontology Filtering</h3>
-<p>All document endpoints support optional ontology filtering:</p>
-<p><strong>Search with ontology filter:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="err">POST</span><span class="w"> </span><span class="err">/query/docume</span><span class="kc">nts</span><span class="err">/search</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;recursive patterns&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;ontology&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CS Research&quot;</span><span class="w">  </span><span class="c1">// optional - scope to single ontology</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
-</code></pre></div></p>
-<p><strong>Browse ontology documents:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>GET /ontology/{name}/documents?limit=50
-</code></pre></div></p>
-<p>Returns same structure as search (without similarity scores).</p>
-<h3 id="5-full-ontology-export-defer-to-backup">5. Full Ontology Export (Defer to Backup)</h3>
-<p>For complete ontology cloning/export, use the existing backup system (ADR-015):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>--type<span class="w"> </span>ontology<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;CS Research&quot;</span>
-</code></pre></div>
-<p><strong>Future enhancement (ADR-015 extension):</strong>
-- Add <code>--include-garage</code> flag to include original Garage documents
-- Enables full ontology clone with raw source files</p>
-<h3 id="6-content-types">6. Content Types</h3>
-<p><strong>Documents (single resource):</strong>
-- Markdown (<code>.md</code>)
-- Plain text (<code>.txt</code>)
-- JSON (<code>.json</code>)
-- HTML (<code>.html</code>)</p>
-<p><strong>Images (two resources - always paired):</strong>
-- JPEG, PNG, GIF, WebP, BMP
-- Prose description file (LLM-generated text describing the image)</p>
-<h3 id="7-aggregation-strategy">7. Aggregation Strategy</h3>
-<p><strong>Document ranking:</strong>
-- Score = max chunk similarity (best match wins)
-- Tie-breaker: count of matching chunks (more matches = more relevant)</p>
-<p><strong>Why max, not average:</strong>
-- A document with one highly relevant section is more valuable than one with many mediocre matches
-- Prevents dilution from unrelated sections in long documents</p>
-<h3 id="8-concept-association">8. Concept Association</h3>
-<p>For each document, <code>concept_ids</code> are derived by:
-1. Find all <code>:Source</code> nodes linked via <code>HAS_SOURCE</code>
-2. Find all <code>:Concept</code> nodes linked via <code>APPEARS</code> relationship
-3. Return unique concept IDs (no ranking in metadata response)</p>
-<h3 id="9-implementation-phases">9. Implementation Phases</h3>
-<p><strong>Phase 1: API Endpoints</strong>
-- <code>POST /query/documents/search</code> - metadata search (with ontology filter)
-- <code>GET /documents/{id}/content</code> - content retrieval
-- <code>GET /ontology/{name}/documents</code> - list documents in ontology
-- Reuse existing <code>source_embeddings</code> search infrastructure</p>
-<p><strong>Phase 2: CLI</strong>
-- <code>kg document search "query"</code> - search and list metadata
-- <code>kg document search "query" --ontology "Name"</code> - scoped search
-- <code>kg document show &lt;id&gt;</code> - fetch content
-- <code>kg document list --ontology &lt;name&gt;</code> - browse by ontology
-- Table output with <code>--json</code> flag for structured output</p>
-<p><strong>Phase 3: MCP Tool</strong>
-- <code>search</code> tool with <code>type: "documents"</code> parameter
-- <code>document</code> tool for content retrieval
-- Returns structured data for Claude analysis</p>
-<p><strong>Phase 4: Web Explorer</strong>
-- Document search panel with ontology filter
-- Load multiple documents into graph view
-- Show document→concept relationships visually</p>
+<p><strong>Note:</strong> The migration number (058) is provisional — assign the next available number at implementation time. The <code>schema_migrations.applied_at</code> column (1 additional column found during audit, total: 16 columns) is included for completeness.</p>
 <h2 id="consequences">Consequences</h2>
-<h3 id="positive">Positive</h3>
+<h3 id="benefits">Benefits</h3>
 <ul>
-<li>Users can find original source documents, not just concepts</li>
-<li>Enables document-centric workflows (compare papers, find sources)</li>
-<li>Leverages existing source embedding infrastructure</li>
-<li>Metadata/content split keeps responses lightweight</li>
-<li>Ontology filtering enables scoped exploration</li>
-<li>Defers to backup system for full exports (no duplication)</li>
+<li>JSON serialization will include timezone offset, eliminating client-side guesswork</li>
+<li>Python code receives aware datetimes from psycopg2, preventing naive/aware comparison errors (ADR-056)</li>
+<li>Schema is consistent: 100% <code>TIMESTAMPTZ</code> across all tables</li>
+<li>Worker status, job durations, and all time-based displays work correctly regardless of client timezone</li>
 </ul>
-<h3 id="negative">Negative</h3>
+<h3 id="trade-offs">Trade-offs</h3>
 <ul>
-<li>Additional query complexity (chunk→document aggregation)</li>
-<li>Two-step flow for content (search metadata, then fetch)</li>
-<li>Document retrieval requires Garage access</li>
+<li>Brief <code>ACCESS EXCLUSIVE</code> lock on each table during ALTER (milliseconds for small tables)</li>
+<li>Client-side Z-append workaround becomes redundant but should remain as defense-in-depth</li>
+<li>Requires running migration on all deployed instances</li>
 </ul>
-<h3 id="neutral">Neutral</h3>
+<h3 id="follow-up-work">Follow-up Work</h3>
 <ul>
-<li>Builds on existing <code>:DocumentMeta</code> infrastructure (ADR-051)</li>
-<li>Complements concept search (different discovery patterns)</li>
-<li>Backup extends naturally for full ontology cloning (ADR-015)</li>
+<li>[ ] Implement migration (assign next available migration number)</li>
+<li>[ ] Complete ADR-056 Python datetime migration (21 remaining violations)</li>
+<li>[ ] Audit FastAPI response models to ensure datetime fields serialize with <code>Z</code>/<code>+00:00</code></li>
+<li>[ ] Remove or annotate Z-append workarounds as defense-in-depth after migration is deployed</li>
 </ul>
-<h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="a-full-text-search-postgresql-tsvector">A. Full-Text Search (PostgreSQL tsvector)</h3>
+<h2 id="references">References</h2>
 <ul>
-<li><strong>Rejected:</strong> Would require new indexing infrastructure</li>
-<li>Semantic search via embeddings handles synonyms better</li>
-<li>Can add later as complementary feature</li>
-</ul>
-<h3 id="b-search-at-document-embedding-level">B. Search at Document Embedding Level</h3>
-<ul>
-<li><strong>Rejected:</strong> Would require generating document-level embeddings</li>
-<li>Current chunk embeddings provide finer granularity</li>
-<li>Aggregation from chunks gives similar results with existing data</li>
-</ul>
-<h3 id="c-return-only-document-ids">C. Return Only Document IDs</h3>
-<ul>
-<li><strong>Rejected:</strong> Users need context (matching chunks, concepts)</li>
-<li>Single query should provide actionable results</li>
-</ul>
-<h2 id="related-adrs">Related ADRs</h2>
-<ul>
-<li>ADR-015: Backup/restore streaming (ontology-scoped export, extend for Garage content)</li>
-<li>ADR-051: Document deduplication and <code>:DocumentMeta</code> nodes</li>
-<li>ADR-057: Image storage with prose descriptions (image + prose file pairing)</li>
-<li>ADR-068: Source text embeddings (chunk-level search)</li>
-<li>ADR-081: Source document lifecycle and Garage storage</li>
+<li><a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/">ADR-056: Timezone-Aware Datetime Utilities</a></li>
+<li><a href="../ADR-040-database-schema-migrations/">ADR-040: Database Schema Migrations</a></li>
+<li><a href="../../infrastructure/ADR-100-database-driven-job-dispatch/">ADR-100: Database-Driven Job Dispatch</a></li>
+<li><a href="https://www.postgresql.org/docs/current/datatype-datetime.html">PostgreSQL TIMESTAMPTZ</a></li>
 </ul>
 
 
