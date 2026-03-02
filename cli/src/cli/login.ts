@@ -85,6 +85,8 @@ async function loginCommand(options: LoginOptions) {
       config.delete('auth.oauth_client_name');
       config.delete('auth.oauth_scopes');
       config.delete('auth.oauth_created_at');
+      config.delete('auth.token_type');
+      config.delete('auth.username');
     } else {
       console.log('');
       console.log('\x1b[33m⚠️  Already logged in\x1b[0m');
