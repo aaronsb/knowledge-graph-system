@@ -524,7 +524,7 @@ EOF
 
         # Configure embeddings
         echo -e "${BLUE}→ Configuring embeddings...${NC}"
-        docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py embedding 2
+        docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py embedding --provider local
         echo -e "${GREEN}✓ Embeddings configured (local nomic-embed)${NC}"
         echo ""
     else

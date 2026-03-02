@@ -141,7 +141,7 @@ export function formatWorkerStatus(status: any, lanes: any): string {
   if (status.running_jobs && status.running_jobs.length > 0) {
     output += `## Active Jobs\n\n`;
     for (const job of status.running_jobs) {
-      const startedAt = job.started_at ? new Date(job.started_at) : null;
+      const startedAt = job.started_at ? new Date(job.started_at.endsWith('Z') ? job.started_at : job.started_at + 'Z') : null;
       const seconds = startedAt ? Math.floor((Date.now() - startedAt.getTime()) / 1000) : null;
       const duration = seconds !== null
         ? seconds < 60 ? `${seconds}s` : seconds < 3600 ? `${Math.floor(seconds / 60)}m` : `${Math.floor(seconds / 3600)}h`

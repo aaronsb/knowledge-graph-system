@@ -28,3 +28,8 @@ BEGIN
 
     RAISE NOTICE 'automation_level = %', v_level;
 END $$;
+
+-- Record migration
+INSERT INTO public.schema_migrations (version, name)
+VALUES (53, 'annealing_autonomous_default')
+ON CONFLICT (version) DO NOTHING;
