@@ -28,17 +28,7 @@ logger = setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueue
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManager
-from .workers.ingestion_worker import run_ingestion_worker
-from .workers.restore_worker import run_restore_worker
-from .workers.vocab_refresh_worker import run_vocab_refresh_worker
-from .workers.vocab_consolidate_worker import run_vocab_consolidate_worker
-from .workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
-from .workers.source_embedding_worker import run_source_embedding_worker
-from .workers.projection_worker import run_projection_worker
-from .workers.polarity_worker import run_polarity_worker
-from .workers.artifact_cleanup_worker import run_artifact_cleanup_worker
-from .workers.annealing_worker import run_annealing_worker
-from .workers.proposal_execution_worker import run_proposal_execution_worker
+from .services.worker_registry import register_all_workers, get_all_job_types
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs
 from .services.embedding_worker import get_embedding_worker
@@ -152,20 +142,9 @@ async def startup_event():
     queue = init_job_queue(queue_type="postgresql")
     logger.info(f"✅ Job queue initialized: postgresql (kg_api.jobs)")
 
-    # Register worker functions
-    queue.register_worker("ingestion", run_ingestion_worker)
-    queue.register_worker("ingest_image", run_ingestion_worker)  # ADR-057: Same worker, prose already generated
-    queue.register_worker("restore", run_restore_worker)
-    queue.register_worker("vocab_refresh", run_vocab_refresh_worker)  # ADR-050
-    queue.register_worker("vocab_consolidate", run_vocab_consolidate_worker)  # ADR-050
-    queue.register_worker("epistemic_remeasurement", run_epistemic_remeasurement_worker)  # ADR-065 Phase 2
-    queue.register_worker("source_embedding", run_source_embedding_worker)  # ADR-068 Phase 1
-    queue.register_worker("projection", run_projection_worker)  # ADR-078: Embedding landscape
-    queue.register_worker("polarity", run_polarity_worker)  # ADR-070+083: Polarity with artifact support
-    queue.register_worker("artifact_cleanup", run_artifact_cleanup_worker)  # ADR-083: Cleanup expired artifacts
-    queue.register_worker("ontology_annealing", run_annealing_worker)  # ADR-200: Annealing cycle
-    queue.register_worker("proposal_execution", run_proposal_execution_worker)  # ADR-200 Phase 4: Execute approved proposals
-    logger.info("✅ Workers registered: ingestion, ingest_image, restore, vocab_refresh, vocab_consolidate, epistemic_remeasurement, source_embedding, projection, polarity, artifact_cleanup, ontology_annealing, proposal_execution")
+    # Register worker functions (ADR-100: single source of truth in worker_registry.py)
+    register_all_workers(queue)
+    logger.info(f"✅ Workers registered: {', '.join(get_all_job_types())}")
 
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
