@@ -136,8 +136,7 @@ class JobLauncher(ABC):
                 "approved_by": "system:scheduler"
             })
 
-            # Trigger execution immediately (fixes #221: jobs stuck in pending)
-            self.job_queue.execute_job_async(job_id)
+            # ADR-100: Lane manager poll loops will claim the approved job
 
-        logger.info(f"✅ {self.__class__.__name__}: Enqueued and started job {job_id}")
+        logger.info(f"✅ {self.__class__.__name__}: Enqueued job {job_id} (will be claimed by lane)")
         return job_id

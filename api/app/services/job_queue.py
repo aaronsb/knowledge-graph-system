@@ -776,8 +776,11 @@ class PostgreSQLJobQueue(JobQueue):
 
     def execute_job(self, job_id: str):
         """
-        Execute a job (called by BackgroundTasks).
-        Bridge between FastAPI and worker functions.
+        Execute a job (called by lane manager or BackgroundTasks).
+        Bridge between job dispatch and worker functions.
+
+        ADR-100: The lane manager's claim query already sets status='running'.
+        This method skips the redundant status update.
         """
         job = self.get_job(job_id)
         if not job:
@@ -791,9 +794,6 @@ class PostgreSQLJobQueue(JobQueue):
                 "error": f"No worker registered for job type: {job['job_type']}"
             })
             return
-
-        # Update to running
-        self.update_job(job_id, {"status": "running"})
 
         try:
             # Execute worker (pass queue ref for progress updates)
@@ -811,10 +811,6 @@ class PostgreSQLJobQueue(JobQueue):
                 "status": "failed",
                 "error": str(e)
             })
-        finally:
-            # If this was a serial job, process next in queue (database-backed)
-            if job.get("processing_mode") == "serial":
-                self._process_next_serial_job()
 
     def queue_serial_job(self, job_id: str):
         """

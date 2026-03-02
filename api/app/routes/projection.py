@@ -363,8 +363,7 @@ async def regenerate_projection(
         "approved_by": current_user.username
     })
 
-    # Start the job in the background (serial execution)
-    background_tasks.add_task(queue.queue_serial_job, job_id)
+    # ADR-100: Lane manager will claim the approved job
 
     return RegenerateResponse(
         status="queued",

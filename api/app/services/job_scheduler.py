@@ -126,9 +126,9 @@ class JobScheduler:
             serial_jobs.sort(key=lambda j: j.get("created_at", ""))
             oldest_job = serial_jobs[0]
 
-            logger.info(f"Found stuck approved job, starting: {oldest_job['job_id']}")
-            # Use queue_serial_job which handles database state atomically
-            queue.queue_serial_job(oldest_job["job_id"])
+            # ADR-100: Stuck approved jobs will be claimed by lane manager poll loops.
+            # No manual dispatch needed — just log for visibility.
+            logger.info(f"Found stuck approved job (lane manager will claim): {oldest_job['job_id']}")
 
     async def cleanup_jobs(self):
         """
@@ -242,9 +242,9 @@ class JobScheduler:
                                 "status": "approved",
                                 "approved_by": "scheduler_recovery",
                             })
-                            queue.execute_job_async(exec_job_id)
+                            # ADR-100: Lane manager will claim the approved job
                             logger.info(
-                                f"Re-dispatched stranded proposal {proposal_id} "
+                                f"Re-enqueued stranded proposal {proposal_id} "
                                 f"as job {exec_job_id}"
                             )
                         except Exception as e:

@@ -29,6 +29,7 @@ from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueu
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManager
 from .services.worker_registry import register_all_workers, get_all_job_types
+from .services.lane_manager import LaneManager
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs
 from .services.embedding_worker import get_embedding_worker
@@ -36,6 +37,7 @@ from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
 # Module-level variables
 scheduled_jobs_manager = None
+lane_manager = None
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -263,17 +265,20 @@ async def startup_event():
                 queue.update_job(job_id, {"status": "completed"})
                 logger.info(f"✅ Marked completed job: {job_id}")
 
-        # Trigger execution for all approved jobs (includes both pre-existing and newly-resumed)
-        all_approved = queue.list_jobs(status="approved", limit=500)
-        for job in all_approved:
-            queue.execute_job_async(job["job_id"])
-            logger.debug(f"▶️  Started approved job: {job['job_id']}")
+        # ADR-100: Approved jobs are no longer pushed to threads here.
+        # The lane manager's poll loops will claim them automatically.
 
         if resumed_count > 0:
-            logger.info(f"✅ Resumed {resumed_count} interrupted job(s)")
+            logger.info(f"✅ Resumed {resumed_count} interrupted job(s) (will be claimed by lane loops)")
 
     except Exception as e:
         logger.error(f"⚠️  Failed to resume interrupted jobs: {e}", exc_info=True)
+
+    # ADR-100: Start lane manager (poll-and-claim dispatch)
+    global lane_manager
+    lane_manager = LaneManager(queue)
+    await lane_manager.start()
+    logger.info("✅ Lane manager started (database-driven job dispatch)")
 
     # ADR-014: Initialize and start job scheduler (lifecycle management)
     scheduler = init_job_scheduler()
@@ -311,6 +316,12 @@ async def shutdown_event():
         logger.info("✅ Job scheduler stopped (lifecycle management)")
     except RuntimeError:
         pass  # Scheduler not initialized
+
+    # ADR-100: Stop lane manager (drain lanes, let running jobs finish)
+    global lane_manager
+    if lane_manager:
+        await lane_manager.stop()
+        logger.info("✅ Lane manager stopped")
 
     # ADR-050: Stop scheduled jobs manager gracefully
     global scheduled_jobs_manager

@@ -180,12 +180,12 @@ def _auto_approve_and_dispatch(
                     "status": "approved",
                     "approved_by": "annealing_worker",
                 })
-                job_queue.execute_job_async(exec_job_id)
+                # ADR-100: Lane manager will claim the approved job
                 dispatched += 1
 
                 logger.info(
                     f"Auto-approved proposal {proposal_id}, "
-                    f"dispatched execution job {exec_job_id}"
+                    f"enqueued execution job {exec_job_id}"
                 )
             except Exception as e:
                 logger.error(
