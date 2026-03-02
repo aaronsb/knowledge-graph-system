@@ -14,6 +14,7 @@ import { createEmbeddingCommand, createExtractionCommand, createKeysCommand } fr
 import { createStatusCommand } from './status';
 import { createBackupCommand, createListBackupsCommand, createRestoreCommand } from './backup';
 import { createSchedulerCommand } from './scheduler';
+import { createWorkersCommand } from './workers';
 
 // Create command instances
 const statusCommand = createStatusCommand();
@@ -21,6 +22,7 @@ const backupCommand = createBackupCommand();
 const listBackupsCommand = createListBackupsCommand();
 const restoreCommand = createRestoreCommand();
 const schedulerCommand = createSchedulerCommand();
+const workersCommand = createWorkersCommand();
 
 // Main admin command
 export const adminCommand = setCommandHelp(
@@ -34,7 +36,8 @@ export const adminCommand = setCommandHelp(
   .addCommand(backupCommand)
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
-  .addCommand(schedulerCommand);
+  .addCommand(schedulerCommand)
+  .addCommand(workersCommand);
 
 // ADR-027: Register user management commands
 registerAuthAdminCommand(adminCommand);
@@ -59,4 +62,4 @@ adminCommand.addCommand(extractionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, workersCommand].forEach(configureColoredHelp);

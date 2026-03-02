@@ -119,6 +119,48 @@ export function formatApiHealth(result: any): string {
   return output;
 }
 
+export function formatWorkerStatus(status: any, lanes: any): string {
+  let output = `# Worker Status (ADR-100)\n\n`;
+
+  output += `## Slot Utilization\n\n`;
+  output += `Slots In Use: ${status.slots_in_use}/${status.total_slots}\n`;
+  output += `Running Jobs: ${status.running_count}\n`;
+  output += `Queued Jobs: ${status.total_queued}\n\n`;
+
+  if (lanes?.lanes && lanes.lanes.length > 0) {
+    output += `## Lane Configuration\n\n`;
+    for (const lane of lanes.lanes) {
+      output += `### ${lane.name} (${lane.enabled ? 'enabled' : 'disabled'})\n`;
+      output += `Job Types: ${lane.job_types.join(', ')}\n`;
+      output += `Slots: ${lane.running_jobs}/${lane.max_slots} (${lane.slots_available} available, ${lane.queued_jobs} queued)\n`;
+      output += `Poll Interval: ${(lane.poll_interval_ms / 1000).toFixed(1)}s\n`;
+      output += `Stale Timeout: ${lane.stale_timeout_minutes}m\n\n`;
+    }
+  }
+
+  if (status.running_jobs && status.running_jobs.length > 0) {
+    output += `## Active Jobs\n\n`;
+    for (const job of status.running_jobs) {
+      const startedAt = job.started_at ? new Date(job.started_at) : null;
+      const seconds = startedAt ? Math.floor((Date.now() - startedAt.getTime()) / 1000) : null;
+      const duration = seconds !== null
+        ? seconds < 60 ? `${seconds}s` : seconds < 3600 ? `${Math.floor(seconds / 60)}m` : `${Math.floor(seconds / 3600)}h`
+        : 'unknown';
+      output += `- ${job.job_id.substring(0, 8)}... ${job.job_type} (${duration})\n`;
+    }
+    output += `\n`;
+  }
+
+  if (status.queued_by_type && status.queued_by_type.length > 0) {
+    output += `## Queue Depth by Type\n\n`;
+    for (const q of status.queued_by_type) {
+      output += `${q.job_type}: ${q.count}\n`;
+    }
+  }
+
+  return output;
+}
+
 export function formatMcpAllowedPaths(result: any): string {
   if (!result.configured) {
     let output = `# MCP File Access Allowlist\n\n`;

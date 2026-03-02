@@ -1276,6 +1276,51 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Get worker status overview (ADR-100)
+   * Returns slot utilization, running jobs, queue depth, and lane summary.
+   */
+  async getWorkerStatus(): Promise<{
+    running_jobs: Array<{
+      job_id: string;
+      job_type: string;
+      claimed_by: string | null;
+      claimed_at: string | null;
+      started_at: string | null;
+      priority: number;
+    }>;
+    running_count: number;
+    queued_by_type: Array<{ job_type: string; count: number; oldest: string | null }>;
+    total_queued: number;
+    lanes: Array<{ name: string; max_slots: number; enabled: boolean }>;
+    total_slots: number;
+    slots_in_use: number;
+  }> {
+    const response = await this.client.get('/admin/workers/status');
+    return response.data;
+  }
+
+  /**
+   * Get worker lane configuration with slot utilization (ADR-100)
+   * Returns lane configs enriched with running/queued job counts.
+   */
+  async getWorkerLanes(): Promise<{
+    lanes: Array<{
+      name: string;
+      job_types: string[];
+      max_slots: number;
+      poll_interval_ms: number;
+      stale_timeout_minutes: number;
+      enabled: boolean;
+      running_jobs: number;
+      queued_jobs: number;
+      slots_available: number;
+    }>;
+  }> {
+    const response = await this.client.get('/admin/workers/lanes');
+    return response.data;
+  }
+
+  /**
    * Regenerate embeddings for concept nodes in the graph
    */
   async regenerateConceptEmbeddings(params: {
