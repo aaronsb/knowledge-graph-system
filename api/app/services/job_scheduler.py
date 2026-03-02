@@ -197,7 +197,60 @@ class JobScheduler:
         if deleted_failed > 0:
             logger.info(f"Deleted {deleted_failed} old failed jobs")
 
-        # Task 4: Annealing proposal lifecycle cleanup
+        # Task 4 (ADR-100): Reap stale running jobs past their lane timeout
+        try:
+            conn = queue._get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE kg_api.jobs j
+                        SET status = 'approved',
+                            claimed_by = NULL,
+                            claimed_at = NULL,
+                            retries = j.retries + 1
+                        FROM kg_api.worker_lanes wl
+                        WHERE j.status = 'running'
+                          AND j.claimed_at IS NOT NULL
+                          AND j.claimed_at < NOW() - (wl.stale_timeout_minutes || ' minutes')::INTERVAL
+                          AND j.job_type = ANY(wl.job_types)
+                          AND j.retries < j.max_retries
+                        RETURNING j.job_id, j.job_type, j.retries
+                    """)
+                    reaped = cur.fetchall()
+                    conn.commit()
+
+                    for job_id, job_type, retries in reaped:
+                        logger.warning(
+                            f"Reaped stale job {job_id} ({job_type}), "
+                            f"retry {retries}/{3} — returned to approved"
+                        )
+
+                    # Also fail jobs that exceeded max_retries
+                    cur.execute("""
+                        UPDATE kg_api.jobs j
+                        SET status = 'failed',
+                            error = 'Exceeded max retries after stale timeouts',
+                            completed_at = NOW()
+                        FROM kg_api.worker_lanes wl
+                        WHERE j.status = 'running'
+                          AND j.claimed_at IS NOT NULL
+                          AND j.claimed_at < NOW() - (wl.stale_timeout_minutes || ' minutes')::INTERVAL
+                          AND j.job_type = ANY(wl.job_types)
+                          AND j.retries >= j.max_retries
+                        RETURNING j.job_id, j.job_type
+                    """)
+                    failed = cur.fetchall()
+                    conn.commit()
+
+                    for job_id, job_type in failed:
+                        logger.error(f"Failed stale job {job_id} ({job_type}) — exceeded max retries")
+
+            finally:
+                queue._return_connection(conn)
+        except Exception as e:
+            logger.error(f"Error reaping stale jobs: {e}", exc_info=True)
+
+        # Task 5: Annealing proposal lifecycle cleanup
         try:
             conn = queue._get_connection()
             try:
