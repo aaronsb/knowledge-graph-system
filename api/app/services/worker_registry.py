@@ -67,3 +67,22 @@ def get_job_types_for_lane(lane: str) -> list[str]:
 def get_all_job_types() -> list[str]:
     """Return all registered job type names.  @verified (new)"""
     return list(WORKER_REGISTRY.keys())
+
+
+def validate_lane_uniqueness() -> None:
+    """Verify each job type appears in exactly one lane.
+
+    The stale job reaper JOINs jobs against worker_lanes using
+    job_type = ANY(wl.job_types). If a type appeared in multiple lanes,
+    it could match the wrong timeout. This check runs at startup.
+
+    Raises ValueError if a duplicate is found.
+    """
+    seen: dict[str, str] = {}
+    for job_type, entry in WORKER_REGISTRY.items():
+        if job_type in seen:
+            raise ValueError(
+                f"Job type '{job_type}' registered in lanes "
+                f"'{seen[job_type]}' and '{entry.lane}' — must be unique"
+            )
+        seen[job_type] = entry.lane

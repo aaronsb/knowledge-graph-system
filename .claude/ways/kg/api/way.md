@@ -52,7 +52,7 @@ Cypher fallback. Key patterns:
 ## After API Changes
 
 ```bash
-./operator.sh restart api    # or hot-reload (dev mode watches for changes)
+./operator.sh restart api    # Required — no hot reload in dev or prod
 ```
 
 ## Testing Endpoints

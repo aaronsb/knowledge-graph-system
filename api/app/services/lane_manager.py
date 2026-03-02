@@ -13,13 +13,11 @@ one interval — no container restart needed.
 import asyncio
 import logging
 import os
-import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
-import psycopg2
 from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger(__name__)
@@ -46,9 +44,11 @@ class LaneManager:
         """Initialize with a reference to the job queue (for execute_job and DB pool)."""
         self._queue = job_queue
         self._running = False
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._tasks: dict[str, asyncio.Task] = {}
+        # All mutations to _active_jobs happen on the event loop thread.
+        # Worker threads use call_soon_threadsafe to schedule slot release.
         self._active_jobs: dict[str, set[str]] = {}  # lane_name → {job_id, ...}
-        self._locks: dict[str, asyncio.Lock] = {}
         # Shared executor for running sync workers in threads
         max_workers = int(os.getenv("MAX_CONCURRENT_JOBS", "4"))
         self._executor = ThreadPoolExecutor(
@@ -59,10 +59,10 @@ class LaneManager:
     async def start(self) -> None:
         """Start poll loops for all enabled lanes.  @verified (new)"""
         self._running = True
+        self._loop = asyncio.get_running_loop()
         lane_names = await self._get_lane_names()
         for name in lane_names:
             self._active_jobs[name] = set()
-            self._locks[name] = asyncio.Lock()
             task = asyncio.create_task(self._lane_loop(name))
             self._tasks[name] = task
             logger.info(f"Started lane loop: {name}")
@@ -125,14 +125,15 @@ class LaneManager:
                     logger.info(f"Lane {lane_name}: claimed {job_type} job {job_id}")
                     self._active_jobs[lane_name].add(job_id)
 
-                    # Run the worker in the thread pool
-                    loop = asyncio.get_event_loop()
-                    loop.run_in_executor(
+                    # Run the worker in the thread pool (track future for shutdown drain)
+                    loop = asyncio.get_running_loop()
+                    future = loop.run_in_executor(
                         self._executor,
                         self._run_and_release,
                         lane_name,
                         job_id,
                     )
+                    future.add_done_callback(self._on_job_done)
                 else:
                     # No work available — sleep for the poll interval
                     await asyncio.sleep(config.poll_interval_ms / 1000)
@@ -143,6 +144,13 @@ class LaneManager:
                 logger.exception(f"Lane {lane_name}: error in poll loop")
                 await asyncio.sleep(5)  # back off on errors
 
+    @staticmethod
+    def _on_job_done(future) -> None:
+        """Callback for executor futures — log any unhandled exceptions."""
+        exc = future.exception()
+        if exc is not None:
+            logger.error(f"Unhandled exception in job executor: {exc}", exc_info=exc)
+
     def _run_and_release(self, lane_name: str, job_id: str) -> None:
         """Execute a job and release the lane slot when done. Runs in a thread."""
         try:
@@ -150,8 +158,15 @@ class LaneManager:
         except Exception:
             logger.exception(f"Lane {lane_name}: unhandled error executing {job_id}")
         finally:
-            # Release the slot (thread-safe set discard)
-            self._active_jobs.get(lane_name, set()).discard(job_id)
+            # Release the slot on the event loop thread (all _active_jobs mutations
+            # happen on the event loop to avoid cross-thread set mutation).
+            if self._loop and self._loop.is_running():
+                self._loop.call_soon_threadsafe(
+                    self._active_jobs.get(lane_name, set()).discard, job_id
+                )
+            else:
+                # Fallback during shutdown when loop may be closing
+                self._active_jobs.get(lane_name, set()).discard(job_id)
 
     # -------------------------------------------------------------------------
     # Internal: database operations (run in executor to avoid blocking)
@@ -159,7 +174,7 @@ class LaneManager:
 
     async def _get_lane_names(self) -> list[str]:
         """Fetch all lane names from the database."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._get_lane_names_sync)
 
     def _get_lane_names_sync(self) -> list[str]:
@@ -173,7 +188,7 @@ class LaneManager:
 
     async def _load_lane_config(self, lane_name: str) -> Optional[LaneConfig]:
         """Load lane config from database. Returns None if lane doesn't exist."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._load_lane_config_sync, lane_name)
 
     def _load_lane_config_sync(self, lane_name: str) -> Optional[LaneConfig]:
@@ -200,7 +215,7 @@ class LaneManager:
 
     async def _claim_next_job(self, job_types: list[str]) -> Optional[dict]:
         """Atomically claim the highest-priority approved job matching the given types."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._claim_next_job_sync, job_types)
 
     def _claim_next_job_sync(self, job_types: list[str]) -> Optional[dict]:

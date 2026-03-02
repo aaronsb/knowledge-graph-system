@@ -162,10 +162,10 @@ Job control operations are gated by RBAC permissions (ADR-028). The migration ad
 
 | Permission | Scope | Operations |
 |------------|-------|------------|
-| `jobs:manage` | Platform | cancel, reprioritize, drain/resume lanes, modify lane config |
-| `jobs:view` | Platform | inspect jobs, view lane status and slot utilization |
+| `workers:manage` | Platform | cancel, reprioritize, drain/resume lanes, modify lane config |
+| `workers:view` | Platform | inspect jobs, view lane status and slot utilization |
 
-Both permissions are added to the `platform_admin` role by the migration. They are also available as resources in the RBAC system, so custom roles can be granted `jobs:view` (for monitoring dashboards) or `jobs:manage` (for operators) independently.
+Both permissions are added to the `platform_admin` role by the migration. They are also available as resources in the RBAC system, so custom roles can be granted `workers:view` (for monitoring dashboards) or `workers:manage` (for operators) independently.
 
 The existing `jobs:read` permission (list/view own jobs) remains unchanged for non-admin users.
 
@@ -174,11 +174,11 @@ The existing `jobs:read` permission (list/view own jobs) remains unchanged for n
 These live under `/admin/workers/` to distinguish them from the existing `/jobs/` lifecycle routes.
 
 ```
-GET    /admin/workers/lanes              # List lanes, slot utilization    (jobs:view)
-PATCH  /admin/workers/lanes/:name        # Update lane config              (jobs:manage)
-GET    /admin/workers/status             # Slot utilization, queue depth   (jobs:view)
-POST   /admin/workers/jobs/:id/cancel    # Cancel a running job            (jobs:manage)
-PATCH  /admin/workers/jobs/:id/priority  # Reprioritize a queued job       (jobs:manage)
+GET    /admin/workers/lanes              # List lanes, slot utilization    (workers:view)
+PATCH  /admin/workers/lanes/:name        # Update lane config              (workers:manage)
+GET    /admin/workers/status             # Slot utilization, queue depth   (workers:view)
+POST   /admin/workers/jobs/:id/cancel    # Cancel a running job            (workers:manage)
+PATCH  /admin/workers/jobs/:id/priority  # Reprioritize a queued job       (workers:manage)
 ```
 
 The existing routes are unchanged:
@@ -199,7 +199,7 @@ A single migration adds:
 2. `priority` column on `kg_api.jobs` (default 0)
 3. `claimed_by` and `claimed_at` columns on `kg_api.jobs`
 4. `cancelled` boolean column on `kg_api.jobs` (default FALSE)
-5. `jobs:manage` and `jobs:view` permissions registered as RBAC resources
+5. `workers:manage` and `workers:view` permissions registered as RBAC resources
 6. Both permissions granted to `platform_admin` role
 
 ### Connection pool changes
@@ -233,7 +233,7 @@ A future ADR could address shared connection pooling if connection counts remain
 - **ADR-014 approval workflow unchanged.** The approval step still transitions jobs to `approved`. The difference is what happens after: polling replaces push.
 - **Worker code unchanged.** The `execute_job()` method and individual worker functions don't change. Only the dispatch layer around them changes.
 - **Serial chaining removed.** `_process_next_serial_job()` and `queue_serial_job()` are deleted. The poll loop handles ordering naturally.
-- **RBAC scope.** `jobs:manage` and `jobs:view` are new permission resources. Existing user-facing job permissions (`jobs:read`) are unchanged.
+- **RBAC scope.** `workers:manage` and `workers:view` are new permission resources. Existing user-facing job permissions (`jobs:read`) are unchanged.
 
 ## Alternatives Considered
 

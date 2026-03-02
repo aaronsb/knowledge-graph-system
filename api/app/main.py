@@ -28,7 +28,7 @@ logger = setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"))
 from .services.job_queue import init_job_queue, get_job_queue, PostgreSQLJobQueue
 from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManager
-from .services.worker_registry import register_all_workers, get_all_job_types
+from .services.worker_registry import register_all_workers, get_all_job_types, validate_lane_uniqueness
 from .services.lane_manager import LaneManager
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs, admin_workers
@@ -38,6 +38,40 @@ from .lib.ai_providers import get_provider
 # Module-level variables
 scheduled_jobs_manager = None
 lane_manager = None
+_is_dispatch_leader = False
+_dispatch_lock_conn = None  # Held for process lifetime to maintain advisory lock
+
+
+def _try_acquire_dispatch_lock(queue) -> bool:
+    """Try to acquire PostgreSQL advisory lock for dispatch leadership.
+
+    With --workers N, multiple uvicorn processes run startup_event(). Only one
+    should run the lane manager, scheduler, and scheduled jobs. We use a session-level
+    advisory lock (pg_try_advisory_lock) which is held for the connection lifetime.
+
+    Returns True if this process acquired the lock (is the leader).
+    """
+    global _dispatch_lock_conn
+    LOCK_ID = 100_000_001  # ADR-100 dispatch leader lock
+
+    try:
+        conn = queue._get_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(%s)", (LOCK_ID,))
+            acquired = cur.fetchone()[0]
+
+        if acquired:
+            # Keep connection alive — releasing it drops the lock
+            _dispatch_lock_conn = conn
+            logger.info(f"Acquired dispatch leader lock (advisory lock {LOCK_ID})")
+            return True
+        else:
+            queue._return_connection(conn)
+            logger.info(f"Dispatch leader lock held by another worker")
+            return False
+    except Exception as e:
+        logger.warning(f"Failed to acquire dispatch leader lock: {e}")
+        return False
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -67,9 +101,9 @@ async def log_requests(request: Request, call_next):
     """Log all HTTP requests with timing"""
     start_time = time.time()
 
-    # Use debug level for health checks to reduce noise
-    is_health_check = request.url.path == "/health"
-    log_level = logger.debug if is_health_check else logger.info
+    # Use debug level for high-frequency polling endpoints to reduce noise
+    is_polling = request.url.path in ("/health", "/database/epoch")
+    log_level = logger.debug if is_polling else logger.info
 
     # Log request
     log_level(f"→ {request.method} {request.url.path}")
@@ -145,6 +179,7 @@ async def startup_event():
     logger.info(f"✅ Job queue initialized: postgresql (kg_api.jobs)")
 
     # Register worker functions (ADR-100: single source of truth in worker_registry.py)
+    validate_lane_uniqueness()  # Fail fast if a job type is in multiple lanes
     register_all_workers(queue)
     logger.info(f"✅ Workers registered: {', '.join(get_all_job_types())}")
 
@@ -274,30 +309,39 @@ async def startup_event():
     except Exception as e:
         logger.error(f"⚠️  Failed to resume interrupted jobs: {e}", exc_info=True)
 
-    # ADR-100: Start lane manager (poll-and-claim dispatch)
-    global lane_manager
-    lane_manager = LaneManager(queue)
-    await lane_manager.start()
-    logger.info("✅ Lane manager started (database-driven job dispatch)")
+    # ADR-100: Only one uvicorn worker should run the lane manager, scheduler,
+    # and scheduled jobs manager. With --workers 2, each process calls startup_event().
+    # Use a PostgreSQL advisory lock (non-blocking) to elect a leader.
+    global _is_dispatch_leader
+    _is_dispatch_leader = _try_acquire_dispatch_lock(queue)
 
-    # ADR-014: Initialize and start job scheduler (lifecycle management)
-    scheduler = init_job_scheduler()
-    scheduler.start()
-    logger.info("✅ Job scheduler started (lifecycle management enabled)")
+    if _is_dispatch_leader:
+        # ADR-100: Start lane manager (poll-and-claim dispatch)
+        global lane_manager
+        lane_manager = LaneManager(queue)
+        await lane_manager.start()
+        logger.info("✅ Lane manager started (database-driven job dispatch)")
 
-    # ADR-050: Initialize and start scheduled jobs manager (maintenance tasks)
-    global scheduled_jobs_manager
-    launcher_registry = {
-        'CategoryRefreshLauncher': CategoryRefreshLauncher,
-        'VocabConsolidationLauncher': VocabConsolidationLauncher,
-        'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
-        'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
-        'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
-        'AnnealingLauncher': AnnealingLauncher,  # ADR-200: Ontology annealing cycle
-    }
-    scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
-    await scheduled_jobs_manager.start()
-    logger.info("✅ Scheduled jobs manager started (maintenance tasks enabled)")
+        # ADR-014: Initialize and start job scheduler (lifecycle management)
+        scheduler = init_job_scheduler()
+        scheduler.start()
+        logger.info("✅ Job scheduler started (lifecycle management enabled)")
+
+        # ADR-050: Initialize and start scheduled jobs manager (maintenance tasks)
+        global scheduled_jobs_manager
+        launcher_registry = {
+            'CategoryRefreshLauncher': CategoryRefreshLauncher,
+            'VocabConsolidationLauncher': VocabConsolidationLauncher,
+            'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
+            'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
+            'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
+            'AnnealingLauncher': AnnealingLauncher,  # ADR-200: Ontology annealing cycle
+        }
+        scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
+        await scheduled_jobs_manager.start()
+        logger.info("✅ Scheduled jobs manager started (maintenance tasks enabled)")
+    else:
+        logger.info("ℹ️  Another worker is the dispatch leader — skipping lane manager, scheduler, scheduled jobs")
 
     logger.info("🎉 API ready!")
     logger.info(f"📚 Docs: http://localhost:8000/docs")
@@ -309,25 +353,36 @@ async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("👋 Shutting down API...")
 
-    # ADR-014: Stop lifecycle scheduler gracefully
-    try:
-        scheduler = get_job_scheduler()
-        await scheduler.stop()
-        logger.info("✅ Job scheduler stopped (lifecycle management)")
-    except RuntimeError:
-        pass  # Scheduler not initialized
+    # Only the dispatch leader runs these services
+    if _is_dispatch_leader:
+        # ADR-014: Stop lifecycle scheduler gracefully
+        try:
+            scheduler = get_job_scheduler()
+            await scheduler.stop()
+            logger.info("✅ Job scheduler stopped (lifecycle management)")
+        except RuntimeError:
+            pass  # Scheduler not initialized
 
-    # ADR-100: Stop lane manager (drain lanes, let running jobs finish)
-    global lane_manager
-    if lane_manager:
-        await lane_manager.stop()
-        logger.info("✅ Lane manager stopped")
+        # ADR-100: Stop lane manager (drain lanes, let running jobs finish)
+        global lane_manager
+        if lane_manager:
+            await lane_manager.stop()
+            logger.info("✅ Lane manager stopped")
 
-    # ADR-050: Stop scheduled jobs manager gracefully
-    global scheduled_jobs_manager
-    if scheduled_jobs_manager:
-        await scheduled_jobs_manager.stop()
-        logger.info("✅ Scheduled jobs manager stopped (maintenance tasks)")
+        # ADR-050: Stop scheduled jobs manager gracefully
+        global scheduled_jobs_manager
+        if scheduled_jobs_manager:
+            await scheduled_jobs_manager.stop()
+            logger.info("✅ Scheduled jobs manager stopped (maintenance tasks)")
+
+        # Release dispatch leader lock
+        global _dispatch_lock_conn
+        if _dispatch_lock_conn:
+            try:
+                _dispatch_lock_conn.close()
+            except Exception:
+                pass
+            _dispatch_lock_conn = None
 
     # Shut down job queue executor and connection pool
     try:

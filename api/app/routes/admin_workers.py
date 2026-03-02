@@ -10,7 +10,7 @@ All endpoints require workers:view or workers:manage RBAC permissions.
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 
@@ -109,10 +109,13 @@ def update_lane(lane_name: str, body: LaneUpdate, current_user: CurrentUser):
             if not old:
                 raise HTTPException(status_code=404, detail=f"Lane not found: {lane_name}")
 
-            # Build dynamic SET clause
+            # Build dynamic SET clause (column names validated against allowlist)
+            ALLOWED_COLUMNS = {"max_slots", "poll_interval_ms", "stale_timeout_minutes", "enabled"}
             set_parts = []
             params = []
             for col, val in updates.items():
+                if col not in ALLOWED_COLUMNS:
+                    raise HTTPException(status_code=422, detail=f"Unknown field: {col}")
                 set_parts.append(f"{col} = %s")
                 params.append(val)
             set_parts.append("updated_at = NOW()")
@@ -229,7 +232,11 @@ def cancel_running_job(job_id: str, current_user: CurrentUser):
 
 
 @router.patch("/jobs/{job_id}/priority", summary="Reprioritize a queued job")
-def reprioritize_job(job_id: str, priority: int, current_user: CurrentUser):
+def reprioritize_job(
+    job_id: str,
+    current_user: CurrentUser,
+    priority: int = Query(..., ge=-100, le=100, description="Job priority (-100 to 100, higher = claimed first)"),
+):
     """
     Change the priority of a queued (approved) job.
     Higher priority = claimed first by lane workers.

@@ -9,11 +9,19 @@ commands: operator\.sh\s+(start|restart|init)
 
 `./operator.sh init` in dev mode sets `DEV_MODE=true` in `.operator.conf`. The dev compose overlay mounts source directories into containers so code changes take effect without rebuilding.
 
+## API: Multi-Worker (No Hot Reload)
+
+The API runs `--workers 2` in both dev and production. Hot reload (`--reload`) is incompatible with multi-worker and was removed to fix request serialization (#346). After editing Python files:
+
+```bash
+./operator.sh restart api        # Required to pick up API code changes
+```
+
 ## What Hot Reloads (No Rebuild)
 
 | Service | Mounted Path | Mechanism |
 |---------|-------------|-----------|
-| **API** (Python/FastAPI) | `api/` → `/app/api` | uvicorn `--reload` watches Python files |
+| **API** (Python/FastAPI) | `api/` → `/app/api` | Restart required (`./operator.sh restart api`) |
 | **Web** (React/Vite) | `web/src/` → `/app/src` | Vite HMR via WebSocket |
 | **Operator** (Bash/Python) | repo → `/workspace` | Scripts read fresh on each execution |
 
@@ -35,15 +43,15 @@ Web `node_modules` is an anonymous volume — stays in the container, not mounte
 
 ```bash
 ./operator.sh start              # Start with dev mounts if DEV_MODE=true
-./operator.sh restart api        # Restart API (picks up env var changes)
+./operator.sh restart api        # Restart API (picks up Python code changes)
 ./operator.sh restart web        # Restart web
-./operator.sh logs api -f        # Follow API logs (see reload events)
+./operator.sh logs api -f        # Follow API logs
 ./operator.sh logs web -f        # Follow Vite output (see HMR events)
 ```
 
 ## Common Gotchas
 
-- **Schema SQL changes** reload automatically (mounted into API container)
+- **API code changes** require `./operator.sh restart api` — no hot reload
+- **Schema SQL changes** are mounted but require API restart to take effect
 - **Web env vars** (like `VITE_API_URL`) require container restart — the entrypoint regenerates `config.js` on start
 - **API model downloads** (HuggingFace) persist in a named volume — not lost on restart
-- **If hot reload stops working**, check `./operator.sh logs <service> -f` for crash loops

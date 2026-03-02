@@ -817,11 +817,18 @@ class PostgreSQLJobQueue(JobQueue):
             # Execute worker (pass queue ref for progress updates)
             result = worker_func(job["job_data"], job_id, self)
 
-            # Mark completed
-            self.update_job(job_id, {
-                "status": "completed",
-                "result": result
-            })
+            # ADR-100: Workers return {"status": "cancelled"} when they detect
+            # the cancellation flag. Reflect that in the job status.
+            if isinstance(result, dict) and result.get("status") == "cancelled":
+                self.update_job(job_id, {
+                    "status": "cancelled",
+                    "result": result
+                })
+            else:
+                self.update_job(job_id, {
+                    "status": "completed",
+                    "result": result
+                })
 
         except Exception as e:
             # Mark failed

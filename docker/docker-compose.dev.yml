@@ -1,5 +1,5 @@
 # ============================================================================
-# Development Overrides for Hot Reload
+# Development Overrides
 # ============================================================================
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 # Or use: ./operator/lib/start-app.sh --dev
@@ -41,13 +41,15 @@ services:
   api:
     # Override standalone container_name back to dev name
     container_name: kg-api-dev
-    # Enable hot reload for development
-    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # Multi-worker for concurrent request handling (matches production).
+    # Hot reload (--reload) is incompatible with --workers, so restart
+    # the container after code changes: ./operator.sh restart api
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
     build:
       context: ..
       dockerfile: api/Dockerfile
     volumes:
-      # Mount source for hot reload
+      # Mount source for development (restart container to pick up changes)
       - ../api:/app/api
       - ../schema:/app/schema
       # Mount tests for in-container testing

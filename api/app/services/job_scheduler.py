@@ -197,7 +197,11 @@ class JobScheduler:
         if deleted_failed > 0:
             logger.info(f"Deleted {deleted_failed} old failed jobs")
 
-        # Task 4 (ADR-100): Reap stale running jobs past their lane timeout
+        # Task 4 (ADR-100): Reap stale running jobs past their lane timeout.
+        # NOTE: The JOIN assumes each job_type appears in exactly one lane.
+        # If a job_type were in multiple lanes, it could match against the
+        # wrong lane's stale_timeout_minutes. The worker_registry enforces
+        # this by assigning each type to a single lane.
         try:
             conn = queue._get_connection()
             try:
@@ -214,15 +218,15 @@ class JobScheduler:
                           AND j.claimed_at < NOW() - (wl.stale_timeout_minutes || ' minutes')::INTERVAL
                           AND j.job_type = ANY(wl.job_types)
                           AND j.retries < j.max_retries
-                        RETURNING j.job_id, j.job_type, j.retries
+                        RETURNING j.job_id, j.job_type, j.retries, j.max_retries
                     """)
                     reaped = cur.fetchall()
                     conn.commit()
 
-                    for job_id, job_type, retries in reaped:
+                    for job_id, job_type, retries, max_retries in reaped:
                         logger.warning(
                             f"Reaped stale job {job_id} ({job_type}), "
-                            f"retry {retries}/{3} — returned to approved"
+                            f"retry {retries}/{max_retries} — returned to approved"
                         )
 
                     # Also fail jobs that exceeded max_retries
