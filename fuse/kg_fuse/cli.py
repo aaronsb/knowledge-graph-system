@@ -399,9 +399,33 @@ def cmd_init(args: Namespace) -> None:
         print(f"{_green('OK')}  {client_id}")
     else:
         print(f"{_red('FAILED')}  {auth_info}")
-        print("\n  Credentials may be expired. Try:")
-        print(f"    {_dim('kg oauth create')}")
-        sys.exit(1)
+        print("\n  Credentials are stale (common after platform redeploy).")
+        if _prompt_yn("  Re-authenticate now? (runs 'kg login --force')"):
+            try:
+                subprocess.run(["kg", "login", "--force"], check=True)
+                # Re-read credentials after login
+                client_id, client_secret, _ = read_kg_credentials()
+                if not client_id:
+                    print(f"\n  {_red('Credentials still missing after login.')}")
+                    sys.exit(1)
+                # Re-test
+                auth_ok, auth_info = _test_auth(api_url, client_id, client_secret)
+                if not auth_ok:
+                    print(f"\n  {_red('Auth still failing:')} {auth_info}")
+                    sys.exit(1)
+                print(f"  {_green('OK')}  {client_id}")
+            except FileNotFoundError:
+                msg = "'kg' command not found."
+                print(f"\n  {_red(msg)} Install: npm install -g @aaronsb/kg-cli")
+                sys.exit(1)
+            except subprocess.CalledProcessError:
+                msg = "'kg login --force' failed."
+                print(f"\n  {_red(msg)}")
+                sys.exit(1)
+        else:
+            print(f"\n  Re-authenticate manually:")
+            print(f"    {_dim('kg login --force')}")
+            sys.exit(1)
 
     # Step 5: Check credential permissions
     kg_cfg_path = get_kg_config_path()
