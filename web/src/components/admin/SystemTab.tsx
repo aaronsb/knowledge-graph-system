@@ -21,6 +21,7 @@ import {
   CheckCircle,
   AlertCircle,
   BarChart3,
+  Layers,
   Play,
   Save,
   Trash2,
@@ -31,7 +32,7 @@ import {
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { Section, StatusBadge } from './components';
-import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, SchedulerStatus } from './types';
+import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, SchedulerStatus, WorkerStatus } from './types';
 
 interface SystemTabProps {
   onError: (error: string) => void;
@@ -43,6 +44,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbCounters, setDbCounters] = useState<any>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
+  const [workerStatus, setWorkerStatus] = useState<WorkerStatus | null>(null);
   const [docsIngested, setDocsIngested] = useState<number>(0);
   const [graphEpoch, setGraphEpoch] = useState<number>(0);
   const [embeddingConfigs, setEmbeddingConfigs] = useState<EmbeddingConfig[]>([]);
@@ -69,11 +71,12 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [status, stats, counters, scheduler, embeddings, extraction, keys, apiInfo, dbEpoch] = await Promise.all([
+      const [status, stats, counters, scheduler, workers, embeddings, extraction, keys, apiInfo, dbEpoch] = await Promise.all([
         apiClient.getSystemStatus().catch(() => null),
         apiClient.getDatabaseStats().catch(() => null),
         apiClient.getDatabaseCounters().catch(() => null),
         apiClient.getSchedulerStatus().catch(() => null),
+        apiClient.getWorkerStatus().catch(() => null),
         apiClient.listEmbeddingConfigs().catch(() => []),
         apiClient.getExtractionConfig().catch(() => null),
         apiClient.listApiKeys().catch(() => []),
@@ -84,6 +87,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       setDbStats(stats);
       setDbCounters(counters);
       setSchedulerStatus(scheduler);
+      setWorkerStatus(workers);
       setDocsIngested(apiInfo.epoch || 0);
       setGraphEpoch(dbEpoch);
       setEmbeddingConfigs(embeddings);
@@ -464,6 +468,90 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       </Section>
 
       <Section
+        title="Workers"
+        icon={<Layers className="w-5 h-5" />}
+      >
+        {workerStatus ? (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="p-4 bg-status-info/20 rounded-lg">
+                <div className="text-2xl font-bold text-status-info">
+                  {workerStatus.slots_in_use}/{workerStatus.total_slots}
+                </div>
+                <div className="text-sm text-status-info">Slots In Use</div>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="text-2xl font-bold text-foreground">
+                  {workerStatus.running_count}
+                </div>
+                <div className="text-sm text-muted-foreground">Running Jobs</div>
+              </div>
+              <div className="p-4 bg-status-warning/10 rounded-lg">
+                <div className="text-2xl font-bold text-status-warning">
+                  {workerStatus.total_queued}
+                </div>
+                <div className="text-sm text-status-warning">Queued</div>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div className="text-sm font-medium text-foreground">Lanes</div>
+              {workerStatus.lanes.map((lane) => (
+                <div
+                  key={lane.name}
+                  className={`flex items-center justify-between p-2 rounded-lg border ${
+                    lane.enabled
+                      ? 'bg-status-active/10 border-status-active/30'
+                      : 'bg-muted/50 border-border opacity-60'
+                  }`}
+                >
+                  <span className="text-sm font-medium text-foreground">{lane.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {lane.enabled ? `${lane.max_slots} slots` : 'disabled'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {workerStatus.running_jobs.length > 0 && (
+              <div className="space-y-1 mb-4">
+                <div className="text-sm font-medium text-foreground">Active Jobs</div>
+                {workerStatus.running_jobs.map((job) => {
+                  const startedAt = job.started_at ? new Date(job.started_at) : null;
+                  const durationSeconds = startedAt
+                    ? Math.floor((Date.now() - startedAt.getTime()) / 1000)
+                    : null;
+                  const durationLabel = durationSeconds !== null
+                    ? durationSeconds < 60 ? `${durationSeconds}s`
+                      : durationSeconds < 3600 ? `${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`
+                        : `${Math.floor(durationSeconds / 3600)}h ${Math.floor((durationSeconds % 3600) / 60)}m`
+                    : null;
+                  return (
+                    <div key={job.job_id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {job.job_id.substring(0, 8)}...
+                      </span>
+                      <span className="text-foreground">{job.job_type}</span>
+                      {durationLabel && (
+                        <span className="text-xs text-muted-foreground">{durationLabel}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-muted-foreground text-center py-8">
+            Unable to load worker status.
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-3">
+          Use <code className="bg-muted px-1 rounded">kg admin workers</code> for CLI view
+        </p>
+      </Section>
+
+      <Section
         title="API Documentation"
         icon={<FileText className="w-5 h-5" />}
       >
@@ -528,7 +616,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                       </span>
                     )}
                     <span className="font-medium text-foreground">
-                      Config {config.id}
+                      {config.name || `Config ${config.id}`}
                     </span>
                     {config.delete_protected && (
                       <span title="Delete protected">
@@ -581,15 +669,15 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                 <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Provider:</span>
-                    <span className="ml-1 text-foreground">{config.provider}</span>
+                    <span className="ml-1 text-foreground">{config.text_provider}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Model:</span>
-                    <span className="ml-1 text-foreground font-mono text-xs">{config.model_name}</span>
+                    <span className="ml-1 text-foreground font-mono text-xs">{config.text_model_name}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Dims:</span>
-                    <span className="ml-1 text-foreground">{config.embedding_dimensions}</span>
+                    <span className="ml-1 text-foreground">{config.text_dimensions}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Device:</span>

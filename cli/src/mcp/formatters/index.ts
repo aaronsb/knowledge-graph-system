@@ -35,6 +35,7 @@ export {
   formatDatabaseHealth,
   formatSystemStatus,
   formatApiHealth,
+  formatWorkerStatus,
   formatMcpAllowedPaths,
 } from './system.js';
 

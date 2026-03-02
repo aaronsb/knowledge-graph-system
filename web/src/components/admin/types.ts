@@ -103,11 +103,20 @@ export interface PermissionInfo {
 
 export interface EmbeddingConfig {
   id: number;
-  provider: string;
-  model_name: string;
-  embedding_dimensions: number;
-  precision: string;
+  name: string;
+  vector_space: string;
+  multimodal: boolean;
+  text_provider: string;
+  text_model_name: string;
+  text_loader: string;
+  text_dimensions: number;
+  text_precision: string;
+  image_provider: string | null;
+  image_model_name: string | null;
+  image_dimensions: number | null;
   device: string | null;
+  batch_size: number;
+  max_seq_length: number;
   active: boolean;
   delete_protected: boolean;
   change_protected: boolean;
@@ -139,6 +148,23 @@ export interface SchedulerStatus {
   jobs_by_status: Record<string, number>;
   last_cleanup: string | null;
   next_cleanup: string | null;
+}
+
+export interface WorkerStatus {
+  running_jobs: Array<{
+    job_id: string;
+    job_type: string;
+    claimed_by: string | null;
+    claimed_at: string | null;
+    started_at: string | null;
+    priority: number;
+  }>;
+  running_count: number;
+  queued_by_type: Array<{ job_type: string; count: number; oldest: string | null }>;
+  total_queued: number;
+  lanes: Array<{ name: string; max_slots: number; enabled: boolean }>;
+  total_slots: number;
+  slots_in_use: number;
 }
 
 export type TabType = 'account' | 'users' | 'roles' | 'system';

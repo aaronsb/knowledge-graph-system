@@ -971,6 +971,30 @@ class APIClient {
   }
 
   /**
+   * Get worker status overview (ADR-100)
+   * Returns slot utilization, running jobs, queue depth, and lane summary.
+   */
+  async getWorkerStatus(): Promise<{
+    running_jobs: Array<{
+      job_id: string;
+      job_type: string;
+      claimed_by: string | null;
+      claimed_at: string | null;
+      started_at: string | null;
+      priority: number;
+    }>;
+    running_count: number;
+    queued_by_type: Array<{ job_type: string; count: number; oldest: string | null }>;
+    total_queued: number;
+    lanes: Array<{ name: string; max_slots: number; enabled: boolean }>;
+    total_slots: number;
+    slots_in_use: number;
+  }> {
+    const response = await this.client.get('/admin/workers/status');
+    return response.data;
+  }
+
+  /**
    * Get database statistics
    * Response format: { nodes: { concepts, sources, instances }, relationships: { total, by_type } }
    */
@@ -1027,11 +1051,20 @@ class APIClient {
    */
   async listEmbeddingConfigs(): Promise<Array<{
     id: number;
-    provider: string;
-    model_name: string;
-    embedding_dimensions: number;
-    precision: string;
+    name: string;
+    vector_space: string;
+    multimodal: boolean;
+    text_provider: string;
+    text_model_name: string;
+    text_loader: string;
+    text_dimensions: number;
+    text_precision: string;
+    image_provider: string | null;
+    image_model_name: string | null;
+    image_dimensions: number | null;
     device: string | null;
+    batch_size: number;
+    max_seq_length: number;
     active: boolean;
     delete_protected: boolean;
     change_protected: boolean;

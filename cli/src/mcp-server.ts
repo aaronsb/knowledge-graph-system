@@ -35,6 +35,7 @@ import {
   formatDatabaseHealth,
   formatSystemStatus,
   formatApiHealth,
+  formatWorkerStatus,
   formatMcpAllowedPaths,
   formatEpistemicStatusList,
   formatEpistemicStatusDetails,
@@ -1358,6 +1359,12 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
         mimeType: 'application/json'
       },
       {
+        uri: 'workers/status',
+        name: 'Worker Status',
+        description: 'Lane slot utilization, active jobs, queue depth (ADR-100)',
+        mimeType: 'application/json'
+      },
+      {
         uri: 'api/health',
         name: 'API Health',
         description: 'API server health and timestamp',
@@ -1425,6 +1432,20 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
             uri,
             mimeType: 'text/plain',
             text: formatSystemStatus(result)
+          }]
+        };
+      }
+
+      case 'workers/status': {
+        const [workerStatusResult, workerLanesResult] = await Promise.all([
+          client.getWorkerStatus(),
+          client.getWorkerLanes(),
+        ]);
+        return {
+          contents: [{
+            uri,
+            mimeType: 'text/plain',
+            text: formatWorkerStatus(workerStatusResult, workerLanesResult)
           }]
         };
       }
