@@ -159,6 +159,7 @@ class BaseMixin(pyfuse3.Operations):
         """Set the trio nursery for background tasks. Called by main.py."""
         self._cache.set_nursery(nursery)
         nursery.start_soon(self._flush_pending_ingestions)
+        nursery.start_soon(self._poll_active_jobs)
         if self._mountpoint:
             nursery.start_soon(self._watch_config)
 
