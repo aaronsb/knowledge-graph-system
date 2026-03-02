@@ -312,12 +312,14 @@ export interface FontSettings {
   display: string; // font id
   body: string;
   mono: string;
+  scale: number; // multiplier, 1.0 = default
 }
 
 export const defaultFontSettings: FontSettings = {
   display: 'space-grotesk',
   body: 'ibm-plex-condensed',
   mono: 'jetbrains',
+  scale: 1.0,
 };
 
 /**
@@ -337,6 +339,7 @@ export function applyFontsToCSS(settings: FontSettings) {
   root.style.setProperty('--font-display', getFontFamily('display', settings.display));
   root.style.setProperty('--font-body', getFontFamily('body', settings.body));
   root.style.setProperty('--font-mono', getFontFamily('mono', settings.mono));
+  root.style.setProperty('--font-scale', String(settings.scale ?? 1.0));
 }
 
 // localStorage keys
@@ -385,6 +388,10 @@ export function loadFontSettings(): FontSettings | null {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed?.display && parsed?.body && parsed?.mono) {
+        // Backfill scale for settings saved before font scaling was added
+        if (parsed.scale === undefined) {
+          parsed.scale = 1.0;
+        }
         return parsed;
       }
     }

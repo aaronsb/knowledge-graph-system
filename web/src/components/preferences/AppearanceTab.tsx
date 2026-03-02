@@ -23,6 +23,7 @@ import {
 import { useThemeStore, type ThemePreference } from '../../store/themeStore';
 import {
   Section,
+  Slider,
   HueGrid,
   SaturationGrid,
   LightnessGrid,
@@ -123,6 +124,17 @@ export const AppearanceTab: React.FC = () => {
     applyFontsToCSS(newSettings);
   };
 
+  // Update font scale
+  const updateFontScale = (scale: number) => {
+    const newSettings: FontSettings = {
+      ...fontSettings,
+      scale,
+    };
+    setFontSettings(newSettings);
+    saveFontSettings(newSettings);
+    applyFontsToCSS(newSettings);
+  };
+
   // Update background style
   const updateBgStyle = (style: BackgroundStyle) => {
     setBgStyle(style);
@@ -163,7 +175,8 @@ export const AppearanceTab: React.FC = () => {
   const isColorCustomized = JSON.stringify(colorSettings) !== JSON.stringify(defaultColorSettings);
   const isFontCustomized = JSON.stringify(fontSettings) !== JSON.stringify(defaultFontSettings);
   const isBgStyleCustomized = bgStyle !== defaultBackgroundStyle;
-  const isCustomized = isColorCustomized || isFontCustomized || isBgStyleCustomized;
+  const isFontScaleCustomized = (fontSettings.scale ?? 1.0) !== 1.0;
+  const isCustomized = isColorCustomized || isFontCustomized || isBgStyleCustomized || isFontScaleCustomized;
 
   const themeOptions: { id: ThemePreference; label: string; icon: React.ComponentType<{ className?: string }>; time: string }[] = [
     { id: 'dark', label: 'Dark', icon: Moon, time: '23:00' },
@@ -483,6 +496,18 @@ export const AppearanceTab: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Font Scale */}
+          <Slider
+            value={fontSettings.scale ?? 1.0}
+            onChange={updateFontScale}
+            min={0.75}
+            max={1.5}
+            step={0.05}
+            label="Font Scale"
+            description="Multiplier applied to all text sizes"
+            formatValue={(v) => `${Math.round(v * 100)}%`}
+          />
         </div>
       </Section>
 
