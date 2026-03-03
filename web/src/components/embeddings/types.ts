@@ -36,7 +36,11 @@ export interface ProjectionConcept {
   ontology?: string;  // Source ontology (for cross-ontology mode)
   item_type?: ProjectionItemType;  // For distinguishing in combined view
   cluster_id?: number | null;  // DBSCAN cluster assignment (null = noise)
+  degree?: number | null;  // Total edge count (in + out)
 }
+
+// Point size metric options
+export type SizeMetric = 'uniform' | 'grounding' | 'diversity' | 'degree';
 
 // Distance metric for projection algorithm
 export type DistanceMetric = 'cosine' | 'euclidean';
@@ -77,6 +81,8 @@ export interface EmbeddingPoint {
   z: number;
   ontology: string;
   grounding: number | null;
+  diversity: number | null;
+  degree: number | null;
   color: string;
   itemType: ProjectionItemType;
   clusterId?: number | null;

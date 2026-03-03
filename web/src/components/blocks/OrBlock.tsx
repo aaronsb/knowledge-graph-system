@@ -16,7 +16,7 @@ export const OrBlock: React.FC<NodeProps<BlockData>> = ({ id }) => {
       <div className="flex flex-col items-center justify-center gap-1">
         <div className="flex items-center gap-2">
           <span className="font-bold text-base text-cyan-700 dark:text-cyan-300">OR</span>
-          <span className="px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 rounded text-[10px] font-medium">
+          <span className="px-1.5 py-0.5 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 rounded text-[0.625rem] font-medium">
             LOGIC
           </span>
         </div>

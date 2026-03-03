@@ -99,7 +99,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
               background: generateGradient(d3.interpolateViridis),
             }}
           />
-          <div className="flex justify-between text-[10px] text-muted-foreground">
+          <div className="flex justify-between text-[0.625rem] text-muted-foreground">
             <span>Low</span>
             <span>High</span>
           </div>
@@ -115,7 +115,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
               background: generateGradient(d3.interpolatePlasma),
             }}
           />
-          <div className="flex justify-between text-[10px] text-muted-foreground">
+          <div className="flex justify-between text-[0.625rem] text-muted-foreground">
             <span>Low</span>
             <span>High</span>
           </div>

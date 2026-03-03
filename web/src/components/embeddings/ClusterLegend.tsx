@@ -75,7 +75,7 @@ export function ClusterLegend({
 }: Props) {
   if (clusterCount <= 0) {
     return (
-      <div className="text-[10px] text-muted-foreground/60">
+      <div className="text-xs text-muted-foreground/60">
         No clusters — regenerate projection
       </div>
     );
@@ -119,7 +119,7 @@ export function ClusterLegend({
           <button
             key={p}
             onClick={() => onPaletteChange(p)}
-            className={`flex-1 py-1 text-[10px] transition-colors ${
+            className={`flex-1 py-1 text-xs transition-colors ${
               palette === p
                 ? 'bg-primary/30 text-primary'
                 : 'bg-accent/30 text-muted-foreground hover:bg-accent/50'
@@ -134,7 +134,7 @@ export function ClusterLegend({
       {highlightedClusters !== null && (
         <button
           onClick={() => onHighlightChange(null)}
-          className="text-[10px] text-primary hover:text-primary/80 mb-1 underline"
+          className="text-xs text-primary hover:text-primary/80 mb-1 underline"
         >
           Show all
         </button>
@@ -150,7 +150,7 @@ export function ClusterLegend({
                 ? { key: col.key, desc: !sort.desc }
                 : { key: col.key, desc: col.key === 'count' }
             )}
-            className={`text-[9px] font-medium ${col.width} text-left transition-colors ${
+            className={`text-xs font-medium ${col.width} text-left transition-colors ${
               sort.key === col.key
                 ? 'text-primary'
                 : 'text-muted-foreground/50 hover:text-muted-foreground'
@@ -198,10 +198,10 @@ export function ClusterLegend({
                 className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: clusterColor(palette, id) }}
               />
-              <span className="text-[10px] text-muted-foreground truncate flex-1">
+              <span className="text-xs text-muted-foreground truncate flex-1">
                 {name}
               </span>
-              <span className="text-[10px] text-muted-foreground/40 flex-shrink-0 tabular-nums">
+              <span className="text-xs text-muted-foreground/40 flex-shrink-0 tabular-nums">
                 {size}
               </span>
             </button>
@@ -216,10 +216,10 @@ export function ClusterLegend({
             className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
             style={{ backgroundColor: NOISE_COLOR }}
           />
-          <span className="text-[10px] text-muted-foreground/60 flex-1">
+          <span className="text-xs text-muted-foreground/60 flex-1">
             noise
           </span>
-          <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+          <span className="text-xs text-muted-foreground/40 tabular-nums">
             {noiseCount}
           </span>
         </div>

@@ -247,7 +247,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({ onAddBlock, classNam
               {section.title}
             </h4>
             {section.description && (
-              <p className="text-[10px] text-muted-foreground dark:text-gray-500">{section.description}</p>
+              <p className="text-[0.625rem] text-muted-foreground dark:text-gray-500">{section.description}</p>
             )}
           </div>
 

@@ -21,13 +21,13 @@ export const StartBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       <div className="flex items-center justify-center gap-2 mb-2">
         <Play className="w-4 h-4 text-green-600 dark:text-green-400 fill-current" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">START</span>
-        <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded text-[10px] font-medium">
+        <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded text-[0.625rem] font-medium">
           FLOW
         </span>
       </div>
 
       {/* Execution Mode Control */}
-      <div className="flex items-center justify-center gap-1 text-[10px]">
+      <div className="flex items-center justify-center gap-1 text-[0.625rem]">
         <button
           className={`flex items-center gap-1 px-2 py-1 rounded ${
             executionMode === 'interactive'

@@ -215,7 +215,7 @@ export const AppearanceTab: React.FC = () => {
                   <span className="text-xs font-mono uppercase tracking-wide font-semibold">
                     {option.label}
                   </span>
-                  <span className="text-[9px] opacity-70">{option.time}</span>
+                  <span className="text-[0.5625rem] opacity-70">{option.time}</span>
                   {isSelected && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                   )}
@@ -252,7 +252,7 @@ export const AppearanceTab: React.FC = () => {
           </div>
 
           {/* Harmony info */}
-          <div className="bg-surface-2 p-3 font-mono text-[10px] space-y-1">
+          <div className="bg-surface-2 p-3 font-mono text-[0.625rem] space-y-1">
             <div className="flex justify-between text-muted-foreground">
               <span>BG Lightness</span>
               <span className="text-card-foreground">{harmony.bg.l}%</span>
@@ -437,7 +437,7 @@ export const AppearanceTab: React.FC = () => {
                   style={{ fontFamily: font.family }}
                 >
                   <div className="text-sm font-semibold">{font.label}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono mt-1">Aa Bb Cc</div>
+                  <div className="text-[0.625rem] text-muted-foreground font-mono mt-1">Aa Bb Cc</div>
                 </button>
               ))}
             </div>
@@ -462,7 +462,7 @@ export const AppearanceTab: React.FC = () => {
                   style={{ fontFamily: font.family }}
                 >
                   <div className="text-sm">{font.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">
+                  <div className="text-[0.625rem] text-muted-foreground mt-1">
                     The quick brown fox jumps over the lazy dog
                   </div>
                 </button>
@@ -489,7 +489,7 @@ export const AppearanceTab: React.FC = () => {
                   style={{ fontFamily: font.family }}
                 >
                   <div className="text-sm">{font.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">
+                  <div className="text-[0.625rem] text-muted-foreground mt-1">
                     {'const x = 42;'}
                   </div>
                 </button>
@@ -542,7 +542,7 @@ export const AppearanceTab: React.FC = () => {
                 />
                 <div className="relative">
                   <div className="text-xs font-mono font-semibold mb-1">{option.label}</div>
-                  <div className="text-[9px] text-muted-foreground">{option.description}</div>
+                  <div className="text-[0.5625rem] text-muted-foreground">{option.description}</div>
                 </div>
               </button>
             ))}

@@ -1470,6 +1470,7 @@ class APIClient {
       include_grounding?: boolean;
       refresh_grounding?: boolean; // Compute fresh grounding values
       include_diversity?: boolean;
+      include_degree?: boolean;    // Include degree (edge count) per concept
       embedding_source?: 'concepts' | 'sources' | 'vocabulary' | 'combined';
     }
   ): Promise<{

@@ -11,7 +11,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import type { EmbeddingPoint, ProjectionItemType } from './types';
+import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
+import type { EmbeddingPoint, ProjectionItemType, SizeMetric } from './types';
 
 // Shape type mapping: concept=0, source=1, vocabulary=2
 const SHAPE_INDEX: Record<ProjectionItemType, number> = {
@@ -110,27 +111,58 @@ const fragmentShader = `
   }
 `;
 
+/** Compute point size based on the selected metric. */
+function computePointSize(
+  point: EmbeddingPoint,
+  sizeMetric: SizeMetric,
+  maxDegree: number
+): number {
+  switch (sizeMetric) {
+    case 'grounding':
+      return point.grounding !== null ? 2 + Math.abs(point.grounding) * 12 : 3;
+    case 'diversity':
+      return point.diversity !== null ? 2 + point.diversity * 14 : 3;
+    case 'degree': {
+      if (point.degree == null || maxDegree === 0) return 3;
+      // sqrt scale so mid-range values are visible, not just the max
+      const normalized = Math.sqrt(point.degree / maxDegree);
+      return 2 + normalized * 14;
+    }
+    case 'uniform':
+    default:
+      return 5;
+  }
+}
+
 interface Props {
   points: EmbeddingPoint[];
   onSelectPoint: (point: EmbeddingPoint | null) => void;
   onContextMenu?: (point: EmbeddingPoint, screenPos: { x: number; y: number }) => void;
   selectedPoint: EmbeddingPoint | null;
+  sizeMetric?: SizeMetric;
+  showHulls?: boolean;
+  hullGrouping?: 'cluster' | 'ontology';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selectedPoint }: Props) {
+export function EmbeddingScatter3D({
+  points, onSelectPoint, onContextMenu, selectedPoint,
+  sizeMetric = 'uniform', showHulls = false, hullGrouping = 'cluster',
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const pointsRef = useRef<THREE.Points | null>(null);
+  const hullGroupRef = useRef<THREE.Group | null>(null);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const hoveredIndexRef = useRef<number | null>(null);
 
   // Map from point index to EmbeddingPoint data
   const pointDataRef = useRef<EmbeddingPoint[]>([]);
+  // Track previous points identity to know when data (not just sizeMetric) changed
+  const prevPointsRef = useRef<EmbeddingPoint[]>([]);
 
   // Tooltip state
   const [tooltip, setTooltip] = useState<{
@@ -225,6 +257,22 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
     const scene = sceneRef.current;
     if (!scene) return;
 
+    const dataChanged = points !== prevPointsRef.current;
+
+    // If only sizeMetric changed, just update the size buffer in-place
+    if (!dataChanged && pointsRef.current && points.length > 0) {
+      const geometry = pointsRef.current.geometry;
+      const sizeAttr = geometry.getAttribute('size') as THREE.BufferAttribute;
+      const maxDegree = points.reduce((max, p) => Math.max(max, p.degree ?? 0), 0);
+      for (let i = 0; i < points.length; i++) {
+        sizeAttr.array[i] = computePointSize(points[i], sizeMetric, maxDegree);
+      }
+      sizeAttr.needsUpdate = true;
+      return;
+    }
+
+    prevPointsRef.current = points;
+
     // Remove old points
     if (pointsRef.current) {
       scene.remove(pointsRef.current);
@@ -238,6 +286,9 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
     }
 
     pointDataRef.current = points;
+
+    // Precompute max degree for normalization
+    const maxDegree = points.reduce((max, p) => Math.max(max, p.degree ?? 0), 0);
 
     // Create geometry with attributes for SDF shader
     const geometry = new THREE.BufferGeometry();
@@ -256,10 +307,7 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      // Size based on grounding if available (smaller dots for dense clouds)
-      sizes[i] = point.grounding !== null
-        ? 3 + Math.abs(point.grounding) * 3
-        : 5;
+      sizes[i] = computePointSize(point, sizeMetric, maxDegree);
 
       // Shape based on item type
       shapes[i] = SHAPE_INDEX[point.itemType] ?? 0;
@@ -271,12 +319,9 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
     geometry.setAttribute('shape', new THREE.BufferAttribute(shapes, 1));
 
     // Dynamic alpha based on point count
-    // Higher base opacity for better color pop on dark backgrounds
-    // Only reduce opacity for very large point clouds (>5000 points)
     const dynamicAlpha = Math.min(1 / Math.sqrt(points.length), 0.95);
-    const effectiveAlpha = Math.max(0.75, dynamicAlpha); // Higher minimum for color vibrancy
+    const effectiveAlpha = Math.max(0.75, dynamicAlpha);
 
-    // Create custom SDF shader material for crisp vector shapes
     const material = new THREE.ShaderMaterial({
       uniforms: {
         uOpacity: { value: effectiveAlpha },
@@ -285,7 +330,7 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
       fragmentShader,
       vertexColors: true,
       transparent: true,
-      depthWrite: true,  // Enable proper z-ordering (closer points occlude farther)
+      depthWrite: true,
       depthTest: true,
       blending: THREE.NormalBlending,
     });
@@ -294,7 +339,7 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
     scene.add(pointCloud);
     pointsRef.current = pointCloud;
 
-    // Auto-fit camera to data
+    // Auto-fit camera to data (only when data changes, not sizeMetric)
     if (cameraRef.current && controlsRef.current) {
       const bbox = new THREE.Box3().setFromBufferAttribute(
         geometry.getAttribute('position') as THREE.BufferAttribute
@@ -311,7 +356,79 @@ export function EmbeddingScatter3D({ points, onSelectPoint, onContextMenu, selec
       controlsRef.current.target.copy(center);
       controlsRef.current.update();
     }
-  }, [points]);
+  }, [points, sizeMetric]);
+
+  // Convex hulls around clusters or ontologies
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    // Remove old hulls
+    if (hullGroupRef.current) {
+      hullGroupRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          (child.material as THREE.Material).dispose();
+        }
+      });
+      scene.remove(hullGroupRef.current);
+      hullGroupRef.current = null;
+    }
+
+    if (!showHulls || points.length === 0) return;
+
+    const group = new THREE.Group();
+
+    // Group points by key
+    const groups = new Map<string, EmbeddingPoint[]>();
+    points.forEach(p => {
+      let key: string;
+      if (hullGrouping === 'cluster') {
+        key = p.clusterId != null ? String(p.clusterId) : '__noise__';
+      } else {
+        key = p.ontology;
+      }
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    });
+
+    groups.forEach((groupPoints, key) => {
+      // Skip noise points and groups too small for a 3D hull
+      if (key === '__noise__' || groupPoints.length < 4) return;
+
+      const vectors = groupPoints.map(p => new THREE.Vector3(p.x, p.y, p.z));
+
+      try {
+        const geometry = new ConvexGeometry(vectors);
+        const hullColor = new THREE.Color(groupPoints[0].color);
+
+        // Filled hull — very low opacity
+        const fillMaterial = new THREE.MeshBasicMaterial({
+          color: hullColor,
+          transparent: true,
+          opacity: 0.06,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        });
+        group.add(new THREE.Mesh(geometry, fillMaterial));
+
+        // Wireframe overlay
+        const wireMaterial = new THREE.MeshBasicMaterial({
+          color: hullColor,
+          transparent: true,
+          opacity: 0.12,
+          wireframe: true,
+          depthWrite: false,
+        });
+        group.add(new THREE.Mesh(geometry, wireMaterial));
+      } catch {
+        // ConvexGeometry can fail if points are coplanar
+      }
+    });
+
+    scene.add(group);
+    hullGroupRef.current = group;
+  }, [points, showHulls, hullGrouping]);
 
   // Handle mouse move for hover detection
   const handleMouseMove = useCallback((event: React.MouseEvent) => {

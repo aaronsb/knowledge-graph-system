@@ -90,6 +90,7 @@ def run_projection_worker(
         include_grounding = job_data.get("include_grounding", True)
         refresh_grounding = job_data.get("refresh_grounding", False)
         include_diversity = job_data.get("include_diversity", False)
+        include_degree = job_data.get("include_degree", True)
         embedding_source = job_data.get("embedding_source", "concepts")
 
         logger.info(
@@ -128,6 +129,7 @@ def run_projection_worker(
             include_grounding=include_grounding,
             refresh_grounding=refresh_grounding,
             include_diversity=include_diversity,
+            include_degree=include_degree,
             embedding_source=embedding_source
         )
 

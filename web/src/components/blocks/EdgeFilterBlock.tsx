@@ -74,7 +74,7 @@ export const EdgeFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
               }}
               className="w-3 h-3 text-blue-500 dark:text-blue-400 rounded"
             />
-            <span className="text-[10px] text-muted-foreground dark:text-gray-500">Regex</span>
+            <span className="text-[0.625rem] text-muted-foreground dark:text-gray-500">Regex</span>
           </label>
         </div>
 
@@ -102,7 +102,7 @@ export const EdgeFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
 
         {/* Regex error message */}
         {regexError && (
-          <div className="text-[10px] text-red-500 dark:text-red-400">
+          <div className="text-[0.625rem] text-red-500 dark:text-red-400">
             {regexError}
           </div>
         )}

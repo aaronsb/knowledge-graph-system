@@ -517,7 +517,7 @@ export const DocumentExplorer: React.FC<
         {rings.map((ring) => (
           <div
             key={ring.color}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[10px] font-medium"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[0.625rem] font-medium"
             style={{ backgroundColor: `${ring.color}25`, color: ring.color }}
           >
             <span className="truncate">{queryColorLabels.get(ring.color) || '?'}</span>

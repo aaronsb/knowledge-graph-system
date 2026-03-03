@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { Loader2, RefreshCw, Layers, Eye, EyeOff, SlidersHorizontal, FolderOpen } from 'lucide-react';
-import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp, ClusterPalette } from './types';
+import type { ProjectionData, EmbeddingPoint, ColorScheme, ProjectionItemType, DistanceMetric, GroundingScale, GroundingColorRamp, ClusterPalette, SizeMetric } from './types';
 import type { ClusterSortKey } from './ClusterLegend';
 import { EmbeddingScatter3D } from './EmbeddingScatter3D';
 import { ClusterLegend, NOISE_COLOR, clusterColor } from './ClusterLegend';
@@ -285,6 +285,13 @@ export function EmbeddingLandscapeWorkspace() {
   // Color ramp for grounding visualization
   const [groundingRamp, setGroundingRamp] = useState<GroundingColorRamp>('pink-gray-cyan');
 
+  // Point size metric
+  const [sizeMetric, setSizeMetric] = useState<SizeMetric>('uniform');
+
+  // Convex hull visualization
+  const [showHulls, setShowHulls] = useState(false);
+  const [hullGrouping, setHullGrouping] = useState<'cluster' | 'ontology'>('cluster');
+
   // Load global projection on mount
   useEffect(() => {
     loadGlobalProjection();
@@ -349,6 +356,8 @@ export function EmbeddingLandscapeWorkspace() {
         perplexity,
         metric,
         refresh_grounding: refreshGrounding,
+        include_diversity: true,
+        include_degree: true,
         embedding_source: 'concepts',
       });
 
@@ -394,6 +403,8 @@ export function EmbeddingLandscapeWorkspace() {
       z: number;
       ontology: string;
       grounding: number | null;
+      diversity: number | null;
+      degree: number | null;
       ontologyColor: string;
       itemType: ProjectionItemType;
       clusterId: number | null;
@@ -413,6 +424,8 @@ export function EmbeddingLandscapeWorkspace() {
         z: concept.z,
         ontology,
         grounding: concept.grounding_strength,
+        diversity: concept.diversity_score ?? null,
+        degree: concept.degree ?? null,
         ontologyColor: ontologyColors.get(ontology) || '#888888',
         itemType: (concept.item_type as ProjectionItemType) || 'concept',
         clusterId: concept.cluster_id ?? null,
@@ -468,6 +481,8 @@ export function EmbeddingLandscapeWorkspace() {
         z: p.z,
         ontology: p.ontology,
         grounding: p.grounding,
+        diversity: p.diversity,
+        degree: p.degree,
         color,
         itemType: p.itemType,
         clusterId: p.clusterId,
@@ -820,6 +835,9 @@ export function EmbeddingLandscapeWorkspace() {
             }}
             onContextMenu={handleContextMenu}
             selectedPoint={selectedConcept}
+            sizeMetric={sizeMetric}
+            showHulls={showHulls}
+            hullGrouping={hullGrouping}
           />
         )}
 
@@ -852,7 +870,7 @@ export function EmbeddingLandscapeWorkspace() {
                     <button
                       key={scale}
                       onClick={() => setGroundingScale(scale)}
-                      className={`flex-1 py-1 text-[10px] transition-colors ${
+                      className={`flex-1 py-1 text-[0.625rem] transition-colors ${
                         groundingScale === scale
                           ? 'bg-primary/30 text-primary'
                           : 'bg-accent/30 text-muted-foreground hover:bg-accent/50'
@@ -873,13 +891,13 @@ export function EmbeddingLandscapeWorkspace() {
                   title="Click to change colors"
                 />
                 {/* Labels */}
-                <div className="flex justify-between text-[10px] text-muted-foreground" style={{ width: '140px' }}>
+                <div className="flex justify-between text-[0.625rem] text-muted-foreground" style={{ width: '140px' }}>
                   <span>-1</span>
                   <span>0</span>
                   <span>+1</span>
                 </div>
                 {/* Current ramp name */}
-                <div className="text-[10px] text-muted-foreground/50 text-center" style={{ width: '140px' }}>
+                <div className="text-[0.625rem] text-muted-foreground/50 text-center" style={{ width: '140px' }}>
                   {GROUNDING_COLOR_RAMPS[groundingRamp].label}
                 </div>
               </div>
@@ -894,7 +912,7 @@ export function EmbeddingLandscapeWorkspace() {
                       background: 'conic-gradient(from 180deg, hsl(0, 90%, 60%), hsl(60, 90%, 60%), hsl(120, 90%, 60%), hsl(180, 90%, 60%), hsl(240, 90%, 60%), hsl(300, 90%, 60%), hsl(360, 90%, 60%))',
                     }}
                   />
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-[0.625rem] text-muted-foreground">
                     <div>XZ position</div>
                     <div className="text-muted-foreground/60">= hue angle</div>
                   </div>
@@ -907,7 +925,7 @@ export function EmbeddingLandscapeWorkspace() {
                       background: 'linear-gradient(to right, hsl(200, 90%, 50%), hsl(200, 90%, 70%))',
                     }}
                   />
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-[0.625rem] text-muted-foreground">
                     <div>Y height</div>
                     <div className="text-muted-foreground/60">= brightness</div>
                   </div>
@@ -931,6 +949,59 @@ export function EmbeddingLandscapeWorkspace() {
             <div className="text-muted-foreground/60 mt-2 pt-2 border-t border-border">
               {stats.totalConcepts} points
             </div>
+
+            {/* Point size metric */}
+            <div className="mt-2 pt-2 border-t border-border">
+              <label className="text-muted-foreground block mb-1">Point Size</label>
+              <select
+                value={sizeMetric}
+                onChange={(e) => setSizeMetric(e.target.value as SizeMetric)}
+                className="w-full bg-card border border-border rounded px-2 py-1 text-foreground text-xs"
+                style={{ colorScheme: 'dark' }}
+              >
+                <option value="uniform">Uniform</option>
+                <option value="grounding">Grounding</option>
+                <option value="diversity">Diversity</option>
+                <option value="degree">Degree (edges)</option>
+              </select>
+            </div>
+
+            {/* Convex hulls */}
+            <div className="mt-2 pt-2 border-t border-border">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showHulls}
+                  onChange={(e) => setShowHulls(e.target.checked)}
+                  className="rounded border-border accent-primary"
+                />
+                <span className="text-muted-foreground">Show hulls</span>
+              </label>
+              {showHulls && (
+                <div className="flex gap-1 mt-1.5">
+                  <button
+                    onClick={() => setHullGrouping('cluster')}
+                    className={`flex-1 px-2 py-1 rounded transition-colors ${
+                      hullGrouping === 'cluster'
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-accent/30 text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    Clusters
+                  </button>
+                  <button
+                    onClick={() => setHullGrouping('ontology')}
+                    className={`flex-1 px-2 py-1 rounded transition-colors ${
+                      hullGrouping === 'ontology'
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-accent/30 text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    Ontologies
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -948,7 +1019,7 @@ export function EmbeddingLandscapeWorkspace() {
               <div className="text-xs text-muted-foreground truncate">
                 {contextMenu.point.ontology}
               </div>
-              <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground/70">
+              <div className="flex gap-3 mt-1 text-[0.625rem] text-muted-foreground/70">
                 {contextMenu.point.grounding != null && (
                   <span>grounding: {contextMenu.point.grounding.toFixed(2)}</span>
                 )}
