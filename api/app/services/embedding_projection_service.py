@@ -597,38 +597,30 @@ class EmbeddingProjectionService:
             return concepts
 
         try:
-            conn = self.client.pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    self.client._set_age_path(cur)
-                    # Bulk degree lookup for all concepts in one query
-                    query = """
-                    SELECT * FROM cypher('%s', $$
-                        MATCH (c:Concept)
-                        WHERE c.concept_id IN %s
-                        OPTIONAL MATCH (c)-[r_out]->(:Concept)
-                        OPTIONAL MATCH (:Concept)-[r_in]->(c)
-                        RETURN c.concept_id as concept_id,
-                               count(DISTINCT r_out) + count(DISTINCT r_in) as degree
-                    $$) AS (concept_id agtype, degree agtype)
-                    """ % (self.client.graph_name, str(concept_ids))
+            # Use _execute_cypher which handles AGE setup, query wrapping, and result parsing
+            results = self.client._execute_cypher(
+                """
+                MATCH (c:Concept)
+                WHERE c.concept_id IN $concept_ids
+                OPTIONAL MATCH (c)-[r_out]->(:Concept)
+                OPTIONAL MATCH (:Concept)-[r_in]->(c)
+                RETURN c.concept_id as concept_id,
+                       count(DISTINCT r_out) + count(DISTINCT r_in) as degree
+                """,
+                params={"concept_ids": concept_ids}
+            )
 
-                    cur.execute(query)
-                    rows = cur.fetchall()
+            degree_map = {}
+            for row in results:
+                cid = row.get("concept_id")
+                deg = row.get("degree", 0)
+                if cid:
+                    degree_map[str(cid)] = int(deg) if deg is not None else 0
 
-                    degree_map = {}
-                    for row in rows:
-                        cid = str(row[0]).strip('"')
-                        deg = int(str(row[1]))
-                        degree_map[cid] = deg
+            for concept in concepts:
+                concept["degree"] = degree_map.get(concept["concept_id"], 0)
 
-                    for concept in concepts:
-                        concept["degree"] = degree_map.get(concept["concept_id"], 0)
-
-                    logger.info(f"Added degree counts for {len(degree_map)}/{len(concept_ids)} concepts")
-
-            finally:
-                self.client.pool.putconn(conn)
+            logger.info(f"Added degree counts for {len(degree_map)}/{len(concept_ids)} concepts")
 
         except Exception as e:
             logger.error(f"Error adding degree counts: {e}", exc_info=True)

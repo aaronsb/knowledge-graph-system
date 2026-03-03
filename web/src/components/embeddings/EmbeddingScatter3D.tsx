@@ -161,6 +161,8 @@ export function EmbeddingScatter3D({
 
   // Map from point index to EmbeddingPoint data
   const pointDataRef = useRef<EmbeddingPoint[]>([]);
+  // Track previous points identity to know when data (not just sizeMetric) changed
+  const prevPointsRef = useRef<EmbeddingPoint[]>([]);
 
   // Tooltip state
   const [tooltip, setTooltip] = useState<{
@@ -255,6 +257,22 @@ export function EmbeddingScatter3D({
     const scene = sceneRef.current;
     if (!scene) return;
 
+    const dataChanged = points !== prevPointsRef.current;
+
+    // If only sizeMetric changed, just update the size buffer in-place
+    if (!dataChanged && pointsRef.current && points.length > 0) {
+      const geometry = pointsRef.current.geometry;
+      const sizeAttr = geometry.getAttribute('size') as THREE.BufferAttribute;
+      const maxDegree = points.reduce((max, p) => Math.max(max, p.degree ?? 0), 0);
+      for (let i = 0; i < points.length; i++) {
+        sizeAttr.array[i] = computePointSize(points[i], sizeMetric, maxDegree);
+      }
+      sizeAttr.needsUpdate = true;
+      return;
+    }
+
+    prevPointsRef.current = points;
+
     // Remove old points
     if (pointsRef.current) {
       scene.remove(pointsRef.current);
@@ -301,10 +319,8 @@ export function EmbeddingScatter3D({
     geometry.setAttribute('shape', new THREE.BufferAttribute(shapes, 1));
 
     // Dynamic alpha based on point count
-    // Higher base opacity for better color pop on dark backgrounds
-    // Only reduce opacity for very large point clouds (>5000 points)
     const dynamicAlpha = Math.min(1 / Math.sqrt(points.length), 0.95);
-    const effectiveAlpha = Math.max(0.75, dynamicAlpha); // Higher minimum for color vibrancy
+    const effectiveAlpha = Math.max(0.75, dynamicAlpha);
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -323,7 +339,7 @@ export function EmbeddingScatter3D({
     scene.add(pointCloud);
     pointsRef.current = pointCloud;
 
-    // Auto-fit camera to data
+    // Auto-fit camera to data (only when data changes, not sizeMetric)
     if (cameraRef.current && controlsRef.current) {
       const bbox = new THREE.Box3().setFromBufferAttribute(
         geometry.getAttribute('position') as THREE.BufferAttribute
