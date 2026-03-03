@@ -119,13 +119,14 @@ function computePointSize(
 ): number {
   switch (sizeMetric) {
     case 'grounding':
-      return point.grounding !== null ? 3 + Math.abs(point.grounding) * 3 : 5;
+      return point.grounding !== null ? 2 + Math.abs(point.grounding) * 12 : 3;
     case 'diversity':
-      return point.diversity !== null ? 3 + point.diversity * 4 : 5;
+      return point.diversity !== null ? 2 + point.diversity * 14 : 3;
     case 'degree': {
-      if (point.degree == null || maxDegree === 0) return 5;
-      const normalized = point.degree / maxDegree;
-      return 3 + normalized * 5;
+      if (point.degree == null || maxDegree === 0) return 3;
+      // sqrt scale so mid-range values are visible, not just the max
+      const normalized = Math.sqrt(point.degree / maxDegree);
+      return 2 + normalized * 14;
     }
     case 'uniform':
     default:
