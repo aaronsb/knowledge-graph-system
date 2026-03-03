@@ -16,7 +16,7 @@ export const AndBlock: React.FC<NodeProps<BlockData>> = ({ id }) => {
       <div className="flex flex-col items-center justify-center gap-1">
         <div className="flex items-center gap-2">
           <span className="font-bold text-base text-amber-700 dark:text-amber-300">AND</span>
-          <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded text-[10px] font-medium">
+          <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded text-[0.625rem] font-medium">
             LOGIC
           </span>
         </div>

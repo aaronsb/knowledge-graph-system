@@ -399,7 +399,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             {Array.from(hitCountsByColor.entries()).map(([color, count]) => (
               <button
                 key={color}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[10px] font-medium cursor-pointer hover:brightness-110 transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[0.625rem] font-medium cursor-pointer hover:brightness-110 transition-all"
                 style={{ backgroundColor: `${color}25`, color }}
                 onClick={(e) => handleScrollToHighlight(color, e)}
                 title={`Click to cycle through "${queryLabels.get(color) || '?'}" highlights`}

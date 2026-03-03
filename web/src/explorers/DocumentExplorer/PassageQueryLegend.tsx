@@ -24,7 +24,7 @@ export const PassageQueryLegend: React.FC<PassageQueryLegendProps> = ({
 
   return (
     <div className="border-b border-border">
-      <div className="px-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="px-3 py-1.5 text-[0.625rem] font-medium text-muted-foreground uppercase tracking-wider">
         Queries
       </div>
       <div className="px-2 pb-2 space-y-0.5">
@@ -42,7 +42,7 @@ export const PassageQueryLegend: React.FC<PassageQueryLegendProps> = ({
             <span className="flex-1 truncate" title={q.text}>
               {q.text}
             </span>
-            <span className="text-[10px] text-muted-foreground shrink-0">
+            <span className="text-[0.625rem] text-muted-foreground shrink-0">
               {q.results.length}
             </span>
             <button

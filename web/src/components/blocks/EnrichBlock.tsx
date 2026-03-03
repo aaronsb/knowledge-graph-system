@@ -59,7 +59,7 @@ export const EnrichBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           />
           <div className="flex-1">
             <span className="text-sm text-card-foreground dark:text-gray-100">Ontology</span>
-            <p className="text-[10px] text-muted-foreground dark:text-gray-500">Color-code by source document</p>
+            <p className="text-[0.625rem] text-muted-foreground dark:text-gray-500">Color-code by source document</p>
           </div>
         </label>
 
@@ -72,7 +72,7 @@ export const EnrichBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           />
           <div className="flex-1">
             <span className="text-sm text-card-foreground dark:text-gray-100">Grounding</span>
-            <p className="text-[10px] text-muted-foreground dark:text-gray-500">Confidence/reliability score</p>
+            <p className="text-[0.625rem] text-muted-foreground dark:text-gray-500">Confidence/reliability score</p>
           </div>
         </label>
 
@@ -85,7 +85,7 @@ export const EnrichBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           />
           <div className="flex-1">
             <span className="text-sm text-card-foreground dark:text-gray-100">Search Terms</span>
-            <p className="text-[10px] text-muted-foreground dark:text-gray-500">Alternative labels/aliases</p>
+            <p className="text-[0.625rem] text-muted-foreground dark:text-gray-500">Alternative labels/aliases</p>
           </div>
         </label>
       </div>

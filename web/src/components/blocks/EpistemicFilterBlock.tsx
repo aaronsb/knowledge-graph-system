@@ -54,7 +54,7 @@ export const EpistemicFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =
       <div className="flex items-center gap-2 mb-3">
         <Snowflake className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Epistemic Filter</span>
-        <span className="ml-auto px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded text-[10px] font-medium">
+        <span className="ml-auto px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded text-[0.625rem] font-medium">
           SMART
         </span>
       </div>
@@ -76,7 +76,7 @@ export const EpistemicFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =
         >
           Include Only
           {includeStatuses.length > 0 && (
-            <span className="ml-1 px-1 bg-white/20 rounded text-[10px]">{includeStatuses.length}</span>
+            <span className="ml-1 px-1 bg-white/20 rounded text-[0.625rem]">{includeStatuses.length}</span>
           )}
         </button>
         <button
@@ -89,7 +89,7 @@ export const EpistemicFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =
         >
           Exclude
           {excludeStatuses.length > 0 && (
-            <span className="ml-1 px-1 bg-white/20 rounded text-[10px]">{excludeStatuses.length}</span>
+            <span className="ml-1 px-1 bg-white/20 rounded text-[0.625rem]">{excludeStatuses.length}</span>
           )}
         </button>
       </div>
@@ -121,7 +121,7 @@ export const EpistemicFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =
                 <span className="text-xs font-medium text-card-foreground dark:text-gray-200 block">
                   {status.label}
                 </span>
-                <span className="text-[10px] text-muted-foreground dark:text-gray-500 block truncate">
+                <span className="text-[0.625rem] text-muted-foreground dark:text-gray-500 block truncate">
                   {status.description}
                 </span>
               </div>
@@ -132,7 +132,7 @@ export const EpistemicFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) =
 
       {/* Active filters summary */}
       {activeCount > 0 && (
-        <div className="mt-2 pt-2 border-t border-border dark:border-gray-700 text-[10px] text-muted-foreground dark:text-gray-500">
+        <div className="mt-2 pt-2 border-t border-border dark:border-gray-700 text-[0.625rem] text-muted-foreground dark:text-gray-500">
           {includeStatuses.length > 0 && (
             <div>Include: {includeStatuses.join(', ')}</div>
           )}

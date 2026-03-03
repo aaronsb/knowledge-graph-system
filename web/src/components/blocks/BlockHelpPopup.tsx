@@ -71,7 +71,7 @@ export const BlockHelpPopup: React.FC<BlockHelpPopupProps> = ({ blockType, posit
       <div className="px-4 py-3 border-b border-border dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-card-foreground dark:text-gray-100">{content.title}</span>
-          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${tagStyle.bg} ${tagStyle.text}`}>
+          <span className={`px-1.5 py-0.5 rounded text-[0.625rem] font-medium ${tagStyle.bg} ${tagStyle.text}`}>
             {content.tag}
           </span>
         </div>

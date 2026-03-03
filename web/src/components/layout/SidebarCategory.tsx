@@ -88,7 +88,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{label}</span>
           {badge && (
-            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded">
+            <span className="px-1.5 py-0.5 text-[0.625rem] font-medium bg-muted text-muted-foreground rounded">
               {badge}
             </span>
           )}

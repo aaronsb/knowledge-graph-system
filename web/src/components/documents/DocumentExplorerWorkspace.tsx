@@ -405,7 +405,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
                 {result.concepts.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {result.concepts.slice(0, 3).map(c => (
-                      <span key={c.conceptId} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      <span key={c.conceptId} className="text-[0.625rem] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
                         {c.label}
                       </span>
                     ))}

@@ -1162,7 +1162,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
                               {diagram.description}
                             </div>
                           )}
-                          <div className="text-[10px] text-muted-foreground dark:text-gray-500 mt-1">
+                          <div className="text-[0.625rem] text-muted-foreground dark:text-gray-500 mt-1">
                             {diagram.nodeCount} blocks, {diagram.edgeCount} connections
                           </div>
                         </div>

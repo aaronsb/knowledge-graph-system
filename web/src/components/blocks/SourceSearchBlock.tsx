@@ -48,7 +48,7 @@ export const SourceSearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       <div className="flex items-center gap-2 mb-3">
         <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Source Search</span>
-        <span className="ml-auto px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded text-[10px] font-medium">
+        <span className="ml-auto px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded text-[0.625rem] font-medium">
           SMART
         </span>
       </div>

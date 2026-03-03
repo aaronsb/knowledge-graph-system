@@ -62,7 +62,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
       <div className="flex items-center gap-2 mb-3">
         <Network className="w-4 h-4 text-purple-600 dark:text-purple-400" />
         <span className="font-medium text-sm text-card-foreground dark:text-gray-100">Expand Neighborhood</span>
-        <span className="ml-auto px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-[10px] font-medium">
+        <span className="ml-auto px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-[0.625rem] font-medium">
           CYPHER
         </span>
       </div>
@@ -128,7 +128,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
         >
           {showFilters ? '▼' : '▶'} Epistemic Filters
           {(includeStatuses.length > 0 || excludeStatuses.length > 0) && (
-            <span className="ml-1 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-[10px]">
+            <span className="ml-1 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-[0.625rem]">
               {includeStatuses.length + excludeStatuses.length}
             </span>
           )}
@@ -138,7 +138,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
           <div className="pl-2 space-y-2">
             {/* Include Filters */}
             <div>
-              <label className="text-[10px] text-muted-foreground dark:text-gray-500 uppercase tracking-wide">Include Only</label>
+              <label className="text-[0.625rem] text-muted-foreground dark:text-gray-500 uppercase tracking-wide">Include Only</label>
               <div className="space-y-1 mt-1">
                 {EPISTEMIC_STATUSES.map(status => (
                   <label key={`include-${status}`} className="flex items-center gap-1.5 cursor-pointer">
@@ -148,7 +148,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
                       onChange={() => toggleIncludeStatus(status)}
                       className="w-3 h-3 text-purple-600 dark:text-purple-400 rounded focus:ring-purple-500 dark:focus:ring-purple-400"
                     />
-                    <span className="text-[11px] text-card-foreground dark:text-gray-300">{status}</span>
+                    <span className="text-[0.6875rem] text-card-foreground dark:text-gray-300">{status}</span>
                   </label>
                 ))}
               </div>
@@ -156,7 +156,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
 
             {/* Exclude Filters */}
             <div>
-              <label className="text-[10px] text-muted-foreground dark:text-gray-500 uppercase tracking-wide">Exclude</label>
+              <label className="text-[0.625rem] text-muted-foreground dark:text-gray-500 uppercase tracking-wide">Exclude</label>
               <div className="space-y-1 mt-1">
                 {EPISTEMIC_STATUSES.map(status => (
                   <label key={`exclude-${status}`} className="flex items-center gap-1.5 cursor-pointer">
@@ -166,7 +166,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
                       onChange={() => toggleExcludeStatus(status)}
                       className="w-3 h-3 text-red-600 dark:text-red-400 rounded focus:ring-red-500 dark:focus:ring-red-400"
                     />
-                    <span className="text-[11px] text-card-foreground dark:text-gray-300">{status}</span>
+                    <span className="text-[0.6875rem] text-card-foreground dark:text-gray-300">{status}</span>
                   </label>
                 ))}
               </div>
