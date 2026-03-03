@@ -40,6 +40,7 @@ class ProjectionConceptResponse(BaseModel):
     ontology: Optional[str] = None  # Source ontology (for cross-ontology mode)
     item_type: Optional[str] = None  # Item type (for combined mode)
     cluster_id: Optional[int] = None  # DBSCAN cluster assignment (None = noise)
+    degree: Optional[int] = None  # Total edge count (in + out)
 
 
 class ProjectionParametersResponse(BaseModel):
@@ -141,6 +142,10 @@ class RegenerateRequest(BaseModel):
     include_diversity: bool = Field(
         default=False,
         description="Include diversity scores (slower)"
+    )
+    include_degree: bool = Field(
+        default=True,
+        description="Include concept degree (edge count)"
     )
     embedding_source: Literal["concepts", "sources", "vocabulary", "combined"] = Field(
         default="concepts",
@@ -287,6 +292,7 @@ async def regenerate_projection(
             include_grounding=body.include_grounding,
             refresh_grounding=body.refresh_grounding,
             include_diversity=body.include_diversity,
+            include_degree=body.include_degree,
             embedding_source=body.embedding_source
         )
 
@@ -316,6 +322,7 @@ async def regenerate_projection(
                     "center": body.center,
                     "include_grounding": body.include_grounding,
                     "include_diversity": body.include_diversity,
+                    "include_degree": body.include_degree,
                     "embedding_source": body.embedding_source
                 },
                 payload=dataset,
@@ -348,6 +355,7 @@ async def regenerate_projection(
             "include_grounding": body.include_grounding,
             "refresh_grounding": body.refresh_grounding,
             "include_diversity": body.include_diversity,
+            "include_degree": body.include_degree,
             "embedding_source": body.embedding_source,
             "create_artifact": body.create_artifact,
             "description": f"Regenerate {body.embedding_source} projection for '{ontology}'",

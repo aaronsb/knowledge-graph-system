@@ -590,6 +590,53 @@ class EmbeddingProjectionService:
 
         return concepts
 
+    def _add_degree_counts(self, concepts: List[Dict], ontology: str) -> List[Dict]:
+        """Add degree (total edge count) to concepts via bulk Cypher query."""
+        concept_ids = [c["concept_id"] for c in concepts if c.get("concept_id")]
+        if not concept_ids:
+            return concepts
+
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    self.client._set_age_path(cur)
+                    # Bulk degree lookup for all concepts in one query
+                    query = """
+                    SELECT * FROM cypher('%s', $$
+                        MATCH (c:Concept)
+                        WHERE c.concept_id IN %s
+                        OPTIONAL MATCH (c)-[r_out]->(:Concept)
+                        OPTIONAL MATCH (:Concept)-[r_in]->(c)
+                        RETURN c.concept_id as concept_id,
+                               count(DISTINCT r_out) + count(DISTINCT r_in) as degree
+                    $$) AS (concept_id agtype, degree agtype)
+                    """ % (self.client.graph_name, str(concept_ids))
+
+                    cur.execute(query)
+                    rows = cur.fetchall()
+
+                    degree_map = {}
+                    for row in rows:
+                        cid = str(row[0]).strip('"')
+                        deg = int(str(row[1]))
+                        degree_map[cid] = deg
+
+                    for concept in concepts:
+                        concept["degree"] = degree_map.get(concept["concept_id"], 0)
+
+                    logger.info(f"Added degree counts for {len(degree_map)}/{len(concept_ids)} concepts")
+
+            finally:
+                self.client.pool.putconn(conn)
+
+        except Exception as e:
+            logger.error(f"Error adding degree counts: {e}", exc_info=True)
+            for concept in concepts:
+                concept["degree"] = None
+
+        return concepts
+
     def compute_projection(
         self,
         embeddings: np.ndarray,
@@ -867,6 +914,7 @@ class EmbeddingProjectionService:
         include_grounding: bool = True,
         refresh_grounding: bool = False,
         include_diversity: bool = False,  # Off by default for performance
+        include_degree: bool = True,  # On by default (cheap bulk query)
         embedding_source: Literal["concepts", "sources", "vocabulary", "combined"] = "concepts"
     ) -> Dict[str, Any]:
         """
@@ -1005,6 +1053,10 @@ class EmbeddingProjectionService:
                     if cid and cid in fresh_groundings:
                         item["grounding_strength"] = fresh_groundings[cid]
 
+        # Add degree counts if requested (bulk Cypher, cheap)
+        if include_degree and embedding_source in ("concepts", "combined"):
+            self._add_degree_counts(items, ontology)
+
         # Build result dataset
         result_items = []
         grounding_values = []
@@ -1043,6 +1095,9 @@ class EmbeddingProjectionService:
                 entry["diversity_related_count"] = item.get("diversity_related_count", 0)
                 if item.get("diversity_score") is not None:
                     diversity_values.append(item["diversity_score"])
+
+            if include_degree:
+                entry["degree"] = item.get("degree")
 
             # Add extra metadata for sources
             if "full_text" in item:
