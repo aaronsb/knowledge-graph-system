@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS kg_api.provider_model_catalog (
     supports_streaming BOOLEAN DEFAULT TRUE,
 
     -- Pricing (USD per 1M tokens, NULL = unknown/free)
-    price_prompt_per_m NUMERIC(12, 6),
-    price_completion_per_m NUMERIC(12, 6),
-    price_cache_read_per_m NUMERIC(12, 6),
+    price_prompt_per_m NUMERIC,
+    price_completion_per_m NUMERIC,
+    price_cache_read_per_m NUMERIC,
 
     -- Curation
     enabled BOOLEAN DEFAULT FALSE,
