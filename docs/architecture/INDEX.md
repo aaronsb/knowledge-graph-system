@@ -46,6 +46,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-061](./database-schema/ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
 | [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Accepted |
 | [ADR-201](./database-schema/ADR-201-in-memory-graph-acceleration-extension.md) | In-Memory Graph Acceleration Extension | Draft |
+| [ADR-202](./database-schema/ADR-202-timestamp-timezone-normalization.md) | Timestamp Timezone Normalization | Proposed |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
@@ -150,6 +151,7 @@ _Providers, extraction, convergence, prompts_
 | [ADR-058](./ai-embeddings/ADR-058-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding Calculation | Accepted |
 | [ADR-068](./ai-embeddings/ADR-068-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Accepted |
 | [ADR-070](./ai-embeddings/ADR-070-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
+| [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Draft |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_
