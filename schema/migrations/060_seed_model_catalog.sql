@@ -66,3 +66,9 @@ VALUES
     ('ollama', 'llava:13b', 'LLaVA 13B', 'vision', 4096, TRUE, FALSE, 0, 0, FALSE, 2),
     ('ollama', 'bakllava:7b', 'BakLLaVA 7B', 'vision', 4096, TRUE, FALSE, 0, 0, FALSE, 3)
 ON CONFLICT (provider, model_id, category) DO NOTHING;
+
+-- ===========================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (60, 'seed_model_catalog')
+ON CONFLICT (version) DO NOTHING;

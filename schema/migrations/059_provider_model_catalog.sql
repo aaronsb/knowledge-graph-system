@@ -45,3 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_catalog_provider
 ON kg_api.provider_model_catalog(provider, enabled);
 
 COMMENT ON TABLE kg_api.provider_model_catalog IS 'Cached model catalog per AI provider with curation and pricing (ADR-800)';
+
+-- ===========================================================================
+
+INSERT INTO public.schema_migrations (version, name)
+VALUES (59, 'provider_model_catalog')
+ON CONFLICT (version) DO NOTHING;
