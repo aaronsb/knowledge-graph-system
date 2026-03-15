@@ -43,7 +43,7 @@ if [ -f "/.dockerenv" ] || grep -q docker /proc/1/cgroup 2>/dev/null; then
         PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" "$@"
     }
     run_psql_file() {
-        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -f "$1"
+        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$1"
     }
 else
     INSIDE_CONTAINER=false
@@ -52,7 +52,7 @@ else
         docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" "$@"
     }
     run_psql_file() {
-        docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" < "$1"
+        docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 < "$1"
     }
 fi
 

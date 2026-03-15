@@ -8,6 +8,9 @@
 -- Fix: explicitly create all known vertex and edge labels at schema init time.
 -- Uses DO blocks to check ag_catalog.ag_label before creating (AGE has no
 -- CREATE VLABEL IF NOT EXISTS syntax).
+--
+-- Note: Uses EXCEPTION handlers so label creation failures (e.g., AGE not fully
+-- initialized on cold start) are logged as warnings rather than aborting the migration.
 
 LOAD 'age';
 SET search_path = ag_catalog, "$user", public;
@@ -27,11 +30,15 @@ BEGIN
             JOIN ag_catalog.ag_graph g ON l.graph = g.graphid
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'v'
         ) THEN
-            EXECUTE format(
-                'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE VLABEL %I $$) as (a agtype)',
-                lbl
-            );
-            RAISE NOTICE 'Created vertex label: %', lbl;
+            BEGIN
+                EXECUTE format(
+                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE VLABEL %I $$) as (a agtype)',
+                    lbl
+                );
+                RAISE NOTICE 'Created vertex label: %', lbl;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
+            END;
         END IF;
     END LOOP;
 END $$;
@@ -55,11 +62,15 @@ BEGIN
             JOIN ag_catalog.ag_graph g ON l.graph = g.graphid
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'e'
         ) THEN
-            EXECUTE format(
-                'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
-                lbl
-            );
-            RAISE NOTICE 'Created edge label: %', lbl;
+            BEGIN
+                EXECUTE format(
+                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
+                    lbl
+                );
+                RAISE NOTICE 'Created edge label: %', lbl;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+            END;
         END IF;
     END LOOP;
 END $$;
@@ -98,11 +109,15 @@ BEGIN
             JOIN ag_catalog.ag_graph g ON l.graph = g.graphid
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'e'
         ) THEN
-            EXECUTE format(
-                'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
-                lbl
-            );
-            RAISE NOTICE 'Created edge label: %', lbl;
+            BEGIN
+                EXECUTE format(
+                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
+                    lbl
+                );
+                RAISE NOTICE 'Created edge label: %', lbl;
+            EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+            END;
         END IF;
     END LOOP;
 END $$;
