@@ -973,6 +973,7 @@ class OpenRouterProvider(AIProvider):
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
         embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
     ):
         """
         Initialize OpenRouter provider.
@@ -982,6 +983,7 @@ class OpenRouterProvider(AIProvider):
             extraction_model: Model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-sonnet-4')
             embedding_provider: Separate provider for embeddings (required — OpenRouter
                                doesn't serve embeddings)
+            max_tokens: Max completion tokens for extraction (default: 16384)
         """
         from openai import OpenAI
 
@@ -1012,6 +1014,7 @@ class OpenRouterProvider(AIProvider):
         self.extraction_model = extraction_model or os.getenv(
             "OPENROUTER_EXTRACTION_MODEL", "openai/gpt-4o"
         )
+        self.max_tokens = max_tokens or 16384
         self.embedding_provider = embedding_provider
 
     def extract_concepts(
@@ -1028,7 +1031,7 @@ class OpenRouterProvider(AIProvider):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"},
                 ],
-                max_tokens=16384,
+                max_tokens=self.max_tokens,
                 temperature=0.3,
                 response_format={"type": "json_object"},
             )
@@ -1836,11 +1839,14 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
 
     # Determine provider and model based on DEVELOPMENT_MODE
     extraction_model = None
+    max_tokens = None
 
     if is_development_mode():
         # Development mode: Use environment variables
         provider_name = provider_name or os.getenv("AI_PROVIDER", "openai").lower()
-        # extraction_model will be set by provider constructor from env vars
+        max_tokens_env = os.getenv("MAX_EXTRACTION_TOKENS")
+        if max_tokens_env:
+            max_tokens = int(max_tokens_env)
         logger.debug(f"[DEV MODE] Using .env configuration: provider={provider_name}")
     else:
         # Production mode: Load from database
@@ -1859,7 +1865,8 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
 
         provider_name = provider_name or config['provider']
         extraction_model = config['model_name']
-        logger.debug(f"[PROD MODE] Using database configuration: provider={provider_name}, model={extraction_model}")
+        max_tokens = config.get('max_tokens')
+        logger.debug(f"[PROD MODE] Using database configuration: provider={provider_name}, model={extraction_model}, max_tokens={max_tokens}")
 
     # Check for separate embedding provider configuration
     embedding_provider = get_embedding_provider()
@@ -1902,6 +1909,7 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
         return OpenRouterProvider(
             extraction_model=extraction_model,
             embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
         )
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider

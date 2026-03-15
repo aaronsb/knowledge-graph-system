@@ -114,6 +114,7 @@ class OperatorConfig:
         """Configure AI extraction provider"""
         provider = args.provider
         model = args.model
+        max_tokens = getattr(args, 'max_tokens', None)
 
         if not provider:
             print("❌ Provider required (openai, anthropic, ollama, or openrouter)")
@@ -161,14 +162,15 @@ class OperatorConfig:
                 # Insert/update configuration
                 cur.execute(
                     """INSERT INTO kg_api.ai_extraction_config
-                       (provider, model_name, supports_vision, supports_json_mode, active)
-                       VALUES (%s, %s, true, true, true)
+                       (provider, model_name, supports_vision, supports_json_mode, max_tokens, active)
+                       VALUES (%s, %s, true, true, %s, true)
                        ON CONFLICT (active) WHERE active = true
                        DO UPDATE SET
                          provider = EXCLUDED.provider,
                          model_name = EXCLUDED.model_name,
+                         max_tokens = COALESCE(EXCLUDED.max_tokens, kg_api.ai_extraction_config.max_tokens),
                          updated_at = NOW()""",
-                    (provider, model)
+                    (provider, model, max_tokens)
                 )
                 conn.commit()
                 print(f"✅ Configured AI extraction: {provider} / {model}")
@@ -653,6 +655,7 @@ def main():
     ai_parser = subparsers.add_parser('ai-provider', help='Configure AI extraction provider')
     ai_parser.add_argument('provider', nargs='?', help='Provider: openai, anthropic, ollama, openrouter')
     ai_parser.add_argument('--model', help='Model name (optional, uses default)')
+    ai_parser.add_argument('--max-tokens', type=int, help='Max completion tokens for extraction (default: 16384)')
 
     # embedding
     embed_parser = subparsers.add_parser('embedding', help='List or activate embedding profile')

@@ -547,12 +547,18 @@ else
             echo ""
             echo -e "${GREEN}→${NC} Selected: ${BOLD}${CHOSEN_NAME}${NC} (${CHOSEN_MODEL_ID})"
 
+            # Prompt for max completion tokens with sensible default
+            echo ""
+            read -p "Max completion tokens [16384]: " -r MAX_TOKENS_INPUT
+            MAX_TOKENS="${MAX_TOKENS_INPUT:-16384}"
+            echo -e "${GREEN}→${NC} Max tokens: ${MAX_TOKENS}"
+
             # Enable and set as default in catalog
             docker exec kg-operator python /workspace/operator/configure.py models enable "$CHOSEN_CATALOG_ID" 2>/dev/null
             docker exec kg-operator python /workspace/operator/configure.py models default "$CHOSEN_CATALOG_ID" 2>/dev/null
 
-            # Update active extraction config with chosen model
-            docker exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$CHOSEN_MODEL_ID"
+            # Update active extraction config with chosen model and max tokens
+            docker exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$CHOSEN_MODEL_ID" --max-tokens "$MAX_TOKENS"
             SELECTING=false
         else
             echo -e "${YELLOW}→${NC} Invalid choice, please try again."
