@@ -71,12 +71,12 @@ echo ""
 echo -e "${YELLOW}Development defaults (for quick evaluation):${NC}"
 echo -e "  • Admin password: ${RED}Password1!${NC}"
 echo -e "  • Database password: ${RED}password${NC}"
-echo "  • AI extraction: OpenAI GPT-4o"
+echo "  • AI extraction: Choose from OpenAI, Anthropic, or OpenRouter"
 echo "  • Embeddings: Local (nomic-ai/nomic-embed-text-v1.5)"
 echo ""
 echo -e "${YELLOW}Prerequisites:${NC}"
 echo "  • Docker with permissions (docker ps should work)"
-echo "  • OpenAI API key (will prompt during setup)"
+echo "  • API key for your AI provider (will prompt during setup)"
 echo "  • Node.js + npm (for kg CLI installation)"
 echo ""
 echo -e "${YELLOW}Supported Platforms:${NC}"
@@ -200,7 +200,7 @@ echo ""
 echo -e "${YELLOW}ℹ️  What this affects:${NC}"
 echo "  • WHERE local embeddings are computed (MPS/CUDA/ROCm/CPU)"
 echo "  • Does NOT affect WHICH models are used (local vs API)"
-echo "  • AI extraction always uses remote API (OpenAI/Anthropic)"
+echo "  • AI extraction uses remote API (OpenAI/Anthropic/OpenRouter)"
 echo ""
 read -p "Choose option (1-5): " -r
 echo ""
@@ -246,7 +246,7 @@ echo ""
 
 # Step 1: Generate secrets
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 1/7: Generating infrastructure secrets${NC}"
+echo -e "${BOLD}Step 1/9: Generating infrastructure secrets${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -286,7 +286,7 @@ echo ""
 
 # Step 2: Start infrastructure
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 2/7: Starting infrastructure (Postgres + Garage + Operator)${NC}"
+echo -e "${BOLD}Step 2/9: Starting infrastructure (Postgres + Garage + Operator)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 ./operator/lib/start-infra.sh
@@ -295,7 +295,7 @@ echo ""
 
 # Step 3: Configure admin
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 3/7: Creating admin user${NC}"
+echo -e "${BOLD}Step 3/9: Creating admin user${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -308,30 +308,62 @@ fi
 docker exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
 echo ""
 
-# Step 4: Configure AI provider
+# Step 4: Configure AI provider (interactive selection)
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 4/7: Configuring AI extraction provider${NC}"
+echo -e "${BOLD}Step 4/9: Choosing AI extraction provider${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Setting OpenAI GPT-4o as extraction provider..."
-docker exec kg-operator python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+echo "Choose your AI extraction provider:"
+echo ""
+echo -e "  ${GREEN}[1] OpenAI${NC} (GPT-4o, GPT-4o-mini)"
+echo "      Direct access to OpenAI models"
+echo ""
+echo -e "  ${GREEN}[2] Anthropic${NC} (Claude Sonnet 4, Claude 3.5 Sonnet)"
+echo "      Direct access to Anthropic Claude models"
+echo ""
+echo -e "  ${GREEN}[3] OpenRouter${NC} (200+ models from all providers)"
+echo "      Unified API — access OpenAI, Anthropic, Google, Meta, Mistral, etc."
+echo "      Single API key for all models"
+echo ""
+# Ollama requires separate setup (local inference, no API key)
+# Configure via: ./operator.sh shell → configure ai-provider ollama
+echo -e "  ${YELLOW}Note:${NC} Ollama (local inference) can be configured after setup"
+echo "        via: ./operator.sh shell → configure ai-provider ollama"
+echo ""
+read -p "Choose option (1-3): " -r
 echo ""
 
-# Step 5: Configure embeddings
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 5/7: Configuring embedding provider${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5)..."
-docker exec kg-operator python /workspace/operator/configure.py embedding --provider local
+case "$REPLY" in
+    1)
+        AI_PROVIDER="openai"
+        AI_KEY_PROMPT="OpenAI API key (sk-...)"
+        echo -e "${GREEN}→${NC} Selected OpenAI"
+        ;;
+    2)
+        AI_PROVIDER="anthropic"
+        AI_KEY_PROMPT="Anthropic API key (sk-ant-...)"
+        echo -e "${GREEN}→${NC} Selected Anthropic"
+        ;;
+    3)
+        AI_PROVIDER="openrouter"
+        AI_KEY_PROMPT="OpenRouter API key (sk-or-...)"
+        echo -e "${GREEN}→${NC} Selected OpenRouter"
+        ;;
+    *)
+        AI_PROVIDER="openai"
+        AI_KEY_PROMPT="OpenAI API key (sk-...)"
+        echo -e "${YELLOW}→${NC} Invalid option, defaulting to OpenAI"
+        ;;
+esac
 echo ""
 
-# Step 6: Store OpenAI API key with validation loop
+# Step 5: Store API key (skip for Ollama)
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 6/8: Storing OpenAI API key${NC}"
+echo -e "${BOLD}Step 5/9: Validating API key${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Please enter your OpenAI API key."
+
+echo "Please enter your ${AI_PROVIDER} API key."
 echo "The key will be validated and stored encrypted in the database."
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to cancel${NC}"
@@ -339,10 +371,10 @@ echo ""
 
 API_KEY_STORED=false
 while [ "$API_KEY_STORED" = false ]; do
-    read -sp "OpenAI API key (sk-...): " OPENAI_KEY
+    read -sp "${AI_KEY_PROMPT}: " AI_KEY
     echo ""
 
-    if [ -z "$OPENAI_KEY" ]; then
+    if [ -z "$AI_KEY" ]; then
         echo -e "${RED}✗${NC} API key cannot be empty. Please try again."
         echo ""
         continue
@@ -350,8 +382,7 @@ while [ "$API_KEY_STORED" = false ]; do
 
     echo -e "${BLUE}→${NC} Validating and storing API key..."
 
-    # Try to store the key (will validate automatically)
-    if docker exec kg-operator python /workspace/operator/configure.py api-key openai --key "$OPENAI_KEY" 2>&1; then
+    if docker exec kg-operator python /workspace/operator/configure.py api-key "$AI_PROVIDER" --key "$AI_KEY" 2>&1; then
         API_KEY_STORED=true
         echo ""
     else
@@ -361,9 +392,128 @@ while [ "$API_KEY_STORED" = false ]; do
     fi
 done
 
-# Step 7: Configure Garage credentials
+# Step 6: Refresh model catalog and select model
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 7/8: Configuring Garage object storage${NC}"
+echo -e "${BOLD}Step 6/9: Selecting extraction model${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+# Set initial provider config with default model so catalog refresh can work
+docker exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" 2>/dev/null
+
+# Refresh model catalog from provider API
+echo -e "${BLUE}→${NC} Fetching available models from ${AI_PROVIDER}..."
+docker exec kg-operator python /workspace/operator/configure.py models refresh "$AI_PROVIDER" 2>&1
+echo ""
+
+# Get model list in TSV format for parsing
+# Get full model list in TSV format
+FULL_MODEL_LIST=$(docker exec kg-operator python /workspace/operator/configure.py models list "$AI_PROVIDER" --tsv --category extraction 2>/dev/null)
+
+if [ -z "$FULL_MODEL_LIST" ]; then
+    echo -e "${YELLOW}⚠${NC} Could not fetch models from catalog. Using provider default."
+    echo ""
+else
+    # For OpenRouter (200+ models), filter to well-known reasoning models first.
+    # For OpenAI/Anthropic, the seed data is already a curated list.
+    if [ "$AI_PROVIDER" = "openrouter" ]; then
+        # Pattern match popular/capable reasoning models
+        MODEL_LIST=$(echo "$FULL_MODEL_LIST" | grep -iE '(gpt-4o|gpt-4\.5|gpt-5|claude.*sonnet|claude.*opus|claude.*haiku|gemini.*pro|gemini.*flash|llama.*70|llama.*405|qwen.*72|mistral.*large|deepseek.*chat|deepseek.*r1|command-r)')
+    else
+        MODEL_LIST="$FULL_MODEL_LIST"
+    fi
+
+    # Build numbered menu from filtered list
+    display_model_menu() {
+        local model_list="$1"
+        MENU_INDEX=0
+        declare -g -a MODEL_IDS MODEL_NAMES MODEL_CATALOG_IDS MODEL_PRICES
+        MODEL_IDS=()
+        MODEL_NAMES=()
+        MODEL_CATALOG_IDS=()
+        MODEL_PRICES=()
+
+        while IFS=$'\t' read -r cat_id model_id display_name prompt_price comp_price; do
+            MENU_INDEX=$((MENU_INDEX + 1))
+            MODEL_CATALOG_IDS[$MENU_INDEX]="$cat_id"
+            MODEL_IDS[$MENU_INDEX]="$model_id"
+            MODEL_NAMES[$MENU_INDEX]="$display_name"
+
+            if [ -n "$prompt_price" ] && [ "$prompt_price" != "0.0000" ]; then
+                MODEL_PRICES[$MENU_INDEX]="\$${prompt_price}/\$${comp_price} per 1M tokens"
+            else
+                MODEL_PRICES[$MENU_INDEX]="free (local)"
+            fi
+
+            printf "  ${GREEN}[%2d]${NC} %-45s %s\n" "$MENU_INDEX" "$display_name" "${MODEL_PRICES[$MENU_INDEX]}"
+        done <<< "$model_list"
+    }
+
+    echo "Available extraction models:"
+    echo ""
+    display_model_menu "$MODEL_LIST"
+
+    # Offer "show all" option for OpenRouter
+    if [ "$AI_PROVIDER" = "openrouter" ]; then
+        TOTAL_COUNT=$(echo "$FULL_MODEL_LIST" | wc -l)
+        echo ""
+        echo -e "  ${YELLOW}[ 0]${NC} Show all ${TOTAL_COUNT} available models"
+    fi
+
+    echo ""
+
+    SELECTING=true
+    while [ "$SELECTING" = true ]; do
+        read -p "Choose model (1-${MENU_INDEX}) [1]: " -r MODEL_CHOICE
+        if [ -z "$MODEL_CHOICE" ]; then
+            MODEL_CHOICE=1
+        fi
+
+        # Handle "show all" for OpenRouter
+        if [ "$MODEL_CHOICE" = "0" ] && [ "$AI_PROVIDER" = "openrouter" ]; then
+            echo ""
+            echo "All available models:"
+            echo ""
+            display_model_menu "$FULL_MODEL_LIST"
+            echo ""
+            continue
+        fi
+
+        # Validate and apply choice
+        if [ "$MODEL_CHOICE" -ge 1 ] 2>/dev/null && [ "$MODEL_CHOICE" -le "$MENU_INDEX" ] 2>/dev/null; then
+            CHOSEN_MODEL_ID="${MODEL_IDS[$MODEL_CHOICE]}"
+            CHOSEN_CATALOG_ID="${MODEL_CATALOG_IDS[$MODEL_CHOICE]}"
+            CHOSEN_NAME="${MODEL_NAMES[$MODEL_CHOICE]}"
+
+            echo ""
+            echo -e "${GREEN}→${NC} Selected: ${BOLD}${CHOSEN_NAME}${NC} (${CHOSEN_MODEL_ID})"
+
+            # Enable and set as default in catalog
+            docker exec kg-operator python /workspace/operator/configure.py models enable "$CHOSEN_CATALOG_ID" 2>/dev/null
+            docker exec kg-operator python /workspace/operator/configure.py models default "$CHOSEN_CATALOG_ID" 2>/dev/null
+
+            # Update active extraction config with chosen model
+            docker exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$CHOSEN_MODEL_ID"
+            SELECTING=false
+        else
+            echo -e "${YELLOW}→${NC} Invalid choice, please try again."
+        fi
+    done
+fi
+echo ""
+
+# Step 7: Configure embeddings
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 7/9: Configuring embedding provider${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5)..."
+docker exec kg-operator python /workspace/operator/configure.py embedding --provider local
+echo ""
+
+# Step 8: Configure Garage credentials
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 8/9: Configuring Garage object storage${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Configuring S3-compatible object storage for images..."
@@ -414,7 +564,7 @@ fi
 
 # Step 8: Save configuration and start application
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 8/8: Starting application (API + Web)${NC}"
+echo -e "${BOLD}Step 9/9: Starting application (API + Web)${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 

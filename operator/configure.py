@@ -361,14 +361,22 @@ class OperatorConfig:
         try:
             if action == 'list':
                 provider = getattr(args, 'provider_name', None)
+                use_tsv = getattr(args, 'tsv', False)
+                category_filter = getattr(args, 'category', None)
+                limit = getattr(args, 'limit', 0) or 0
+
                 with conn.cursor() as cur:
                     conditions = []
                     params = []
                     if provider:
                         conditions.append("provider = %s")
                         params.append(provider)
+                    if category_filter:
+                        conditions.append("category = %s")
+                        params.append(category_filter)
 
                     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+                    limit_clause = f"LIMIT {int(limit)}" if limit > 0 else ""
                     cur.execute(
                         f"""SELECT id, provider, model_id, display_name, category,
                                    enabled, is_default,
@@ -376,13 +384,23 @@ class OperatorConfig:
                                    fetched_at
                             FROM kg_api.provider_model_catalog
                             {where}
-                            ORDER BY provider, sort_order, model_id""",
+                            ORDER BY provider, sort_order, model_id
+                            {limit_clause}""",
                         params,
                     )
                     rows = cur.fetchall()
 
                 if not rows:
-                    print("📭 No models in catalog." + (" Try: models refresh <provider>" if provider else ""))
+                    if not use_tsv:
+                        print("📭 No models in catalog." + (" Try: models refresh <provider>" if provider else ""))
+                    return True
+
+                if use_tsv:
+                    # Machine-parseable: ID\tmodel_id\tdisplay_name\tprice_prompt\tprice_completion
+                    for row in rows:
+                        prompt_p = f"{float(row['price_prompt_per_m']):.4f}" if row['price_prompt_per_m'] is not None else ""
+                        comp_p = f"{float(row['price_completion_per_m']):.4f}" if row['price_completion_per_m'] is not None else ""
+                        print(f"{row['id']}\t{row['model_id']}\t{row['display_name'] or row['model_id']}\t{prompt_p}\t{comp_p}")
                     return True
 
                 current_provider = None
@@ -648,6 +666,9 @@ def main():
     models_parser.add_argument('model_id', nargs='?', help='Catalog ID (for enable/disable/default/price)')
     models_parser.add_argument('--prompt', type=float, help='Prompt price per 1M tokens (for price)')
     models_parser.add_argument('--completion', type=float, help='Completion price per 1M tokens (for price)')
+    models_parser.add_argument('--tsv', action='store_true', help='Output in TSV format (for scripting)')
+    models_parser.add_argument('--category', default='extraction', help='Filter by category (default: extraction)')
+    models_parser.add_argument('--limit', type=int, default=0, help='Limit number of results (0=unlimited)')
 
     # status
     subparsers.add_parser('status', help='Show configuration status')
