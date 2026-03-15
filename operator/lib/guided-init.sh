@@ -423,6 +423,17 @@ else
         MODEL_LIST="$FULL_MODEL_LIST"
     fi
 
+    # Sort a TSV model list by prompt price (column 4)
+    # Args: $1=model_list, $2=sort mode ("asc", "desc", or "none")
+    sort_model_list() {
+        local list="$1" mode="$2"
+        case "$mode" in
+            asc)  echo "$list" | sort -t$'\t' -k4 -n ;;
+            desc) echo "$list" | sort -t$'\t' -k4 -rn ;;
+            *)    echo "$list" ;;
+        esac
+    }
+
     # Build numbered menu from filtered list
     display_model_menu() {
         local model_list="$1"
@@ -449,18 +460,54 @@ else
         done <<< "$model_list"
     }
 
-    echo "Available extraction models:"
-    echo ""
-    display_model_menu "$MODEL_LIST"
+    # State for the selection loop
+    SHOW_ALL=false
+    SORT_MODE="none"  # none → asc → desc → none
+    CURRENT_LIST="$MODEL_LIST"
 
-    # Offer "show all" option for OpenRouter
-    if [ "$AI_PROVIDER" = "openrouter" ]; then
-        TOTAL_COUNT=$(echo "$FULL_MODEL_LIST" | wc -l)
+    redisplay_menu() {
+        # Pick base list
+        if [ "$SHOW_ALL" = true ]; then
+            local base="$FULL_MODEL_LIST"
+        else
+            local base="$MODEL_LIST"
+        fi
+        CURRENT_LIST=$(sort_model_list "$base" "$SORT_MODE")
+
         echo ""
-        echo -e "  ${YELLOW}[ 0]${NC} Show all ${TOTAL_COUNT} available models"
-    fi
+        if [ "$SHOW_ALL" = true ]; then
+            echo "All available models:"
+        else
+            echo "Available extraction models:"
+        fi
+        # Show sort indicator
+        case "$SORT_MODE" in
+            asc)  echo -e "  ${YELLOW}(sorted: cheapest first)${NC}" ;;
+            desc) echo -e "  ${YELLOW}(sorted: most expensive first)${NC}" ;;
+        esac
+        echo ""
+        display_model_menu "$CURRENT_LIST"
 
-    echo ""
+        # Show options footer
+        echo ""
+        if [ "$AI_PROVIDER" = "openrouter" ]; then
+            TOTAL_COUNT=$(echo "$FULL_MODEL_LIST" | wc -l)
+            if [ "$SHOW_ALL" = true ]; then
+                echo -e "  ${YELLOW}[ 0]${NC} Show curated models only"
+            else
+                echo -e "  ${YELLOW}[ 0]${NC} Show all ${TOTAL_COUNT} available models"
+            fi
+        fi
+        case "$SORT_MODE" in
+            none) echo -e "  ${YELLOW}[ \$]${NC} Sort by price (cheapest first)" ;;
+            asc)  echo -e "  ${YELLOW}[ \$]${NC} Sort by price (most expensive first)" ;;
+            desc) echo -e "  ${YELLOW}[ \$]${NC} Clear price sort" ;;
+        esac
+        echo ""
+    }
+
+    # Initial display
+    redisplay_menu
 
     SELECTING=true
     while [ "$SELECTING" = true ]; do
@@ -469,13 +516,25 @@ else
             MODEL_CHOICE=1
         fi
 
-        # Handle "show all" for OpenRouter
+        # Handle "show all / show curated" toggle
         if [ "$MODEL_CHOICE" = "0" ] && [ "$AI_PROVIDER" = "openrouter" ]; then
-            echo ""
-            echo "All available models:"
-            echo ""
-            display_model_menu "$FULL_MODEL_LIST"
-            echo ""
+            if [ "$SHOW_ALL" = true ]; then
+                SHOW_ALL=false
+            else
+                SHOW_ALL=true
+            fi
+            redisplay_menu
+            continue
+        fi
+
+        # Handle price sort toggle
+        if [ "$MODEL_CHOICE" = '$' ]; then
+            case "$SORT_MODE" in
+                none) SORT_MODE="asc" ;;
+                asc)  SORT_MODE="desc" ;;
+                desc) SORT_MODE="none" ;;
+            esac
+            redisplay_menu
             continue
         fi
 
