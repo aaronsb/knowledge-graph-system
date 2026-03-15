@@ -452,7 +452,8 @@ class OperatorConfig:
                     return False
 
             elif action == 'enable':
-                model_id_str = getattr(args, 'model_id', None)
+                # Catalog ID is the 2nd positional arg (argparse maps it to provider_name)
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
                 if not model_id_str:
                     print("❌ Model catalog ID required")
                     return False
@@ -465,7 +466,7 @@ class OperatorConfig:
                 return False
 
             elif action == 'disable':
-                model_id_str = getattr(args, 'model_id', None)
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
                 if not model_id_str:
                     print("❌ Model catalog ID required")
                     return False
@@ -478,7 +479,7 @@ class OperatorConfig:
                 return False
 
             elif action == 'default':
-                model_id_str = getattr(args, 'model_id', None)
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
                 if not model_id_str:
                     print("❌ Model catalog ID required")
                     return False
@@ -491,7 +492,7 @@ class OperatorConfig:
                 return False
 
             elif action == 'price':
-                model_id_str = getattr(args, 'model_id', None)
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
                 prompt_cost = getattr(args, 'prompt', None)
                 comp_cost = getattr(args, 'completion', None)
 
