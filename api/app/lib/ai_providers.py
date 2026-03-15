@@ -98,6 +98,34 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
     return None
 
 
+def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
+    """
+    Query the provider_model_catalog for enabled models (ADR-800).
+
+    Returns dict of category -> model_id list, or None if catalog unavailable.
+    """
+    try:
+        from .model_catalog import list_catalog
+        from .age_client import AGEClient
+
+        client = AGEClient()
+        conn = client.pool.getconn()
+        try:
+            rows = list_catalog(conn, provider=provider, enabled_only=True)
+            if not rows:
+                return None
+
+            result: Dict[str, List[str]] = {}
+            for row in rows:
+                cat = row["category"]
+                result.setdefault(cat, []).append(row["model_id"])
+            return result
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        return None
+
+
 class AIProvider(ABC):
     """Abstract base class for AI providers"""
 
@@ -175,6 +203,21 @@ class AIProvider(ABC):
             Dict with 'text' (description) and 'tokens' (usage info)
         """
         pass
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """
+        Fetch available models from the provider API for catalog storage (ADR-800).
+
+        Returns a list of dicts with keys matching provider_model_catalog columns:
+            provider, model_id, display_name, category, context_length,
+            max_completion_tokens, supports_vision, supports_json_mode,
+            supports_tool_use, supports_streaming, price_prompt_per_m,
+            price_completion_per_m, upstream_provider, raw_metadata
+
+        Default implementation returns an empty list. Providers override
+        this to query their model listing APIs.
+        """
+        return []
 
 
 class OpenAIProvider(AIProvider):
@@ -432,12 +475,14 @@ class OpenAIProvider(AIProvider):
             return False
 
     def list_available_models(self) -> Dict[str, List[str]]:
-        """List available OpenAI models"""
+        """List available OpenAI models. Prefers catalog (ADR-800), falls back to API then hardcoded."""
+        catalog = _list_models_from_catalog("openai")
+        if catalog:
+            return catalog
+
         try:
             models_response = self.client.models.list()
             all_models = [model.id for model in models_response.data]
-
-            # Filter to relevant models
             extraction_models = [m for m in all_models if any(x in m for x in ["gpt-4", "gpt-3.5", "o1"])]
             embedding_models = [m for m in all_models if "embedding" in m]
 
@@ -446,8 +491,56 @@ class OpenAIProvider(AIProvider):
                 "embedding": embedding_models or AVAILABLE_MODELS["openai"]["embedding"]
             }
         except Exception:
-            # Fallback to hardcoded list
             return AVAILABLE_MODELS["openai"]
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Fetch models from OpenAI API and return catalog entries (ADR-800)."""
+        # Known pricing (USD per 1M tokens) — OpenAI doesn't expose pricing via API
+        known_pricing = {
+            "gpt-4o": (2.50, 10.00),
+            "gpt-4o-mini": (0.15, 0.60),
+            "gpt-4-turbo": (10.00, 30.00),
+            "o1-preview": (15.00, 60.00),
+            "o1-mini": (3.00, 12.00),
+            "text-embedding-3-small": (0.02, None),
+            "text-embedding-3-large": (0.13, None),
+            "text-embedding-ada-002": (0.10, None),
+        }
+
+        entries = []
+        try:
+            models_response = self.client.models.list()
+            for model in models_response.data:
+                mid = model.id
+                # Filter to models we care about
+                is_extraction = any(x in mid for x in ["gpt-4", "gpt-3.5", "o1"])
+                is_embedding = "embedding" in mid
+
+                if not is_extraction and not is_embedding:
+                    continue
+
+                category = "embedding" if is_embedding else "extraction"
+                pricing = known_pricing.get(mid, (None, None))
+
+                entries.append({
+                    "provider": "openai",
+                    "model_id": mid,
+                    "display_name": mid,
+                    "category": category,
+                    "context_length": None,
+                    "supports_vision": "4o" in mid or "gpt-4-turbo" in mid,
+                    "supports_json_mode": not is_embedding and "o1" not in mid,
+                    "supports_tool_use": not is_embedding and "o1" not in mid,
+                    "supports_streaming": True,
+                    "price_prompt_per_m": pricing[0],
+                    "price_completion_per_m": pricing[1],
+                    "upstream_provider": None,
+                    "raw_metadata": {"id": mid, "created": getattr(model, "created", None)},
+                })
+        except Exception as e:
+            logger.warning(f"Failed to fetch OpenAI model catalog: {e}")
+
+        return entries
 
 
 class LocalEmbeddingProvider(AIProvider):
@@ -823,8 +916,373 @@ class AnthropicProvider(AIProvider):
             return False
 
     def list_available_models(self) -> Dict[str, List[str]]:
-        """List available Anthropic models (returns hardcoded list as Anthropic doesn't have a models endpoint)"""
+        """List available Anthropic models. Prefers catalog (ADR-800), falls back to hardcoded."""
+        catalog = _list_models_from_catalog("anthropic")
+        if catalog:
+            return catalog
         return AVAILABLE_MODELS["anthropic"]
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Return hardcoded Anthropic model catalog with known pricing (ADR-800)."""
+        models = [
+            ("claude-sonnet-4-20250514", "Claude Sonnet 4", 200000, True, 3.00, 15.00),
+            ("claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet", 200000, True, 3.00, 15.00),
+            ("claude-3-opus-20240229", "Claude 3 Opus", 200000, True, 15.00, 75.00),
+            ("claude-3-sonnet-20240229", "Claude 3 Sonnet", 200000, True, 3.00, 15.00),
+            ("claude-3-haiku-20240307", "Claude 3 Haiku", 200000, True, 0.25, 1.25),
+        ]
+        return [
+            {
+                "provider": "anthropic",
+                "model_id": mid,
+                "display_name": name,
+                "category": "extraction",
+                "context_length": ctx,
+                "supports_vision": vision,
+                "supports_json_mode": True,
+                "supports_tool_use": True,
+                "supports_streaming": True,
+                "price_prompt_per_m": prompt_cost,
+                "price_completion_per_m": comp_cost,
+                "upstream_provider": None,
+                "raw_metadata": None,
+            }
+            for mid, name, ctx, vision, prompt_cost, comp_cost in models
+        ]
+
+
+class OpenRouterProvider(AIProvider):
+    """
+    OpenRouter provider for accessing 200+ models via a unified API (ADR-800).
+
+    OpenRouter provides an OpenAI-compatible API that routes to multiple upstream
+    providers (OpenAI, Anthropic, Google, Meta, Mistral, etc.). Model IDs are
+    namespaced (e.g., 'openai/gpt-4o', 'anthropic/claude-sonnet-4').
+
+    Key differences from direct provider access:
+    - Single API key for all upstream models
+    - Automatic provider routing and fallback
+    - Per-model pricing available via catalog API
+    - No direct embedding support (delegate to embedding_provider)
+    """
+
+    OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        extraction_model: Optional[str] = None,
+        embedding_provider: Optional[AIProvider] = None,
+    ):
+        """
+        Initialize OpenRouter provider.
+
+        Args:
+            api_key: OpenRouter API key (falls back to OPENROUTER_API_KEY env var)
+            extraction_model: Model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-sonnet-4')
+            embedding_provider: Separate provider for embeddings (required — OpenRouter
+                               doesn't serve embeddings)
+        """
+        from openai import OpenAI
+
+        self.api_key = _load_api_key("openrouter", api_key, "OPENROUTER_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "OpenRouter API key not found. Either:\n"
+                "  1. Configure via admin API: POST /admin/keys/openrouter\n"
+                "  2. Set OPENROUTER_API_KEY environment variable\n"
+                "  3. Add to .env file (development only)"
+            )
+
+        from .rate_limiter import get_provider_max_retries
+        max_retries = get_provider_max_retries("openrouter")
+
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.OPENROUTER_BASE_URL,
+            max_retries=max_retries,
+            timeout=120.0,
+            default_headers={
+                "HTTP-Referer": "https://github.com/aaronsb/knowledge-graph-system",
+                "X-OpenRouter-Title": "Knowledge Graph System",
+            },
+        )
+        logger.info(f"OpenRouter client configured with max_retries={max_retries}")
+
+        self.extraction_model = extraction_model or os.getenv(
+            "OPENROUTER_EXTRACTION_MODEL", "openai/gpt-4o"
+        )
+        self.embedding_provider = embedding_provider
+
+    def extract_concepts(
+        self,
+        text: str,
+        system_prompt: str,
+        existing_concepts: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Extract concepts via OpenRouter using the configured model."""
+        try:
+            response = self.client.chat.completions.create(
+                model=self.extraction_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Text to analyze:\n\n{text}"},
+                ],
+                max_tokens=4096,
+                temperature=0.3,
+                response_format={"type": "json_object"},
+            )
+
+            response_text = response.choices[0].message.content
+
+            try:
+                result = self._extract_json(response_text)
+            except json.JSONDecodeError as json_err:
+                raise Exception(
+                    f"Failed to parse JSON from OpenRouter response.\n"
+                    f"Error: {json_err}\n"
+                    f"Response text (first 500 chars): {response_text[:500]}"
+                )
+
+            result.setdefault("concepts", [])
+            result.setdefault("instances", [])
+            result.setdefault("relationships", [])
+
+            tokens = 0
+            if hasattr(response, "usage") and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {"result": result, "tokens": tokens}
+
+        except Exception as e:
+            raise Exception(f"OpenRouter concept extraction failed: {e}")
+
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """Extract JSON from response text (handles markdown code blocks)."""
+        cleaned = text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"JSON parsing failed: {e.msg}. Response snippet: {cleaned[:100]}...",
+                e.doc,
+                e.pos,
+            )
+
+    def generate_embedding(
+        self, text: str, purpose: Literal["query", "document"] = "document"
+    ) -> Dict[str, Any]:
+        """Delegate to embedding provider — OpenRouter doesn't serve embeddings."""
+        if self.embedding_provider:
+            return self.embedding_provider.generate_embedding(text, purpose=purpose)
+
+        raise RuntimeError(
+            "No embedding provider configured. OpenRouter does not provide embeddings. "
+            "Configure a local embedding model via POST /admin/embedding/config."
+        )
+
+    def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
+        """Translate code/diagram to prose using a cheap model via OpenRouter."""
+        try:
+            # Use a fast/cheap model for translation; fall back to extraction model
+            translation_model = "openai/gpt-4o-mini"
+
+            response = self.client.chat.completions.create(
+                model=translation_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a technical writer who explains code and diagrams in clear, simple prose.",
+                    },
+                    {"role": "user", "content": f"{prompt}\n\n{code}"},
+                ],
+                max_tokens=1000,
+                temperature=0.5,
+            )
+
+            prose = response.choices[0].message.content.strip()
+            tokens = 0
+            if hasattr(response, "usage") and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {"text": prose, "tokens": tokens}
+
+        except Exception as e:
+            raise Exception(f"OpenRouter code translation failed: {e}")
+
+    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+        """Describe an image using a vision-capable model via OpenRouter."""
+        import base64
+
+        try:
+            image_base64 = base64.b64encode(image_data).decode("utf-8")
+
+            # Detect MIME type from magic bytes
+            mime_type = "image/png"
+            if image_data[:2] == b"\xff\xd8":
+                mime_type = "image/jpeg"
+            elif image_data[:4] == b"GIF8":
+                mime_type = "image/gif"
+            elif image_data[:4] == b"RIFF" and image_data[8:12] == b"WEBP":
+                mime_type = "image/webp"
+
+            # Use the extraction model if it supports vision, otherwise default
+            vision_model = self.extraction_model
+
+            response = self.client.chat.completions.create(
+                model=vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{image_base64}",
+                                    "detail": "high",
+                                },
+                            },
+                        ],
+                    }
+                ],
+                max_tokens=2000,
+                temperature=0.3,
+            )
+
+            description = response.choices[0].message.content.strip()
+            tokens = 0
+            if hasattr(response, "usage") and response.usage:
+                tokens = response.usage.total_tokens
+
+            return {"text": description, "tokens": tokens}
+
+        except Exception as e:
+            raise Exception(f"OpenRouter image description failed: {e}")
+
+    def get_provider_name(self) -> str:
+        return "OpenRouter"
+
+    def get_extraction_model(self) -> str:
+        return self.extraction_model
+
+    def get_embedding_model(self) -> str:
+        if self.embedding_provider:
+            return self.embedding_provider.get_embedding_model()
+        return ""
+
+    @property
+    def model_name(self) -> str:
+        """Embedding model name, delegating to embedding_provider."""
+        if self.embedding_provider and hasattr(self.embedding_provider, "model_name"):
+            return self.embedding_provider.model_name
+        return ""
+
+    def validate_api_key(self) -> bool:
+        """Validate OpenRouter API key by fetching the models list."""
+        try:
+            self.client.models.list()
+            return True
+        except Exception as e:
+            logger.error(f"OpenRouter API key validation failed: {e}")
+            return False
+
+    def list_available_models(self) -> Dict[str, List[str]]:
+        """List available models from OpenRouter catalog."""
+        try:
+            models_response = self.client.models.list()
+            all_models = [model.id for model in models_response.data]
+
+            # Categorize by capability heuristics
+            extraction_models = [
+                m
+                for m in all_models
+                if any(
+                    x in m
+                    for x in [
+                        "gpt-4",
+                        "claude",
+                        "gemini",
+                        "llama",
+                        "mistral",
+                        "qwen",
+                        "deepseek",
+                    ]
+                )
+            ]
+
+            return {
+                "extraction": extraction_models,
+                "embedding": [],  # OpenRouter doesn't serve embeddings
+            }
+        except Exception:
+            return {"extraction": [], "embedding": []}
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Fetch models from OpenRouter API with pricing (ADR-800)."""
+        import requests
+
+        entries = []
+        try:
+            # OpenRouter models endpoint is public but we use auth for higher rate limits
+            resp = requests.get(
+                f"{self.OPENROUTER_BASE_URL}/models",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            for model in data.get("data", []):
+                mid = model.get("id", "")
+                pricing = model.get("pricing", {})
+                arch = model.get("architecture", {})
+                top = model.get("top_provider", {})
+                input_mods = arch.get("input_modalities", [])
+                supported_params = model.get("supported_parameters", [])
+
+                # Convert per-token string to per-1M-token numeric
+                prompt_per_token = pricing.get("prompt")
+                comp_per_token = pricing.get("completion")
+                price_prompt = float(prompt_per_token) * 1_000_000 if prompt_per_token else None
+                price_comp = float(comp_per_token) * 1_000_000 if comp_per_token else None
+
+                cache_per_token = pricing.get("input_cache_read")
+                price_cache = float(cache_per_token) * 1_000_000 if cache_per_token else None
+
+                # Determine upstream provider from model ID (e.g., "openai/gpt-4o" -> "openai")
+                upstream = mid.split("/")[0] if "/" in mid else None
+
+                entries.append({
+                    "provider": "openrouter",
+                    "model_id": mid,
+                    "display_name": model.get("name", mid),
+                    "category": "extraction",
+                    "context_length": model.get("context_length"),
+                    "max_completion_tokens": top.get("max_completion_tokens"),
+                    "supports_vision": "image" in input_mods,
+                    "supports_json_mode": "response_format" in supported_params,
+                    "supports_tool_use": "tools" in supported_params,
+                    "supports_streaming": True,
+                    "price_prompt_per_m": price_prompt,
+                    "price_completion_per_m": price_comp,
+                    "price_cache_read_per_m": price_cache,
+                    "upstream_provider": upstream,
+                    "raw_metadata": model,
+                })
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch OpenRouter model catalog: {e}")
+
+        return entries
 
 
 class OllamaProvider(AIProvider):
@@ -1248,8 +1706,12 @@ class OllamaProvider(AIProvider):
             return False
 
     def list_available_models(self) -> Dict[str, List[str]]:
-        """List available models from Ollama (queries /api/tags endpoint)"""
+        """List available Ollama models. Prefers catalog (ADR-800), falls back to API then hardcoded."""
         import requests
+
+        catalog = _list_models_from_catalog("ollama")
+        if catalog:
+            return catalog
 
         try:
             response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
@@ -1272,6 +1734,43 @@ class OllamaProvider(AIProvider):
             logger.warning(f"Could not fetch Ollama models: {e}")
             # Return recommended models as fallback
             return AVAILABLE_MODELS["ollama"]
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Fetch installed models from Ollama instance (ADR-800)."""
+        import requests
+
+        entries = []
+        try:
+            response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
+            response.raise_for_status()
+            models_data = response.json()
+
+            for model in models_data.get("models", []):
+                name = model.get("name", "")
+                details = model.get("details", {})
+                is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
+                category = "vision" if is_vision else "extraction"
+
+                entries.append({
+                    "provider": "ollama",
+                    "model_id": name,
+                    "display_name": name,
+                    "category": category,
+                    "context_length": None,
+                    "supports_vision": is_vision,
+                    "supports_json_mode": not is_vision,
+                    "supports_tool_use": False,
+                    "supports_streaming": True,
+                    "price_prompt_per_m": 0,
+                    "price_completion_per_m": 0,
+                    "upstream_provider": None,
+                    "raw_metadata": model,
+                })
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch Ollama model catalog: {e}")
+
+        return entries
 
 
 def get_embedding_provider() -> Optional[AIProvider]:
@@ -1303,7 +1802,7 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     - DEVELOPMENT_MODE=false: Loads from database (kg_api.ai_extraction_config)
 
     Args:
-        provider_name: Name of provider ("openai", "anthropic", or "mock")
+        provider_name: Name of provider ("openai", "anthropic", "ollama", "openrouter", or "mock")
                       If None, reads from AI_PROVIDER env var or database
 
     Returns:
@@ -1399,12 +1898,17 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
             top_p=top_p,
             thinking_mode=thinking_mode
         )
+    elif provider_name == "openrouter":
+        return OpenRouterProvider(
+            extraction_model=extraction_model,
+            embedding_provider=embedding_provider,
+        )
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider
         mock_mode = os.getenv("MOCK_MODE", "default")
         return MockAIProvider(mode=mock_mode)
     else:
-        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', 'ollama', or 'mock'")
+        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', 'ollama', 'openrouter', or 'mock'")
 
 
 # Model configurations for reference

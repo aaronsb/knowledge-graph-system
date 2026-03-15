@@ -18,9 +18,16 @@ from pathlib import Path
 
 
 class CostEstimator:
-    """Calculate token costs based on model and environment configuration."""
+    """
+    Calculate token costs based on model catalog, environment, or defaults (ADR-800).
 
-    # Model pricing environment variable mappings
+    Pricing lookup chain:
+    1. provider_model_catalog table (if available)
+    2. Environment variables (TOKEN_COST_*)
+    3. Hardcoded defaults
+    """
+
+    # Model pricing environment variable mappings (fallback)
     EXTRACTION_MODEL_COSTS = {
         "gpt-4o": "TOKEN_COST_GPT4O",
         "gpt-4o-mini": "TOKEN_COST_GPT4O_MINI",
@@ -39,14 +46,56 @@ class CostEstimator:
     DEFAULT_EMBEDDING_COST = 0.02   # text-embedding-3-small
 
     @classmethod
-    def get_extraction_cost_per_million(cls, model: str) -> float:
-        """Get extraction cost per 1M tokens from environment or default."""
+    def _get_catalog_price(cls, provider: str, model: str) -> Optional[Dict]:
+        """Try to get pricing from the model catalog database table."""
+        try:
+            from ..lib.model_catalog import get_model_pricing
+            from ..lib.age_client import AGEClient
+
+            client = AGEClient()
+            conn = client.pool.getconn()
+            try:
+                return get_model_pricing(conn, provider, model)
+            finally:
+                client.pool.putconn(conn)
+        except Exception:
+            return None
+
+    @classmethod
+    def get_extraction_cost_per_million(cls, model: str, provider: Optional[str] = None) -> float:
+        """
+        Get extraction cost per 1M tokens.
+
+        Lookup chain: catalog → env var → default.
+        Uses average of prompt+completion when both available from catalog.
+        """
+        # 1. Try catalog (need provider to look up)
+        if provider:
+            pricing = cls._get_catalog_price(provider, model)
+            if pricing and pricing.get("price_prompt_per_m") is not None:
+                prompt = pricing["price_prompt_per_m"]
+                comp = pricing.get("price_completion_per_m") or prompt
+                # Average of prompt and completion as a reasonable estimate
+                return (prompt + comp) / 2
+
+        # 2. Env var fallback
         cost_var = cls.EXTRACTION_MODEL_COSTS.get(model, "TOKEN_COST_GPT4O")
         return float(os.getenv(cost_var, cls.DEFAULT_EXTRACTION_COST))
 
     @classmethod
-    def get_embedding_cost_per_million(cls, model: str) -> float:
-        """Get embedding cost per 1M tokens from environment or default."""
+    def get_embedding_cost_per_million(cls, model: str, provider: Optional[str] = None) -> float:
+        """
+        Get embedding cost per 1M tokens.
+
+        Lookup chain: catalog → env var → default.
+        """
+        # 1. Try catalog
+        if provider:
+            pricing = cls._get_catalog_price(provider, model)
+            if pricing and pricing.get("price_prompt_per_m") is not None:
+                return pricing["price_prompt_per_m"]
+
+        # 2. Env var fallback
         cost_var = cls.EMBEDDING_MODEL_COSTS.get(model, "TOKEN_COST_EMBEDDING_SMALL")
         return float(os.getenv(cost_var, cls.DEFAULT_EMBEDDING_COST))
 
