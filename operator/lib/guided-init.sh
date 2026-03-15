@@ -371,7 +371,7 @@ echo ""
 
 API_KEY_STORED=false
 while [ "$API_KEY_STORED" = false ]; do
-    read -sp "${AI_KEY_PROMPT}: " AI_KEY
+    read -p "${AI_KEY_PROMPT}: " AI_KEY
     echo ""
 
     if [ -z "$AI_KEY" ]; then
