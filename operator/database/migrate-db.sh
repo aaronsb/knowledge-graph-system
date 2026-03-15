@@ -60,6 +60,7 @@ fi
 DRY_RUN=false
 AUTO_CONFIRM=false
 VERBOSE=false
+WARM_MODE=false
 
 for arg in "$@"; do
     case $arg in
@@ -72,6 +73,9 @@ for arg in "$@"; do
         -v|--verbose)
             VERBOSE=true
             ;;
+        --warm)
+            WARM_MODE=true
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -79,6 +83,7 @@ for arg in "$@"; do
             echo "  --dry-run       Show what would be applied without making changes"
             echo "  -y, --yes       Skip confirmation prompt"
             echo "  -v, --verbose   Show detailed migration SQL"
+            echo "  --warm          Apply warm migrations (require running AGE/graph engine)"
             echo "  -h, --help      Show this help message"
             echo ""
             echo "Examples:"
@@ -86,6 +91,7 @@ for arg in "$@"; do
             echo "  $0 --dry-run          # Preview pending migrations"
             echo "  $0 -y                 # Apply migrations without confirmation"
             echo "  $0 -y --verbose       # Apply with detailed output"
+            echo "  $0 -y --warm          # Apply warm migrations (after app start)"
             exit 0
             ;;
         *)
@@ -95,6 +101,11 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+# Select migration directory based on mode
+if [ "$WARM_MODE" = true ]; then
+    MIGRATIONS_DIR="schema/migrations-warm"
+fi
 
 # Header
 if [ "$DRY_RUN" = true ]; then
@@ -296,13 +307,15 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
         FAILED_COUNT=$((FAILED_COUNT + 1))
 
         # Show error details
-        echo -e "${RED}Error details:${NC}"
+        echo -e "${YELLOW}Error details:${NC}"
         echo "$MIGRATION_OUTPUT" | grep -i "ERROR:\|ROLLBACK\|LINE" | sed 's/^/  /'
 
-        echo ""
-        echo -e "${RED}✗ Migration $VERSION failed - stopping${NC}"
-        echo -e "${YELLOW}Fix the migration and try again${NC}"
-        exit 1
+        # Continue to next migration instead of stopping.
+        # Failed migration won't be recorded (ON_ERROR_STOP prevents the
+        # INSERT INTO schema_migrations from running), so it will be
+        # retried on the next run when the database may be fully ready.
+        echo -e "${YELLOW}  ⚠️  Skipping — will retry on next migration run${NC}"
+        continue
     fi
 
     echo -e "${GREEN}  ✅ Migration $VERSION applied successfully${NC}"

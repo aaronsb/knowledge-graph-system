@@ -143,16 +143,20 @@ class OperatorConfig:
                     print(f"📝 Current: {current['provider']} / {current['model_name']}")
 
                 # Validate model exists in catalog (ADR-800) — warn but don't block
-                cur.execute(
-                    """SELECT id, enabled FROM kg_api.provider_model_catalog
-                       WHERE provider = %s AND model_id = %s AND category = 'extraction'""",
-                    (provider, model),
-                )
-                catalog_row = cur.fetchone()
-                if catalog_row is None:
-                    print(f"⚠️  Model '{model}' not in catalog for {provider}. Run: models refresh {provider}")
-                elif not catalog_row['enabled']:
-                    print(f"⚠️  Model '{model}' is in catalog but not enabled. Run: models enable {catalog_row['id']}")
+                try:
+                    cur.execute(
+                        """SELECT id, enabled FROM kg_api.provider_model_catalog
+                           WHERE provider = %s AND model_id = %s AND category = 'extraction'""",
+                        (provider, model),
+                    )
+                    catalog_row = cur.fetchone()
+                    if catalog_row is None:
+                        print(f"⚠️  Model '{model}' not in catalog for {provider}. Run: models refresh {provider}")
+                    elif not catalog_row['enabled']:
+                        print(f"⚠️  Model '{model}' is in catalog but not enabled. Run: models enable {catalog_row['id']}")
+                except Exception:
+                    # Table may not exist yet (migrations pending)
+                    conn.rollback()
 
                 # Insert/update configuration
                 cur.execute(
