@@ -1028,7 +1028,7 @@ class OpenRouterProvider(AIProvider):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"},
                 ],
-                max_tokens=4096,
+                max_tokens=16384,
                 temperature=0.3,
                 response_format={"type": "json_object"},
             )
