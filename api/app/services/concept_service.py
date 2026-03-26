@@ -253,7 +253,8 @@ class ConceptService:
         self,
         concept_id: str,
         evidence_text: str,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        creation_method: CreationMethod = CreationMethod.API
     ) -> Dict[str, Any]:
         """Add evidence to an existing concept.
 
@@ -278,7 +279,7 @@ class ConceptService:
         source_id = await self._create_synthetic_source(
             ontology=ontology,
             concept_label=label,
-            creation_method=CreationMethod.API,
+            creation_method=creation_method,
             user_id=user_id
         )
 

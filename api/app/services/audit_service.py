@@ -26,6 +26,9 @@ class AuditAction(str, Enum):
     UPDATE_EDGE = "update_edge"
     DELETE_EDGE = "delete_edge"
 
+    # Evidence operations
+    ADD_EVIDENCE = "add_evidence"
+
     # Batch operations
     BATCH_CREATE = "batch_create"
 

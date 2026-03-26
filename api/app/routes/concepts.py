@@ -19,6 +19,7 @@ from ..models.concepts import (
     ConceptListResponse,
     CreationMethod,
     EvidenceCreate,
+    EvidenceResponse,
 )
 from ..models.auth import UserInDB
 from ..dependencies.auth import require_permission
@@ -282,6 +283,7 @@ async def delete_concept(
 
 @router.post(
     "/{concept_id}/evidence",
+    response_model=EvidenceResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Add evidence to a concept"
 )
@@ -311,7 +313,7 @@ async def add_evidence(
         log_audit_standalone(
             age_client=age_client,
             user_id=current_user.id if current_user else None,
-            action=AuditAction.CREATE_CONCEPT.value,
+            action=AuditAction.ADD_EVIDENCE.value,
             resource_type="evidence",
             resource_id=result["instance_id"],
             details={

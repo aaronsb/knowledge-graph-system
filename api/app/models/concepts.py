@@ -105,6 +105,15 @@ class EvidenceCreate(BaseModel):
     )
 
 
+class EvidenceResponse(BaseModel):
+    """Response from adding evidence to a concept."""
+
+    concept_id: str
+    instance_id: str
+    source_id: str
+    evidence_text: str
+
+
 class ConceptUpdate(BaseModel):
     """Request to update an existing concept (partial update)."""
 

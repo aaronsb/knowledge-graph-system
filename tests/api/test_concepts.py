@@ -448,3 +448,110 @@ class TestConceptScopeEnforcement:
 
             response = api_client.get("/concepts/c_123", headers=auth_headers_user)
             assert response.status_code == 200
+
+
+class TestAddEvidence:
+    """Tests for POST /concepts/{concept_id}/evidence endpoint."""
+
+    def test_add_evidence_success(self, api_client: TestClient, auth_headers_user):
+        """Add evidence to existing concept returns 201."""
+        with patch('api.app.routes.concepts.get_age_client') as mock_age, \
+             patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.add_evidence.return_value = {
+                "concept_id": "c_123",
+                "instance_id": "i_abc",
+                "source_id": "src_def",
+                "evidence_text": "This concept is supported by empirical observation."
+            }
+            mock_service_factory.return_value = mock_service
+            mock_age.return_value = MagicMock()
+
+            response = api_client.post(
+                "/concepts/c_123/evidence",
+                json={"evidence_text": "This concept is supported by empirical observation."},
+                headers=auth_headers_user
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert data["concept_id"] == "c_123"
+            assert data["instance_id"] == "i_abc"
+            assert data["evidence_text"] == "This concept is supported by empirical observation."
+
+    def test_add_evidence_too_short(self, api_client: TestClient, auth_headers_user):
+        """Evidence text shorter than 10 chars is rejected."""
+        response = api_client.post(
+            "/concepts/c_123/evidence",
+            json={"evidence_text": "short"},
+            headers=auth_headers_user
+        )
+        assert response.status_code == 422  # Pydantic validation
+
+    def test_add_evidence_concept_not_found(self, api_client: TestClient, auth_headers_user):
+        """Add evidence to nonexistent concept returns 404."""
+        with patch('api.app.routes.concepts.get_age_client'), \
+             patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.add_evidence.side_effect = ValueError("Concept c_missing not found")
+            mock_service_factory.return_value = mock_service
+
+            response = api_client.post(
+                "/concepts/c_missing/evidence",
+                json={"evidence_text": "Evidence for a concept that does not exist."},
+                headers=auth_headers_user
+            )
+
+            assert response.status_code == 404
+
+    def test_add_evidence_requires_auth(self, api_client: TestClient):
+        """Add evidence requires authentication."""
+        response = api_client.post(
+            "/concepts/c_123/evidence",
+            json={"evidence_text": "Evidence without authentication."}
+        )
+        assert response.status_code == 401
+
+
+class TestEvidenceRequiredOnCreate:
+    """Tests for evidence_text requirement on manual concept creation."""
+
+    def test_create_concept_with_evidence(self, api_client: TestClient, auth_headers_user):
+        """Create concept with evidence_text succeeds."""
+        with patch('api.app.routes.concepts.get_age_client') as mock_age, \
+             patch('api.app.routes.concepts.get_concept_service') as mock_service_factory:
+
+            mock_service = AsyncMock()
+            mock_service.create_concept.return_value = make_concept_response()
+            mock_service_factory.return_value = mock_service
+            mock_age.return_value = MagicMock()
+
+            response = api_client.post(
+                "/concepts",
+                json={
+                    "label": "Test Concept",
+                    "ontology": "test-ontology",
+                    "evidence_text": "This concept represents a well-established principle."
+                },
+                headers=auth_headers_user
+            )
+
+            assert response.status_code == 201
+            # Verify evidence_text was passed to the service
+            call_args = mock_service.create_concept.call_args
+            assert call_args.kwargs["request"].evidence_text == "This concept represents a well-established principle."
+
+    def test_create_concept_evidence_too_short(self, api_client: TestClient, auth_headers_user):
+        """Evidence text shorter than 10 chars is rejected by Pydantic."""
+        response = api_client.post(
+            "/concepts",
+            json={
+                "label": "Test Concept",
+                "ontology": "test-ontology",
+                "evidence_text": "short"
+            },
+            headers=auth_headers_user
+        )
+        assert response.status_code == 422
