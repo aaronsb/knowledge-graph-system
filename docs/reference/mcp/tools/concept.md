@@ -14,9 +14,10 @@ For multi-step workflows (search → connect → expand → filter), compose the
 
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)
-  - Allowed values: `details`, `related`, `connect`
-- `concept_id` (`string`) - Concept ID (required for details, related)
+- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)
+  - Allowed values: `details`, `related`, `connect`, `add_evidence`
+- `concept_id` (`string`) - Concept ID (required for details, related, add_evidence)
+- `evidence_text` (`string`) - Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)
 - `include_grounding` (`boolean`) - Include grounding_strength (default: true)
   - Default: `true`
 - `include_diversity` (`boolean`) - Include diversity metrics for details action (default: false, adds ~100-500ms)

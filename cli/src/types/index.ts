@@ -1048,6 +1048,24 @@ export interface ConceptCreate {
   search_terms?: string[];
   matching_mode?: MatchingMode;
   creation_method?: CreationMethod;
+  evidence_text?: string;
+}
+
+/**
+ * Request to add evidence to an existing concept.
+ */
+export interface EvidenceCreate {
+  evidence_text: string;
+}
+
+/**
+ * Response from adding evidence to a concept.
+ */
+export interface EvidenceResponse {
+  concept_id: string;
+  instance_id: string;
+  source_id: string;
+  evidence_text: string;
 }
 
 /**

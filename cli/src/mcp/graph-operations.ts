@@ -96,6 +96,7 @@ export interface CreateConceptParams {
   description?: string;
   search_terms?: string[];
   matching_mode?: MatchingMode;
+  evidence_text?: string;
 }
 
 /**
@@ -191,6 +192,7 @@ export interface QueueOperation {
   description?: string;
   search_terms?: string[];
   matching_mode?: MatchingMode;
+  evidence_text?: string;
   concept_id?: string;
   cascade?: boolean;
   label_contains?: string;
@@ -354,6 +356,7 @@ export class GraphOperationExecutor {
         search_terms: params.search_terms,
         matching_mode: params.matching_mode || 'auto',
         creation_method: 'mcp',
+        evidence_text: params.evidence_text,
       });
 
       return { success: true, data: result };
@@ -660,6 +663,7 @@ export class GraphOperationExecutor {
         description: op.description,
         search_terms: op.search_terms,
         matching_mode: op.matching_mode,
+        evidence_text: op.evidence_text,
       });
       if (!result.success) {
         throw new Error(result.error);

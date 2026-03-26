@@ -64,6 +64,7 @@ Queue executes sequentially, continues past errors by default (set continue_on_e
 - `matching_mode` (`string`) - How to handle similar existing concepts (default: auto)
   - Allowed values: `auto`, `force_create`, `match_only`
   - Default: `"auto"`
+- `evidence_text` (`string`) - Evidence/rationale for the concept (required for create concept, min 10 chars). Stored as an Instance node.
 - `from_concept_id` (`string`) - Source concept ID (for edge create/delete)
 - `to_concept_id` (`string`) - Target concept ID (for edge create/delete)
 - `from_label` (`string`) - Source concept by label (semantic resolution)

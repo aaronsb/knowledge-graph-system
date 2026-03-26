@@ -442,13 +442,17 @@ For multi-step workflows (search → connect → expand → filter), compose the
           properties: {
             action: {
               type: 'string',
-              enum: ['details', 'related', 'connect'],
-              description: 'Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)',
+              enum: ['details', 'related', 'connect', 'add_evidence'],
+              description: 'Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)',
             },
-            // For details and related
+            // For details, related, and add_evidence
             concept_id: {
               type: 'string',
-              description: 'Concept ID (required for details, related)',
+              description: 'Concept ID (required for details, related, add_evidence)',
+            },
+            evidence_text: {
+              type: 'string',
+              description: 'Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)',
             },
             include_grounding: {
               type: 'boolean',
@@ -1064,6 +1068,7 @@ Queue executes sequentially, continues past errors by default (set continue_on_e
                   description: { type: 'string' },
                   search_terms: { type: 'array', items: { type: 'string' } },
                   matching_mode: { type: 'string', enum: ['auto', 'force_create', 'match_only'] },
+                  evidence_text: { type: 'string' },
                   concept_id: { type: 'string' },
                   from_concept_id: { type: 'string' },
                   to_concept_id: { type: 'string' },
@@ -1108,6 +1113,10 @@ Queue executes sequentially, continues past errors by default (set continue_on_e
               enum: ['auto', 'force_create', 'match_only'],
               description: 'How to handle similar existing concepts (default: auto)',
               default: 'auto',
+            },
+            evidence_text: {
+              type: 'string',
+              description: 'Evidence/rationale for the concept (required for create concept, min 10 chars). Stored as an Instance node.',
             },
             // Edge fields
             from_concept_id: {
@@ -1704,6 +1713,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 content: [{ type: 'text', text: formattedText }],
               };
             }
+          }
+
+          case 'add_evidence': {
+            const conceptId = toolArgs.concept_id as string;
+            const evidenceText = toolArgs.evidence_text as string;
+
+            if (!conceptId) {
+              throw new Error('concept_id is required for add_evidence');
+            }
+            if (!evidenceText || evidenceText.length < 10) {
+              throw new Error('evidence_text is required and must be at least 10 characters');
+            }
+
+            const result = await client.addEvidence(conceptId, evidenceText);
+
+            return {
+              content: [{ type: 'text', text: `Evidence added to concept ${result.concept_id}\n\nInstance: ${result.instance_id}\nSource: ${result.source_id}\nText: ${result.evidence_text}` }],
+            };
           }
 
           default:
@@ -2614,12 +2641,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         switch (action) {
           case 'create': {
             if (entity === 'concept') {
+              const evidenceText = toolArgs.evidence_text as string | undefined;
+              const matchingMode = toolArgs.matching_mode as string | undefined;
+              // Require evidence_text unless match_only (linking to existing concept)
+              if (matchingMode !== 'match_only' && (!evidenceText || evidenceText.length < 10)) {
+                throw new Error('evidence_text is required when creating a concept (min 10 characters). Provide the rationale or supporting evidence for why this concept exists.');
+              }
               const result = await executor.createConcept({
                 label: toolArgs.label as string,
                 ontology: toolArgs.ontology as string,
                 description: toolArgs.description as string | undefined,
                 search_terms: toolArgs.search_terms as string[] | undefined,
-                matching_mode: toolArgs.matching_mode as 'auto' | 'force_create' | 'match_only' | undefined,
+                matching_mode: matchingMode as 'auto' | 'force_create' | 'match_only' | undefined,
+                evidence_text: evidenceText,
               });
               if (!result.success) throw new Error(result.error);
               return {

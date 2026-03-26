@@ -113,6 +113,13 @@ class ConceptService:
                 f"No matching concept found for '{request.label}' in ontology '{request.ontology}'"
             )
 
+        # Require evidence for manual concept creation
+        if request.creation_method != CreationMethod.LLM_EXTRACTION and not request.evidence_text:
+            raise ValueError(
+                "evidence_text is required when creating a concept manually. "
+                "Provide the rationale or supporting evidence (min 10 characters)."
+            )
+
         # Create new concept
         concept_id = f"c_{uuid4().hex[:12]}"
 
@@ -137,6 +144,14 @@ class ConceptService:
 
         # Link concept to source
         self.age_client.link_concept_to_source(concept_id, source_id)
+
+        # Create evidence instance if evidence_text provided
+        if request.evidence_text:
+            await self._create_evidence_instance(
+                concept_id=concept_id,
+                source_id=source_id,
+                evidence_text=request.evidence_text
+            )
 
         # Store creation metadata (in concept properties)
         await self._set_concept_metadata(
@@ -214,6 +229,75 @@ class ConceptService:
         )
 
         return source_id
+
+    async def _create_evidence_instance(
+        self,
+        concept_id: str,
+        source_id: str,
+        evidence_text: str
+    ) -> str:
+        """Create an Instance node and link it to a concept and source."""
+        instance_id = f"i_{uuid4().hex[:12]}"
+        self.age_client.create_instance_node(
+            instance_id=instance_id,
+            quote=evidence_text
+        )
+        self.age_client.link_instance_to_concept_and_source(
+            instance_id=instance_id,
+            concept_id=concept_id,
+            source_id=source_id
+        )
+        return instance_id
+
+    async def add_evidence(
+        self,
+        concept_id: str,
+        evidence_text: str,
+        user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Add evidence to an existing concept.
+
+        Creates a synthetic source, an Instance node with the evidence text,
+        and links them: Concept -[EVIDENCED_BY]-> Instance -[FROM_SOURCE]-> Source.
+        """
+        # Verify concept exists
+        query = """
+        MATCH (c:Concept {concept_id: $concept_id})
+        RETURN c.label as label, c.ontology as ontology
+        """
+        result = self.age_client._execute_cypher(
+            query, params={"concept_id": concept_id}, fetch_one=True
+        )
+        if not result:
+            raise ValueError(f"Concept {concept_id} not found")
+
+        label = result.get("label", "unknown")
+        ontology = result.get("ontology", "unknown")
+
+        # Create synthetic source for this evidence
+        source_id = await self._create_synthetic_source(
+            ontology=ontology,
+            concept_label=label,
+            creation_method=CreationMethod.API,
+            user_id=user_id
+        )
+
+        # Link concept to the new source
+        self.age_client.link_concept_to_source(concept_id, source_id)
+
+        # Create instance and link
+        instance_id = await self._create_evidence_instance(
+            concept_id=concept_id,
+            source_id=source_id,
+            evidence_text=evidence_text
+        )
+
+        return {
+            "concept_id": concept_id,
+            "instance_id": instance_id,
+            "source_id": source_id,
+            "evidence_text": evidence_text
+        }
 
     async def _set_concept_metadata(
         self,

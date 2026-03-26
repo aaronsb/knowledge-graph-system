@@ -18,6 +18,7 @@ from ..models.concepts import (
     ConceptResponse,
     ConceptListResponse,
     CreationMethod,
+    EvidenceCreate,
 )
 from ..models.auth import UserInDB
 from ..dependencies.auth import require_permission
@@ -276,4 +277,66 @@ async def delete_concept(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete concept"
+        )
+
+
+@router.post(
+    "/{concept_id}/evidence",
+    status_code=status.HTTP_201_CREATED,
+    summary="Add evidence to a concept"
+)
+async def add_evidence(
+    concept_id: str,
+    request: EvidenceCreate,
+    current_user: UserInDB = Depends(require_permission("graph", "write"))
+):
+    """
+    Add evidence text to an existing concept.
+
+    Creates an Instance node with the evidence text and links it
+    to the concept via a synthetic source.
+
+    Requires `graph:write` permission.
+    """
+    age_client = get_age_client()
+    service = get_concept_service(age_client)
+
+    try:
+        result = await service.add_evidence(
+            concept_id=concept_id,
+            evidence_text=request.evidence_text,
+            user_id=str(current_user.id) if current_user else None
+        )
+
+        log_audit_standalone(
+            age_client=age_client,
+            user_id=current_user.id if current_user else None,
+            action=AuditAction.CREATE_CONCEPT.value,
+            resource_type="evidence",
+            resource_id=result["instance_id"],
+            details={
+                "concept_id": concept_id,
+                "evidence_text": request.evidence_text[:100]
+            },
+            outcome="success"
+        )
+
+        age_client.refresh_epoch()
+
+        return result
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e)
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to add evidence to concept {concept_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to add evidence"
         )
