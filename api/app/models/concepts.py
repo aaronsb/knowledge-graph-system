@@ -74,6 +74,12 @@ class ConceptCreate(BaseModel):
         CreationMethod.API,
         description="How this concept is being created"
     )
+    evidence_text: Optional[str] = Field(
+        None,
+        description="Evidence/rationale for the concept (required for manual creation via API/CLI/MCP)",
+        min_length=10,
+        max_length=2000
+    )
 
     class Config:
         json_schema_extra = {
@@ -86,6 +92,26 @@ class ConceptCreate(BaseModel):
                 "creation_method": "api"
             }
         }
+
+
+class EvidenceCreate(BaseModel):
+    """Request to add evidence to an existing concept."""
+
+    evidence_text: str = Field(
+        ...,
+        description="Evidence/rationale text supporting the concept",
+        min_length=10,
+        max_length=2000
+    )
+
+
+class EvidenceResponse(BaseModel):
+    """Response from adding evidence to a concept."""
+
+    concept_id: str
+    instance_id: str
+    source_id: str
+    evidence_text: str
 
 
 class ConceptUpdate(BaseModel):

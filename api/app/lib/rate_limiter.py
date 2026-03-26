@@ -43,10 +43,11 @@ def get_provider_concurrency_limit(provider_name: str) -> int:
     - ollama: 1 (single GPU/CPU bottleneck)
     - anthropic: 4 (moderate API rate limits)
     - openai: 8 (higher API rate limits)
+    - openrouter: 8 (cloud API, similar to OpenAI)
     - mock: 100 (no real limits for testing)
 
     Args:
-        provider_name: Provider name ('openai', 'anthropic', 'ollama', 'mock')
+        provider_name: Provider name ('openai', 'anthropic', 'ollama', 'openrouter', 'mock')
 
     Returns:
         Maximum concurrent requests allowed for this provider
@@ -58,6 +59,7 @@ def get_provider_concurrency_limit(provider_name: str) -> int:
         'ollama': 1,      # Local GPU/CPU - serialize to avoid thrashing
         'anthropic': 4,   # Moderate API rate limits
         'openai': 8,      # Higher API rate limits
+        'openrouter': 8,  # Cloud API proxy - similar to OpenAI
         'mock': 100,      # Testing - no real limits
     }
 
@@ -137,10 +139,11 @@ def get_provider_max_retries(provider_name: str) -> int:
     - ollama: 3 (local, fewer retries needed)
     - anthropic: 8 (cloud API, more resilience)
     - openai: 8 (cloud API, more resilience)
+    - openrouter: 8 (cloud API proxy, more resilience)
     - mock: 0 (testing, no retries)
 
     Args:
-        provider_name: Provider name ('openai', 'anthropic', 'ollama', 'mock')
+        provider_name: Provider name ('openai', 'anthropic', 'ollama', 'openrouter', 'mock')
 
     Returns:
         Maximum retry attempts for rate-limited requests
@@ -152,6 +155,7 @@ def get_provider_max_retries(provider_name: str) -> int:
         'ollama': 3,      # Local - fewer retries needed
         'anthropic': 8,   # Cloud API - more resilience
         'openai': 8,      # Cloud API - more resilience
+        'openrouter': 8,  # Cloud API proxy - more resilience
         'mock': 0,        # Testing - no retries
     }
 

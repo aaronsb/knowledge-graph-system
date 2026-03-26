@@ -14,10 +14,11 @@ cryptography==46.0.3
 # Python dotenv (for reading .env files in diagnostics)
 python-dotenv==1.2.1
 
-# AI provider SDKs (for API key validation in configure.py)
+# AI provider SDKs (for API key validation and catalog refresh in configure.py)
 httpx==0.27.2  # Pinned to 0.27.x (0.28.x removed proxies parameter, breaks openai SDK)
 openai==2.7.1  # Latest stable
 anthropic==0.72.0  # Latest stable
+requests>=2.31.0  # For model catalog refresh (OpenRouter, Ollama)
 
 # Numeric computation (for grounding calculation in admin scripts)
 numpy==2.3.4  # Required for measurement tools and statistical calculations

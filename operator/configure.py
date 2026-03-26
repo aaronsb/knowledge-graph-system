@@ -114,9 +114,10 @@ class OperatorConfig:
         """Configure AI extraction provider"""
         provider = args.provider
         model = args.model
+        max_tokens = getattr(args, 'max_tokens', None)
 
         if not provider:
-            print("❌ Provider required (openai, anthropic, or ollama)")
+            print("❌ Provider required (openai, anthropic, ollama, or openrouter)")
             return False
 
         # Default models
@@ -124,7 +125,8 @@ class OperatorConfig:
             models = {
                 "openai": "gpt-4o",
                 "anthropic": "claude-sonnet-4-20250514",
-                "ollama": "mistral:7b-instruct"
+                "ollama": "mistral:7b-instruct",
+                "openrouter": "openai/gpt-4o",
             }
             model = models.get(provider)
             if not model:
@@ -141,17 +143,34 @@ class OperatorConfig:
                 if current:
                     print(f"📝 Current: {current['provider']} / {current['model_name']}")
 
+                # Validate model exists in catalog (ADR-800) — warn but don't block
+                try:
+                    cur.execute(
+                        """SELECT id, enabled FROM kg_api.provider_model_catalog
+                           WHERE provider = %s AND model_id = %s AND category = 'extraction'""",
+                        (provider, model),
+                    )
+                    catalog_row = cur.fetchone()
+                    if catalog_row is None:
+                        print(f"⚠️  Model '{model}' not in catalog for {provider}. Run: models refresh {provider}")
+                    elif not catalog_row['enabled']:
+                        print(f"⚠️  Model '{model}' is in catalog but not enabled. Run: models enable {catalog_row['id']}")
+                except Exception:
+                    # Table may not exist yet (migrations pending)
+                    conn.rollback()
+
                 # Insert/update configuration
                 cur.execute(
                     """INSERT INTO kg_api.ai_extraction_config
-                       (provider, model_name, supports_vision, supports_json_mode, active)
-                       VALUES (%s, %s, true, true, true)
+                       (provider, model_name, supports_vision, supports_json_mode, max_tokens, active)
+                       VALUES (%s, %s, true, true, %s, true)
                        ON CONFLICT (active) WHERE active = true
                        DO UPDATE SET
                          provider = EXCLUDED.provider,
                          model_name = EXCLUDED.model_name,
+                         max_tokens = COALESCE(EXCLUDED.max_tokens, kg_api.ai_extraction_config.max_tokens),
                          updated_at = NOW()""",
-                    (provider, model)
+                    (provider, model, max_tokens)
                 )
                 conn.commit()
                 print(f"✅ Configured AI extraction: {provider} / {model}")
@@ -278,7 +297,7 @@ class OperatorConfig:
         try:
             from api.app.lib.encrypted_keys import EncryptedKeyStore
             from api.app.lib.age_client import AGEClient
-            from api.app.lib.ai_providers import OpenAIProvider, AnthropicProvider
+            from api.app.lib.ai_providers import OpenAIProvider, AnthropicProvider, OpenRouterProvider
         except ImportError as e:
             print(f"❌ Cannot import required modules: {e}")
             print("   Make sure PYTHONPATH includes api directory")
@@ -291,6 +310,8 @@ class OperatorConfig:
                 validator = OpenAIProvider(api_key=key)
             elif provider.lower() == "anthropic":
                 validator = AnthropicProvider(api_key=key)
+            elif provider.lower() == "openrouter":
+                validator = OpenRouterProvider(api_key=key)
             else:
                 print(f"⚠️  Warning: Validation not implemented for provider '{provider}'")
                 print("   Key will be stored without validation.")
@@ -333,6 +354,177 @@ class OperatorConfig:
         except Exception as e:
             print(f"❌ Failed to store API key: {e}")
             return False
+
+    def cmd_models(self, args):
+        """Manage provider model catalog (ADR-800)."""
+        action = getattr(args, 'action', None)
+
+        if not action:
+            print("❌ Action required: list, refresh, enable, disable, default, price")
+            return False
+
+        conn = self.get_connection()
+        try:
+            if action == 'list':
+                provider = getattr(args, 'provider_name', None)
+                use_tsv = getattr(args, 'tsv', False)
+                category_filter = getattr(args, 'category', None)
+                limit = getattr(args, 'limit', 0) or 0
+
+                with conn.cursor() as cur:
+                    conditions = []
+                    params = []
+                    if provider:
+                        conditions.append("provider = %s")
+                        params.append(provider)
+                    if category_filter:
+                        conditions.append("category = %s")
+                        params.append(category_filter)
+
+                    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+                    limit_clause = f"LIMIT {int(limit)}" if limit > 0 else ""
+                    cur.execute(
+                        f"""SELECT id, provider, model_id, display_name, category,
+                                   enabled, is_default,
+                                   price_prompt_per_m, price_completion_per_m,
+                                   fetched_at
+                            FROM kg_api.provider_model_catalog
+                            {where}
+                            ORDER BY provider, sort_order, model_id
+                            {limit_clause}""",
+                        params,
+                    )
+                    rows = cur.fetchall()
+
+                if not rows:
+                    if not use_tsv:
+                        print("📭 No models in catalog." + (" Try: models refresh <provider>" if provider else ""))
+                    return True
+
+                if use_tsv:
+                    # Machine-parseable: ID\tmodel_id\tdisplay_name\tprice_prompt\tprice_completion
+                    for row in rows:
+                        prompt_p = f"{float(row['price_prompt_per_m']):.4f}" if row['price_prompt_per_m'] is not None else ""
+                        comp_p = f"{float(row['price_completion_per_m']):.4f}" if row['price_completion_per_m'] is not None else ""
+                        print(f"{row['id']}\t{row['model_id']}\t{row['display_name'] or row['model_id']}\t{prompt_p}\t{comp_p}")
+                    return True
+
+                current_provider = None
+                for row in rows:
+                    if row['provider'] != current_provider:
+                        current_provider = row['provider']
+                        print(f"\n📦 {current_provider.upper()}")
+                        print(f"   {'ID':>4}  {'Model':<40} {'Category':<12} {'Enabled':<8} {'Default':<8} {'Prompt/1M':>10} {'Comp/1M':>10}")
+                        print(f"   {'─'*4}  {'─'*40} {'─'*12} {'─'*8} {'─'*8} {'─'*10} {'─'*10}")
+
+                    enabled_mark = "✅" if row['enabled'] else "  "
+                    default_mark = "⭐" if row['is_default'] else "  "
+                    prompt_price = f"${float(row['price_prompt_per_m']):.4f}" if row['price_prompt_per_m'] is not None else "—"
+                    comp_price = f"${float(row['price_completion_per_m']):.4f}" if row['price_completion_per_m'] is not None else "—"
+
+                    print(f"   {row['id']:>4}  {row['model_id']:<40} {row['category']:<12} {enabled_mark:<8} {default_mark:<8} {prompt_price:>10} {comp_price:>10}")
+
+                print()
+                return True
+
+            elif action == 'refresh':
+                provider = getattr(args, 'provider_name', None)
+                if not provider:
+                    print("❌ Provider required: openai, anthropic, ollama, openrouter")
+                    return False
+
+                print(f"🔄 Fetching model catalog from {provider}...")
+                try:
+                    from api.app.lib.ai_providers import get_provider
+                    from api.app.lib.model_catalog import upsert_catalog_entries
+
+                    prov = get_provider(provider)
+                    entries = prov.fetch_model_catalog()
+
+                    if not entries:
+                        print(f"⚠️  No models returned from {provider}")
+                        return False
+
+                    count = upsert_catalog_entries(conn, entries)
+                    print(f"✅ Refreshed {count} models from {provider}")
+                    return True
+
+                except Exception as e:
+                    print(f"❌ Failed to refresh catalog: {e}")
+                    return False
+
+            elif action == 'enable':
+                # Catalog ID is the 2nd positional arg (argparse maps it to provider_name)
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
+                if not model_id_str:
+                    print("❌ Model catalog ID required")
+                    return False
+
+                from api.app.lib.model_catalog import set_model_enabled
+                if set_model_enabled(conn, int(model_id_str), True):
+                    print(f"✅ Enabled model #{model_id_str}")
+                    return True
+                print(f"❌ Model #{model_id_str} not found")
+                return False
+
+            elif action == 'disable':
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
+                if not model_id_str:
+                    print("❌ Model catalog ID required")
+                    return False
+
+                from api.app.lib.model_catalog import set_model_enabled
+                if set_model_enabled(conn, int(model_id_str), False):
+                    print(f"✅ Disabled model #{model_id_str}")
+                    return True
+                print(f"❌ Model #{model_id_str} not found")
+                return False
+
+            elif action == 'default':
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
+                if not model_id_str:
+                    print("❌ Model catalog ID required")
+                    return False
+
+                from api.app.lib.model_catalog import set_model_default
+                if set_model_default(conn, int(model_id_str)):
+                    print(f"✅ Set model #{model_id_str} as default")
+                    return True
+                print(f"❌ Model #{model_id_str} not found")
+                return False
+
+            elif action == 'price':
+                model_id_str = getattr(args, 'provider_name', None) or getattr(args, 'model_id', None)
+                prompt_cost = getattr(args, 'prompt', None)
+                comp_cost = getattr(args, 'completion', None)
+
+                if not model_id_str:
+                    print("❌ Model catalog ID required")
+                    return False
+                if prompt_cost is None and comp_cost is None:
+                    print("❌ Specify --prompt and/or --completion price per 1M tokens")
+                    return False
+
+                from api.app.lib.model_catalog import update_model_pricing
+                if update_model_pricing(
+                    conn, int(model_id_str),
+                    price_prompt_per_m=float(prompt_cost) if prompt_cost else None,
+                    price_completion_per_m=float(comp_cost) if comp_cost else None,
+                ):
+                    print(f"✅ Updated pricing for model #{model_id_str}")
+                    return True
+                print(f"❌ Model #{model_id_str} not found")
+                return False
+
+            else:
+                print(f"❌ Unknown action: {action}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Models command failed: {e}")
+            return False
+        finally:
+            conn.close()
 
     def cmd_status(self, args):
         """Show current configuration status"""
@@ -461,8 +653,9 @@ def main():
 
     # ai-provider
     ai_parser = subparsers.add_parser('ai-provider', help='Configure AI extraction provider')
-    ai_parser.add_argument('provider', nargs='?', help='Provider: openai, anthropic, ollama')
+    ai_parser.add_argument('provider', nargs='?', help='Provider: openai, anthropic, ollama, openrouter')
     ai_parser.add_argument('--model', help='Model name (optional, uses default)')
+    ai_parser.add_argument('--max-tokens', type=int, help='Max completion tokens for extraction (default: 16384)')
 
     # embedding
     embed_parser = subparsers.add_parser('embedding', help='List or activate embedding profile')
@@ -473,6 +666,17 @@ def main():
     key_parser = subparsers.add_parser('api-key', help='Store encrypted API key')
     key_parser.add_argument('provider', nargs='?', help='Provider name')
     key_parser.add_argument('--key', help='API key (will prompt if not provided)')
+
+    # models (ADR-800)
+    models_parser = subparsers.add_parser('models', help='Manage provider model catalog')
+    models_parser.add_argument('action', nargs='?', help='list, refresh, enable, disable, default, price')
+    models_parser.add_argument('provider_name', nargs='?', help='Provider name (for list/refresh)')
+    models_parser.add_argument('model_id', nargs='?', help='Catalog ID (for enable/disable/default/price)')
+    models_parser.add_argument('--prompt', type=float, help='Prompt price per 1M tokens (for price)')
+    models_parser.add_argument('--completion', type=float, help='Completion price per 1M tokens (for price)')
+    models_parser.add_argument('--tsv', action='store_true', help='Output in TSV format (for scripting)')
+    models_parser.add_argument('--category', default='extraction', help='Filter by category (default: extraction)')
+    models_parser.add_argument('--limit', type=int, default=0, help='Limit number of results (0=unlimited)')
 
     # status
     subparsers.add_parser('status', help='Show configuration status')
@@ -497,6 +701,7 @@ def main():
         'ai-provider': config.cmd_ai_provider,
         'embedding': config.cmd_embedding,
         'api-key': config.cmd_api_key,
+        'models': config.cmd_models,
         'status': config.cmd_status,
         'oauth': config.cmd_oauth,
     }

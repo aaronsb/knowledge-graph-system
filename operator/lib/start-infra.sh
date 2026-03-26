@@ -124,6 +124,21 @@ else
 fi
 cd "$DOCKER_DIR"
 
+# Restart postgres so AGE extension is fully initialized before warm migrations
+echo -e "${BLUE}  Restarting PostgreSQL for AGE initialization...${NC}"
+docker restart $POSTGRES_CONTAINER >/dev/null 2>&1
+for i in {1..15}; do
+    if docker exec $POSTGRES_CONTAINER psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT 1" >/dev/null 2>&1; then
+        echo -e "${GREEN}✓ PostgreSQL restarted${NC}"
+        break
+    fi
+    if [ $i -eq 15 ]; then
+        echo -e "${RED}✗ PostgreSQL did not come back after restart${NC}"
+        exit 1
+    fi
+    sleep 2
+done
+
 # Check AGE extension
 AGE_EXT=$(docker exec $POSTGRES_CONTAINER psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT COUNT(*) FROM pg_extension WHERE extname='age'" 2>/dev/null || echo "0")
 if [ "$AGE_EXT" -gt 0 ]; then
@@ -131,6 +146,18 @@ if [ "$AGE_EXT" -gt 0 ]; then
 else
     echo -e "${RED}✗ AGE extension not found${NC}"
 fi
+
+# Apply warm migrations (require running AGE/graph engine)
+cd "$PROJECT_ROOT"
+if [ -f "$PROJECT_ROOT/operator/database/migrate-db.sh" ] && [ -d "schema/migrations-warm" ]; then
+    WARM_COUNT=$(ls schema/migrations-warm/*.sql 2>/dev/null | wc -l)
+    if [ "$WARM_COUNT" -gt 0 ]; then
+        echo -e "${BLUE}  Applying warm migrations (AGE/graph)...${NC}"
+        "$PROJECT_ROOT/operator/database/migrate-db.sh" -y --warm 2>&1 | grep -E "✓|✅|→|⚠️|✗" || true
+        echo -e "${GREEN}✓ Warm migrations applied${NC}"
+    fi
+fi
+cd "$DOCKER_DIR"
 
 # Show applied migrations
 MIGRATION_LIST=$(docker exec $POSTGRES_CONTAINER psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -tAc "SELECT version || ' - ' || name FROM public.schema_migrations ORDER BY version" 2>/dev/null || echo "")

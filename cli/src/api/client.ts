@@ -72,6 +72,7 @@ import {
   EdgeListResponse,
   BatchCreateRequest,
   BatchCreateResponse,
+  EvidenceResponse,
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -730,6 +731,17 @@ export class KnowledgeGraphClient {
    */
   async createConcept(request: ConceptCreate): Promise<ConceptCRUDResponse> {
     const response = await this.client.post('/concepts', request);
+    return response.data;
+  }
+
+  /**
+   * Add evidence to an existing concept.
+   */
+  async addEvidence(conceptId: string, evidenceText: string): Promise<EvidenceResponse> {
+    const response = await this.client.post(
+      `/concepts/${encodeURIComponent(conceptId)}/evidence`,
+      { evidence_text: evidenceText }
+    );
     return response.data;
   }
 
