@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -5383,6 +5383,41 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../../architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-800: Dynamic Model Catalog and OpenRouter Support
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -5392,10 +5427,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_12" >
         
           
-          <label class="md-nav__link" for="__nav_9_3_11" id="__nav_9_3_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9_3_12" id="__nav_9_3_12_label" tabindex="0">
             
   
   
@@ -5413,8 +5448,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9_3_11">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -9499,9 +9534,10 @@
 <p>For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. For example, seed from a search then expand via Cypher using $W_IDS to reference accumulated concept IDs. See the program tool and program/syntax resource for this and other composition patterns.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths)</li>
-<li>Allowed values: <code>details</code>, <code>related</code>, <code>connect</code></li>
-<li><code>concept_id</code> (<code>string</code>) - Concept ID (required for details, related)</li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)</li>
+<li>Allowed values: <code>details</code>, <code>related</code>, <code>connect</code>, <code>add_evidence</code></li>
+<li><code>concept_id</code> (<code>string</code>) - Concept ID (required for details, related, add_evidence)</li>
+<li><code>evidence_text</code> (<code>string</code>) - Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)</li>
 <li><code>include_grounding</code> (<code>boolean</code>) - Include grounding_strength (default: true)</li>
 <li>Default: <code>true</code></li>
 <li><code>include_diversity</code> (<code>boolean</code>) - Include diversity metrics for details action (default: false, adds ~100-500ms)</li>
