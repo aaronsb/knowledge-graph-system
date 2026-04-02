@@ -17,6 +17,7 @@ import shutil
 import tempfile
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
@@ -392,7 +393,14 @@ async def restore_backup(
 
         logger.info(f"Created restore job {job_id} for temp file {temp_path}")
 
-        # ADR-100: Lane manager will claim the approved job
+        # Auto-approve: restore jobs don't need the analysis/approval workflow
+        # (user already confirmed via CLI). Move straight to approved so the
+        # ADR-100 lane manager can claim it.
+        job_queue.update_job(job_id, {
+            "status": "approved",
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "approved_by": "auto"
+        })
 
         return {
             "job_id": job_id,

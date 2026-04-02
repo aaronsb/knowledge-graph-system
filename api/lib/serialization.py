@@ -828,20 +828,28 @@ class DataImporter:
                 MERGE (c)-[:APPEARS]->(s)
             """
 
-            try:
-                client._execute_cypher(query, params=instance)
-            except Exception as e:
-                # AGE creates label tables on first use - parallel threads may race
-                if "already exists" in str(e):
-                    # Extract label name from error message
-                    import re
-                    match = re.search(r'relation "(\w+)" already exists', str(e))
-                    if match:
-                        Console.info(f"  Initializing AGE label: {match.group(1)}")
-                    # Retry - label table now exists
+            import time
+            max_retries = 5
+            for attempt in range(max_retries + 1):
+                try:
                     client._execute_cypher(query, params=instance)
-                else:
-                    raise
+                    break
+                except Exception as e:
+                    error_str = str(e)
+                    if "already exists" in error_str and attempt < max_retries:
+                        # AGE creates label tables on first use - parallel threads may race
+                        import re
+                        match = re.search(r'relation "(\w+)" already exists', error_str)
+                        if match:
+                            Console.info(f"  Initializing AGE label: {match.group(1)}")
+                        time.sleep(0.1 * (attempt + 1))
+                        continue
+                    elif "Entity failed to be updated" in error_str and attempt < max_retries:
+                        # AGE MVCC conflict from concurrent MERGE on same node
+                        time.sleep(0.1 * (attempt + 1))
+                        continue
+                    else:
+                        raise
 
             # Thread-safe progress tracking
             with progress_lock:
@@ -880,48 +888,64 @@ class DataImporter:
             """Process single relationship"""
             # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
             # Use OPTIONAL MATCH to handle missing nodes gracefully
-            query = f"""
-                OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
-                OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
-                WITH c1, c2
-                WHERE c1 IS NOT NULL AND c2 IS NOT NULL
-                MERGE (c1)-[r:{rel['type']}]->(c2)
-                SET r = $properties
-                RETURN count(r) as created
-            """
-
-            try:
-                result = client._execute_cypher(query, params={
+            props = rel.get("properties") or {}
+            if props:
+                query = f"""
+                    OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
+                    OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
+                    WITH c1, c2
+                    WHERE c1 IS NOT NULL AND c2 IS NOT NULL
+                    MERGE (c1)-[r:{rel['type']}]->(c2)
+                    SET r = $properties
+                    RETURN count(r) as created
+                """
+                params = {
                     "from_id": rel["from"],
                     "to_id": rel["to"],
-                    "properties": rel["properties"]
-                }, fetch_one=True)
-            except Exception as e:
-                # AGE concurrency issues with parallel processing
-                error_str = str(e)
+                    "properties": props
+                }
+            else:
+                # Skip SET for empty properties — AGE rejects SET r = {} with
+                # "SET clause expects a map"
+                query = f"""
+                    OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
+                    OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
+                    WITH c1, c2
+                    WHERE c1 IS NOT NULL AND c2 IS NOT NULL
+                    MERGE (c1)-[r:{rel['type']}]->(c2)
+                    RETURN count(r) as created
+                """
+                params = {
+                    "from_id": rel["from"],
+                    "to_id": rel["to"],
+                }
 
-                if "already exists" in error_str:
-                    # AGE creates edge type tables on first use - parallel threads may race
-                    import re
-                    match = re.search(r'relation "(\w+)" already exists', error_str)
-                    if match:
-                        Console.info(f"  Initializing edge type: {match.group(1)}")
-                    # Retry - edge type table now exists
-                    result = client._execute_cypher(query, params={
-                        "from_id": rel["from"],
-                        "to_id": rel["to"],
-                        "properties": rel["properties"]
-                    }, fetch_one=True)
-                elif "Entity failed to be updated" in error_str:
-                    # AGE concurrency: Multiple threads updating same relationship
-                    # Retry once - conflict should be resolved
-                    result = client._execute_cypher(query, params={
-                        "from_id": rel["from"],
-                        "to_id": rel["to"],
-                        "properties": rel["properties"]
-                    }, fetch_one=True)
-                else:
-                    raise
+            import time
+            max_retries = 5
+            for attempt in range(max_retries + 1):
+                try:
+                    result = client._execute_cypher(query, params=params, fetch_one=True)
+                    break
+                except Exception as e:
+                    error_str = str(e)
+
+                    if "already exists" in error_str and attempt < max_retries:
+                        # AGE creates edge type tables on first use - parallel threads may race
+                        import re
+                        match = re.search(r'relation "(\w+)" already exists', error_str)
+                        if match:
+                            Console.info(f"  Initializing edge type: {match.group(1)}")
+                        time.sleep(0.1 * (attempt + 1))
+                        continue
+                    elif "Entity failed to be updated" in error_str and attempt < max_retries:
+                        # AGE MVCC conflict from concurrent MERGE on same edge
+                        time.sleep(0.1 * (attempt + 1))
+                        continue
+                    elif "SET clause expects a map" in error_str and attempt < max_retries:
+                        time.sleep(0.1 * (attempt + 1))
+                        continue
+                    else:
+                        raise
 
             created = 0
             if result and int(str(result.get("created", 0))) > 0:
