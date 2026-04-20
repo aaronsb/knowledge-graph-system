@@ -23,7 +23,9 @@ import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { buildContextMenuItems, useGraphNavigation } from '../common';
+import { buildContextMenuItems, useGraphNavigation, Legend, StatsPanel, PanelStack } from '../common';
+import { FileSpreadsheet } from 'lucide-react';
+import type { GraphData } from '../../types/graph';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
@@ -135,6 +137,41 @@ export const ForceGraph3DV2: React.FC<
     () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
     [data]
   );
+
+  // Synthesize a V1-shape GraphData object for the shared Legend component.
+  // Legend reads `nodes[*].{group,color}` and `links[*].{category,color}`;
+  // our EngineNode/EngineEdge don't carry computed colors (they're applied
+  // in-shader), so we derive them here using the same palette functions
+  // the scene uses. Cast is safe — Legend only touches these fields.
+  const legendData = useMemo<GraphData>(() => {
+    const engineNodes = data?.nodes ?? [];
+    const engineEdges = data?.edges ?? [];
+    const ns = engineNodes.map((n) => ({
+      id: n.id,
+      concept_id: n.id,
+      label: n.label,
+      ontology: n.category,
+      group: n.category,
+      color: palette(n.category),
+      size: 10,
+      search_terms: [],
+    }));
+    const ls = engineEdges.map((e) => {
+      const category = vocabStore.getCategory(e.type) || 'Uncategorized';
+      return {
+        from_id: e.from,
+        to_id: e.to,
+        source: e.from,
+        target: e.to,
+        type: e.type,
+        relationship_type: e.type,
+        category,
+        color: edgePalette ? edgePalette(e.type) : getCategoryColor(category),
+        value: 1,
+      };
+    });
+    return { nodes: ns, links: ls } as unknown as GraphData;
+  }, [data, palette, edgePalette, vocabStore]);
 
   // Build the context-menu item list using the shared helper — identical
   // structure to V1 so users get the same Follow / Add / Remove / Pin /
@@ -272,6 +309,26 @@ export const ForceGraph3DV2: React.FC<
           </div>
         )}
       </div>
+
+      <PanelStack side="left" gap={16} initialTop={16}>
+        <Legend data={legendData} nodeColorMode="ontology" />
+      </PanelStack>
+
+      <PanelStack side="right" gap={16} initialTop={16}>
+        <div className="flex items-center gap-2">
+          <StatsPanel nodeCount={counts.nodes} edgeCount={counts.edges} />
+          {onSendToReports && (
+            <button
+              onClick={onSendToReports}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-lg transition-colors text-sm font-medium"
+              title="Send to Reports"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Reports</span>
+            </button>
+          )}
+        </div>
+      </PanelStack>
 
       {contextMenu && (
         <ContextMenu
