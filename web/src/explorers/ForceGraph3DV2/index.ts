@@ -8,7 +8,7 @@
 import { Boxes } from 'lucide-react';
 import type { ExplorerPlugin } from '../../types/explorer';
 import { ForceGraph3DV2 } from './ForceGraph3DV2';
-import { ProfilePanel } from './ProfilePanel';
+import { V2SettingsPanel } from './V2SettingsPanel';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 import { transformForEngine } from './dataTransformer';
@@ -27,7 +27,7 @@ export const ForceGraph3DV2Explorer: ExplorerPlugin<
   },
 
   component: ForceGraph3DV2,
-  settingsPanel: ProfilePanel,
+  settingsPanel: V2SettingsPanel,
   dataTransformer: transformForEngine,
   defaultSettings: DEFAULT_SETTINGS,
 };

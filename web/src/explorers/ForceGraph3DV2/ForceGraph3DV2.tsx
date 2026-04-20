@@ -261,6 +261,12 @@ export const ForceGraph3DV2: React.FC<
           edges={filteredData?.edges ?? []}
           palette={palette}
           edgePalette={edgePalette}
+          physics={{
+            repulsion: settings?.physics?.repulsion,
+            attraction: settings?.physics?.attraction,
+            centerGravity: settings?.physics?.centerGravity,
+            damping: settings?.physics?.damping,
+          }}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}

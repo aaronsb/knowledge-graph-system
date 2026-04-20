@@ -388,10 +388,16 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     />
   );
 
-  // Settings panel content — graph settings (physics, visual, interaction)
+  // Settings panel content. V2 declares its own settings panel via the
+  // plugin contract; V1 2D/3D share GraphSettingsPanel which is hardcoded
+  // to the V1 settings shape. New explorers with their own shape should
+  // rely on the plugin's settingsPanel field (ADR-034).
+  const PluginSettingsPanel = explorerPlugin?.settingsPanel;
   const settingsPanelContent = (
     <div className="p-3 space-y-4">
-      {explorerSettings?.physics ? (
+      {explorerType === 'force-3d-v2' && PluginSettingsPanel ? (
+        <PluginSettingsPanel settings={explorerSettings} onChange={setExplorerSettings} />
+      ) : explorerSettings?.physics ? (
         <>
           <GraphSettingsPanel
             settings={explorerSettings}
