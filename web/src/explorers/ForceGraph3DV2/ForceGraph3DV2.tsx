@@ -73,6 +73,17 @@ export const ForceGraph3DV2: React.FC<
     [data]
   );
 
+  // Detect V1-shape leaking into the V2 component: V1 data has `links`,
+  // V2 has `edges`. If `data.links` exists we know the ExplorerView's
+  // per-plugin transformer path skipped V2's transformer.
+  const shapeTag = useMemo(() => {
+    if (!data) return 'null';
+    const d = data as unknown as { edges?: unknown[]; links?: unknown[] };
+    if (Array.isArray(d.edges)) return 'v2 (edges)';
+    if (Array.isArray(d.links)) return 'v1 leaked (links)';
+    return 'unknown';
+  }, [data]);
+
   // Raw counts from the store — when these are non-zero but `data` counts
   // are zero, the V2 dataTransformer isn't running or is producing the
   // wrong shape. Select primitives individually (not a freshly-constructed
@@ -150,6 +161,9 @@ export const ForceGraph3DV2: React.FC<
         </div>
         <div style={{ opacity: 0.5, fontSize: 10, marginTop: 2 }}>
           store raw: {rawNodeCount} nodes · {rawLinkCount} links
+        </div>
+        <div style={{ opacity: 0.5, fontSize: 10, marginTop: 1 }}>
+          shape: {shapeTag}
         </div>
         {(selectedId || hoveredId) && (
           <div style={{ opacity: 0.6, marginTop: 4, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
