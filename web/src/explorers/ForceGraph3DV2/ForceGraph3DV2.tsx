@@ -81,6 +81,7 @@ export const ForceGraph3DV2: React.FC<
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}
           selectedId={selectedId}
+          hoveredId={hoveredId}
           onSelect={handleSelect}
           onHover={handleHover}
         />

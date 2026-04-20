@@ -13,6 +13,7 @@ import type { EngineNode, EngineEdge } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
 import { Arrows } from './Arrows';
+import { CaretMarker, NodeLabel } from './Overlays';
 import { useSim } from './useSim';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 
@@ -29,6 +30,7 @@ export interface SceneProps {
   showArrows?: boolean;
   physics?: ForceSimParams;
   selectedId?: string | null;
+  hoveredId?: string | null;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
@@ -49,6 +51,7 @@ export function Scene({
   showArrows = true,
   physics,
   selectedId,
+  hoveredId,
   onSelect,
   onHover,
   onContextMenu,
@@ -99,6 +102,13 @@ export function Scene({
         onSelect={onSelect}
         onHover={onHover}
         onContextMenu={onContextMenu}
+      />
+      <CaretMarker nodes={nodes} positionsRef={sim.positionsRef} nodeId={selectedId} />
+      <NodeLabel
+        nodes={nodes}
+        positionsRef={sim.positionsRef}
+        nodeId={selectedId ?? hoveredId}
+        variant={selectedId ? 'selected' : 'hover'}
       />
       <OrbitControls makeDefault />
     </>
