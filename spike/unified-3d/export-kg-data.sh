@@ -15,6 +15,14 @@ set -euo pipefail
 OUT_DIR="$(dirname "$0")/data"
 mkdir -p "$OUT_DIR"
 
+# AGE note: we cast agtype → text → jsonb. This works on the AGE image pinned
+# in this repo (see CLAUDE.md). Across AGE versions this cast can emit numeric
+# type annotations or unquoted keys that break jsonb parsing; if this script
+# starts failing after an AGE upgrade, switch to the kg REST API as the data
+# source instead of SQL.
+# Degree uses an undirected match (c)-[r]-() — each relationship is counted
+# twice (once from each endpoint) when summed across nodes, which matches how
+# the reference renderer scales node size.
 docker exec -i knowledge-graph-postgres psql -U admin -d knowledge_graph -qtA <<'SQL' > "$OUT_DIR/kg-raw.jsonl"
 LOAD 'age';
 SET search_path = ag_catalog, "$user", public;
@@ -70,7 +78,9 @@ def source_bucket(cid, _seen={}):
         _seen[key] = ATLASSIAN_CATEGORIES[idx]
     return _seen[key]
 
-for line in open(src):
+with open(src) as f:
+    raw_lines = f.readlines()
+for line in raw_lines:
     line = line.strip()
     if not line:
         continue

@@ -157,7 +157,10 @@ The engine owns:
 - Edge index array (`Uint32Array` of length `2M`)
 - Force simulation (CPU or GPU, same parameter object)
 - Instanced node rendering (polygon or billboarded sprite)
-- Edge rendering (straight or bezier, via line shader)
+- Edge rendering (straight or bezier, via line shader) with optional
+  edge-type coloring (see Plugin surface)
+- Arrow-glyph rendering on directed edges, as an instanced-triangle mesh
+  anchored to the target end of each edge (togglable per plugin)
 - Camera (orthographic or perspective)
 - Pointer picking via `instanceId` (uniform across node modes)
 - Hidden mask (per-instance visibility, respected by both sim and renderer)
@@ -211,9 +214,24 @@ Plugins implement the existing `ExplorerPlugin` interface from ADR-034 and
 embed the engine component as their scene. The engine exposes:
 
 ```ts
+interface EngineNode {
+  id: string;                // stable key (e.g. kg concept_id)
+  label: string;              // human-readable display text
+  category: string;           // opaque string; resolved via palette
+  degree: number;             // used for size scaling
+  pinned?: boolean;
+}
+
+interface EngineEdge {
+  from: string;
+  to: string;
+  type: string;               // relationship type; resolved via edgePalette
+  weight?: number;
+}
+
 interface UnifiedGraphEngineProps {
-  nodes: EngineNode[];            // { id, category, degree, pinned? }
-  edges: EngineEdge[];            // { from, to, type, weight? }
+  nodes: EngineNode[];
+  edges: EngineEdge[];
   projection: '2D' | '3D';
   nodeMode: 'sprite' | 'poly';
   physicsBackend?: 'auto' | 'cpu' | 'gpu';
@@ -223,7 +241,12 @@ interface UnifiedGraphEngineProps {
   highlightedEdges?: Set<string>;
   selectedId?: string | null;
   hoveredId?: string | null;
-  palette: (category: string) => string;
+  palette: (category: string) => string;         // node category → hex
+  edgePalette?: (edgeType: string) => string;    // edge type → hex (optional;
+                                                 //   falls back to endpoint
+                                                 //   gradient if absent)
+  showArrows?: boolean;                          // render target-end arrow
+                                                 //   glyphs; default true
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   onHide?: (id: string) => void;
@@ -242,9 +265,11 @@ through the engine.
 ### Positive
 
 - **One engine, one physics, one rendering path.** Maintenance surface
-  shrinks substantially — estimated ~2000-3000 LOC reduction across the
-  three current surfaces once migration completes, plus removal of
-  `react-force-graph-3d` as a dependency.
+  shrinks substantially — the three current surfaces total ~4,400 lines
+  (`ForceGraph2D` 1840, `ForceGraph3D` 2052, `EmbeddingScatter3D` 529).
+  Phase 1 alone takes ~2000 lines off the 3D surface (V2 replaces V1 and
+  `react-force-graph-3d` is removed); phases 2 and 3 reduce the remaining
+  two stacks. Expected total reduction ~2,000–3,000 lines by phase 3.
 - **10k-node real-time interaction** becomes viable for the first time.
   Current 3D hits visible frame drops at a few hundred nodes.
 - **2D and 3D share a camera and a sim**, so switching projection mode on
@@ -324,6 +349,11 @@ including:
 V1 stays registered. Users pick via the explorer dropdown. Once V2 reaches
 full parity and soaks, V1 is removed and `react-force-graph-3d` dep is
 dropped.
+
+**Phase-1 merge gate:** before the phase-1 PR merges, a follow-up spike at
+kg-scale (1,000+ concepts) must validate the performance target on
+kg-shaped data at volume (per spike finding #5). The current spike (52
+concepts) validated shape compatibility but not scaling.
 
 ### Phase 2 — Add 2D projection
 
@@ -447,10 +477,12 @@ The spike lives in `spike/unified-3d/` on this branch. It consists of:
 - An export script (`export-kg-data.sh`) that pulls concepts and relationships
   from a live kg postgres and writes them to `spike/unified-3d/data/kg-graph.json`
   in the shape the atlassian-graph UI expects (`{nodes, edges, meta}`)
-- A drop-in spike server (`spike/unified-3d/reference/spike-server.js`) that
-  replaces atlassian-graph's GraphQL-schema-backed `/api/graph`, `/api/type/:name`,
-  `/api/stats`, `/api/categories` endpoints with static reads from the kg export,
-  leaving the rest of the reference implementation unchanged.
+- A drop-in spike server (`spike/unified-3d/spike-server.js`; copied into
+  `spike/unified-3d/reference/` at reproduction time so it resolves
+  `express` from `reference/node_modules`) that replaces atlassian-graph's
+  GraphQL-schema-backed `/api/graph`, `/api/type/:name`, `/api/stats`,
+  `/api/categories` endpoints with static reads from the kg export, leaving
+  the rest of the reference implementation unchanged.
 
 The reference UI's vite dev server and the spike server both run cleanly and
 serve kg data through the atlassian-graph pipeline end-to-end. At the time of
