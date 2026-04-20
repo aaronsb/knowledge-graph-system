@@ -75,8 +75,13 @@ export function CaretMarker({
 
   return (
     <group ref={groupRef}>
-      <Html center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ position: 'relative', width: 52, height: 52 }}>
+      <Html
+        center
+        zIndexRange={[100, 0]}
+        wrapperClass="pointer-events-none"
+        style={{ pointerEvents: 'none' }}
+      >
+        <div style={{ position: 'relative', width: 52, height: 52, pointerEvents: 'none' }}>
           <div style={{ ...corner, top: 0, left: 0, borderWidth: '2px 0 0 2px' }} />
           <div style={{ ...corner, top: 0, right: 0, borderWidth: '2px 2px 0 0' }} />
           <div style={{ ...corner, bottom: 0, left: 0, borderWidth: '0 0 2px 2px' }} />
@@ -145,7 +150,12 @@ export function NodeLabel({
 
   return (
     <group ref={groupRef}>
-      <Html center zIndexRange={[90, 0]} style={{ pointerEvents: 'none' }}>
+      <Html
+        center
+        zIndexRange={[90, 0]}
+        wrapperClass="pointer-events-none"
+        style={{ pointerEvents: 'none' }}
+      >
         <div
           style={{
             ...style,
@@ -155,6 +165,7 @@ export function NodeLabel({
             fontFamily: 'SF Mono, Menlo, monospace',
             whiteSpace: 'nowrap',
             transform: 'translate(0, -260%)',
+            pointerEvents: 'none',
           }}
         >
           {node.label}

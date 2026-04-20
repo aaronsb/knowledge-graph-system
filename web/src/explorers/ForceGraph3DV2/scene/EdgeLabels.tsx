@@ -195,7 +195,12 @@ export function EdgeLabels({
               groupRefs.current[slot] = g;
             }}
           >
-            <Html center zIndexRange={[50, 0]} style={{ pointerEvents: 'none' }}>
+            <Html
+              center
+              zIndexRange={[50, 0]}
+              wrapperClass="pointer-events-none"
+              style={{ pointerEvents: 'none' }}
+            >
               <div
                 style={{
                   padding: '1px 5px',
@@ -207,6 +212,7 @@ export function EdgeLabels({
                   fontFamily: 'SF Mono, Menlo, monospace',
                   whiteSpace: 'nowrap',
                   letterSpacing: 0.4,
+                  pointerEvents: 'none',
                 }}
               >
                 {meta.type}
