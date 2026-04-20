@@ -21,15 +21,40 @@ import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor } from '../../config/categoryColors';
+import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { buildContextMenuItems, useGraphNavigation } from '../common';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
   ExplorerProps<ForceGraph3DV2Data, ForceGraph3DV2Settings>
-> = ({ data, settings, onNodeClick, className }) => {
+> = ({ data, settings, onNodeClick, onSendToReports, className }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
+  const [hiddenIds] = useState<Set<string>>(() => new Set());
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
+
+  // Context menu + origin/destination / focus markers are the state backing
+  // the shared right-click menu. These mirror V1's ForceGraph3D bookkeeping
+  // so the same buildContextMenuItems helper produces an identical menu.
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string | null;
+    nodeLabel: string | null;
+  } | null>(null);
+  const [originNodeId, setOriginNodeId] = useState<string | null>(null);
+  const [destinationNodeId, setDestinationNodeId] = useState<string | null>(null);
+  const [focusedNode, setFocusedNode] = useState<string | null>(null);
+
+  const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
+  const {
+    handleFollowConcept,
+    handleAddToGraph,
+    handleRemoveFromGraph,
+    handleTravelPath,
+    handleSendToPolarity,
+    handleSendPathToReports,
+  } = useGraphNavigation(mergeRawGraphData);
 
   const handleSelect = useCallback(
     (id: string | null) => {
@@ -41,16 +66,33 @@ export const ForceGraph3DV2: React.FC<
   const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
   }, []);
-  const handleContextMenu = useCallback((id: string) => {
-    // Temporary M4 behavior: right-click hides the node. M5 task #17
-    // swaps this for the shared ContextMenu component with hide /
-    // expand / send-to-reports actions.
-    setHiddenIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }, []);
+  const handleContextMenu = useCallback(
+    (id: string, event: PointerEvent) => {
+      const node = data?.nodes?.find((n) => n.id === id);
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        nodeId: id,
+        nodeLabel: node?.label ?? id,
+      });
+    },
+    [data]
+  );
+
+  // Pin helpers wired through the shared context menu. Drag-to-pin already
+  // mutates pinnedIds via useDragHandler, so these stay aligned with drag.
+  const isPinned = useCallback((nodeId: string) => pinnedIds.has(nodeId), [pinnedIds]);
+  const togglePinNode = useCallback(
+    (nodeId: string) =>
+      setPinnedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(nodeId)) next.delete(nodeId);
+        else next.add(nodeId);
+        return next;
+      }),
+    []
+  );
+  const unpinAllNodes = useCallback(() => setPinnedIds(new Set()), []);
   const palette = useMemo(() => {
     const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
     return createOntologyColorScale(ontologies);
@@ -72,6 +114,41 @@ export const ForceGraph3DV2: React.FC<
     () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
     [data]
   );
+
+  // Build the context-menu item list using the shared helper — identical
+  // structure to V1 so users get the same Follow / Add / Remove / Pin /
+  // Focus / Origin / Destination / Report menu layout.
+  const contextMenuItems: ContextMenuItem[] = contextMenu
+    ? buildContextMenuItems(
+        contextMenu.nodeId && contextMenu.nodeLabel
+          ? { nodeId: contextMenu.nodeId, nodeLabel: contextMenu.nodeLabel }
+          : null,
+        {
+          handleFollowConcept,
+          handleAddToGraph,
+          handleRemoveFromGraph,
+          setOriginNode: setOriginNodeId,
+          setDestinationNode: setDestinationNodeId,
+          setFocusedNode,
+          focusedNodeId: focusedNode,
+          isPinned,
+          togglePinNode,
+          unpinAllNodes,
+          // Camera travel and origin/destination ring markers are V1-3D-
+          // specific features; V2 can pick them up in a follow-up commit
+          // once we have an r3f camera-tween and overlay renderer.
+        },
+        { onClose: () => setContextMenu(null) },
+        originNodeId,
+        destinationNodeId,
+        {
+          handleTravelPath,
+          handleSendToPolarity,
+          handleSendPathToReports,
+          handleSendConceptToReports: onSendToReports,
+        }
+      )
+    : [];
 
   // Detect V1-shape leaking into the V2 component: V1 data has `links`,
   // V2 has `edges`. If `data.links` exists we know the ExplorerView's
@@ -172,6 +249,15 @@ export const ForceGraph3DV2: React.FC<
           </div>
         )}
       </div>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };
