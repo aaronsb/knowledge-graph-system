@@ -51,6 +51,7 @@ export const ForceGraph3DV2: React.FC<
           palette={palette}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
+          showArrows={settings?.visual?.showArrows ?? true}
         />
       </Canvas>
 

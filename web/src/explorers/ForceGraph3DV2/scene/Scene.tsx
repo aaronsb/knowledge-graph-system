@@ -12,6 +12,7 @@ import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
+import { Arrows } from './Arrows';
 import { useSim } from './useSim';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 
@@ -23,6 +24,7 @@ export interface SceneProps {
   highlightedIds?: Set<string>;
   nodeSize?: number;
   edgeOpacity?: number;
+  showArrows?: boolean;
   physics?: ForceSimParams;
   /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
   simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
@@ -37,6 +39,7 @@ export function Scene({
   highlightedIds,
   nodeSize,
   edgeOpacity,
+  showArrows = true,
   physics,
   simHandleRef,
 }: SceneProps) {
@@ -63,6 +66,14 @@ export function Scene({
         palette={palette}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
+      />
+      <Arrows
+        nodes={nodes}
+        edges={edges}
+        positionsRef={sim.positionsRef}
+        palette={palette}
+        hiddenIds={hiddenIds}
+        enabled={showArrows}
       />
       <Nodes
         nodes={nodes}
