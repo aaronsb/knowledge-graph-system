@@ -23,9 +23,10 @@ import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { buildContextMenuItems, useGraphNavigation, Legend, StatsPanel, PanelStack } from '../common';
+import { buildContextMenuItems, useGraphNavigation, Legend, StatsPanel, PanelStack, explorerTheme } from '../common';
 import { FileSpreadsheet } from 'lucide-react';
 import type { GraphData } from '../../types/graph';
+import { useThemeStore } from '../../store/themeStore';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
@@ -53,6 +54,9 @@ export const ForceGraph3DV2: React.FC<
   const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfoData[]>([]);
 
   const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
+  const visibleEdgeCategories = useGraphStore((s) => s.filters.visibleEdgeCategories);
+  const appliedTheme = useThemeStore((s) => s.appliedTheme);
+  const canvasBg = explorerTheme.canvas3D[appliedTheme];
   const {
     handleFollowConcept,
     handleAddToGraph,
@@ -133,9 +137,23 @@ export const ForceGraph3DV2: React.FC<
     };
   }, [vocabStore, settings?.visual?.edgeColorBy]);
 
+  // Apply the edge-category filter from the shared store. Empty set means
+  // "show all" — keep data untouched to skip allocations on the common path.
+  const filteredData = useMemo(() => {
+    if (!data || visibleEdgeCategories.size === 0) return data;
+    const edges = data.edges.filter((e) => {
+      const category = vocabStore.getCategory(e.type) || 'Uncategorized';
+      return visibleEdgeCategories.has(category);
+    });
+    return { ...data, edges };
+  }, [data, visibleEdgeCategories, vocabStore]);
+
   const counts = useMemo(
-    () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
-    [data]
+    () => ({
+      nodes: filteredData?.nodes?.length ?? 0,
+      edges: filteredData?.edges?.length ?? 0,
+    }),
+    [filteredData]
   );
 
   // Synthesize a V1-shape GraphData object for the shared Legend component.
@@ -144,8 +162,8 @@ export const ForceGraph3DV2: React.FC<
   // in-shader), so we derive them here using the same palette functions
   // the scene uses. Cast is safe — Legend only touches these fields.
   const legendData = useMemo<GraphData>(() => {
-    const engineNodes = data?.nodes ?? [];
-    const engineEdges = data?.edges ?? [];
+    const engineNodes = filteredData?.nodes ?? [];
+    const engineEdges = filteredData?.edges ?? [];
     const ns = engineNodes.map((n) => ({
       id: n.id,
       concept_id: n.id,
@@ -171,7 +189,7 @@ export const ForceGraph3DV2: React.FC<
       };
     });
     return { nodes: ns, links: ls } as unknown as GraphData;
-  }, [data, palette, edgePalette, vocabStore]);
+  }, [filteredData, palette, edgePalette, vocabStore]);
 
   // Build the context-menu item list using the shared helper — identical
   // structure to V1 so users get the same Follow / Add / Remove / Pin /
@@ -229,7 +247,7 @@ export const ForceGraph3DV2: React.FC<
   return (
     <div
       className={`relative w-full h-full ${className || ''}`}
-      style={{ background: '#0a0a0f' }}
+      style={{ background: canvasBg }}
     >
       <Canvas
         camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
@@ -237,10 +255,10 @@ export const ForceGraph3DV2: React.FC<
         frameloop="demand"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
-        <color attach="background" args={['#0a0a0f']} />
+        <color attach="background" args={[canvasBg]} />
         <Scene
-          nodes={data?.nodes ?? []}
-          edges={data?.edges ?? []}
+          nodes={filteredData?.nodes ?? []}
+          edges={filteredData?.edges ?? []}
           palette={palette}
           edgePalette={edgePalette}
           nodeSize={settings?.visual?.nodeSize ?? 1}
