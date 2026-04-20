@@ -28,6 +28,10 @@ export interface SceneProps {
   edgeOpacity?: number;
   showArrows?: boolean;
   physics?: ForceSimParams;
+  selectedId?: string | null;
+  onSelect?: (id: string | null) => void;
+  onHover?: (id: string | null) => void;
+  onContextMenu?: (id: string, event: PointerEvent) => void;
   /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
   simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
 }
@@ -44,6 +48,10 @@ export function Scene({
   edgeOpacity,
   showArrows = true,
   physics,
+  selectedId,
+  onSelect,
+  onHover,
+  onContextMenu,
   simHandleRef,
 }: SceneProps) {
   const sim = useSim(nodes, edges, { ...physics, hiddenIds });
@@ -87,6 +95,10 @@ export function Scene({
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onHover={onHover}
+        onContextMenu={onContextMenu}
       />
       <OrbitControls makeDefault />
     </>

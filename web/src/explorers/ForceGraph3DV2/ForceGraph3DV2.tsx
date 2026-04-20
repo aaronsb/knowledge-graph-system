@@ -11,7 +11,7 @@
  * through the same palette; M3 task #12 adds edge-type coloring.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
@@ -24,7 +24,20 @@ import { getCategoryColor } from '../../config/categoryColors';
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
   ExplorerProps<ForceGraph3DV2Data, ForceGraph3DV2Settings>
-> = ({ data, settings, className }) => {
+> = ({ data, settings, onNodeClick, className }) => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  const handleSelect = useCallback(
+    (id: string | null) => {
+      setSelectedId(id);
+      if (id) onNodeClick?.(id);
+    },
+    [onNodeClick]
+  );
+  const handleHover = useCallback((id: string | null) => {
+    setHoveredId(id);
+  }, []);
   const palette = useMemo(() => {
     const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
     return createOntologyColorScale(ontologies);
@@ -67,6 +80,9 @@ export const ForceGraph3DV2: React.FC<
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}
+          selectedId={selectedId}
+          onSelect={handleSelect}
+          onHover={handleHover}
         />
       </Canvas>
 
@@ -105,6 +121,12 @@ export const ForceGraph3DV2: React.FC<
         <div>
           {counts.nodes} nodes · {counts.edges} edges
         </div>
+        {(selectedId || hoveredId) && (
+          <div style={{ opacity: 0.6, marginTop: 4, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {selectedId ? 'selected: ' : 'hover: '}
+            {data?.nodes?.find((n) => n.id === (selectedId || hoveredId))?.label ?? (selectedId || hoveredId)}
+          </div>
+        )}
       </div>
     </div>
   );

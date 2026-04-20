@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { EngineNode } from '../types';
 
@@ -30,6 +30,10 @@ export interface NodesProps {
   hiddenIds?: Set<string>;
   highlightedIds?: Set<string>;
   nodeSize?: number;
+  selectedId?: string | null;
+  onSelect?: (id: string | null) => void;
+  onHover?: (id: string | null) => void;
+  onContextMenu?: (id: string, event: PointerEvent) => void;
 }
 
 /** Instanced icosahedron node mesh — one draw call for all nodes.  @verified c17bbeb9 */
@@ -40,6 +44,10 @@ export function Nodes({
   hiddenIds,
   highlightedIds,
   nodeSize = 1,
+  selectedId,
+  onSelect,
+  onHover,
+  onContextMenu,
 }: NodesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -87,8 +95,46 @@ export function Nodes({
     invalidate();
   }, [nodes, palette, invalidate]);
 
+  const handleOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (e.instanceId == null) return;
+    const id = nodes[e.instanceId]?.id;
+    if (!id) return;
+    if (hiddenIds && hiddenIds.has(id)) return;
+    onHover?.(id);
+  };
+  const handleOut = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    onHover?.(null);
+  };
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (e.instanceId == null) return;
+    const id = nodes[e.instanceId]?.id;
+    if (!id) return;
+    if (hiddenIds && hiddenIds.has(id)) return;
+    // Toggle: clicking the already-selected node clears selection.
+    onSelect?.(selectedId === id ? null : id);
+  };
+  const handleContextMenu = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    e.nativeEvent.preventDefault();
+    if (e.instanceId == null) return;
+    const id = nodes[e.instanceId]?.id;
+    if (!id) return;
+    if (hiddenIds && hiddenIds.has(id)) return;
+    onContextMenu?.(id, e.nativeEvent as unknown as PointerEvent);
+  };
+
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, nodes.length]}>
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, nodes.length]}
+      onPointerOver={handleOver}
+      onPointerOut={handleOut}
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
+    >
       <icosahedronGeometry args={[1, 1]} />
       {/* vertexColors=false is intentional: per-instance colors come from
           setColorAt/instanceColor, which three injects via the
