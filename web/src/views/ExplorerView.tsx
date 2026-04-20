@@ -41,7 +41,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const {
     searchParams,
     similarityThreshold,
-    graphData: storeGraphData,
     rawGraphData,
     setGraphData,
     setRawGraphData,
@@ -233,20 +232,28 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   const isLoading = isLoadingExplore || isLoadingPath || isLoadingEnrichment;
   const error = pathError;
-  const graphData = storeGraphData;
 
   // Get the current explorer plugin
   const explorerPlugin = getExplorer(explorerType);
 
-  // Transform rawGraphData using current explorer's dataTransformer
-  useEffect(() => {
-    if (!rawGraphData || !explorerPlugin) {
-      return;
-    }
+  // Derive the current explorer's data shape synchronously from rawGraphData.
+  // Each explorer's dataTransformer produces its own shape — the V1 2D/3D
+  // graphs expect {nodes, links}, V2 expects {nodes, edges}, etc. Computing
+  // inline with useMemo means switching explorers never shows one
+  // explorer's component the previous explorer's shape (which crashes
+  // cross-shape access like data.links being undefined under V2's shape).
+  const graphData = useMemo(() => {
+    if (!rawGraphData || !explorerPlugin) return null;
+    return explorerPlugin.dataTransformer(rawGraphData);
+  }, [rawGraphData, explorerPlugin]);
 
-    const transformedData = explorerPlugin.dataTransformer(rawGraphData);
-    setGraphData(transformedData);
-  }, [rawGraphData, explorerPlugin, explorerType]);
+  // Mirror to the store for cross-cutting consumers that still read
+  // graphData from zustand (report creation paths pull from rawGraphData
+  // directly, so the mirror is eventual-consistent). Effects run after
+  // render so this never beats the synchronous useMemo for the component.
+  useEffect(() => {
+    setGraphData(graphData);
+  }, [graphData, setGraphData]);
 
   // Local settings state for the current explorer
   const [explorerSettings, setExplorerSettings] = useState(
