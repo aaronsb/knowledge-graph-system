@@ -137,16 +137,28 @@ export const ForceGraph3DV2: React.FC<
     };
   }, [vocabStore, settings?.visual?.edgeColorBy]);
 
+  // Resolve an edge's category with the same 3-level fallback V1 uses in
+  // transformForD3: vocabulary lookup → API-provided category → fallback.
+  // Matching the chain keeps V1 and V2 producing the same category set for
+  // the same edges, so the shared visibleEdgeCategories (populated once by
+  // Legend based on whichever explorer rendered first) lines up.
+  const edgeCategory = useCallback(
+    (e: ForceGraph3DV2Data['edges'][number]): string => {
+      let cat = vocabStore.getCategory(e.type);
+      if (!cat) cat = e.source?.category;
+      if (!cat || cat === 'default') cat = 'Uncategorized';
+      return cat;
+    },
+    [vocabStore]
+  );
+
   // Apply the edge-category filter from the shared store. Empty set means
   // "show all" — keep data untouched to skip allocations on the common path.
   const filteredData = useMemo(() => {
     if (!data || visibleEdgeCategories.size === 0) return data;
-    const edges = data.edges.filter((e) => {
-      const category = vocabStore.getCategory(e.type) || 'Uncategorized';
-      return visibleEdgeCategories.has(category);
-    });
+    const edges = data.edges.filter((e) => visibleEdgeCategories.has(edgeCategory(e)));
     return { ...data, edges };
-  }, [data, visibleEdgeCategories, vocabStore]);
+  }, [data, visibleEdgeCategories, edgeCategory]);
 
   const counts = useMemo(
     () => ({
@@ -175,7 +187,7 @@ export const ForceGraph3DV2: React.FC<
       search_terms: [],
     }));
     const ls = engineEdges.map((e) => {
-      const category = vocabStore.getCategory(e.type) || 'Uncategorized';
+      const category = edgeCategory(e);
       return {
         from_id: e.from,
         to_id: e.to,
@@ -189,7 +201,7 @@ export const ForceGraph3DV2: React.FC<
       };
     });
     return { nodes: ns, links: ls } as unknown as GraphData;
-  }, [filteredData, palette, edgePalette, vocabStore]);
+  }, [filteredData, palette, edgePalette, edgeCategory]);
 
   // Build the context-menu item list using the shared helper — identical
   // structure to V1 so users get the same Follow / Add / Remove / Pin /
