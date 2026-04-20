@@ -80,6 +80,8 @@ export const ForceGraph3DV2: React.FC<
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}
+          showEdgeLabels={settings?.visual?.showLabels ?? true}
+          labelVisibilityRadius={settings?.visual?.labelVisibilityRadius ?? 250}
           selectedId={selectedId}
           hoveredId={hoveredId}
           onSelect={handleSelect}

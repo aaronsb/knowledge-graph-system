@@ -13,6 +13,7 @@ import type { EngineNode, EngineEdge } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
 import { Arrows } from './Arrows';
+import { EdgeLabels } from './EdgeLabels';
 import { CaretMarker, NodeLabel } from './Overlays';
 import { useSim } from './useSim';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
@@ -28,6 +29,8 @@ export interface SceneProps {
   nodeSize?: number;
   edgeOpacity?: number;
   showArrows?: boolean;
+  showEdgeLabels?: boolean;
+  labelVisibilityRadius?: number;
   physics?: ForceSimParams;
   selectedId?: string | null;
   hoveredId?: string | null;
@@ -49,6 +52,8 @@ export function Scene({
   nodeSize,
   edgeOpacity,
   showArrows = true,
+  showEdgeLabels = true,
+  labelVisibilityRadius = 250,
   physics,
   selectedId,
   hoveredId,
@@ -102,6 +107,15 @@ export function Scene({
         onSelect={onSelect}
         onHover={onHover}
         onContextMenu={onContextMenu}
+      />
+      <EdgeLabels
+        nodes={nodes}
+        edges={edges}
+        positionsRef={sim.positionsRef}
+        hiddenIds={hiddenIds}
+        enabled={showEdgeLabels}
+        visibilityRadius={labelVisibilityRadius}
+        edgePalette={edgePalette}
       />
       <CaretMarker nodes={nodes} positionsRef={sim.positionsRef} nodeId={selectedId} />
       <NodeLabel
