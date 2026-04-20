@@ -1,6 +1,7 @@
 ---
-status: Draft
+status: Proposed
 date: 2026-04-20
+updated: 2026-04-20
 deciders:
   - aaronsb
   - claude
@@ -454,14 +455,32 @@ The spike lives in `spike/unified-3d/` on this branch. It consists of:
 The reference UI's vite dev server and the spike server both run cleanly and
 serve kg data through the atlassian-graph pipeline end-to-end. At the time of
 the spike the local kg instance held 52 concepts and 76 relationships.
-Headless verification passed (both servers respond 200 for all endpoints the
-UI hits; data round-trips intact with 8 source-document buckets mapped into
-the palette's 16 category slots, and 30 distinct relationship types preserved
-on the edge records).
 
-Final visual verification is pending a browser session against
-`http://localhost:5173`. The spike stays in-tree as a reference implementation
-for phase 1 implementation work.
+**Headless verification — passed.** Both servers respond 200 for all
+endpoints the UI hits; data round-trips intact with 8 source-document
+buckets mapped into the palette's 16 category slots, and 30 distinct
+relationship types preserved on the edge records.
+
+**Visual verification — passed (2026-04-20 live session).** Browser session
+against `http://localhost:5173` confirmed:
+
+- `GPU` capability badge lit — `GPUComputationRenderer` + WebGL2 + float
+  render-target path selected on target hardware. GPU physics works.
+- Force simulation settled into a coherent topology with visible high-degree
+  hubs (e.g. "Session Narrative System", degree 19).
+- Sprite screen-space selection caret (four corner brackets + center ring
+  rendered via `<Html center>` at a world position, constant pixel size
+  regardless of camera distance) rendered exactly as specified — confirming
+  the `CaretMarker` pattern for phase 1.
+- Per-instance category colors applied correctly across the 8 buckets;
+  palette ramp selector (8-bit VGA, Rainbow, Viridis, Magma, Plasma, Inferno,
+  Turbo, Hot, Metal, Cool) all functional.
+- Sidebar correctly rendered selected-node detail with the three outgoing
+  relationship types (`EVOLVES_INTO`, `INFLUENCES`, `FOCUSES_ON`) as
+  collapsed detail rows — confirms edge-type metadata survives to the
+  detail surface.
+
+The spike stays in-tree as a reference implementation for phase-1 work.
 
 #### Findings — shape compatibility (positive)
 
@@ -516,6 +535,13 @@ for phase 1 implementation work.
    instances, not on the spike. A future spike at kg-scale (1k+ concepts)
    should be run before phase 1 PR merges to confirm the performance target
    on kg-shaped data at volume.
+
+6. **Hover label shows raw concept ID.** Live observation: hovering a node
+   surfaced `sha256:e5779_chunk1_fab33936` instead of the human-readable
+   `label` field. This is the exact symptom of finding #3 — the reference
+   engine uses `name` as both key and display value. kg's engine must
+   accept `label` separately and thread it through to the `<Html>` overlay
+   text. A single-field addition, zero architectural impact.
 
 #### Changes to the ADR driven by the spike
 
