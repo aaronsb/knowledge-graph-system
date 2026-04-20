@@ -15,6 +15,7 @@ import { Edges } from './Edges';
 import { Arrows } from './Arrows';
 import { EdgeLabels } from './EdgeLabels';
 import { CaretMarker, NodeLabel } from './Overlays';
+import { NodeInfoOverlay, type NodeInfoData } from './NodeInfoOverlay';
 import { useSim } from './useSim';
 import { useDragHandler } from './useDragHandler';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
@@ -23,6 +24,7 @@ import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 // expect a Set identity that doesn't change every render.
 const EMPTY_SET: Set<string> = new Set();
 const NOOP_SET_SETTER: (s: Set<string>) => void = () => {};
+const EMPTY_INFOS: NodeInfoData[] = [];
 
 export interface SceneProps {
   nodes: EngineNode[];
@@ -45,6 +47,8 @@ export interface SceneProps {
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
   onPinnedIdsChange?: (ids: Set<string>) => void;
+  activeNodeInfos?: NodeInfoData[];
+  onDismissNodeInfo?: (nodeId: string) => void;
   /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
   simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
 }
@@ -70,6 +74,8 @@ export function Scene({
   onHover,
   onContextMenu,
   onPinnedIdsChange,
+  activeNodeInfos = EMPTY_INFOS,
+  onDismissNodeInfo,
   simHandleRef,
 }: SceneProps) {
   const sim = useSim(nodes, edges, { ...physics, hiddenIds, pinnedIds });
@@ -136,6 +142,15 @@ export function Scene({
         visibilityRadius={labelVisibilityRadius}
         edgePalette={edgePalette}
       />
+      {activeNodeInfos.map((info) => (
+        <NodeInfoOverlay
+          key={info.nodeId}
+          info={info}
+          nodes={nodes}
+          positionsRef={sim.positionsRef}
+          onDismiss={() => onDismissNodeInfo?.(info.nodeId)}
+        />
+      ))}
       <CaretMarker nodes={nodes} positionsRef={sim.positionsRef} nodeId={selectedId} />
       <NodeLabel
         nodes={nodes}

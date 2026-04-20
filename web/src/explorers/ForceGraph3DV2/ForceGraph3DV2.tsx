@@ -16,6 +16,7 @@ import { Canvas } from '@react-three/fiber';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
 import { Scene } from './scene/Scene';
+import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
@@ -45,6 +46,9 @@ export const ForceGraph3DV2: React.FC<
   const [originNodeId, setOriginNodeId] = useState<string | null>(null);
   const [destinationNodeId, setDestinationNodeId] = useState<string | null>(null);
   const [focusedNode, setFocusedNode] = useState<string | null>(null);
+  // Open node info panels — one per selected node, dismissable. V1 tracks
+  // the same state; our version lives in a flat array for stable keying.
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfoData[]>([]);
 
   const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
   const {
@@ -59,9 +63,26 @@ export const ForceGraph3DV2: React.FC<
   const handleSelect = useCallback(
     (id: string | null) => {
       setSelectedId(id);
-      if (id) onNodeClick?.(id);
+      if (id) {
+        onNodeClick?.(id);
+        const node = data?.nodes?.find((n) => n.id === id);
+        if (node) {
+          setActiveNodeInfos((prev) => {
+            if (prev.some((i) => i.nodeId === id)) return prev;
+            return [
+              ...prev,
+              { nodeId: id, label: node.label, group: node.category, degree: node.degree },
+            ];
+          });
+        }
+      }
     },
-    [onNodeClick]
+    [onNodeClick, data]
+  );
+  const handleDismissNodeInfo = useCallback(
+    (nodeId: string) =>
+      setActiveNodeInfos((prev) => prev.filter((i) => i.nodeId !== nodeId)),
+    []
   );
   const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
@@ -198,6 +219,8 @@ export const ForceGraph3DV2: React.FC<
           onSelect={handleSelect}
           onHover={handleHover}
           onContextMenu={handleContextMenu}
+          activeNodeInfos={activeNodeInfos}
+          onDismissNodeInfo={handleDismissNodeInfo}
         />
       </Canvas>
 
