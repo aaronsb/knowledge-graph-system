@@ -19,6 +19,7 @@ import { Scene } from './scene/Scene';
 import { simBackend } from './scene/useSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
+import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor } from '../../config/categoryColors';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
@@ -70,6 +71,16 @@ export const ForceGraph3DV2: React.FC<
   const counts = useMemo(
     () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
     [data]
+  );
+
+  // Raw counts from the store — when these are non-zero but `data` counts
+  // are zero, the V2 dataTransformer isn't running or is producing the
+  // wrong shape. Surface both in the overlay for quick diagnosis.
+  const rawCounts = useGraphStore(
+    (s) => ({
+      rn: s.rawGraphData?.nodes?.length ?? 0,
+      rl: s.rawGraphData?.links?.length ?? 0,
+    })
   );
 
   return (
@@ -139,6 +150,9 @@ export const ForceGraph3DV2: React.FC<
         </div>
         <div>
           {counts.nodes} nodes · {counts.edges} edges
+        </div>
+        <div style={{ opacity: 0.5, fontSize: 10, marginTop: 2 }}>
+          store raw: {rawCounts.rn} nodes · {rawCounts.rl} links
         </div>
         {(selectedId || hoveredId) && (
           <div style={{ opacity: 0.6, marginTop: 4, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
