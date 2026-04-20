@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { EngineNode, EngineEdge } from '../types';
-import { computeBundles } from './bundles';
+import { computeBundles, perpendicularBasis } from './bundles';
 
 /** Position of the arrow apex along the curve, as t in (0, 1]. Using 1.0
  *  anchors the apex at the target node; we offset the apex further along
