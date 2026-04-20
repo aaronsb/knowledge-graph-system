@@ -48,6 +48,9 @@ export function Nodes({
   onSelect,
   onHover,
   onContextMenu,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }: NodesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -95,6 +98,11 @@ export function Nodes({
     invalidate();
   }, [nodes, palette, invalidate]);
 
+  // Drag bookkeeping — keep pointer-down position so a tiny jitter between
+  // down and up still resolves as a click rather than a drag.
+  const downRef = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
+  const DRAG_THRESHOLD = 4;
+
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     if (e.instanceId == null) return;
@@ -107,14 +115,43 @@ export function Nodes({
     e.stopPropagation();
     onHover?.(null);
   };
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
+  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.instanceId == null) return;
     const id = nodes[e.instanceId]?.id;
     if (!id) return;
     if (hiddenIds && hiddenIds.has(id)) return;
-    // Toggle: clicking the already-selected node clears selection.
-    onSelect?.(selectedId === id ? null : id);
+    // Only left-button starts a drag; right-click falls through to onContextMenu.
+    if (e.nativeEvent.button !== 0) return;
+    e.stopPropagation();
+    downRef.current = { id, x: e.nativeEvent.clientX, y: e.nativeEvent.clientY, moved: false };
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+  };
+  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!downRef.current) return;
+    const dx = e.nativeEvent.clientX - downRef.current.x;
+    const dy = e.nativeEvent.clientY - downRef.current.y;
+    if (!downRef.current.moved && dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) {
+      downRef.current.moved = true;
+      onDragStart?.(downRef.current.id, e);
+    }
+    if (downRef.current.moved) {
+      e.stopPropagation();
+      onDragMove?.(e);
+    }
+  };
+  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+    const wasDragging = downRef.current?.moved ?? false;
+    const clickedId = downRef.current?.id;
+    downRef.current = null;
+    if (wasDragging) {
+      e.stopPropagation();
+      onDragEnd?.(e);
+    } else if (clickedId) {
+      // Treated as a click — toggle selection.
+      if (!hiddenIds || !hiddenIds.has(clickedId)) {
+        onSelect?.(selectedId === clickedId ? null : clickedId);
+      }
+    }
   };
   const handleContextMenu = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -132,7 +169,9 @@ export function Nodes({
       args={[undefined, undefined, nodes.length]}
       onPointerOver={handleOver}
       onPointerOut={handleOut}
-      onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
       <icosahedronGeometry args={[1, 1]} />

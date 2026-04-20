@@ -16,7 +16,13 @@ import { Arrows } from './Arrows';
 import { EdgeLabels } from './EdgeLabels';
 import { CaretMarker, NodeLabel } from './Overlays';
 import { useSim } from './useSim';
+import { useDragHandler } from './useDragHandler';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
+
+// Stable references used when the plugin doesn't wire pinnedIds — hooks
+// expect a Set identity that doesn't change every render.
+const EMPTY_SET: Set<string> = new Set();
+const NOOP_SET_SETTER: (s: Set<string>) => void = () => {};
 
 export interface SceneProps {
   nodes: EngineNode[];
@@ -25,6 +31,7 @@ export interface SceneProps {
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
+  pinnedIds?: Set<string>;
   highlightedIds?: Set<string>;
   nodeSize?: number;
   edgeOpacity?: number;
@@ -37,6 +44,7 @@ export interface SceneProps {
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
+  onPinnedIdsChange?: (ids: Set<string>) => void;
   /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
   simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
 }
@@ -48,6 +56,7 @@ export function Scene({
   palette,
   edgePalette,
   hiddenIds,
+  pinnedIds,
   highlightedIds,
   nodeSize,
   edgeOpacity,
@@ -60,9 +69,16 @@ export function Scene({
   onSelect,
   onHover,
   onContextMenu,
+  onPinnedIdsChange,
   simHandleRef,
 }: SceneProps) {
-  const sim = useSim(nodes, edges, { ...physics, hiddenIds });
+  const sim = useSim(nodes, edges, { ...physics, hiddenIds, pinnedIds });
+  const drag = useDragHandler({
+    nodes,
+    positionsRef: sim.positionsRef,
+    pinnedIds: pinnedIds ?? EMPTY_SET,
+    setPinnedIds: onPinnedIdsChange ?? NOOP_SET_SETTER,
+  });
 
   // Expose the sim handle outside the Canvas tree (e.g. to a settings
   // panel that lives in the plugin component). useImperativeHandle is
@@ -107,6 +123,9 @@ export function Scene({
         onSelect={onSelect}
         onHover={onHover}
         onContextMenu={onContextMenu}
+        onDragStart={drag.onDragStart}
+        onDragMove={drag.onDragMove}
+        onDragEnd={drag.onDragEnd}
       />
       <EdgeLabels
         nodes={nodes}

@@ -27,6 +27,8 @@ export const ForceGraph3DV2: React.FC<
 > = ({ data, settings, onNodeClick, className }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
 
   const handleSelect = useCallback(
     (id: string | null) => {
@@ -37,6 +39,16 @@ export const ForceGraph3DV2: React.FC<
   );
   const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
+  }, []);
+  const handleContextMenu = useCallback((id: string) => {
+    // Temporary M4 behavior: right-click hides the node. M5 task #17
+    // swaps this for the shared ContextMenu component with hide /
+    // expand / send-to-reports actions.
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   }, []);
   const palette = useMemo(() => {
     const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
@@ -84,8 +96,12 @@ export const ForceGraph3DV2: React.FC<
           labelVisibilityRadius={settings?.visual?.labelVisibilityRadius ?? 250}
           selectedId={selectedId}
           hoveredId={hoveredId}
+          hiddenIds={hiddenIds}
+          pinnedIds={pinnedIds}
+          onPinnedIdsChange={setPinnedIds}
           onSelect={handleSelect}
           onHover={handleHover}
+          onContextMenu={handleContextMenu}
         />
       </Canvas>
 

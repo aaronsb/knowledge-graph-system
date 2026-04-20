@@ -57,6 +57,8 @@ const DEFAULTS: PhysicsParams = {
 
 export interface ForceSimParams extends Partial<PhysicsParams> {
   hiddenIds?: Set<string>;
+  /** Nodes held at their current position; sim skips integration for them. */
+  pinnedIds?: Set<string>;
 }
 
 /** Handle returned by useForceSim; drives the sim and exposes its buffer.  @verified c17bbeb9 */
@@ -75,7 +77,7 @@ export function useForceSim(
   edges: EngineEdge[],
   params: ForceSimParams = {}
 ): ForceSimHandle {
-  const { hiddenIds, ...tuning } = params;
+  const { hiddenIds, pinnedIds, ...tuning } = params;
   const cfg: PhysicsParams = { ...DEFAULTS, ...tuning };
   const nodeCount = nodes.length;
   const invalidate = useThree((state) => state.invalidate);
@@ -134,7 +136,17 @@ export function useForceSim(
 
     const forces = new Float32Array(N * 3);
     const hasHidden = !!hiddenIds && hiddenIds.size > 0;
+    const hasPinned = !!pinnedIds && pinnedIds.size > 0;
     const isHidden = hasHidden ? (i: number) => hiddenIds!.has(nodes[i].id) : () => false;
+    // Physics-frozen: hidden (excluded from sim entirely) OR pinned (user is
+    // dragging — sim shouldn't clobber the position).
+    const isFrozen =
+      hasHidden || hasPinned
+        ? (i: number) => {
+            const id = nodes[i].id;
+            return (hasHidden && hiddenIds!.has(id)) || (hasPinned && pinnedIds!.has(id));
+          }
+        : () => false;
 
     // Repulsion — O(N²) upper-triangular, applies equal and opposite to each pair.
     for (let i = 0; i < N; i++) {
@@ -189,8 +201,10 @@ export function useForceSim(
 
     // Integrate. Cap force before alpha scaling so alpha actually governs
     // the dynamics for high-degree nodes (matches GPU shader behavior).
+    // Frozen nodes (hidden or pinned) skip integration so their position
+    // stays where the caller / drag handler put it.
     for (let i = 0; i < N; i++) {
-      if (isHidden(i)) continue;
+      if (isFrozen(i)) continue;
       const ix3 = i * 3;
       let fx = forces[ix3];
       let fy = forces[ix3 + 1];
