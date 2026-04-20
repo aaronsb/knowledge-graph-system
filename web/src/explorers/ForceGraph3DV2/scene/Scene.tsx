@@ -20,6 +20,8 @@ export interface SceneProps {
   nodes: EngineNode[];
   edges: EngineEdge[];
   palette: (category: string) => string;
+  /** Optional edge-type palette; when provided, edges and arrows color by type. */
+  edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   highlightedIds?: Set<string>;
   nodeSize?: number;
@@ -35,6 +37,7 @@ export function Scene({
   nodes,
   edges,
   palette,
+  edgePalette,
   hiddenIds,
   highlightedIds,
   nodeSize,
@@ -64,6 +67,7 @@ export function Scene({
         edges={edges}
         positionsRef={sim.positionsRef}
         palette={palette}
+        edgePalette={edgePalette}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
       />
@@ -72,6 +76,7 @@ export function Scene({
         edges={edges}
         positionsRef={sim.positionsRef}
         palette={palette}
+        edgePalette={edgePalette}
         hiddenIds={hiddenIds}
         enabled={showArrows}
       />

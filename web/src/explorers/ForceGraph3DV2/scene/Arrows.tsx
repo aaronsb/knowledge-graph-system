@@ -44,6 +44,8 @@ export interface ArrowsProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   palette: (category: string) => string;
+  /** If provided, color arrows by edge type; otherwise use target node category. */
+  edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   opacity?: number;
   /** Turn off arrow rendering entirely; default true per ADR-702. */
@@ -56,6 +58,7 @@ export function Arrows({
   edges,
   positionsRef,
   palette,
+  edgePalette,
   hiddenIds,
   opacity = 0.9,
   enabled = true,
@@ -63,7 +66,7 @@ export function Arrows({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { indexPairs, curveOffsets, usableCount } = useMemo(() => {
+  const { indexPairs, curveOffsets, usableCount, usableEdges } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
     const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
@@ -73,22 +76,30 @@ export function Arrows({
       pairs[i * 2 + 1] = nodeIndex.get(usable[i].to)!;
     }
     const { offsets } = computeBundles(usable);
-    return { indexPairs: pairs, curveOffsets: offsets, usableCount: usable.length };
+    return {
+      indexPairs: pairs,
+      curveOffsets: offsets,
+      usableCount: usable.length,
+      usableEdges: usable,
+    };
   }, [nodes, edges]);
 
-  // Color each arrow by the target node's category so the arrow matches
-  // the edge color at the end it sits on.
+  // Color: edgePalette by edge type if available, else target node's category.
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     for (let i = 0; i < usableCount; i++) {
-      const ti = indexPairs[i * 2 + 1];
-      tmpColor.set(palette(nodes[ti].category));
+      if (edgePalette) {
+        tmpColor.set(edgePalette(usableEdges[i].type));
+      } else {
+        const ti = indexPairs[i * 2 + 1];
+        tmpColor.set(palette(nodes[ti].category));
+      }
       mesh.setColorAt(i, tmpColor);
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     invalidate();
-  }, [usableCount, indexPairs, nodes, palette, invalidate]);
+  }, [usableCount, indexPairs, nodes, palette, edgePalette, usableEdges, invalidate]);
 
   useFrame(() => {
     const mesh = meshRef.current;

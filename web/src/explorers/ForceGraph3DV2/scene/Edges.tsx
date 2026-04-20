@@ -30,6 +30,8 @@ export interface EdgesProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   palette: (category: string) => string;
+  /** If provided, color edges by edge type instead of endpoint-category gradient. */
+  edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   opacity?: number;
 }
@@ -40,13 +42,14 @@ export function Edges({
   edges,
   positionsRef,
   palette,
+  edgePalette,
   hiddenIds,
   opacity = 0.7,
 }: EdgesProps) {
   const lineRef = useRef<THREE.LineSegments>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { geometry, material, indexPairs, curveOffsets, segments } = useMemo(() => {
+  const { geometry, material, indexPairs, curveOffsets, segments, usableEdges } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
 
@@ -87,6 +90,7 @@ export function Edges({
       indexPairs: pairs,
       curveOffsets: bundleOffsets,
       segments: segs,
+      usableEdges: usable,
     };
   }, [nodes, edges, opacity]);
 
@@ -97,12 +101,14 @@ export function Edges({
     };
   }, [geometry, material]);
 
-  // Coloring: endpoint gradient distributed across the curve. Each vertex
-  // along the curve gets an interpolated color between the endpoint
-  // categories. Task #12 (M3) swaps this for an edge-type palette.
+  // Coloring. Two modes:
+  //   - edgePalette provided → every vertex of an edge gets the same color
+  //     derived from the edge's relationship type (flat edge coloring).
+  //   - otherwise → endpoint-category gradient across the curve.
   useEffect(() => {
     const colAttr = geometry.getAttribute('color') as THREE.BufferAttribute;
     const arr = colAttr.array as Float32Array;
+    const ec = new THREE.Color();
     const sc = new THREE.Color();
     const tc = new THREE.Color();
     const vc = new THREE.Color();
@@ -110,13 +116,25 @@ export function Edges({
     const vertsPerEdge = 2 * segments;
 
     for (let i = 0; i < pairCount; i++) {
+      const base = i * vertsPerEdge * 3;
+
+      if (edgePalette) {
+        ec.set(edgePalette(usableEdges[i].type));
+        for (let v = 0; v < vertsPerEdge; v++) {
+          const off = base + v * 3;
+          arr[off] = ec.r;
+          arr[off + 1] = ec.g;
+          arr[off + 2] = ec.b;
+        }
+        continue;
+      }
+
       const si = indexPairs[i * 2];
       const ti = indexPairs[i * 2 + 1];
       sc.set(palette(nodes[si].category));
       tc.set(palette(nodes[ti].category));
-      const base = i * vertsPerEdge * 3;
       for (let v = 0; v < vertsPerEdge; v++) {
-        // `lineSegments` pairs vertices (0,1)(2,3)... Each segment v spans
+        // lineSegments pairs vertices (0,1)(2,3)... Each segment v spans
         // t values [v/segs, (v+1)/segs], so vertex position within the
         // segment alternates: even = segment start, odd = segment end.
         const segIndex = Math.floor(v / 2);
@@ -131,7 +149,7 @@ export function Edges({
     }
     colAttr.needsUpdate = true;
     invalidate();
-  }, [geometry, indexPairs, nodes, palette, segments, invalidate]);
+  }, [geometry, indexPairs, nodes, palette, edgePalette, usableEdges, segments, invalidate]);
 
   useFrame(() => {
     const line = lineRef.current;

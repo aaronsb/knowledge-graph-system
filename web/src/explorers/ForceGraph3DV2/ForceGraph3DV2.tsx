@@ -18,6 +18,8 @@ import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
 import { Scene } from './scene/Scene';
 import { simBackend } from './scene/useSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
+import { useVocabularyStore } from '../../store/vocabularyStore';
+import { getCategoryColor } from '../../config/categoryColors';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
@@ -27,6 +29,18 @@ export const ForceGraph3DV2: React.FC<
     const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
     return createOntologyColorScale(ontologies);
   }, [data?.nodes]);
+
+  // kg-specific edge palette: relationship_type → vocabulary category →
+  // hex via categoryColors.ts. Mirrors V1's edge-coloring behavior but
+  // as an opaque function the engine treats generically.
+  const vocabStore = useVocabularyStore();
+  const edgePalette = useMemo(() => {
+    if ((settings?.visual?.edgeColorBy ?? 'type') !== 'type') return undefined;
+    return (edgeType: string): string => {
+      const category = vocabStore.getCategory(edgeType);
+      return getCategoryColor(category || undefined);
+    };
+  }, [vocabStore, settings?.visual?.edgeColorBy]);
 
   const counts = useMemo(
     () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
@@ -49,6 +63,7 @@ export const ForceGraph3DV2: React.FC<
           nodes={data?.nodes ?? []}
           edges={data?.edges ?? []}
           palette={palette}
+          edgePalette={edgePalette}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}
