@@ -17,13 +17,25 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { EngineNode, EngineEdge } from '../types';
-import { computeBundles } from './bundles';
+import { computeBundles, perpendicularBasis } from './bundles';
 
 /** Number of line segments per edge when bezier bundles are present. */
 const SEGMENTS_CURVED = 12;
 
 const UP = new THREE.Vector3(0, 1, 0);
 const FALLBACK = new THREE.Vector3(1, 0, 0);
+
+function controlPointOffsetDir(
+  edgeDir: THREE.Vector3,
+  angle: number,
+  e1: THREE.Vector3,
+  e2: THREE.Vector3,
+  out: THREE.Vector3
+) {
+  perpendicularBasis(edgeDir, UP, FALLBACK, e1, e2);
+  out.copy(e1).multiplyScalar(Math.cos(angle));
+  out.addScaledVector(e2, Math.sin(angle));
+}
 
 export interface EdgesProps {
   nodes: EngineNode[];
@@ -49,12 +61,12 @@ export function Edges({
   const lineRef = useRef<THREE.LineSegments>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { geometry, material, indexPairs, curveOffsets, segments, usableEdges } = useMemo(() => {
+  const { geometry, material, indexPairs, curveAngles, curveMags, segments, usableEdges } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
 
     const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
-    const { offsets: bundleOffsets, maxBundleSize } = computeBundles(usable);
+    const { angles, magnitudes, maxBundleSize } = computeBundles(usable);
     const segs = maxBundleSize > 1 ? SEGMENTS_CURVED : 1;
 
     // lineSegments renders every pair of adjacent vertices as a line,
@@ -88,7 +100,8 @@ export function Edges({
       geometry: geom,
       material: mat,
       indexPairs: pairs,
-      curveOffsets: bundleOffsets,
+      curveAngles: angles,
+      curveMags: magnitudes,
       segments: segs,
       usableEdges: usable,
     };
@@ -166,7 +179,9 @@ export function Edges({
     const s = new THREE.Vector3();
     const t = new THREE.Vector3();
     const edgeDir = new THREE.Vector3();
-    const perp = new THREE.Vector3();
+    const e1 = new THREE.Vector3();
+    const e2 = new THREE.Vector3();
+    const offsetDir = new THREE.Vector3();
     const mid = new THREE.Vector3();
     const ctrl = new THREE.Vector3();
     const p = new THREE.Vector3();
@@ -193,9 +208,9 @@ export function Edges({
       s.set(positions[si * 3], positions[si * 3 + 1], positions[si * 3 + 2]);
       t.set(positions[ti * 3], positions[ti * 3 + 1], positions[ti * 3 + 2]);
 
-      const curveOffset = curveOffsets[i];
+      const curveMag = curveMags[i];
 
-      if (segments === 1 || curveOffset === 0) {
+      if (segments === 1 || curveMag === 0) {
         // Straight-line fast path. When segments > 1 but this particular
         // edge has offset 0 (middle of a bundle), still emit every segment
         // so the per-vertex color table stays aligned — positions all walk
@@ -213,8 +228,9 @@ export function Edges({
         continue;
       }
 
-      // Bezier path. Control point offset perpendicular to the edge,
-      // magnitude scaled by edge length and bundle slot.
+      // Bezier path. Control point offset along a perpendicular plane
+      // direction chosen by the bundle's angle; magnitude scales with
+      // edge length.
       edgeDir.subVectors(t, s);
       const edgeLen = edgeDir.length();
       if (edgeLen < 1e-4) {
@@ -230,14 +246,9 @@ export function Edges({
       }
       edgeDir.multiplyScalar(1 / edgeLen);
 
-      // Pick a perpendicular direction. Crossing with world up works for
-      // most edges; fall back when edge is near-vertical.
-      perp.crossVectors(edgeDir, UP);
-      if (perp.lengthSq() < 1e-4) perp.crossVectors(edgeDir, FALLBACK);
-      perp.normalize();
-
+      controlPointOffsetDir(edgeDir, curveAngles[i], e1, e2, offsetDir);
       mid.copy(s).add(t).multiplyScalar(0.5);
-      ctrl.copy(mid).addScaledVector(perp, curveOffset * edgeLen);
+      ctrl.copy(mid).addScaledVector(offsetDir, curveMag * edgeLen);
 
       // Sample the quadratic bezier B(u) = (1-u)² s + 2(1-u)u ctrl + u² t
       // at each segment boundary. Two vertices emitted per segment

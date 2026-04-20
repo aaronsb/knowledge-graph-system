@@ -63,6 +63,15 @@ export function Nodes({
     return out;
   }, [nodes, nodeSize]);
 
+  // Bounding-sphere refresh cadence — three.js InstancedMesh.raycast()
+  // early-outs against the bounding sphere before testing instances.
+  // The sphere is auto-computed from instanceMatrix on first query and
+  // then cached. If the sim moves instances and we never invalidate it,
+  // raycasts miss and pointer events silently stop firing. Recompute
+  // every ~15 frames — O(N) but cheap, and the pointer-event cost of a
+  // stale sphere is much higher.
+  const bsFrameRef = useRef(0);
+
   useFrame(() => {
     const mesh = meshRef.current;
     const positions = positionsRef.current;
@@ -85,6 +94,12 @@ export function Nodes({
       mesh.setMatrixAt(i, tmpMat);
     }
     mesh.instanceMatrix.needsUpdate = true;
+
+    bsFrameRef.current++;
+    if (bsFrameRef.current % 15 === 0) {
+      // Nulling triggers recomputation on the next raycast hit-test.
+      mesh.boundingSphere = null;
+    }
   });
 
   useEffect(() => {

@@ -66,7 +66,7 @@ export function Arrows({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { indexPairs, curveOffsets, usableCount, usableEdges } = useMemo(() => {
+  const { indexPairs, curveAngles, curveMags, usableCount, usableEdges } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
     const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
@@ -75,10 +75,11 @@ export function Arrows({
       pairs[i * 2] = nodeIndex.get(usable[i].from)!;
       pairs[i * 2 + 1] = nodeIndex.get(usable[i].to)!;
     }
-    const { offsets } = computeBundles(usable);
+    const { angles, magnitudes } = computeBundles(usable);
     return {
       indexPairs: pairs,
-      curveOffsets: offsets,
+      curveAngles: angles,
+      curveMags: magnitudes,
       usableCount: usable.length,
       usableEdges: usable,
     };
@@ -112,7 +113,9 @@ export function Arrows({
     const s = new THREE.Vector3();
     const t = new THREE.Vector3();
     const tangent = new THREE.Vector3();
-    const perp = new THREE.Vector3();
+    const e1 = new THREE.Vector3();
+    const e2 = new THREE.Vector3();
+    const offsetDir = new THREE.Vector3();
     const ctrl = new THREE.Vector3();
     const mid = new THREE.Vector3();
     const apex = new THREE.Vector3();
@@ -141,26 +144,26 @@ export function Arrows({
         continue;
       }
 
-      const curveOffset = curveOffsets[i];
+      const curveMag = curveMags[i];
       const arrowLen = Math.max(
         ARROW_LEN_MIN,
         Math.min(edgeLen * ARROW_LEN_RATIO, ARROW_LEN_MAX)
       );
 
-      if (curveOffset === 0) {
+      if (curveMag === 0) {
         // Straight edge — tangent is just (t - s).normalize().
         tangent.subVectors(t, s).multiplyScalar(1 / edgeLen);
         apex.copy(t).addScaledVector(tangent, ARROW_APEX_OFFSET_RATIO * edgeLen);
       } else {
-        // Bezier — tangent at u = ARROW_T is 2(1-u)(ctrl-s) + 2u(t-ctrl),
-        // reduced to 2(t - ctrl) at u=1. Same perpendicular picking as Edges.tsx.
+        // Bezier with angle-rotated perpendicular basis; matches Edges.tsx
+        // so arrows sit on the same curve their edges follow. Tangent at
+        // u=1 is 2(t - ctrl) (quadratic bezier).
         tangent.subVectors(t, s).multiplyScalar(1 / edgeLen);
-        perp.crossVectors(tangent, UP);
-        if (perp.lengthSq() < 1e-4) perp.crossVectors(tangent, FALLBACK);
-        perp.normalize();
+        perpendicularBasis(tangent, UP, FALLBACK, e1, e2);
+        offsetDir.copy(e1).multiplyScalar(Math.cos(curveAngles[i]));
+        offsetDir.addScaledVector(e2, Math.sin(curveAngles[i]));
         mid.copy(s).add(t).multiplyScalar(0.5);
-        ctrl.copy(mid).addScaledVector(perp, curveOffset * edgeLen);
-        // Sample the curve at ARROW_T and compute tangent there.
+        ctrl.copy(mid).addScaledVector(offsetDir, curveMag * edgeLen);
         const u = ARROW_T;
         const mu = 1 - u;
         apex.copy(s).multiplyScalar(mu * mu);

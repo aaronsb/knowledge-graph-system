@@ -19,7 +19,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { EngineNode, EngineEdge } from '../types';
-import { computeBundles } from './bundles';
+import { computeBundles, perpendicularBasis } from './bundles';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const FALLBACK = new THREE.Vector3(1, 0, 0);
@@ -44,7 +44,8 @@ interface EdgeMeta {
   edgeIndex: number;
   si: number;
   ti: number;
-  curveOffset: number;
+  curveAngle: number;
+  curveMag: number;
   type: string;
 }
 
@@ -64,12 +65,13 @@ export function EdgeLabels({
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
     const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
-    const { offsets } = computeBundles(usable);
+    const { angles, magnitudes } = computeBundles(usable);
     return usable.map((e, i) => ({
       edgeIndex: i,
       si: nodeIndex.get(e.from)!,
       ti: nodeIndex.get(e.to)!,
-      curveOffset: offsets[i],
+      curveAngle: angles[i],
+      curveMag: magnitudes[i],
       type: e.type,
     }));
   }, [nodes, edges]);
@@ -90,7 +92,9 @@ export function EdgeLabels({
       s: new THREE.Vector3(),
       t: new THREE.Vector3(),
       mid: new THREE.Vector3(),
-      perp: new THREE.Vector3(),
+      e1: new THREE.Vector3(),
+      e2: new THREE.Vector3(),
+      offsetDir: new THREE.Vector3(),
       edgeDir: new THREE.Vector3(),
       ctrl: new THREE.Vector3(),
       camPos: new THREE.Vector3(),
@@ -125,16 +129,18 @@ export function EdgeLabels({
       scratch.t.set(positions[b], positions[b + 1], positions[b + 2]);
       scratch.mid.copy(scratch.s).add(scratch.t).multiplyScalar(0.5);
 
-      if (meta.curveOffset !== 0) {
+      if (meta.curveMag !== 0) {
         // Match the bezier midpoint (u=0.5): B(0.5) = 0.25 s + 0.5 ctrl + 0.25 t.
         scratch.edgeDir.subVectors(scratch.t, scratch.s);
         const edgeLen = scratch.edgeDir.length();
         if (edgeLen > 1e-4) {
           scratch.edgeDir.multiplyScalar(1 / edgeLen);
-          scratch.perp.crossVectors(scratch.edgeDir, UP);
-          if (scratch.perp.lengthSq() < 1e-4) scratch.perp.crossVectors(scratch.edgeDir, FALLBACK);
-          scratch.perp.normalize();
-          scratch.ctrl.copy(scratch.mid).addScaledVector(scratch.perp, meta.curveOffset * edgeLen);
+          perpendicularBasis(scratch.edgeDir, UP, FALLBACK, scratch.e1, scratch.e2);
+          scratch.offsetDir
+            .copy(scratch.e1)
+            .multiplyScalar(Math.cos(meta.curveAngle));
+          scratch.offsetDir.addScaledVector(scratch.e2, Math.sin(meta.curveAngle));
+          scratch.ctrl.copy(scratch.mid).addScaledVector(scratch.offsetDir, meta.curveMag * edgeLen);
           scratch.mid
             .copy(scratch.s)
             .multiplyScalar(0.25)
