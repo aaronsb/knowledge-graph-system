@@ -1,24 +1,32 @@
 /**
- * ForceGraph3D V2 — Main Component (scaffold)
+ * ForceGraph3D V2 — Main Component
  *
- * M1 task #6: plugin skeleton only. An r3f Canvas mounts and reports the
- * engine-shape data counts; scene primitives (instanced nodes, edges,
- * physics) arrive in subsequent M1/M2 tasks per ADR-702.
+ * Mounts the r3f Canvas and the scene composition (M1: instanced nodes +
+ * indexed edges with seeded sphere positions, no physics yet). Consumes
+ * the ExplorerPlugin contract from ADR-034; engine primitives come from
+ * the scene/ subdirectory per ADR-702.
  *
- * The plugin contract (ADR-034) is honored: ExplorerProps in, selection
- * and click events emitted upward. Widgets (NodeInfoBox etc.) get wired
- * in M5.
+ * Node palette: built per-dataset from the ontologies present
+ * (createOntologyColorScale). Edge coloring at M1 is endpoint-gradient
+ * through the same palette; M3 task #12 adds edge-type coloring.
  */
 
 import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
+import { Scene } from './scene/Scene';
+import { createOntologyColorScale } from '../../utils/colorScale';
 
-/** ForceGraph3D V2 scaffold component — r3f Canvas + data summary overlay.  @verified c17bbeb9 */
+/** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
   ExplorerProps<ForceGraph3DV2Data, ForceGraph3DV2Settings>
-> = ({ data, className }) => {
+> = ({ data, settings, className }) => {
+  const palette = useMemo(() => {
+    const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
+    return createOntologyColorScale(ontologies);
+  }, [data?.nodes]);
+
   const counts = useMemo(
     () => ({ nodes: data?.nodes?.length ?? 0, edges: data?.edges?.length ?? 0 }),
     [data]
@@ -32,9 +40,16 @@ export const ForceGraph3DV2: React.FC<
       <Canvas
         camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
         gl={{ antialias: true }}
+        frameloop="demand"
       >
-        <ambientLight intensity={0.5} />
         <color attach="background" args={['#0a0a0f']} />
+        <Scene
+          nodes={data?.nodes ?? []}
+          edges={data?.edges ?? []}
+          palette={palette}
+          nodeSize={settings?.visual?.nodeSize ?? 1}
+          edgeOpacity={0.7}
+        />
       </Canvas>
 
       <div
@@ -53,13 +68,13 @@ export const ForceGraph3DV2: React.FC<
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 4 }}>
-          ForceGraph3D V2 — scaffold
+          ForceGraph3D V2 — M1 static
         </div>
         <div>
           {counts.nodes} nodes · {counts.edges} edges
         </div>
         <div style={{ opacity: 0.6, marginTop: 4 }}>
-          Scene primitives land in M1 task #7
+          Physics: pending (M2)
         </div>
       </div>
     </div>
