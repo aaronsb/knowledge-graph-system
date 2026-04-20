@@ -1,18 +1,18 @@
 /**
  * Scene composition — Nodes + Edges + camera controls + lighting.
  *
- * Owns the shared positions buffer for the frame. M1 seeds positions
- * once (static); M2 swaps the seeded init for a force-sim hook that
- * mutates the same buffer each frame, without changes to Nodes/Edges.
+ * Owns the physics sim; the sim owns the positions buffer that Nodes
+ * and Edges read. M2 task #8 adds CPU force sim; M2 task #9 adds the
+ * GPU sim and a dispatcher. Both expose the same handle shape so the
+ * scene composition doesn't change between them.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useImperativeHandle } from 'react';
 import { OrbitControls } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
 import type { EngineNode, EngineEdge } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
-import { seedSpherePositions, defaultSeedRadius } from './positions';
+import { useForceSim, type ForceSimHandle, type ForceSimParams } from './useForceSim';
 
 export interface SceneProps {
   nodes: EngineNode[];
@@ -22,9 +22,12 @@ export interface SceneProps {
   highlightedIds?: Set<string>;
   nodeSize?: number;
   edgeOpacity?: number;
+  physics?: ForceSimParams;
+  /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
+  simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
 }
 
-/** V2 scene composition — Nodes + Edges + OrbitControls + lighting.  @verified c17bbeb9 */
+/** V2 scene composition — physics + rendering + orbit controls.  @verified c17bbeb9 */
 export function Scene({
   nodes,
   edges,
@@ -33,24 +36,21 @@ export function Scene({
   highlightedIds,
   nodeSize,
   edgeOpacity,
+  physics,
+  simHandleRef,
 }: SceneProps) {
-  const positionsRef = useRef<Float32Array | null>(null);
-  const invalidate = useThree((state) => state.invalidate);
+  const sim = useForceSim(nodes, edges, { ...physics, hiddenIds });
 
-  // Reseed whenever node count changes. Preserves existing positions when
-  // count is unchanged (M1 static) so simple re-renders don't disturb layout.
-  useMemo(() => {
-    if (!positionsRef.current || positionsRef.current.length !== nodes.length * 3) {
-      positionsRef.current = seedSpherePositions(
-        nodes.length,
-        defaultSeedRadius(nodes.length)
-      );
-    }
-  }, [nodes.length]);
+  // Expose the sim handle outside the Canvas tree (e.g. to a settings
+  // panel that lives in the plugin component). useImperativeHandle is
+  // the idiomatic way even though we pass a MutableRefObject ourselves.
+  useImperativeHandle(simHandleRef, () => sim, [sim]);
 
   useEffect(() => {
-    invalidate();
-  }, [nodes, edges, invalidate]);
+    // Kick a frame when the data set changes so demand-mode picks up
+    // the reseeded buffers immediately rather than next user interaction.
+    sim.reheat();
+  }, [nodes.length]);
 
   return (
     <>
@@ -58,14 +58,14 @@ export function Scene({
       <Edges
         nodes={nodes}
         edges={edges}
-        positionsRef={positionsRef}
+        positionsRef={sim.positionsRef}
         palette={palette}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
       />
       <Nodes
         nodes={nodes}
-        positionsRef={positionsRef}
+        positionsRef={sim.positionsRef}
         palette={palette}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
