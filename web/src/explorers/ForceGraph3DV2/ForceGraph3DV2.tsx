@@ -34,13 +34,14 @@ export const ForceGraph3DV2: React.FC<
 
   return (
     <div
-      className={className}
-      style={{ position: 'relative', width: '100%', height: '100%', background: '#0a0a0f' }}
+      className={`relative w-full h-full ${className || ''}`}
+      style={{ background: '#0a0a0f' }}
     >
       <Canvas
         camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
         gl={{ antialias: true }}
         frameloop="demand"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
         <color attach="background" args={['#0a0a0f']} />
         <Scene
