@@ -12,7 +12,8 @@ import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
-import { useForceSim, type ForceSimHandle, type ForceSimParams } from './useForceSim';
+import { useSim } from './useSim';
+import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 
 export interface SceneProps {
   nodes: EngineNode[];
@@ -39,7 +40,7 @@ export function Scene({
   physics,
   simHandleRef,
 }: SceneProps) {
-  const sim = useForceSim(nodes, edges, { ...physics, hiddenIds });
+  const sim = useSim(nodes, edges, { ...physics, hiddenIds });
 
   // Expose the sim handle outside the Canvas tree (e.g. to a settings
   // panel that lives in the plugin component). useImperativeHandle is

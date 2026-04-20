@@ -16,6 +16,7 @@ import { Canvas } from '@react-three/fiber';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
 import { Scene } from './scene/Scene';
+import { simBackend } from './scene/useSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
@@ -69,13 +70,24 @@ export const ForceGraph3DV2: React.FC<
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 4 }}>
-          ForceGraph3D V2 — M1 static
+          ForceGraph3D V2{' '}
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 400,
+              padding: '1px 6px',
+              marginLeft: 4,
+              borderRadius: 3,
+              background: simBackend === 'gpu' ? '#2a4d3a' : '#4d3a2a',
+              color: simBackend === 'gpu' ? '#7aff9a' : '#ffb37a',
+              textTransform: 'uppercase',
+            }}
+          >
+            {simBackend}
+          </span>
         </div>
         <div>
           {counts.nodes} nodes · {counts.edges} edges
-        </div>
-        <div style={{ opacity: 0.6, marginTop: 4 }}>
-          Physics: pending (M2)
         </div>
       </div>
     </div>
