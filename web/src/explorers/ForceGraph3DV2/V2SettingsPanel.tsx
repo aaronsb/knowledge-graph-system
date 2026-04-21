@@ -6,10 +6,9 @@
  * V2's settings shape (repulsion/attraction/damping/centerGravity, node
  * mode, edge-color-by, label visibility radius, etc.).
  *
- * Sim action buttons (reheat / simmer / freeze) live on a separate
- * on-canvas overlay inside ForceGraph3DV2.tsx, next to the sim-backend
- * badge — they drive a simHandleRef that can only be read inside the
- * r3f Canvas tree.
+ * Sim action buttons (reheat / simmer / freeze) live on the on-canvas
+ * info overlay inside ForceGraph3DV2.tsx so they can drive a
+ * simHandleRef that's only writable from inside the r3f Canvas tree.
  */
 
 import React, { useState } from 'react';
@@ -17,6 +16,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { SettingsPanelProps } from '../../types/explorer';
 import type { ForceGraph3DV2Settings } from './types';
 import { SLIDER_RANGES } from './types';
+import { simBackend } from './scene/useSim';
 
 type Section = 'physics' | 'visual' | 'interaction';
 
@@ -93,6 +93,19 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
         {sectionHeader('physics', 'Physics')}
         {expanded.has('physics') && (
           <div className="space-y-2 mt-1 pl-4">
+            <div className="flex items-center gap-2 text-xs text-card-foreground">
+              <span className="flex-1 min-w-0 truncate">Backend</span>
+              <span
+                className={`font-mono text-[10px] uppercase px-1.5 py-0.5 rounded ${
+                  simBackend === 'gpu'
+                    ? 'bg-emerald-900/40 text-emerald-300'
+                    : 'bg-amber-900/40 text-amber-300'
+                }`}
+                title="Sim backend chosen at module load by capability detection"
+              >
+                {simBackend}
+              </span>
+            </div>
             {row(
               'Enabled',
               settings.physics.enabled ? 'on' : 'off',
@@ -161,6 +174,25 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
               settings.visual.showLabels ? 'on' : 'off',
               toggle_(settings.visual.showLabels, (v) => updateVisual({ showLabels: v }))
             )}
+            {row(
+              'Show node labels',
+              settings.visual.showNodeLabels ? 'on' : 'off',
+              toggle_(settings.visual.showNodeLabels, (v) => updateVisual({ showNodeLabels: v }))
+            )}
+            <label className="flex items-center gap-2 text-xs text-card-foreground">
+              <span className="flex-1 min-w-0 truncate">Node color</span>
+              <select
+                className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+                value={settings.visual.nodeColorBy}
+                onChange={(e) =>
+                  updateVisual({ nodeColorBy: e.target.value as ForceGraph3DV2Settings['visual']['nodeColorBy'] })
+                }
+              >
+                <option value="ontology">By ontology</option>
+                <option value="degree">By degree</option>
+                <option value="centrality">By centrality</option>
+              </select>
+            </label>
             <label className="flex items-center gap-2 text-xs text-card-foreground">
               <span className="flex-1 min-w-0 truncate">Edge color</span>
               <select
@@ -183,17 +215,6 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
                 SLIDER_RANGES.visual.nodeSize.max,
                 SLIDER_RANGES.visual.nodeSize.step,
                 (v) => updateVisual({ nodeSize: v })
-              )
-            )}
-            {row(
-              'Link width',
-              settings.visual.linkWidth.toFixed(2),
-              slider(
-                settings.visual.linkWidth,
-                SLIDER_RANGES.visual.linkWidth.min,
-                SLIDER_RANGES.visual.linkWidth.max,
-                SLIDER_RANGES.visual.linkWidth.step,
-                (v) => updateVisual({ linkWidth: v })
               )
             )}
             {row(

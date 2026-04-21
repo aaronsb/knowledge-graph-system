@@ -15,6 +15,7 @@ import { useGraphStore } from '../../store/graphStore';
 import { useThemeStore } from '../../store/themeStore';
 import { getCategoryColor, categoryColors } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { computeNodeColors } from '../common';
 import { FileSpreadsheet } from 'lucide-react';
 import {
   NodeInfoBox,
@@ -282,53 +283,20 @@ export const ForceGraph2D: React.FC<
     return getNeighbors(focusedNode, filteredData.links);
   }, [focusedNode, filteredData.links, settings.interaction.highlightNeighbors]);
 
-  // Calculate node colors based on nodeColorBy setting
+  // Centrality uses the unfiltered graph (it's a property of the node in
+  // the larger graph); ontology and degree use the visible subset.
   const nodeColors = useMemo(() => {
-    const colors = new Map<string, string>();
-
-    if (settings.visual.nodeColorBy === 'ontology') {
-      // Color by ontology (default behavior from transformForD3)
-      filteredData.nodes.forEach(node => {
-        colors.set(node.id, node.color);
-      });
-    } else if (settings.visual.nodeColorBy === 'degree') {
-      // Color by degree (number of connections)
-      const degrees = new Map<string, number>();
-      filteredData.links.forEach(link => {
-        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
-        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
-      });
-
-      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
-      const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxDegree]);
-
-      filteredData.nodes.forEach(node => {
-        const degree = degrees.get(node.id) || 0;
-        colors.set(node.id, colorScale(degree));
-      });
-    } else if (settings.visual.nodeColorBy === 'centrality') {
-      // Color by centrality (using degree as proxy for now)
-      const degrees = new Map<string, number>();
-      data.links.forEach(link => {
-        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-        degrees.set(sourceId, (degrees.get(sourceId) || 0) + 1);
-        degrees.set(targetId, (degrees.get(targetId) || 0) + 1);
-      });
-
-      const maxDegree = Math.max(...Array.from(degrees.values()), 1);
-      const colorScale = d3.scaleSequential(d3.interpolatePlasma).domain([0, maxDegree]);
-
-      data.nodes.forEach(node => {
-        const degree = degrees.get(node.id) || 0;
-        colors.set(node.id, colorScale(degree));
-      });
-    }
-
-    return colors;
-  }, [filteredData.nodes, data.links, settings.visual.nodeColorBy]);
+    const mode = settings.visual.nodeColorBy;
+    const useFull = mode === 'centrality';
+    const sourceNodes = useFull ? data.nodes : filteredData.nodes;
+    const sourceLinks = useFull ? data.links : filteredData.links;
+    const nodeInputs = sourceNodes.map((n) => ({ id: n.id, fallbackColor: n.color }));
+    const edgeInputs = sourceLinks.map((l) => ({
+      sourceId: typeof l.source === 'string' ? l.source : l.source.id,
+      targetId: typeof l.target === 'string' ? l.target : l.target.id,
+    }));
+    return computeNodeColors(nodeInputs, edgeInputs, mode);
+  }, [filteredData.nodes, filteredData.links, data.nodes, data.links, settings.visual.nodeColorBy]);
 
   // Calculate edge colors based on edgeColorBy setting
   const linkColors = useMemo(() => {

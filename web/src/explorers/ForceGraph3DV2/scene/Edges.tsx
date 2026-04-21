@@ -41,11 +41,17 @@ export interface EdgesProps {
   nodes: EngineNode[];
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
-  palette: (category: string) => string;
-  /** If provided, color edges by edge type instead of endpoint-category gradient. */
+  /** Per-node colors, parallel to `nodes` by index. Used for endpoint
+   *  gradient when edgePalette isn't provided. */
+  colors: string[];
+  /** If provided, color edges by edge type instead of endpoint gradient. */
   edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   opacity?: number;
+  /** When defined, edges with at least one endpoint NOT in this set are
+   *  dimmed by dimAlpha. Drives hover/focus dim. */
+  activeIds?: Set<string>;
+  dimAlpha?: number;
 }
 
 /** Indexed-line edge mesh — straight when no parallels, bezier otherwise.  @verified c17bbeb9 */
@@ -53,10 +59,12 @@ export function Edges({
   nodes,
   edges,
   positionsRef,
-  palette,
+  colors,
   edgePalette,
   hiddenIds,
   opacity = 0.7,
+  activeIds,
+  dimAlpha = 1,
 }: EdgesProps) {
   const lineRef = useRef<THREE.LineSegments>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -128,11 +136,22 @@ export function Edges({
     const pairCount = indexPairs.length / 2;
     const vertsPerEdge = 2 * segments;
 
+    const hasActive = !!activeIds && activeIds.size > 0;
     for (let i = 0; i < pairCount; i++) {
       const base = i * vertsPerEdge * 3;
+      const si = indexPairs[i * 2];
+      const ti = indexPairs[i * 2 + 1];
+      // An edge is "active" only if both endpoints are in the active set.
+      // Otherwise we multiply its color by dimAlpha. (For endpoint-gradient
+      // mode the node colors are already pre-dimmed by the caller, but we
+      // still apply edge-level dim so the edge geometry visibly recedes.)
+      const edgeDim =
+        hasActive && (!activeIds!.has(nodes[si].id) || !activeIds!.has(nodes[ti].id))
+          ? dimAlpha
+          : 1;
 
       if (edgePalette) {
-        ec.set(edgePalette(usableEdges[i].type));
+        ec.set(edgePalette(usableEdges[i].type)).multiplyScalar(edgeDim);
         for (let v = 0; v < vertsPerEdge; v++) {
           const off = base + v * 3;
           arr[off] = ec.r;
@@ -142,10 +161,8 @@ export function Edges({
         continue;
       }
 
-      const si = indexPairs[i * 2];
-      const ti = indexPairs[i * 2 + 1];
-      sc.set(palette(nodes[si].category));
-      tc.set(palette(nodes[ti].category));
+      sc.set(colors[si] ?? '#888888').multiplyScalar(edgeDim);
+      tc.set(colors[ti] ?? '#888888').multiplyScalar(edgeDim);
       for (let v = 0; v < vertsPerEdge; v++) {
         // lineSegments pairs vertices (0,1)(2,3)... Each segment v spans
         // t values [v/segs, (v+1)/segs], so vertex position within the
@@ -162,7 +179,7 @@ export function Edges({
     }
     colAttr.needsUpdate = true;
     invalidate();
-  }, [geometry, indexPairs, nodes, palette, edgePalette, usableEdges, segments, invalidate]);
+  }, [geometry, indexPairs, nodes, colors, edgePalette, usableEdges, segments, activeIds, dimAlpha, invalidate]);
 
   useFrame(() => {
     const line = lineRef.current;

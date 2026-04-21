@@ -11,31 +11,42 @@
  * through the same palette; M3 task #12 adds edge-type coloring.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
+import { Flame } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraph3DV2Data, ForceGraph3DV2Settings } from './types';
 import { Scene } from './scene/Scene';
 import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
+import type { ForceSimHandle } from './scene/useForceSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
 import { useGraphStore } from '../../store/graphStore';
 import { getCategoryColor } from '../../config/categoryColors';
 import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
-import { buildContextMenuItems, useGraphNavigation, Legend, StatsPanel, PanelStack, explorerTheme } from '../common';
+import { buildContextMenuItems, useGraphNavigation, Legend, StatsPanel, PanelStack, explorerTheme, computeNodeColors } from '../common';
 import { FileSpreadsheet } from 'lucide-react';
 import type { GraphData } from '../../types/graph';
 import { useThemeStore } from '../../store/themeStore';
 
+
 /** ForceGraph3D V2 — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph3DV2: React.FC<
   ExplorerProps<ForceGraph3DV2Data, ForceGraph3DV2Settings>
-> = ({ data, settings, onNodeClick, onSendToReports, className }) => {
+> = ({ data, settings, onSettingsChange, onNodeClick, onSendToReports, className }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hiddenIds] = useState<Set<string>>(() => new Set());
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
+  // Sim handle bridges the inside-Canvas hook to the Reheat button outside
+  // the Canvas tree. Simmer/Freeze were dropped — Reheat covers the common
+  // case (kick the layout when the graph drifts off-screen).
+  const simHandleRef = useRef<ForceSimHandle | null>(null);
+  const handleReheat = useCallback(() => {
+    simHandleRef.current?.reheat();
+  }, []);
 
   // Context menu + origin/destination / focus markers are the state backing
   // the shared right-click menu. These mirror V1's ForceGraph3D bookkeeping
@@ -66,11 +77,15 @@ export const ForceGraph3DV2: React.FC<
     handleSendPathToReports,
   } = useGraphNavigation(mergeRawGraphData);
 
+  // Left-click: select + open info panel. Note we do NOT fire onNodeClick
+  // here — at the parent level (ExplorerView) onNodeClick is wired to
+  // "Follow Concept" which reloads the graph. That action stays on the
+  // right-click context menu (handleFollowConcept) so users can invoke it
+  // deliberately rather than every time they want to inspect a node.
   const handleSelect = useCallback(
     (id: string | null) => {
       setSelectedId(id);
       if (id) {
-        onNodeClick?.(id);
         const node = data?.nodes?.find((n) => n.id === id);
         if (node) {
           setActiveNodeInfos((prev) => {
@@ -83,7 +98,7 @@ export const ForceGraph3DV2: React.FC<
         }
       }
     },
-    [onNodeClick, data]
+    [data]
   );
   const handleDismissNodeInfo = useCallback(
     (nodeId: string) =>
@@ -124,6 +139,7 @@ export const ForceGraph3DV2: React.FC<
     const ontologies = [...new Set(data?.nodes?.map((n) => n.category) ?? [])].sort();
     return createOntologyColorScale(ontologies);
   }, [data?.nodes]);
+  const nodeColorBy = settings?.visual?.nodeColorBy ?? 'ontology';
 
   // kg-specific edge palette: relationship_type → vocabulary category →
   // hex via categoryColors.ts. Mirrors V1's edge-coloring behavior but
@@ -167,6 +183,72 @@ export const ForceGraph3DV2: React.FC<
     }),
     [filteredData]
   );
+
+  // Per-node colors. Engine consumes this as a string[] indexed by node
+  // position; Legend consumes the same map shape via legendData below.
+  // Computed against the filtered set so degree/centrality reflect what's
+  // currently visible — matches 2D's behavior except for centrality, which
+  // 2D computes against the unfiltered graph (deferred convergence).
+  const nodeColorMap = useMemo(() => {
+    const ns = filteredData?.nodes ?? [];
+    const es = filteredData?.edges ?? [];
+    return computeNodeColors(
+      ns.map((n) => ({ id: n.id, fallbackColor: palette(n.category) })),
+      es.map((e) => ({ sourceId: e.from, targetId: e.to })),
+      nodeColorBy,
+    );
+  }, [filteredData, palette, nodeColorBy]);
+
+  const baseNodeColors = useMemo(() => {
+    const ns = filteredData?.nodes ?? [];
+    return ns.map((n) => nodeColorMap.get(n.id) ?? palette(n.category));
+  }, [filteredData, nodeColorMap, palette]);
+
+  // Direct neighbors of the currently-selected node, used for size-boosting
+  // adjacent nodes when settings.interaction.highlightNeighbors is on.
+  // Empty Set when disabled or nothing selected — Nodes.tsx skips the
+  // boost when the set is empty so this is the cheapest no-op shape.
+  const highlightedIds = useMemo(() => {
+    if (!selectedId || !(settings?.interaction?.highlightNeighbors ?? true)) {
+      return new Set<string>();
+    }
+    const neighbors = new Set<string>();
+    for (const e of filteredData?.edges ?? []) {
+      if (e.from === selectedId) neighbors.add(e.to);
+      else if (e.to === selectedId) neighbors.add(e.from);
+    }
+    return neighbors;
+  }, [selectedId, filteredData, settings?.interaction?.highlightNeighbors]);
+
+  // Active set + dim alpha for hover/focus dimming. Focus (right-click
+  // "Focus on node") wins over hover and dims more aggressively. Mirrors
+  // V1 2D's pattern (focus 0.05, hover 0.2). When neither is active the
+  // set is undefined and engine renders at full opacity for everything.
+  const dimState = useMemo<{ activeIds: Set<string>; dimAlpha: number } | undefined>(() => {
+    const driverId = focusedNode ?? hoveredId;
+    if (!driverId) return undefined;
+    const active = new Set<string>([driverId]);
+    for (const e of filteredData?.edges ?? []) {
+      if (e.from === driverId) active.add(e.to);
+      else if (e.to === driverId) active.add(e.from);
+    }
+    return { activeIds: active, dimAlpha: focusedNode ? 0.05 : 0.2 };
+  }, [focusedNode, hoveredId, filteredData]);
+
+  // Bake the dim into the per-node color array so Nodes (and endpoint-
+  // gradient Edges) automatically dim without engine-level changes. Edges/
+  // Arrows in edge-type mode and the labels handle their own dimming via
+  // the activeIds prop.
+  const nodeColors = useMemo(() => {
+    if (!dimState) return baseNodeColors;
+    const tmp = new THREE.Color();
+    return baseNodeColors.map((c, i) => {
+      const id = filteredData?.nodes?.[i]?.id;
+      if (id && dimState.activeIds.has(id)) return c;
+      tmp.set(c).multiplyScalar(dimState.dimAlpha);
+      return `#${tmp.getHexString()}`;
+    });
+  }, [baseNodeColors, dimState, filteredData]);
 
   // Synthesize a V1-shape GraphData object for the shared Legend component.
   // Legend reads `nodes[*].{group,color}` and `links[*].{category,color}`;
@@ -271,9 +353,10 @@ export const ForceGraph3DV2: React.FC<
         <Scene
           nodes={filteredData?.nodes ?? []}
           edges={filteredData?.edges ?? []}
-          palette={palette}
+          colors={nodeColors}
           edgePalette={edgePalette}
           physics={{
+            enabled: settings?.physics?.enabled ?? true,
             repulsion: settings?.physics?.repulsion,
             attraction: settings?.physics?.attraction,
             centerGravity: settings?.physics?.centerGravity,
@@ -283,71 +366,85 @@ export const ForceGraph3DV2: React.FC<
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}
           showEdgeLabels={settings?.visual?.showLabels ?? true}
+          showNodeLabels={settings?.visual?.showNodeLabels ?? true}
           labelVisibilityRadius={settings?.visual?.labelVisibilityRadius ?? 250}
           selectedId={selectedId}
           hoveredId={hoveredId}
           hiddenIds={hiddenIds}
           pinnedIds={pinnedIds}
+          highlightedIds={highlightedIds}
+          activeIds={dimState?.activeIds}
+          dimAlpha={dimState?.dimAlpha ?? 1}
+          enableDrag={settings?.interaction?.enableDrag ?? true}
+          enableZoom={settings?.interaction?.enableZoom ?? true}
+          enablePan={settings?.interaction?.enablePan ?? true}
           onPinnedIdsChange={setPinnedIds}
           onSelect={handleSelect}
           onHover={handleHover}
           onContextMenu={handleContextMenu}
           activeNodeInfos={activeNodeInfos}
           onDismissNodeInfo={handleDismissNodeInfo}
+          simHandleRef={simHandleRef}
         />
       </Canvas>
 
-      <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          padding: '8px 12px',
-          background: 'rgba(10, 10, 15, 0.85)',
-          border: '1px solid #26263a',
-          borderRadius: 4,
-          color: '#d7d7e0',
-          fontFamily: 'SF Mono, Menlo, monospace',
-          fontSize: 12,
-          pointerEvents: 'none',
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-          ForceGraph3D V2{' '}
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 400,
-              padding: '1px 6px',
-              marginLeft: 4,
-              borderRadius: 3,
-              background: simBackend === 'gpu' ? '#2a4d3a' : '#4d3a2a',
-              color: simBackend === 'gpu' ? '#7aff9a' : '#ffb37a',
-              textTransform: 'uppercase',
-            }}
-          >
-            {simBackend}
-          </span>
-        </div>
-        <div>
-          {counts.nodes} nodes · {counts.edges} edges
-        </div>
-        <div style={{ opacity: 0.5, fontSize: 10, marginTop: 2 }}>
-          store raw: {rawNodeCount} nodes · {rawLinkCount} links
-        </div>
-        <div style={{ opacity: 0.5, fontSize: 10, marginTop: 1 }}>
-          shape: {shapeTag}
-        </div>
-        {(selectedId || hoveredId) && (
-          <div style={{ opacity: 0.6, marginTop: 4, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {selectedId ? 'selected: ' : 'hover: '}
-            {data?.nodes?.find((n) => n.id === (selectedId || hoveredId))?.label ?? (selectedId || hoveredId)}
-          </div>
-        )}
-      </div>
-
       <PanelStack side="left" gap={16} initialTop={16}>
-        <Legend data={legendData} nodeColorMode="ontology" />
+        <div
+          className="bg-card/95 border border-border rounded-lg shadow-xl p-3 text-xs text-card-foreground"
+          style={{ width: '240px' }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-medium text-sm text-foreground">ForceGraph3D V2</span>
+            <span
+              className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
+                simBackend === 'gpu'
+                  ? 'bg-emerald-900/40 text-emerald-300'
+                  : 'bg-amber-900/40 text-amber-300'
+              }`}
+            >
+              {simBackend}
+            </span>
+          </div>
+          <div className="font-mono tabular-nums">
+            {counts.nodes} nodes · {counts.edges} edges
+          </div>
+          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+            store raw: {rawNodeCount} nodes · {rawLinkCount} links
+          </div>
+          <div className="text-[10px] text-muted-foreground font-mono">
+            shape: {shapeTag}
+          </div>
+          {(selectedId || hoveredId) && (
+            <div className="text-[11px] text-muted-foreground mt-1 truncate">
+              {selectedId ? 'selected: ' : 'hover: '}
+              {data?.nodes?.find((n) => n.id === (selectedId || hoveredId))?.label ?? (selectedId || hoveredId)}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleReheat}
+            title="Reheat — restart the layout sim from full energy"
+            className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-muted/50 text-card-foreground text-xs hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Flame size={12} />
+            <span>Reheat</span>
+          </button>
+        </div>
+        <Legend
+          data={legendData}
+          nodeColorMode={nodeColorBy}
+          visibilityControls={{
+            showArrows: settings?.visual?.showArrows ?? true,
+            showEdgeLabels: settings?.visual?.showLabels ?? true,
+            showNodeLabels: settings?.visual?.showNodeLabels ?? true,
+            onToggleArrows: (v) =>
+              settings && onSettingsChange?.({ ...settings, visual: { ...settings.visual, showArrows: v } }),
+            onToggleEdgeLabels: (v) =>
+              settings && onSettingsChange?.({ ...settings, visual: { ...settings.visual, showLabels: v } }),
+            onToggleNodeLabels: (v) =>
+              settings && onSettingsChange?.({ ...settings, visual: { ...settings.visual, showNodeLabels: v } }),
+          }}
+        />
       </PanelStack>
 
       <PanelStack side="right" gap={16} initialTop={16}>

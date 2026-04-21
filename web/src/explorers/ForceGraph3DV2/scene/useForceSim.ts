@@ -37,6 +37,12 @@ export interface PhysicsParams {
   dampingSimmer: number;
   centerGravitySimmer: number;
   velStopSimmer: number;
+  /** Period of one full simmer cycle (cool→warm→cool) in milliseconds. */
+  simmerCycleMs: number;
+  /** Low end of the simmer alpha cycle (near-settled). */
+  simmerAlphaLow: number;
+  /** High end of the simmer alpha cycle (gentle reheat). */
+  simmerAlphaHigh: number;
 }
 
 const DEFAULTS: PhysicsParams = {
@@ -53,12 +59,17 @@ const DEFAULTS: PhysicsParams = {
   dampingSimmer: 0.70,
   centerGravitySimmer: 0.03,
   velStopSimmer: 0.3,
+  simmerCycleMs: 24000,
+  simmerAlphaLow: 0.02,
+  simmerAlphaHigh: 0.35,
 };
 
 export interface ForceSimParams extends Partial<PhysicsParams> {
   hiddenIds?: Set<string>;
   /** Nodes held at their current position; sim skips integration for them. */
   pinnedIds?: Set<string>;
+  /** When false, the sim halts entirely — positions hold, no frames pump. */
+  enabled?: boolean;
 }
 
 /** Handle returned by useForceSim; drives the sim and exposes its buffer.  @verified c17bbeb9 */
@@ -77,7 +88,7 @@ export function useForceSim(
   edges: EngineEdge[],
   params: ForceSimParams = {}
 ): ForceSimHandle {
-  const { hiddenIds, pinnedIds, ...tuning } = params;
+  const { hiddenIds, pinnedIds, enabled = true, ...tuning } = params;
   const cfg: PhysicsParams = { ...DEFAULTS, ...tuning };
   const nodeCount = nodes.length;
   const invalidate = useThree((state) => state.invalidate);
@@ -90,6 +101,9 @@ export function useForceSim(
   const dirtyRef = useRef(false);
   const frameCounterRef = useRef(0);
   const simmerRef = useRef(false);
+  // Wall-clock start of the current simmer cycle. Reset on every simmer(true)
+  // so the cycle phase begins at "cold" each time the user enters simmer mode.
+  const simmerStartRef = useRef(0);
 
   // Seed positions when node count changes. useMemo keeps the allocation
   // out of the render commit phase; we don't actually consume its return.
@@ -116,6 +130,10 @@ export function useForceSim(
   }, [nodes, edges, nodeCount]);
 
   useFrame(() => {
+    if (!enabled) {
+      dirtyRef.current = false;
+      return;
+    }
     const alpha = alphaRef.current;
     if (alpha < cfg.alphaMin) {
       dirtyRef.current = false;
@@ -240,8 +258,18 @@ export function useForceSim(
       positions[ix3 + 2] += nvz * dt;
     }
 
-    const decayed = alpha * (1 - cfg.alphaDecay);
-    alphaRef.current = simmerRef.current ? Math.max(cfg.alphaSimmer, decayed) : decayed;
+    if (simmerRef.current) {
+      // Stovetop-style thermal-mass cycle: alpha rides a smooth cosine
+      // between simmerAlphaLow and simmerAlphaHigh. Slow enough (default
+      // 24 s period) that the graph visibly reorganizes during each
+      // warm-up but never gets to fully settle, like a coil cycling on
+      // and off with thermal lag smoothing the transitions.
+      const t = (performance.now() - simmerStartRef.current) / cfg.simmerCycleMs;
+      const smooth = 0.5 - 0.5 * Math.cos(t * 2 * Math.PI);
+      alphaRef.current = cfg.simmerAlphaLow + (cfg.simmerAlphaHigh - cfg.simmerAlphaLow) * smooth;
+    } else {
+      alphaRef.current = alpha * (1 - cfg.alphaDecay);
+    }
     dirtyRef.current = true;
 
     frameCounterRef.current++;
@@ -271,15 +299,17 @@ export function useForceSim(
     (on: boolean) => {
       simmerRef.current = on;
       if (on) {
-        if (alphaRef.current < cfg.alphaSimmer) {
-          alphaRef.current = cfg.alphaSimmer;
-          setAlphaDisplay(cfg.alphaSimmer);
-        }
+        // Reset the cycle so it always starts at the cool end. Without
+        // this, toggling simmer after a long pause would resume mid-cycle
+        // at whatever wall-clock phase happens to land.
+        simmerStartRef.current = performance.now();
+        alphaRef.current = cfg.simmerAlphaLow;
+        setAlphaDisplay(cfg.simmerAlphaLow);
         dirtyRef.current = true;
         invalidate();
       }
     },
-    [cfg.alphaSimmer, invalidate]
+    [cfg.simmerAlphaLow, invalidate]
   );
 
   return { positionsRef, dirtyRef, alpha: alphaDisplay, reheat, freeze, simmer };

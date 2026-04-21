@@ -14,6 +14,7 @@ import { Nodes } from './Nodes';
 import { Edges } from './Edges';
 import { Arrows } from './Arrows';
 import { EdgeLabels } from './EdgeLabels';
+import { NodeLabels } from './NodeLabels';
 import { CaretMarker, NodeLabel } from './Overlays';
 import { NodeInfoOverlay, type NodeInfoData } from './NodeInfoOverlay';
 import { useSim } from './useSim';
@@ -29,20 +30,32 @@ const EMPTY_INFOS: NodeInfoData[] = [];
 export interface SceneProps {
   nodes: EngineNode[];
   edges: EngineEdge[];
-  palette: (category: string) => string;
+  /** Per-node colors, parallel to `nodes` by index. Caller computes from
+   *  whatever dimension (ontology/degree/centrality/...) they choose. */
+  colors: string[];
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   pinnedIds?: Set<string>;
   highlightedIds?: Set<string>;
+  /** When defined, items not in this set are dimmed. Driven by hover or
+   *  right-click "Focus on node" in the consuming explorer. */
+  activeIds?: Set<string>;
+  /** Dim multiplier applied to non-active edges/arrows in edge-type mode.
+   *  Node colors arrive pre-dimmed via the `colors` prop. */
+  dimAlpha?: number;
   nodeSize?: number;
   edgeOpacity?: number;
   showArrows?: boolean;
   showEdgeLabels?: boolean;
+  showNodeLabels?: boolean;
   labelVisibilityRadius?: number;
   physics?: ForceSimParams;
   selectedId?: string | null;
   hoveredId?: string | null;
+  enableDrag?: boolean;
+  enableZoom?: boolean;
+  enablePan?: boolean;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
@@ -57,19 +70,25 @@ export interface SceneProps {
 export function Scene({
   nodes,
   edges,
-  palette,
+  colors,
   edgePalette,
   hiddenIds,
   pinnedIds,
   highlightedIds,
+  activeIds,
+  dimAlpha = 1,
   nodeSize,
   edgeOpacity,
   showArrows = true,
   showEdgeLabels = true,
+  showNodeLabels = true,
   labelVisibilityRadius = 250,
   physics,
   selectedId,
   hoveredId,
+  enableDrag = true,
+  enableZoom = true,
+  enablePan = true,
   onSelect,
   onHover,
   onContextMenu,
@@ -104,24 +123,29 @@ export function Scene({
         nodes={nodes}
         edges={edges}
         positionsRef={sim.positionsRef}
-        palette={palette}
+        colors={colors}
         edgePalette={edgePalette}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
+        activeIds={activeIds}
+        dimAlpha={dimAlpha}
       />
       <Arrows
         nodes={nodes}
         edges={edges}
         positionsRef={sim.positionsRef}
-        palette={palette}
+        colors={colors}
         edgePalette={edgePalette}
         hiddenIds={hiddenIds}
         enabled={showArrows}
+        nodeSize={nodeSize}
+        activeIds={activeIds}
+        dimAlpha={dimAlpha}
       />
       <Nodes
         nodes={nodes}
         positionsRef={sim.positionsRef}
-        palette={palette}
+        colors={colors}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
@@ -129,9 +153,9 @@ export function Scene({
         onSelect={onSelect}
         onHover={onHover}
         onContextMenu={onContextMenu}
-        onDragStart={drag.onDragStart}
-        onDragMove={drag.onDragMove}
-        onDragEnd={drag.onDragEnd}
+        onDragStart={enableDrag ? drag.onDragStart : undefined}
+        onDragMove={enableDrag ? drag.onDragMove : undefined}
+        onDragEnd={enableDrag ? drag.onDragEnd : undefined}
       />
       <EdgeLabels
         nodes={nodes}
@@ -141,6 +165,16 @@ export function Scene({
         enabled={showEdgeLabels}
         visibilityRadius={labelVisibilityRadius}
         edgePalette={edgePalette}
+        activeIds={activeIds}
+      />
+      <NodeLabels
+        nodes={nodes}
+        positionsRef={sim.positionsRef}
+        colors={colors}
+        hiddenIds={hiddenIds}
+        enabled={showNodeLabels}
+        visibilityRadius={labelVisibilityRadius}
+        activeIds={activeIds}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay
@@ -152,13 +186,19 @@ export function Scene({
         />
       ))}
       <CaretMarker nodes={nodes} positionsRef={sim.positionsRef} nodeId={selectedId} />
-      <NodeLabel
-        nodes={nodes}
-        positionsRef={sim.positionsRef}
-        nodeId={selectedId ?? hoveredId}
-        variant={selectedId ? 'selected' : 'hover'}
-      />
-      <OrbitControls makeDefault />
+      {/* Hover/select label is redundant when persistent node labels are
+          rendering — only show it when persistent labels are off, OR when
+          a node is explicitly selected (the selected pill is more
+          prominent than the always-on label). */}
+      {(!showNodeLabels || selectedId) && (
+        <NodeLabel
+          nodes={nodes}
+          positionsRef={sim.positionsRef}
+          nodeId={selectedId ?? hoveredId}
+          variant={selectedId ? 'selected' : 'hover'}
+        />
+      )}
+      <OrbitControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
     </>
   );
 }

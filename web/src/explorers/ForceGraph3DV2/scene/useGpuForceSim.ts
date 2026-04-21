@@ -41,6 +41,9 @@ const DEFAULTS: PhysicsParams = {
   dampingSimmer: 0.70,
   centerGravitySimmer: 0.03,
   velStopSimmer: 0.3,
+  simmerCycleMs: 24000,
+  simmerAlphaLow: 0.02,
+  simmerAlphaHigh: 0.35,
 };
 
 /** Capability detection — WebGL2 + EXT_color_buffer_float required.  @verified c17bbeb9 */
@@ -85,7 +88,7 @@ export function useGpuForceSim(
   edges: EngineEdge[],
   params: ForceSimParams = {}
 ): ForceSimHandle {
-  const { hiddenIds, pinnedIds, ...tuning } = params;
+  const { hiddenIds, pinnedIds, enabled = true, ...tuning } = params;
   const cfg: PhysicsParams = { ...DEFAULTS, ...tuning };
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
@@ -97,6 +100,7 @@ export function useGpuForceSim(
   const [alphaDisplay, setAlphaDisplay] = useState(cfg.alphaInitial);
   const frameCounterRef = useRef(0);
   const simmerRef = useRef(false);
+  const simmerStartRef = useRef(0);
   const gpuStateRef = useRef<GpuState | null>(null);
 
   useEffect(() => {
@@ -285,6 +289,10 @@ export function useGpuForceSim(
   }, [hiddenIds, pinnedIds, nodes, invalidate]);
 
   useFrame(() => {
+    if (!enabled) {
+      dirtyRef.current = false;
+      return;
+    }
     const s = gpuStateRef.current;
     if (!s) return;
     const alpha = alphaRef.current;
@@ -323,8 +331,14 @@ export function useGpuForceSim(
       }
     }
 
-    const decayed = alpha * (1 - cfg.alphaDecay);
-    alphaRef.current = simmerRef.current ? Math.max(cfg.alphaSimmer, decayed) : decayed;
+    if (simmerRef.current) {
+      // Stovetop thermal cycle — see useForceSim.ts for the rationale.
+      const t = (performance.now() - simmerStartRef.current) / cfg.simmerCycleMs;
+      const smooth = 0.5 - 0.5 * Math.cos(t * 2 * Math.PI);
+      alphaRef.current = cfg.simmerAlphaLow + (cfg.simmerAlphaHigh - cfg.simmerAlphaLow) * smooth;
+    } else {
+      alphaRef.current = alpha * (1 - cfg.alphaDecay);
+    }
     dirtyRef.current = true;
 
     frameCounterRef.current++;
@@ -357,15 +371,14 @@ export function useGpuForceSim(
     (on: boolean) => {
       simmerRef.current = on;
       if (on) {
-        if (alphaRef.current < cfg.alphaSimmer) {
-          alphaRef.current = cfg.alphaSimmer;
-          setAlphaDisplay(cfg.alphaSimmer);
-        }
+        simmerStartRef.current = performance.now();
+        alphaRef.current = cfg.simmerAlphaLow;
+        setAlphaDisplay(cfg.simmerAlphaLow);
         dirtyRef.current = true;
         invalidate();
       }
     },
-    [cfg.alphaSimmer, invalidate]
+    [cfg.simmerAlphaLow, invalidate]
   );
 
   return { positionsRef, dirtyRef, alpha: alphaDisplay, reheat, freeze, simmer };

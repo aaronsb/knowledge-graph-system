@@ -31,3 +31,9 @@ export {
   type GraphContextMenuHandlers,
   type GraphContextMenuCallbacks,
 } from './useGraphContextMenu';
+export {
+  computeNodeColors,
+  type NodeColorMode,
+  type NodeColorInput,
+  type EdgeColorInput,
+} from './nodeColors';

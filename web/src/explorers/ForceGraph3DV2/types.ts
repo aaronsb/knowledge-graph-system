@@ -2,12 +2,15 @@
  * ForceGraph3D V2 — Type Definitions
  *
  * Built on the unified rendering engine described in ADR-702.
- * Engine shape: {EngineNode[], EngineEdge[]} with {projection, nodeMode,
- * physicsBackend} axes and kg-specific properties from spike findings
- * (separate id/label, edge-type palette, directed arrows).
+ * Engine shape: {EngineNode[], EngineEdge[]} with kg-specific properties
+ * from spike findings (separate id/label, edge-type palette, directed
+ * arrows).
  */
 
 import type { APIGraphNode, APIGraphLink } from '../../types/graph';
+import type { NodeColorMode } from '../common';
+
+export type { NodeColorMode };
 
 /** A node as consumed by the unified rendering engine.  @verified c17bbeb9 */
 export interface EngineNode {
@@ -45,7 +48,6 @@ export interface ForceGraph3DV2Data {
   edges: EngineEdge[];
 }
 
-export type NodeMode = 'sprite' | 'poly';
 export type PhysicsBackend = 'auto' | 'cpu' | 'gpu';
 export type EdgeColorMode = 'endpoint' | 'type';
 
@@ -61,13 +63,15 @@ export interface ForceGraph3DV2Settings {
   };
 
   visual: {
-    nodeMode: NodeMode;
     showArrows: boolean;
+    /** Persistent edge-type labels on edges. */
     showLabels: boolean;
+    /** Persistent node labels above each node. */
+    showNodeLabels: boolean;
+    nodeColorBy: NodeColorMode;
     edgeColorBy: EdgeColorMode;
     labelVisibilityRadius: number;
     nodeSize: number;
-    linkWidth: number;
   };
 
   interaction: {
@@ -75,12 +79,6 @@ export interface ForceGraph3DV2Settings {
     enableZoom: boolean;
     enablePan: boolean;
     highlightNeighbors: boolean;
-  };
-
-  filters: {
-    relationshipTypes: string[];
-    ontologies: string[];
-    minConfidence: number;
   };
 }
 
@@ -94,24 +92,19 @@ export const DEFAULT_SETTINGS: ForceGraph3DV2Settings = {
     backend: 'auto',
   },
   visual: {
-    nodeMode: 'poly',
     showArrows: true,
     showLabels: true,
+    showNodeLabels: true,
+    nodeColorBy: 'ontology',
     edgeColorBy: 'type',
     labelVisibilityRadius: 250,
     nodeSize: 1.0,
-    linkWidth: 1.0,
   },
   interaction: {
     enableDrag: true,
     enableZoom: true,
     enablePan: true,
     highlightNeighbors: true,
-  },
-  filters: {
-    relationshipTypes: [],
-    ontologies: [],
-    minConfidence: 0,
   },
 };
 
@@ -125,6 +118,5 @@ export const SLIDER_RANGES = {
   visual: {
     labelVisibilityRadius: { min: 50, max: 1000, step: 10 },
     nodeSize: { min: 0.3, max: 3, step: 0.1 },
-    linkWidth: { min: 0.5, max: 5, step: 0.1 },
   },
 };

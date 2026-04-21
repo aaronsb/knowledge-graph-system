@@ -12,14 +12,27 @@ import { categoryColors } from '../../config/categoryColors';
 import { useGraphStore } from '../../store/graphStore';
 import type { GraphData } from '../../types/graph';
 
+/** Optional Show/Hide visibility section. Each toggle is independent so
+ *  callers can wire only the controls they support (e.g. 2D might not
+ *  have showNodeLabels). Section is omitted when no controls are passed. */
+export interface LegendVisibilityControls {
+  showArrows?: boolean;
+  showEdgeLabels?: boolean;
+  showNodeLabels?: boolean;
+  onToggleArrows?: (v: boolean) => void;
+  onToggleEdgeLabels?: (v: boolean) => void;
+  onToggleNodeLabels?: (v: boolean) => void;
+}
+
 interface LegendProps {
   data: GraphData;
   nodeColorMode: 'ontology' | 'degree' | 'centrality';
+  visibilityControls?: LegendVisibilityControls;
 }
 
-export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
+export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode, visibilityControls }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['nodeColors', 'edgeColors'])
+    new Set(['nodeColors', 'edgeColors', 'visibility'])
   );
 
   const {
@@ -150,7 +163,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
         </div>
 
         {/* Edge Colors Section */}
-        <div>
+        <div className={visibilityControls ? 'border-b border-border pb-3' : ''}>
           <button
             onClick={() => toggleSection('edgeColors')}
             className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground transition-colors"
@@ -191,6 +204,60 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode }) => {
             </div>
           )}
         </div>
+
+        {/* Show / Hide Section — opt-in via visibilityControls prop */}
+        {visibilityControls && (
+          <div>
+            <button
+              onClick={() => toggleSection('visibility')}
+              className="w-full flex items-center justify-between text-sm font-medium text-card-foreground hover:text-foreground transition-colors"
+            >
+              <span>Show / Hide</span>
+              {expandedSections.has('visibility') ? (
+                <ChevronDown size={14} className="text-muted-foreground" />
+              ) : (
+                <ChevronRight size={14} className="text-muted-foreground" />
+              )}
+            </button>
+            {expandedSections.has('visibility') && (
+              <div className="mt-3 space-y-1.5">
+                {visibilityControls.onToggleArrows !== undefined && (
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={visibilityControls.showArrows ?? false}
+                      onChange={(e) => visibilityControls.onToggleArrows?.(e.target.checked)}
+                      className="w-3 h-3 rounded cursor-pointer"
+                    />
+                    <span className="text-card-foreground">Arrows</span>
+                  </label>
+                )}
+                {visibilityControls.onToggleEdgeLabels !== undefined && (
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={visibilityControls.showEdgeLabels ?? false}
+                      onChange={(e) => visibilityControls.onToggleEdgeLabels?.(e.target.checked)}
+                      className="w-3 h-3 rounded cursor-pointer"
+                    />
+                    <span className="text-card-foreground">Edge labels</span>
+                  </label>
+                )}
+                {visibilityControls.onToggleNodeLabels !== undefined && (
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={visibilityControls.showNodeLabels ?? false}
+                      onChange={(e) => visibilityControls.onToggleNodeLabels?.(e.target.checked)}
+                      className="w-3 h-3 rounded cursor-pointer"
+                    />
+                    <span className="text-card-foreground">Node labels</span>
+                  </label>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

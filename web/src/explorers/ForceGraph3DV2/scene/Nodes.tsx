@@ -3,7 +3,10 @@
  *
  * One draw call for N nodes via InstancedMesh. Per-instance matrix
  * (position + uniform scale from degree) and per-instance color from
- * the palette. Reads positions each frame from a shared Float32Array
+ * the `colors` prop (string[] of length nodes.length, indexed by node
+ * position). Color source is opaque to the engine — callers compute
+ * colors from category, degree, centrality, etc. before passing them
+ * in. Reads positions each frame from a shared Float32Array
  * ref so physics and rendering stay on the same buffer.
  *
  * Pointer events on the mesh surface instanceId, which callers resolve
@@ -14,6 +17,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import type { DragHandlers } from './useDragHandler';
 import * as THREE from 'three';
 import type { EngineNode } from '../types';
 
@@ -26,7 +30,8 @@ const tmpColor = new THREE.Color();
 export interface NodesProps {
   nodes: EngineNode[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
-  palette: (category: string) => string;
+  /** Per-node colors, parallel to `nodes` by index. */
+  colors: string[];
   hiddenIds?: Set<string>;
   highlightedIds?: Set<string>;
   nodeSize?: number;
@@ -34,13 +39,16 @@ export interface NodesProps {
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
+  onDragStart?: DragHandlers['onDragStart'];
+  onDragMove?: DragHandlers['onDragMove'];
+  onDragEnd?: DragHandlers['onDragEnd'];
 }
 
 /** Instanced icosahedron node mesh — one draw call for all nodes.  @verified c17bbeb9 */
 export function Nodes({
   nodes,
   positionsRef,
-  palette,
+  colors,
   hiddenIds,
   highlightedIds,
   nodeSize = 1,
@@ -106,12 +114,18 @@ export function Nodes({
     const mesh = meshRef.current;
     if (!mesh) return;
     for (let i = 0; i < nodes.length; i++) {
-      tmpColor.set(palette(nodes[i].category));
+      tmpColor.set(colors[i] ?? '#888888');
       mesh.setColorAt(i, tmpColor);
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    // Stale bounding sphere kills raycasts (and therefore pointer events
+    // including right-click). After data updates the new instance positions
+    // can fall outside the cached sphere — null it so the next raycast
+    // forces a recompute, and pump a frame so it actually happens before
+    // the user's next click.
+    mesh.boundingSphere = null;
     invalidate();
-  }, [nodes, palette, invalidate]);
+  }, [nodes, colors, invalidate]);
 
   // Drag bookkeeping — keep pointer-down position so a tiny jitter between
   // down and up still resolves as a click rather than a drag.

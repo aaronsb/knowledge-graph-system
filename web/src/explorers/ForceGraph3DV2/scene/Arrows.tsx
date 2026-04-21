@@ -23,9 +23,9 @@ const ARROW_T = 1.0;
 /** Apex offset outward from target along the tangent, as fraction of edge length. */
 const ARROW_APEX_OFFSET_RATIO = 0.0;
 /** Arrow length as fraction of edge length (with absolute min/max). */
-const ARROW_LEN_RATIO = 0.06;
-const ARROW_LEN_MIN = 2;
-const ARROW_LEN_MAX = 10;
+const ARROW_LEN_RATIO = 0.018;
+const ARROW_LEN_MIN = 0.6;
+const ARROW_LEN_MAX = 3;
 /** Arrow base radius as fraction of arrow length. */
 const ARROW_RADIUS_RATIO = 0.4;
 /** Cone-axis direction before any instance rotation — ConeGeometry is +Y up. */
@@ -43,13 +43,22 @@ export interface ArrowsProps {
   nodes: EngineNode[];
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
-  palette: (category: string) => string;
-  /** If provided, color arrows by edge type; otherwise use target node category. */
+  /** Per-node colors, parallel to `nodes` by index. Used as the arrow
+   *  color (target node) when edgePalette isn't provided. */
+  colors: string[];
+  /** If provided, color arrows by edge type; otherwise use target node color. */
   edgePalette?: (edgeType: string) => string;
   hiddenIds?: Set<string>;
   opacity?: number;
   /** Turn off arrow rendering entirely; default true per ADR-702. */
   enabled?: boolean;
+  /** Multiplier on node radius. Mirrors Nodes' nodeSize so the apex sits
+   *  on the actual sphere surface. Default 1. */
+  nodeSize?: number;
+  /** When defined, arrows whose endpoints aren't both in this set are
+   *  dimmed by dimAlpha. */
+  activeIds?: Set<string>;
+  dimAlpha?: number;
 }
 
 /** Instanced cone arrow glyphs at edge target ends.  @verified c17bbeb9 */
@@ -57,11 +66,14 @@ export function Arrows({
   nodes,
   edges,
   positionsRef,
-  palette,
+  colors,
   edgePalette,
   hiddenIds,
   opacity = 0.9,
   enabled = true,
+  nodeSize = 1,
+  activeIds,
+  dimAlpha = 1,
 }: ArrowsProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -86,21 +98,30 @@ export function Arrows({
   }, [nodes, edges]);
 
   // Color: edgePalette by edge type if available, else target node's category.
+  // Dimmed arrows multiply their color by dimAlpha when either endpoint
+  // isn't in the active set.
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
+    const hasActive = !!activeIds && activeIds.size > 0;
     for (let i = 0; i < usableCount; i++) {
+      const si = indexPairs[i * 2];
+      const ti = indexPairs[i * 2 + 1];
+      const dim =
+        hasActive && (!activeIds!.has(nodes[si].id) || !activeIds!.has(nodes[ti].id))
+          ? dimAlpha
+          : 1;
       if (edgePalette) {
         tmpColor.set(edgePalette(usableEdges[i].type));
       } else {
-        const ti = indexPairs[i * 2 + 1];
-        tmpColor.set(palette(nodes[ti].category));
+        tmpColor.set(colors[ti] ?? '#888888');
       }
+      tmpColor.multiplyScalar(dim);
       mesh.setColorAt(i, tmpColor);
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     invalidate();
-  }, [usableCount, indexPairs, nodes, palette, edgePalette, usableEdges, invalidate]);
+  }, [usableCount, indexPairs, nodes, colors, edgePalette, usableEdges, activeIds, dimAlpha, invalidate]);
 
   useFrame(() => {
     const mesh = meshRef.current;
@@ -172,6 +193,14 @@ export function Arrows({
         tangent.subVectors(t, ctrl).multiplyScalar(2).normalize();
         apex.addScaledVector(tangent, ARROW_APEX_OFFSET_RATIO * edgeLen);
       }
+
+      // Pull the apex back from the target node center to the sphere
+      // surface so the cone tip touches but doesn't bury inside the node.
+      // Mirrors Nodes.tsx scale formula: world radius = (0.8 + sqrt(degree)
+      // * 0.3) * nodeSize. icosahedronGeometry uses unit radius so scale
+      // equals world radius directly.
+      const targetRadius = (0.8 + Math.sqrt(nodes[ti].degree || 1) * 0.3) * nodeSize;
+      apex.addScaledVector(tangent, -targetRadius);
 
       // ConeGeometry apex at +Y (height/2 above center). Placing the cone
       // center at (apex - tangent * arrowLen/2) makes the apex land at `apex`.

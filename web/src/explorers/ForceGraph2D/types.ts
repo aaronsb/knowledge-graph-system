@@ -3,8 +3,9 @@
  */
 
 import type { GraphData } from '../../types/graph';
+import type { NodeColorMode } from '../common';
 
-export type NodeColorMode = 'ontology' | 'degree' | 'centrality';
+export type { NodeColorMode };
 export type EdgeColorMode = 'category' | 'confidence' | 'uniform';
 export type LayoutAlgorithm = 'force' | 'circular' | 'grid';
 
