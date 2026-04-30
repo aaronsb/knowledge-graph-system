@@ -1,5 +1,7 @@
 # Kappa Graph — κ(G)
 
+[![SafeSkill 20/100](https://img.shields.io/badge/SafeSkill-20%2F100_Blocked-red)](https://safeskill.dev/scan/aaronsb-knowledge-graph-system)
+
 ![License](https://img.shields.io/github/license/aaronsb/knowledge-graph-system)
 ![GitHub stars](https://img.shields.io/github/stars/aaronsb/knowledge-graph-system?style=social)
 ![Latest Release](https://img.shields.io/github/v/release/aaronsb/knowledge-graph-system?include_prereleases&label=version)
