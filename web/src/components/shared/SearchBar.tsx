@@ -395,6 +395,7 @@ LIMIT 50`);
                 debouncedQuery={debouncedPrimaryQuery}
                 onSelect={handleSelectPrimary}
                 noResultsContent={noResultsContent}
+                isSelected={!!selectedPrimary}
               />
 
               {similaritySlider}
@@ -461,6 +462,7 @@ LIMIT 50`);
                         results={destinationResults?.results}
                         debouncedQuery={debouncedDestinationQuery}
                         onSelect={handleSelectDestination}
+                        isSelected={!!selectedDestination}
                       />
 
                       {selectedDestination && (
