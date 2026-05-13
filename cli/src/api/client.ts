@@ -1178,16 +1178,18 @@ export class KnowledgeGraphClient {
       responseType: 'stream'
     });
 
-    // Extract filename from Content-Disposition header
-    const contentDisposition = response.headers['content-disposition'];
+    // Extract filename from Content-Disposition header.
+    // Axios types `headers[x]` as the union `string | number | true | string[] | AxiosHeaders`,
+    // but for HTTP response headers we always get strings — narrow at the boundary.
+    const contentDisposition = response.headers['content-disposition'] as string | undefined;
     const filenameMatch = contentDisposition?.match(/filename=(.+)/);
     // Default based on content type (archive is now default)
-    const contentType = response.headers['content-type'] || '';
+    const contentType = (response.headers['content-type'] as string | undefined) || '';
     const defaultFilename = contentType.includes('gzip') ? 'backup.tar.gz' : 'backup.json';
     const filename = filenameMatch ? filenameMatch[1] : defaultFilename;
 
     // Get content length if available
-    const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+    const totalBytes = parseInt((response.headers['content-length'] as string | undefined) || '0', 10);
 
     // Create write stream
     const writer = fs.createWriteStream(savePath);

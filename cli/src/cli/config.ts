@@ -23,8 +23,10 @@ async function testApiUrl(url: string): Promise<boolean> {
       validateStatus: () => true // Don't throw on any status
     });
 
-    // Check if response is JSON and looks like our API
-    const contentType = response.headers['content-type'] || '';
+    // Check if response is JSON and looks like our API.
+    // Axios's header union is broader than HTTP responses actually return —
+    // narrow to string at the boundary.
+    const contentType = (response.headers['content-type'] as string | undefined) || '';
     if (!contentType.includes('application/json')) {
       return false;
     }
