@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, GitBranch, Blocks, Code, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { Search, GitBranch, Blocks, Code, ChevronDown, ChevronRight, Plus, X, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -25,6 +25,8 @@ import { BlockBuilder } from '../blocks/BlockBuilder';
 import { parseCypherStatements } from '../../utils/cypherGenerator';
 import type { PathResult } from '../../utils/cypherResultMapper';
 import { useExplorationActions } from '../../hooks/useExplorationActions';
+import { useAutosave } from '../../hooks/useAutosave';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -51,6 +53,16 @@ export const SearchBar: React.FC = () => {
 
   // All graph-mutating actions funnel through this hub.
   const actions = useExplorationActions();
+
+  // "Refresh current query" — replays the autosave (current session) through
+  // the server via GraphProgram, producing always-fresh data without
+  // disturbing React Query's cache for unrelated subgraph keys. The button
+  // is hidden when there's no session to refresh.
+  const autosave = useAutosave();
+  const { replayQuery, isReplaying } = useQueryReplay();
+  const handleRefresh = () => {
+    if (autosave) replayQuery(autosave);
+  };
 
   // === UNIFIED SEARCH STATE ===
   // Primary concept (the starting point for any search)
@@ -336,7 +348,7 @@ LIMIT 50`);
 
   return (
     <div className="relative space-y-4 min-w-0">
-      {/* Header with Mode Info and Dial */}
+      {/* Header with Mode Info, Refresh, and Dial */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3 flex-1">
           <div className="flex-shrink-0">
@@ -351,7 +363,20 @@ LIMIT 50`);
             </p>
           </div>
         </div>
-        <ModeDial mode={queryMode} onChange={setQueryMode} />
+        <div className="flex items-center gap-2">
+          {autosave && (
+            <button
+              onClick={handleRefresh}
+              disabled={isReplaying}
+              title="Refresh current query — re-run the active session against the server for fresh data"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isReplaying ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          )}
+          <ModeDial mode={queryMode} onChange={setQueryMode} />
+        </div>
       </div>
 
       {/* ===== SMART SEARCH (Unified Progressive) ===== */}
