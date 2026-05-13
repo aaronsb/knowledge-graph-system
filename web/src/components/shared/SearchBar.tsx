@@ -22,10 +22,9 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
-import { stepToCypher, parseCypherStatements } from '../../utils/cypherGenerator';
-import { mapWorkingGraphToRawGraph, extractGraphFromPath } from '../../utils/cypherResultMapper';
+import { parseCypherStatements } from '../../utils/cypherGenerator';
 import type { PathResult } from '../../utils/cypherResultMapper';
-import { statementsToProgram } from '../../utils/programBuilder';
+import { useExplorationActions } from '../../hooks/useExplorationActions';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -48,11 +47,10 @@ export const SearchBar: React.FC = () => {
     similarityThreshold: similarity,
     setSimilarityThreshold: setSimilarity,
     searchParams,
-    setSearchParams,
-    setRawGraphData,
-    mergeRawGraphData,
-    setGraphData,
   } = useGraphStore();
+
+  // All graph-mutating actions funnel through this hub.
+  const actions = useExplorationActions();
 
   // === UNIFIED SEARCH STATE ===
   // Primary concept (the starting point for any search)
@@ -152,30 +150,13 @@ LIMIT 50`);
     setDepth(1); // Reset to explore default
   };
 
-  /** Load explore — fetch subgraph around selected concept and record the step */
-  const handleLoadExplore = (loadMode: 'clean' | 'add') => {
+  /** Load explore — delegate to the exploration action hub. */
+  const handleLoadExplore = async (loadMode: 'clean' | 'add') => {
     if (!selectedPrimary) return;
-
-    const stepParams = {
-      action: 'explore' as const,
-      conceptLabel: selectedPrimary.label,
-      depth,
-    };
-
-    useGraphStore.getState().addExplorationStep({
-      action: 'explore',
-      op: '+',
-      cypher: stepToCypher(stepParams),
+    await actions.loadExplore({
       conceptId: selectedPrimary.concept_id,
       conceptLabel: selectedPrimary.label,
       depth,
-    });
-
-    setSearchParams({
-      primaryConceptId: selectedPrimary.concept_id,
-      primaryConceptLabel: selectedPrimary.label,
-      depth,
-      maxHops: 5,
       loadMode,
     });
   };
@@ -214,66 +195,28 @@ LIMIT 50`);
     }
   };
 
-  /** Load selected path into graph and record the step */
+  /** Load selected path — delegate to the exploration action hub. */
   const handleLoadPath = async (loadMode: 'clean' | 'add') => {
     if (!selectedPath || !selectedPrimary || !selectedDestination) return;
 
-    const stepParams = {
-      action: 'load-path' as const,
-      conceptLabel: selectedPrimary.label,
+    await actions.loadPath({
+      fromId: selectedPrimary.concept_id,
+      fromLabel: selectedPrimary.label,
+      toId: selectedDestination.concept_id,
+      toLabel: selectedDestination.label,
+      path: selectedPath,
       depth,
-      destinationConceptLabel: selectedDestination.label,
       maxHops,
-    };
-
-    useGraphStore.getState().addExplorationStep({
-      action: 'load-path',
-      op: '+',
-      cypher: stepToCypher(stepParams),
-      conceptId: selectedPrimary.concept_id,
-      conceptLabel: selectedPrimary.label,
-      depth,
-      destinationConceptId: selectedDestination.concept_id,
-      destinationConceptLabel: selectedDestination.label,
-      maxHops,
+      loadMode,
     });
-
-    const { nodes, links, conceptNodeIds } = extractGraphFromPath(selectedPath);
-
-    if (loadMode === 'clean') {
-      setGraphData(null);
-      setRawGraphData({ nodes, links });
-    } else {
-      mergeRawGraphData({ nodes, links });
-    }
-
-    // Enrich path nodes with neighborhood context
-    if (depth > 0 && conceptNodeIds.length <= 50) {
-      const enrichDepth = Math.min(depth, 2);
-      if (conceptNodeIds.length > 0) {
-        try {
-          const enrichments = await Promise.all(
-            conceptNodeIds.map((id) =>
-              apiClient.getSubgraph({ center_concept_id: id, depth: enrichDepth })
-            )
-          );
-          for (const data of enrichments) {
-            mergeRawGraphData({ nodes: data.nodes, links: data.links });
-          }
-        } catch (error) {
-          console.error('Path enrichment failed:', error);
-        }
-      }
-    }
 
     setPathResults(null);
     setSelectedPath(null);
   };
 
-  // Execute Cypher program — parses +/- prefixed multi-statement scripts,
-  // routes results through the rawGraphData pipeline (not setGraphData directly),
-  // and records each statement as an exploration step for save/export round-trip.
-  // Plain Cypher without operators is treated as a single additive statement.
+  // Execute Cypher program — parses +/- prefixed multi-statement scripts and
+  // delegates to the exploration action hub. Plain Cypher without operators
+  // is treated as a single additive statement.
   const handleExecuteCypher = async () => {
     if (!cypherQuery.trim()) return;
 
@@ -293,29 +236,7 @@ LIMIT 50`);
 
       if (statements.length === 0) return;
 
-      const store = useGraphStore.getState();
-
-      // Start fresh — clear graph and reset exploration session
-      setGraphData(null);
-      setRawGraphData(null);
-      store.resetExplorationSession();
-
-      // Execute all statements as a single GraphProgram (ADR-500)
-      const program = statementsToProgram(statements);
-      const programResult = await apiClient.executeProgram({ program: program as unknown as Record<string, unknown> });
-      const mapped = mapWorkingGraphToRawGraph(programResult.result);
-
-      // Record exploration steps for save/export round-trip
-      for (const stmt of statements) {
-        store.addExplorationStep({
-          action: 'cypher',
-          op: stmt.op,
-          cypher: stmt.cypher,
-        });
-      }
-
-      // Load the complete result
-      mergeRawGraphData(mapped);
+      await actions.runCypher(statements);
     } catch (error: unknown) {
       console.error('Failed to execute Cypher query:', error);
       const err = error as { response?: { data?: { detail?: string } }; message?: string };
