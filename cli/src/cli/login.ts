@@ -26,7 +26,8 @@ async function testApiUrl(url: string): Promise<boolean> {
       timeout: 5000,
       validateStatus: () => true
     });
-    const contentType = response.headers['content-type'] || '';
+    // Narrow axios's broader header union to string at the boundary.
+    const contentType = (response.headers['content-type'] as string | undefined) || '';
     if (!contentType.includes('application/json')) {
       return false;
     }
