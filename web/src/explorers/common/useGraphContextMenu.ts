@@ -49,7 +49,12 @@ export interface NodeContextMenuParams {
 export interface GraphContextMenuHandlers {
   // Generic handlers (provided by hook)
   handleFollowConcept: (nodeId: string) => Promise<void>;
-  handleAddToGraph: (nodeId: string) => Promise<void>;
+  /**
+   * Merge the node's neighborhood into the graph at the given depth.
+   * Depth selector (1/2/3) is exposed as a submenu in the context menu;
+   * omitting the argument falls back to the hub's default depth.
+   */
+  handleAddToGraph: (nodeId: string, depth?: 1 | 2 | 3) => Promise<void>;
   handleRemoveFromGraph: (nodeId: string) => void;
   setOriginNode: (nodeId: string | null) => void;
   setDestinationNode: (nodeId: string | null) => void;
@@ -113,11 +118,13 @@ export function useGraphNavigation(_mergeGraphData?: (newData: RawGraphData) => 
     [actions]
   );
 
-  /** Add adjacent — delegates to the action hub, with an alert on failure. */
+  /** Add adjacent — delegates to the action hub, with an alert on failure.
+   *  Optional `depth` (1/2/3) drives the depth selector exposed by the
+   *  shared context menu; undefined uses the hub's default depth. */
   const handleAddToGraph = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, depth?: 1 | 2 | 3) => {
       try {
-        await actions.addAdjacent(nodeId);
+        await actions.addAdjacent(nodeId, depth ? { depth } : undefined);
       } catch (error: unknown) {
         alert(`Failed to add adjacent nodes: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -600,13 +607,21 @@ export function buildContextMenuItems(
       },
     });
 
+    // Add Adjacent — submenu with depth selector. Depth 1 is the
+    // immediate neighborhood; 2 and 3 expand further at proportionally
+    // higher fetch cost, capped at 3 (the API enforces this server-side
+    // and the depth-2/3 fetches are noticeably slower on dense graphs).
     items.push({
-      label: `Add Adjacent Nodes`,
+      label: 'Add Adjacent Nodes',
       icon: Plus,
-      onClick: () => {
-        handleAddToGraph(nodeId);
-        onClose();
-      },
+      submenu: ([1, 2, 3] as const).map((d) => ({
+        label: `Depth ${d}${d === 1 ? ' (direct neighbors)' : ''}`,
+        icon: Plus,
+        onClick: () => {
+          handleAddToGraph(nodeId, d);
+          onClose();
+        },
+      })),
     });
 
     items.push({
