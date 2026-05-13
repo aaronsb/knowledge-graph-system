@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \bapi\b|AGEClient|routes/|FastAPI|endpoint|backend
 files: api/app/
+description: FastAPI backend structure, query safety via GraphFacade, and endpoint patterns for the knowledge graph API
+vocabulary: api endpoint route fastapi backend rest query facade age client permission
+scope: agent, subagent
 ---
 # API Way
 

@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: kg\s+(cli|command|tool)|\bcli\b.*kg|mcp.*tool|MCP.*server|knowledge.?graph.*cli
 commands: kg\s
+description: CLI commands and MCP server tools for interacting with the knowledge graph from the terminal
+vocabulary: cli command mcp tool kg terminal typescript install build
+scope: agent, subagent
 ---
 # CLI & MCP Way
 

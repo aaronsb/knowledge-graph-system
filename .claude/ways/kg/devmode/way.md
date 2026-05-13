@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: hot.?reload|dev.?mode|live.?reload|volume.?mount|container.*watch|rebuild.*container|code.*change.*container
 commands: operator\.sh\s+(start|restart|init)
+description: Dev mode volume mounts, hot reload behavior, and when container rebuilds are needed
+vocabulary: dev mode hot reload volume mount container restart rebuild watch live
+scope: agent, subagent
 ---
 # Dev Mode Way
 

@@ -1,8 +1,10 @@
 ---
-match: regex
 pattern: \bgraph.accel\b|\bgraph_accel\b|\.so\b.*pgrx|pgrx|traversal\.rs|bfs_neighborhood|graph_accel_load|graph_accel_neighborhood|graph_accel_path|graph_accel_subgraph|graph_accel_degree
 files: graph-accel/
 commands: cargo\s+(test|build|pgrx)
+description: Rust pgrx PostgreSQL extension for in-memory graph traversal acceleration with BFS and k-shortest paths
+vocabulary: graph accel rust pgrx extension traversal bfs neighborhood pathfinding guc generation cache
+scope: agent, subagent
 ---
 # graph_accel Way
 

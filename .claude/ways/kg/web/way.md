@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \bweb\b|frontend|Zustand|React.*component|Next\.js
 files: web/src/
+description: React frontend with Zustand state management, explorer plugins, and API-first persistence
+vocabulary: web frontend react zustand component store view explorer vite typescript ui
+scope: agent, subagent
 ---
 # Web Way
 

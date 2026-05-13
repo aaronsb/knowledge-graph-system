@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \badr\b|ADR-\d|architecture.*decision|docs/architecture/ADR
 files: docs/architecture/ADR
+description: Architecture decision records with domain-based numbering for the knowledge graph system
+vocabulary: adr architecture decision record proposal design rationale domain numbering
+scope: agent, subagent
 ---
 # KG ADR Supplement
 

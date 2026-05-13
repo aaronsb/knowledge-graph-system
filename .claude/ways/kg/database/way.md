@@ -1,8 +1,9 @@
 ---
-match: regex
 pattern: \bpostgres\b|\bpsql\b|database.*query|run.*SQL|kg_admin|SELECT\s.*FROM|INSERT\s+INTO|UPDATE\s+kg_|DELETE\s+FROM|schema_migrations
 commands: docker\s+exec.*(postgres|psql)|psql\s+-U
 scope: agent, subagent
+description: Database access via operator.sh query, PostgreSQL schemas, and why docker exec fails
+vocabulary: database postgres psql sql query schema migration table select insert
 ---
 # Database Way
 
