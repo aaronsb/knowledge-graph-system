@@ -27,7 +27,7 @@ import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
-import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
+import { generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 import type { VisualizationType } from '../types/explorer';
 
@@ -285,32 +285,14 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   const ExplorerComponent = explorerPlugin.component;
 
-  /** Follow Concept: load clicked node's neighborhood and record the step */
-  const handleNodeClick = useCallback((nodeId: string) => {
-    const store = useGraphStore.getState();
+  // Left-click on a node is per-explorer (graph explorers open a node info
+  // panel; document explorer opens the document viewer) and is handled
+  // entirely inside each explorer component. The shared `onNodeClick`
+  // prop in ExplorerProps is preserved as an optional escape hatch for
+  // future explorers, but is not wired to any action here — graph-mutating
+  // operations live on the right-click context menu and the search bar so
+  // they're never invoked accidentally on inspection.
 
-    const nodeLabel = store.rawGraphData?.nodes?.find(
-      (n: RawGraphNode) => n.concept_id === nodeId
-    )?.label || nodeId;
-
-    store.addExplorationStep({
-      action: 'add-adjacent',
-      op: '+',
-      cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 2 }),
-      conceptId: nodeId,
-      conceptLabel: nodeLabel,
-      depth: 2,
-    });
-
-    store.setFocusedNodeId(nodeId);
-    store.setSearchParams({
-      primaryConceptId: nodeId,
-      primaryConceptLabel: nodeLabel,
-      depth: 2,
-      maxHops: 5,
-      loadMode: 'add',
-    });
-  }, []);
 
   // Send current graph to Reports
   const handleSendToReports = useCallback(async () => {
@@ -540,7 +522,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
               data={graphData}
               settings={explorerSettings}
               onSettingsChange={setExplorerSettings}
-              onNodeClick={handleNodeClick}
               onSendToReports={rawGraphData && rawGraphData.nodes.length > 0 ? handleSendToReports : undefined}
             />
           )}
