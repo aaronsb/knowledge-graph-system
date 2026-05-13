@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \bschema\b|migration|\.sql|Cypher|openCypher|AGE|database.*table
 files: schema/
+description: SQL schema structure, migration workflow, openCypher graph data model, and namespace conventions
+vocabulary: schema migration sql cypher opencypher age graph model concept source instance namespace
+scope: agent, subagent
 ---
 # Schema Way
 

@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \boperator\b|docker.*kg|container|\.sh.*(start|stop|restart|status)
 commands: operator\.sh|docker\s
+description: operator.sh lifecycle commands for managing knowledge graph containers, configuration, and secrets
+vocabulary: operator container docker start stop restart status init setup deploy upgrade teardown
+scope: agent, subagent
 ---
 # Operator Way
 

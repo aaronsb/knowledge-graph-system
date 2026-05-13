@@ -1,8 +1,9 @@
 ---
-match: regex
 pattern: \bmake\b|makefile|run.*(test|suite|lint)|docstring.?coverage|scan.?for.*(antipattern|slop)|\bpytest\b|python3?\s.*pytest|PYTHONPATH|\.?/?venv|pip\s+install|npm\s+(test|run)|cargo\s+(test|pgrx)|docker\s+exec\s+kg-
 commands: ^make\s|^pytest|^python3?\s|^PYTHONPATH|^docker exec kg-|^npm (test|run)|^cargo (test|pgrx)
 scope: agent, subagent
+description: Makefile targets that wrap test, lint, and coverage commands for consistent project builds
+vocabulary: make target build test lint coverage slopscan pytest npm cargo
 ---
 # Make Targets Way
 

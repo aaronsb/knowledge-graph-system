@@ -1,7 +1,9 @@
 ---
-match: regex
 pattern: \bpytest\b|\bjest\b|\btest\b.*run|coverage|conftest
 commands: pytest|npm\s+test|tests/run
+description: Test execution, pytest markers, fixtures, and coverage for the knowledge graph platform
+vocabulary: test pytest jest coverage fixture marker unit integration api security conftest
+scope: agent, subagent
 ---
 # Testing Way
 
