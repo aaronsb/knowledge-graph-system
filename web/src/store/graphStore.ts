@@ -581,11 +581,34 @@ export const useGraphStore = create<GraphStore>()(
     }),
     {
       name: 'kg-graph-exploration',
+      // Persist the exploration session and similarity threshold only.
+      // `rawGraphData` deliberately omitted: a localStorage snapshot of
+      // graph data goes stale the moment the database is re-ingested or
+      // the user moves to a different deploy, and a stale snapshot is
+      // worse than no snapshot — clicking a stale node hits the API with
+      // an ID that no longer exists and the user sees an empty graph.
+      // The session is the durable record; on next load we present it as
+      // an "autosave" entry that replays through the server, producing
+      // fresh data instead of rehydrating a frozen blob.
       partialize: (state) => ({
-        rawGraphData: state.rawGraphData,
         explorationSession: state.explorationSession,
         similarityThreshold: state.similarityThreshold,
       }),
+      // Version bump strips stale fields from existing browsers. Without
+      // it, the previous version's localStorage entry would still carry a
+      // `rawGraphData` slot that Zustand's default merge would rehydrate
+      // into state on first load, reintroducing exactly the bug we're
+      // fixing for everyone who already has a persisted session.
+      version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        const s = (persistedState ?? {}) as Record<string, unknown>;
+        if (version < 1) {
+          // Drop the legacy rawGraphData snapshot — the autosave path
+          // replays from `explorationSession` instead.
+          delete s.rawGraphData;
+        }
+        return s;
+      },
     }
   )
 );
