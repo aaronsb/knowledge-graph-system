@@ -51,8 +51,9 @@ export interface EdgesProps {
   edgeColors?: string[];
   hiddenIds?: Set<string>;
   opacity?: number;
-  /** Line width in pixels. WebGL's LineBasicMaterial clamps to 1px on
-   *  most drivers, so values above 1 may have limited visual effect. */
+  /** Line width in pixels. Honoured by LineBasicMaterial on drivers
+   *  that support it; the WebGL spec doesn't require widths > 1, so
+   *  the effect varies by platform. */
   linkWidth?: number;
   /** When defined, edges with at least one endpoint NOT in this set are
    *  dimmed by dimAlpha. Drives hover/focus dim. */

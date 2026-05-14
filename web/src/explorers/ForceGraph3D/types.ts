@@ -89,9 +89,10 @@ export interface ForceGraph3DSettings {
     edgeColorBy: EdgeColorMode;
     labelVisibilityRadius: number;
     nodeSize: number;
-    /** Edge line width. Note: WebGL's LineBasicMaterial clamps linewidth
-     *  to 1px on most drivers, so values above 1 have limited visual
-     *  effect. Tracked for parity; a thick-line shader is a follow-up. */
+    /** Edge line width. Honoured by LineBasicMaterial on drivers that
+     *  support it (renders fine on Linux Chrome / Mesa). The WebGL
+     *  spec doesn't require widths > 1, so the visible effect varies
+     *  by platform. A thick-line shader would make it guaranteed. */
     linkWidth: number;
     /** Multiplier on node label world-space height. 1.0 = default size. */
     nodeLabelSize: number;
