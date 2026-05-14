@@ -177,6 +177,7 @@ export function Scene({
         visibilityRadius={labelVisibilityRadius}
         edgePalette={edgePalette}
         activeIds={activeIds}
+        projection={projection}
       />
       <NodeLabels
         nodes={nodes}
@@ -186,6 +187,7 @@ export function Scene({
         enabled={showNodeLabels}
         visibilityRadius={labelVisibilityRadius}
         activeIds={activeIds}
+        projection={projection}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay

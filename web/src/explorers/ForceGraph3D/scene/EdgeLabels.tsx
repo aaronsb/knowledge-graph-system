@@ -22,7 +22,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { EngineNode, EngineEdge } from '../types';
+import type { EngineNode, EngineEdge, Projection } from '../types';
 import { computeBundles, perpendicularBasis } from './bundles';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -76,7 +76,8 @@ export interface EdgeLabelsProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   hiddenIds?: Set<string>;
-  /** Labels past this world-space distance from the camera are unmounted. */
+  /** Labels past this world-space distance from the camera are unmounted.
+   *  In 2D the distance is computed in the XY plane only. */
   visibilityRadius?: number;
   enabled?: boolean;
   /** If provided, color label border by edge type. */
@@ -84,6 +85,8 @@ export interface EdgeLabelsProps {
   /** When defined, labels for edges whose endpoints aren't both in this set
    *  are dimmed (material opacity reduced). */
   activeIds?: Set<string>;
+  /** Drives the distance-culling axis count. 2D ignores Z. Default '3D'. */
+  projection?: Projection;
 }
 
 interface EdgeMeta {
@@ -108,6 +111,7 @@ export function EdgeLabels({
   enabled = true,
   edgePalette,
   activeIds,
+  projection = '3D',
 }: EdgeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -298,6 +302,11 @@ export function EdgeLabels({
     if (nowMs - lastScanRef.current < RESCAN_MS) return;
     lastScanRef.current = nowMs;
 
+    // In 2D the camera is z-locked at a fixed offset from the layout plane,
+    // so dz is a constant >> visibilityRadius. Culling on the XY-plane
+    // distance makes `visibilityRadius` mean "world units from the viewport
+    // centre", which is what a 2D viewer wants.
+    const is2D = projection === '2D';
     const candidates: { idx: number; dist2: number }[] = [];
     for (let i = 0; i < edgeMeta.length; i++) {
       const m = edgeMeta[i];
@@ -309,7 +318,7 @@ export function EdgeLabels({
       const mz = (positions[a + 2] + positions[b + 2]) * 0.5;
       const dx = mx - scratch.camPos.x;
       const dy = my - scratch.camPos.y;
-      const dz = mz - scratch.camPos.z;
+      const dz = is2D ? 0 : mz - scratch.camPos.z;
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 < radius2) candidates.push({ idx: i, dist2: d2 });
     }
