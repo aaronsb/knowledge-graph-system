@@ -317,8 +317,8 @@ export function EdgeLabels({
     // In 2D the camera is z-locked at a fixed offset from the layout plane,
     // so dz is a constant >> visibilityRadius. Culling on the XY-plane
     // distance makes `visibilityRadius` mean "world units from the viewport
-    // centre", which is what a 2D viewer wants.
-    const is2D = projection === '2D';
+    // centre", which is what a 2D viewer wants. is2D is already defined
+    // above for the orientation branch.
     const candidates: { idx: number; dist2: number }[] = [];
     for (let i = 0; i < edgeMeta.length; i++) {
       const m = edgeMeta[i];
