@@ -28,6 +28,7 @@ import {
   Shield,
   Network,
   Boxes,
+  Map,
   GitBranch,
   FlaskConical,
   Home,
@@ -129,8 +130,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <SidebarItem
               icon={Network}
               label="2D Force Graph"
-              isActive={isActive('/explore/2d')}
+              isActive={location.pathname === '/explore/2d'}
               onClick={() => navigate('/explore/2d')}
+            />
+            <SidebarItem
+              icon={Map}
+              label="2D Force Graph (V2)"
+              isActive={location.pathname === '/explore/2d-v2'}
+              onClick={() => navigate('/explore/2d-v2')}
             />
             <SidebarItem
               icon={Boxes}
