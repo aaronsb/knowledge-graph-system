@@ -7,7 +7,7 @@
  * (pan + zoom, no rotation).
  */
 
-import { useEffect, useImperativeHandle } from 'react';
+import { useEffect, useImperativeHandle, type ReactElement } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
@@ -34,6 +34,16 @@ export interface SceneProps {
   /** Per-node colors, parallel to `nodes` by index. Caller computes from
    *  whatever dimension (ontology/degree/centrality/...) they choose. */
   colors: string[];
+  /** Optional per-node class key (parallel to `nodes`). When provided
+   *  with `geometryByClass`, the engine renders one InstancedMesh per
+   *  class — Document Explorer uses this to render document nodes as
+   *  larger squared glyphs alongside concept dots. */
+  nodeClasses?: string[];
+  /** Geometry element per class key, used when `nodeClasses` is set. */
+  geometryByClass?: Record<string, ReactElement>;
+  /** Optional per-node base scale override (parallel to `nodes`). When
+   *  provided, replaces the engine's degree-based default scale. */
+  nodeScales?: Float32Array;
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgeColors?: string[];
   hiddenIds?: Set<string>;
@@ -80,6 +90,9 @@ export function Scene({
   nodes,
   edges,
   colors,
+  nodeClasses,
+  geometryByClass,
+  nodeScales,
   edgeColors,
   hiddenIds,
   pinnedIds,
@@ -166,6 +179,9 @@ export function Scene({
         nodes={nodes}
         positionsRef={sim.positionsRef}
         colors={colors}
+        nodeClasses={nodeClasses}
+        geometryByClass={geometryByClass}
+        nodeScales={nodeScales}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
