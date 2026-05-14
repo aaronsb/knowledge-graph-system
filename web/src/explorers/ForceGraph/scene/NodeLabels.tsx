@@ -91,10 +91,22 @@ export interface NodeLabelsProps {
   projection?: Projection;
   /** Multiplier on the base label world-space height. Default 1. */
   sizeMultiplier?: number;
-  /** Signed offset in world units along the billboard's local Y axis.
-   *  Positive lifts the label above the node, negative drops it below.
-   *  Default 1.4 (above). */
+  /** Signed Y offset in world units. The sign controls direction
+   *  (positive = above, negative = below). When `nodeScales` is also
+   *  provided, the offset becomes scale-aware: the label sits at
+   *  `sign(labelOffsetY) * radius + labelOffsetY` so it always clears
+   *  the node's surface by that constant padding regardless of how the
+   *  node is scaled. When `nodeScales` is omitted (current Force Graph
+   *  default), it falls back to a flat absolute offset. Default 1.4. */
   labelOffsetY?: number;
+  /** Per-node base scale (parallel to `nodes`). When provided, label
+   *  positioning becomes radius-aware — see `labelOffsetY`. The plugin
+   *  should pass the same array it gives `<Nodes>` so labels track the
+   *  actual rendered node radius. */
+  nodeScales?: Float32Array;
+  /** Global node-size multiplier — same prop `<Nodes>` consumes. Used
+   *  alongside `nodeScales` when computing scale-aware label offsets. */
+  nodeSize?: number;
 }
 
 /** Dim opacity applied to labels for nodes outside activeIds. */
@@ -113,6 +125,8 @@ export function NodeLabels({
   projection = '3D',
   sizeMultiplier = 1,
   labelOffsetY = DEFAULT_LABEL_OFFSET_Y,
+  nodeScales,
+  nodeSize = 1,
 }: NodeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -214,13 +228,22 @@ export function NodeLabels({
       scratch.pos.set(positions[a], positions[a + 1], positions[a + 2]);
 
       // Offset along world-up before billboard rotation. Once the mesh
-      // faces the camera (via lookAt-like quaternion) this stays
-      // "above"/"below" from the viewer's POV because the rotation is
-      // around the node, not around world-up. Negative labelOffsetY
-      // drops the label below the node — used by Document Explorer so
-      // labels don't sit on top of the larger document glyphs.
+      // faces the camera this stays "above"/"below" from the viewer's
+      // POV because the rotation is around the node, not around world-up.
+      //
+      // When the plugin passes `nodeScales`, the offset clears the node's
+      // surface by `|labelOffsetY|` regardless of how the node is scaled
+      // (e.g. Document Explorer's documents are ~6× concept radius — a
+      // fixed offset would sit inside them). When `nodeScales` is absent
+      // the engine falls back to the flat absolute offset (Force Graph).
       scratch.labelPos.copy(scratch.pos);
-      scratch.labelPos.y += labelOffsetY;
+      if (nodeScales) {
+        const radius = (nodeScales[idx] ?? 1) * nodeSize;
+        const sign = labelOffsetY >= 0 ? 1 : -1;
+        scratch.labelPos.y += sign * radius + labelOffsetY;
+      } else {
+        scratch.labelPos.y += labelOffsetY;
+      }
 
       // Screen-aligned billboard: normal points at the camera, "up" locked
       // to the camera's world-up so text stays horizontal in the viewport

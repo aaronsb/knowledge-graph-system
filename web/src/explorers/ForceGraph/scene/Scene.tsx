@@ -7,7 +7,7 @@
  * (pan + zoom, no rotation).
  */
 
-import { useEffect, useImperativeHandle, type ReactElement } from 'react';
+import { useEffect, useImperativeHandle, useMemo, type ReactElement } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
@@ -42,7 +42,8 @@ export interface SceneProps {
   /** Geometry element per class key, used when `nodeClasses` is set. */
   geometryByClass?: Record<string, ReactElement>;
   /** Optional per-node base scale override (parallel to `nodes`). When
-   *  provided, replaces the engine's degree-based default scale. */
+   *  provided, replaces the engine's degree-based default scale.
+   *  Drives node mesh size AND scale-aware label offsets uniformly. */
   nodeScales?: Float32Array;
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgeColors?: string[];
@@ -142,6 +143,20 @@ export function Scene({
     pinnedIds,
     dimensions: projection === '2D' ? 2 : 3,
   });
+
+  // Resolve per-node base scales here so Nodes and NodeLabels see the
+  // same numbers — the plugin's override wins if provided, otherwise
+  // the engine derives from degree. Sharing one resolved array is what
+  // lets label positioning be scale-aware for every explorer (the
+  // alternative is each consumer re-deriving and silently disagreeing).
+  const resolvedNodeScales = useMemo(() => {
+    if (nodeScales) return nodeScales;
+    const out = new Float32Array(nodes.length);
+    for (let i = 0; i < nodes.length; i++) {
+      out[i] = 0.8 + Math.sqrt(nodes[i].degree || 1) * 0.3;
+    }
+    return out;
+  }, [nodes, nodeScales]);
   const drag = useDragHandler({
     nodes,
     positionsRef: sim.positionsRef,
@@ -195,7 +210,7 @@ export function Scene({
         colors={colors}
         nodeClasses={nodeClasses}
         geometryByClass={geometryByClass}
-        nodeScales={nodeScales}
+        nodeScales={resolvedNodeScales}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
@@ -231,6 +246,8 @@ export function Scene({
         projection={projection}
         sizeMultiplier={nodeLabelSize}
         labelOffsetY={nodeLabelOffsetY}
+        nodeScales={resolvedNodeScales}
+        nodeSize={nodeSize}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay
