@@ -1,18 +1,16 @@
 /**
  * Shared node-coloring computation for graph explorers.
  *
- * Both 2D and 3D V2 explorers feed `mode` from settings.visual.nodeColorBy
- * and consume the returned Map<id, color> to drive their respective
- * rendering paths (canvas fillStyle for 2D, instanced color buffer for V2).
- *
- * Inputs are minimal-shape adapters so callers don't need to share node
- * or link types — 2D uses d3-style links (source/target as string|object),
- * V2 uses engine edges (from/to as string).
+ * Callers feed `mode` from settings.visual.nodeColorBy and consume the
+ * returned Map<id, color> to drive the instanced color buffer on the
+ * unified r3f engine. Inputs are minimal-shape adapters so the helper
+ * can also serve future explorers that share the engine but carry their
+ * own node/edge shape.
  */
 
 import * as d3 from 'd3';
 
-/** Node-color dimension. Mirrors ForceGraph2D's NodeColorMode union. */
+/** Node-color dimension. */
 export type NodeColorMode = 'ontology' | 'degree' | 'centrality';
 
 export interface NodeColorInput {

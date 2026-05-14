@@ -11,13 +11,13 @@
 
 import { Network } from 'lucide-react';
 import type { ExplorerPlugin } from '../../types/explorer';
-import { ForceGraph3D } from './ForceGraph3D';
+import { ForceGraph } from './ForceGraph';
 import { SettingsPanel } from './SettingsPanel';
-import type { ForceGraph3DData, ForceGraph3DSettings } from './types';
+import type { ForceGraphData, ForceGraphSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 import { transformForEngine } from './dataTransformer';
 
-export const ForceGraphExplorer: ExplorerPlugin<ForceGraph3DData, ForceGraph3DSettings> = {
+export const ForceGraphExplorer: ExplorerPlugin<ForceGraphData, ForceGraphSettings> = {
   config: {
     id: 'force-graph',
     type: 'force-graph',
@@ -26,7 +26,7 @@ export const ForceGraphExplorer: ExplorerPlugin<ForceGraph3DData, ForceGraph3DSe
     icon: Network,
     requiredDataShape: 'graph',
   },
-  component: ForceGraph3D,
+  component: ForceGraph,
   settingsPanel: SettingsPanel,
   dataTransformer: transformForEngine,
   defaultSettings: DEFAULT_SETTINGS,

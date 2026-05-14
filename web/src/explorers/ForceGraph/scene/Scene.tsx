@@ -75,7 +75,7 @@ export interface SceneProps {
   projection?: Projection;
 }
 
-/** V2 scene composition — physics + rendering + orbit controls.  @verified c17bbeb9 */
+/** Scene composition — physics + rendering + camera controls.  @verified c17bbeb9 */
 export function Scene({
   nodes,
   edges,

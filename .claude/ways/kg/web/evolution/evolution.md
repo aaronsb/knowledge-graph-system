@@ -89,3 +89,7 @@ user-facing affordance.
   refactor PRs)
 - PR #365 — Phase A: V1-3D retirement
 - PR #366 — Phase B: 2D projection + parity controls
+- PR for Phase C — single Force Graph plugin; d3 ForceGraph2D retired,
+  the factory collapses to one plugin, `ForceGraph3D` symbol/dir renamed
+  to `ForceGraph` (the 3D suffix became misleading once 2D shared the
+  engine)

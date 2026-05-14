@@ -1,10 +1,9 @@
 /**
- * ForceGraph3D — Type Definitions
+ * ForceGraph — Type Definitions
  *
  * Built on the unified rendering engine described in ADR-702.
  * Engine shape: {EngineNode[], EngineEdge[]} with kg-specific properties
- * from spike findings (separate id/label, edge-type palette, directed
- * arrows).
+ * (separate id/label, edge-type palette, directed arrows).
  */
 
 import type { APIGraphNode, APIGraphLink } from '../../types/graph';
@@ -42,8 +41,8 @@ export interface EngineEdge {
   source?: APIGraphLink;
 }
 
-/** Data shape the ForceGraph3D explorer plugin consumes.  @verified c17bbeb9 */
-export interface ForceGraph3DData {
+/** Data shape the ForceGraph explorer plugin consumes.  @verified c17bbeb9 */
+export interface ForceGraphData {
   nodes: EngineNode[];
   edges: EngineEdge[];
 }
@@ -63,8 +62,8 @@ export type EdgeColorMode = 'endpoint' | 'type' | 'confidence' | 'uniform';
  */
 export type Projection = '2D' | '3D';
 
-/** Runtime settings for the ForceGraph3D explorer plugin.  @verified c17bbeb9 */
-export interface ForceGraph3DSettings {
+/** Runtime settings for the ForceGraph explorer plugin.  @verified c17bbeb9 */
+export interface ForceGraphSettings {
   /** Camera + sim projection mode. Drives camera type, sim axis count,
    *  and drag-plane construction. Plugin defaults this; users may toggle
    *  it at runtime. */
@@ -108,7 +107,7 @@ export interface ForceGraph3DSettings {
   };
 }
 
-export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
+export const DEFAULT_SETTINGS: ForceGraphSettings = {
   projection: '3D',
   physics: {
     enabled: true,

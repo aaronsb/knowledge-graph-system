@@ -1,26 +1,26 @@
 /**
- * ForceGraph3D Settings Panel
+ * ForceGraph Settings Panel
  *
  * Settings surface for the unified rendering engine (ADR-702):
- * repulsion / attraction / damping / center gravity, node-color mode,
- * edge-color mode, label visibility radius, etc.
+ * projection, repulsion / attraction / damping / center gravity,
+ * node-color mode, edge-color mode, label visibility radius, etc.
  *
  * The Reheat button lives on the on-canvas info overlay inside
- * ForceGraph3D.tsx so it can drive a simHandleRef that's only writable
+ * ForceGraph.tsx so it can drive a simHandleRef that's only writable
  * from inside the r3f Canvas tree.
  */
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { SettingsPanelProps } from '../../types/explorer';
-import type { ForceGraph3DSettings } from './types';
+import type { ForceGraphSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
 import { useGraphStore } from '../../store/graphStore';
 
 type Section = 'physics' | 'visual' | 'interaction' | 'filters';
 
-export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> = ({
+export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = ({
   settings,
   onChange,
 }) => {
@@ -38,11 +38,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
       return next;
     });
 
-  const updatePhysics = (patch: Partial<ForceGraph3DSettings['physics']>) =>
+  const updatePhysics = (patch: Partial<ForceGraphSettings['physics']>) =>
     onChange({ ...settings, physics: { ...settings.physics, ...patch } });
-  const updateVisual = (patch: Partial<ForceGraph3DSettings['visual']>) =>
+  const updateVisual = (patch: Partial<ForceGraphSettings['visual']>) =>
     onChange({ ...settings, visual: { ...settings.visual, ...patch } });
-  const updateInteraction = (patch: Partial<ForceGraph3DSettings['interaction']>) =>
+  const updateInteraction = (patch: Partial<ForceGraphSettings['interaction']>) =>
     onChange({ ...settings, interaction: { ...settings.interaction, ...patch } });
 
   const sectionHeader = (id: Section, title: string) => (
@@ -100,7 +100,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
             className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
             value={settings.projection}
             onChange={(e) =>
-              onChange({ ...settings, projection: e.target.value as ForceGraph3DSettings['projection'] })
+              onChange({ ...settings, projection: e.target.value as ForceGraphSettings['projection'] })
             }
           >
             <option value="3D">3D (perspective + orbit)</option>
@@ -206,7 +206,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
                 className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.nodeColorBy}
                 onChange={(e) =>
-                  updateVisual({ nodeColorBy: e.target.value as ForceGraph3DSettings['visual']['nodeColorBy'] })
+                  updateVisual({ nodeColorBy: e.target.value as ForceGraphSettings['visual']['nodeColorBy'] })
                 }
               >
                 <option value="ontology">By ontology</option>
@@ -220,7 +220,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
                 className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.edgeColorBy}
                 onChange={(e) =>
-                  updateVisual({ edgeColorBy: e.target.value as ForceGraph3DSettings['visual']['edgeColorBy'] })
+                  updateVisual({ edgeColorBy: e.target.value as ForceGraphSettings['visual']['edgeColorBy'] })
                 }
               >
                 <option value="type">By edge type</option>
