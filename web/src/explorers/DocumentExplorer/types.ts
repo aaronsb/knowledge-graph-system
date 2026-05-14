@@ -9,14 +9,21 @@
 // Settings
 // ---------------------------------------------------------------------------
 
+import type { Projection } from '../ForceGraph/types';
+export type { Projection };
+
 export interface DocumentExplorerSettings {
+  /** Camera + sim projection. Same toggle as the Force Graph plugin —
+   *  the unified r3f engine (ADR-702) dispatches camera, drag plane, and
+   *  sim axis count from this value. */
+  projection: Projection;
   visual: {
     showLabels: boolean;
     showEdges: boolean;
     nodeSize: number;           // Base size multiplier
   };
   layout: {
-    documentSize: number;       // Document node size (20-60)
+    documentSize: number;       // Document node base scale (relative to concept dots)
   };
   interaction: {
     enableZoom: boolean;
@@ -26,6 +33,7 @@ export interface DocumentExplorerSettings {
 }
 
 export const DEFAULT_SETTINGS: DocumentExplorerSettings = {
+  projection: '3D',
   visual: {
     showLabels: true,
     showEdges: true,
