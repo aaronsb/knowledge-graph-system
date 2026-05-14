@@ -11,7 +11,6 @@ import type { RawGraphData } from '../utils/cypherResultMapper';
 export type VisualizationType =
   | 'force-2d'
   | 'force-3d'
-  | 'force-3d-v2'
   | 'document'
   | 'hierarchy'
   | 'sankey'

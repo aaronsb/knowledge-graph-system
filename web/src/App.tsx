@@ -127,7 +127,8 @@ const AppContent: React.FC = () => {
         {/* Explorers */}
         <Route path="/explore/2d" element={<ExplorerView explorerType="force-2d" />} />
         <Route path="/explore/3d" element={<ExplorerView explorerType="force-3d" />} />
-        <Route path="/explore/3d-v2" element={<ExplorerView explorerType="force-3d-v2" />} />
+        {/* Old V2 route — redirect existing bookmarks to the canonical 3D explorer */}
+        <Route path="/explore/3d-v2" element={<Navigate to="/explore/3d" replace />} />
         <Route path="/explore/documents" element={<DocumentExplorerWorkspace />} />
 
         {/* Block Editor */}
