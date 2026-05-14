@@ -32,6 +32,8 @@ import { Scene } from '../ForceGraph/scene/Scene';
 import type { EngineNode, EngineEdge } from '../ForceGraph/types';
 import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
 import type { NodeInfoData } from '../ForceGraph/scene/NodeInfoOverlay';
+import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { FileText, Eye, EyeOff, Crosshair } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Visual constants
@@ -181,58 +183,74 @@ export const DocumentExplorer: React.FC<
   }), []);
 
   // ---------------------------------------------------------------------------
-  // Focus mode → activeIds (drives the engine's dim and the per-node
-  // color dim baked below)
+  // Dim state — hover and focus drive the same engine `activeIds` /
+  // `dimAlpha` machinery the Force Graph uses. Focus is persistent
+  // (right-click → "Focus on document") and dims more aggressively;
+  // hover is transient and dims subtly. When both are active, focus
+  // wins — same convention as Force Graph.
   // ---------------------------------------------------------------------------
 
-  const focusedConceptSet = useMemo(() => {
+  const FOCUS_DIM_ALPHA = 0.05;
+  const HOVER_DIM_ALPHA = 0.25;
+
+  // Concept set for the currently-focused document (document plus all
+  // its concepts). Only documents can be focused; concepts use hover
+  // for inspection.
+  const focusActiveIds = useMemo<Set<string> | null>(() => {
     if (!focusedDocumentId || !data) return null;
     const doc = data.documents.find((d) => d.id === focusedDocumentId);
     if (!doc) return null;
-    return new Set(doc.conceptIds);
-  }, [focusedDocumentId, data]);
-
-  // When set, items not in this set render at FOCUS_DIM_ALPHA on the
-  // engine's edges/labels and via the baked color dim on the nodes.
-  // Nothing focused → undefined, full opacity for everything.
-  const activeIds = useMemo(() => {
-    if (!focusedDocumentId || !focusedConceptSet) return undefined;
-    const set = new Set<string>(focusedConceptSet);
+    const set = new Set<string>(doc.conceptIds);
     set.add(focusedDocumentId);
     return set;
-  }, [focusedDocumentId, focusedConceptSet]);
+  }, [focusedDocumentId, data]);
 
-  // Engine `<Nodes>` doesn't read activeIds/dimAlpha (only Edges/Labels
-  // do), so bake the dim into the color array — that's how the document
-  // and concept meshes themselves visually recede when a different doc
-  // is focused.
-  const FOCUS_DIM_ALPHA = 0.08;
+  // Hovered node + its immediate edge neighbors. Matches Force Graph's
+  // hover-dim behaviour so muscle memory carries.
+  const hoverActiveIds = useMemo<Set<string> | null>(() => {
+    if (!hoveredId) return null;
+    const set = new Set<string>([hoveredId]);
+    for (const e of engineData.edges) {
+      if (e.from === hoveredId) set.add(e.to);
+      else if (e.to === hoveredId) set.add(e.from);
+    }
+    return set;
+  }, [hoveredId, engineData]);
+
+  const dimState = useMemo<{ activeIds: Set<string>; dimAlpha: number } | undefined>(() => {
+    if (focusActiveIds) return { activeIds: focusActiveIds, dimAlpha: FOCUS_DIM_ALPHA };
+    if (hoverActiveIds) return { activeIds: hoverActiveIds, dimAlpha: HOVER_DIM_ALPHA };
+    return undefined;
+  }, [focusActiveIds, hoverActiveIds]);
+
+  // Engine `<Nodes>` doesn't read activeIds/dimAlpha directly (only
+  // Edges/Labels do), so bake the dim into the per-node color array —
+  // the document and concept meshes themselves recede along with the
+  // edges. Same pattern Force Graph uses.
   const nodeColors = useMemo(() => {
     const tmp = new THREE.Color();
-    const hasFocus = !!activeIds && activeIds.size > 0;
     return engineData.nodes.map((n) => {
       const type = nodeType(n.id) ?? 'extended-concept';
       const base = COLORS[type];
-      if (!hasFocus || activeIds!.has(n.id)) return base;
-      tmp.set(base).multiplyScalar(FOCUS_DIM_ALPHA);
+      if (!dimState || dimState.activeIds.has(n.id)) return base;
+      tmp.set(base).multiplyScalar(dimState.dimAlpha);
       return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
-  }, [engineData, nodeType, activeIds]);
+  }, [engineData, nodeType, dimState]);
 
   // Labels render in a colour distinct from the node mesh so text isn't
-  // masked by the disc it sits next to. White-ish reads against any node
-  // colour (the engine's label canvas paints a dark stroke underneath
-  // for legibility on light themes). Focus dim is baked in here too.
+  // masked by the disc next to it. White-ish reads against any node
+  // colour (the engine paints a dark stroke under the text). Dim is
+  // baked in here too.
   const LABEL_COLOR = '#e5e7eb';
   const labelColors = useMemo(() => {
     const tmp = new THREE.Color();
-    const hasFocus = !!activeIds && activeIds.size > 0;
     return engineData.nodes.map((n) => {
-      if (!hasFocus || activeIds!.has(n.id)) return LABEL_COLOR;
-      tmp.set(LABEL_COLOR).multiplyScalar(FOCUS_DIM_ALPHA);
+      if (!dimState || dimState.activeIds.has(n.id)) return LABEL_COLOR;
+      tmp.set(LABEL_COLOR).multiplyScalar(dimState.dimAlpha);
       return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
-  }, [engineData, activeIds]);
+  }, [engineData, dimState]);
 
   // Per-node base scale. Documents use a large constant (documentSize
   // setting is in pixel-space in the original; here it controls relative
@@ -257,16 +275,18 @@ export const DocumentExplorer: React.FC<
   }, [engineData, settings?.layout?.documentSize, nodeType]);
 
   // ---------------------------------------------------------------------------
-  // Interaction handlers — bridge engine onSelect to DocumentExplorer's
-  // focus / view-document model.
+  // Interaction handlers — left-click is pure inspection (no graph
+  // mutation, no focus toggle); right-click drives the context menu
+  // where focus and graph-mutating actions live. Mirrors Force Graph.
   //
-  // - Click on a document: opens the document viewer AND focuses (dims
-  //   non-focused). Clicking the focused document again clears focus and
-  //   the open viewer is left in place — closing the viewer is its own
-  //   dismiss control.
-  // - Click on a concept: pins an in-scene `NodeInfoOverlay` (the same
-  //   info card Force Graph uses). Click the same concept again to
-  //   dismiss it.
+  // - Click on a document: opens the document viewer.
+  // - Click on a concept: toggles its in-scene `NodeInfoOverlay`.
+  // - Hover: dims non-neighbours (subtle, transient).
+  // - Right-click: opens the context menu. Document menu offers
+  //   View / Focus / Unfocus; concept menu offers Unfocus (when a
+  //   document is focused) — graph mutations don't fit this explorer
+  //   since the dataset is built from a saved query plus document
+  //   hydration, not a generic exploration.
   // ---------------------------------------------------------------------------
 
   const handleSelect = useCallback((id: string | null) => {
@@ -274,7 +294,6 @@ export const DocumentExplorer: React.FC<
     const type = nodeType(id);
     if (type === 'document') {
       onViewDocument?.(id);
-      onFocusChange?.(focusedDocumentId === id ? null : id);
       return;
     }
     // Concept — toggle the in-scene info overlay.
@@ -289,7 +308,7 @@ export const DocumentExplorer: React.FC<
         { nodeId: id, label: node.label, group: type ?? undefined, degree: node.degree },
       ];
     });
-  }, [focusedDocumentId, nodeType, nodesById, onFocusChange, onViewDocument]);
+  }, [nodeType, nodesById, onViewDocument]);
 
   const handleDismissNodeInfo = useCallback(
     (nodeId: string) => setActiveNodeInfos((prev) => prev.filter((i) => i.nodeId !== nodeId)),
@@ -303,6 +322,93 @@ export const DocumentExplorer: React.FC<
     }
     setHoveredId(id);
   }, [settings?.interaction?.highlightOnHover]);
+
+  // ---------------------------------------------------------------------------
+  // Right-click context menu
+  // ---------------------------------------------------------------------------
+
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string | null;
+    nodeLabel: string | null;
+  } | null>(null);
+
+  // Set when a node-mesh right-click consumes the event so the
+  // background div's onContextMenu doesn't ALSO open a menu (mirrors
+  // Force Graph's pattern).
+  const nodeContextConsumedRef = useRef(false);
+
+  const handleNodeContextMenu = useCallback(
+    (id: string, event: PointerEvent) => {
+      nodeContextConsumedRef.current = true;
+      const label = nodesById.get(id)?.label ?? id;
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId: id, nodeLabel: label });
+    },
+    [nodesById],
+  );
+
+  const handleBackgroundContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (nodeContextConsumedRef.current) {
+        nodeContextConsumedRef.current = false;
+        return;
+      }
+      // Background menu — only useful when something is focused, to
+      // offer Unfocus. Otherwise dismiss silently so right-click on
+      // empty canvas doesn't surprise the user.
+      if (!focusedDocumentId) return;
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId: null, nodeLabel: null });
+    },
+    [focusedDocumentId],
+  );
+
+  const contextMenuItems = useMemo<ContextMenuItem[]>(() => {
+    if (!contextMenu) return [];
+    const items: ContextMenuItem[] = [];
+    const type = contextMenu.nodeId ? nodeType(contextMenu.nodeId) : null;
+    if (type === 'document') {
+      items.push({
+        label: 'View document',
+        icon: FileText,
+        onClick: () => onViewDocument?.(contextMenu.nodeId!),
+      });
+      if (focusedDocumentId === contextMenu.nodeId) {
+        items.push({
+          label: 'Unfocus',
+          icon: EyeOff,
+          onClick: () => onFocusChange?.(null),
+        });
+      } else {
+        items.push({
+          label: 'Focus on document',
+          icon: Crosshair,
+          onClick: () => onFocusChange?.(contextMenu.nodeId!),
+        });
+      }
+    } else if (type === 'query-concept' || type === 'extended-concept') {
+      // Concepts — the only menu entry that makes sense right now is
+      // unfocus when something is focused. A "Focus on concept" item
+      // would need a concept-level dim model we don't have yet.
+      if (focusedDocumentId) {
+        items.push({
+          label: 'Unfocus',
+          icon: EyeOff,
+          onClick: () => onFocusChange?.(null),
+        });
+      }
+    } else {
+      // Background — only opens when something is focused (see
+      // handleBackgroundContextMenu).
+      items.push({
+        label: 'Unfocus',
+        icon: Eye,
+        onClick: () => onFocusChange?.(null),
+      });
+    }
+    return items;
+  }, [contextMenu, nodeType, focusedDocumentId, onFocusChange, onViewDocument]);
 
   const handleReheat = useCallback(() => {
     simHandleRef.current?.reheat();
@@ -325,6 +431,7 @@ export const DocumentExplorer: React.FC<
   return (
     <div
       className={`relative w-full h-full overflow-hidden ${bgClass} ${className || ''}`}
+      onContextMenu={handleBackgroundContextMenu}
     >
       {/* Canvas keys on projection so the camera dispatch in Scene gets a
           fresh r3f tree (perspective vs orthographic can't be swapped
@@ -349,8 +456,8 @@ export const DocumentExplorer: React.FC<
           nodeClasses={nodeClasses}
           geometryByClass={geometryByClass}
           nodeScales={nodeScales}
-          activeIds={activeIds}
-          dimAlpha={FOCUS_DIM_ALPHA}
+          activeIds={dimState?.activeIds}
+          dimAlpha={dimState?.dimAlpha ?? 1}
           showArrows={false}
           showEdgeLabels={false}
           showNodeLabels={settings?.visual?.showLabels !== false}
@@ -363,6 +470,7 @@ export const DocumentExplorer: React.FC<
           hoveredId={hoveredId}
           onSelect={handleSelect}
           onHover={handleHover}
+          onContextMenu={handleNodeContextMenu}
           activeNodeInfos={activeNodeInfos}
           onDismissNodeInfo={handleDismissNodeInfo}
           simHandleRef={simHandleRef}
@@ -408,6 +516,15 @@ export const DocumentExplorer: React.FC<
         </div>
       </div>
 
+      {/* Right-click context menu */}
+      {contextMenu && contextMenuItems.length > 0 && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };
