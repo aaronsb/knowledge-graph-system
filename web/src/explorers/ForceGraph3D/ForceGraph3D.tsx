@@ -372,7 +372,19 @@ export const ForceGraph3D: React.FC<
       onContextMenu={handleBackgroundContextMenu}
     >
       <Canvas
-        camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
+        // Projection dispatch picks the camera flavor: perspective for 3D
+        // (looking down -Z from z=400) and orthographic for 2D (frustum
+        // computed from canvas aspect, zoom drives world-units-per-pixel).
+        // `key` forces a Canvas remount on projection change so r3f
+        // instantiates the right camera class — the `orthographic` prop
+        // is read once at mount.
+        key={settings?.projection ?? '3D'}
+        camera={
+          (settings?.projection ?? '3D') === '2D'
+            ? { position: [0, 0, 400], near: 0.1, far: 5000, zoom: 2.5 }
+            : { position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }
+        }
+        orthographic={(settings?.projection ?? '3D') === '2D'}
         gl={{ antialias: true }}
         frameloop="demand"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
@@ -390,6 +402,7 @@ export const ForceGraph3D: React.FC<
             centerGravity: settings?.physics?.centerGravity,
             damping: settings?.physics?.damping,
           }}
+          projection={settings?.projection ?? '3D'}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           showArrows={settings?.visual?.showArrows ?? true}

@@ -88,7 +88,7 @@ export function useGpuForceSim(
   edges: EngineEdge[],
   params: ForceSimParams = {}
 ): ForceSimHandle {
-  const { hiddenIds, pinnedIds, enabled = true, ...tuning } = params;
+  const { hiddenIds, pinnedIds, enabled = true, dimensions = 3, ...tuning } = params;
   const cfg: PhysicsParams = { ...DEFAULTS, ...tuning };
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
@@ -211,6 +211,11 @@ export function useGpuForceSim(
     pU.dt = { value: cfg.dt };
     pU.nodeCount = { value: nodeCount };
     pU.hiddenMask = { value: hiddenMaskTex };
+    // zClamp flattens the Z output to zero in 2D mode. Same value lives
+    // on the velocity shader so vel.z also collapses; together that
+    // pins the layout to the z=0 plane within a single frame.
+    pU.zClamp = { value: dimensions === 2 ? 0 : 1 };
+    vU.zClamp = { value: dimensions === 2 ? 0 : 1 };
 
     const err = gpuCompute.init();
     if (err) {
@@ -312,6 +317,8 @@ export function useGpuForceSim(
     u.damping.value = simmerRef.current ? cfg.dampingSimmer : cfg.damping;
     u.centerGravity.value = simmerRef.current ? cfg.centerGravitySimmer : cfg.centerGravity;
     u.velStop.value = simmerRef.current ? cfg.velStopSimmer : 0;
+    u.zClamp.value = dimensions === 2 ? 0 : 1;
+    s.posVar.material.uniforms.zClamp.value = dimensions === 2 ? 0 : 1;
 
     // Compute current frame, then read back the alternate target (last
     // frame's output). One-frame lag keeps CPU and GPU overlapped —

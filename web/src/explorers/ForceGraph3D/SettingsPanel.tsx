@@ -87,6 +87,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
 
   return (
     <div className="space-y-3">
+      {/* Projection — top-level switch since it remounts the Canvas */}
+      <section>
+        <label className="flex items-center gap-2 text-xs text-card-foreground py-1.5">
+          <span className="flex-1 min-w-0 truncate font-medium">Projection</span>
+          <select
+            className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+            value={settings.projection}
+            onChange={(e) =>
+              onChange({ ...settings, projection: e.target.value as ForceGraph3DSettings['projection'] })
+            }
+          >
+            <option value="3D">3D (perspective + orbit)</option>
+            <option value="2D">2D (orthographic + pan/zoom)</option>
+          </select>
+        </label>
+      </section>
+
       {/* Physics */}
       <section>
         {sectionHeader('physics', 'Physics')}

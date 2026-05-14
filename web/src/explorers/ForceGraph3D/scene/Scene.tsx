@@ -2,14 +2,14 @@
  * Scene composition — Nodes + Edges + camera controls + lighting.
  *
  * Owns the physics sim; the sim owns the positions buffer that Nodes
- * and Edges read. M2 task #8 adds CPU force sim; M2 task #9 adds the
- * GPU sim and a dispatcher. Both expose the same handle shape so the
- * scene composition doesn't change between them.
+ * and Edges read. Projection dispatch picks the camera-controls flavor:
+ * OrbitControls for 3D (rotate + zoom + pan) and MapControls for 2D
+ * (pan + zoom, no rotation).
  */
 
 import { useEffect, useImperativeHandle } from 'react';
-import { OrbitControls } from '@react-three/drei';
-import type { EngineNode, EngineEdge } from '../types';
+import { MapControls, OrbitControls } from '@react-three/drei';
+import type { EngineNode, EngineEdge, Projection } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
 import { Arrows } from './Arrows';
@@ -64,6 +64,9 @@ export interface SceneProps {
   onDismissNodeInfo?: (nodeId: string) => void;
   /** Optional external handle to drive reheat/freeze/simmer from outside Canvas. */
   simHandleRef?: React.MutableRefObject<ForceSimHandle | null>;
+  /** Camera + sim projection. Drives camera-controls flavor, sim
+   *  dimensionality, and drag-plane construction. Defaults '3D'. */
+  projection?: Projection;
 }
 
 /** V2 scene composition — physics + rendering + orbit controls.  @verified c17bbeb9 */
@@ -96,13 +99,20 @@ export function Scene({
   activeNodeInfos = EMPTY_INFOS,
   onDismissNodeInfo,
   simHandleRef,
+  projection = '3D',
 }: SceneProps) {
-  const sim = useSim(nodes, edges, { ...physics, hiddenIds, pinnedIds });
+  const sim = useSim(nodes, edges, {
+    ...physics,
+    hiddenIds,
+    pinnedIds,
+    dimensions: projection === '2D' ? 2 : 3,
+  });
   const drag = useDragHandler({
     nodes,
     positionsRef: sim.positionsRef,
     pinnedIds: pinnedIds ?? EMPTY_SET,
     setPinnedIds: onPinnedIdsChange ?? NOOP_SET_SETTER,
+    projection,
   });
 
   // Expose the sim handle outside the Canvas tree (e.g. to a settings
@@ -198,7 +208,13 @@ export function Scene({
           variant={selectedId ? 'selected' : 'hover'}
         />
       )}
-      <OrbitControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
+      {projection === '2D' ? (
+        // MapControls = pan + zoom on an orthographic camera. No
+        // rotation, no orbit — feels like a 2D map viewer.
+        <MapControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
+      ) : (
+        <OrbitControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
+      )}
     </>
   );
 }

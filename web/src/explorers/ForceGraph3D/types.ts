@@ -51,8 +51,25 @@ export interface ForceGraph3DData {
 export type PhysicsBackend = 'auto' | 'cpu' | 'gpu';
 export type EdgeColorMode = 'endpoint' | 'type';
 
+/**
+ * Camera + sim projection mode.
+ *
+ * Today: '2D' (orthographic camera, z-locked sim, pan/zoom only) and
+ * '3D' (perspective camera, full 3D sim, orbit controls).
+ *
+ * The type stays a string union so the engine can grow new projections
+ * (e.g. hyperbolic, globe) as case-style dispatches in the scene
+ * composition without breaking the plugin contract.
+ */
+export type Projection = '2D' | '3D';
+
 /** Runtime settings for the ForceGraph3D explorer plugin.  @verified c17bbeb9 */
 export interface ForceGraph3DSettings {
+  /** Camera + sim projection mode. Drives camera type, sim axis count,
+   *  and drag-plane construction. Plugin defaults this; users may toggle
+   *  it at runtime. */
+  projection: Projection;
+
   physics: {
     enabled: boolean;
     repulsion: number;
@@ -83,6 +100,7 @@ export interface ForceGraph3DSettings {
 }
 
 export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
+  projection: '3D',
   physics: {
     enabled: true,
     repulsion: 120,

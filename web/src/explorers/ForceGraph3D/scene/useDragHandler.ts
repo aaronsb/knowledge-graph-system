@@ -16,7 +16,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { EngineNode } from '../types';
+import type { EngineNode, Projection } from '../types';
 
 export interface DragHandlers {
   onDragStart: (id: string, event: ThreeEvent<PointerEvent>) => void;
@@ -29,6 +29,10 @@ export interface UseDragHandlerParams {
   positionsRef: React.MutableRefObject<Float32Array | null>;
   pinnedIds: Set<string>;
   setPinnedIds: (next: Set<string>) => void;
+  /** Projection mode. Drives the drag-plane construction: in 3D the
+   *  plane is camera-perpendicular through the node's current depth;
+   *  in 2D it's fixed at Z=0 with normal +Z. Default '3D'. */
+  projection?: Projection;
 }
 
 /** Drag handlers that pin a node and follow the cursor on a camera plane.  @verified c17bbeb9 */
@@ -37,6 +41,7 @@ export function useDragHandler({
   positionsRef,
   pinnedIds,
   setPinnedIds,
+  projection = '3D',
 }: UseDragHandlerParams): DragHandlers {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
@@ -65,10 +70,19 @@ export function useDragHandler({
         positions[idx * 3 + 1],
         positions[idx * 3 + 2]
       );
-      // Plane perpendicular to the camera view direction, through the node.
-      const normal = new THREE.Vector3();
-      camera.getWorldDirection(normal).negate();
-      const plane = new THREE.Plane(normal, -normal.dot(pos));
+      // Drag-plane construction dispatches on projection. 2D pins all
+      // motion to z=0 with a +Z normal so the cursor unproject lands
+      // on the layout plane regardless of camera distance. 3D uses a
+      // camera-perpendicular plane through the node's current depth so
+      // depth-relative motion feels natural.
+      let plane: THREE.Plane;
+      if (projection === '2D') {
+        plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      } else {
+        const normal = new THREE.Vector3();
+        camera.getWorldDirection(normal).negate();
+        plane = new THREE.Plane(normal, -normal.dot(pos));
+      }
       dragRef.current = {
         id,
         idx,
@@ -81,7 +95,7 @@ export function useDragHandler({
       next.add(id);
       setPinnedIds(next);
     },
-    [camera, nodeIndex, pinnedIds, positionsRef, setPinnedIds]
+    [camera, nodeIndex, pinnedIds, positionsRef, setPinnedIds, projection]
   );
 
   const onDragMove = useCallback(
