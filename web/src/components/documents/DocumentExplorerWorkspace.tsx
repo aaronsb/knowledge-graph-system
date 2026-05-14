@@ -26,45 +26,42 @@ import { SavedQueriesPanel } from '../shared/SavedQueriesPanel';
 import { useQueryReplay, type ReplayableDefinition } from '../../hooks/useQueryReplay';
 import { usePassageSearch } from '../../hooks/usePassageSearch';
 import { useGraphStore } from '../../store/graphStore';
+import { useDocumentExplorerStore, type SidebarDocument } from '../../store/documentExplorerStore';
 import { mapWorkingGraphToRawGraph } from '../../utils/cypherResultMapper';
 import { cypherToStatement } from '../../utils/programBuilder';
-
-/** Sidebar document entry (from findDocumentsByConcepts). */
-interface SidebarDocument {
-  document_id: string;
-  filename: string;
-  ontology: string;
-  content_type: string;
-  concept_ids: string[];       // concepts overlapping with query
-  totalConceptCount: number;   // ALL concepts for this doc (after hydration)
-}
 
 export const DocumentExplorerWorkspace: React.FC = () => {
   const { replayQuery } = useQueryReplay();
   const [activeRailTab, setActiveRailTab] = useState('savedQueries');
 
-  // Pipeline state
+  // Pipeline state — kept local; these reset on remount intentionally
+  // (a stale "Loading..." indicator on a re-entry would be wrong).
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Document list (populated from query)
-  const [sidebarDocs, setSidebarDocs] = useState<SidebarDocument[]>([]);
+  // Session state — lives in a Zustand store so it survives navigating
+  // away and back. Mirrors how Force Graph keeps `rawGraphData` in
+  // `graphStore`. See `documentExplorerStore` for why we don't persist
+  // these to localStorage.
+  const sidebarDocs = useDocumentExplorerStore((s) => s.sidebarDocs);
+  const explorerData = useDocumentExplorerStore((s) => s.explorerData);
+  const focusedDocId = useDocumentExplorerStore((s) => s.focusedDocId);
+  const setSidebarDocs = useDocumentExplorerStore((s) => s.setSidebarDocs);
+  const setExplorerData = useDocumentExplorerStore((s) => s.setExplorerData);
+  const setFocusedDocId = useDocumentExplorerStore((s) => s.setFocusedDocId);
+  const resetSession = useDocumentExplorerStore((s) => s.reset);
 
-  // Graph data
-  const [explorerData, setExplorerData] = useState<DocumentExplorerData | null>(null);
-
-  // Focus state — which document is focused in the graph
-  const [focusedDocId, setFocusedDocId] = useState<string | null>(null);
-
-  // Document viewer
+  // Document viewer is per-mount UI — modal-style state that doesn't
+  // need to survive navigation.
   const [viewingDocument, setViewingDocument] = useState<{
     document_id: string;
     filename: string;
     content_type: string;
   } | null>(null);
 
-  // Settings
+  // Settings — local, matching Force Graph's pattern where settings
+  // reset on remount.
   const [settings, setSettings] = useState<DocumentExplorerSettings>(DEFAULT_SETTINGS);
 
   // Multi-query passage search (extracted hook)
@@ -89,9 +86,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   const handleLoadExplorationQuery = useCallback(async (query: ReplayableDefinition) => {
     setIsLoading(true);
     setError(null);
-    setFocusedDocId(null);
-    setExplorerData(null);
-    setSidebarDocs([]);
+    resetSession();
     resetQueries();
 
     try {
@@ -271,8 +266,12 @@ export const DocumentExplorerWorkspace: React.FC = () => {
   // ---------------------------------------------------------------------------
 
   const handleFocusDocument = useCallback((docId: string) => {
-    setFocusedDocId(prev => prev === docId ? null : docId);
-  }, []);
+    // Read current focus from the store directly so this callback can stay
+    // dependency-free — the Zustand setter doesn't accept an updater fn
+    // the way `useState` does.
+    const current = useDocumentExplorerStore.getState().focusedDocId;
+    setFocusedDocId(current === docId ? null : docId);
+  }, [setFocusedDocId]);
 
   const handleViewDocument = useCallback((doc: SidebarDocument) => {
     setViewingDocument({
