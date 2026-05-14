@@ -320,11 +320,13 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
       name: '',
       type: 'graph',
       data: reportData,
-      sourceExplorer: explorerType === 'force-3d' ? '3d' : '2d',
+      // Record the active projection — drives report representation
+      // (`force_graph_2d` vs `force_graph_3d`) for downstream consumers.
+      sourceExplorer: (explorerSettings as { projection?: '2D' | '3D' })?.projection === '2D' ? '2d' : '3d',
     });
 
     navigate('/report');
-  }, [rawGraphData, searchParams, mode, explorerType, addReport, navigate]);
+  }, [rawGraphData, searchParams, mode, explorerSettings, addReport, navigate]);
 
   // Save current exploration as a query definition
   const handleSaveExploration = useCallback(async () => {

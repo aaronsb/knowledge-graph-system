@@ -45,8 +45,7 @@ const NODES: GraphNode[] = [
   { id: 'ingest', label: 'Ingest', x: 160, y: 310, route: '/ingest', category: 'data', size: 28 },
 
   // Explorers
-  { id: 'graph2d', label: '2D Graph', x: 350, y: 70, route: '/explore/2d', category: 'explore', size: 28 },
-  { id: 'graph3d', label: '3D Graph', x: 530, y: 55, route: '/explore/3d', category: 'explore', size: 28 },
+  { id: 'forcegraph', label: 'Force\nGraph', x: 440, y: 60, route: '/explore/graph', category: 'explore', size: 32 },
   { id: 'docexplorer', label: 'Document\nExplorer', x: 280, y: 195, route: '/explore/documents', category: 'explore', size: 26 },
 
   // Analyzers

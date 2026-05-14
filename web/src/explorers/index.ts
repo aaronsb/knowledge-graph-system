@@ -5,7 +5,7 @@
  */
 
 export * from './registry';
-export { ForceGraph3DExplorer, ForceGraph2DV2Explorer } from './ForceGraph3D';
+export { ForceGraphExplorer } from './ForceGraph3D';
 export { DocumentExplorerPlugin } from './DocumentExplorer';
 
 // Import explorers to trigger auto-registration

@@ -1,59 +1,36 @@
 /**
- * ForceGraph — Plugin Definitions
+ * Force Graph — Plugin Definition
  *
- * Two plugin entries share the same component, transformer, and
- * settings panel; they differ only in `config` (id / name / icon) and
- * `defaultSettings.projection`. This is the transitional shape during
- * d3-2D coexistence: once `force-2d` (d3) retires, the `(V2)` suffix
- * drops and these two entries can consolidate into a single "Force
- * Graph" plugin with the projection toggle as the user-facing affordance.
+ * The unified force-graph explorer. Backed by the r3f + GPU rendering
+ * engine described in ADR-702. Projection (2D / 3D) is a user-facing
+ * setting on the same plugin — the engine dispatches camera, drag plane,
+ * and simulation axis count from `settings.projection`.
  *
  * Follows ADR-034 Explorer Plugin Interface.
- * Built on the unified rendering engine per ADR-702 (r3f + instanced
- * GPU rendering + GPU-accelerated force simulation).
  */
 
-import { Boxes, Map } from 'lucide-react';
-import type { ExplorerPlugin, VisualizationType } from '../../types/explorer';
-import type { ComponentType } from 'react';
+import { Network } from 'lucide-react';
+import type { ExplorerPlugin } from '../../types/explorer';
 import { ForceGraph3D } from './ForceGraph3D';
 import { SettingsPanel } from './SettingsPanel';
-import type { ForceGraph3DData, ForceGraph3DSettings, Projection } from './types';
+import type { ForceGraph3DData, ForceGraph3DSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 import { transformForEngine } from './dataTransformer';
 
-function createForceGraphPlugin(
-  type: VisualizationType,
-  name: string,
-  description: string,
-  icon: ComponentType<{ className?: string }>,
-  projection: Projection
-): ExplorerPlugin<ForceGraph3DData, ForceGraph3DSettings> {
-  return {
-    config: { id: type, type, name, description, icon, requiredDataShape: 'graph' },
-    component: ForceGraph3D,
-    settingsPanel: SettingsPanel,
-    dataTransformer: transformForEngine,
-    defaultSettings: { ...DEFAULT_SETTINGS, projection },
-  };
-}
-
-export const ForceGraph3DExplorer = createForceGraphPlugin(
-  'force-3d',
-  'Force-Directed 3D',
-  'Unified r3f + GPU engine — 3D with instanced nodes and shader-driven edges',
-  Boxes,
-  '3D'
-);
-
-export const ForceGraph2DV2Explorer = createForceGraphPlugin(
-  'force-2d-v2',
-  'Force-Directed 2D (V2)',
-  'Unified r3f + GPU engine — 2D projection on the same scene primitives',
-  Map,
-  '2D'
-);
+export const ForceGraphExplorer: ExplorerPlugin<ForceGraph3DData, ForceGraph3DSettings> = {
+  config: {
+    id: 'force-graph',
+    type: 'force-graph',
+    name: 'Force Graph',
+    description: 'Unified r3f + GPU engine — 2D or 3D projection toggleable in settings',
+    icon: Network,
+    requiredDataShape: 'graph',
+  },
+  component: ForceGraph3D,
+  settingsPanel: SettingsPanel,
+  dataTransformer: transformForEngine,
+  defaultSettings: DEFAULT_SETTINGS,
+};
 
 import { registerExplorer } from '../registry';
-registerExplorer(ForceGraph3DExplorer);
-registerExplorer(ForceGraph2DV2Explorer);
+registerExplorer(ForceGraphExplorer);
