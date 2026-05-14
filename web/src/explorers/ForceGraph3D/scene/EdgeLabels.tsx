@@ -223,6 +223,7 @@ export function EdgeLabels({
     camera.getWorldPosition(scratch.camPos);
     const radius2 = visibilityRadius * visibilityRadius;
     const hasHidden = !!hiddenIds && hiddenIds.size > 0;
+    const is2D = projection === '2D';
 
     // Per-frame: position + orient currently-visible meshes.
     for (let slot = 0; slot < visibleIndices.length; slot++) {
@@ -271,20 +272,31 @@ export function EdgeLabels({
           .addScaledVector(scratch.t, 0.25);
       }
 
-      // Camera-facing roll around the edge axis: pick the perpendicular-
-      // to-edge direction that points most toward the camera as the plane
-      // normal. When the edge is nearly aligned with the view direction
-      // the projection collapses; fall back to a world-axis perpendicular.
-      scratch.toCam.subVectors(scratch.camPos, scratch.mid);
-      const dotEC = scratch.toCam.dot(scratch.edgeDir);
-      scratch.normal.copy(scratch.toCam).addScaledVector(scratch.edgeDir, -dotEC);
-      if (scratch.normal.lengthSq() < 1e-6) {
-        const fb = Math.abs(scratch.edgeDir.y) > 0.99 ? FALLBACK : UP;
-        scratch.normal.copy(fb).addScaledVector(scratch.edgeDir, -fb.dot(scratch.edgeDir));
+      if (is2D) {
+        // 2D: screen-aligned basis so text always reads left-to-right
+        // regardless of edge direction. The orthographic camera is
+        // top-down with rotation locked, so the world axes coincide
+        // with the screen axes.
+        scratch.edgeDir.set(1, 0, 0);
+        scratch.up.set(0, 1, 0);
+        scratch.normal.set(0, 0, 1);
+      } else {
+        // 3D: camera-facing roll around the edge axis. Pick the
+        // perpendicular-to-edge direction that points most toward the
+        // camera as the plane normal. When the edge is nearly aligned
+        // with the view direction the projection collapses; fall back
+        // to a world-axis perpendicular.
+        scratch.toCam.subVectors(scratch.camPos, scratch.mid);
+        const dotEC = scratch.toCam.dot(scratch.edgeDir);
+        scratch.normal.copy(scratch.toCam).addScaledVector(scratch.edgeDir, -dotEC);
+        if (scratch.normal.lengthSq() < 1e-6) {
+          const fb = Math.abs(scratch.edgeDir.y) > 0.99 ? FALLBACK : UP;
+          scratch.normal.copy(fb).addScaledVector(scratch.edgeDir, -fb.dot(scratch.edgeDir));
+        }
+        scratch.normal.normalize();
+        // up = normal × right (right-handed: right × up = normal).
+        scratch.up.copy(scratch.normal).cross(scratch.edgeDir);
       }
-      scratch.normal.normalize();
-      // up = normal × right (right-handed: right × up = normal).
-      scratch.up.copy(scratch.normal).cross(scratch.edgeDir);
 
       scratch.basis.makeBasis(scratch.edgeDir, scratch.up, scratch.normal);
       mesh.visible = true;
