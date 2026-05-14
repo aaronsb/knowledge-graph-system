@@ -166,8 +166,14 @@ export const DocumentExplorer: React.FC<
     });
   }, [engineData, nodeType]);
 
+  // Both documents and concepts render as the same icosahedron geometry —
+  // the d3 implementation drew documents as larger circles too (with a
+  // small white file-glyph overlay; that overlay is the only detail
+  // dropped on the engine port). Size + color do the visual distinction.
+  // `geometryByClass` is wired so this stays single-source if we want to
+  // re-add a glyph (textured plane / instanced sprite) on documents later.
   const geometryByClass = useMemo(() => ({
-    document: <boxGeometry args={[1, 1, 1]} />,
+    document: <icosahedronGeometry args={[1, 2]} />,
     concept: <icosahedronGeometry args={[1, 1]} />,
   }), []);
 
@@ -209,6 +215,21 @@ export const DocumentExplorer: React.FC<
       return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
   }, [engineData, nodeType, activeIds]);
+
+  // Labels render in a colour distinct from the node mesh so text isn't
+  // masked by the disc it sits next to. White-ish reads against any node
+  // colour (the engine's label canvas paints a dark stroke underneath
+  // for legibility on light themes). Focus dim is baked in here too.
+  const LABEL_COLOR = '#e5e7eb';
+  const labelColors = useMemo(() => {
+    const tmp = new THREE.Color();
+    const hasFocus = !!activeIds && activeIds.size > 0;
+    return engineData.nodes.map((n) => {
+      if (!hasFocus || activeIds!.has(n.id)) return LABEL_COLOR;
+      tmp.set(LABEL_COLOR).multiplyScalar(FOCUS_DIM_ALPHA);
+      return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
+    });
+  }, [engineData, activeIds]);
 
   // Per-node base scale. Documents use a large constant (documentSize
   // setting is in pixel-space in the original; here it controls relative
@@ -341,6 +362,8 @@ export const DocumentExplorer: React.FC<
           edges={engineData.edges}
           edgeVisible={engineData.edgeVisible}
           colors={nodeColors}
+          labelColors={labelColors}
+          nodeLabelOffsetY={-2.2}
           nodeClasses={nodeClasses}
           geometryByClass={geometryByClass}
           nodeScales={nodeScales}
@@ -389,7 +412,7 @@ export const DocumentExplorer: React.FC<
       {/* Legend — bottom left */}
       <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg p-3 text-xs space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COLORS.document }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: COLORS.document }} />
           <span>Document</span>
         </div>
         <div className="flex items-center gap-2">

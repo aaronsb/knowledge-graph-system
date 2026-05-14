@@ -66,6 +66,12 @@ export interface SceneProps {
   nodeLabelSize?: number;
   /** Multiplier on the base world-space edge-label height. Default 1. */
   edgeLabelSize?: number;
+  /** Optional per-node label color override (parallel to `nodes`). When
+   *  omitted, labels use the node's mesh color (Force Graph default). */
+  labelColors?: string[];
+  /** Signed Y offset for node labels in world units. Default +1.4
+   *  (above); negative drops below — used by Document Explorer. */
+  nodeLabelOffsetY?: number;
   showArrows?: boolean;
   showEdgeLabels?: boolean;
   showNodeLabels?: boolean;
@@ -109,6 +115,8 @@ export function Scene({
   linkWidth,
   nodeLabelSize = 1,
   edgeLabelSize = 1,
+  labelColors,
+  nodeLabelOffsetY,
   showArrows = true,
   showEdgeLabels = true,
   showNodeLabels = true,
@@ -215,12 +223,14 @@ export function Scene({
         nodes={nodes}
         positionsRef={sim.positionsRef}
         colors={colors}
+        labelColors={labelColors}
         hiddenIds={hiddenIds}
         enabled={showNodeLabels}
         visibilityRadius={labelVisibilityRadius}
         activeIds={activeIds}
         projection={projection}
         sizeMultiplier={nodeLabelSize}
+        labelOffsetY={nodeLabelOffsetY}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay
