@@ -7,7 +7,7 @@
 
 import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { OAuthCallback } from './components/auth/OAuthCallback';
 import { useVocabularyStore } from './store/vocabularyStore';
@@ -127,8 +127,6 @@ const AppContent: React.FC = () => {
         {/* Explorers */}
         <Route path="/explore/2d" element={<ExplorerView explorerType="force-2d" />} />
         <Route path="/explore/3d" element={<ExplorerView explorerType="force-3d" />} />
-        {/* Old V2 route — redirect existing bookmarks to the canonical 3D explorer */}
-        <Route path="/explore/3d-v2" element={<Navigate to="/explore/3d" replace />} />
         <Route path="/explore/documents" element={<DocumentExplorerWorkspace />} />
 
         {/* Block Editor */}
