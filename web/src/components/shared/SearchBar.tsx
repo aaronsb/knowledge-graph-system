@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, GitBranch, Blocks, Code, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { Search, GitBranch, Blocks, Code, ChevronDown, ChevronRight, Plus, X, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSearchConcepts } from '../../hooks/useGraphData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -22,10 +22,11 @@ import { useGraphStore } from '../../store/graphStore';
 import { ModeDial } from './ModeDial';
 import { apiClient } from '../../api/client';
 import { BlockBuilder } from '../blocks/BlockBuilder';
-import { stepToCypher, parseCypherStatements } from '../../utils/cypherGenerator';
-import { mapWorkingGraphToRawGraph, extractGraphFromPath } from '../../utils/cypherResultMapper';
+import { parseCypherStatements } from '../../utils/cypherGenerator';
 import type { PathResult } from '../../utils/cypherResultMapper';
-import { statementsToProgram } from '../../utils/programBuilder';
+import { useExplorationActions } from '../../hooks/useExplorationActions';
+import { useAutosave } from '../../hooks/useAutosave';
+import { useQueryReplay } from '../../hooks/useQueryReplay';
 import {
   ConceptSearchInput,
   SliderControl,
@@ -48,11 +49,20 @@ export const SearchBar: React.FC = () => {
     similarityThreshold: similarity,
     setSimilarityThreshold: setSimilarity,
     searchParams,
-    setSearchParams,
-    setRawGraphData,
-    mergeRawGraphData,
-    setGraphData,
   } = useGraphStore();
+
+  // All graph-mutating actions funnel through this hub.
+  const actions = useExplorationActions();
+
+  // "Refresh current query" — replays the autosave (current session) through
+  // the server via GraphProgram, producing always-fresh data without
+  // disturbing React Query's cache for unrelated subgraph keys. The button
+  // is hidden when there's no session to refresh.
+  const autosave = useAutosave();
+  const { replayQuery, isReplaying } = useQueryReplay();
+  const handleRefresh = () => {
+    if (autosave) replayQuery(autosave);
+  };
 
   // === UNIFIED SEARCH STATE ===
   // Primary concept (the starting point for any search)
@@ -152,30 +162,13 @@ LIMIT 50`);
     setDepth(1); // Reset to explore default
   };
 
-  /** Load explore — fetch subgraph around selected concept and record the step */
-  const handleLoadExplore = (loadMode: 'clean' | 'add') => {
+  /** Load explore — delegate to the exploration action hub. */
+  const handleLoadExplore = async (loadMode: 'clean' | 'add') => {
     if (!selectedPrimary) return;
-
-    const stepParams = {
-      action: 'explore' as const,
-      conceptLabel: selectedPrimary.label,
-      depth,
-    };
-
-    useGraphStore.getState().addExplorationStep({
-      action: 'explore',
-      op: '+',
-      cypher: stepToCypher(stepParams),
+    await actions.loadExplore({
       conceptId: selectedPrimary.concept_id,
       conceptLabel: selectedPrimary.label,
       depth,
-    });
-
-    setSearchParams({
-      primaryConceptId: selectedPrimary.concept_id,
-      primaryConceptLabel: selectedPrimary.label,
-      depth,
-      maxHops: 5,
       loadMode,
     });
   };
@@ -214,66 +207,28 @@ LIMIT 50`);
     }
   };
 
-  /** Load selected path into graph and record the step */
+  /** Load selected path — delegate to the exploration action hub. */
   const handleLoadPath = async (loadMode: 'clean' | 'add') => {
     if (!selectedPath || !selectedPrimary || !selectedDestination) return;
 
-    const stepParams = {
-      action: 'load-path' as const,
-      conceptLabel: selectedPrimary.label,
+    await actions.loadPath({
+      fromId: selectedPrimary.concept_id,
+      fromLabel: selectedPrimary.label,
+      toId: selectedDestination.concept_id,
+      toLabel: selectedDestination.label,
+      path: selectedPath,
       depth,
-      destinationConceptLabel: selectedDestination.label,
       maxHops,
-    };
-
-    useGraphStore.getState().addExplorationStep({
-      action: 'load-path',
-      op: '+',
-      cypher: stepToCypher(stepParams),
-      conceptId: selectedPrimary.concept_id,
-      conceptLabel: selectedPrimary.label,
-      depth,
-      destinationConceptId: selectedDestination.concept_id,
-      destinationConceptLabel: selectedDestination.label,
-      maxHops,
+      loadMode,
     });
-
-    const { nodes, links, conceptNodeIds } = extractGraphFromPath(selectedPath);
-
-    if (loadMode === 'clean') {
-      setGraphData(null);
-      setRawGraphData({ nodes, links });
-    } else {
-      mergeRawGraphData({ nodes, links });
-    }
-
-    // Enrich path nodes with neighborhood context
-    if (depth > 0 && conceptNodeIds.length <= 50) {
-      const enrichDepth = Math.min(depth, 2);
-      if (conceptNodeIds.length > 0) {
-        try {
-          const enrichments = await Promise.all(
-            conceptNodeIds.map((id) =>
-              apiClient.getSubgraph({ center_concept_id: id, depth: enrichDepth })
-            )
-          );
-          for (const data of enrichments) {
-            mergeRawGraphData({ nodes: data.nodes, links: data.links });
-          }
-        } catch (error) {
-          console.error('Path enrichment failed:', error);
-        }
-      }
-    }
 
     setPathResults(null);
     setSelectedPath(null);
   };
 
-  // Execute Cypher program — parses +/- prefixed multi-statement scripts,
-  // routes results through the rawGraphData pipeline (not setGraphData directly),
-  // and records each statement as an exploration step for save/export round-trip.
-  // Plain Cypher without operators is treated as a single additive statement.
+  // Execute Cypher program — parses +/- prefixed multi-statement scripts and
+  // delegates to the exploration action hub. Plain Cypher without operators
+  // is treated as a single additive statement.
   const handleExecuteCypher = async () => {
     if (!cypherQuery.trim()) return;
 
@@ -293,29 +248,7 @@ LIMIT 50`);
 
       if (statements.length === 0) return;
 
-      const store = useGraphStore.getState();
-
-      // Start fresh — clear graph and reset exploration session
-      setGraphData(null);
-      setRawGraphData(null);
-      store.resetExplorationSession();
-
-      // Execute all statements as a single GraphProgram (ADR-500)
-      const program = statementsToProgram(statements);
-      const programResult = await apiClient.executeProgram({ program: program as unknown as Record<string, unknown> });
-      const mapped = mapWorkingGraphToRawGraph(programResult.result);
-
-      // Record exploration steps for save/export round-trip
-      for (const stmt of statements) {
-        store.addExplorationStep({
-          action: 'cypher',
-          op: stmt.op,
-          cypher: stmt.cypher,
-        });
-      }
-
-      // Load the complete result
-      mergeRawGraphData(mapped);
+      await actions.runCypher(statements);
     } catch (error: unknown) {
       console.error('Failed to execute Cypher query:', error);
       const err = error as { response?: { data?: { detail?: string } }; message?: string };
@@ -415,7 +348,7 @@ LIMIT 50`);
 
   return (
     <div className="relative space-y-4 min-w-0">
-      {/* Header with Mode Info and Dial */}
+      {/* Header with Mode Info, Refresh, and Dial */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3 flex-1">
           <div className="flex-shrink-0">
@@ -430,7 +363,20 @@ LIMIT 50`);
             </p>
           </div>
         </div>
-        <ModeDial mode={queryMode} onChange={setQueryMode} />
+        <div className="flex items-center gap-2">
+          {autosave && (
+            <button
+              onClick={handleRefresh}
+              disabled={isReplaying}
+              title="Refresh current query — re-run the active session against the server for fresh data"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isReplaying ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          )}
+          <ModeDial mode={queryMode} onChange={setQueryMode} />
+        </div>
       </div>
 
       {/* ===== SMART SEARCH (Unified Progressive) ===== */}
@@ -474,6 +420,7 @@ LIMIT 50`);
                 debouncedQuery={debouncedPrimaryQuery}
                 onSelect={handleSelectPrimary}
                 noResultsContent={noResultsContent}
+                isSelected={!!selectedPrimary}
               />
 
               {similaritySlider}
@@ -540,6 +487,7 @@ LIMIT 50`);
                         results={destinationResults?.results}
                         debouncedQuery={debouncedDestinationQuery}
                         onSelect={handleSelectDestination}
+                        isSelected={!!selectedDestination}
                       />
 
                       {selectedDestination && (

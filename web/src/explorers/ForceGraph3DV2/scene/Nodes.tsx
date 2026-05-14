@@ -193,7 +193,18 @@ export function Nodes({
   };
 
   return (
+    // `key={nodes.length}` forces a full remount on node-count change.
+    // three.js's InstancedMesh allocates `instanceMatrix` once at construction
+    // sized for the initial `count`; reusing the mesh when `args[2]` grows
+    // leaves the backing buffer too small. `computeBoundingSphere` then reads
+    // past the array end, produces NaN bounds, and three.js's raycaster
+    // early-outs against the bad sphere — every pointer event silently
+    // misses, so left- and right-clicks on nodes stop responding after the
+    // first action that grows the graph (Add Adjacent / Follow / Load).
+    // The 15-frame `boundingSphere = null` refresh in useFrame can't rescue
+    // this because the underlying buffer is the wrong size.
     <instancedMesh
+      key={nodes.length}
       ref={meshRef}
       args={[undefined, undefined, nodes.length]}
       onPointerOver={handleOver}

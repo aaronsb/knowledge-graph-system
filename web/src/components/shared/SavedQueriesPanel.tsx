@@ -9,9 +9,11 @@
  */
 
 import React, { useEffect } from 'react';
-import { FolderOpen, Save, Code, Trash2 } from 'lucide-react';
+import { FolderOpen, Save, Code, Trash2, History } from 'lucide-react';
 import { useQueryDefinitionStore } from '../../store/queryDefinitionStore';
 import type { ReplayableDefinition } from '../../hooks/useQueryReplay';
+import { useAutosave, AUTOSAVE_ID } from '../../hooks/useAutosave';
+import { useGraphStore } from '../../store/graphStore';
 
 interface SavedQueriesPanelProps {
   /** Called when user clicks a saved query to load it */
@@ -77,6 +79,19 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
 
   const savedQueries = savedQueryIds.map(id => savedQueriesMap[id]).filter(Boolean);
 
+  // Autosave entry — the current exploration session presented as a saved
+  // query. Only shown for the "exploration" filter so we don't surface it
+  // in panels scoped to other definition types (polarity, block_diagram).
+  const autosave = useAutosave();
+  const showAutosave =
+    autosave !== null &&
+    (definitionTypeFilter === undefined || definitionTypeFilter === 'exploration');
+  const sessionUpdatedAt = useGraphStore(
+    (s) => s.explorationSession?.steps[s.explorationSession.steps.length - 1]?.timestamp
+      ?? s.explorationSession?.createdAt
+      ?? 0
+  );
+
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteSavedQuery(id);
@@ -110,19 +125,33 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
         </div>
       )}
 
-      {/* Query list */}
+      {/* Query list \u2014 autosave (when present) pinned at top, then saved queries. */}
       {isLoadingQueries ? (
         <div className="text-center text-muted-foreground text-sm py-4">
           Loading...
         </div>
-      ) : savedQueries.length === 0 ? (
-        <div className="text-center text-muted-foreground text-sm py-4">
-          <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p>No saved queries</p>
-          <p className="text-xs mt-1">Save queries from the search panel</p>
-        </div>
-      ) : (
+      ) : (showAutosave || savedQueries.length > 0) ? (
         <div className="space-y-2">
+          {showAutosave && autosave && (
+            <div
+              key="autosave"
+              className="border border-primary/30 rounded-lg p-3 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group"
+              onClick={() => onLoadQuery(autosave)}
+              title="Replay your current exploration session against the server (always fresh data)"
+            >
+              <div className="flex items-start gap-2">
+                <History className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-primary truncate">Autosave</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {(autosave.definition as { statements?: unknown[] })?.statements?.length ?? 0} steps
+                    {' \u00b7 '}
+                    {sessionUpdatedAt ? new Date(sessionUpdatedAt).toLocaleString() : 'current session'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {savedQueries.map((query) => (
             <div
               key={query.id}
@@ -138,16 +167,24 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
                     {new Date(query.created_at).toLocaleDateString()}
                   </div>
                 </div>
-                <button
-                  onClick={(e) => handleDelete(query.id, e)}
-                  className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
-                  title="Delete query"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {query.id !== AUTOSAVE_ID && (
+                  <button
+                    onClick={(e) => handleDelete(query.id, e)}
+                    className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
+                    title="Delete query"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="text-center text-muted-foreground text-sm py-4">
+          <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p>No saved queries</p>
+          <p className="text-xs mt-1">Save queries from the search panel</p>
         </div>
       )}
     </div>

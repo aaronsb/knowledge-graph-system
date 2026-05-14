@@ -12,11 +12,11 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import { stepToCypher } from '../../utils/cypherGenerator';
 import { extractGraphFromPath } from '../../utils/cypherResultMapper';
-import type { RawGraphNode, RawGraphData, PathResult } from '../../utils/cypherResultMapper';
+import type { RawGraphNode, PathResult } from '../../utils/cypherResultMapper';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore, type TraversalReportData } from '../../store/reportStore';
+import { useExplorationActions } from '../../hooks/useExplorationActions';
 import type { ContextMenuItem } from '../../components/shared/ContextMenu';
 import {
   ArrowRight,
@@ -48,7 +48,12 @@ export interface NodeContextMenuParams {
 export interface GraphContextMenuHandlers {
   // Generic handlers (provided by hook)
   handleFollowConcept: (nodeId: string) => Promise<void>;
-  handleAddToGraph: (nodeId: string) => Promise<void>;
+  /**
+   * Merge the node's neighborhood into the graph at the given depth.
+   * Depth selector (1/2/3) is exposed as a submenu in the context menu;
+   * omitting the argument falls back to the hub's default depth.
+   */
+  handleAddToGraph: (nodeId: string, depth?: 1 | 2 | 3) => Promise<void>;
   handleRemoveFromGraph: (nodeId: string) => void;
   setOriginNode: (nodeId: string | null) => void;
   setDestinationNode: (nodeId: string | null) => void;
@@ -77,97 +82,69 @@ export interface GraphContextMenuCallbacks {
 }
 
 /**
- * Hook providing generic graph navigation actions
+ * Hook providing generic graph navigation actions.
+ *
+ * Follow / add-adjacent / remove / travel-path delegate to
+ * `useExplorationActions` — the single writer for graph-mutating
+ * operations. The wrappers here add UX concerns layered on top (an
+ * `alert` dialog on failure) and preserve the historic return shape so
+ * existing call sites in 2D / 3D-V1 / 3D-V2 don't need to change.
+ *
+ * Send-to-polarity and send-path-to-reports stay here because they're
+ * pure navigation / report creation, not graph-mutating.
+ *
+ * @verified 80d68539
  */
-export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => void) {
-  const { setGraphData, setRawGraphData, mergeRawGraphData, setFocusedNodeId } = useGraphStore();
+export function useGraphNavigation() {
   const navigate = useNavigate();
+  const actions = useExplorationActions();
 
-  /** Follow concept — replace graph with this node's neighborhood and record the step */
-  const handleFollowConcept = useCallback(async (nodeId: string) => {
-    try {
-      const store = useGraphStore.getState();
-      const nodeLabel = store.rawGraphData?.nodes?.find(
-        (n: RawGraphNode) => n.concept_id === nodeId
-      )?.label || nodeId;
+  /** Follow concept — delegates to the action hub, with an alert on failure. */
+  const handleFollowConcept = useCallback(
+    async (nodeId: string) => {
+      try {
+        await actions.followConcept(nodeId);
+      } catch (error: unknown) {
+        alert(`Failed to follow concept: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    },
+    [actions]
+  );
 
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1,
-      });
+  /** Add adjacent — delegates to the action hub, with an alert on failure.
+   *  Optional `depth` (1/2/3) drives the depth selector exposed by the
+   *  shared context menu; undefined uses the hub's default depth. */
+  const handleAddToGraph = useCallback(
+    async (nodeId: string, depth?: 1 | 2 | 3) => {
+      try {
+        await actions.addAdjacent(nodeId, depth ? { depth } : undefined);
+      } catch (error: unknown) {
+        alert(`Failed to add adjacent nodes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    },
+    [actions]
+  );
 
-      store.addExplorationStep({
-        action: 'follow',
-        op: '+',
-        cypher: stepToCypher({ action: 'follow', conceptLabel: nodeLabel, depth: 1 }),
-        conceptId: nodeId,
-        conceptLabel: nodeLabel,
-        depth: 1,
-      });
+  /** Remove node — delegates to the action hub. */
+  const handleRemoveFromGraph = useCallback(
+    (nodeId: string) => {
+      actions.removeNode(nodeId);
+    },
+    [actions]
+  );
 
-      setGraphData(null);
-      setRawGraphData({ nodes: response.nodes, links: response.links });
-      setFocusedNodeId(nodeId);
-    } catch (error: unknown) {
-      console.error('Failed to follow concept:', error);
-      alert(`Failed to follow concept: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [setGraphData, setRawGraphData, setFocusedNodeId]);
-
-  /** Add adjacent nodes — merge this node's neighbors into the graph and record the step */
-  const handleAddToGraph = useCallback(async (nodeId: string) => {
-    try {
-      const store = useGraphStore.getState();
-      const nodeLabel = store.rawGraphData?.nodes?.find(
-        (n: RawGraphNode) => n.concept_id === nodeId
-      )?.label || nodeId;
-
-      const response = await apiClient.getSubgraph({
-        center_concept_id: nodeId,
-        depth: 1,
-      });
-
-      store.addExplorationStep({
-        action: 'add-adjacent',
-        op: '+',
-        cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 1 }),
-        conceptId: nodeId,
-        conceptLabel: nodeLabel,
-        depth: 1,
-      });
-
-      mergeRawGraphData({ nodes: response.nodes, links: response.links });
-      setFocusedNodeId(nodeId);
-    } catch (error: unknown) {
-      console.error('Failed to add adjacent nodes:', error);
-      alert(`Failed to add adjacent nodes: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [mergeRawGraphData, setFocusedNodeId]);
-
-  /** Remove node and its connections from the graph, recording a subtractive step */
-  const handleRemoveFromGraph = useCallback((nodeId: string) => {
-    const store = useGraphStore.getState();
-    const node = store.rawGraphData?.nodes?.find(
-      (n: RawGraphNode) => n.concept_id === nodeId
-    );
-    const nodeLabel = node?.label || nodeId;
-
-    store.addExplorationStep({
-      action: 'cypher',
-      op: '-',
-      cypher: `MATCH (c:Concept)-[r]-(n:Concept)\nWHERE c.label = '${nodeLabel}'\nRETURN c, r, n`,
-      conceptId: nodeId,
-      conceptLabel: nodeLabel,
-      depth: 1,
-    });
-
-    store.subtractRawGraphData({
-      nodes: [{ concept_id: nodeId, label: nodeLabel }],
-      links: [],
-    });
-  }, []);
-
-  /** Find path between origin/destination, merge into graph, then animate camera */
+  /**
+   * Find path between origin/destination, route the graph mutation +
+   * step recording through the hub, then animate the camera through
+   * the path nodes.
+   *
+   * The path fetch lives here (not in the hub) because the camera
+   * animation needs the path object. Once we have it, the actual graph
+   * write goes through `actions.loadPath` so the single-writer invariant
+   * holds and replay through the autosave reproduces the same state.
+   * Enrichment is disabled — travel is a "show me this path" action,
+   * not "explore around the path".
+   */
   const handleTravelPath = useCallback(async (
     originId: string,
     destinationId: string,
@@ -194,32 +171,23 @@ export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => vo
         console.warn('No path found between origin and destination');
         return;
       }
+      const path = result.paths[0];
 
-      const { nodes, links, conceptNodeIds } = extractGraphFromPath(result.paths[0]);
-
-      // Record exploration step
-      store.addExplorationStep({
-        action: 'load-path',
-        op: '+',
-        cypher: stepToCypher({
-          action: 'load-path',
-          conceptLabel: originLabel,
-          depth: 1,
-          destinationConceptLabel: destLabel,
-          maxHops: 5,
-        }),
-        conceptId: originId,
-        conceptLabel: originLabel,
+      await actions.loadPath({
+        fromId: originId,
+        fromLabel: originLabel,
+        toId: destinationId,
+        toLabel: destLabel,
+        path,
         depth: 1,
-        destinationConceptId: destinationId,
-        destinationConceptLabel: destLabel,
         maxHops: 5,
+        loadMode: 'add',
+        enrich: false,
       });
 
-      // Merge path into graph
-      mergeRawGraphData({ nodes, links });
-
-      // Wait for graph to re-render with new nodes, then animate
+      // Camera animation runs after the graph re-renders with the new
+      // path nodes — two RAFs match the previous behavior's timing.
+      const { conceptNodeIds } = extractGraphFromPath(path);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           travelAlongPath(conceptNodeIds, reverse);
@@ -228,7 +196,7 @@ export function useGraphNavigation(mergeGraphData: (newData: RawGraphData) => vo
     } catch (error: unknown) {
       console.error('Failed to travel path:', error);
     }
-  }, [mergeRawGraphData]);
+  }, [actions]);
 
   /** Set polarity poles from origin/destination and navigate to polarity explorer */
   const handleSendToPolarity = useCallback((originId: string, destinationId: string) => {
@@ -634,13 +602,21 @@ export function buildContextMenuItems(
       },
     });
 
+    // Add Adjacent — submenu with depth selector. Depth 1 is the
+    // immediate neighborhood; 2 and 3 expand further at proportionally
+    // higher fetch cost, capped at 3 (the API enforces this server-side
+    // and the depth-2/3 fetches are noticeably slower on dense graphs).
     items.push({
-      label: `Add Adjacent Nodes`,
+      label: 'Add Adjacent Nodes',
       icon: Plus,
-      onClick: () => {
-        handleAddToGraph(nodeId);
-        onClose();
-      },
+      submenu: ([1, 2, 3] as const).map((d) => ({
+        label: `Depth ${d}${d === 1 ? ' (direct neighbors)' : ''}`,
+        icon: Plus,
+        onClick: () => {
+          handleAddToGraph(nodeId, d);
+          onClose();
+        },
+      })),
     });
 
     items.push({

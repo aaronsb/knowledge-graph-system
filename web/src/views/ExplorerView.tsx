@@ -15,6 +15,7 @@ import { SearchBar } from '../components/shared/SearchBar';
 import { IconRailPanel } from '../components/shared/IconRailPanel';
 import { SavedQueriesPanel } from '../components/shared/SavedQueriesPanel';
 import { useQueryReplay } from '../hooks/useQueryReplay';
+import { useAutosave } from '../hooks/useAutosave';
 import { useGraphStore, deriveMode } from '../store/graphStore';
 import { useReportStore } from '../store/reportStore';
 import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
@@ -26,7 +27,7 @@ import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
-import { stepToCypher, generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
+import { generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
 import type { VisualizationType } from '../types/explorer';
 
@@ -57,6 +58,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     createDefinition: createSavedQuery,
   } = useQueryDefinitionStore();
   const { replayQuery, isReplaying } = useQueryReplay();
+  const autosave = useAutosave();
 
   // UI state for IconRailPanel
   const [activeTab, setActiveTab] = useState('history');
@@ -283,32 +285,14 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
 
   const ExplorerComponent = explorerPlugin.component;
 
-  /** Follow Concept: load clicked node's neighborhood and record the step */
-  const handleNodeClick = useCallback((nodeId: string) => {
-    const store = useGraphStore.getState();
+  // Left-click on a node is per-explorer (graph explorers open a node info
+  // panel; document explorer opens the document viewer) and is handled
+  // entirely inside each explorer component. The shared `onNodeClick`
+  // prop in ExplorerProps is preserved as an optional escape hatch for
+  // future explorers, but is not wired to any action here — graph-mutating
+  // operations live on the right-click context menu and the search bar so
+  // they're never invoked accidentally on inspection.
 
-    const nodeLabel = store.rawGraphData?.nodes?.find(
-      (n: RawGraphNode) => n.concept_id === nodeId
-    )?.label || nodeId;
-
-    store.addExplorationStep({
-      action: 'add-adjacent',
-      op: '+',
-      cypher: stepToCypher({ action: 'add-adjacent', conceptLabel: nodeLabel, depth: 2 }),
-      conceptId: nodeId,
-      conceptLabel: nodeLabel,
-      depth: 2,
-    });
-
-    store.setFocusedNodeId(nodeId);
-    store.setSearchParams({
-      primaryConceptId: nodeId,
-      primaryConceptLabel: nodeLabel,
-      depth: 2,
-      maxHops: 5,
-      loadMode: 'add',
-    });
-  }, []);
 
   // Send current graph to Reports
   const handleSendToReports = useCallback(async () => {
@@ -502,12 +486,24 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
           )}
 
           {!graphData && !isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-              <div className="text-center max-w-md">
-                <h3 className="text-xl font-semibold mb-2">Welcome to Knowledge Graph Visualization</h3>
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <div className="text-center max-w-md px-6 pointer-events-auto">
+                <h3 className="text-xl font-semibold mb-2">
+                  {autosave ? 'Welcome back' : 'Welcome to Knowledge Graph Visualization'}
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Search for a concept above to start exploring the graph
+                  {autosave
+                    ? 'Your last session is saved as an autosave. Restore it, or start a new search above.'
+                    : 'Search for a concept above to start exploring the graph'}
                 </p>
+                {autosave && (
+                  <button
+                    onClick={() => replayQuery(autosave)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors mb-4"
+                  >
+                    Restore last session
+                  </button>
+                )}
                 <div className="text-sm text-muted-foreground">
                   <p>Tips:</p>
                   <ul className="mt-2 space-y-1 text-left">
@@ -526,7 +522,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
               data={graphData}
               settings={explorerSettings}
               onSettingsChange={setExplorerSettings}
-              onNodeClick={handleNodeClick}
               onSendToReports={rawGraphData && rawGraphData.nodes.length > 0 ? handleSendToReports : undefined}
             />
           )}

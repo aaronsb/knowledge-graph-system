@@ -216,7 +216,16 @@ export function Arrows({
   if (!enabled || usableCount === 0) return null;
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, usableCount]}>
+    // `key={usableCount}` mirrors the Nodes.tsx fix: when the edge count
+    // grows, the InstancedMesh's `instanceMatrix` buffer must be reallocated
+    // or three.js reads past the buffer end and renders garbage. Arrows
+    // don't gate pointer events (they don't carry handlers), but a stale
+    // buffer still produces visual glitches when the graph grows.
+    <instancedMesh
+      key={usableCount}
+      ref={meshRef}
+      args={[undefined, undefined, usableCount]}
+    >
       {/* Unit cone — radius ARROW_RADIUS_RATIO, height 1. Per-instance
           scale multiplies by the computed arrow length. */}
       <coneGeometry args={[ARROW_RADIUS_RATIO, 1, 8]} />

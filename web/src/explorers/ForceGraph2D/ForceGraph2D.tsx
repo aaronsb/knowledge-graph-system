@@ -1492,7 +1492,7 @@ export const ForceGraph2D: React.FC<
   }, [graphData]);
 
   // Use common graph navigation hook
-  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation(mergeGraphData);
+  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation();
 
   // Pin/Unpin node functionality
   const isPinned = useCallback((nodeId: string): boolean => {
