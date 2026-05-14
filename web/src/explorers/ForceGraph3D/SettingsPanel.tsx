@@ -1,26 +1,25 @@
 /**
- * V2 Settings Panel
+ * ForceGraph3D Settings Panel
  *
- * Settings surface for the unified rendering engine (ADR-702). Mirrors
- * the collapsible-sections layout of V1's GraphSettingsPanel but against
- * V2's settings shape (repulsion/attraction/damping/centerGravity, node
- * mode, edge-color-by, label visibility radius, etc.).
+ * Settings surface for the unified rendering engine (ADR-702):
+ * repulsion / attraction / damping / center gravity, node-color mode,
+ * edge-color mode, label visibility radius, etc.
  *
- * Sim action buttons (reheat / simmer / freeze) live on the on-canvas
- * info overlay inside ForceGraph3DV2.tsx so they can drive a
- * simHandleRef that's only writable from inside the r3f Canvas tree.
+ * The Reheat button lives on the on-canvas info overlay inside
+ * ForceGraph3D.tsx so it can drive a simHandleRef that's only writable
+ * from inside the r3f Canvas tree.
  */
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { SettingsPanelProps } from '../../types/explorer';
-import type { ForceGraph3DV2Settings } from './types';
+import type { ForceGraph3DSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
 
 type Section = 'physics' | 'visual' | 'interaction';
 
-export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings>> = ({
+export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> = ({
   settings,
   onChange,
 }) => {
@@ -34,11 +33,11 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
       return next;
     });
 
-  const updatePhysics = (patch: Partial<ForceGraph3DV2Settings['physics']>) =>
+  const updatePhysics = (patch: Partial<ForceGraph3DSettings['physics']>) =>
     onChange({ ...settings, physics: { ...settings.physics, ...patch } });
-  const updateVisual = (patch: Partial<ForceGraph3DV2Settings['visual']>) =>
+  const updateVisual = (patch: Partial<ForceGraph3DSettings['visual']>) =>
     onChange({ ...settings, visual: { ...settings.visual, ...patch } });
-  const updateInteraction = (patch: Partial<ForceGraph3DV2Settings['interaction']>) =>
+  const updateInteraction = (patch: Partial<ForceGraph3DSettings['interaction']>) =>
     onChange({ ...settings, interaction: { ...settings.interaction, ...patch } });
 
   const sectionHeader = (id: Section, title: string) => (
@@ -185,7 +184,7 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
                 className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.nodeColorBy}
                 onChange={(e) =>
-                  updateVisual({ nodeColorBy: e.target.value as ForceGraph3DV2Settings['visual']['nodeColorBy'] })
+                  updateVisual({ nodeColorBy: e.target.value as ForceGraph3DSettings['visual']['nodeColorBy'] })
                 }
               >
                 <option value="ontology">By ontology</option>
@@ -199,7 +198,7 @@ export const V2SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DV2Settings
                 className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.edgeColorBy}
                 onChange={(e) =>
-                  updateVisual({ edgeColorBy: e.target.value as ForceGraph3DV2Settings['visual']['edgeColorBy'] })
+                  updateVisual({ edgeColorBy: e.target.value as ForceGraph3DSettings['visual']['edgeColorBy'] })
                 }
               >
                 <option value="type">By edge type</option>

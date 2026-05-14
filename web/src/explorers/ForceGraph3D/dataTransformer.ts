@@ -1,5 +1,5 @@
 /**
- * Data transformer — RawGraphData → ForceGraph3DV2Data
+ * Data transformer — RawGraphData → ForceGraph3DData
  *
  * Converts the store's raw node/link records into the engine's
  * {EngineNode[], EngineEdge[]} shape. Degree is computed here (not in the
@@ -8,10 +8,10 @@
  */
 
 import type { RawGraphData } from '../../utils/cypherResultMapper';
-import type { EngineNode, EngineEdge, ForceGraph3DV2Data } from './types';
+import type { EngineNode, EngineEdge, ForceGraph3DData } from './types';
 
 /** Transform store graph data to the engine's node/edge shape.  @verified c17bbeb9 */
-export function transformForEngine(apiData: RawGraphData): ForceGraph3DV2Data {
+export function transformForEngine(apiData: RawGraphData): ForceGraph3DData {
   const apiNodes = apiData.nodes || [];
   const apiLinks = apiData.links || [];
 

@@ -27,7 +27,6 @@ import {
   Settings,
   Shield,
   Network,
-  Box,
   Boxes,
   GitBranch,
   FlaskConical,
@@ -134,16 +133,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               onClick={() => navigate('/explore/2d')}
             />
             <SidebarItem
-              icon={Box}
+              icon={Boxes}
               label="3D Force Graph"
               isActive={location.pathname === '/explore/3d'}
               onClick={() => navigate('/explore/3d')}
-            />
-            <SidebarItem
-              icon={Boxes}
-              label="3D Force Graph (V2)"
-              isActive={location.pathname === '/explore/3d-v2'}
-              onClick={() => navigate('/explore/3d-v2')}
             />
             <SidebarItem
               icon={FileText}

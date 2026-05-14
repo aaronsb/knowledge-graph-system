@@ -1,45 +1,37 @@
 /**
- * Force-Directed 3D Graph Explorer - Plugin Definition
+ * ForceGraph3D — Plugin Definition
  *
  * Follows ADR-034 Explorer Plugin Interface.
- * 3D WebGL visualization using react-force-graph-3d.
+ * Built on the unified rendering engine per ADR-702 (r3f + instanced GPU
+ * rendering + GPU-accelerated force simulation).
  */
 
-import { Box } from 'lucide-react';
+import { Boxes } from 'lucide-react';
 import type { ExplorerPlugin } from '../../types/explorer';
 import { ForceGraph3D } from './ForceGraph3D';
-import { ProfilePanel } from './ProfilePanel';
-import type { ForceGraph3DSettings, ForceGraph3DData } from './types';
+import { SettingsPanel } from './SettingsPanel';
+import type { ForceGraph3DData, ForceGraph3DSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
-import { transformForD3 } from '../../utils/graphTransform';
+import { transformForEngine } from './dataTransformer';
 
-/**
- * Force-Directed 3D Graph Explorer Plugin
- *
- * Interactive 3D force-directed graph visualization with WebGL rendering.
- * Best for exploring spatial relationships and large conceptual networks.
- */
-export const ForceGraph3DExplorer: ExplorerPlugin<ForceGraph3DData, ForceGraph3DSettings> = {
+export const ForceGraph3DExplorer: ExplorerPlugin<
+  ForceGraph3DData,
+  ForceGraph3DSettings
+> = {
   config: {
     id: 'force-3d',
     type: 'force-3d',
     name: 'Force-Directed 3D',
-    description: 'Explore conceptual neighborhoods in 3D space with WebGL',
-    icon: Box,
+    description: 'Unified r3f + GPU engine — 3D with instanced nodes and shader-driven edges',
+    icon: Boxes,
     requiredDataShape: 'graph',
   },
 
   component: ForceGraph3D,
-  settingsPanel: ProfilePanel,
-
-  dataTransformer: (apiData) => {
-    // Always transform to ensure node.size and node.color are calculated
-    return transformForD3(apiData.nodes || [], apiData.links || []);
-  },
-
+  settingsPanel: SettingsPanel,
+  dataTransformer: transformForEngine,
   defaultSettings: DEFAULT_SETTINGS,
 };
 
-// Auto-register this explorer
 import { registerExplorer } from '../registry';
 registerExplorer(ForceGraph3DExplorer);

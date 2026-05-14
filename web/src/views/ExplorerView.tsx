@@ -23,9 +23,7 @@ import type { GraphReportData } from '../store/reportStore';
 import { useSubgraph, useFindConnection, usePathEnrichment } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
 import { GraphSettingsPanel } from '../explorers/common/GraphSettingsPanel';
-import { Settings3DPanel } from '../explorers/common/3DSettingsPanel';
 import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
-import { SLIDER_RANGES as SLIDER_RANGES_3D } from '../explorers/ForceGraph3D/types';
 import { getZIndexValue } from '../config/zIndex';
 import { generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
@@ -269,9 +267,6 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     }
   }, [explorerPlugin, explorerType]);
 
-  // Slider ranges for the current explorer's settings panel
-  const sliderRanges = explorerType === 'force-3d' ? SLIDER_RANGES_3D : SLIDER_RANGES_2D;
-
   if (!explorerPlugin) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -372,33 +367,21 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     />
   );
 
-  // Settings panel content. V2 declares its own settings panel via the
-  // plugin contract; V1 2D/3D share GraphSettingsPanel which is hardcoded
-  // to the V1 settings shape. New explorers with their own shape should
-  // rely on the plugin's settingsPanel field (ADR-034).
+  // Settings panel content. The 3D explorer declares its own settings
+  // panel via the plugin contract (ADR-034). The 2D explorer is the last
+  // consumer of the legacy GraphSettingsPanel + SLIDER_RANGES_2D shape.
   const PluginSettingsPanel = explorerPlugin?.settingsPanel;
   const settingsPanelContent = (
     <div className="p-3 space-y-4">
-      {explorerType === 'force-3d-v2' && PluginSettingsPanel ? (
+      {explorerType === 'force-2d' && explorerSettings?.physics ? (
+        <GraphSettingsPanel
+          settings={explorerSettings}
+          onChange={setExplorerSettings}
+          sliderRanges={SLIDER_RANGES_2D}
+          embedded
+        />
+      ) : PluginSettingsPanel ? (
         <PluginSettingsPanel settings={explorerSettings} onChange={setExplorerSettings} />
-      ) : explorerSettings?.physics ? (
-        <>
-          <GraphSettingsPanel
-            settings={explorerSettings}
-            onChange={setExplorerSettings}
-            sliderRanges={sliderRanges}
-            embedded
-          />
-          {explorerType === 'force-3d' && explorerSettings.camera && (
-            <Settings3DPanel
-              camera={explorerSettings.camera}
-              onCameraChange={(camera) =>
-                setExplorerSettings({ ...explorerSettings, camera })
-              }
-              embedded
-            />
-          )}
-        </>
       ) : (
         <div className="text-center text-muted-foreground text-sm py-4">
           <p>No settings for this explorer</p>

@@ -1,122 +1,122 @@
 /**
- * Force-Directed 3D Graph Explorer - Type Definitions
+ * ForceGraph3D — Type Definitions
+ *
+ * Built on the unified rendering engine described in ADR-702.
+ * Engine shape: {EngineNode[], EngineEdge[]} with kg-specific properties
+ * from spike findings (separate id/label, edge-type palette, directed
+ * arrows).
  */
 
-import type { GraphData } from '../../types/graph';
+import type { APIGraphNode, APIGraphLink } from '../../types/graph';
+import type { NodeColorMode } from '../common';
 
-export type NodeColorMode = 'ontology' | 'degree' | 'centrality';
-export type EdgeColorMode = 'category' | 'confidence' | 'uniform';
-export type LayoutAlgorithm = 'force' | 'circular' | 'grid';
+export type { NodeColorMode };
 
+/** A node as consumed by the unified rendering engine.  @verified c17bbeb9 */
+export interface EngineNode {
+  /** Stable key (e.g. kg concept_id). Used for identity and picking. */
+  id: string;
+  /** Human-readable display text. Separate from id per spike finding #3. */
+  label: string;
+  /** Opaque string; resolved via the palette prop. */
+  category: string;
+  /** Used for size scaling. */
+  degree: number;
+  /** Whether the engine should hold this node's position against the sim. */
+  pinned?: boolean;
+  /** Full API payload passed through so widgets can read without re-fetch. */
+  source?: APIGraphNode;
+}
+
+/** An edge as consumed by the unified rendering engine.  @verified c17bbeb9 */
+export interface EngineEdge {
+  /** Source node id. */
+  from: string;
+  /** Target node id. */
+  to: string;
+  /** Relationship type (e.g. "IMPLIES"); resolved via the edgePalette prop. */
+  type: string;
+  /** Optional weight, may drive line thickness or arrow size. */
+  weight?: number;
+  /** Full API payload passed through. */
+  source?: APIGraphLink;
+}
+
+/** Data shape the ForceGraph3D explorer plugin consumes.  @verified c17bbeb9 */
+export interface ForceGraph3DData {
+  nodes: EngineNode[];
+  edges: EngineEdge[];
+}
+
+export type PhysicsBackend = 'auto' | 'cpu' | 'gpu';
+export type EdgeColorMode = 'endpoint' | 'type';
+
+/** Runtime settings for the ForceGraph3D explorer plugin.  @verified c17bbeb9 */
 export interface ForceGraph3DSettings {
-  // Physics simulation
   physics: {
     enabled: boolean;
-    charge: number; // Repulsion strength (-100 to -1000)
-    linkDistance: number; // Target link distance (10-200)
-    gravity: number; // Center gravity (0-1)
-    friction: number; // Velocity decay (0-1)
+    repulsion: number;
+    attraction: number;
+    centerGravity: number;
+    damping: number;
+    backend: PhysicsBackend;
   };
 
-  // Visual appearance
   visual: {
+    showArrows: boolean;
+    /** Persistent edge-type labels on edges. */
+    showLabels: boolean;
+    /** Persistent node labels above each node. */
+    showNodeLabels: boolean;
     nodeColorBy: NodeColorMode;
     edgeColorBy: EdgeColorMode;
-    showLabels: boolean;
-    showArrows: boolean;
-    showGrid: boolean;
-    showShadows: boolean; // 3D-style shadows and highlights
-    nodeSize: number; // Base node size multiplier (0.5-3)
-    linkWidth: number; // Base link width (0.5-5)
-    nodeLabelSize: number; // Node label font size (6-20px)
-    edgeLabelSize: number; // Edge label font size (6-20px)
+    labelVisibilityRadius: number;
+    nodeSize: number;
   };
 
-  // Interaction
   interaction: {
     enableDrag: boolean;
     enableZoom: boolean;
     enablePan: boolean;
     highlightNeighbors: boolean;
-    showOriginNode: boolean; // "You Are Here" highlighting
   };
-
-  // Camera controls (3D-specific)
-  camera: {
-    fov: number;         // Field of view in degrees (30-120)
-    autoLevel: boolean;  // Smoothly return to level ground when releasing mouse
-    clampToFloor: boolean; // Prevent camera from going below grid floor
-    orientLabels: boolean; // Rotate labels around edge axis to face camera
-  };
-
-  // Filters
-  filters: {
-    relationshipTypes: string[];
-    ontologies: string[];
-    minConfidence: number; // 0-1
-  };
-
-  // Layout
-  layout: LayoutAlgorithm;
-}
-
-export interface ForceGraph3DData extends GraphData {
-  // Already has nodes and links
 }
 
 export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
   physics: {
     enabled: true,
-    charge: -650,        // Stronger repulsion for 3D space
-    linkDistance: 130,   // Longer links for better 3D depth perception
-    gravity: 0.10,
-    friction: 0.9,
+    repulsion: 120,
+    attraction: 0.04,
+    centerGravity: 0.004,
+    damping: 0.93,
+    backend: 'auto',
   },
   visual: {
-    nodeColorBy: 'ontology',
-    edgeColorBy: 'category',
-    showLabels: true, // Enabled by default for better readability
     showArrows: true,
-    showGrid: true,
-    showShadows: false, // Disabled by default for performance
-    nodeSize: 0.40,      // Smaller default due to volume scaling (radius³)
-    linkWidth: 1.0,
-    nodeLabelSize: 12,
-    edgeLabelSize: 16,   // Larger text for better readability in 3D space
+    showLabels: true,
+    showNodeLabels: true,
+    nodeColorBy: 'ontology',
+    edgeColorBy: 'type',
+    labelVisibilityRadius: 250,
+    nodeSize: 1.0,
   },
   interaction: {
     enableDrag: true,
     enableZoom: true,
     enablePan: true,
     highlightNeighbors: true,
-    showOriginNode: true,
   },
-  camera: {
-    fov: 75,            // Default field of view (standard perspective)
-    autoLevel: true,    // Auto-level by default for less disorienting camera
-    clampToFloor: true, // Prevent going below floor by default
-    orientLabels: true, // Orient labels to camera by default for readability
-  },
-  filters: {
-    relationshipTypes: [],
-    ontologies: [],
-    minConfidence: 0,
-  },
-  layout: 'force',
 };
 
-// Slider range configurations for 3D graph
-// 3D uses tighter nodeSize range due to volume-based sizing (radius³)
 export const SLIDER_RANGES = {
   physics: {
-    charge: { min: -1000, max: -100, step: 50 },
-    linkDistance: { min: 10, max: 200, step: 10 },
-    gravity: { min: 0, max: 1, step: 0.05 },
+    repulsion: { min: 20, max: 500, step: 5 },
+    attraction: { min: 0, max: 0.2, step: 0.005 },
+    centerGravity: { min: 0, max: 0.05, step: 0.001 },
+    damping: { min: 0.5, max: 0.99, step: 0.01 },
   },
   visual: {
-    nodeSize: { min: 0.1, max: 1.5, step: 0.05 },  // Tighter range for 3D volume scaling
-    linkWidth: { min: 0.5, max: 5, step: 0.1 },
-    nodeLabelSize: { min: 6, max: 20, step: 1 },
-    edgeLabelSize: { min: 10, max: 40, step: 1 },
+    labelVisibilityRadius: { min: 50, max: 1000, step: 10 },
+    nodeSize: { min: 0.3, max: 3, step: 0.1 },
   },
 };
