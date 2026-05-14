@@ -89,6 +89,14 @@ export interface ForceGraph3DSettings {
     edgeColorBy: EdgeColorMode;
     labelVisibilityRadius: number;
     nodeSize: number;
+    /** Edge line width. Note: WebGL's LineBasicMaterial clamps linewidth
+     *  to 1px on most drivers, so values above 1 have limited visual
+     *  effect. Tracked for parity; a thick-line shader is a follow-up. */
+    linkWidth: number;
+    /** Multiplier on node label world-space height. 1.0 = default size. */
+    nodeLabelSize: number;
+    /** Multiplier on edge label world-space height. 1.0 = default size. */
+    edgeLabelSize: number;
   };
 
   interaction: {
@@ -117,6 +125,9 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     edgeColorBy: 'type',
     labelVisibilityRadius: 250,
     nodeSize: 1.0,
+    linkWidth: 1.0,
+    nodeLabelSize: 1.0,
+    edgeLabelSize: 1.0,
   },
   interaction: {
     enableDrag: true,
@@ -136,5 +147,8 @@ export const SLIDER_RANGES = {
   visual: {
     labelVisibilityRadius: { min: 50, max: 1000, step: 10 },
     nodeSize: { min: 0.3, max: 3, step: 0.1 },
+    linkWidth: { min: 0.5, max: 5, step: 0.1 },
+    nodeLabelSize: { min: 0.5, max: 3, step: 0.1 },
+    edgeLabelSize: { min: 0.5, max: 3, step: 0.1 },
   },
 };

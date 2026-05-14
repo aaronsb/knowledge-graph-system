@@ -22,8 +22,9 @@ import type { EngineNode, Projection } from '../types';
 const RESCAN_MS = 200;
 /** Upper bound on simultaneously-mounted labels to bound per-frame cost. */
 const MAX_LABELS = 120;
-/** Label height in world units. Width derived from texture aspect. */
-const LABEL_HEIGHT_WORLD = 1.0;
+/** Base label height in world units. Multiplied by the caller's
+ *  sizeMultiplier prop to compute the actual mesh scale. */
+const BASE_LABEL_HEIGHT_WORLD = 1.0;
 /** Vertical offset above the node (world up before billboard rotation). */
 const LABEL_OFFSET_ABOVE = 1.4;
 /** Canvas font size for text rendering (high-res for crisp scaling). */
@@ -78,6 +79,8 @@ export interface NodeLabelsProps {
   activeIds?: Set<string>;
   /** Drives the distance-culling axis count. 2D ignores Z. Default '3D'. */
   projection?: Projection;
+  /** Multiplier on the base label world-space height. Default 1. */
+  sizeMultiplier?: number;
 }
 
 /** Dim opacity applied to labels for nodes outside activeIds. */
@@ -93,6 +96,7 @@ export function NodeLabels({
   enabled = true,
   activeIds,
   projection = '3D',
+  sizeMultiplier = 1,
 }: NodeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -149,10 +153,11 @@ export function NodeLabels({
         mat.needsUpdate = true;
       }
       if (mesh) {
-        mesh.scale.set(entry.aspect * LABEL_HEIGHT_WORLD, LABEL_HEIGHT_WORLD, 1);
+        const h = BASE_LABEL_HEIGHT_WORLD * sizeMultiplier;
+        mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, nodes, colors, enabled, activeIds]);
+  }, [visibleIndices, nodes, colors, enabled, activeIds, sizeMultiplier]);
 
   const scratch = useMemo(
     () => ({

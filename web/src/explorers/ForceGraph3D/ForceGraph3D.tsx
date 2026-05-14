@@ -73,6 +73,10 @@ export const ForceGraph3D: React.FC<
 
   const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
   const visibleEdgeCategories = useGraphStore((s) => s.filters.visibleEdgeCategories);
+  // Universal filters live in the store so every explorer sees the same
+  // filtered data. Reading them via individual selectors keeps zustand's
+  // shallow equality from re-rendering on unrelated store updates.
+  const minConfidence = useGraphStore((s) => s.filters.minConfidence);
   const appliedTheme = useThemeStore((s) => s.appliedTheme);
   const canvasBg = explorerTheme.canvas3D[appliedTheme];
   const {
@@ -184,13 +188,21 @@ export const ForceGraph3D: React.FC<
     [vocabStore]
   );
 
-  // Apply the edge-category filter from the shared store. Empty set means
-  // "show all" — keep data untouched to skip allocations on the common path.
+  // Apply shared-store filters. Both are universal — every explorer
+  // reads from the same store fields, so a filter set in one place
+  // applies everywhere. Empty / zero means "show all".
   const filteredData = useMemo(() => {
-    if (!data || visibleEdgeCategories.size === 0) return data;
-    const edges = data.edges.filter((e) => visibleEdgeCategories.has(edgeCategory(e)));
+    if (!data) return data;
+    const hasCatFilter = visibleEdgeCategories.size > 0;
+    const hasConfFilter = minConfidence > 0;
+    if (!hasCatFilter && !hasConfFilter) return data;
+    const edges = data.edges.filter((e) => {
+      if (hasCatFilter && !visibleEdgeCategories.has(edgeCategory(e))) return false;
+      if (hasConfFilter && (e.weight ?? 1) < minConfidence) return false;
+      return true;
+    });
     return { ...data, edges };
-  }, [data, visibleEdgeCategories, edgeCategory]);
+  }, [data, visibleEdgeCategories, minConfidence, edgeCategory]);
 
   // Per-edge colors driven by edgeColorBy. Parallel to filteredData.edges
   // by index. Undefined means "use endpoint gradient" — the engine's
@@ -424,6 +436,9 @@ export const ForceGraph3D: React.FC<
           projection={settings?.projection ?? '3D'}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
+          linkWidth={settings?.visual?.linkWidth ?? 1}
+          nodeLabelSize={settings?.visual?.nodeLabelSize ?? 1}
+          edgeLabelSize={settings?.visual?.edgeLabelSize ?? 1}
           showArrows={settings?.visual?.showArrows ?? true}
           showEdgeLabels={settings?.visual?.showLabels ?? true}
           showNodeLabels={settings?.visual?.showNodeLabels ?? true}

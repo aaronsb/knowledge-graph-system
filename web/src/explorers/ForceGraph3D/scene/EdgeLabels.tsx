@@ -31,12 +31,9 @@ const FALLBACK = new THREE.Vector3(1, 0, 0);
 const RESCAN_MS = 200;
 /** Upper bound on simultaneously-mounted labels to bound per-frame cost. */
 const MAX_LABELS = 80;
-/** Label height in world units. Width is derived from the texture aspect. */
-const LABEL_HEIGHT_WORLD = 1.25;
-/** World-space offset along the label's local +Y so it sits above the edge
- *  line instead of on it. Just over half the label height keeps the bottom
- *  of the text from overlapping the line. */
-const LABEL_OFFSET_LOCAL_Y = LABEL_HEIGHT_WORLD * 0.5;
+/** Base label height in world units. Multiplied by the caller's
+ *  sizeMultiplier prop to compute the actual mesh scale. */
+const BASE_LABEL_HEIGHT_WORLD = 1.25;
 /** Canvas font size for text rendering (high-res for crisp scaling). */
 const TEXT_FONT_PX = 32;
 const TEXT_PADDING_PX = 8;
@@ -88,6 +85,8 @@ export interface EdgeLabelsProps {
   activeIds?: Set<string>;
   /** Drives the distance-culling axis count. 2D ignores Z. Default '3D'. */
   projection?: Projection;
+  /** Multiplier on the base label world-space height. Default 1. */
+  sizeMultiplier?: number;
 }
 
 interface EdgeMeta {
@@ -115,6 +114,7 @@ export function EdgeLabels({
   edgeColors,
   activeIds,
   projection = '3D',
+  sizeMultiplier = 1,
 }: EdgeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -202,10 +202,11 @@ export function EdgeLabels({
         mat.needsUpdate = true;
       }
       if (mesh) {
-        mesh.scale.set(entry.aspect * LABEL_HEIGHT_WORLD, LABEL_HEIGHT_WORLD, 1);
+        const h = BASE_LABEL_HEIGHT_WORLD * sizeMultiplier;
+        mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes]);
+  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes, sizeMultiplier]);
 
   // Scratch vectors reused across the frame loop.
   const scratch = useMemo(
@@ -316,7 +317,7 @@ export function EdgeLabels({
       // the label sits above the edge instead of crossing it.
       mesh.position
         .copy(scratch.mid)
-        .addScaledVector(scratch.up, LABEL_OFFSET_LOCAL_Y);
+        .addScaledVector(scratch.up, BASE_LABEL_HEIGHT_WORLD * sizeMultiplier * 0.5);
       mesh.quaternion.setFromRotationMatrix(scratch.basis);
     }
 

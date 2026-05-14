@@ -51,6 +51,9 @@ export interface EdgesProps {
   edgeColors?: string[];
   hiddenIds?: Set<string>;
   opacity?: number;
+  /** Line width in pixels. WebGL's LineBasicMaterial clamps to 1px on
+   *  most drivers, so values above 1 may have limited visual effect. */
+  linkWidth?: number;
   /** When defined, edges with at least one endpoint NOT in this set are
    *  dimmed by dimAlpha. Drives hover/focus dim. */
   activeIds?: Set<string>;
@@ -66,6 +69,7 @@ export function Edges({
   edgeColors,
   hiddenIds,
   opacity = 0.7,
+  linkWidth = 1,
   activeIds,
   dimAlpha = 1,
 }: EdgesProps) {
@@ -117,6 +121,7 @@ export function Edges({
       transparent: true,
       opacity,
       depthWrite: false,
+      linewidth: linkWidth,
     });
 
     return {
@@ -128,7 +133,7 @@ export function Edges({
       segments: segs,
       originalIndices: origIdx,
     };
-  }, [nodes, edges, opacity]);
+  }, [nodes, edges, opacity, linkWidth]);
 
   useEffect(() => {
     return () => {

@@ -47,6 +47,11 @@ export interface SceneProps {
   dimAlpha?: number;
   nodeSize?: number;
   edgeOpacity?: number;
+  linkWidth?: number;
+  /** Multiplier on the base world-space node-label height. Default 1. */
+  nodeLabelSize?: number;
+  /** Multiplier on the base world-space edge-label height. Default 1. */
+  edgeLabelSize?: number;
   showArrows?: boolean;
   showEdgeLabels?: boolean;
   showNodeLabels?: boolean;
@@ -83,6 +88,9 @@ export function Scene({
   dimAlpha = 1,
   nodeSize,
   edgeOpacity,
+  linkWidth,
+  nodeLabelSize = 1,
+  edgeLabelSize = 1,
   showArrows = true,
   showEdgeLabels = true,
   showNodeLabels = true,
@@ -138,6 +146,7 @@ export function Scene({
         edgeColors={edgeColors}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
+        linkWidth={linkWidth}
         activeIds={activeIds}
         dimAlpha={dimAlpha}
       />
@@ -178,6 +187,7 @@ export function Scene({
         edgeColors={edgeColors}
         activeIds={activeIds}
         projection={projection}
+        sizeMultiplier={edgeLabelSize}
       />
       <NodeLabels
         nodes={nodes}
@@ -188,6 +198,7 @@ export function Scene({
         visibilityRadius={labelVisibilityRadius}
         activeIds={activeIds}
         projection={projection}
+        sizeMultiplier={nodeLabelSize}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay
