@@ -80,8 +80,9 @@ export interface EdgeLabelsProps {
    *  In 2D the distance is computed in the XY plane only. */
   visibilityRadius?: number;
   enabled?: boolean;
-  /** If provided, color label border by edge type. */
-  edgePalette?: (edgeType: string) => string;
+  /** Optional per-edge label colours, parallel to `edges` by index.
+   *  Falls back to a neutral grey when absent. */
+  edgeColors?: string[];
   /** When defined, labels for edges whose endpoints aren't both in this set
    *  are dimmed (material opacity reduced). */
   activeIds?: Set<string>;
@@ -90,7 +91,9 @@ export interface EdgeLabelsProps {
 }
 
 interface EdgeMeta {
-  edgeIndex: number;
+  /** Index of this edge in the caller's input `edges` array. Used to look
+   *  up edgeColors[origIdx] for the per-edge label colour. */
+  origIdx: number;
   si: number;
   ti: number;
   curveAngle: number;
@@ -109,7 +112,7 @@ export function EdgeLabels({
   hiddenIds,
   visibilityRadius = 250,
   enabled = true,
-  edgePalette,
+  edgeColors,
   activeIds,
   projection = '3D',
 }: EdgeLabelsProps) {
@@ -118,10 +121,18 @@ export function EdgeLabels({
   const edgeMeta: EdgeMeta[] = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
-    const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
+    const usable: typeof edges = [];
+    const origIdx: number[] = [];
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i];
+      if (nodeIndex.has(e.from) && nodeIndex.has(e.to)) {
+        usable.push(e);
+        origIdx.push(i);
+      }
+    }
     const { angles, magnitudes } = computeBundles(usable);
     return usable.map((e, i) => ({
-      edgeIndex: i,
+      origIdx: origIdx[i],
       si: nodeIndex.get(e.from)!,
       ti: nodeIndex.get(e.to)!,
       curveAngle: angles[i],
@@ -173,7 +184,7 @@ export function EdgeLabels({
     for (let slot = 0; slot < visibleIndices.length; slot++) {
       const meta = edgeMeta[visibleIndices[slot]];
       if (!meta) continue;
-      const color = edgePalette ? edgePalette(meta.type) : '#8899aa';
+      const color = edgeColors?.[meta.origIdx] ?? '#8899aa';
       const key = `${meta.type}|${color}`;
       let entry = textureCache.current.get(key);
       if (!entry) {
@@ -194,7 +205,7 @@ export function EdgeLabels({
         mesh.scale.set(entry.aspect * LABEL_HEIGHT_WORLD, LABEL_HEIGHT_WORLD, 1);
       }
     }
-  }, [visibleIndices, edgeMeta, edgePalette, enabled, activeIds, nodes]);
+  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes]);
 
   // Scratch vectors reused across the frame loop.
   const scratch = useMemo(

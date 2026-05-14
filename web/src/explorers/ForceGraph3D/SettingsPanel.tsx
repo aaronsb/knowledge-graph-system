@@ -219,7 +219,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
                 }
               >
                 <option value="type">By edge type</option>
+                <option value="confidence">By confidence</option>
                 <option value="endpoint">Endpoint gradient</option>
+                <option value="uniform">Uniform</option>
               </select>
             </label>
             {row(

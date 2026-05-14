@@ -38,6 +38,10 @@ export function transformForEngine(apiData: RawGraphData): ForceGraph3DData {
       from: l.from_id,
       to: l.to_id,
       type: l.relationship_type,
+      // Confidence flows through as `weight` — the engine's opaque
+      // per-edge scalar — so the explorer can drive confidence-coloured
+      // edges without re-reading the source link in the rendering path.
+      weight: l.confidence,
       source: l,
     }));
 

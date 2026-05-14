@@ -168,17 +168,7 @@ export const ForceGraph3D: React.FC<
   }, [data?.nodes]);
   const nodeColorBy = settings?.visual?.nodeColorBy ?? 'ontology';
 
-  // kg-specific edge palette: relationship_type → vocabulary category →
-  // hex via categoryColors.ts. Passed to the engine as an opaque
-  // (edgeType: string) => hex function.
   const vocabStore = useVocabularyStore();
-  const edgePalette = useMemo(() => {
-    if ((settings?.visual?.edgeColorBy ?? 'type') !== 'type') return undefined;
-    return (edgeType: string): string => {
-      const category = vocabStore.getCategory(edgeType);
-      return getCategoryColor(category || undefined);
-    };
-  }, [vocabStore, settings?.visual?.edgeColorBy]);
 
   // Resolve an edge's category with a 3-level fallback (matches the chain
   // used by the 2D explorer's transformForD3): vocabulary lookup →
@@ -201,6 +191,32 @@ export const ForceGraph3D: React.FC<
     const edges = data.edges.filter((e) => visibleEdgeCategories.has(edgeCategory(e)));
     return { ...data, edges };
   }, [data, visibleEdgeCategories, edgeCategory]);
+
+  // Per-edge colors driven by edgeColorBy. Parallel to filteredData.edges
+  // by index. Undefined means "use endpoint gradient" — the engine's
+  // default. Centralising the mode dispatch here keeps Edges, Arrows, and
+  // EdgeLabels uniform: they consume a string[] regardless of mode.
+  const edgeColorBy = settings?.visual?.edgeColorBy ?? 'type';
+  const edgeColors = useMemo<string[] | undefined>(() => {
+    const es = filteredData?.edges;
+    if (!es) return undefined;
+    if (edgeColorBy === 'endpoint') return undefined;
+    if (edgeColorBy === 'uniform') return es.map(() => '#888888');
+    if (edgeColorBy === 'confidence') {
+      return es.map((e) => {
+        // weight ∈ [0,1] (set from API confidence). Hue 0=red, 120=green
+        // matches the d3 2D explorer's scale so cross-view comparison reads.
+        const w = typeof e.weight === 'number' ? e.weight : 0.5;
+        const hue = Math.max(0, Math.min(1, w)) * 120;
+        return `hsl(${hue}, 70%, 50%)`;
+      });
+    }
+    // 'type' — relationship → vocabulary category → category color.
+    return es.map((e) => {
+      const category = vocabStore.getCategory(e.type);
+      return getCategoryColor(category || undefined);
+    });
+  }, [filteredData, edgeColorBy, vocabStore]);
 
   const counts = useMemo(
     () => ({
@@ -294,7 +310,7 @@ export const ForceGraph3D: React.FC<
       size: 10,
       search_terms: [],
     }));
-    const ls = engineEdges.map((e) => {
+    const ls = engineEdges.map((e, i) => {
       const category = edgeCategory(e);
       return {
         from_id: e.from,
@@ -304,12 +320,15 @@ export const ForceGraph3D: React.FC<
         type: e.type,
         relationship_type: e.type,
         category,
-        color: edgePalette ? edgePalette(e.type) : getCategoryColor(category),
+        // Legend swatch follows the rendered edge colour when one is
+        // computed, falling back to the category palette so endpoint
+        // mode still produces a meaningful swatch.
+        color: edgeColors?.[i] ?? getCategoryColor(category),
         value: 1,
       };
     });
     return { nodes: ns, links: ls } as unknown as GraphData;
-  }, [filteredData, palette, edgePalette, edgeCategory]);
+  }, [filteredData, palette, edgeColors, edgeCategory]);
 
   // Build the context-menu item list using the shared helper — produces
   // the same Follow / Add / Remove / Pin / Focus / Origin / Destination /
@@ -394,7 +413,7 @@ export const ForceGraph3D: React.FC<
           nodes={filteredData?.nodes ?? []}
           edges={filteredData?.edges ?? []}
           colors={nodeColors}
-          edgePalette={edgePalette}
+          edgeColors={edgeColors}
           physics={{
             enabled: settings?.physics?.enabled ?? true,
             repulsion: settings?.physics?.repulsion,

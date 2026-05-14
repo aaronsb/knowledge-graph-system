@@ -42,10 +42,13 @@ export interface EdgesProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   /** Per-node colors, parallel to `nodes` by index. Used for endpoint
-   *  gradient when edgePalette isn't provided. */
+   *  gradient when edgeColors isn't provided. */
   colors: string[];
-  /** If provided, color edges by edge type instead of endpoint gradient. */
-  edgePalette?: (edgeType: string) => string;
+  /** Optional per-edge flat colors, parallel to `edges` by index. When
+   *  provided, each edge renders as a uniform color along its length
+   *  (used by edgeColorBy type / confidence / uniform). When omitted,
+   *  edges render an endpoint-category gradient. */
+  edgeColors?: string[];
   hiddenIds?: Set<string>;
   opacity?: number;
   /** When defined, edges with at least one endpoint NOT in this set are
@@ -60,7 +63,7 @@ export function Edges({
   edges,
   positionsRef,
   colors,
-  edgePalette,
+  edgeColors,
   hiddenIds,
   opacity = 0.7,
   activeIds,
@@ -69,11 +72,23 @@ export function Edges({
   const lineRef = useRef<THREE.LineSegments>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { geometry, material, indexPairs, curveAngles, curveMags, segments, usableEdges } = useMemo(() => {
+  const { geometry, material, indexPairs, curveAngles, curveMags, segments, originalIndices } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
 
-    const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
+    // Filter to renderable edges (endpoints present) while remembering each
+    // survivor's index in the input array. The caller passes edgeColors
+    // parallel to the input — we use originalIndices[i] to look up the
+    // colour for the i-th renderable edge.
+    const usable: EngineEdge[] = [];
+    const origIdx: number[] = [];
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i];
+      if (nodeIndex.has(e.from) && nodeIndex.has(e.to)) {
+        usable.push(e);
+        origIdx.push(i);
+      }
+    }
     const { angles, magnitudes, maxBundleSize } = computeBundles(usable);
     const segs = maxBundleSize > 1 ? SEGMENTS_CURVED : 1;
 
@@ -111,7 +126,7 @@ export function Edges({
       curveAngles: angles,
       curveMags: magnitudes,
       segments: segs,
-      usableEdges: usable,
+      originalIndices: origIdx,
     };
   }, [nodes, edges, opacity]);
 
@@ -123,8 +138,8 @@ export function Edges({
   }, [geometry, material]);
 
   // Coloring. Two modes:
-  //   - edgePalette provided → every vertex of an edge gets the same color
-  //     derived from the edge's relationship type (flat edge coloring).
+  //   - edgeColors[i] provided → every vertex of an edge gets the same
+  //     color (flat edge coloring; covers type / confidence / uniform).
   //   - otherwise → endpoint-category gradient across the curve.
   useEffect(() => {
     const colAttr = geometry.getAttribute('color') as THREE.BufferAttribute;
@@ -150,8 +165,8 @@ export function Edges({
           ? dimAlpha
           : 1;
 
-      if (edgePalette) {
-        ec.set(edgePalette(usableEdges[i].type)).multiplyScalar(edgeDim);
+      if (edgeColors) {
+        ec.set(edgeColors[originalIndices[i]] ?? '#888888').multiplyScalar(edgeDim);
         for (let v = 0; v < vertsPerEdge; v++) {
           const off = base + v * 3;
           arr[off] = ec.r;
@@ -179,7 +194,7 @@ export function Edges({
     }
     colAttr.needsUpdate = true;
     invalidate();
-  }, [geometry, indexPairs, nodes, colors, edgePalette, usableEdges, segments, activeIds, dimAlpha, invalidate]);
+  }, [geometry, indexPairs, nodes, colors, edgeColors, originalIndices, segments, activeIds, dimAlpha, invalidate]);
 
   useFrame(() => {
     const line = lineRef.current;

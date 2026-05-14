@@ -49,7 +49,7 @@ export interface ForceGraph3DData {
 }
 
 export type PhysicsBackend = 'auto' | 'cpu' | 'gpu';
-export type EdgeColorMode = 'endpoint' | 'type';
+export type EdgeColorMode = 'endpoint' | 'type' | 'confidence' | 'uniform';
 
 /**
  * Camera + sim projection mode.

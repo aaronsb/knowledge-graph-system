@@ -35,7 +35,7 @@ export interface SceneProps {
    *  whatever dimension (ontology/degree/centrality/...) they choose. */
   colors: string[];
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
-  edgePalette?: (edgeType: string) => string;
+  edgeColors?: string[];
   hiddenIds?: Set<string>;
   pinnedIds?: Set<string>;
   highlightedIds?: Set<string>;
@@ -75,7 +75,7 @@ export function Scene({
   nodes,
   edges,
   colors,
-  edgePalette,
+  edgeColors,
   hiddenIds,
   pinnedIds,
   highlightedIds,
@@ -135,7 +135,7 @@ export function Scene({
         edges={edges}
         positionsRef={sim.positionsRef}
         colors={colors}
-        edgePalette={edgePalette}
+        edgeColors={edgeColors}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
         activeIds={activeIds}
@@ -146,7 +146,7 @@ export function Scene({
         edges={edges}
         positionsRef={sim.positionsRef}
         colors={colors}
-        edgePalette={edgePalette}
+        edgeColors={edgeColors}
         hiddenIds={hiddenIds}
         enabled={showArrows}
         nodeSize={nodeSize}
@@ -175,7 +175,7 @@ export function Scene({
         hiddenIds={hiddenIds}
         enabled={showEdgeLabels}
         visibilityRadius={labelVisibilityRadius}
-        edgePalette={edgePalette}
+        edgeColors={edgeColors}
         activeIds={activeIds}
         projection={projection}
       />
