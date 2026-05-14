@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useImperativeHandle } from 'react';
-import { MapControls, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
 import { Nodes } from './Nodes';
 import { Edges } from './Edges';
@@ -209,13 +209,16 @@ export function Scene({
         />
       )}
       {projection === '2D' ? (
-        // MapControls = pan + zoom on an orthographic camera. Rotation
-        // is disabled (z-locked layout, nothing to rotate). Node-mesh
-        // pointer handlers stopPropagation on a node hit, so left-click
-        // on a node drives drag/select while left-click on background
-        // pans. Right-click contextmenu bubbles to the wrapper div for
-        // the shared context menu.
-        <MapControls
+        // OrbitControls with rotation disabled gives us pan + zoom on
+        // an orthographic camera. MapControls is the wrong abstraction
+        // here — its screenSpacePanning=false default assumes a Y-up
+        // ground-plane model where vertical pan moves along world Z,
+        // which is perpendicular to our screen and produces no visible
+        // motion. OrbitControls' default screenSpacePanning=true pans
+        // along the camera's screen-aligned up axis. Node-mesh pointer
+        // handlers stopPropagation on a node hit, so left-click on a
+        // node drives drag/select while left-click on background pans.
+        <OrbitControls
           makeDefault
           enableZoom={enableZoom}
           enablePan={enablePan}
