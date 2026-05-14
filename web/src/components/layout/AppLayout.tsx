@@ -75,6 +75,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const getWorkspaceName = () => {
     const path = location.pathname;
     if (path === '/') return 'Home';
+    if (path === '/explore/2d-v2') return '2D Force Graph (V2)';
     if (path.startsWith('/explore/2d')) return '2D Force Graph';
     if (path.startsWith('/explore/3d')) return '3D Force Graph';
     if (path.startsWith('/explore/documents')) return 'Document Explorer';

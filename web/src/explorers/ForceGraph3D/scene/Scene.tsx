@@ -209,9 +209,18 @@ export function Scene({
         />
       )}
       {projection === '2D' ? (
-        // MapControls = pan + zoom on an orthographic camera. No
-        // rotation, no orbit — feels like a 2D map viewer.
-        <MapControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
+        // MapControls = pan + zoom on an orthographic camera. Rotation
+        // is disabled (z-locked layout, nothing to rotate). Node-mesh
+        // pointer handlers stopPropagation on a node hit, so left-click
+        // on a node drives drag/select while left-click on background
+        // pans. Right-click contextmenu bubbles to the wrapper div for
+        // the shared context menu.
+        <MapControls
+          makeDefault
+          enableZoom={enableZoom}
+          enablePan={enablePan}
+          enableRotate={false}
+        />
       ) : (
         <OrbitControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
       )}
