@@ -602,9 +602,11 @@ export const useGraphStore = create<GraphStore>()(
       version: 1,
       migrate: (persistedState: unknown, version: number) => {
         const s = (persistedState ?? {}) as Record<string, unknown>;
-        if (version < 1) {
-          // Drop the legacy rawGraphData snapshot — the autosave path
-          // replays from `explorationSession` instead.
+        // Per-version blocks (not `version < N`) so future bumps don't
+        // accidentally re-run earlier migrations on already-migrated state.
+        if (version === 0) {
+          // v0 → v1: drop the legacy rawGraphData snapshot — the autosave
+          // path replays from `explorationSession` instead.
           delete s.rawGraphData;
         }
         return s;

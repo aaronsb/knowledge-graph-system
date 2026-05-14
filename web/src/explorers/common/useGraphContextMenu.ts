@@ -12,9 +12,8 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import { stepToCypher } from '../../utils/cypherGenerator';
 import { extractGraphFromPath } from '../../utils/cypherResultMapper';
-import type { RawGraphNode, RawGraphData, PathResult } from '../../utils/cypherResultMapper';
+import type { RawGraphNode, PathResult } from '../../utils/cypherResultMapper';
 import { useGraphStore } from '../../store/graphStore';
 import { useReportStore, type TraversalReportData } from '../../store/reportStore';
 import { useExplorationActions } from '../../hooks/useExplorationActions';
@@ -85,24 +84,18 @@ export interface GraphContextMenuCallbacks {
 /**
  * Hook providing generic graph navigation actions.
  *
- * Follow / add-adjacent / remove delegate to `useExplorationActions` — the
- * single writer for graph-mutating operations. The wrappers here add UX
- * concerns layered on top (an `alert` dialog on failure) and preserve the
- * historic return shape so existing call sites in 2D / 3D-V1 / 3D-V2 don't
- * need to change.
+ * Follow / add-adjacent / remove / travel-path delegate to
+ * `useExplorationActions` — the single writer for graph-mutating
+ * operations. The wrappers here add UX concerns layered on top (an
+ * `alert` dialog on failure) and preserve the historic return shape so
+ * existing call sites in 2D / 3D-V1 / 3D-V2 don't need to change.
  *
- * Travel-path, send-to-polarity, and send-path-to-reports still live here
- * because they involve presentation-layer concerns (camera animation,
- * route navigation, report creation) that don't belong in the hub.
- *
- * @param _mergeGraphData — historical positional argument, no longer used.
- *   Kept for call-site compatibility; the hub manages graph mutations.
+ * Send-to-polarity and send-path-to-reports stay here because they're
+ * pure navigation / report creation, not graph-mutating.
  *
  * @verified 80d68539
  */
-export function useGraphNavigation(_mergeGraphData?: (newData: RawGraphData) => void) {
-  void _mergeGraphData;
-  const { mergeRawGraphData } = useGraphStore();
+export function useGraphNavigation() {
   const navigate = useNavigate();
   const actions = useExplorationActions();
 
@@ -140,7 +133,18 @@ export function useGraphNavigation(_mergeGraphData?: (newData: RawGraphData) => 
     [actions]
   );
 
-  /** Find path between origin/destination, merge into graph, then animate camera */
+  /**
+   * Find path between origin/destination, route the graph mutation +
+   * step recording through the hub, then animate the camera through
+   * the path nodes.
+   *
+   * The path fetch lives here (not in the hub) because the camera
+   * animation needs the path object. Once we have it, the actual graph
+   * write goes through `actions.loadPath` so the single-writer invariant
+   * holds and replay through the autosave reproduces the same state.
+   * Enrichment is disabled — travel is a "show me this path" action,
+   * not "explore around the path".
+   */
   const handleTravelPath = useCallback(async (
     originId: string,
     destinationId: string,
@@ -167,32 +171,23 @@ export function useGraphNavigation(_mergeGraphData?: (newData: RawGraphData) => 
         console.warn('No path found between origin and destination');
         return;
       }
+      const path = result.paths[0];
 
-      const { nodes, links, conceptNodeIds } = extractGraphFromPath(result.paths[0]);
-
-      // Record exploration step
-      store.addExplorationStep({
-        action: 'load-path',
-        op: '+',
-        cypher: stepToCypher({
-          action: 'load-path',
-          conceptLabel: originLabel,
-          depth: 1,
-          destinationConceptLabel: destLabel,
-          maxHops: 5,
-        }),
-        conceptId: originId,
-        conceptLabel: originLabel,
+      await actions.loadPath({
+        fromId: originId,
+        fromLabel: originLabel,
+        toId: destinationId,
+        toLabel: destLabel,
+        path,
         depth: 1,
-        destinationConceptId: destinationId,
-        destinationConceptLabel: destLabel,
         maxHops: 5,
+        loadMode: 'add',
+        enrich: false,
       });
 
-      // Merge path into graph
-      mergeRawGraphData({ nodes, links });
-
-      // Wait for graph to re-render with new nodes, then animate
+      // Camera animation runs after the graph re-renders with the new
+      // path nodes — two RAFs match the previous behavior's timing.
+      const { conceptNodeIds } = extractGraphFromPath(path);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           travelAlongPath(conceptNodeIds, reverse);
@@ -201,7 +196,7 @@ export function useGraphNavigation(_mergeGraphData?: (newData: RawGraphData) => 
     } catch (error: unknown) {
       console.error('Failed to travel path:', error);
     }
-  }, [mergeRawGraphData]);
+  }, [actions]);
 
   /** Set polarity poles from origin/destination and navigate to polarity explorer */
   const handleSendToPolarity = useCallback((originId: string, destinationId: string) => {

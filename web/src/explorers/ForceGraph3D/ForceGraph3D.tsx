@@ -944,7 +944,7 @@ export const ForceGraph3D: React.FC<
   }, [graphData]);
 
   // Use common graph navigation hook
-  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation(mergeGraphData);
+  const { handleFollowConcept, handleAddToGraph, handleRemoveFromGraph, handleTravelPath, handleSendToPolarity, handleSendPathToReports } = useGraphNavigation();
 
   // Pin/Unpin node functionality for 3D
   const isPinned = useCallback((nodeId: string): boolean => {

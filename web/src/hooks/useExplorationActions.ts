@@ -18,16 +18,14 @@
  *   2. `loadMode === 'clean'` ⇒ `resetExplorationSession()` is called
  *      BEFORE the step is added, so the ledger starts fresh from this
  *      action forward.
- *   3. All fetches go through React Query (`queryClient.fetchQuery`) so
- *      cache identity stays consistent across the app — no direct
- *      `apiClient.getSubgraph` calls escape this layer.
+ *   3. Every API call lives in this hub. The "Refresh" button's path
+ *      (`useQueryReplay` → `apiClient.executeProgram`) is the canonical
+ *      always-fresh route; the per-action calls below intentionally do
+ *      NOT invalidate React Query keys, leaving the autocomplete and
+ *      subgraph caches alone for the common case where the user just
+ *      wants to see the data they already loaded.
  *   4. Depth defaults are exported constants, not magic numbers scattered
  *      across call sites.
- *
- * This file lands first as scaffolding — call sites continue to use their
- * existing inline implementations until later commits migrate them one at
- * a time. Each migration is mechanical (replace inline logic with a hub
- * call) and behaviorally equivalent.
  *
  * Affirms ADR-500 (GraphProgram as canonical execution) and ADR-083
  * (`explorationSession` as canonical ledger).
@@ -36,7 +34,6 @@
  */
 
 import { useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useGraphStore } from '../store/graphStore';
 import { apiClient } from '../api/client';
 import { stepToCypher } from '../utils/cypherGenerator';
@@ -114,8 +111,6 @@ const labelFor = (nodeId: string): string => {
  * @verified c02127db
  */
 export function useExplorationActions() {
-  const queryClient = useQueryClient();
-
   /**
    * Load the neighborhood of a concept as the new graph (`clean`) or
    * merge it into the existing graph (`add`). Records one `explore` step.
@@ -297,6 +292,12 @@ export function useExplorationActions() {
   /**
    * Remove a node and its connections from the graph. Records one
    * subtractive `cypher` step so the removal survives save/replay.
+   *
+   * The recorded Cypher matches ONLY the node itself (not its neighbors),
+   * because `subtractRawGraphData` removes only the named node and the
+   * autosave-replay path needs to behave the same way. An earlier shape
+   * (`MATCH (c)-[r]-(n) RETURN c, r, n`) would replay as "subtract this
+   * node AND every 1-hop neighbor", silently expanding the removal.
    */
   const removeNode = useCallback((nodeId: string) => {
     const store = useGraphStore.getState();
@@ -308,7 +309,7 @@ export function useExplorationActions() {
     store.addExplorationStep({
       action: 'cypher',
       op: '-',
-      cypher: `MATCH (c:Concept)-[r]-(n:Concept)\nWHERE c.label = '${conceptLabel}'\nRETURN c, r, n`,
+      cypher: `MATCH (c:Concept)\nWHERE c.label = '${conceptLabel}'\nRETURN c`,
       conceptId: nodeId,
       conceptLabel,
       depth: 1,
@@ -355,12 +356,6 @@ export function useExplorationActions() {
 
     store.mergeRawGraphData(mapped);
   }, []);
-
-  // Silence the unused-import linter — queryClient becomes the active
-  // cache-invalidation surface in the idempotent-re-search commit. Kept
-  // imported now so call-site migrations don't reshape the hook's
-  // dependencies later.
-  void queryClient;
 
   return {
     loadExplore,

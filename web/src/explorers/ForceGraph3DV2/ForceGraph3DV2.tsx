@@ -75,13 +75,13 @@ export const ForceGraph3DV2: React.FC<
     handleTravelPath,
     handleSendToPolarity,
     handleSendPathToReports,
-  } = useGraphNavigation(mergeRawGraphData);
+  } = useGraphNavigation();
 
-  // Left-click: select + open info panel. Note we do NOT fire onNodeClick
-  // here — at the parent level (ExplorerView) onNodeClick is wired to
-  // "Follow Concept" which reloads the graph. That action stays on the
-  // right-click context menu (handleFollowConcept) so users can invoke it
-  // deliberately rather than every time they want to inspect a node.
+  // Left-click selects the node and opens its info panel — pure inspection,
+  // no graph mutation. Graph-mutating actions (Follow / Add Adjacent /
+  // Remove) live on the right-click context menu so they're invoked
+  // deliberately rather than every time the user inspects a node. Same
+  // contract holds across all three force-graph explorers.
   const handleSelect = useCallback(
     (id: string | null) => {
       setSelectedId(id);

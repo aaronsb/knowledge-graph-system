@@ -10,5 +10,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // setupFiles run before any test module imports — necessary for the
+    // localStorage shim Zustand persist captures at module load time.
+    setupFiles: ['./src/test-setup.ts'],
   },
 });
