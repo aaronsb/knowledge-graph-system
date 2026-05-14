@@ -22,7 +22,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { EngineNode, EngineEdge } from '../types';
+import type { EngineNode, EngineEdge, Projection } from '../types';
 import { computeBundles, perpendicularBasis } from './bundles';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -31,12 +31,9 @@ const FALLBACK = new THREE.Vector3(1, 0, 0);
 const RESCAN_MS = 200;
 /** Upper bound on simultaneously-mounted labels to bound per-frame cost. */
 const MAX_LABELS = 80;
-/** Label height in world units. Width is derived from the texture aspect. */
-const LABEL_HEIGHT_WORLD = 1.25;
-/** World-space offset along the label's local +Y so it sits above the edge
- *  line instead of on it. Just over half the label height keeps the bottom
- *  of the text from overlapping the line. */
-const LABEL_OFFSET_LOCAL_Y = LABEL_HEIGHT_WORLD * 0.5;
+/** Base label height in world units. Multiplied by the caller's
+ *  sizeMultiplier prop to compute the actual mesh scale. */
+const BASE_LABEL_HEIGHT_WORLD = 1.25;
 /** Canvas font size for text rendering (high-res for crisp scaling). */
 const TEXT_FONT_PX = 32;
 const TEXT_PADDING_PX = 8;
@@ -76,18 +73,26 @@ export interface EdgeLabelsProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   hiddenIds?: Set<string>;
-  /** Labels past this world-space distance from the camera are unmounted. */
+  /** Labels past this world-space distance from the camera are unmounted.
+   *  In 2D the distance is computed in the XY plane only. */
   visibilityRadius?: number;
   enabled?: boolean;
-  /** If provided, color label border by edge type. */
-  edgePalette?: (edgeType: string) => string;
+  /** Optional per-edge label colours, parallel to `edges` by index.
+   *  Falls back to a neutral grey when absent. */
+  edgeColors?: string[];
   /** When defined, labels for edges whose endpoints aren't both in this set
    *  are dimmed (material opacity reduced). */
   activeIds?: Set<string>;
+  /** Drives the distance-culling axis count. 2D ignores Z. Default '3D'. */
+  projection?: Projection;
+  /** Multiplier on the base label world-space height. Default 1. */
+  sizeMultiplier?: number;
 }
 
 interface EdgeMeta {
-  edgeIndex: number;
+  /** Index of this edge in the caller's input `edges` array. Used to look
+   *  up edgeColors[origIdx] for the per-edge label colour. */
+  origIdx: number;
   si: number;
   ti: number;
   curveAngle: number;
@@ -106,18 +111,28 @@ export function EdgeLabels({
   hiddenIds,
   visibilityRadius = 250,
   enabled = true,
-  edgePalette,
+  edgeColors,
   activeIds,
+  projection = '3D',
+  sizeMultiplier = 1,
 }: EdgeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
   const edgeMeta: EdgeMeta[] = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
-    const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
+    const usable: typeof edges = [];
+    const origIdx: number[] = [];
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i];
+      if (nodeIndex.has(e.from) && nodeIndex.has(e.to)) {
+        usable.push(e);
+        origIdx.push(i);
+      }
+    }
     const { angles, magnitudes } = computeBundles(usable);
     return usable.map((e, i) => ({
-      edgeIndex: i,
+      origIdx: origIdx[i],
       si: nodeIndex.get(e.from)!,
       ti: nodeIndex.get(e.to)!,
       curveAngle: angles[i],
@@ -169,7 +184,7 @@ export function EdgeLabels({
     for (let slot = 0; slot < visibleIndices.length; slot++) {
       const meta = edgeMeta[visibleIndices[slot]];
       if (!meta) continue;
-      const color = edgePalette ? edgePalette(meta.type) : '#8899aa';
+      const color = edgeColors?.[meta.origIdx] ?? '#8899aa';
       const key = `${meta.type}|${color}`;
       let entry = textureCache.current.get(key);
       if (!entry) {
@@ -187,10 +202,11 @@ export function EdgeLabels({
         mat.needsUpdate = true;
       }
       if (mesh) {
-        mesh.scale.set(entry.aspect * LABEL_HEIGHT_WORLD, LABEL_HEIGHT_WORLD, 1);
+        const h = BASE_LABEL_HEIGHT_WORLD * sizeMultiplier;
+        mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, edgeMeta, edgePalette, enabled, activeIds, nodes]);
+  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes, sizeMultiplier]);
 
   // Scratch vectors reused across the frame loop.
   const scratch = useMemo(
@@ -219,6 +235,7 @@ export function EdgeLabels({
     camera.getWorldPosition(scratch.camPos);
     const radius2 = visibilityRadius * visibilityRadius;
     const hasHidden = !!hiddenIds && hiddenIds.size > 0;
+    const is2D = projection === '2D';
 
     // Per-frame: position + orient currently-visible meshes.
     for (let slot = 0; slot < visibleIndices.length; slot++) {
@@ -267,20 +284,31 @@ export function EdgeLabels({
           .addScaledVector(scratch.t, 0.25);
       }
 
-      // Camera-facing roll around the edge axis: pick the perpendicular-
-      // to-edge direction that points most toward the camera as the plane
-      // normal. When the edge is nearly aligned with the view direction
-      // the projection collapses; fall back to a world-axis perpendicular.
-      scratch.toCam.subVectors(scratch.camPos, scratch.mid);
-      const dotEC = scratch.toCam.dot(scratch.edgeDir);
-      scratch.normal.copy(scratch.toCam).addScaledVector(scratch.edgeDir, -dotEC);
-      if (scratch.normal.lengthSq() < 1e-6) {
-        const fb = Math.abs(scratch.edgeDir.y) > 0.99 ? FALLBACK : UP;
-        scratch.normal.copy(fb).addScaledVector(scratch.edgeDir, -fb.dot(scratch.edgeDir));
+      if (is2D) {
+        // 2D: screen-aligned basis so text always reads left-to-right
+        // regardless of edge direction. The orthographic camera is
+        // top-down with rotation locked, so the world axes coincide
+        // with the screen axes.
+        scratch.edgeDir.set(1, 0, 0);
+        scratch.up.set(0, 1, 0);
+        scratch.normal.set(0, 0, 1);
+      } else {
+        // 3D: camera-facing roll around the edge axis. Pick the
+        // perpendicular-to-edge direction that points most toward the
+        // camera as the plane normal. When the edge is nearly aligned
+        // with the view direction the projection collapses; fall back
+        // to a world-axis perpendicular.
+        scratch.toCam.subVectors(scratch.camPos, scratch.mid);
+        const dotEC = scratch.toCam.dot(scratch.edgeDir);
+        scratch.normal.copy(scratch.toCam).addScaledVector(scratch.edgeDir, -dotEC);
+        if (scratch.normal.lengthSq() < 1e-6) {
+          const fb = Math.abs(scratch.edgeDir.y) > 0.99 ? FALLBACK : UP;
+          scratch.normal.copy(fb).addScaledVector(scratch.edgeDir, -fb.dot(scratch.edgeDir));
+        }
+        scratch.normal.normalize();
+        // up = normal × right (right-handed: right × up = normal).
+        scratch.up.copy(scratch.normal).cross(scratch.edgeDir);
       }
-      scratch.normal.normalize();
-      // up = normal × right (right-handed: right × up = normal).
-      scratch.up.copy(scratch.normal).cross(scratch.edgeDir);
 
       scratch.basis.makeBasis(scratch.edgeDir, scratch.up, scratch.normal);
       mesh.visible = true;
@@ -289,7 +317,7 @@ export function EdgeLabels({
       // the label sits above the edge instead of crossing it.
       mesh.position
         .copy(scratch.mid)
-        .addScaledVector(scratch.up, LABEL_OFFSET_LOCAL_Y);
+        .addScaledVector(scratch.up, BASE_LABEL_HEIGHT_WORLD * sizeMultiplier * 0.5);
       mesh.quaternion.setFromRotationMatrix(scratch.basis);
     }
 
@@ -298,6 +326,11 @@ export function EdgeLabels({
     if (nowMs - lastScanRef.current < RESCAN_MS) return;
     lastScanRef.current = nowMs;
 
+    // In 2D the camera is z-locked at a fixed offset from the layout plane,
+    // so dz is a constant >> visibilityRadius. Culling on the XY-plane
+    // distance makes `visibilityRadius` mean "world units from the viewport
+    // centre", which is what a 2D viewer wants. is2D is already defined
+    // above for the orientation branch.
     const candidates: { idx: number; dist2: number }[] = [];
     for (let i = 0; i < edgeMeta.length; i++) {
       const m = edgeMeta[i];
@@ -309,7 +342,7 @@ export function EdgeLabels({
       const mz = (positions[a + 2] + positions[b + 2]) * 0.5;
       const dx = mx - scratch.camPos.x;
       const dy = my - scratch.camPos.y;
-      const dz = mz - scratch.camPos.z;
+      const dz = is2D ? 0 : mz - scratch.camPos.z;
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 < radius2) candidates.push({ idx: i, dist2: d2 });
     }

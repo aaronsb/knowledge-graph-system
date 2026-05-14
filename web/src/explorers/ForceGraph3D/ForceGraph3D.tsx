@@ -73,6 +73,10 @@ export const ForceGraph3D: React.FC<
 
   const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
   const visibleEdgeCategories = useGraphStore((s) => s.filters.visibleEdgeCategories);
+  // Universal filters live in the store so every explorer sees the same
+  // filtered data. Reading them via individual selectors keeps zustand's
+  // shallow equality from re-rendering on unrelated store updates.
+  const minConfidence = useGraphStore((s) => s.filters.minConfidence);
   const appliedTheme = useThemeStore((s) => s.appliedTheme);
   const canvasBg = explorerTheme.canvas3D[appliedTheme];
   const {
@@ -168,17 +172,7 @@ export const ForceGraph3D: React.FC<
   }, [data?.nodes]);
   const nodeColorBy = settings?.visual?.nodeColorBy ?? 'ontology';
 
-  // kg-specific edge palette: relationship_type → vocabulary category →
-  // hex via categoryColors.ts. Passed to the engine as an opaque
-  // (edgeType: string) => hex function.
   const vocabStore = useVocabularyStore();
-  const edgePalette = useMemo(() => {
-    if ((settings?.visual?.edgeColorBy ?? 'type') !== 'type') return undefined;
-    return (edgeType: string): string => {
-      const category = vocabStore.getCategory(edgeType);
-      return getCategoryColor(category || undefined);
-    };
-  }, [vocabStore, settings?.visual?.edgeColorBy]);
 
   // Resolve an edge's category with a 3-level fallback (matches the chain
   // used by the 2D explorer's transformForD3): vocabulary lookup →
@@ -194,13 +188,47 @@ export const ForceGraph3D: React.FC<
     [vocabStore]
   );
 
-  // Apply the edge-category filter from the shared store. Empty set means
-  // "show all" — keep data untouched to skip allocations on the common path.
+  // Apply shared-store filters. Both are universal — every explorer
+  // reads from the same store fields, so a filter set in one place
+  // applies everywhere. Empty / zero means "show all".
   const filteredData = useMemo(() => {
-    if (!data || visibleEdgeCategories.size === 0) return data;
-    const edges = data.edges.filter((e) => visibleEdgeCategories.has(edgeCategory(e)));
+    if (!data) return data;
+    const hasCatFilter = visibleEdgeCategories.size > 0;
+    const hasConfFilter = minConfidence > 0;
+    if (!hasCatFilter && !hasConfFilter) return data;
+    const edges = data.edges.filter((e) => {
+      if (hasCatFilter && !visibleEdgeCategories.has(edgeCategory(e))) return false;
+      if (hasConfFilter && (e.weight ?? 1) < minConfidence) return false;
+      return true;
+    });
     return { ...data, edges };
-  }, [data, visibleEdgeCategories, edgeCategory]);
+  }, [data, visibleEdgeCategories, minConfidence, edgeCategory]);
+
+  // Per-edge colors driven by edgeColorBy. Parallel to filteredData.edges
+  // by index. Undefined means "use endpoint gradient" — the engine's
+  // default. Centralising the mode dispatch here keeps Edges, Arrows, and
+  // EdgeLabels uniform: they consume a string[] regardless of mode.
+  const edgeColorBy = settings?.visual?.edgeColorBy ?? 'type';
+  const edgeColors = useMemo<string[] | undefined>(() => {
+    const es = filteredData?.edges;
+    if (!es) return undefined;
+    if (edgeColorBy === 'endpoint') return undefined;
+    if (edgeColorBy === 'uniform') return es.map(() => '#888888');
+    if (edgeColorBy === 'confidence') {
+      return es.map((e) => {
+        // weight ∈ [0,1] (set from API confidence). Hue 0=red, 120=green
+        // matches the d3 2D explorer's scale so cross-view comparison reads.
+        const w = typeof e.weight === 'number' ? e.weight : 0.5;
+        const hue = Math.max(0, Math.min(1, w)) * 120;
+        return `hsl(${hue}, 70%, 50%)`;
+      });
+    }
+    // 'type' — relationship → vocabulary category → category color.
+    return es.map((e) => {
+      const category = vocabStore.getCategory(e.type);
+      return getCategoryColor(category || undefined);
+    });
+  }, [filteredData, edgeColorBy, vocabStore]);
 
   const counts = useMemo(
     () => ({
@@ -294,7 +322,7 @@ export const ForceGraph3D: React.FC<
       size: 10,
       search_terms: [],
     }));
-    const ls = engineEdges.map((e) => {
+    const ls = engineEdges.map((e, i) => {
       const category = edgeCategory(e);
       return {
         from_id: e.from,
@@ -304,12 +332,15 @@ export const ForceGraph3D: React.FC<
         type: e.type,
         relationship_type: e.type,
         category,
-        color: edgePalette ? edgePalette(e.type) : getCategoryColor(category),
+        // Legend swatch follows the rendered edge colour when one is
+        // computed, falling back to the category palette so endpoint
+        // mode still produces a meaningful swatch.
+        color: edgeColors?.[i] ?? getCategoryColor(category),
         value: 1,
       };
     });
     return { nodes: ns, links: ls } as unknown as GraphData;
-  }, [filteredData, palette, edgePalette, edgeCategory]);
+  }, [filteredData, palette, edgeColors, edgeCategory]);
 
   // Build the context-menu item list using the shared helper — produces
   // the same Follow / Add / Remove / Pin / Focus / Origin / Destination /
@@ -372,7 +403,19 @@ export const ForceGraph3D: React.FC<
       onContextMenu={handleBackgroundContextMenu}
     >
       <Canvas
-        camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
+        // Projection dispatch picks the camera flavor: perspective for 3D
+        // (looking down -Z from z=400) and orthographic for 2D (frustum
+        // computed from canvas aspect, zoom drives world-units-per-pixel).
+        // `key` forces a Canvas remount on projection change so r3f
+        // instantiates the right camera class — the `orthographic` prop
+        // is read once at mount.
+        key={settings?.projection ?? '3D'}
+        camera={
+          (settings?.projection ?? '3D') === '2D'
+            ? { position: [0, 0, 400], near: 0.1, far: 5000, zoom: 2.5 }
+            : { position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }
+        }
+        orthographic={(settings?.projection ?? '3D') === '2D'}
         gl={{ antialias: true }}
         frameloop="demand"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
@@ -382,7 +425,7 @@ export const ForceGraph3D: React.FC<
           nodes={filteredData?.nodes ?? []}
           edges={filteredData?.edges ?? []}
           colors={nodeColors}
-          edgePalette={edgePalette}
+          edgeColors={edgeColors}
           physics={{
             enabled: settings?.physics?.enabled ?? true,
             repulsion: settings?.physics?.repulsion,
@@ -390,8 +433,12 @@ export const ForceGraph3D: React.FC<
             centerGravity: settings?.physics?.centerGravity,
             damping: settings?.physics?.damping,
           }}
+          projection={settings?.projection ?? '3D'}
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
+          linkWidth={settings?.visual?.linkWidth ?? 1}
+          nodeLabelSize={settings?.visual?.nodeLabelSize ?? 1}
+          edgeLabelSize={settings?.visual?.edgeLabelSize ?? 1}
           showArrows={settings?.visual?.showArrows ?? true}
           showEdgeLabels={settings?.visual?.showLabels ?? true}
           showNodeLabels={settings?.visual?.showNodeLabels ?? true}

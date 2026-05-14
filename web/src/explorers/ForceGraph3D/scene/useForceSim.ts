@@ -70,6 +70,10 @@ export interface ForceSimParams extends Partial<PhysicsParams> {
   pinnedIds?: Set<string>;
   /** When false, the sim halts entirely — positions hold, no frames pump. */
   enabled?: boolean;
+  /** Dimensionality of the layout. 3 = full 3D; 2 = z-pinned to zero for
+   *  2D projection. Engine ignores this until the dispatching scene
+   *  consumes it. */
+  dimensions?: 2 | 3;
 }
 
 /** Handle returned by useForceSim; drives the sim and exposes its buffer.  @verified c17bbeb9 */
@@ -88,8 +92,11 @@ export function useForceSim(
   edges: EngineEdge[],
   params: ForceSimParams = {}
 ): ForceSimHandle {
-  const { hiddenIds, pinnedIds, enabled = true, ...tuning } = params;
+  const { hiddenIds, pinnedIds, enabled = true, dimensions = 3, ...tuning } = params;
   const cfg: PhysicsParams = { ...DEFAULTS, ...tuning };
+  // Z-clamp factor — 1 in 3D, 0 in 2D. Multiplied into the integrated
+  // Z-component each frame so 2D mode flattens the layout onto z=0.
+  const zClamp = dimensions === 2 ? 0 : 1;
   const nodeCount = nodes.length;
   const invalidate = useThree((state) => state.invalidate);
 
@@ -252,10 +259,10 @@ export function useForceSim(
       }
       velocities[ix3] = nvx;
       velocities[ix3 + 1] = nvy;
-      velocities[ix3 + 2] = nvz;
+      velocities[ix3 + 2] = nvz * zClamp;
       positions[ix3] += nvx * dt;
       positions[ix3 + 1] += nvy * dt;
-      positions[ix3 + 2] += nvz * dt;
+      positions[ix3 + 2] = (positions[ix3 + 2] + nvz * dt) * zClamp;
     }
 
     if (simmerRef.current) {

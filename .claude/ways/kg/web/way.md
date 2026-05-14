@@ -43,10 +43,16 @@ export const useMyStore = create<MyStore>()(
 
 ## After Web Changes
 
+`kg-web-dev` runs Vite with HMR — code changes hot-reload automatically.
+No container restart needed in dev mode. See `kg/devmode/way.md`.
+
 ```bash
-cd web && npm run build  # Check for TypeScript errors
-./operator.sh restart web
+cd web && npx tsc --noEmit  # Check for TypeScript errors (run anytime)
+cd web && npm test           # Run the vitest suite
 ```
+
+Restart `kg-web-dev` only when changing build config (vite.config.ts,
+package.json, tsconfig*.json) — those aren't watched by HMR.
 
 ## API-First with localStorage Fallback
 

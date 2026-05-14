@@ -14,6 +14,7 @@ uniform float damping;
 uniform float centerGravity;
 uniform float maxForce;
 uniform float velStop;
+uniform float zClamp;
 uniform int nodeCount;
 uniform sampler2D neighborOffsetCount;
 uniform sampler2D neighborList;
@@ -82,12 +83,16 @@ void main() {
 
   vec3 newVel = (vel + force) * damping;
   if (velStop > 0.0 && length(newVel) < velStop) newVel = vec3(0.0);
+  // zClamp = 1 in 3D, 0 in 2D — zeroes the Z velocity so the layout
+  // flattens onto z=0 over the first frame.
+  newVel.z *= zClamp;
   gl_FragColor = vec4(newVel, 1.0);
 }
 `;
 
 export const posShaderBody = /* glsl */ `
 uniform float dt;
+uniform float zClamp;
 uniform int nodeCount;
 uniform sampler2D hiddenMask;
 
@@ -100,10 +105,15 @@ void main() {
     return;
   }
   if (texture2D(hiddenMask, uv).r < 0.5) {
-    gl_FragColor = vec4(pos, 1.0);
+    // Hidden/pinned nodes still respect the projection — clamp Z to 0
+    // in 2D so they don't sit at their seeded Z while everything else
+    // flattens.
+    gl_FragColor = vec4(pos.xy, pos.z * zClamp, 1.0);
     return;
   }
   vec3 vel = texture2D(textureVelocity, uv).xyz;
-  gl_FragColor = vec4(pos + vel * dt, 1.0);
+  vec3 newPos = pos + vel * dt;
+  newPos.z *= zClamp;
+  gl_FragColor = vec4(newPos, 1.0);
 }
 `;

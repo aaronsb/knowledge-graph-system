@@ -44,10 +44,12 @@ export interface ArrowsProps {
   edges: EngineEdge[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
   /** Per-node colors, parallel to `nodes` by index. Used as the arrow
-   *  color (target node) when edgePalette isn't provided. */
+   *  color (target node) when edgeColors isn't provided. */
   colors: string[];
-  /** If provided, color arrows by edge type; otherwise use target node color. */
-  edgePalette?: (edgeType: string) => string;
+  /** Optional per-edge flat colors, parallel to `edges` by index. When
+   *  provided each arrow takes its colour from this array; otherwise
+   *  the target node's colour is used. */
+  edgeColors?: string[];
   hiddenIds?: Set<string>;
   opacity?: number;
   /** Turn off arrow rendering entirely; default true per ADR-702. */
@@ -67,7 +69,7 @@ export function Arrows({
   edges,
   positionsRef,
   colors,
-  edgePalette,
+  edgeColors,
   hiddenIds,
   opacity = 0.9,
   enabled = true,
@@ -78,10 +80,18 @@ export function Arrows({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
 
-  const { indexPairs, curveAngles, curveMags, usableCount, usableEdges } = useMemo(() => {
+  const { indexPairs, curveAngles, curveMags, usableCount, originalIndices } = useMemo(() => {
     const nodeIndex = new Map<string, number>();
     for (let i = 0; i < nodes.length; i++) nodeIndex.set(nodes[i].id, i);
-    const usable = edges.filter((e) => nodeIndex.has(e.from) && nodeIndex.has(e.to));
+    const usable: EngineEdge[] = [];
+    const origIdx: number[] = [];
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i];
+      if (nodeIndex.has(e.from) && nodeIndex.has(e.to)) {
+        usable.push(e);
+        origIdx.push(i);
+      }
+    }
     const pairs = new Uint32Array(usable.length * 2);
     for (let i = 0; i < usable.length; i++) {
       pairs[i * 2] = nodeIndex.get(usable[i].from)!;
@@ -93,13 +103,14 @@ export function Arrows({
       curveAngles: angles,
       curveMags: magnitudes,
       usableCount: usable.length,
-      usableEdges: usable,
+      originalIndices: origIdx,
     };
   }, [nodes, edges]);
 
-  // Color: edgePalette by edge type if available, else target node's category.
-  // Dimmed arrows multiply their color by dimAlpha when either endpoint
-  // isn't in the active set.
+  // Color: edgeColors[i] takes precedence (flat colour for type/confidence/
+  // uniform modes); otherwise the arrow takes the target node's colour.
+  // Dimmed arrows multiply by dimAlpha when either endpoint isn't in the
+  // active set.
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
@@ -111,8 +122,8 @@ export function Arrows({
         hasActive && (!activeIds!.has(nodes[si].id) || !activeIds!.has(nodes[ti].id))
           ? dimAlpha
           : 1;
-      if (edgePalette) {
-        tmpColor.set(edgePalette(usableEdges[i].type));
+      if (edgeColors) {
+        tmpColor.set(edgeColors[originalIndices[i]] ?? colors[ti] ?? '#888888');
       } else {
         tmpColor.set(colors[ti] ?? '#888888');
       }
@@ -121,7 +132,7 @@ export function Arrows({
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     invalidate();
-  }, [usableCount, indexPairs, nodes, colors, edgePalette, usableEdges, activeIds, dimAlpha, invalidate]);
+  }, [usableCount, indexPairs, nodes, colors, edgeColors, originalIndices, activeIds, dimAlpha, invalidate]);
 
   useFrame(() => {
     const mesh = meshRef.current;

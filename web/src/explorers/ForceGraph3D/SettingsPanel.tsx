@@ -16,14 +16,19 @@ import type { SettingsPanelProps } from '../../types/explorer';
 import type { ForceGraph3DSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
+import { useGraphStore } from '../../store/graphStore';
 
-type Section = 'physics' | 'visual' | 'interaction';
+type Section = 'physics' | 'visual' | 'interaction' | 'filters';
 
 export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> = ({
   settings,
   onChange,
 }) => {
   const [expanded, setExpanded] = useState<Set<Section>>(new Set(['physics', 'visual']));
+  // Filters live in the shared store, not in per-plugin settings, so they
+  // apply universally across every explorer that consumes rawGraphData.
+  const minConfidence = useGraphStore((s) => s.filters.minConfidence);
+  const setFilters = useGraphStore((s) => s.setFilters);
 
   const toggle = (section: Section) =>
     setExpanded((prev) => {
@@ -87,6 +92,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
 
   return (
     <div className="space-y-3">
+      {/* Projection — top-level switch since it remounts the Canvas */}
+      <section>
+        <label className="flex items-center gap-2 text-xs text-card-foreground py-1.5">
+          <span className="flex-1 min-w-0 truncate font-medium">Projection</span>
+          <select
+            className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+            value={settings.projection}
+            onChange={(e) =>
+              onChange({ ...settings, projection: e.target.value as ForceGraph3DSettings['projection'] })
+            }
+          >
+            <option value="3D">3D (perspective + orbit)</option>
+            <option value="2D">2D (orthographic + pan/zoom)</option>
+          </select>
+        </label>
+      </section>
+
       {/* Physics */}
       <section>
         {sectionHeader('physics', 'Physics')}
@@ -202,7 +224,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
                 }
               >
                 <option value="type">By edge type</option>
+                <option value="confidence">By confidence</option>
                 <option value="endpoint">Endpoint gradient</option>
+                <option value="uniform">Uniform</option>
               </select>
             </label>
             {row(
@@ -217,6 +241,39 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
               )
             )}
             {row(
+              'Link width',
+              settings.visual.linkWidth.toFixed(1),
+              slider(
+                settings.visual.linkWidth,
+                SLIDER_RANGES.visual.linkWidth.min,
+                SLIDER_RANGES.visual.linkWidth.max,
+                SLIDER_RANGES.visual.linkWidth.step,
+                (v) => updateVisual({ linkWidth: v })
+              )
+            )}
+            {row(
+              'Node label size',
+              settings.visual.nodeLabelSize.toFixed(2),
+              slider(
+                settings.visual.nodeLabelSize,
+                SLIDER_RANGES.visual.nodeLabelSize.min,
+                SLIDER_RANGES.visual.nodeLabelSize.max,
+                SLIDER_RANGES.visual.nodeLabelSize.step,
+                (v) => updateVisual({ nodeLabelSize: v })
+              )
+            )}
+            {row(
+              'Edge label size',
+              settings.visual.edgeLabelSize.toFixed(2),
+              slider(
+                settings.visual.edgeLabelSize,
+                SLIDER_RANGES.visual.edgeLabelSize.min,
+                SLIDER_RANGES.visual.edgeLabelSize.max,
+                SLIDER_RANGES.visual.edgeLabelSize.step,
+                (v) => updateVisual({ edgeLabelSize: v })
+              )
+            )}
+            {row(
               'Label radius',
               settings.visual.labelVisibilityRadius.toFixed(0),
               slider(
@@ -227,6 +284,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraph3DSettings>> =
                 (v) => updateVisual({ labelVisibilityRadius: v })
               )
             )}
+          </div>
+        )}
+      </section>
+
+      {/* Filters — shared-store fields, universal across explorers */}
+      <section>
+        {sectionHeader('filters', 'Filters')}
+        {expanded.has('filters') && (
+          <div className="space-y-2 mt-1 pl-4">
+            {row(
+              'Min confidence',
+              minConfidence.toFixed(2),
+              slider(minConfidence, 0, 1, 0.01, (v) => setFilters({ minConfidence: v }))
+            )}
+            <p className="text-[10px] text-muted-foreground">
+              Filters edges by confidence (weight). Applies to every explorer
+              that reads from the shared graph data.
+            </p>
           </div>
         )}
       </section>

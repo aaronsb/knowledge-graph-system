@@ -49,10 +49,27 @@ export interface ForceGraph3DData {
 }
 
 export type PhysicsBackend = 'auto' | 'cpu' | 'gpu';
-export type EdgeColorMode = 'endpoint' | 'type';
+export type EdgeColorMode = 'endpoint' | 'type' | 'confidence' | 'uniform';
+
+/**
+ * Camera + sim projection mode.
+ *
+ * Today: '2D' (orthographic camera, z-locked sim, pan/zoom only) and
+ * '3D' (perspective camera, full 3D sim, orbit controls).
+ *
+ * The type stays a string union so the engine can grow new projections
+ * (e.g. hyperbolic, globe) as case-style dispatches in the scene
+ * composition without breaking the plugin contract.
+ */
+export type Projection = '2D' | '3D';
 
 /** Runtime settings for the ForceGraph3D explorer plugin.  @verified c17bbeb9 */
 export interface ForceGraph3DSettings {
+  /** Camera + sim projection mode. Drives camera type, sim axis count,
+   *  and drag-plane construction. Plugin defaults this; users may toggle
+   *  it at runtime. */
+  projection: Projection;
+
   physics: {
     enabled: boolean;
     repulsion: number;
@@ -72,6 +89,15 @@ export interface ForceGraph3DSettings {
     edgeColorBy: EdgeColorMode;
     labelVisibilityRadius: number;
     nodeSize: number;
+    /** Edge line width. Honoured by LineBasicMaterial on drivers that
+     *  support it (renders fine on Linux Chrome / Mesa). The WebGL
+     *  spec doesn't require widths > 1, so the visible effect varies
+     *  by platform. A thick-line shader would make it guaranteed. */
+    linkWidth: number;
+    /** Multiplier on node label world-space height. 1.0 = default size. */
+    nodeLabelSize: number;
+    /** Multiplier on edge label world-space height. 1.0 = default size. */
+    edgeLabelSize: number;
   };
 
   interaction: {
@@ -83,6 +109,7 @@ export interface ForceGraph3DSettings {
 }
 
 export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
+  projection: '3D',
   physics: {
     enabled: true,
     repulsion: 120,
@@ -99,6 +126,9 @@ export const DEFAULT_SETTINGS: ForceGraph3DSettings = {
     edgeColorBy: 'type',
     labelVisibilityRadius: 250,
     nodeSize: 1.0,
+    linkWidth: 1.0,
+    nodeLabelSize: 1.0,
+    edgeLabelSize: 1.0,
   },
   interaction: {
     enableDrag: true,
@@ -118,5 +148,8 @@ export const SLIDER_RANGES = {
   visual: {
     labelVisibilityRadius: { min: 50, max: 1000, step: 10 },
     nodeSize: { min: 0.3, max: 3, step: 0.1 },
+    linkWidth: { min: 0.5, max: 5, step: 0.1 },
+    nodeLabelSize: { min: 0.5, max: 3, step: 0.1 },
+    edgeLabelSize: { min: 0.5, max: 3, step: 0.1 },
   },
 };

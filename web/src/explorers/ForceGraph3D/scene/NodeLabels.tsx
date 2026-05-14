@@ -16,14 +16,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { EngineNode } from '../types';
+import type { EngineNode, Projection } from '../types';
 
 /** Throttle for re-scanning which nodes qualify; ~5 Hz is imperceptible. */
 const RESCAN_MS = 200;
 /** Upper bound on simultaneously-mounted labels to bound per-frame cost. */
 const MAX_LABELS = 120;
-/** Label height in world units. Width derived from texture aspect. */
-const LABEL_HEIGHT_WORLD = 1.0;
+/** Base label height in world units. Multiplied by the caller's
+ *  sizeMultiplier prop to compute the actual mesh scale. */
+const BASE_LABEL_HEIGHT_WORLD = 1.0;
 /** Vertical offset above the node (world up before billboard rotation). */
 const LABEL_OFFSET_ABOVE = 1.4;
 /** Canvas font size for text rendering (high-res for crisp scaling). */
@@ -69,11 +70,17 @@ export interface NodeLabelsProps {
   /** Per-node colors, parallel to `nodes` by index. */
   colors: string[];
   hiddenIds?: Set<string>;
-  /** Labels past this world-space distance from the camera are unmounted. */
+  /** Labels past this world-space distance from the camera are unmounted.
+   *  In 2D the distance is computed in the XY plane only — the camera's
+   *  fixed Z-offset to the layout plane shouldn't bias culling. */
   visibilityRadius?: number;
   enabled?: boolean;
   /** When defined, labels for nodes not in this set are dimmed. */
   activeIds?: Set<string>;
+  /** Drives the distance-culling axis count. 2D ignores Z. Default '3D'. */
+  projection?: Projection;
+  /** Multiplier on the base label world-space height. Default 1. */
+  sizeMultiplier?: number;
 }
 
 /** Dim opacity applied to labels for nodes outside activeIds. */
@@ -88,6 +95,8 @@ export function NodeLabels({
   visibilityRadius = 250,
   enabled = true,
   activeIds,
+  projection = '3D',
+  sizeMultiplier = 1,
 }: NodeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -144,10 +153,11 @@ export function NodeLabels({
         mat.needsUpdate = true;
       }
       if (mesh) {
-        mesh.scale.set(entry.aspect * LABEL_HEIGHT_WORLD, LABEL_HEIGHT_WORLD, 1);
+        const h = BASE_LABEL_HEIGHT_WORLD * sizeMultiplier;
+        mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, nodes, colors, enabled, activeIds]);
+  }, [visibleIndices, nodes, colors, enabled, activeIds, sizeMultiplier]);
 
   const scratch = useMemo(
     () => ({
@@ -219,13 +229,18 @@ export function NodeLabels({
     if (nowMs - lastScanRef.current < RESCAN_MS) return;
     lastScanRef.current = nowMs;
 
+    // In 2D the camera is z-locked at a fixed offset from the layout plane,
+    // so dz is a constant >> visibilityRadius. Culling on the XY-plane
+    // distance makes `visibilityRadius` mean "world units from the viewport
+    // centre", which is what a 2D viewer wants.
+    const is2D = projection === '2D';
     const candidates: { idx: number; dist2: number }[] = [];
     for (let i = 0; i < nodes.length; i++) {
       if (hasHidden && hiddenIds!.has(nodes[i].id)) continue;
       const a = i * 3;
       const dx = positions[a] - scratch.camPos.x;
       const dy = positions[a + 1] - scratch.camPos.y;
-      const dz = positions[a + 2] - scratch.camPos.z;
+      const dz = is2D ? 0 : positions[a + 2] - scratch.camPos.z;
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 < radius2) candidates.push({ idx: i, dist2: d2 });
     }

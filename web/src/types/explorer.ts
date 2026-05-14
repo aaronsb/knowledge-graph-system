@@ -10,6 +10,7 @@ import type { RawGraphData } from '../utils/cypherResultMapper';
 
 export type VisualizationType =
   | 'force-2d'
+  | 'force-2d-v2'
   | 'force-3d'
   | 'document'
   | 'hierarchy'
