@@ -6,7 +6,6 @@
 export { NodeInfoBox, type NodeInfoBoxProps } from './NodeInfoBox';
 export { EdgeInfoBox, type EdgeInfoBoxProps } from './EdgeInfoBox';
 export { StatsPanel, type StatsPanelProps } from './StatsPanel';
-export { GraphSettingsPanel } from './GraphSettingsPanel';
 export { Legend } from './Legend';
 export { PanelStack } from './PanelStack';
 export { formatGrounding, getRelationshipTextColor } from './utils';

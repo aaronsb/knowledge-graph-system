@@ -26,7 +26,6 @@ import {
   PencilLine,
   Settings,
   Shield,
-  Network,
   Boxes,
   Map,
   GitBranch,
@@ -76,7 +75,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     const path = location.pathname;
     if (path === '/') return 'Home';
     if (path === '/explore/2d-v2') return '2D Force Graph (V2)';
-    if (path.startsWith('/explore/2d')) return '2D Force Graph';
     if (path.startsWith('/explore/3d')) return '3D Force Graph';
     if (path.startsWith('/explore/documents')) return 'Document Explorer';
     if (path.startsWith('/blocks')) return 'Block Editor';
@@ -128,12 +126,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           {/* Explorers */}
           <SidebarCategory title="Explorers" icon={Compass} defaultExpanded={true}>
-            <SidebarItem
-              icon={Network}
-              label="2D Force Graph"
-              isActive={location.pathname === '/explore/2d'}
-              onClick={() => navigate('/explore/2d')}
-            />
             <SidebarItem
               icon={Map}
               label="2D Force Graph (V2)"

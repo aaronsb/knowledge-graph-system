@@ -286,7 +286,7 @@ export const useGraphStore = create<GraphStore>()(
   persist(
     (set) => ({
   // Explorer selection
-  selectedExplorer: 'force-2d',
+  selectedExplorer: 'force-3d',
   setSelectedExplorer: (type) => set({ selectedExplorer: type }),
 
   // Graph data (raw API data - cached)

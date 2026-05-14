@@ -22,8 +22,6 @@ import { useQueryDefinitionStore } from '../store/queryDefinitionStore';
 import type { GraphReportData } from '../store/reportStore';
 import { useSubgraph, useFindConnection, usePathEnrichment } from '../hooks/useGraphData';
 import { getExplorer } from '../explorers';
-import { GraphSettingsPanel } from '../explorers/common/GraphSettingsPanel';
-import { SLIDER_RANGES as SLIDER_RANGES_2D } from '../explorers/ForceGraph2D/types';
 import { getZIndexValue } from '../config/zIndex';
 import { generateCypher, parseCypherStatements } from '../utils/cypherGenerator';
 import type { RawGraphNode, RawGraphLink } from '../utils/cypherResultMapper';
@@ -237,11 +235,11 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   const explorerPlugin = getExplorer(explorerType);
 
   // Derive the current explorer's data shape synchronously from rawGraphData.
-  // Each explorer's dataTransformer produces its own shape — the V1 2D/3D
-  // graphs expect {nodes, links}, V2 expects {nodes, edges}, etc. Computing
+  // Each explorer's dataTransformer produces its own shape. Computing
   // inline with useMemo means switching explorers never shows one
-  // explorer's component the previous explorer's shape (which crashes
-  // cross-shape access like data.links being undefined under V2's shape).
+  // explorer's component the previous explorer's shape (which would crash
+  // on cross-shape access like data.links being undefined under
+  // {nodes, edges} shape).
   const graphData = useMemo(() => {
     if (!rawGraphData || !explorerPlugin) return null;
     return explorerPlugin.dataTransformer(rawGraphData);
@@ -367,20 +365,12 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
     />
   );
 
-  // Settings panel content. The 3D explorer declares its own settings
-  // panel via the plugin contract (ADR-034). The 2D explorer is the last
-  // consumer of the legacy GraphSettingsPanel + SLIDER_RANGES_2D shape.
+  // Settings panel content — each explorer plugin declares its own settings
+  // panel via the ExplorerPlugin contract (ADR-034).
   const PluginSettingsPanel = explorerPlugin?.settingsPanel;
   const settingsPanelContent = (
     <div className="p-3 space-y-4">
-      {explorerType === 'force-2d' && explorerSettings?.physics ? (
-        <GraphSettingsPanel
-          settings={explorerSettings}
-          onChange={setExplorerSettings}
-          sliderRanges={SLIDER_RANGES_2D}
-          embedded
-        />
-      ) : PluginSettingsPanel ? (
+      {PluginSettingsPanel ? (
         <PluginSettingsPanel settings={explorerSettings} onChange={setExplorerSettings} />
       ) : (
         <div className="text-center text-muted-foreground text-sm py-4">
