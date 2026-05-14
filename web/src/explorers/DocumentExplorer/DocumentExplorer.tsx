@@ -17,6 +17,7 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { RotateCcw } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type {
@@ -118,20 +119,21 @@ export const DocumentExplorer: React.FC<
     }));
 
     const nodeIds = new Set(nodes.map((n) => n.id));
-    // Only visible edges land in the engine. Document→concept clustering
-    // hints from the d3 implementation are dropped on first cut — the
-    // engine's center gravity + concept-to-concept links produce a
-    // workable layout. If clustering proves loose in practice, the engine
-    // can grow per-edge visibility (render-skip while sim still uses them).
-    const edges: EngineEdge[] = data.links
-      .filter((l) => l.visible && nodeIds.has(l.source) && nodeIds.has(l.target))
-      .map((l) => ({
-        from: l.source,
-        to: l.target,
-        type: l.type,
-      }));
+    // All links land in the engine — both visible relationship edges
+    // (concept↔concept) and invisible clustering hints (document→concept).
+    // The engine sim uses the full set for force computation; rendering
+    // checks `edgeVisible` and collapses invisible edges to a point.
+    // Without this, concept dots drift away from their parent documents
+    // (concepts of one doc rarely link directly to each other in data).
+    const edges: EngineEdge[] = [];
+    const edgeVisible: boolean[] = [];
+    for (const l of data.links) {
+      if (!nodeIds.has(l.source) || !nodeIds.has(l.target)) continue;
+      edges.push({ from: l.source, to: l.target, type: l.type });
+      edgeVisible.push(l.visible);
+    }
 
-    return { nodes, edges };
+    return { nodes, edges, edgeVisible };
   }, [data]);
 
   // Index nodes by id for fast lookups during click / NodeInfoBox prep.
@@ -169,12 +171,44 @@ export const DocumentExplorer: React.FC<
     concept: <icosahedronGeometry args={[1, 1]} />,
   }), []);
 
+  // ---------------------------------------------------------------------------
+  // Focus mode → activeIds (drives the engine's dim and the per-node
+  // color dim baked below)
+  // ---------------------------------------------------------------------------
+
+  const focusedConceptSet = useMemo(() => {
+    if (!focusedDocumentId || !data) return null;
+    const doc = data.documents.find((d) => d.id === focusedDocumentId);
+    if (!doc) return null;
+    return new Set(doc.conceptIds);
+  }, [focusedDocumentId, data]);
+
+  // When set, items not in this set render at FOCUS_DIM_ALPHA on the
+  // engine's edges/labels and via the baked color dim on the nodes.
+  // Nothing focused → undefined, full opacity for everything.
+  const activeIds = useMemo(() => {
+    if (!focusedDocumentId || !focusedConceptSet) return undefined;
+    const set = new Set<string>(focusedConceptSet);
+    set.add(focusedDocumentId);
+    return set;
+  }, [focusedDocumentId, focusedConceptSet]);
+
+  // Engine `<Nodes>` doesn't read activeIds/dimAlpha (only Edges/Labels
+  // do), so bake the dim into the color array — that's how the document
+  // and concept meshes themselves visually recede when a different doc
+  // is focused.
+  const FOCUS_DIM_ALPHA = 0.08;
   const nodeColors = useMemo(() => {
+    const tmp = new THREE.Color();
+    const hasFocus = !!activeIds && activeIds.size > 0;
     return engineData.nodes.map((n) => {
       const type = nodeType(n.id) ?? 'extended-concept';
-      return COLORS[type];
+      const base = COLORS[type];
+      if (!hasFocus || activeIds!.has(n.id)) return base;
+      tmp.set(base).multiplyScalar(FOCUS_DIM_ALPHA);
+      return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
-  }, [engineData, nodeType]);
+  }, [engineData, nodeType, activeIds]);
 
   // Per-node base scale. Documents use a large constant (documentSize
   // setting is in pixel-space in the original; here it controls relative
@@ -197,27 +231,6 @@ export const DocumentExplorer: React.FC<
     }
     return out;
   }, [engineData, settings?.layout?.documentSize, nodeType]);
-
-  // ---------------------------------------------------------------------------
-  // Focus mode → engine highlight + dim
-  // ---------------------------------------------------------------------------
-
-  const focusedConceptSet = useMemo(() => {
-    if (!focusedDocumentId || !data) return null;
-    const doc = data.documents.find((d) => d.id === focusedDocumentId);
-    if (!doc) return null;
-    return new Set(doc.conceptIds);
-  }, [focusedDocumentId, data]);
-
-  // activeIds drives the engine's dim — when set, items not in the set
-  // render at `dimAlpha`. Focus on a document narrows to the document
-  // plus its concept set; nothing focused leaves the whole graph active.
-  const activeIds = useMemo(() => {
-    if (!focusedDocumentId || !focusedConceptSet) return undefined;
-    const set = new Set<string>(focusedConceptSet);
-    set.add(focusedDocumentId);
-    return set;
-  }, [focusedDocumentId, focusedConceptSet]);
 
   // ---------------------------------------------------------------------------
   // Interaction handlers — bridge engine onSelect to DocumentExplorer's
@@ -269,11 +282,12 @@ export const DocumentExplorer: React.FC<
 
   const handleReheat = useCallback(() => {
     simHandleRef.current?.reheat();
+    // The engine doesn't yet expose a settle-end callback, so the spinner
+    // is a fixed-duration visual hint rather than a real signal that the
+    // layout has actually quieted. ~2.5s matches typical convergence in
+    // practice on the engine's GPU sim; the rendering is correct
+    // regardless of whether the spinner is on or off.
     setPhysicsActive(true);
-    // Engine's reheat doesn't drive a settled callback yet; reflect the
-    // active state for a short window so the spinner UX matches the d3
-    // version. The engine settles much faster than the old d3 sim so a
-    // brief indicator is more honest than waiting for a real-end event.
     window.setTimeout(() => setPhysicsActive(false), 2500);
   }, []);
 
@@ -325,12 +339,13 @@ export const DocumentExplorer: React.FC<
         <Scene
           nodes={engineData.nodes}
           edges={engineData.edges}
+          edgeVisible={engineData.edgeVisible}
           colors={nodeColors}
           nodeClasses={nodeClasses}
           geometryByClass={geometryByClass}
           nodeScales={nodeScales}
           activeIds={activeIds}
-          dimAlpha={0.08}
+          dimAlpha={FOCUS_DIM_ALPHA}
           showArrows={false}
           showEdgeLabels={false}
           showNodeLabels={settings?.visual?.showLabels !== false}

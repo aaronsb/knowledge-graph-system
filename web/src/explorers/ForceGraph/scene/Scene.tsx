@@ -46,6 +46,10 @@ export interface SceneProps {
   nodeScales?: Float32Array;
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgeColors?: string[];
+  /** Optional per-edge render visibility (parallel to `edges`). When
+   *  `false`, the edge is kept in the physics sim but rendered collapsed
+   *  to a point. Used by Document Explorer for invisible clustering hints. */
+  edgeVisible?: boolean[];
   hiddenIds?: Set<string>;
   pinnedIds?: Set<string>;
   highlightedIds?: Set<string>;
@@ -94,6 +98,7 @@ export function Scene({
   geometryByClass,
   nodeScales,
   edgeColors,
+  edgeVisible,
   hiddenIds,
   pinnedIds,
   highlightedIds,
@@ -157,6 +162,7 @@ export function Scene({
         positionsRef={sim.positionsRef}
         colors={colors}
         edgeColors={edgeColors}
+        edgeVisible={edgeVisible}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
         linkWidth={linkWidth}
