@@ -9,9 +9,8 @@
  *
  * Each frame the mesh is positioned at the edge midpoint (curved per the
  * shared bundle bezier) and oriented so its width axis tracks the edge
- * direction while its normal points toward the camera — V1's "orient
- * labels to camera" mode, applied unconditionally because it's the only
- * mode that stays readable from arbitrary angles.
+ * direction while its normal points toward the camera — the only label
+ * orientation that stays readable from arbitrary 3D angles.
  *
  * Visibility is recomputed on a 5 Hz timer: candidates within
  * labelVisibilityRadius and not endpoint-hidden, sorted by distance,

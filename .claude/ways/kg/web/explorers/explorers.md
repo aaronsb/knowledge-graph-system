@@ -7,15 +7,17 @@ scope: agent, subagent
 ---
 # Force-Graph Explorers Way
 
-Explorer plugins live in `web/src/explorers/`. The unified-engine
-direction (ADR-702) is collapsing the 2D and 3D variants onto one R3F
-engine; until that lands, both worlds coexist and their interaction
-defaults need to agree.
+Explorer plugins live in `web/src/explorers/`. The force-graph explorer
+(`web/src/explorers/ForceGraph/`) is built on the unified R3F engine
+(ADR-702); projection ('2D' / '3D') is a user-facing setting on the
+plugin, and the engine dispatches camera, drag plane, and sim axis
+count from it.
 
-## Interaction Model: d3 ForceGraph2D is the Reference
+## Interaction Model (carried over from the retired d3 ForceGraph2D)
 
-For any 2D force-graph explorer in this project, the d3-based
-`ForceGraph2D` defines the expected interaction defaults:
+The d3-based `ForceGraph2D` plugin (retired in Phase C) established the
+2D interaction defaults this codebase keeps. The unified engine's 2D
+projection matches them, and any future 2D-style explorer should too:
 
 | Input | Action |
 |-------|--------|
@@ -24,10 +26,8 @@ For any 2D force-graph explorer in this project, the d3-based
 | Right-click on background | Background context menu |
 | Scroll wheel | Zoom |
 
-Any new 2D-projection explorer (including R3F top-down ortho variants)
-should match this — left-pan, right-context — so muscle memory carries
-across plugins. If you find yourself with a different default, that's
-the bug, not a feature.
+Left-pan, right-context is the reference. If you find yourself with a
+different default, that's the bug, not a feature.
 
 ## R3F Top-Down 2D: OrbitControls, Not MapControls
 
@@ -96,4 +96,4 @@ on a driver that does honour it.
 
 - ADR-702 (`docs/architecture/user-interfaces/ADR-702-unified-graph-rendering-engine.md`) — the unified-engine commitment
 - ADR-034 — the ExplorerPlugin contract every explorer follows
-- `web/src/explorers/ForceGraph3D/scene/` — engine primitives (Scene, Nodes, Edges, Arrows, NodeLabels, EdgeLabels, useSim, useForceSim, useGpuForceSim, useDragHandler)
+- `web/src/explorers/ForceGraph/scene/` — engine primitives (Scene, Nodes, Edges, Arrows, NodeLabels, EdgeLabels, useSim, useForceSim, useGpuForceSim, useDragHandler)

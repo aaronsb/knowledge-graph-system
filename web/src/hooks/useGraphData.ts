@@ -6,9 +6,8 @@
  */
 
 import { useMemo } from 'react';
-import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { transformForD3 } from '../utils/graphTransform';
 
 /**
  * Fetch subgraph centered on a concept
@@ -382,24 +381,3 @@ export function usePathEnrichment(
   return { data, isLoading };
 }
 
-/**
- * Prefetch subgraph for a concept
- * Useful for preloading data when hovering over nodes
- */
-export function usePrefetchSubgraph() {
-  const queryClient = useQueryClient();
-
-  return (conceptId: string, depth = 1) => {
-    queryClient.prefetchQuery({
-      queryKey: ['subgraph', conceptId, depth],
-      queryFn: async () => {
-        const response = await apiClient.getSubgraph({
-          center_concept_id: conceptId,
-          depth,
-        });
-        return transformForD3(response.nodes, response.links);
-      },
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-}

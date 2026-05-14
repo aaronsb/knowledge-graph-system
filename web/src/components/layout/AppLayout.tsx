@@ -27,8 +27,6 @@ import {
   Settings,
   Shield,
   Network,
-  Boxes,
-  Map,
   GitBranch,
   FlaskConical,
   Home,
@@ -75,9 +73,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const getWorkspaceName = () => {
     const path = location.pathname;
     if (path === '/') return 'Home';
-    if (path === '/explore/2d-v2') return '2D Force Graph (V2)';
-    if (path.startsWith('/explore/2d')) return '2D Force Graph';
-    if (path.startsWith('/explore/3d')) return '3D Force Graph';
+    if (path.startsWith('/explore/graph')) return 'Force Graph';
     if (path.startsWith('/explore/documents')) return 'Document Explorer';
     if (path.startsWith('/blocks')) return 'Block Editor';
     if (path.startsWith('/ingest')) return 'Ingest';
@@ -130,21 +126,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <SidebarCategory title="Explorers" icon={Compass} defaultExpanded={true}>
             <SidebarItem
               icon={Network}
-              label="2D Force Graph"
-              isActive={location.pathname === '/explore/2d'}
-              onClick={() => navigate('/explore/2d')}
-            />
-            <SidebarItem
-              icon={Map}
-              label="2D Force Graph (V2)"
-              isActive={location.pathname === '/explore/2d-v2'}
-              onClick={() => navigate('/explore/2d-v2')}
-            />
-            <SidebarItem
-              icon={Boxes}
-              label="3D Force Graph"
-              isActive={location.pathname === '/explore/3d'}
-              onClick={() => navigate('/explore/3d')}
+              label="Force Graph"
+              isActive={location.pathname.startsWith('/explore/graph')}
+              onClick={() => navigate('/explore/graph')}
             />
             <SidebarItem
               icon={FileText}

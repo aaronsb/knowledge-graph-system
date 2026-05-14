@@ -87,8 +87,7 @@ export interface GraphContextMenuCallbacks {
  * Follow / add-adjacent / remove / travel-path delegate to
  * `useExplorationActions` — the single writer for graph-mutating
  * operations. The wrappers here add UX concerns layered on top (an
- * `alert` dialog on failure) and preserve the historic return shape so
- * existing call sites in 2D / 3D-V1 / 3D-V2 don't need to change.
+ * `alert` dialog on failure).
  *
  * Send-to-polarity and send-path-to-reports stay here because they're
  * pure navigation / report creation, not graph-mutating.

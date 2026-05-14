@@ -1,10 +1,11 @@
 /**
- * ForceGraph3D — Main Component
+ * ForceGraph — Main Component
  *
  * Mounts the r3f Canvas and the scene composition (instanced nodes +
- * indexed edges, GPU force sim). Consumes the ExplorerPlugin contract
- * from ADR-034; engine primitives come from the scene/ subdirectory
- * per ADR-702.
+ * indexed edges, GPU force sim). Camera, sim axis count, and drag plane
+ * dispatch from `settings.projection` ('2D' or '3D'). Consumes the
+ * ExplorerPlugin contract from ADR-034; engine primitives come from the
+ * scene/ subdirectory per ADR-702.
  *
  * Node palette: built per-dataset from the ontologies present
  * (createOntologyColorScale). Default edge coloring is by relationship
@@ -17,7 +18,7 @@ import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Flame } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
-import type { ForceGraph3DData, ForceGraph3DSettings } from './types';
+import type { ForceGraphData, ForceGraphSettings } from './types';
 import { Scene } from './scene/Scene';
 import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
@@ -33,9 +34,9 @@ import type { GraphData } from '../../types/graph';
 import { useThemeStore } from '../../store/themeStore';
 
 
-/** ForceGraph3D — r3f Canvas + scene composition.  @verified c17bbeb9 */
-export const ForceGraph3D: React.FC<
-  ExplorerProps<ForceGraph3DData, ForceGraph3DSettings>
+/** ForceGraph — r3f Canvas + scene composition.  @verified c17bbeb9 */
+export const ForceGraph: React.FC<
+  ExplorerProps<ForceGraphData, ForceGraphSettings>
 > = ({ data, settings, onSettingsChange, onNodeClick, onSendToReports, className }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -179,7 +180,7 @@ export const ForceGraph3D: React.FC<
   // API-provided category → fallback. Keeping the chain in sync means the
   // shared visibleEdgeCategories store stays consistent across explorers.
   const edgeCategory = useCallback(
-    (e: ForceGraph3DData['edges'][number]): string => {
+    (e: ForceGraphData['edges'][number]): string => {
       let cat = vocabStore.getCategory(e.type);
       if (!cat) cat = e.source?.category;
       if (!cat || cat === 'default') cat = 'Uncategorized';
@@ -469,7 +470,7 @@ export const ForceGraph3D: React.FC<
           style={{ width: '240px' }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-medium text-sm text-foreground">ForceGraph3D</span>
+            <span className="font-medium text-sm text-foreground">Force Graph</span>
             <span
               className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
                 simBackend === 'gpu'

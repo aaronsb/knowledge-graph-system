@@ -7,7 +7,7 @@
 
 import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { OAuthCallback } from './components/auth/OAuthCallback';
 import { useVocabularyStore } from './store/vocabularyStore';
@@ -125,9 +125,12 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<HomeWorkspace />} />
 
         {/* Explorers */}
-        <Route path="/explore/2d" element={<ExplorerView explorerType="force-2d" />} />
-        <Route path="/explore/2d-v2" element={<ExplorerView explorerType="force-2d-v2" />} />
-        <Route path="/explore/3d" element={<ExplorerView explorerType="force-3d" />} />
+        <Route path="/explore/graph" element={<ExplorerView explorerType="force-graph" />} />
+        {/* Legacy public routes — preserve bookmarks. The unified plugin
+            owns projection via its settings panel, so the URL no longer
+            encodes 2D vs 3D. Search params (concept ids, depth, etc.) carry over. */}
+        <Route path="/explore/2d" element={<RedirectPreservingSearch to="/explore/graph" />} />
+        <Route path="/explore/3d" element={<RedirectPreservingSearch to="/explore/graph" />} />
         <Route path="/explore/documents" element={<DocumentExplorerWorkspace />} />
 
         {/* Block Editor */}
@@ -164,6 +167,14 @@ const AppContent: React.FC = () => {
       </Routes>
     </AppLayout>
   );
+};
+
+/** Redirect that preserves the incoming `?…` search string. Used to keep
+ *  legacy explorer routes (`/explore/2d`, `/explore/3d`) honoring their
+ *  bookmarked concept-id and depth query params after consolidation. */
+const RedirectPreservingSearch: React.FC<{ to: string }> = ({ to }) => {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
 };
 
 function App() {
