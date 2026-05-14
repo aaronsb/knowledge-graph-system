@@ -48,6 +48,14 @@ export const ForceGraph3DV2: React.FC<
     simHandleRef.current?.reheat();
   }, []);
 
+  // Background right-click dispatch: r3f mesh handlers fire first on the
+  // bubble path, then the native contextmenu event reaches the wrapping
+  // div. We need the wrapper to open a node-less menu only when the click
+  // missed all nodes. The flag is set by the node handler and consumed by
+  // the wrapper handler — guaranteed same-tick because both attach to the
+  // one underlying DOM contextmenu event.
+  const nodeContextMenuConsumedRef = useRef(false);
+
   // Context menu + origin/destination / focus markers are the state backing
   // the shared right-click menu. These mirror V1's ForceGraph3D bookkeeping
   // so the same buildContextMenuItems helper produces an identical menu.
@@ -111,6 +119,7 @@ export const ForceGraph3DV2: React.FC<
   const handleContextMenu = useCallback(
     (id: string, event: PointerEvent) => {
       const node = data?.nodes?.find((n) => n.id === id);
+      nodeContextMenuConsumedRef.current = true;
       setContextMenu({
         x: event.clientX,
         y: event.clientY,
@@ -119,6 +128,26 @@ export const ForceGraph3DV2: React.FC<
       });
     },
     [data]
+  );
+  // Background right-click: fired by the wrapper div after the mesh handler
+  // has had a chance to consume the event. Matches V1's onBackgroundRightClick
+  // — opens the context menu with a null node, so the shared builder renders
+  // the background-only items (Unpin All, etc.).
+  const handleBackgroundContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (nodeContextMenuConsumedRef.current) {
+        nodeContextMenuConsumedRef.current = false;
+        return;
+      }
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        nodeId: null,
+        nodeLabel: null,
+      });
+    },
+    []
   );
 
   // Pin helpers wired through the shared context menu. Drag-to-pin already
@@ -342,6 +371,7 @@ export const ForceGraph3DV2: React.FC<
     <div
       className={`relative w-full h-full ${className || ''}`}
       style={{ background: canvasBg }}
+      onContextMenu={handleBackgroundContextMenu}
     >
       <Canvas
         camera={{ position: [0, 0, 400], fov: 60, near: 0.1, far: 5000 }}
