@@ -27,10 +27,11 @@ import type {
   PassageQuery,
 } from './types';
 import { useThemeStore } from '../../store/themeStore';
-import { NodeInfoBox, StatsPanel, PanelStack } from '../common';
+import { StatsPanel, PanelStack } from '../common';
 import { Scene } from '../ForceGraph/scene/Scene';
 import type { EngineNode, EngineEdge } from '../ForceGraph/types';
 import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
+import type { NodeInfoData } from '../ForceGraph/scene/NodeInfoOverlay';
 
 // ---------------------------------------------------------------------------
 // Visual constants
@@ -82,18 +83,20 @@ export const DocumentExplorer: React.FC<
   onViewDocument,
 }) => {
   const { appliedTheme: theme } = useThemeStore();
-  const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [physicsActive, setPhysicsActive] = useState(true);
+  // Spinner reflects an explicit Reheat — the engine sim is always
+  // running (GPU/CPU), so a "settled" state isn't a real signal. Default
+  // off; Reheat flips it on for a short window.
+  const [physicsActive, setPhysicsActive] = useState(false);
+
+  // Engine-style info cards: one per pinned concept, rendered in-scene
+  // via the same `NodeInfoOverlay` Force Graph uses. Documents bypass
+  // this — clicking a document opens the viewer instead.
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfoData[]>([]);
 
   // Sim handle bridges the inside-Canvas hook to the Reheat button outside
   // the Canvas tree.
   const simHandleRef = useRef<ForceSimHandle | null>(null);
-
-  // Last-click bookkeeping for manual dblclick detection. The engine's
-  // pointer handler fires once per pointer-up; double-click semantics are
-  // local concern (we use it to open the document viewer on documents).
-  const lastClickRef = useRef<{ id: string; at: number } | null>(null);
 
   // ---------------------------------------------------------------------------
   // Engine data — transform DocumentExplorer shape → EngineNode[]/EngineEdge[]
@@ -255,43 +258,43 @@ export const DocumentExplorer: React.FC<
 
   // ---------------------------------------------------------------------------
   // Interaction handlers — bridge engine onSelect to DocumentExplorer's
-  // focus / view-document model. Single-click on a document focuses it;
-  // double-click opens the viewer. Single-click on a concept shows the
-  // NodeInfoBox; clicking the same concept again dismisses it (engine's
-  // toggle behavior is preserved).
+  // focus / view-document model.
+  //
+  // - Click on a document: opens the document viewer AND focuses (dims
+  //   non-focused). Clicking the focused document again clears focus and
+  //   the open viewer is left in place — closing the viewer is its own
+  //   dismiss control.
+  // - Click on a concept: pins an in-scene `NodeInfoOverlay` (the same
+  //   info card Force Graph uses). Click the same concept again to
+  //   dismiss it.
   // ---------------------------------------------------------------------------
 
   const handleSelect = useCallback((id: string | null) => {
-    if (!id) {
-      setSelectedConceptId(null);
-      return;
-    }
+    if (!id) return;
     const type = nodeType(id);
-
-    // Manual dblclick detection — engine fires onSelect once per click.
-    const now = performance.now();
-    const isDouble = lastClickRef.current?.id === id
-      && (now - lastClickRef.current.at) < DOUBLE_CLICK_MS;
-    lastClickRef.current = { id, at: now };
-
     if (type === 'document') {
-      if (isDouble) {
-        onViewDocument?.(id);
-        return;
-      }
-      // Single-click on a document toggles focus.
-      if (focusedDocumentId === id) {
-        onFocusChange?.(null);
-      } else {
-        onFocusChange?.(id);
-      }
-      setSelectedConceptId(null);
+      onViewDocument?.(id);
+      onFocusChange?.(focusedDocumentId === id ? null : id);
       return;
     }
+    // Concept — toggle the in-scene info overlay.
+    const node = nodesById.get(id);
+    if (!node) return;
+    setActiveNodeInfos((prev) => {
+      if (prev.some((i) => i.nodeId === id)) {
+        return prev.filter((i) => i.nodeId !== id);
+      }
+      return [
+        ...prev,
+        { nodeId: id, label: node.label, group: type ?? undefined, degree: node.degree },
+      ];
+    });
+  }, [focusedDocumentId, nodeType, nodesById, onFocusChange, onViewDocument]);
 
-    // Concept click — toggle the NodeInfoBox selection.
-    setSelectedConceptId((prev) => (prev === id ? null : id));
-  }, [focusedDocumentId, nodeType, onFocusChange, onViewDocument]);
+  const handleDismissNodeInfo = useCallback(
+    (nodeId: string) => setActiveNodeInfos((prev) => prev.filter((i) => i.nodeId !== nodeId)),
+    [],
+  );
 
   const handleHover = useCallback((id: string | null) => {
     if (settings?.interaction?.highlightOnHover === false) {
@@ -313,26 +316,6 @@ export const DocumentExplorer: React.FC<
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Selected concept → NodeInfoBox data
-  // ---------------------------------------------------------------------------
-
-  const selectedNodeData = useMemo(() => {
-    if (!selectedConceptId) return null;
-    const src = sourceById.get(selectedConceptId);
-    const eng = nodesById.get(selectedConceptId);
-    if (!src || !eng) return null;
-    const degree = engineData.edges.filter(
-      (e) => e.from === selectedConceptId || e.to === selectedConceptId,
-    ).length;
-    return {
-      id: selectedConceptId,
-      label: src.label || 'Unknown',
-      type: src.type,
-      degree,
-    };
-  }, [selectedConceptId, sourceById, nodesById, engineData]);
-
-  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
@@ -342,7 +325,6 @@ export const DocumentExplorer: React.FC<
   return (
     <div
       className={`relative w-full h-full overflow-hidden ${bgClass} ${className || ''}`}
-      onContextMenu={(e) => e.preventDefault()}
     >
       {/* Canvas keys on projection so the camera dispatch in Scene gets a
           fresh r3f tree (perspective vs orthographic can't be swapped
@@ -378,10 +360,11 @@ export const DocumentExplorer: React.FC<
           enableDrag
           enableZoom={settings?.interaction?.enableZoom !== false}
           enablePan={settings?.interaction?.enablePan !== false}
-          selectedId={selectedConceptId}
           hoveredId={hoveredId}
           onSelect={handleSelect}
           onHover={handleHover}
+          activeNodeInfos={activeNodeInfos}
+          onDismissNodeInfo={handleDismissNodeInfo}
           simHandleRef={simHandleRef}
           projection={projection}
         />
@@ -425,20 +408,6 @@ export const DocumentExplorer: React.FC<
         </div>
       </div>
 
-      {/* NodeInfoBox for selected concept */}
-      {selectedNodeData && selectedNodeData.type !== 'document' && (
-        <NodeInfoBox
-          info={{
-            nodeId: selectedNodeData.id,
-            label: selectedNodeData.label,
-            group: selectedNodeData.type === 'query-concept' ? 'query match' : 'document extended',
-            degree: selectedNodeData.degree,
-            x: 16,
-            y: 16,
-          }}
-          onDismiss={() => setSelectedConceptId(null)}
-        />
-      )}
     </div>
   );
 };
