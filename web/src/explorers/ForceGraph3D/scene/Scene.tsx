@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useImperativeHandle } from 'react';
+import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
 import { Nodes } from './Nodes';
@@ -209,20 +210,27 @@ export function Scene({
         />
       )}
       {projection === '2D' ? (
-        // OrbitControls with rotation disabled gives us pan + zoom on
-        // an orthographic camera. MapControls is the wrong abstraction
-        // here — its screenSpacePanning=false default assumes a Y-up
-        // ground-plane model where vertical pan moves along world Z,
-        // which is perpendicular to our screen and produces no visible
-        // motion. OrbitControls' default screenSpacePanning=true pans
-        // along the camera's screen-aligned up axis. Node-mesh pointer
-        // handlers stopPropagation on a node hit, so left-click on a
-        // node drives drag/select while left-click on background pans.
+        // 2D bindings match the d3 force-graph viewer: left-click drag
+        // pans, scroll-wheel zooms, right-click reserved for the
+        // explorer's context menu. Rotation is disabled (z-locked
+        // layout). The default OrbitControls binding (LEFT=ROTATE,
+        // RIGHT=PAN) doesn't fit a 2D viewer, so we remap. Node-mesh
+        // pointer handlers stopPropagation on a node hit, so left-click
+        // on a node drives drag/select while left-click on background
+        // pans.
         <OrbitControls
           makeDefault
           enableZoom={enableZoom}
           enablePan={enablePan}
           enableRotate={false}
+          mouseButtons={{
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            // RIGHT mapped to ROTATE, then gated off by enableRotate=false
+            // — leaves right-click un-consumed so the wrapper div's
+            // onContextMenu can open the explorer's context menu.
+            RIGHT: THREE.MOUSE.ROTATE,
+          }}
         />
       ) : (
         <OrbitControls makeDefault enableZoom={enableZoom} enablePan={enablePan} />
