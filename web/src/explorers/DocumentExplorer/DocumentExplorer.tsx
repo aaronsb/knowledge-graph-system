@@ -29,6 +29,7 @@ import type {
 import { useThemeStore } from '../../store/themeStore';
 import { StatsPanel, PanelStack } from '../common';
 import { Scene } from '../ForceGraph/scene/Scene';
+import { HOVER_DIM_ALPHA, FOCUS_DIM_ALPHA } from '../ForceGraph/scene/dimModel';
 import type { EngineNode, EngineEdge } from '../ForceGraph/types';
 import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
 import type { NodeInfoData } from '../ForceGraph/scene/NodeInfoOverlay';
@@ -190,9 +191,6 @@ export const DocumentExplorer: React.FC<
   // wins — same convention as Force Graph.
   // ---------------------------------------------------------------------------
 
-  const FOCUS_DIM_ALPHA = 0.05;
-  const HOVER_DIM_ALPHA = 0.25;
-
   // Concept set for the currently-focused document (document plus all
   // its concepts). Only documents can be focused; concepts use hover
   // for inspection.
@@ -241,16 +239,15 @@ export const DocumentExplorer: React.FC<
   // Labels render in a colour distinct from the node mesh so text isn't
   // masked by the disc next to it. White-ish reads against any node
   // colour (the engine paints a dark stroke under the text). Dim is
-  // baked in here too.
+  // intentionally NOT baked here — the engine dims out-of-set labels via
+  // opacity on its single activeIds path (same as Force Graph). Baking
+  // the alpha in too would double-dim and is what made Document Explorer
+  // read harsher than Force Graph on hover.
   const LABEL_COLOR = '#e5e7eb';
-  const labelColors = useMemo(() => {
-    const tmp = new THREE.Color();
-    return engineData.nodes.map((n) => {
-      if (!dimState || dimState.activeIds.has(n.id)) return LABEL_COLOR;
-      tmp.set(LABEL_COLOR).multiplyScalar(dimState.dimAlpha);
-      return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
-    });
-  }, [engineData, dimState]);
+  const labelColors = useMemo(
+    () => engineData.nodes.map(() => LABEL_COLOR),
+    [engineData],
+  );
 
   // Per-node base scale. Documents use a large constant (documentSize
   // setting is in pixel-space in the original; here it controls relative

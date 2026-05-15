@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { EngineNode, Projection } from '../types';
+import { DIM_LABEL_OPACITY } from './dimModel';
 
 /** Throttle for re-scanning which nodes qualify; ~5 Hz is imperceptible. */
 const RESCAN_MS = 200;
@@ -108,9 +109,6 @@ export interface NodeLabelsProps {
    *  alongside `nodeScales` when computing scale-aware label offsets. */
   nodeSize?: number;
 }
-
-/** Dim opacity applied to labels for nodes outside activeIds. */
-const DIM_LABEL_OPACITY = 0.15;
 
 /** Persistent billboarded node labels with distance culling.  @verified e05014ea */
 export function NodeLabels({

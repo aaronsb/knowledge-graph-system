@@ -22,6 +22,7 @@ import type { ForceGraphData, ForceGraphSettings } from './types';
 import { Scene } from './scene/Scene';
 import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
+import { HOVER_DIM_ALPHA, FOCUS_DIM_ALPHA } from './scene/dimModel';
 import type { ForceSimHandle } from './scene/useForceSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
@@ -276,9 +277,10 @@ export const ForceGraph: React.FC<
   }, [selectedId, filteredData, settings?.interaction?.highlightNeighbors]);
 
   // Active set + dim alpha for hover/focus dimming. Focus (right-click
-  // "Focus on node") wins over hover and dims more aggressively (0.05 vs.
-  // 0.2). When neither is active the set is undefined and the engine
-  // renders at full opacity for everything.
+  // "Focus on node") wins over hover and dims more aggressively. Alphas
+  // come from the shared dim model so every engine consumer recedes by
+  // the same amount. When neither is active the set is undefined and the
+  // engine renders at full opacity for everything.
   const dimState = useMemo<{ activeIds: Set<string>; dimAlpha: number } | undefined>(() => {
     const driverId = focusedNode ?? hoveredId;
     if (!driverId) return undefined;
@@ -287,7 +289,7 @@ export const ForceGraph: React.FC<
       if (e.from === driverId) active.add(e.to);
       else if (e.to === driverId) active.add(e.from);
     }
-    return { activeIds: active, dimAlpha: focusedNode ? 0.05 : 0.2 };
+    return { activeIds: active, dimAlpha: focusedNode ? FOCUS_DIM_ALPHA : HOVER_DIM_ALPHA };
   }, [focusedNode, hoveredId, filteredData]);
 
   // Bake the dim into the per-node color array so Nodes (and endpoint-
