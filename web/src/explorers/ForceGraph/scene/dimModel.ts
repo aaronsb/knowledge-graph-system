@@ -22,8 +22,10 @@
  * Fixed for now. If these become user-configurable, this is the seam.
  */
 
-/** Node-color multiplier for out-of-set nodes under transient hover. */
-export const HOVER_DIM_ALPHA = 0.2;
+/** Node-color multiplier for out-of-set nodes under transient hover.
+ *  Deliberately subtle — hover only steps the rest back ~10% so the
+ *  local topology reads without the view feeling like it changed mode. */
+export const HOVER_DIM_ALPHA = 0.9;
 
 /** Node-color multiplier for out-of-set nodes under persistent focus. */
 export const FOCUS_DIM_ALPHA = 0.05;
