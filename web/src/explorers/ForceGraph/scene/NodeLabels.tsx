@@ -17,7 +17,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { EngineNode, Projection } from '../types';
-import { DIM_LABEL_OPACITY } from './dimModel';
 
 /** Throttle for re-scanning which nodes qualify; ~5 Hz is imperceptible. */
 const RESCAN_MS = 200;
@@ -108,6 +107,11 @@ export interface NodeLabelsProps {
   /** Global node-size multiplier — same prop `<Nodes>` consumes. Used
    *  alongside `nodeScales` when computing scale-aware label offsets. */
   nodeSize?: number;
+  /** Plane opacity for labels of nodes outside `activeIds`. Resolved
+   *  from the active dim tier by the consumer (see dimModel). Default 1
+   *  (no dim) — a caller that wires `activeIds` but forgets this should
+   *  fail visibly, not silently land on an old magic number. */
+  dimLabelOpacity?: number;
 }
 
 /** Persistent billboarded node labels with distance culling.  @verified e05014ea */
@@ -125,6 +129,7 @@ export function NodeLabels({
   labelOffsetY = DEFAULT_LABEL_OFFSET_Y,
   nodeScales,
   nodeSize = 1,
+  dimLabelOpacity = 1,
 }: NodeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -177,7 +182,7 @@ export function NodeLabels({
       const dimmed = hasActive && !activeIds!.has(node.id);
       if (mat) {
         mat.map = entry.texture;
-        mat.opacity = dimmed ? DIM_LABEL_OPACITY : 1;
+        mat.opacity = dimmed ? dimLabelOpacity : 1;
         mat.needsUpdate = true;
       }
       if (mesh) {
@@ -185,7 +190,7 @@ export function NodeLabels({
         mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, nodes, colors, labelColors, enabled, activeIds, sizeMultiplier]);
+  }, [visibleIndices, nodes, colors, labelColors, enabled, activeIds, sizeMultiplier, dimLabelOpacity]);
 
   const scratch = useMemo(
     () => ({

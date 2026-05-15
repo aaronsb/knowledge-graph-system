@@ -2,33 +2,43 @@
  * Shared dim model — one source of truth for hover/focus dimming so
  * every explorer that consumes the engine recedes by the same amount.
  *
- * Two tiers, matching the interaction model both Force Graph and
+ * Two interaction tiers, matching the model both Force Graph and
  * Document Explorer expose:
  *
- *   - HOVER  — transient, subtle. Pointer is over a node; its local
- *              topology stays lit while the rest steps back enough to
- *              read the neighborhood but not so far it reads as a mode
+ *   - hover  — transient, subtle. Pointer is over a node; its local
+ *              topology stays lit while the rest steps back just enough
+ *              to read the neighborhood without feeling like a mode
  *              change.
- *   - FOCUS  — persistent, aggressive. Set via right-click "Focus on
+ *   - focus  — persistent, aggressive. Set via right-click "Focus on
  *              node/document". Wins over hover when both are active.
  *
- * `*_DIM_ALPHA` multiplies node mesh colors (consumers bake it into the
- * per-node color array). `DIM_LABEL_OPACITY` is the label-plane opacity
- * for out-of-set nodes — labels dim via opacity, not color, so the
- * engine owns it on the single `activeIds` path. Consumers should NOT
- * pre-bake the alpha into label colors as well; that double-dims and is
- * what made Document Explorer look harsher than Force Graph.
+ * Each tier is ONE node carrying every property it affects, so the
+ * node mesh and its label can never drift apart: tune a tier in one
+ * place and the dot and its text move together. (The previous flat
+ * constants let label opacity and node alpha be set independently —
+ * that's what made hover read harsher on labels than on dots.)
+ *
+ * The engine itself stays primitive — Scene/Nodes/Edges/labels take
+ * plain numbers. This map is a consumer-side convenience; explorers
+ * resolve a tier to its spec and feed the numbers in. A future
+ * consumer with a different interaction vocabulary isn't forced to
+ * adopt ours.
  *
  * Fixed for now. If these become user-configurable, this is the seam.
  */
 
-/** Node-color multiplier for out-of-set nodes under transient hover.
- *  Deliberately subtle — hover only steps the rest back ~10% so the
- *  local topology reads without the view feeling like it changed mode. */
-export const HOVER_DIM_ALPHA = 0.9;
+export type DimTier = 'hover' | 'focus';
 
-/** Node-color multiplier for out-of-set nodes under persistent focus. */
-export const FOCUS_DIM_ALPHA = 0.05;
+export interface DimSpec {
+  /** Color multiplier for out-of-set node meshes, edges, and arrows
+   *  (edges visually couple to their endpoints, so they share the
+   *  node figure rather than carrying a separate alpha). */
+  nodeAlpha: number;
+  /** Plane opacity for out-of-set node and edge labels. */
+  labelOpacity: number;
+}
 
-/** Label-plane opacity for out-of-set nodes (engine-applied, single path). */
-export const DIM_LABEL_OPACITY = 0.15;
+export const DIM_MODEL: Record<DimTier, DimSpec> = {
+  hover: { nodeAlpha: 0.9, labelOpacity: 0.9 },
+  focus: { nodeAlpha: 0.05, labelOpacity: 0.15 },
+};

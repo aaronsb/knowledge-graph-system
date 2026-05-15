@@ -60,6 +60,11 @@ export interface SceneProps {
   /** Dim multiplier applied to non-active edges/arrows in edge-type mode.
    *  Node colors arrive pre-dimmed via the `colors` prop. */
   dimAlpha?: number;
+  /** Plane opacity for out-of-set node/edge labels. Resolved from the
+   *  active dim tier by the consumer (see dimModel). Default 1 (no dim).
+   *  Pairs with `dimAlpha`: alpha dims the figures, this dims their
+   *  text, and the dim model keeps the two coupled per tier. */
+  dimLabelOpacity?: number;
   nodeSize?: number;
   edgeOpacity?: number;
   linkWidth?: number;
@@ -111,6 +116,7 @@ export function Scene({
   highlightedIds,
   activeIds,
   dimAlpha = 1,
+  dimLabelOpacity = 1,
   nodeSize,
   edgeOpacity,
   linkWidth,
@@ -233,6 +239,7 @@ export function Scene({
         activeIds={activeIds}
         projection={projection}
         sizeMultiplier={edgeLabelSize}
+        dimLabelOpacity={dimLabelOpacity}
       />
       <NodeLabels
         nodes={nodes}
@@ -248,6 +255,7 @@ export function Scene({
         labelOffsetY={nodeLabelOffsetY}
         nodeScales={resolvedNodeScales}
         nodeSize={nodeSize}
+        dimLabelOpacity={dimLabelOpacity}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay

@@ -29,7 +29,7 @@ import type {
 import { useThemeStore } from '../../store/themeStore';
 import { StatsPanel, PanelStack } from '../common';
 import { Scene } from '../ForceGraph/scene/Scene';
-import { HOVER_DIM_ALPHA, FOCUS_DIM_ALPHA } from '../ForceGraph/scene/dimModel';
+import { DIM_MODEL, type DimSpec } from '../ForceGraph/scene/dimModel';
 import type { EngineNode, EngineEdge } from '../ForceGraph/types';
 import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
 import type { NodeInfoData } from '../ForceGraph/scene/NodeInfoOverlay';
@@ -215,9 +215,9 @@ export const DocumentExplorer: React.FC<
     return set;
   }, [hoveredId, engineData]);
 
-  const dimState = useMemo<{ activeIds: Set<string>; dimAlpha: number } | undefined>(() => {
-    if (focusActiveIds) return { activeIds: focusActiveIds, dimAlpha: FOCUS_DIM_ALPHA };
-    if (hoverActiveIds) return { activeIds: hoverActiveIds, dimAlpha: HOVER_DIM_ALPHA };
+  const dimState = useMemo<{ activeIds: Set<string>; spec: DimSpec } | undefined>(() => {
+    if (focusActiveIds) return { activeIds: focusActiveIds, spec: DIM_MODEL.focus };
+    if (hoverActiveIds) return { activeIds: hoverActiveIds, spec: DIM_MODEL.hover };
     return undefined;
   }, [focusActiveIds, hoverActiveIds]);
 
@@ -231,7 +231,7 @@ export const DocumentExplorer: React.FC<
       const type = nodeType(n.id) ?? 'extended-concept';
       const base = COLORS[type];
       if (!dimState || dimState.activeIds.has(n.id)) return base;
-      tmp.set(base).multiplyScalar(dimState.dimAlpha);
+      tmp.set(base).multiplyScalar(dimState.spec.nodeAlpha);
       return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
   }, [engineData, nodeType, dimState]);
@@ -454,7 +454,8 @@ export const DocumentExplorer: React.FC<
           geometryByClass={geometryByClass}
           nodeScales={nodeScales}
           activeIds={dimState?.activeIds}
-          dimAlpha={dimState?.dimAlpha ?? 1}
+          dimAlpha={dimState?.spec.nodeAlpha ?? 1}
+          dimLabelOpacity={dimState?.spec.labelOpacity ?? 1}
           showArrows={false}
           showEdgeLabels={false}
           showNodeLabels={settings?.visual?.showLabels !== false}

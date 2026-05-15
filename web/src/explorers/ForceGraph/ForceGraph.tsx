@@ -22,7 +22,7 @@ import type { ForceGraphData, ForceGraphSettings } from './types';
 import { Scene } from './scene/Scene';
 import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
-import { HOVER_DIM_ALPHA, FOCUS_DIM_ALPHA } from './scene/dimModel';
+import { DIM_MODEL, type DimSpec } from './scene/dimModel';
 import type { ForceSimHandle } from './scene/useForceSim';
 import { createOntologyColorScale } from '../../utils/colorScale';
 import { useVocabularyStore } from '../../store/vocabularyStore';
@@ -281,7 +281,7 @@ export const ForceGraph: React.FC<
   // come from the shared dim model so every engine consumer recedes by
   // the same amount. When neither is active the set is undefined and the
   // engine renders at full opacity for everything.
-  const dimState = useMemo<{ activeIds: Set<string>; dimAlpha: number } | undefined>(() => {
+  const dimState = useMemo<{ activeIds: Set<string>; spec: DimSpec } | undefined>(() => {
     const driverId = focusedNode ?? hoveredId;
     if (!driverId) return undefined;
     const active = new Set<string>([driverId]);
@@ -289,7 +289,7 @@ export const ForceGraph: React.FC<
       if (e.from === driverId) active.add(e.to);
       else if (e.to === driverId) active.add(e.from);
     }
-    return { activeIds: active, dimAlpha: focusedNode ? FOCUS_DIM_ALPHA : HOVER_DIM_ALPHA };
+    return { activeIds: active, spec: focusedNode ? DIM_MODEL.focus : DIM_MODEL.hover };
   }, [focusedNode, hoveredId, filteredData]);
 
   // Bake the dim into the per-node color array so Nodes (and endpoint-
@@ -302,7 +302,7 @@ export const ForceGraph: React.FC<
     return baseNodeColors.map((c, i) => {
       const id = filteredData?.nodes?.[i]?.id;
       if (id && dimState.activeIds.has(id)) return c;
-      tmp.set(c).multiplyScalar(dimState.dimAlpha);
+      tmp.set(c).multiplyScalar(dimState.spec.nodeAlpha);
       return `#${tmp.getHexString()}`;
     });
   }, [baseNodeColors, dimState, filteredData]);
@@ -452,7 +452,8 @@ export const ForceGraph: React.FC<
           pinnedIds={pinnedIds}
           highlightedIds={highlightedIds}
           activeIds={dimState?.activeIds}
-          dimAlpha={dimState?.dimAlpha ?? 1}
+          dimAlpha={dimState?.spec.nodeAlpha ?? 1}
+          dimLabelOpacity={dimState?.spec.labelOpacity ?? 1}
           enableDrag={settings?.interaction?.enableDrag ?? true}
           enableZoom={settings?.interaction?.enableZoom ?? true}
           enablePan={settings?.interaction?.enablePan ?? true}
