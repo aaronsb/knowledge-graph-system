@@ -140,12 +140,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
                         : [...selected, opt.value]
                     )
                   }
+                  style={{ accentColor: opt.color }}
                 />
                 <span
                   className="inline-block w-2.5 h-2.5 rounded-full shrink-0 border border-border"
                   style={{ background: opt.color }}
                 />
-                <span className="truncate">{opt.value}</span>
+                <span className="truncate" style={{ color: opt.color }}>
+                  {opt.value}
+                </span>
               </label>
             );
           })}
